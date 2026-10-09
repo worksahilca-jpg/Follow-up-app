@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>FollowUp app, Today, D3</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif&amp;family=Public+Sans:wght@300;400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#fdfcfc}
+a{color:#0a0a0a}a:hover{color:#57534e}
+button{font:inherit}
+:focus-visible{outline:2px solid #0a0a0a;outline-offset:2px}
+</style>
+</helmet>
+<div style="background: #fdfcfc; color: #0a0a0a; font-family: 'Public Sans', system-ui, sans-serif; -webkit-font-smoothing: antialiased; display: flex; flex-wrap: wrap; min-height: 900px">
+
+<aside style="flex: 1 1 232px; max-width: 260px; box-sizing: border-box; padding: 18px 14px; background: #f9f8f6; border-right: 1px solid #ecebe8; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; align-items: center; gap: 10px; padding: 6px 8px 14px">
+<span style="width: 28px; height: 28px; border-radius: 8px; background: #0a0a0a; color: #ffffff; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600">M</span>
+<span style="font-size: 14.5px; font-weight: 600">Maple Realty</span>
+</div>
+<label for="search3" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Search customers</label>
+<input id="search3" placeholder="Search customers" style="height: 38px; border-radius: 10px; border: 1px solid #e7e5e2; background: #ffffff; padding: 0 12px; font-size: 14px; font-family: inherit; color: #0a0a0a">
+<nav aria-label="App" style="margin-top: 10px; display: flex; flex-direction: column; gap: 2px">
+<a href="#today" aria-current="page" style="display: flex; justify-content: space-between; align-items: center; min-height: 40px; padding: 0 10px; border-radius: 10px; background: #ffffff; box-shadow: 0 1px 2px rgba(26,20,15,0.08); text-decoration: none; font-size: 14.5px; font-weight: 500">Today <span style="font-size: 13px; color: #57534e">4</span></a>
+<a href="#customers" style="display: flex; justify-content: space-between; align-items: center; min-height: 40px; padding: 0 10px; border-radius: 10px; text-decoration: none; font-size: 14.5px; color: #57534e">Customers <span style="font-size: 13px">38</span></a>
+<a href="#settings" style="display: flex; align-items: center; min-height: 40px; padding: 0 10px; border-radius: 10px; text-decoration: none; font-size: 14.5px; color: #57534e">Settings</a>
+</nav>
+<div style="margin-top: auto; padding: 10px; font-size: 13px; color: #736e68">owner@maplerealty.example</div>
+</aside>
+
+<main style="flex: 999 1 640px; min-width: 0; box-sizing: border-box; padding: 34px clamp(20px, 3vw, 44px) 40px">
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #736e68">Wednesday, October 8</div>
+<h1 style="margin: 12px 0 0; font-family: 'Instrument Serif', Georgia, serif; font-size: 48px; font-weight: 400; line-height: 1.0; letter-spacing: -0.02em; max-width: 16em; text-wrap: balance">4 customers are waiting on you. <span style="color: #858079">A reply is written for each.</span></h1>
+
+<div style="margin-top: 30px; display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start">
+<section aria-label="Waiting" style="flex: 1 1 340px; min-width: 0; display: flex; flex-direction: column">
+<button type="button" style="all: unset; cursor: pointer; display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 14px 14px; border-radius: 16px; background: #ffffff; box-shadow: 0 1px 2px rgba(26,20,15,0.06), 0 12px 28px -20px rgba(26,20,15,0.35)">
+<span style="width: 36px; height: 36px; border-radius: 999px; background: #f3efea; display: inline-flex; align-items: center; justify-content: center; font-size: 12.5px; font-weight: 600">PS</span>
+<span style="min-width: 0"><span style="display: flex; align-items: center; gap: 8px; font-size: 15.5px; font-weight: 500"><span style="width: 7px; height: 7px; border-radius: 999px; background: #c96a1b"></span>Priya Sharma</span><span style="display: block; margin-top: 3px; font-size: 14.5px; line-height: 1.45; color: #57534e">"Is the 3-bedroom on Maple Street still available? Could I see it this weekend?"</span></span>
+<span style="font-size: 13px; color: #736e68; padding-top: 2px">2 h</span>
+</button>
+<button type="button" style="all: unset; cursor: pointer; display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 14px 14px; border-top: 1px solid #efedea; margin-top: 6px">
+<span style="width: 36px; height: 36px; border-radius: 999px; background: #f3efea; display: inline-flex; align-items: center; justify-content: center; font-size: 12.5px; font-weight: 600">DK</span>
+<span style="min-width: 0"><span style="display: flex; align-items: center; gap: 8px; font-size: 15.5px; font-weight: 500"><span style="width: 7px; height: 7px; border-radius: 999px; background: #c96a1b"></span>Daniel Kim</span><span style="display: block; margin-top: 3px; font-size: 14.5px; line-height: 1.45; color: #57534e">"What's the asking price on the Queen St condo? Are fees included?"</span></span>
+<span style="font-size: 13px; color: #736e68; padding-top: 2px">5 h</span>
+</button>
+<button type="button" style="all: unset; cursor: pointer; display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 14px 14px; border-top: 1px solid #efedea">
+<span style="width: 36px; height: 36px; border-radius: 999px; background: #f3efea; display: inline-flex; align-items: center; justify-content: center; font-size: 12.5px; font-weight: 600">AO</span>
+<span style="min-width: 0"><span style="display: flex; align-items: center; gap: 8px; font-size: 15.5px; font-weight: 500">Amara Okafor</span><span style="display: block; margin-top: 3px; font-size: 14.5px; line-height: 1.45; color: #57534e">"Thanks for the tour yesterday. We'd like to put in an offer."</span></span>
+<span style="font-size: 13px; color: #736e68; padding-top: 2px">1 d</span>
+</button>
+<button type="button" style="all: unset; cursor: pointer; display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 14px 14px; border-top: 1px solid #efedea">
+<span style="width: 36px; height: 36px; border-radius: 999px; background: #f3efea; display: inline-flex; align-items: center; justify-content: center; font-size: 12.5px; font-weight: 600">LB</span>
+<span style="min-width: 0"><span style="display: flex; align-items: center; gap: 8px; font-size: 15.5px; font-weight: 500">Lucas Brar</span><span style="display: block; margin-top: 3px; font-size: 14.5px; line-height: 1.45; color: #57534e">"Is the house on Elm St still available?"</span></span>
+<span style="font-size: 13px; color: #736e68; padding-top: 2px">2 d</span>
+</button>
+</section>
+
+<section aria-label="Priya Sharma" style="flex: 1.35 1 440px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px">
+<h2 style="margin: 0; font-family: 'Instrument Serif', Georgia, serif; font-size: 34px; font-weight: 400; letter-spacing: -0.01em">Priya Sharma</h2>
+<span style="font-size: 14px; color: #736e68">Gmail · waiting 2 hours</span>
+</div>
+<div style="border-radius: 20px; background: #ffffff; border: 1px solid #ecebe8; padding: 20px 22px">
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: #736e68">She wrote · 9:12 AM</div>
+<p style="margin: 10px 0 0; font-size: 17.5px; line-height: 1.55">Hi, is the 3-bedroom on Maple Street still available? Could I see it this weekend?</p>
+</div>
+<div style="border-radius: 24px; padding: 22px; background: radial-gradient(70% 90% at 12% 10%, rgba(244,196,160,0.9), rgba(244,196,160,0) 70%), radial-gradient(70% 90% at 92% 95%, rgba(196,210,228,0.95), rgba(196,210,228,0) 70%), radial-gradient(50% 70% at 88% 0%, rgba(238,212,204,0.9), rgba(238,212,204,0) 72%), #f3efea; box-shadow: inset 0 0 0 1px rgba(10,10,10,0.06)">
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: #57534e">Written in your words · waits for your OK</div>
+<p style="margin: 12px 0 0; font-size: 17.5px; line-height: 1.6">Hi Priya,<br><br>Yes, the 3-bedroom on Maple Street is still available. Would Saturday morning work for a viewing? I can do 10 or 11.<br><br>Sam</p>
+<p style="margin: 14px 0 0; font-size: 13.5px; color: #57534e">Based on Priya's message on Gmail this morning.</p>
+<div style="margin-top: 18px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+<button type="button" style="min-height: 48px; padding: 0 28px; border-radius: 999px; border: 0; background: #0a0a0a; color: #ffffff; font-size: 16px; font-weight: 500; cursor: pointer">Send</button>
+<button type="button" style="min-height: 48px; padding: 0 22px; border-radius: 999px; border: 1px solid rgba(10,10,10,0.14); background: rgba(255,255,255,0.7); font-size: 16px; cursor: pointer; color: #0a0a0a">Edit</button>
+<span style="margin-left: auto; display: flex; gap: 16px; font-size: 14.5px; color: #57534e"><span>Later</span><span>Don't send</span><span>Already spoke</span></span>
+</div>
+</div>
+</section>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

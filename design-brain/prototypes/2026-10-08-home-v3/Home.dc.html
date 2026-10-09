@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>FollowUp Home v3</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Public+Sans:wght@300..700&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#faf7f2}
+a{color:inherit}
+button{font:inherit;cursor:pointer}
+input{font:inherit}
+#ask::placeholder{color:#908f8c}
+:focus-visible{outline:2px solid #c96a1b;outline-offset:3px}
+@keyframes drift{from{transform:translateY(0)}to{transform:translateY(-50%)}}
+@keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.drift{animation:drift 80s linear infinite}
+.caret{animation:blink 1s steps(1) infinite}
+.rise{animation:rise .45s cubic-bezier(.2,.8,.2,1) both}
+.rv{transition:opacity .6s cubic-bezier(.22,1,.36,1), transform .6s cubic-bezier(.22,1,.36,1), width .9s cubic-bezier(.22,1,.36,1)}
+.lift{transition:box-shadow 1.4s ease, transform 1.4s cubic-bezier(.2,.8,.2,1)}
+@media (prefers-reduced-motion: reduce){.drift,.caret,.rise{animation:none}.rv,.lift{transition:none}}
+</style>
+</helmet>
+<div style="position: relative; width: 100%; background: #faf7f2; color: #141312; font-family: 'Public Sans', system-ui, sans-serif; font-weight: 450; -webkit-font-smoothing: antialiased; overflow-x: clip">
+<div style="position: relative; height: 900px; background: #1e1e20; color: #faf7f2; overflow: hidden">
+<div aria-hidden="true" style="position: absolute; inset: 0; display: flex; gap: 40px; padding: 0 40px; font-family: 'Instrument Serif', Georgia, serif; font-style: italic; line-height: 1.15; color: #f2f1ef; pointer-events: none; -webkit-mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent); mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent)"><div style="flex: 1 1 0; min-width: 0; overflow: hidden; font-size: 17px; opacity: 0.05; filter: blur(1.2px)"><div class="drift" style="animation-duration: 70s; animation-delay: -0s"><div style="padding: 16px 0">Is it still available?</div><div style="padding: 16px 0">How much for a full colour?</div><div style="padding: 16px 0">Can you come today?</div><div style="padding: 16px 0">Do you take new patients?</div><div style="padding: 16px 0">What time works Saturday?</div><div style="padding: 16px 0">Is the price firm?</div><div style="padding: 16px 0">Do you do weekends?</div><div style="padding: 16px 0">Could I see it this week?</div><div style="padding: 16px 0">Is it still available?</div><div style="padding: 16px 0">How much for a full colour?</div><div style="padding: 16px 0">Can you come today?</div><div style="padding: 16px 0">Do you take new patients?</div><div style="padding: 16px 0">What time works Saturday?</div><div style="padding: 16px 0">Is the price firm?</div><div style="padding: 16px 0">Do you do weekends?</div><div style="padding: 16px 0">Could I see it this week?</div></div></div><div style="flex: 1 1 0; min-width: 0; overflow: hidden; font-size: 21px; opacity: 0.08; filter: blur(0.7px)"><div class="drift" style="animation-duration: 83s; animation-delay: -9s"><div style="padding: 16px 0">Is the price firm?</div><div style="padding: 16px 0">Do you do weekends?</div><div style="padding: 16px 0">Could I see it this week?</div><div style="padding: 16px 0">Are condo fees included?</div><div style="padding: 16px 0">Can I book for two?</div><div style="padding: 16px 0">Is parking included?</div><div style="padding: 16px 0">Do you have evening slots?</div><div style="padding: 16px 0">How soon can you start?</div><div style="padding: 16px 0">Is the price firm?</div><div style="padding: 16px 0">Do you do weekends?</div><div style="padding: 16px 0">Could I see it this week?</div><div style="padding: 16px 0">Are condo fees included?</div><div style="padding: 16px 0">Can I book for two?</div><div style="padding: 16px 0">Is parking included?</div><div style="padding: 16px 0">Do you have evening slots?</div><div style="padding: 16px 0">How soon can you start?</div></div></div><div style="flex: 1 1 0; min-width: 0; overflow: hidden; font-size: 27px; opacity: 0.12; filter: blur(0px)"><div class="drift" style="animation-duration: 96s; animation-delay: -18s"><div style="padding: 16px 0">Is parking included?</div><div style="padding: 16px 0">Do you have evening slots?</div><div style="padding: 16px 0">How soon can you start?</div><div style="padding: 16px 0">Can you send a quote?</div><div style="padding: 16px 0">Is the Elm St house still on?</div><div style="padding: 16px 0">Any openings tomorrow?</div><div style="padding: 16px 0">Do you take insurance?</div><div style="padding: 16px 0">Can I change my booking?</div><div style="padding: 16px 0">Is parking included?</div><div style="padding: 16px 0">Do you have evening slots?</div><div style="padding: 16px 0">How soon can you start?</div><div style="padding: 16px 0">Can you send a quote?</div><div style="padding: 16px 0">Is the Elm St house still on?</div><div style="padding: 16px 0">Any openings tomorrow?</div><div style="padding: 16px 0">Do you take insurance?</div><div style="padding: 16px 0">Can I change my booking?</div></div></div><div style="flex: 1 1 0; min-width: 0; overflow: hidden; font-size: 31px; opacity: 0.13; filter: blur(0px)"><div class="drift" style="animation-duration: 109s; animation-delay: -27s"><div style="padding: 16px 0">Any openings tomorrow?</div><div style="padding: 16px 0">Do you take insurance?</div><div style="padding: 16px 0">Can I change my booking?</div><div style="padding: 16px 0">What's included in the price?</div><div style="padding: 16px 0">Are you open on Sunday?</div><div style="padding: 16px 0">Thanks, I'll think about it.</div><div style="padding: 16px 0">Still keen, can we talk?</div><div style="padding: 16px 0">Do you fix water heaters?</div><div style="padding: 16px 0">Any openings tomorrow?</div><div style="padding: 16px 0">Do you take insurance?</div><div style="padding: 16px 0">Can I change my booking?</div><div style="padding: 16px 0">What's included in the price?</div><div style="padding: 16px 0">Are you open on Sunday?</div><div style="padding: 16px 0">Thanks, I'll think about it.</div><div style="padding: 16px 0">Still keen, can we talk?</div><div style="padding: 16px 0">Do you fix water heaters?</div></div></div><div style="flex: 1 1 0; min-width: 0; overflow: hidden; font-size: 24px; opacity: 0.09; filter: blur(0.4px)"><div class="drift" style="animation-duration: 122s; animation-delay: -36s"><div style="padding: 16px 0">Thanks, I'll think about it.</div><div style="padding: 16px 0">Still keen, can we talk?</div><div style="padding: 16px 0">Do you fix water heaters?</div><div style="padding: 16px 0">Is the basement finished?</div><div style="padding: 16px 0">Is it still available?</div><div style="padding: 16px 0">How much for a full colour?</div><div style="padding: 16px 0">Can you come today?</div><div style="padding: 16px 0">Do you take new patients?</div><div style="padding: 16px 0">Thanks, I'll think about it.</div><div style="padding: 16px 0">Still keen, can we talk?</div><div style="padding: 16px 0">Do you fix water heaters?</div><div style="padding: 16px 0">Is the basement finished?</div><div style="padding: 16px 0">Is it still available?</div><div style="padding: 16px 0">How much for a full colour?</div><div style="padding: 16px 0">Can you come today?</div><div style="padding: 16px 0">Do you take new patients?</div></div></div><div style="flex: 1 1 0; min-width: 0; overflow: hidden; font-size: 19px; opacity: 0.06; filter: blur(1.0px)"><div class="drift" style="animation-duration: 135s; animation-delay: -45s"><div style="padding: 16px 0">How much for a full colour?</div><div style="padding: 16px 0">Can you come today?</div><div style="padding: 16px 0">Do you take new patients?</div><div style="padding: 16px 0">What time works Saturday?</div><div style="padding: 16px 0">Is the price firm?</div><div style="padding: 16px 0">Do you do weekends?</div><div style="padding: 16px 0">Could I see it this week?</div><div style="padding: 16px 0">Are condo fees included?</div><div style="padding: 16px 0">How much for a full colour?</div><div style="padding: 16px 0">Can you come today?</div><div style="padding: 16px 0">Do you take new patients?</div><div style="padding: 16px 0">What time works Saturday?</div><div style="padding: 16px 0">Is the price firm?</div><div style="padding: 16px 0">Do you do weekends?</div><div style="padding: 16px 0">Could I see it this week?</div><div style="padding: 16px 0">Are condo fees included?</div></div></div></div>
+<div aria-hidden="true" style="position: absolute; left: 0; top: 0; bottom: 0; width: 780px; background: radial-gradient(70% 62% at 40% 50%, #1e1e20 55%, rgba(30,30,32,0) 100%); pointer-events: none"></div>
+<header style="position: absolute; top: 20px; left: 0; right: 0; z-index: 5; display: flex; justify-content: space-between; align-items: center; padding: 0 56px">
+<span style="display: inline-flex; align-items: center; gap: 9px; font-weight: 650; font-size: 19px"><svg width="13" height="20" viewBox="0 0 76.77 120" fill="currentColor" aria-hidden="true"><path d="M76.77 0 L73.12 20.29 C69.27 41.68 63.3 49.13 43.26 57.55 L9.78 71.61 L13.43 51.32 C17.29 29.93 23.26 22.48 43.3 14.06 Z"></path><path d="M41.97 67.16 L38 89.21 C35.69 102.04 32.11 106.51 20.08 111.56 L0 120 L3.97 97.95 C6.28 85.12 9.86 80.64 21.89 75.59 Z"></path></svg>FollowUp</span>
+<nav aria-label="Main" style="display: flex; align-items: center; gap: 28px; font-size: 15px">
+<a href="#write" style="text-decoration: none; color: #d0cfcc">How it works</a><a href="#prices" style="text-decoration: none; color: #d0cfcc">Prices</a><a href="#control" style="text-decoration: none; color: #d0cfcc">Your data</a><a href="#signin" style="text-decoration: none">Sign in</a>
+<a href="#start" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 20px; border-radius: 999px; background: #faf7f2; color: #141312; font-weight: 600; text-decoration: none">Start free</a>
+</nav>
+</header>
+<div style="position: absolute; left: 56px; top: 0; bottom: 0; width: 600px; display: flex; flex-direction: column; justify-content: center; z-index: 2">
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: #a5a4a1; display: flex; align-items: center; gap: 10px"><span style="width: 8px; height: 8px; border-radius: 999px; background: #c96a1b"></span>For Gmail · free while in beta</div>
+<h1 style="margin: 22px 0 0; font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 96px; line-height: 0.93; letter-spacing: -0.03em; color: #faf7f2">Never lose a lead <em style="color: #f3cfb3">because you forgot to follow up.</em></h1>
+<p style="margin: 26px 0 0; max-width: 27em; font-size: 19px; line-height: 1.5; color: #c3c2c0">FollowUp reads the customers in your Gmail, answers them in your words within minutes, and checks in if they go quiet. When something needs your decision, like a price or a date, it hands it to you.</p>
+<div style="margin-top: 30px; display: flex; align-items: center; gap: 18px; flex-wrap: wrap">
+<a href="#start" style="display: inline-flex; align-items: center; min-height: 58px; padding: 0 30px; border-radius: 999px; background: #faf7f2; color: #141312; font-weight: 600; font-size: 17px; text-decoration: none">Connect Gmail, start free</a>
+<span style="font-size: 15px; color: #a5a4a1">Or try it right here →</span>
+</div>
+</div>
+<div style="position: absolute; right: 48px; top: 92px; bottom: 36px; width: 620px; z-index: 2; border-radius: 36px; background: rgba(41,41,44,0.96); border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 60px 120px -40px rgba(0,0,0,0.8); padding: 28px 30px; box-sizing: border-box; display: flex; flex-direction: column">
+
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #a5a4a1">Try it · ask what your customers ask</div>
+<div style="margin-top: 12px; display: flex; gap: 6px; flex-wrap: wrap">
+<sc-for list="{{ trades }}" as="t" hint-placeholder-count="4"><button type="button" onClick="{{ t.pick }}" aria-pressed="{{ t.on }}" style="min-height: 40px; padding: 0 15px; border-radius: 999px; border: 1px solid {{ t.bd }}; background: {{ t.bg }}; color: {{ t.fg }}; font-size: 14.5px; font-weight: 600">{{ t.label }}</button></sc-for>
+</div>
+<div style="margin-top: 14px; display: flex; flex-direction: column; gap: 6px">
+<sc-for list="{{ qs }}" as="q" hint-placeholder-count="3"><button type="button" onClick="{{ q.pick }}" style="text-align: left; min-height: 44px; padding: 10px 14px; border-radius: 14px; border: 1px solid {{ q.bd }}; background: {{ q.bg }}; color: #eeedeb; font-size: 14.5px; line-height: 1.35">“{{ q.q }}”</button></sc-for>
+</div>
+<form onSubmit="{{ submit }}" style="margin-top: 10px; display: flex; gap: 8px">
+<label for="ask" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Type a question your customer might ask</label>
+<input id="ask" value="{{ typed }}" onChange="{{ onType }}" placeholder="Or type your own customer question…" style="flex: 1 1 auto; min-width: 0; min-height: 44px; padding: 0 14px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.16); background: rgba(255,255,255,0.05); font-size: 14.5px; color: #faf7f2">
+<button type="submit" style="flex: 0 0 auto; min-height: 44px; padding: 0 18px; border-radius: 999px; border: 0; background: #faf7f2; color: #141312; font-size: 14.5px; font-weight: 600">Ask</button>
+</form>
+<div style="margin-top: 22px; display: flex; flex-direction: column; gap: 12px">
+<div style="align-self: flex-start; max-width: 88%; background: #323235; border: 1px solid rgba(255,255,255,0.08); border-radius: 18px 18px 18px 6px; padding: 12px 14px"><div style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #908f8c">Your customer · Gmail</div><div style="margin-top: 5px; font-size: 16px; line-height: 1.4; color: #eeedeb">{{ asked }}</div></div>
+<div class="lift" style="margin-left: -64px; box-sizing: border-box; border-radius: 20px 20px 6px 20px; padding: 18px 22px; background: radial-gradient(70% 90% at 12% 10%, rgba(244,196,160,0.95), rgba(244,196,160,0) 70%), radial-gradient(70% 90% at 92% 95%, rgba(196,210,228,0.98), rgba(196,210,228,0) 70%), #f6f2ec; color: #141312; box-shadow: {{ replyGlow }}; transform: {{ replyLift }}">
+<sc-if value="{{ handed }}" hint-placeholder-val="{{ false }}"><div style="display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 650; color: #9a4f12"><span style="width: 7px; height: 7px; border-radius: 999px; background: #c96a1b"></span>Comes to you first</div></sc-if>
+<sc-if value="{{ notHanded }}" hint-placeholder-val="{{ true }}"><div style="display: inline-flex; align-items: center; gap: 7px; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #57534e"><svg width="9" height="14" viewBox="0 0 76.77 120" fill="currentColor" aria-hidden="true"><path d="M76.77 0 L73.12 20.29 C69.27 41.68 63.3 49.13 43.26 57.55 L9.78 71.61 L13.43 51.32 C17.29 29.93 23.26 22.48 43.3 14.06 Z"></path><path d="M41.97 67.16 L38 89.21 C35.69 102.04 32.11 106.51 20.08 111.56 L0 120 L3.97 97.95 C6.28 85.12 9.86 80.64 21.89 75.59 Z"></path></svg>Written in your words</div></sc-if>
+<div style="margin-top: 6px; min-height: 56px; font-family: 'Instrument Serif', Georgia, serif; font-size: 25px; line-height: 1.17">{{ shown }}<sc-if value="{{ writing }}" hint-placeholder-val="{{ false }}"><span class="caret">▍</span></sc-if></div>
+<sc-if value="{{ done }}" hint-placeholder-val="{{ true }}"><div class="rise" style="margin-top: 10px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap"><span style="display: inline-flex; align-items: center; min-height: 40px; padding: 0 18px; border-radius: 999px; background: #141312; color: #faf7f2; font-size: 14px; font-weight: 600">Send</span><span style="font-size: 14px; color: #57534e">Edit</span></div></sc-if>
+</div>
+<sc-if value="{{ hasNote }}" hint-placeholder-val="{{ false }}"><p class="rise" style="margin: 0; font-size: 13.5px; line-height: 1.45; color: #bdbcb9">{{ note }}</p></sc-if>
+</div>
+<p style="margin: auto 0 0; padding-top: 12px; font-size: 12px; color: #908f8c">Examples. In your account it uses your own hours, prices and facts.</p>
+</div>
+</div>
+<div style="position: sticky; top: 0; z-index: 20; background: rgba(250,247,242,0.94); border-bottom: 1px solid #e6e0d6">
+<div style="height: 64px; padding: 0 56px; display: flex; align-items: center; justify-content: space-between; gap: 24px">
+<span style="display: inline-flex; align-items: center; gap: 9px; font-weight: 650; font-size: 17px"><svg width="13" height="20" viewBox="0 0 76.77 120" fill="currentColor" aria-hidden="true"><path d="M76.77 0 L73.12 20.29 C69.27 41.68 63.3 49.13 43.26 57.55 L9.78 71.61 L13.43 51.32 C17.29 29.93 23.26 22.48 43.3 14.06 Z"></path><path d="M41.97 67.16 L38 89.21 C35.69 102.04 32.11 106.51 20.08 111.56 L0 120 L3.97 97.95 C6.28 85.12 9.86 80.64 21.89 75.59 Z"></path></svg>FollowUp</span>
+<nav aria-label="On this page" style="display: flex; gap: 6px; font-size: 14.5px">
+<a href="#write" style="padding: 8px 12px; border-radius: 999px; text-decoration: none; color: #57534e">When they write</a>
+<a href="#decide" style="padding: 8px 12px; border-radius: 999px; text-decoration: none; color: #57534e">When it needs you</a>
+<a href="#quiet" style="padding: 8px 12px; border-radius: 999px; text-decoration: none; color: #57534e">When they go quiet</a>
+<a href="#control" style="padding: 8px 12px; border-radius: 999px; text-decoration: none; color: #57534e">Your control</a>
+<a href="#questions" style="padding: 8px 12px; border-radius: 999px; text-decoration: none; color: #57534e">Questions</a>
+</nav>
+<a href="#start" style="display: inline-flex; align-items: center; min-height: 42px; padding: 0 18px; border-radius: 999px; background: #141312; color: #faf7f2; font-size: 14.5px; font-weight: 600; text-decoration: none">Connect Gmail, start free</a>
+</div></div>
+<section id="write" style="padding: 128px 56px 0">
+<div style="text-align: center; max-width: 860px; margin: 0 auto">
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: #736e68">When a customer writes</div>
+<h2 style="margin: 16px 0 0; font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 64px; line-height: 1.0; letter-spacing: -0.025em; text-wrap: balance">Answered <em>while you're busy.</em></h2>
+<p style="margin: 18px auto 0; max-width: 34em; font-size: 19px; line-height: 1.5; color: #57534e">A customer writes at 11 PM, or while you're with a client. A minute later the reply is written in your words, waiting for one tap.</p>
+</div>
+<div style="margin: 44px auto 0; max-width: 1180px; border-radius: 36px; background: #ebe3d7; padding: 44px 48px; box-sizing: border-box">
+<div role="img" aria-label="Example: Priya asks at 11:48 PM whether a house is still available. A minute later FollowUp has written the reply in the owner's words. In the morning the owner taps Send and Priya books a viewing." style="display: grid; grid-template-columns: 1fr 72px 1.15fr; align-items: start; min-height: 330px">
+<div style="display: flex; flex-direction: column; gap: 14px">
+<div style="background: #ffffff; border-radius: 22px; padding: 18px 20px; box-shadow: 0 28px 56px -30px rgba(40,28,18,0.42)">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px"><span style="font-size: 15px; font-weight: 650">Priya</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #736e68">Tue 11:48 PM · Gmail</span></div>
+<p style="margin: 8px 0 0; font-size: 17px; line-height: 1.45">Hi, is the 3-bedroom on Maple Street still available? Could I see it this weekend?</p></div>
+<div class="rv" style="opacity: {{ s1.back.o }}; transform: {{ s1.back.y }}; align-self: flex-start; max-width: 85%; background: #ffffff; border-radius: 18px 18px 18px 6px; padding: 12px 16px; box-shadow: 0 28px 56px -30px rgba(40,28,18,0.42)"><div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #736e68">Priya · Wed 7:20 AM</div><div style="margin-top: 4px; font-size: 16px">Saturday at 10 works. See you there!</div></div>
+</div>
+<div class="rv" style="opacity: {{ s1.reply.o }}; transform: {{ s1.reply.y }}; padding-top: 52px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #57534e">1 min<div style="margin: 8px auto 0; width: 36px; height: 1px; background: #141312"></div></div>
+<div class="rv" style="opacity: {{ s1.reply.o }}; transform: {{ s1.reply.y }}">
+<div style="background: radial-gradient(70% 90% at 12% 10%, rgba(244,196,160,0.95), rgba(244,196,160,0) 70%), radial-gradient(70% 90% at 92% 95%, rgba(196,210,228,0.98), rgba(196,210,228,0) 70%), #f6f2ec; border-radius: 22px 22px 6px 22px; padding: 18px 22px; box-shadow: 0 28px 56px -30px rgba(40,28,18,0.42)">
+<div style="display: flex; align-items: center; gap: 7px; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #57534e"><svg width="9" height="14" viewBox="0 0 76.77 120" fill="currentColor" aria-hidden="true"><path d="M76.77 0 L73.12 20.29 C69.27 41.68 63.3 49.13 43.26 57.55 L9.78 71.61 L13.43 51.32 C17.29 29.93 23.26 22.48 43.3 14.06 Z"></path><path d="M41.97 67.16 L38 89.21 C35.69 102.04 32.11 106.51 20.08 111.56 L0 120 L3.97 97.95 C6.28 85.12 9.86 80.64 21.89 75.59 Z"></path></svg>Written in your words</div>
+<p style="margin: 8px 0 0; font-family: 'Instrument Serif', Georgia, serif; font-size: 25px; line-height: 1.18">Hi Priya, yes, it's still available. Would Saturday at 10 or 2 work for a viewing?</p>
+<sc-if value="{{ s1.notSent }}" hint-placeholder-val="{{ true }}"><div style="margin-top: 12px; display: flex; align-items: center; gap: 12px"><span style="display: inline-flex; align-items: center; min-height: 38px; padding: 0 18px; border-radius: 999px; background: #141312; color: #faf7f2; font-size: 14px; font-weight: 600">Send</span><span style="font-size: 14px; color: #57534e">Edit</span></div></sc-if><sc-if value="{{ s1.sent }}" hint-placeholder-val="{{ false }}"><div style="margin-top: 12px; display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 600; color: #2f6b4a"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Sent Wed 7:02 AM, from your own Gmail</div></sc-if></div>
+</div>
+</div>
+<div style="margin-top: 16px; display: flex; align-items: center; justify-content: space-between; gap: 16px">
+<div aria-live="polite" style="font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; letter-spacing: 0.04em; color: #57534e">{{ s1.status }}</div>
+<div style="display: flex; align-items: center; gap: 8px"><span style="font-size: 12.5px; color: #736e68; margin-right: 6px">An example, not a real customer.</span>
+<button type="button" onClick="{{ s1.toggle }}" style="min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid #d6cdc0; background: transparent; color: #141312; font-size: 13.5px; font-weight: 600">{{ s1.pauseLabel }}</button>
+<button type="button" onClick="{{ s1.replay }}" style="min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid #d6cdc0; background: transparent; color: #141312; font-size: 13.5px; font-weight: 600">Replay</button>
+</div></div>
+</div>
+</section>
+<section id="decide" style="padding: 128px 56px 0">
+<div style="text-align: center; max-width: 860px; margin: 0 auto">
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: #736e68">When it needs you</div>
+<h2 style="margin: 16px 0 0; font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 64px; line-height: 1.0; letter-spacing: -0.025em; text-wrap: balance">It hands you <em>the decisions.</em></h2>
+<p style="margin: 18px auto 0; max-width: 34em; font-size: 19px; line-height: 1.5; color: #57534e">A price, a date, or anything it isn't sure of comes to you first, with the reply already written. The customer isn't left in silence meanwhile.</p>
+</div>
+<div style="margin: 44px auto 0; max-width: 1180px; border-radius: 36px; background: #ebe3d7; padding: 44px 48px; box-sizing: border-box">
+<div role="img" aria-label="Example: Priya asks if the price is negotiable. The question comes to the owner with a reply written and a blank for the price. After 30 minutes Priya gets one short fixed note that promises nothing. The owner adds the price and sends." style="display: grid; grid-template-columns: 1fr 1.25fr; gap: 56px; align-items: start; min-height: 330px">
+<div style="display: flex; flex-direction: column; gap: 14px">
+<div style="background: #ffffff; border-radius: 22px; padding: 18px 20px; box-shadow: 0 28px 56px -30px rgba(40,28,18,0.42)">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px"><span style="font-size: 15px; font-weight: 650">Priya</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #736e68">Wed 2:15 PM · Gmail</span></div>
+<p style="margin: 8px 0 0; font-size: 17px; line-height: 1.45">Is the asking price negotiable?</p></div>
+<div class="rv" style="opacity: {{ s2.hold.o }}; transform: {{ s2.hold.y }}; align-self: flex-end; max-width: 92%; background: radial-gradient(70% 90% at 12% 10%, rgba(244,196,160,0.95), rgba(244,196,160,0) 70%), radial-gradient(70% 90% at 92% 95%, rgba(196,210,228,0.98), rgba(196,210,228,0) 70%), #f6f2ec; border-radius: 18px 18px 6px 18px; padding: 12px 16px; box-shadow: 0 28px 56px -30px rgba(40,28,18,0.42)"><div style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #57534e">Sent for you · 2:45 PM</div><div style="margin-top: 5px; font-size: 16px; line-height: 1.4">Thanks for asking! Let me check and I'll send you the price soon.</div></div>
+<p class="rv" style="opacity: {{ s2.hold.o }}; transform: {{ s2.hold.y }}; margin: 0; font-size: 13.5px; line-height: 1.45; color: #57534e">One fixed line, after 30 minutes. It never names a number or a day.</p>
+</div>
+<div class="rv" style="opacity: {{ s2.card.o }}; transform: {{ s2.card.y }}; background: #ffffff; border-radius: 26px; padding: 22px 24px; box-shadow: 0 28px 56px -30px rgba(40,28,18,0.42)">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 10px"><span style="display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 650; color: #9a4f12"><span style="width: 8px; height: 8px; border-radius: 999px; background: #c96a1b"></span>Comes to you first</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #736e68">Today · Priya</span></div>
+<p style="margin: 6px 0 0; font-size: 14.5px; color: #57534e">A price is yours to decide. The reply is written; it needs your number.</p>
+<p style="margin: 14px 0 0; font-family: 'Instrument Serif', Georgia, serif; font-size: 25px; line-height: 1.2">Hi Priya, the seller would consider offers from <span style="display: inline-block; min-width: 120px; padding: 0 10px; border-radius: 10px; border: 1.5px dashed {{ s2.slotBd }}; background: {{ s2.slotBg }}; font-family: 'Public Sans', sans-serif; font-size: 19px; font-weight: 600; text-align: center">{{ s2.price }}</span>. Would you like to talk it through?</p>
+<sc-if value="{{ s2.notSent }}" hint-placeholder-val="{{ true }}"><div style="margin-top: 12px; display: flex; align-items: center; gap: 12px"><span style="display: inline-flex; align-items: center; min-height: 38px; padding: 0 18px; border-radius: 999px; background: #141312; color: #faf7f2; font-size: 14px; font-weight: 600">Send</span><span style="font-size: 14px; color: #57534e">Edit</span></div></sc-if><sc-if value="{{ s2.sent }}" hint-placeholder-val="{{ false }}"><div style="margin-top: 12px; display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 600; color: #2f6b4a"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Sent 3:10 PM, from your own Gmail</div></sc-if>
+</div>
+</div>
+<div style="margin-top: 16px; display: flex; align-items: center; justify-content: space-between; gap: 16px">
+<div aria-live="polite" style="font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; letter-spacing: 0.04em; color: #57534e">{{ s2.status }}</div>
+<div style="display: flex; align-items: center; gap: 8px"><span style="font-size: 12.5px; color: #736e68; margin-right: 6px">An example, not a real customer.</span>
+<button type="button" onClick="{{ s2.toggle }}" style="min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid #d6cdc0; background: transparent; color: #141312; font-size: 13.5px; font-weight: 600">{{ s2.pauseLabel }}</button>
+<button type="button" onClick="{{ s2.replay }}" style="min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid #d6cdc0; background: transparent; color: #141312; font-size: 13.5px; font-weight: 600">Replay</button>
+</div></div>
+</div>
+</section>
+<section id="quiet" style="padding: 128px 56px 0">
+<div style="text-align: center; max-width: 860px; margin: 0 auto">
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: #736e68">When they go quiet</div>
+<h2 style="margin: 16px 0 0; font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 64px; line-height: 1.0; letter-spacing: -0.025em; text-wrap: balance">It checks in <em>on the day you'd have forgotten.</em></h2>
+<p style="margin: 18px auto 0; max-width: 34em; font-size: 19px; line-height: 1.5; color: #57534e">A short note in your words when a customer goes quiet. The moment they answer, it stops.</p>
+</div>
+<div style="margin: 44px auto 0; max-width: 1180px; border-radius: 36px; background: #ebe3d7; padding: 44px 48px; box-sizing: border-box">
+<div role="img" aria-label="Example: the reply goes out Wednesday. Thursday is quiet. Friday at 9 FollowUp checks in. Priya answers at 9:41 and the check-ins stop." style="position: relative; display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px; min-height: 300px">
+<div aria-hidden="true" style="position: absolute; left: 6px; right: 6px; top: 6px; height: 1px; background: #cfc5b7"></div>
+<div aria-hidden="true" class="rv" style="position: absolute; left: 6px; top: 6px; height: 1px; background: #141312; width: {{ s3.line }}"></div>
+<div class="rv" style="opacity: {{ s3.n0.o }}; transform: {{ s3.n0.y }}; position: relative; padding-top: 30px">
+<span aria-hidden="true" style="position: absolute; top: 0; left: 0; width: 13px; height: 13px; border-radius: 999px; background: #141312; box-shadow: 0 0 0 5px #ebe3d7"></span>
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #736e68">Wed 7:02 AM</div>
+<div style="margin-top: 6px; font-size: 16px; font-weight: 650">Your reply went out</div>
+<div style="margin-top: 10px; background: #ffffff; border-radius: 16px; padding: 12px 14px; box-shadow: 0 28px 56px -30px rgba(40,28,18,0.42); font-size: 15px; line-height: 1.4">Hi Priya, yes, it's still available. Would Saturday at 10 or 2 work?</div></div>
+<div class="rv" style="opacity: {{ s3.n1.o }}; transform: {{ s3.n1.y }}; position: relative; padding-top: 30px">
+<span aria-hidden="true" style="position: absolute; top: 0; left: 0; width: 13px; height: 13px; border-radius: 999px; background: #b9ae9f; box-shadow: 0 0 0 5px #ebe3d7"></span>
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #736e68">Thu</div>
+<div style="margin-top: 6px; font-size: 16px; font-weight: 650">Quiet</div>
+<p style="margin: 10px 0 0; font-size: 15px; line-height: 1.45; color: #57534e">No answer yet. This is the day it usually slips.</p></div>
+<div class="rv" style="opacity: {{ s3.n2.o }}; transform: {{ s3.n2.y }}; position: relative; padding-top: 30px">
+<span aria-hidden="true" style="position: absolute; top: 0; left: 0; width: 13px; height: 13px; border-radius: 999px; background: #141312; box-shadow: 0 0 0 5px #ebe3d7"></span>
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #736e68">Fri 9:00 AM</div>
+<div style="margin-top: 6px; font-size: 16px; font-weight: 650">It checks in for you</div>
+<div style="margin-top: 10px; background: radial-gradient(70% 90% at 12% 10%, rgba(244,196,160,0.95), rgba(244,196,160,0) 70%), radial-gradient(70% 90% at 92% 95%, rgba(196,210,228,0.98), rgba(196,210,228,0) 70%), #f6f2ec; border-radius: 16px; padding: 12px 14px; box-shadow: 0 28px 56px -30px rgba(40,28,18,0.42); font-size: 15px; line-height: 1.4">Hi Priya, just checking in. Still keen to see the house this weekend?</div></div>
+<div class="rv" style="opacity: {{ s3.n3.o }}; transform: {{ s3.n3.y }}; position: relative; padding-top: 30px">
+<span aria-hidden="true" style="position: absolute; top: 0; left: 0; width: 13px; height: 13px; border-radius: 999px; background: #2f6b4a; box-shadow: 0 0 0 5px #ebe3d7"></span>
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #736e68">Fri 9:41 AM</div>
+<div style="margin-top: 6px; font-size: 16px; font-weight: 650">Priya answered</div>
+<div style="margin-top: 10px; background: #ffffff; border-radius: 16px; padding: 12px 14px; box-shadow: 0 28px 56px -30px rgba(40,28,18,0.42); font-size: 15px; line-height: 1.4">Yes! Booking the viewing now.</div><div style="margin-top: 12px; display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 600; color: #2f6b4a"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Check-ins stopped. She replied.</div></div>
+</div>
+<div style="margin-top: 16px; display: flex; align-items: center; justify-content: space-between; gap: 16px">
+<div aria-live="polite" style="font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; letter-spacing: 0.04em; color: #57534e">{{ s3.status }}</div>
+<div style="display: flex; align-items: center; gap: 8px"><span style="font-size: 12.5px; color: #736e68; margin-right: 6px">An example, not a real customer.</span>
+<button type="button" onClick="{{ s3.toggle }}" style="min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid #d6cdc0; background: transparent; color: #141312; font-size: 13.5px; font-weight: 600">{{ s3.pauseLabel }}</button>
+<button type="button" onClick="{{ s3.replay }}" style="min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid #d6cdc0; background: transparent; color: #141312; font-size: 13.5px; font-weight: 600">Replay</button>
+</div></div>
+</div>
+</section>
+<section id="control" style="padding: 128px 56px 0">
+<div style="text-align: center; max-width: 860px; margin: 0 auto">
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: #736e68">Your control</div>
+<h2 style="margin: 16px 0 0; font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 64px; line-height: 1.0; letter-spacing: -0.025em; text-wrap: balance">You stay <em>in charge.</em></h2>
+<p style="margin: 18px auto 0; max-width: 34em; font-size: 19px; line-height: 1.5; color: #57534e">It follows up on its own, inside rules you can read. Four promises, and one switch that holds everything.</p>
+</div>
+<div style="margin: 48px auto 0; max-width: 1180px; display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: start">
+<div style="border-bottom: 1px solid #e6e0d6">
+<div style="padding: 20px 0; border-top: 1px solid #e6e0d6"><div style="font-family: 'Instrument Serif', Georgia, serif; font-size: 28px; line-height: 1.1">It stops the moment they reply.</div><p style="margin: 6px 0 0; font-size: 16px; line-height: 1.5; color: #57534e">No chasing someone who already answered.</p></div>
+<div style="padding: 20px 0; border-top: 1px solid #e6e0d6"><div style="font-family: 'Instrument Serif', Georgia, serif; font-size: 28px; line-height: 1.1">Prices and dates come to you.</div><p style="margin: 6px 0 0; font-size: 16px; line-height: 1.5; color: #57534e">Anything that's yours to decide waits for you, with the reply written.</p></div>
+<div style="padding: 20px 0; border-top: 1px solid #e6e0d6"><div style="font-family: 'Instrument Serif', Georgia, serif; font-size: 28px; line-height: 1.1">It writes down why.</div><p style="margin: 6px 0 0; font-size: 16px; line-height: 1.5; color: #57534e">Every message it sends has a reason you can read.</p></div>
+<div style="padding: 20px 0; border-top: 1px solid #e6e0d6"><div style="font-family: 'Instrument Serif', Georgia, serif; font-size: 28px; line-height: 1.1">Delete everything, any time.</div><p style="margin: 6px 0 0; font-size: 16px; line-height: 1.5; color: #57534e">Your data is yours. Deleting also disconnects your Gmail.</p></div>
+</div>
+<div style="border-radius: 36px; background: #ebe3d7; padding: 44px 40px">
+<div style="background: #ffffff; border-radius: 24px; padding: 22px 24px; box-shadow: 0 28px 56px -30px rgba(40,28,18,0.42)">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 16px">
+<div><div style="font-size: 17px; font-weight: 650">Pause all sending</div><div style="margin-top: 3px; font-size: 14px; color: #57534e">One tap holds everything.</div></div>
+<button type="button" role="switch" aria-checked="{{ pause.checked }}" aria-label="Pause all sending" onClick="{{ pause.toggle }}" style="position: relative; flex: 0 0 auto; width: 56px; height: 32px; border-radius: 999px; border: 0; padding: 0; background: {{ pause.track }}; transition: background .2s ease"><span aria-hidden="true" style="position: absolute; top: 3px; left: 3px; width: 26px; height: 26px; border-radius: 999px; background: #ffffff; box-shadow: 0 2px 6px rgba(0,0,0,0.25); transform: {{ pause.knob }}; transition: transform .2s ease"></span></button>
+</div>
+<div aria-live="polite" style="margin-top: 16px; padding-top: 14px; border-top: 1px solid #e6e0d6; display: flex; gap: 10px; align-items: baseline; font-size: 15px; line-height: 1.45"><span aria-hidden="true" style="flex: 0 0 auto; width: 8px; height: 8px; border-radius: 999px; background: {{ pause.dot }}"></span><span>{{ pause.text }}</span></div>
+</div>
+<p style="margin: 18px 4px 0; font-size: 13.5px; color: #57534e">Try the switch. <a href="#data" style="color: #141312; font-weight: 600">How we protect your data ›</a></p>
+</div>
+</div>
+</section>
+<section id="questions" style="padding: 128px 56px 0">
+<div style="text-align: center; max-width: 860px; margin: 0 auto">
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: #736e68">Questions</div>
+<h2 style="margin: 16px 0 0; font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 64px; line-height: 1.0; letter-spacing: -0.025em; text-wrap: balance">Straight <em>answers.</em></h2>
+<p style="margin: 18px auto 0; max-width: 34em; font-size: 19px; line-height: 1.5; color: #57534e">Ask like a customer would. The answer comes back the way FollowUp replies: written for you.</p>
+</div>
+<div style="margin: 48px auto 0; max-width: 1180px; display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 48px; align-items: start">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<sc-for list="{{ faqs }}" as="f" hint-placeholder-count="5"><button type="button" onClick="{{ f.pick }}" aria-pressed="{{ f.on }}" style="text-align: left; min-height: 52px; padding: 12px 18px; border-radius: 16px; border: 1px solid {{ f.bd }}; background: {{ f.bg }}; color: #141312; font-size: 16.5px; font-weight: 550">{{ f.q }}</button></sc-for>
+</div>
+<div style="border-radius: 36px; background: #ebe3d7; padding: 36px 36px 40px; display: flex; flex-direction: column; gap: 14px; min-height: 360px; box-sizing: border-box">
+<div style="align-self: flex-start; max-width: 80%; background: #ffffff; border-radius: 18px 18px 18px 6px; padding: 12px 16px; box-shadow: 0 28px 56px -30px rgba(40,28,18,0.42)"><div style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #736e68">You asked</div><div style="margin-top: 4px; font-size: 16.5px">{{ faq.q }}</div></div>
+<div style="align-self: flex-end; width: 90%"><div style="background: radial-gradient(70% 90% at 12% 10%, rgba(244,196,160,0.95), rgba(244,196,160,0) 70%), radial-gradient(70% 90% at 92% 95%, rgba(196,210,228,0.98), rgba(196,210,228,0) 70%), #f6f2ec; border-radius: 22px 22px 6px 22px; padding: 18px 22px; box-shadow: 0 28px 56px -30px rgba(40,28,18,0.42)">
+<div style="display: flex; align-items: center; gap: 7px; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #57534e"><svg width="9" height="14" viewBox="0 0 76.77 120" fill="currentColor" aria-hidden="true"><path d="M76.77 0 L73.12 20.29 C69.27 41.68 63.3 49.13 43.26 57.55 L9.78 71.61 L13.43 51.32 C17.29 29.93 23.26 22.48 43.3 14.06 Z"></path><path d="M41.97 67.16 L38 89.21 C35.69 102.04 32.11 106.51 20.08 111.56 L0 120 L3.97 97.95 C6.28 85.12 9.86 80.64 21.89 75.59 Z"></path></svg>FollowUp</div>
+<p style="margin: 8px 0 0; font-family: 'Instrument Serif', Georgia, serif; font-size: 25px; line-height: 1.18">{{ faq.a }}</p>
+</div></div>
+<p style="margin: 6px 4px 0; font-size: 14px; color: #57534e">A real person answers too: contact@followupbase.io</p>
+</div>
+</div>
+<p style="margin: 64px auto 0; text-align: center; font-size: 15px; color: #57534e">Works with <strong style="color: #141312">Gmail</strong> today. Outlook, Instagram, WhatsApp and website forms are coming.</p>
+</section>
+<section id="start" style="margin-top: 128px; background: #1e1e20; color: #faf7f2; padding: 140px 56px 0; text-align: center">
+<h2 style="margin: 0 auto; max-width: 12em; font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 88px; line-height: 0.95; letter-spacing: -0.03em; text-wrap: balance">Your customers are writing. <em style="color: #f3cfb3">Answer every one.</em></h2>
+<a href="#start" style="margin-top: 48px; display: inline-flex; align-items: center; gap: 18px; min-height: 92px; padding: 0 48px; border-radius: 999px; background: #faf7f2; color: #141312; font-size: 28px; font-weight: 600; text-decoration: none">Connect Gmail, start free <span aria-hidden="true">→</span></a>
+<p style="margin: 22px 0 0; font-size: 15.5px; color: #a5a4a1">Free while in beta · No credit card</p>
+<footer style="margin-top: 140px; padding: 28px 0 36px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; font-size: 14px; color: #a5a4a1; text-align: left">
+<span style="display: inline-flex; align-items: center; gap: 10px; color: #faf7f2"><span style="display: inline-flex; align-items: center; gap: 8px; font-weight: 650"><svg width="13" height="20" viewBox="0 0 76.77 120" fill="currentColor" aria-hidden="true"><path d="M76.77 0 L73.12 20.29 C69.27 41.68 63.3 49.13 43.26 57.55 L9.78 71.61 L13.43 51.32 C17.29 29.93 23.26 22.48 43.3 14.06 Z"></path><path d="M41.97 67.16 L38 89.21 C35.69 102.04 32.11 106.51 20.08 111.56 L0 120 L3.97 97.95 C6.28 85.12 9.86 80.64 21.89 75.59 Z"></path></svg>FollowUp</span><span style="color: #a5a4a1">So no customer gets forgotten.</span></span>
+<nav aria-label="Footer" style="display: flex; gap: 22px; flex-wrap: wrap"><a href="#write" style="text-decoration: none">How it works</a><a href="#prices" style="text-decoration: none">Prices</a><a href="#data" style="text-decoration: none">Your data</a><a href="#privacy" style="text-decoration: none">Privacy</a><a href="#terms" style="text-decoration: none">Terms</a><a href="#contact" style="text-decoration: none">contact@followupbase.io</a></nav>
+<span>© 2026 FollowUp</span>
+</footer>
+</section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":5850}}'>
+// Each scene: [last step, status lines]. A step is 1.8 s; the end holds for 3 steps, then it starts again.
+const SC = {
+  s1: ["Tue 11:48 PM · Priya writes. You're asleep.", "11:49 PM · The reply is written in your words, waiting for you.", "Wed 7:02 AM · You tap Send. It goes from your own Gmail.", "7:20 AM · Priya books a viewing."],
+  s2: ["Wed 2:15 PM · Priya asks about the price.", "2:15 PM · It comes to you, with the reply written and a blank for the number.", "2:45 PM · You're busy, so she gets one short note that promises nothing.", "3:10 PM · You add the price and tap Send."],
+  s3: ["Wed 7:02 AM · Your reply went out.", "Thursday · No answer. This is the day it usually slips.", "Fri 9:00 AM · It checks in for you, in your words.", "Fri 9:41 AM · Priya answers. The check-ins stop."]
+};
+class Component extends DCLogic {
+  state = { trade: 0, q: 0, typed: '', custom: null, n: 0, idle: 0,
+    s1: 0, s2: 0, s3: 0, p1: false, p2: false, p3: false, paused: false, faq: 0 };
+  componentDidMount() {
+    this.data = [{"trade": "Realtor", "qs": [{"q": "Is the 3-bedroom on Maple Street still available?", "a": "Hi! Yes, it's still available. Would Saturday at 10 or 2 work for a viewing?"}, {"q": "Is the asking price negotiable?", "a": "Thanks for asking! Let me check and I'll send you the price soon.", "hand": "A price is yours to decide, so it comes to you. Meanwhile they get this short note."}, {"q": "Anything under $600k near downtown?", "a": "Hi! I have two that might fit. How many bedrooms do you need, and when would you like to move?"}]}, {"trade": "Plumber", "qs": [{"q": "My kitchen sink is leaking. Can someone come today?", "a": "Sorry about the leak! Turn off the valve under the sink for now. I can come by this afternoon. Does 3 PM work?"}, {"q": "How much do you charge to fix a leak?", "a": "Thanks for asking! Let me check and I'll send you the price soon.", "hand": "A price is yours to decide, so it comes to you. Meanwhile they get this short note."}, {"q": "Do you do weekend calls?", "a": "Yes, we do Saturday mornings. Would you like me to book you in?"}]}, {"trade": "Hair salon", "qs": [{"q": "Anything Saturday for a cut and colour?", "a": "Hi! Saturday at 11 is free for a cut and colour. Shall I book you in?"}, {"q": "How much is a full balayage?", "a": "Thanks for asking! Let me check and I'll send you the price soon.", "hand": "A price is yours to decide, so it comes to you. Meanwhile they get this short note."}, {"q": "Can I bring my daughter too?", "a": "Of course! I'll keep two chairs free. What time suits you both?"}]}, {"trade": "Dental clinic", "qs": [{"q": "I chipped a tooth. Do you take new patients?", "a": "Sorry to hear that! Yes, we take new patients and keep time for urgent visits. Could you come in tomorrow at 9?"}, {"q": "Do you have evening appointments?", "a": "Yes, Tuesdays and Thursdays until 7. Would one of those work for you?"}, {"q": "Is a cleaning covered by my insurance?", "a": "Most plans cover two cleanings a year. Send me your provider's name and I'll check yours."}]}];
+    const reduce = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) { this.setState({ n: 999, s1: 3, s2: 3, s3: 3, p1: true, p2: true, p3: true }); return; }
+    this.timer = setInterval(() => this.tick(), 70);
+    this.scenes = setInterval(() => this.step(), 1800);
+  }
+  componentWillUnmount() { clearInterval(this.timer); clearInterval(this.scenes); }
+  step() {
+    const up = {};
+    [['s1','p1'],['s2','p2'],['s3','p3']].forEach(([s, p]) => { if (!this.state[p]) up[s] = this.state[s] >= 6 ? 0 : this.state[s] + 1; });
+    this.setState(up);
+  }
+  current() {
+    const d = this.data || [{"trade": "Realtor", "qs": [{"q": "Is the 3-bedroom on Maple Street still available?", "a": "Hi! Yes, it's still available. Would Saturday at 10 or 2 work for a viewing?"}, {"q": "Is the asking price negotiable?", "a": "Thanks for asking! Let me check and I'll send you the price soon.", "hand": "A price is yours to decide, so it comes to you. Meanwhile they get this short note."}, {"q": "Anything under $600k near downtown?", "a": "Hi! I have two that might fit. How many bedrooms do you need, and when would you like to move?"}]}, {"trade": "Plumber", "qs": [{"q": "My kitchen sink is leaking. Can someone come today?", "a": "Sorry about the leak! Turn off the valve under the sink for now. I can come by this afternoon. Does 3 PM work?"}, {"q": "How much do you charge to fix a leak?", "a": "Thanks for asking! Let me check and I'll send you the price soon.", "hand": "A price is yours to decide, so it comes to you. Meanwhile they get this short note."}, {"q": "Do you do weekend calls?", "a": "Yes, we do Saturday mornings. Would you like me to book you in?"}]}, {"trade": "Hair salon", "qs": [{"q": "Anything Saturday for a cut and colour?", "a": "Hi! Saturday at 11 is free for a cut and colour. Shall I book you in?"}, {"q": "How much is a full balayage?", "a": "Thanks for asking! Let me check and I'll send you the price soon.", "hand": "A price is yours to decide, so it comes to you. Meanwhile they get this short note."}, {"q": "Can I bring my daughter too?", "a": "Of course! I'll keep two chairs free. What time suits you both?"}]}, {"trade": "Dental clinic", "qs": [{"q": "I chipped a tooth. Do you take new patients?", "a": "Sorry to hear that! Yes, we take new patients and keep time for urgent visits. Could you come in tomorrow at 9?"}, {"q": "Do you have evening appointments?", "a": "Yes, Tuesdays and Thursdays until 7. Would one of those work for you?"}, {"q": "Is a cleaning covered by my insurance?", "a": "Most plans cover two cleanings a year. Send me your provider's name and I'll check yours."}]}];
+    const t = d[this.state.trade];
+    if (this.state.custom) return { asked: this.state.custom, a: "I'm not sure what to say to this one yet, so I'm asking the owner first.", hand: "When FollowUp isn't sure, it doesn't guess. The question comes to you; you answer once, and it learns from your reply.", t };
+    const item = t.qs[this.state.q];
+    return { asked: item.q, a: item.a, hand: item.hand || '', t };
+  }
+  tick() {
+    const words = this.current().a.split(' ').length;
+    if (this.state.n < words) { this.setState({ n: this.state.n + 1 }); return; }
+    const idle = this.state.idle + 1;
+    if (idle < 75) { this.setState({ idle }); return; }
+    if (this.state.custom) { this.setState({ custom: null, n: 0, idle: 0 }); return; }
+    const nq = this.state.q + 1;
+    if (nq < 3) this.setState({ q: nq, n: 0, idle: 0 });
+    else this.setState({ trade: (this.state.trade + 1) % 4, q: 0, n: 0, idle: 0 });
+  }
+  scene(key, pkey) {
+    const k = Math.min(this.state[key], 3);
+    const paused = this.state[pkey];
+    return { k, status: SC[key][k], pauseLabel: paused ? 'Play' : 'Pause',
+      toggle: () => this.setState({ [pkey]: !paused }),
+      replay: () => this.setState({ [key]: 0, [pkey]: false }) };
+  }
+  renderVals() {
+    const d = this.data || [{"trade": "Realtor", "qs": [{"q": "Is the 3-bedroom on Maple Street still available?", "a": "Hi! Yes, it's still available. Would Saturday at 10 or 2 work for a viewing?"}, {"q": "Is the asking price negotiable?", "a": "Thanks for asking! Let me check and I'll send you the price soon.", "hand": "A price is yours to decide, so it comes to you. Meanwhile they get this short note."}, {"q": "Anything under $600k near downtown?", "a": "Hi! I have two that might fit. How many bedrooms do you need, and when would you like to move?"}]}, {"trade": "Plumber", "qs": [{"q": "My kitchen sink is leaking. Can someone come today?", "a": "Sorry about the leak! Turn off the valve under the sink for now. I can come by this afternoon. Does 3 PM work?"}, {"q": "How much do you charge to fix a leak?", "a": "Thanks for asking! Let me check and I'll send you the price soon.", "hand": "A price is yours to decide, so it comes to you. Meanwhile they get this short note."}, {"q": "Do you do weekend calls?", "a": "Yes, we do Saturday mornings. Would you like me to book you in?"}]}, {"trade": "Hair salon", "qs": [{"q": "Anything Saturday for a cut and colour?", "a": "Hi! Saturday at 11 is free for a cut and colour. Shall I book you in?"}, {"q": "How much is a full balayage?", "a": "Thanks for asking! Let me check and I'll send you the price soon.", "hand": "A price is yours to decide, so it comes to you. Meanwhile they get this short note."}, {"q": "Can I bring my daughter too?", "a": "Of course! I'll keep two chairs free. What time suits you both?"}]}, {"trade": "Dental clinic", "qs": [{"q": "I chipped a tooth. Do you take new patients?", "a": "Sorry to hear that! Yes, we take new patients and keep time for urgent visits. Could you come in tomorrow at 9?"}, {"q": "Do you have evening appointments?", "a": "Yes, Tuesdays and Thursdays until 7. Would one of those work for you?"}, {"q": "Is a cleaning covered by my insurance?", "a": "Most plans cover two cleanings a year. Send me your provider's name and I'll check yours."}]}];
+    const cur = this.current();
+    const words = cur.a.split(' ');
+    const n = Math.min(this.state.n, words.length);
+    const done = n >= words.length;
+    const handed = !!cur.hand && !this.state.custom;
+    const vis = (b) => ({ o: b ? 1 : 0, y: b ? 'none' : 'translateY(14px)' });
+    const a = this.scene('s1', 'p1'), b = this.scene('s2', 'p2'), c = this.scene('s3', 'p3');
+    const faqs = [{"q": "Will it send things on its own?", "a": "If you choose Automatic when you set up, yes: thanks, answers it's sure of, and check-ins. A price, a date or anything tense comes to you first. It stops the moment a customer answers. Prefer to check everything? Choose Assisted, or switch any time in Settings."}, {"q": "Why not just set a reminder?", "a": "A reminder still leaves the writing to you, usually at 11 PM. FollowUp writes the reply in your words, checks in when they go quiet, and stops when they answer."}, {"q": "Is my data safe? Can I leave?", "a": "It reads what it needs to answer your customers, and your answers never train a model. Download or delete everything any time; deleting also disconnects your Gmail."}, {"q": "Which inboxes does it work with?", "a": "Gmail today. Outlook, Instagram, WhatsApp and website forms are coming."}, {"q": "Do I need to set anything up?", "a": "Connect your Gmail. It reads your inbox, finds the customers among the newsletters and receipts, and shows you the replies it wrote."}];
+    return {
+      trades: d.map((t, i) => ({ label: t.trade, on: i === this.state.trade ? 'true' : 'false',
+        bg: i === this.state.trade ? '#faf7f2' : 'transparent', fg: i === this.state.trade ? '#141312' : '#dbdad7', bd: i === this.state.trade ? '#faf7f2' : 'rgba(255,255,255,0.16)',
+        pick: () => this.setState({ trade: i, q: 0, custom: null, n: 0, idle: -60 }) })),
+      qs: d[this.state.trade].qs.map((x, jx) => ({ q: x.q,
+        bg: !this.state.custom && jx === this.state.q ? 'rgba(243,207,179,0.10)' : 'rgba(255,255,255,0.035)', bd: !this.state.custom && jx === this.state.q ? 'rgba(243,207,179,0.55)' : 'rgba(255,255,255,0.10)',
+        pick: () => this.setState({ q: jx, custom: null, n: 0, idle: -60 }) })),
+      typed: this.state.typed,
+      onType: (e) => this.setState({ typed: e.target.value, idle: -400 }),
+      submit: (e) => { if (e && e.preventDefault) e.preventDefault(); const v = (this.state.typed || '').trim(); if (v) this.setState({ custom: v.slice(0, 160), typed: '', n: 0, idle: -60 }); },
+      asked: cur.asked, shown: words.slice(0, n).join(' '),
+      writing: !done, done, handed, notHanded: !handed,
+      hasNote: done && !!cur.hand, note: cur.hand,
+      replyGlow: done ? '0 36px 70px -30px rgba(0,0,0,0.85)' : '0 20px 40px -26px rgba(0,0,0,0.6)',
+      replyLift: done ? 'translateY(-4px)' : 'translateY(0)',
+      s1: { ...a, reply: vis(a.k >= 1), back: vis(a.k >= 3), sent: a.k >= 2, notSent: a.k < 2 },
+      s2: { ...b, card: vis(b.k >= 1), hold: vis(b.k >= 2), sent: b.k >= 3, notSent: b.k < 3,
+        price: b.k >= 3 ? '$640,000' : '$ ____', slotBd: b.k >= 3 ? 'transparent' : '#c96a1b', slotBg: b.k >= 3 ? '#f3efe9' : 'rgba(201,106,27,0.06)' },
+      s3: { ...c, n0: vis(true), n1: vis(c.k >= 1), n2: vis(c.k >= 2), n3: vis(c.k >= 3), line: ['8%', '36%', '62%', '88%'][c.k] },
+      pause: { checked: this.state.paused ? 'true' : 'false', toggle: () => this.setState({ paused: !this.state.paused }),
+        track: this.state.paused ? '#c96a1b' : '#cfc5b7', knob: this.state.paused ? 'translateX(24px)' : 'translateX(0)',
+        dot: this.state.paused ? '#c96a1b' : '#2f6b4a',
+        text: this.state.paused ? 'Everything is held. Nothing goes out until you turn sending back on.' : 'Sending is on. Replies and check-ins go out the way you set them.' },
+      faqs: faqs.map((f, i) => ({ q: f.q, on: i === this.state.faq ? 'true' : 'false', bg: i === this.state.faq ? '#ffffff' : 'transparent', bd: i === this.state.faq ? '#141312' : '#e6e0d6', pick: () => this.setState({ faq: i }) })),
+      faq: faqs[this.state.faq]
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -9132,3 +9132,1013 @@ a lead form row there has no icon.
 **Also fixed in the same PR (founder: "merge and fix everything"):** "FollowUp hasn't read a message from them yet"
 contradicted the reply already written for a form lead; with no language read it now says what is always true,
 "Replies are written in the language they write in."
+
+## 2026-10-08 — Founder: the design feels dated (feedback, not yet a decision)
+
+Founder: *"I'm uncertain about our design. It feels outdated, reminiscent of the 1990s, and not as user-friendly as I'd
+like… I want our design to be premium, user-friendly, and easy to understand, but it seems to be lagging."* Asked to
+study Wispr Flow and others for motion, photos, video. **Which surface** (landing page, app, or both) and **which
+example** reads as 1990s is asked, not yet answered: recorded as a fact, not generalised into a principle yet.
+**Found while answering:** nearly every reference in `references/` and `research/` was studied from written
+descriptions only, because the sites are blocked from the build environment (wisprflow.ai, linear.app, attio.com,
+granola.ai, superhuman.com all refused on 2026-10-08). No reference site's screens or motion have actually been seen.
+Next: the founder's Chrome captures screenshots, motion notes and a design-facts readout per site
+(`design-facts.js`, read-only), then principles, then 2–3 drawn directions before any code.
+**Done the same day:** the capture landed (Google Doc "FollowUp design references"); findings and three directions in
+`research/landing-page/2026-10-08-nine-homepages-seen.md`. Waiting for the founder's pick and the surface question.
+**Founder's answer (2026-10-08):** *"both, draw D2 and D3"* and *"have you seen the design that the guys are using? I
+want that taste, though."* So: both surfaces read as dated; draw D2 and D3 for the landing page and the app; the
+target is the *taste* of the studied sites (principles, never their screens). The screenshots had not been seen in
+this session (the Drive reader returns text only), so they were asked for before drawing.
+
+## 2026-10-08 — D2 and D3 drawn, after seeing the eight sites (for the founder's pick; nothing built)
+
+The founder's PDF of the Google Doc gave the 45 screenshots; seen this time (`research/landing-page/2026-10-08-nine-homepages-seen.md`).
+Honest read of ours beside them: not broken, **plain** — one thin grey face for everything, small product cards, no
+committed colour, no depth, no scale. Drawn on a Design canvas (claude.ai/artifact/Wtq91Jo56vW8fBzTxUWdgH, private to
+the founder; copy in `prototypes/2026-10-08-taste-d2-d3/`), six boards:
+- **D2 landing (whole page):** a floating pill menu that stays; headline two-tone (claim black, the rest grey), bigger;
+  the hero is the one before → after, playing slowly (about 3.6 s a beat, four beats, Pause / Replay, still for
+  reduced motion): Priya's Gmail question → the reply in your words, waiting → sent from your own Gmail → she writes
+  back and check-ins stop. Then Works with; three honest numbers (2 min to connect, 1 min for a reply, 1 tap to send);
+  How it works with a sticky chapter list in the owner's words and one scene per chapter (the price handed to you,
+  one polite check-in, it stops when they reply); "What it will and won't do" in a deep warm-ink rounded panel with
+  the four approved promise lines and Pause all sending; a closing line and button.
+- **D3 landing (top half):** the same with Instrument Serif (already loaded for one italic word) as the display face,
+  upright, for headlines, numbers and chapter titles; body stays Public Sans.
+- **Phones, D2 and D3:** first screen each.
+- **App Today, D2 and D3:** two-tone headline ("4 customers are waiting on you. A reply is written for each."), hairline
+  rows with the customer's own words, the selected one lifted; the pane shows her message, then the reply on the wash
+  with Send, Edit and the quiet actions. D3 sets the headline and the name in the display face.
+**Weak, honestly:** (1) the hero is again a conversation playing under the headline, the device R-007 called awkward
+on 2026-09-18 (inferred then: too much theatre); it is slower and pausable now, but it is the same family. (2)
+Instrument Serif is common on AI-startup pages and may read as template. (3) The dark panel is a dark block on the
+white page (A-022); R-010 was about the page changing tone, but it is the founder's call. (4) "1 min" must stay true
+in practice. (5) "See how it works · 40 sec" needs a real recording. (6) The app boards change type, scale and
+surfaces; the density work (R-026) is untouched. (7) Two-tone headlines restyle A-013/A-022's headline.
+
+## 2026-10-08 — Three landing pages mixing all eight references (L1–L3; for the founder's pick, nothing built)
+
+Founder: *"i love all these websites… Can you draw just the landing page a bit from these references? Design two
+or three, mixing and matching all these references."* D2/D3 recorded as R-028 (too safe). The 45 screenshots went
+onto the canvas's References page. Three landing pages drawn on the "Landing L1–L3" page of the same canvas (copy in
+`prototypes/2026-10-08-landing-l1-l3/`); all keep the approved words (A-013 headline, A-081 lede and button, the four
+A-063 promises), "An example, not a real customer", and the guardrails (no dashboard hero R-005/R-009, no person photo
+R-011, no handwriting R-017, the reply never a black card R-018):
+- **L1 "The reply, big"** (Wispr + Stripe + Attio): white page; a very large serif headline (Instrument Serif,
+  already loaded) centred and two-tone; under it the R-014 concept made small and crafted on a hairline grid: her
+  email → a moving dot and a "FollowUp writes it · 1 min" pill → the reply on the wash, then Sent; three big serif
+  numbers in ruled columns; a **deep green** rounded block for How it works with a four-step list and a one-week
+  timeline card; the promises in a ruled 2×2 grid; a wash closing panel.
+- **L2 "Morning light"** (Mercury + Granola + Superhuman): a full-width dawn-sky first screen made only of gradients
+  (no photo), Public Sans at weight 480; frosted cards that arrive one by one (her email, the reply, she writes
+  back); a sticky chapter list in the owner's words with a scene on a soft sky panel per chapter; promises in one
+  ruled box; a sky closing panel.
+- **L3 "Spotlight"** (Macro + Linear): near-black page, serif headline in white with grey, a soft breathing glow, the
+  email and the reply on the dark wash (`globals.css` dark tokens), white primary button; chapters as big centred
+  statements where only the one in view is lit; serif numbers; promises in ruled serif lines.
+**Weak, honestly:** (1) L1's deep green and L2's sky are new colours (`[TO DECIDE]` tokens, founder's call). (2) L3 is
+a dark landing page; R-010 asked for "full black with dark mode and white with light", so L3 may be the dark-mode
+face of whichever page wins rather than a page of its own. (3) Instrument Serif is common on startup pages. (4)
+L2's sky is gradients only; a real photo or render would carry it further but costs money and reopens R-011's
+spirit if people appear. (5) Prices and Questions are left out of all three; they follow whichever wins. (6) "1 min"
+must stay true. (7) Phone versions not drawn yet.
+
+## 2026-10-08 — L4: the founder's own mix (drawn for the founder's pick, nothing built)
+
+Founder: *"Can you mix Wispr, Linear, Superhuman, Mercury, and Macro? And a little bit of Alto, too. Hints from
+Granola as well."* "Alto" was read as **Attio** (one of the eight references; there is no Alto in the set) and said
+so in the reply. Drawn on the "L4 · The mix" page of the same canvas (copy in `prototypes/2026-10-08-landing-l4/`).
+What each reference gave (principle, not pixels):
+- **Superhuman + Mercury:** a cinematic first screen made only of gradients: night sky at the top, a warm dawn glow
+  at the horizon with faint rings. White serif headline, frosted cards that arrive one by one (her email at 11:48 PM →
+  the reply in the owner's words, waiting for OK → Sent at 7:02 AM → she writes back). The page literally goes from
+  night to morning.
+- **Linear + Mercury:** the dawn fades into the paper and the page "pushes in" to the real product, shown big and
+  bleeding off the right edge: Today with four customers and the written reply on the wash (below the hero, so
+  R-005/R-009 hold).
+- **Wispr:** big serif type throughout and one committed colour block (deep night-blue `#111a2e`) for How it works,
+  with the chapter list and a one-week timeline card.
+- **Granola:** the floating frosted menu pill; chapters named from the customer's side ("When they write", "While
+  you're busy", "When they go quiet", "When they come back").
+- **Macro:** a black band of three big statements with only one lit.
+- **Attio:** two-tone headings everywhere, hairline-ruled numbers and a hairline 2×2 promise grid, Pause all sending.
+- A dawn closing panel ("Wake up to replies already written.") echoes the hero.
+Approved words kept: A-013 headline, A-081 button pair, A-063 promises, "An example, not a real customer" logic (the
+hero's cards are an example; aria label says so).
+**Weak, honestly:** (1) dark hero → paper → navy block → black band → paper → dark close is a lot of tone changes;
+R-010 and A-022 (white page) are in tension with it; founder's call. (2) Night-blue `#111a2e`, the dawn gradient
+and the peach `#f2b48a` are new colours (`[TO DECIDE]`). (3) The reply card in the hero is frosted cream, not the
+wash; it is not black (R-018 holds) but it is a new surface. (4) Instrument Serif is common on AI-startup pages.
+(5) The hero's visible "An example" caption is only in the aria label; it needs a visible line before it ships.
+(6) "1 min" and "40 sec" must be true. (7) Prices and Questions still left out. (8) Phone shows the first screen
+only.
+
+## 2026-10-08 — Founder: "why don't you copy their design, formats, template and animations?"
+
+Asked while looking at L4. Answer given: copy the **format** (layout, section order, sizes, spacing, type scale,
+kinds of motion and their timing), never the **page** (their code, photos, videos, illustrations, paid fonts, or a
+screen someone would recognise as theirs), per the CLAUDE.md rule "References are principles, not templates" and
+because a lookalike reads as a copycat, which costs trust. **Inferred (not confirmed):** L1–L4 drifted too far from
+the references; mixing seven sites into one page diluted every one of them. Proposed next: one reference as the
+skeleton, followed closely in format and motion, with FollowUp's words, colours and product, plus one or two details
+from the others. Motion can't be read from screenshots; it needs a description from the founder's browser.
+
+## 2026-10-08 — Founder: take the best things from all of them, design our own, reframe the whole website
+
+*"I didn't tell you to copy Wispr Flow… get the best things that they are using on our side, and then we'll design
+it according to our website. Let's try to reframe the whole website too."* The one-skeleton proposal in the entry
+above is rejected (R-029). Next: a kit of the best technique from each reference turned into FollowUp's own, and the
+whole public site redrawn with it (home, how it works, prices, your data, sign in, phone).
+
+## 2026-10-08 — The whole website reframed with a kit of the best techniques (drawn for the founder's pick)
+
+On the "Website · reframed" page of the design canvas (copy in `prototypes/2026-10-08-website-reframed/`). Not one
+reference as a base (R-029): a **kit** of the best technique from each, turned into FollowUp's own, then every public
+page redrawn with it.
+**The idea that holds it together:** the site moves through one customer's day. Night when they write (the home
+hero), first light when the reply is waiting (our approved wash is the dawn: peach and blue), daylight when you're in
+control (paper). Real times in mono (Tue 11:48 PM, Wed 7:02 AM) are the subject-only detail.
+**The kit (best thing → ours):** Wispr, the one before → after on a slow loop (email at night → reply written → sent →
+she answers), with Pause. Granola, sections named after the customer's week; a floating menu pill. Linear, real
+product screens as the only pictures. Attio, the **time rail** (a sticky list of times that lights the one you're
+reading, with the A-091 orange dot), two-tone headings, hairline rules. Superhuman, frosted cards over a night sky
+(no people, no film) and a small player with Pause. Macro, a spotlight: the four promises big, only the one being
+read in black, on paper not black. Stripe, three true numbers lit one at a time (2 min, 1 min, 1 tap). Mercury, the
+sky fades into morning and the Today screen grows; the menu goes to real pages.
+**The site, reframed:** Home (hero, the Today screen, numbers, the week in four moments, promises, prices strip,
+start), **How it works** (new page: the week in six moments on the time rail, a 40-second film slot, Underneath,
+questions), **Prices** (new page: three plans in ruled columns, Plus lifted on the wash, money questions), **Your
+data** (was Security; same facts, sticky chapter list), **Sign in** (dawn panel with the reply, the same words),
+phone home first screen and the phone week.
+**Kept:** A-013 headline, A-081 lede and buttons, A-063 promises and Pause, the wash (A-032), the orange dot
+(A-091), every fact and price as live; "An example, not a real customer" visible. Guardrails held: no dashboard hero
+(R-005/R-009), no person photo (R-011), no handwriting (R-017), no black reply card (R-018).
+**Weak, honestly:** (1) Night `#0b1220` is a new colour (`[TO DECIDE]`) and a dark hero reopens A-022's white page;
+the dark is now only the top of Home, the Sign in panel and the closing panel. (2) Instrument Serif as the display
+face everywhere reopens A-022's "plain thin headline" (no new font, it is already loaded). (3) Splitting the one page
+into Home + How it works + Prices, and renaming Security to "Your data", change A-063's structure: founder's call.
+(4) Plus still lists Instagram, Messenger and WhatsApp while the site says Gmail first and the rest are coming; the
+live site has the same contradiction; product call. (5) The 40-second film doesn't exist yet. (6) The promise
+spotlight and the player cycle on a timer in the drawing; built, the spotlight follows the scroll. (7) The week's
+example invents small details (a parking spot, "3 came back, 2 booked"), marked as an example. (8) Phone versions of
+How it works, Prices and Your data not drawn; the app (Today) not redrawn with the kit yet. (9) The Google button
+shows a plain "G"; the real one uses Google's own mark.
+
+## 2026-10-08 — Founder on the reframed website: "We are getting close"; wants photographs, not only message cards
+
+*"We are getting close. What else can we do here? Rather than showing it working, I mean just the text messages. Can
+we use some photographs or something like these guys are using? They have cool pages and a cool interface."* Said
+while looking at the References page. Not an approval of specifics. **Inferred:** pictures made only of message
+cards read as plain next to the references; he wants richer imagery. What fits the brain: photos as **mood behind the
+product** (Wispr, Granola, Mercury do this), never a person as the subject (R-011), and they can carry the "one
+customer's day" idea (a night street with a lit window, rooftops at sunrise, a morning table, a house in daylight).
+Photos can't be downloaded from this environment; they have to come from the founder (Drive or upload) or from an
+image tool on his accounts (costs his credits, and must not look fake). Asked him which.
+
+## 2026-10-08 — Photos: relevant only (R-030); a new shot list from the owner's real day
+
+The five mood photos (sunrise skies, rooftops, coffee by a window) were rejected before being placed (R-030). New
+shot list, each photo paired with what FollowUp is doing at that moment: a realtor showing a home (a customer
+writes, the reply is written meanwhile); a tradesperson with both hands busy (the "up a ladder" context in brand
+principle 4); an owner between jobs glancing at their phone (Today); a customer typing an enquiry at home in the
+evening; the result (a for-sale sign or keys at a door). Candid, ordinary places, no posing, no logos or readable
+screens; never captioned or named as a FollowUp customer (A-023). These sit in the sections, not as the first
+picture, so R-011 (no person photo as the hero) holds; if the founder wants a person in the hero, R-011 needs his
+explicit supersede.
+
+## 2026-10-08 — Founder: analyse the references deeply first, then design ours; his favourites ranked
+
+*"Can we deeply analyse all of these designs, then we will create our own? Because I don't know anything about
+UI/UX, I guess we both don't know. Our FollowUp page is not that cool, but I love Wispr Flow, and I got to love
+Macro. Wispr Flow is overall the best. I love the user interface for that, the best experience. I like Linear as
+the organised stuff. Macro is also very organised. I like Superhuman, according to their design."*
+**His favourites, in his words:** Wispr Flow first (overall best: the interface and the experience); Macro and
+Linear (organised); Superhuman (the design). Granola, Attio, Stripe and Mercury were not named this time.
+**What changes:** no more drawing from five stills per site. Step 1, the founder's Chrome captures the four
+favourites completely (every screen at desktop width, measured with `research/landing-page/tools/design-teardown.js`,
+a read-only snippet: section order and heights, type, colours, buttons, container widths, sticky elements,
+transitions and animations, libraries, fonts; plus short GIFs of the motion). Step 2, a deep teardown of each, and
+what is common to all four. Step 3, FollowUp's own design from it. The v2 website (Home drawn, not published) is held
+until then. *Inferred:* when the founder says "we both don't know", the answer is evidence (measure the sites he
+loves) rather than more taste-driven drafts.
+
+## 2026-10-08 — Italic human phrase approved (A-104)
+
+Founder, after the Wispr teardown: *"yes slanted like wispr"*. Headlines: plain words upright, the human phrase in
+italic serif. A-022's "no serif italic" superseded for headlines. He also asked "is it just this that we got from
+Wispr?": answered with the full list of what FollowUp takes from Wispr (and what it doesn't), from the teardown.
+
+## 2026-10-08 — Founder: redraw the website around Wispr; no dark blue sunrise (R-031)
+
+*"Till Superhuman and others are done, can you please make something around Wispr for our website, and let's just
+reframe it again? … we don't want to use that dark bluish sunrise kind of thing. It was looking good, but not my
+type."* Next: a Wispr-structured Home (and phone first screen) on a new canvas page, built from the Wispr teardown's
+14 takeaways and A-104 (italic human phrase), in FollowUp's own light palette.
+
+## 2026-10-08 — Home "around Wispr" drawn (W1; for the founder's pick, nothing built)
+
+On the "Around Wispr" page of the design canvas (copy in `prototypes/2026-10-08-around-wispr/`). Built from the Wispr
+teardown's takeaways, A-104 (italic human phrase) and R-031 (no dark blue): warm paper `#faf7f2`, near-black
+`#141312`, one committed peach block `#f3cfb3` (from the approved wash), a muted warm grey `#ebe5db` for card
+grounds, the A-091 orange as the step marker, black buttons. Instrument Serif headlines with the human phrase in
+italic; Public Sans body at weight 450.
+**Sections:** floating menu card → hero (label, headline with italic, one short line, one button; the loop: her email
+→ "1 min" → your reply → sent → she answers, tilted cards) → near-black "Works with" band sliding over with 64 px
+corners (Gmail, the rest marked "soon", drifting) → peach block overlapping it, "Answered *while you're busy.*": On your
+own 6:40 PM vs With FollowUp 11:03 AM on a blurred photo slot (pinned, the FollowUp card grows) → "One message, *from
+start to finish.*": pinned three-step tour with the orange marker (It reads your inbox / It writes in your words /
+You tap Send), one message throughout, on a blurred photo slot → "It keeps going *when you can't.*": a check-in
+scene on a muted card, four lines lit one at a time → "You stay *in charge.*" one calm card with the promises and
+Pause all sending → near-black "Straight *answers.*": the FAQ as a conversation (question as your message, answer as
+a FollowUp reply on the wash) → peach closing, "Your customers are writing. *Answer every one.*" → footer with the
+giant wordmark. Phone first screen to match.
+**Weak, honestly / founder's call:** (1) the hero line is shortened to one sentence ("It answers the customers in
+your Gmail, in your words, and hands you the decisions."), changing A-081's lede; (2) buttons are rounded rectangles
+(10–12 px) like Wispr's, not the approved pills; (3) the closing headline is new copy; (4) paper `#faf7f2` and peach
+`#f3cfb3` are new tokens (`[TO DECIDE]`); (5) the two photo slots are placeholders until relevant photos arrive
+(R-030); (6) the structure follows Wispr's closely (hero device, colour band, pinned comparison, pinned three
+steps, lit list, trust card, FAQ, big closing, giant footer logo); the content and the hero device are ours, but the
+rhythm is recognisably Wispr's; (7) other pages not redrawn yet.
+
+## 2026-10-08 — W1 feedback: don't copy Wispr as-is (R-032); the first impression is boring (R-033)
+
+Next: two first-screen options, each one big living moment. **A · "Your pile, cleared":** headline left; on a large
+peach stage, a pile of customer emails; the top one flips over to show your reply on the wash, gets "Sent", slides
+onto the Answered pile, and the next one comes up. **B · "The clock":** one giant customer email with a "Waiting"
+timer ticking in the needs-you orange; FollowUp's reply slides up over it and the timer becomes "Answered in 1 min".
+Desktop and phone for both. The giant footer wordmark is removed from W1.
+Drawn on the "First impression" page (copy in `prototypes/2026-10-08-first-impression/`): A (headline left; on a big
+peach stage a pile of customer emails, the top one turns over to the reply on the wash, gets a "Sent" stamp, lands on
+the Answered pile, the next customer comes up; Waiting/Answered counts) and B (centred headline; one giant customer
+email with a "Waiting for an answer" clock in the needs-you orange, running fast to 1:00, then the reply slides up
+over it and the clock becomes "Answer ready · 1:00"; labelled "the clock runs fast here"). Phone versions of both.
+Both use pill buttons (approved) and the italic human phrase (A-104). The giant wordmark is gone from W1's footer.
+**Weak, honestly:** A's pile is a metaphor (Gmail has no pile); B's sped-up clock must stay labelled; both heroes
+show only the reply moment, not check-ins.
+
+## 2026-10-08 — First screen: A's layout approved (A-105), its pile concept rejected (R-034); two new concepts
+
+Both in A's layout. **A2 · "Every lead, warmed":** nine customers who wrote, in cool blue-grey ("No reply · 7 h",
+"Quiet · 4 days"); one by one each warms to peach as FollowUp answers, checks in or books ("Answered · 1 min",
+"Checked in · he replied", "Booked · Sat 11:00"), one hands a price to you with the orange dot. The brand's own
+warm/cool wash becomes the meaning: warm = followed up. Built from R-009's words ("FollowUp is warming every lead").
+**A3 · "See it for your business":** pick a trade (realtor, plumber, hair salon, dental clinic); that customer's
+email arrives and the reply is written in that owner's words; it cycles by itself. Note R-020 (the line under the
+headline never says who it's for): here the trades are examples to try, not a positioning line.
+Founder, mid-way: *"We need to do something creative that will impact the user after landing on our page."* So A2
+became a two-act story: **without FollowUp** (a busy week: nine customers wait in cool grey-blue and four drop away,
+dashed and greyed, "Lost · called another plumber", "Lost · bought elsewhere"; caption "A busy week. *Four of them
+went somewhere else.*"), then the switch flips to **with FollowUp** (the same nine warm to peach one by one, none
+lost; "Every customer answered, *checked in, or handed to you.*"). A3 ("See it for your business") drawn as planned.
+Both on the "First impression · round 2" page, desktop and phone (`prototypes/2026-10-08-first-impression/`).
+**Weak, honestly:** A2's "four of nine lost" is a dramatised example, never a statistic, and must stay labelled; the
+loss half is the most emotional thing on the site and must not tip into fear-selling (brand principle 2, calm over
+urgent); A3's chips can't be clicked in the drawing.
+
+## 2026-10-08 — Founder: "the whole page looks very boring … the references are very interactive and impactful"
+
+Canvas comment on A2's text column. Answer drawn: **A4 · "Try it"**, a first screen you use, not watch (on the
+"First impression · try it" page; `prototypes/2026-10-08-first-impression/HeroA4.dc.html`, `PhoneA4.dc.html`).
+Layout A kept (A-105). Behind everything, faint italic lines of what customers ask drift slowly upward ("Is it still
+available?", "Can you come today?"): the murmur of an inbox, text only, no cards (R-035). The right panel is a working
+demo: pick a business (realtor, plumber, hair salon, dental clinic), click one of three real-sounding questions or
+type your own; the reply writes itself word by word in the owner's words, then Send/Edit. Price questions show
+"Comes to you first" with the orange dot and the short holding note (A-056, holdingMessage). A typed question it
+can't know says so and hands it to the owner ("When FollowUp isn't sure, it doesn't guess…"). It cycles by itself
+when nobody touches it. Scripted examples, labelled ("In your account it uses your own hours, prices and facts").
+**Open for the founder:** a live version answering a visitor's own question with the real AI (cost and limits:
+product call). **Weak, honestly:** scripted replies can't answer what a visitor types; the drifting text must stay
+faint enough to read the headline.
+
+## 2026-10-08 — Founder: "these guys have depth and contrast … our whole thing looks very flat"
+
+Said while watching Chrome capture macro.com (black ground, glowing hub, raised icon circles). **Why ours reads flat
+(diagnosis):** paper `#faf7f2`, white cards and the peach stage sit within a few percent of the same lightness, the
+shadows are soft, and there is no light source, so nothing comes forward. **Why theirs reads deep:** near-black ground
+with white type and a white button (maximum contrast, the button is the brightest object), one light glowing from the
+centre, objects getting smaller and dimmer with distance, raised surfaces with a thin top highlight, a coloured glow
+behind the product.
+**Principle (founder's words, generalised):** a first screen needs a value range, not one lightness. Depth comes from
+contrast, one light source, layering (something in front of something), and distance cues (far = small, dim, soft).
+Answer drawn: **A5 · "Try it, with depth"** (page "First impression · depth"; `prototypes/2026-10-08-first-impression/
+HeroA5.dc.html`, `PhoneA5.dc.html`). Same working demo as A4, now on a warm near-black (`#151210`, our ink warmed;
+never blue, R-031). Cream headline with the italic phrase in peach `#f3cfb3`; cream "Connect Gmail" pill as the
+brightest thing on the left. The drifting customer questions are cold and far: small, dim, slightly blurred at the
+edges, larger and clearer near the middle. The customer's message is a dark, cool bubble; FollowUp's reply is the warm
+wash card, lit from behind by one peach light that **brightens and lifts when the reply is finished** (the lead is
+warmed: R-009's own words, made literal). On desktop the reply card breaks past the panel's left edge, so it sits in
+front of the panel. Only the first screen is dark; the rest of the page stays light (R-018: no black everywhere).
+**Weak, honestly:** dark grounds were loved once (A-009) and called "too black" once (R-018), so this is a test of
+which way he leans now; the glow must stay warm and soft, never neon; the breakout card needs care at narrower widths.
+
+## 2026-10-08 — Founder on A5: "This is not bad, though. The colours of the design can be better."
+
+**Read as:** the depth direction (dark first screen, one warm light, layering) is not rejected; the colour is the open
+question. Not an approval yet. He gave no reason for "better", and R-004 showed he recognises his colour on a finished
+page, not in a swatch, so three finished A5s were drawn instead of asking (bottom row of "First impression · depth"):
+**Charcoal** (`#1e1e20`, the ground he picked from the Aer reference on 2026-09-18) with a soft peach light; **Ink**
+(clean near-black `#0c0b0b`) with an ember light, the most contrast; **Plum** (deep aubergine `#170f18`) with peach
+and rose light, the warmest and most unusual. Same layout, words and demo in all three; only the colour tokens change
+(`gen/a5x.py` swaps them). The first A5 (warm brown-black `#151210`) stays on top for comparison.
+**Weak, honestly:** the brown-black of the first A5 may be what read as "could be better" (it can look muddy next to
+peach); Plum is the riskiest (purple can turn cheap if the glow gets stronger).
+
+## 2026-10-08 — "Don't add that shiny thing": A5 without shine (R-036)
+
+All four A5 boards and the A5 phone redrawn without any glow or highlight: no light behind the reply, no rose haze,
+no glowing dot or button, no highlight edges; panels one flat colour. What stays: the dark ground, the high contrast,
+the reply card sitting in front of the panel with a plain dark shadow that deepens as it lifts when written, and the
+far/near customer questions. The colour question (Charcoal, Ink, Plum, or the first brown-black) is still open.
+
+## 2026-10-08 — Home v3, the whole page from the research (Linear still running)
+
+Founder: *"Linear is running, pull the others up and start working."* Drawn on the canvas page "Website · v3"
+(`prototypes/2026-10-08-home-v3/Home.dc.html`), following the draft rules in
+`research/landing-page/2026-10-08-website-rules-draft.md`:
+A5's first screen (Charcoal, no shine, the working Try-it) → a sticky chapter bar → three chapters telling one
+example customer's story (Priya: she writes at 11:48 PM and the reply is ready; she asks the price and it comes to
+you, she gets the fixed holding line at 30 minutes, you add the price; she goes quiet and it checks in Friday, she
+answers, it stops), each with Pause/Replay and a status line → "You stay in charge" (four promises and a working
+Pause all sending switch) → Questions answered as replies → "Works with Gmail today" → a dark close with one big
+"Connect Gmail" button and a small footer. About 5,850 px (~6.5 screens), in line with A-063's lean target.
+**Fixed in passing:** the Try-it drawings (A4, A5 and its colours) had price replies promising "today"; the product's
+fixed holding line never names a time, so they now use its exact words ("Thanks for asking! Let me check and I'll
+send you the price soon.", `holdingMessage.ts`).
+**Weak, honestly:** the colour is still unchosen (Charcoal is used because it was recommended); the chapters play on
+a timer here, while the real page should start each one as it scrolls into view (and Macro's scroll-driven story is
+not tried yet); the sticky bar doesn't yet show which chapter you're in; the 96 px hero headline runs to five lines
+in its column; no phone version yet; "It writes down why" must be checked against the product before it ships.
+
+## 2026-10-08 — Home v3 rejected: "Colours" and "Not impressive" (R-037)
+
+Asked with four choices; he picked colours and not impressive, not "boring, same old" or "too long". Next: finished
+first screens in a few confident colour worlds (R-004: he recognises colour on a finished page, not in a swatch), each
+with a second screen that keeps the impact (big type, the story at full size).
+
+## 2026-10-08 — Five themes, each with its own moving story
+
+Founder, right after R-037: *"look they have used animations, transitions also the motions, they have built a story in
+the landing page"* and *"give me 5 different themes and don't copy our old design, let be creative, take help from
+references"*. Drawn on the canvas page "Five themes" (`prototypes/2026-10-08-five-themes/`), first screen only so he can
+choose a world before the whole page is built in it. Same words in all five (A-013 headline with the italic human
+phrase, A-104; Gmail-first lede; one button), everything else different:
+1. **Signal** (black and orange, Geist + serif italic; Macro's discipline): customers' questions fall into FollowUp
+   in the middle and leave as orange answers; a price question leaves as an outlined "comes to you". A live count.
+   It is R-009's own request ("leads being caught… FollowUp is warming every lead") as motion.
+2. **Greenhouse** (forest and lime, Fraunces): the conversation in big type: the customer's question, then the reply
+   typing itself in lime, four businesses in turn (Wispr's text-as-hero).
+3. **Lilac** (light lilac and violet, Instrument Serif): a night compressed into 15 seconds; a clock runs 6 PM to 9 AM,
+   questions arrive at their times and are answered; a price waits for you with the fixed holding line; "9:00 AM.
+   You wake up to 3 customers answered, and 1 price waiting for you."
+4. **Blocks** (near-white with clay, sage, lilac and butter cards, Inter Tight): four colour cards turn like a deck,
+   one customer's story in four beats (Wispr/Superhuman colour blocks).
+5. **Ledger** (white, hairline grid, Inter Tight; Linear's precision): one thread across a week draws itself:
+   asked Monday night, answered in a minute, quiet Wednesday, checked in Friday, booked, check-ins stop.
+Every story has Pause (Ledger also Replay), labels its examples, and shows the end state under reduced motion.
+No glow (R-036), no dark blue (R-031), no charcoal/sand/peach (R-037), no dashboard (R-005/R-009), no photos.
+**Fixed honestly in the examples:** replies FollowUp sends on its own no longer offer days or times (a date is a
+decision, A-056); the price reply is the product's fixed holding line.
+**Not decided (needs the founder):** Geist, Fraunces and Inter Tight are used only to explore; adopting one is a font
+decision (CLAUDE.md "ask first"). **Weak, honestly:** Signal's falling pills are CSS loops, so in the real build they
+need a reduced-motion still (drawn) and must not distract from the headline; Blocks' cards have empty space in the
+middle; Lilac and Blocks are the most "pretty", Signal and Ledger the most "story".
+
+## 2026-10-08 — Five ideas: same information, five different pictures (after R-038)
+
+Canvas page "Five ideas" (`prototypes/2026-10-08-five-ideas/`). Same words everywhere (A-013 headline with the italic
+human phrase, the Gmail-first lede, one button); each composition is its own idea:
+1. **Night** (near-black): the whole screen is a phone's lock screen. A big clock runs from 11:40 PM to 7 AM;
+   customers' emails stack up and each gets "Answered in your words · 1 min"; at 7:00 one quiet FollowUp note: "While
+   you slept: 3 customers answered. 1 price is waiting for you." Honest to the product: alerts stay quiet at night
+   and bursts become one (shipped in PR #461).
+2. **The list** (bold yellow): the follow-ups in your head as a giant to-do list that ticks itself off, struck through
+   with "Done by FollowUp · time"; the price row stays open: "Yours to decide · she got 'Let me check'".
+3. **The letter** (cool grey, white sheet): the reply itself as a real email, typing in, with typed notes in the
+   margin (in red, like an editor's): sent a minute after she wrote; your tone; it asks, it doesn't promise; it checks
+   in Friday and stops when she answers. Not hand-drawn (R-017).
+4. **The poster** (full lilac): the headline is the picture, enormous across the screen, and example customers'
+   questions and FollowUp's replies appear beside it.
+5. **The receipt** (orange): your night printed as a receipt, line by line: three answered within a minute, one price
+   to you, "Left waiting 0", the holding line that was sent, "Nobody was forgotten."
+All have Pause and labelled examples; reduced motion shows the end. **Weak, honestly:** Night and Receipt carry the
+story best; the Poster's bubbles are small next to the type; the List's yellow is loud for "calm over urgent"; the
+Letter is the quietest of the five. Fonts beyond the current three remain exploration only.
+
+## 2026-10-08 — The first full page, done properly (A-106): https://claude.ai/artifact/4nhihQ1jNDy8w5e97PgX4E
+
+One scrolling page in the browser, not a canvas board (`prototypes/2026-10-08-home-page/followup-home.html`). Built
+from the four teardowns: dark first screen with the headline (A-013/A-104) and the **real Today screen** (sidebar,
+"Needs your OK", Priya's message, the warm reply card "Written by FollowUp · waits for your OK", Send/Edit/Later,
+"Sending to Priya in 7s · Undo", "Sent from your Gmail"; Coming up; What FollowUp knows) playing its story once and
+resting, with Replay (Linear); a statement that lights up word by word as you scroll; a short fade into the app's own
+paper; "How it works" as three steps on the left with a sticky stage on the right that follows the step you read
+(finds your customers, writes in your words, hands you the decisions with the fixed holding line); the check-in thread
+drawing across the week as you scroll; four promises and a working Pause all sending switch; an honest "What's new"
+from real releases (Oct 5 and 7, PRs #447, #449/#450, #458); a dark close where the Connect Gmail button grows as it
+arrives (Macro); a small footer with Privacy. No library: native scroll and IntersectionObserver. Reduced motion shows
+every end state. Phone: the window shows the main column only and each step carries its own picture.
+**Weak, honestly:** the real wow of the references also comes from made media (film, photography, custom
+illustration), which this page still does not have; the dark→light fade is a plain gradient band; the "How it
+works" stage is static cards that crossfade, not one continuous transforming object; Mobbin (for more reference
+sections) needs a paid plan, the founder's decision.
+
+## 2026-10-08 — Choosing colours on the real page: five palettes and a picker
+
+Founder: *"lets choose the colours first."* Following R-004's lesson (he recognises colour on a finished page, not in
+a swatch), the colour choice is built into the page itself: a small picker at the bottom switches the whole page
+between five worlds, remembered in his browser. **1 Ink and paper** (the first version: near-black and the app's own
+paper), **2 Forest and lime**, **3 Plum and lilac**, **4 Wine and rose**, **5 Black and orange**. Each changes the night,
+the paper, the italic accent, the main button and the reply card's tint; the orange dot keeps its one job ("needs
+you", A-091). No dark blue (R-031), no charcoal + sand + peach (R-037), no glow (R-036). Also fixed: the top menu now
+takes the colour of the section under it (it vanished over light sections).
+**Note for later:** palettes 2–5 tint FollowUp's reply card to match; if one is chosen, the app's own reply card
+colour (A-043 wash) becomes a separate decision.
+
+## 2026-10-08 — Light-first, like Wispr (after R-040)
+
+Asked which direction (four choices), the founder picked **"Light, like Wispr"**: a white or soft off-white page with
+black text, colour only in a few places, maybe one dark band at the end. The page was rebuilt light-first: white
+ground and ink text everywhere, the real Today screen sitting on a soft coloured panel (Wispr's demo-on-a-muted-card
+lesson, so the light page keeps depth), the statement lighting up from pale grey to ink, no dark-to-light fades, and
+one dark band at the close. The picker now holds five light versions: **1 White** (neutral panel, grey italics, black
+close), **2 White and green** (deep green italics and close band, sage panel), **3 White and lilac** (violet italics,
+lilac panel, lilac button on the dark close), **4 White and orange** (orange italics and buttons, black close), **5 White
+with soft colour** (the approved landing wash, A-032, as the panel and the close). The orange "needs you" dot is
+unchanged in all five. The first screen was tightened so the app window shows in the first view.
+
+## 2026-10-08 — The page in FollowUp's own soft colours (A-108)
+
+The default palette is now **"Our soft colours"**, built from the app's reply-card wash (A-043) and nothing else: the
+full wash (apricot, rose-sand, dusty blue on #f3efea) behind the app window in the first screen and as the closing band;
+its three tones split into pale section panels: dusty blue `#eef2f8` for "How it works", apricot `#fbeee4` for the
+check-in thread, rose-sand `#f8eeea` for "Your control". White page, ink text, ink buttons (the app's own accent),
+italics in the app's soft grey, the orange "needs you" dot unchanged. The closing band is light, so the top menu
+stays dark over it. The picker keeps White, White and green, White and lilac, White and orange to compare.
+**Weak, honestly:** five soft tones on one page can drift toward pastel sameness; the italic grey is quiet, so the
+headline's human phrase reads softer than in the colour palettes.
+
+## 2026-10-08 — First screen: FollowUp's own symbols and the FollowUp pill
+
+Founder: *"make the first screen more impressive… look at Wispr, they have their thing going on and I can understand
+easily… Macro, how organised and accurate… let's make our own symbols or things like Wispr has… if anyone lands or
+if I pitch, they get to know what this product is all about in the first impression… user friendly."*
+**Built:** six symbols drawn for FollowUp in one line style (24 px grid, 1.8 stroke, round ends): **finds the customer**
+(an envelope with a new-dot), **writes in your words** (a speech bubble with lines), **sends from your Gmail** (a paper
+plane), **checks in when quiet** (a turning arrow round a clock hand), **hands you decisions** (a ring with the orange
+"needs you" dot, A-091), **stops when they reply** (two bubbles and a tick). They sit as a step bar at the top of the
+first screen's soft panel and light up in order. Under the customer's email, the **FollowUp pill** (our answer to
+Wispr's floating bar: ink capsule, symbol, words, time) says what is happening now ("Writing in your words…", "Sent from
+your Gmail · 1 min", "Quiet since Wednesday · checking in · Fri 9:00", "She replied · check-ins stopped"). Two stories
+alternate: a realtor's customer (the whole loop) and a plumber's customer asking a price (it comes to you first; the
+fixed holding line goes out at 30 minutes). Two other customers sit at the sides in other states (answered, checking
+in), Macro's organised calm. The lede is shorter: "It answers your customers in your words, checks in when they go
+quiet, and asks you only when it matters." The real Today screen (A-106) moved to the section right below and starts
+playing when it scrolls into view. Pause, labelled examples, reduced motion shows the end state.
+**Honest note:** the pill is a brand device that illustrates what happens; it is not a Gmail add-on. The states it
+shows all exist in the product. **Weak, honestly:** the six labels are tight at 1440 px; the side cards are static.
+
+## 2026-10-08 — "simplify please": the first screen cut to one story and four symbols
+
+Founder's reaction to the six-symbol, two-story first screen: *"simplify please."* Cut: the two side customers, the
+second story (the price), and two symbols. Kept: one customer (Priya), the FollowUp pill under her email, and four
+symbols in the step bar: **writes in your words, sends from your Gmail, checks in when quiet, stops when they reply**.
+Four calm steps of about 2–3.6 s; the price hand-off now lives only in "How it works" (step 3). The symbols "finds the
+customer" and "hands you decisions" stay drawn for later use.
+**Principle (his word, generalised):** the first screen carries one story and one moving thing. Everything else
+waits for the scroll.
+
+## 2026-10-08 — "use simple information so that they read it, it's too much": the home page's words cut
+
+Founder's reaction to the simplified home page: *"use simple information so that they read it its too much."*
+**Done:** visible words cut from about 1,400 to about 800 (part of what is left is the real Today screen picture, the
+phone copy of the panels and the colour picker). Every section now has a heading and at most one short line.
+- **First screen:** lede "FollowUp replies to your customers in your words, and follows up when they go quiet." The four
+  symbols are labelled in one word each: Writes, Sends, Follows up, Stops. Priya's email is one line ("Is the house on
+  Maple Street still available?"); the reply, follow-up and answer are one short line each. The pill says "Writing a
+  reply" → "Sent" → "Following up · 2 days later" → "She replied". Footnote: "Example".
+- **Statement:** "A customer writes at 11 PM. You see it the next morning. FollowUp has already answered."
+- **How it works:** "Connect Gmail once. That's all the setup." Steps: finds your customers / writes in your words /
+  asks you first, one line each. Panels trimmed (four inbox rows tagged Customer or Skipped; two facts; the price card
+  without its explanation; the holding line kept word for word).
+- **Quiet, control, what's new, close:** one line each; promises have two-to-four-word subtitles; the close says
+  "Free in beta · No card needed".
+Kept unchanged: the headline (A-013/A-104), "Connect Gmail, start free" (A-081), the exact holding line.
+**Principle:** added to brand principle 9 — people skim; a heading plus one short line, pictures carry the detail.
+**Weak, honestly:** the real Today screen picture is still dense (it is the real app, so its words stay); "How it
+works" leaves a lot of empty scroll between steps now that the text is short.
+
+## 2026-10-08 — "It's still way complicated": four new opening screens, one page with a switcher
+
+Founder, on the home page after the word cut: *"It's still way complicated. Try new temp formats for the opening page,
+please."* Read as: the first screen has too many pieces (kicker, headline, lede, two buttons, four labelled symbols, an
+email card, the pill, two reply cards, a footnote, a Pause button), not only too many words.
+**Built:** https://claude.ai/artifact/1D4MG89T9aLMXVqE8buHpP (copy in `prototypes/2026-10-08-opening-screens/`). Four
+opening screens, each a different picture (R-038), each only: the approved headline (A-013/A-104), at most one short
+line, "Connect Gmail, start free" (A-081), and one moving thing. Built as real, full-size, working screens in our
+light, soft colours (A-108), with motion (A-107), not as quick canvas boards (R-039). Desktop and phone checked.
+1. **One line:** the headline very large, then one sentence that changes every three seconds ("11:48 PM · Priya asked
+   about the house → Answered in 1 min", then followed up, waiting for you, follow-ups stopped). Marked "Example" so it
+   never reads as a fake live feed.
+2. **Day and night:** headline centred, "Customers write at all hours. FollowUp answers every one.", then a
+   full-width day from 6 AM to 6 AM; a line sweeps across, four customers appear and each is answered a minute later,
+   one of them while "You're asleep". Plays once, then rests; Replay.
+3. **Your phone:** the headline split either side of a phone showing the Today screen (Needs you, Done for you,
+   Coming up); a new customer arrives, "Writing a reply" turns into "Replied · just now".
+4. **Three words:** the headline small, then "Replies. Follows up. Stops." very large, one lighting at a time, each
+   with two-to-four words ("in your words", "when they go quiet", "when they reply").
+Checked against rejected.md: not the single message-and-reply (R-034), no card grid (R-035), no shine (R-036), not
+charcoal/sand/peach or small cards on beige (R-037), four different compositions (R-038), not dark (R-040).
+**Honest notes:** the phone's "Done for you" heading is an illustration, not a section the app has today. "Answered a
+minute later" assumes sending is on for that kind of message. **Weak, honestly:** 1 and 4 are both type-led; 2's day
+band is a gradient, the one decorative choice here; 3 crops the phone, so the Coming up rows sit low.
+
+## 2026-10-08 — The four openings rejected (R-041); the opening becomes a live reply flow
+
+Founder: *"no one i dont like the concept, we have to make something catchy… a quick look that says, 'Oh yeah, someone
+is replying'… What's the main job of FollowUp? Why should they use it? How is this going to help?… Make it a bit
+more interactive too… like Wispr Flow, where they have something flowing according to their concept."* Logged as
+R-041.
+**Built:** https://claude.ai/artifact/UpeWaG55sBhBLM19CYQN75 (copy in `prototypes/2026-10-08-reply-flow/`). Under the
+headline, one wide soft panel (A-108 colours) is a stream: customers' messages wait on the left ("Waiting"), each one
+in turn reaches FollowUp in the middle, the reply is typed live in the owner's words, the Send button is pressed, and
+the conversation flows on to the right ("Answered", a counter that goes up). The stream mixes businesses (a realtor,
+a plumber, a salon, a contractor, a dentist, a car detailer), channels (Gmail, Outlook, Instagram, a website form),
+one customer who went quiet (FollowUp writes the follow-up) and one price question (the reply leaves the price
+blank and waits: "Needs you"). **Interactive:** click any waiting customer to answer them next; or "Try it as a
+customer": type a question (or tap "How much is it?" / "Where are you?") and it joins the stream as "You" and is
+answered in the middle. Pause/Play; reduced motion steps with a Next button. Lede: "Every customer gets a reply,
+written in your words. You just tap Send."
+**Honest by design:** the owner taps Send in the animation, because holding every reply for approval is the default
+(holdAllForApproval, since 2026-09-21); prices wait for the owner (the risk check). Visitor replies are fixed example
+replies chosen by keywords, labelled "Example"; nothing is generated. **To fix on the home page later:** its statement
+"FollowUp has already answered" overstates the default; it should say the reply is written and waiting for you.
+Instagram should only appear on the public site once Meta's review passes.
+**Weak, honestly:** on a phone only the middle card shows (the stream's sides fall off-screen); the far-left waiting
+card is a half-faded fragment; the visitor's replies are canned, so an odd question gets a generic answer.
+
+## 2026-10-08 — A-109 approved; the opening made type-first, with depth, and a "how it helps" section
+
+Founder on the reply flow: *"Bro, this is a cool concept. Let's go. We should have this."* (A-109), then, while it
+was being built: make them type, no other choice, like Spotify (A-110); the hook first, the box second, then how it
+saves time and money (artifact comment); no "Connect Gmail" next to "Start free" (artifact comment); *"we need to
+play with our colours too… It looks like a 2D opening page… We had depth between all these things… minimal but
+attractive"*; and borrow from the references in our style (A-111).
+**Built:** one shared part (`flowpart`) used by the home page (https://claude.ai/artifact/4nhihQ1jNDy8w5e97PgX4E,
+v8) and the reply-flow page (https://claude.ai/artifact/UpeWaG55sBhBLM19CYQN75, v2).
+- **Order:** the headline, centred and larger; one box, "Type a customer's question…", focused on desktop, with
+  example questions typing themselves into the placeholder until someone types; "You're the customer. Watch
+  FollowUp write the reply." What is typed appears in the middle card live; Send runs the flow; afterwards "That's
+  FollowUp. Your customers get this, every time." and "Connect Gmail, start free" appear under it. If nobody types
+  for about six seconds, the example stream plays; typing takes the middle back at once.
+- **Depth without shine (R-036):** our soft colours behind the hook; a deeper peach-and-blue stage with a plain
+  inner shadow; cards further from the middle smaller and fainter; the middle card in front with a plain, layered
+  shadow; shadows under the cards and the dark replies.
+- **How it helps:** "Less time in your inbox. No lead you paid for, wasted." A large "7×" card (leads that hear back
+  within an hour are about seven times as likely to turn into a real conversation, HBR 2011, from our research)
+  and three cards: Time back, No lead wasted, Follow-ups on time.
+- **Also:** the colour picker removed from the home page (colours settled, A-108); the statement now says "FollowUp
+  has already written the reply" (it overstated the default before).
+**Weak, honestly:** the visitor's replies are canned; a free-form question can get a generic answer. On the real
+site this could be FollowUp actually writing the reply (with a daily cap), which is a product and cost decision.
+On a phone the stream's sides are reduced to three initials under "Waiting".
+
+## 2026-10-08 — Opening options: 3 layouts × 4 colours, with smoother motion
+
+After R-042 (*"our idea is fire"*, but the theme and the organisation of the first screen are not right; asked, he
+said "show me" for both) and *"we need to add a bit more animations, smooth animations like Wispr and Macro have,
+and the transition, like the button click"*.
+**Built:** https://claude.ai/artifact/4CTFfFCnWd9avFeJ5uLQC5 (copy in `prototypes/2026-10-08-opening-options/`). One
+working opening (A-109/A-110), switched from a bar at the bottom:
+- **Layouts.** 1 *Headline first*: only the headline and the box fill the first screen; on Send the stream slides up
+  under them. 2 *Side by side*: headline, one line and the box on the left; the stream on the right. 3 *Two
+  screens*: the headline alone, very large; "Try it yourself ↓"; then the box and the stream.
+- **Colours.** A *Now* (the soft wash, for comparison). B *Clean white* (white, black, the orange "needs you" dot,
+  depth from shadows only). C *Sage green* (the app's own green #0d6e3c: a deep green stage, white cards, mint
+  replies, green buttons and headline italic). D *Black stage* (white page, one black stage, white cards).
+- **Motion (Wispr/Macro-like, no shine):** the headline's words rise in one by one; the box and stage follow; buttons
+  spring on hover and press; Send's arrow launches; the typed question flies from the box into the middle card;
+  the Sent tick draws itself; the Answered count rolls; cards glide with a softer ease; the "how it helps" cards
+  rise in as you reach them. All of it off with reduced motion.
+**Recommendation given:** layout 1 with colour C: the hook owns the screen, and green is FollowUp's own "sent"
+colour, so the site and the app read as one product. **Weak, honestly:** layout 2 shows only the middle card of the
+stream (no room for its sides); layout 3 asks for a scroll before anything moves.
+
+## 2026-10-08 — Layout 3 picked (A-112); headline smaller; Wispr colour research
+
+Founder: *"I like the two-screen one, but we have to make that header a bit smaller in the centre… this concept is
+good"*, then asked for research on how Wispr Flow uses colour and why, *"we can play with gradients too… then we'll
+decide the proper colours"*. **Done:** layout 3's headline reduced (max ~108 px, was ~158 px) on
+https://claude.ai/artifact/4CTFfFCnWd9avFeJ5uLQC5 (v2). Research page https://claude.ai/artifact/Mi2ateBbv2oxiKwPhHPpWV
+with three palettes on Wispr's role skeleton (Forest recommended, Ink, Mint light); details in
+`research/landing-page/2026-10-08-wispr-colour-study.md`. **Pending from him:** the "border with a lot of things"
+(he will explain) and the palette choice.
+
+## 2026-10-08 — Theme v1: six colours with jobs, matte 3D, on the two-screen opening
+
+Following A-113. **Built:** https://claude.ai/artifact/91FEmxYBCMMTKk7NCHszXj (copy in `prototypes/2026-10-08-theme-v1/`).
+- **Colours and jobs:** Paper `#F8F6F1` (the page), Ink `#0E0E0C` (words), Forest `#0F4A33` lit from the top left
+  (heavy blocks: screen 2, Today, closing), Mint `#CDEFD9` (only "press me", every main button incl. the menu's
+  Start free), Apricot `#F4C49E` (warm highlights: the 7× card), Sky `#DCE6F3` (calm light blocks: control,
+  questions); meanings kept from the app: Sent `#0D6E3C`, Needs you `#C96A1B` (a dot).
+- **Matte 3D:** one-colour gradients lit from above; buttons with a soft bottom edge and a dark drop shadow (they
+  look pressable; pressing sinks them); white cards fading to paper with layered shadows; the stream curves in 3D
+  (cards turn toward the middle, up to 16°); the green block casts a soft shadow upward as it slides.
+- **Layout 3 made real:** screen 1 (paper, the smaller headline, "Try it yourself ↓") stays put while screen 2, a
+  near-full-width Forest block with 64 px corners, slides up over it, holding the box and the flow.
+- A theme sheet at the end shows every colour, its job, and the three specimens (Forest block + button, Sky block +
+  card, Apricot 7×).
+**Weak, honestly:** the in-card Send is black (product UI) while website buttons are mint; Sky is defined but not yet
+on a section of this page; the "border with a lot of things" is still to come from the founder.
+
+## 2026-10-08 — Theme v1 (A-114) put on the whole home page, for the founder to confirm
+
+After *"colours are good bro"* (A-114) the founder asked *"what are the reason behind this"*; answered in chat, one
+line per colour (paper = calm and human, not software-white; ink = readable words; forest = the app's "sent"
+green, so the site says "answered" without words; mint = only buttons, so the next step is found at once; apricot
+= warmth for human moments; sky = calm for control and questions; orange = "your turn", as in the app; matte
+one-colour gradients = depth without cheap shine). Then: *"let me just confirm then we will redesign it around
+that."* **Done (recolour only, no redesign):** https://claude.ai/artifact/4nhihQ1jNDy8w5e97PgX4E v9: the two-screen
+opening (A-112) with the theme; paper sections; How it works on a Sky stage; the quiet thread on an Apricot stage;
+Your control's switch on Sky; the Today screen on a Forest bed; the close as a Forest block with a Mint button; the
+colour picker gone. **Waiting:** his confirmation, then a section-by-section redesign around the theme (A-111),
+and the "border" idea.
+
+## 2026-10-08 — Theme v2 (A-115), and three ideas the founder raised
+
+Founder: *"can we add a concept of how old times people use to write on paper and mail them it takes a long just
+keep it in mind… let me know if we can play around this too… then we gotta play with few colours whatever is
+contradicting let remove that colour we can add grainsh touch and how wisper uses images right we can also go with
+that concept to make it feel more human… and then we can also take professionalism and organised reffrence from the
+other tools and website that we studies"*. Also asked *"what the reason behind all the colours why we using these
+only"* (answered in chat: each colour has a job; fewer colours read as professional; blue/purple, red, neon and
+blended hues work against calm and trust; the site should match the app).
+**Done:** theme v2 (A-115) on the home page, v10.
+**Proposed, waiting for his pick:**
+- *The letter (old post vs a minute):* (1) postmark stamps as the page's small detail (every timestamp a round stamp:
+  "RECEIVED 11:48 PM", "ANSWERED 11:49 PM"), fits the paper and grain; (2) one short section, "From weeks to a
+  minute": a letter by post (weeks), an email you forget (a day, maybe never), FollowUp (a minute), leading into the
+  7× fact; (3) the opening as an envelope that opens into the green block (most striking, highest risk of gimmick).
+  Recommended 1 + 2. No handwriting (R-017/R-020).
+- *Human images like Wispr:* photos must mean something (R-030): busy owners at work while the phone buzzes (a
+  plumber under a sink, a realtor at a showing, a stylist with a client), softly blurred like Wispr's, never presented
+  as customers. Sources: AI-generated now (uses the founder's image credits; ask first), licensed stock (costs per
+  image), or real photos of real users with consent before launch. Recommended: generated now, real before launch.
+- *Organisation from the references (A-111):* one section template everywhere (Macro/Linear: eyebrow + title left,
+  one sentence right, one scene below), one spacing scale, Superhuman's sticky "where you are" bar, the product in
+  high fidelity; done in the section-by-section redesign once he confirms the theme.
+
+## 2026-10-08 — Theme v3: good greens to choose from, green-family touches, the old letter
+
+Following A-116 (and the founder's question *"why we using green as the main colour"*, answered in chat: it already
+means "sent" in the app; green is "done", the result we sell; calm and trustworthy, not salesy; it stands apart
+from AI/CRM blue and purple; it sits well on warm paper; alternative offered: black main, green only for "sent").
+**Built:** https://claude.ai/artifact/4nhihQ1jNDy8w5e97PgX4E v11, with a review bar at the bottom:
+- **Green:** Leaf (default; fresh, `#2E8A5C` lit to `#44A574`), Sage (soft, muted), Emerald (richer), Before (the dark
+  forest). Every green-tinted text (headline italics, the in-card reply) follows the chosen green.
+- **Touches:** Greens (default: soft lime `#E6F1C6`–`#C4E37A` on the quiet thread and the 7× card, sage tint on How
+  it works and the switch) or Sky + apricot (the earlier tints, lighter), to compare.
+- **The old letter:** a postmark ("ANSWERED · 1 MIN · FOLLOWUP") stamps onto the middle card the moment a reply is
+  sent; a new section after the opening, "Then and now": "A letter took weeks. *Today, a minute feels long.*" with
+  three envelope cards (By post: Weeks / By email: A day. Or never. / With FollowUp: 1 minute, in green), each with
+  its own postmark that lands as you scroll to it.
+**Weak, honestly:** the lens stamp overlaps the customer's bubble a little (reads as a stamp, but busy on small
+screens); the envelope flaps are faint lines; images and the section-by-section redesign are still to come.
+
+## 2026-10-08 — Theme v4, professional and neutral (after R-043); references round 2
+
+After R-043 and five references (Ruul, Table22, Harmoniq, Lunora, Aethera) plus Dispatch (*"Look at all these
+references. How these guys are playing around"*; notes in `research/landing-page/2026-10-08-founder-references-round2.md`).
+**Built:** https://claude.ai/artifact/4nhihQ1jNDy8w5e97PgX4E v12: paper `#F4F3EF` everywhere; ink text; grey second
+lines and italics `#8A867F`; black buttons (white ones on dark); one dark panel (`#2C302D`→`#121413`, lit top left)
+for the live flow, the 7× card, the "1 minute" envelope and the close; light blocks in stone (a deeper paper); green
+only as "Sent", orange only as "your turn"; one tiny lime note "Free while in beta" above the headline (Ruul's pill).
+The postmark left the live demo (A-117: the letter lives only in "Then and now"). The green picker removed.
+**Next (asked):** art-directed imagery in the dark panel and the letter section, generated with the founder's
+credits once he says yes.
+
+## 2026-10-08 — R-044 asked: what is wrong with the neutral page; image style examples
+
+Asked after *"i dont like it"* (R-044). His answers: **"Too plain, no colour"**, **"The black panel"**, **"No images"**
+(not "the whole layout"). On image style: *"lets see give me examples"*.
+**Principle (his answers, generalised):** neutral must not mean colourless; dark panels read heavy; the page needs
+human imagery before its colour can be judged. Colour should come back, but not as all-green (R-043).
+**Doing:** example images of one subject (an owner after hours while a customer's message lights the phone) in
+different styles, generated with ElevenLabs (about 2 cents each; Higgsfield had no credits): painted (Dispatch),
+cinematic photo (Lunora), documentary owner portrait (Table22). A fourth, soft storybook illustration (Harmoniq), hit
+ElevenLabs' free daily image limit. Images stay out of the repo until chosen (private references rule applies to
+others' screenshots; these are our own, but unchosen drafts are not kept).
+
+## 2026-10-08 — No AI images (R-045); real art instead
+
+The three AI examples (ElevenLabs, ~5.5 cents in total) were deleted from the workspace and never published; they
+remain in the founder's ElevenLabs account (flow "qNf3jQ3WSkMAgketARgI") for him to delete if he wishes.
+**Proposed instead, waiting for his pick:** public-domain paintings of people writing and reading letters (made by
+people, free to use, and exactly the "Then and now" idea), e.g. Gabriël Metsu's pair *Man Writing a Letter* /
+*Woman Reading a Letter* (one writes, one waits: a message and its reply), Vermeer's *Woman in Blue Reading a
+Letter* and *Girl Reading a Letter at an Open Window*, Hammershøi's quiet grey interiors (closest to "professional");
+or a commissioned painting from a real illustrator for the opening; real owners' photos later. Museum and Wikimedia
+sites are blocked from this session's network, so he downloads the chosen works and attaches them in chat.
+Colour waits for the art: in his references the colour comes from the image (R-044).
+
+## 2026-10-08 — Home v13: the live demo on a real photo (A-118 applied); colour from the photo
+
+**Asked:** *"are we using these photos directly, or are we going to make it grainy and blurry … like Wispr Flow
+does?"*, then *"why we doing this"*, then *"yes"* to trying one photo behind the type box.
+**Why photos (as told to him):** R-044 said too plain, no colour, no images; he wants a human touch, not AI (R-045);
+a visitor recognises "someone like me" before reading. The reply flow stays the hero; photos support it and are cut
+if they pull attention from the type box.
+**Photo treatment (one house look, never raw stock):** a little warmer, a little less saturated, softer contrast,
+lifted blacks, fine grain; blurred (≈6–9 px at 1,300–1,600 px wide) when a product card sits on top; sharp only
+when the person is the point. Processed with Pillow in the build script, so the photo is adjustable.
+**Built (v13, prototype only):** the café photo (Adobe Stock 247196493, free licence, not AI) fills the second
+screen behind the type box and the live flow, with a warm espresso scrim top and bottom; the flow box is a light
+espresso tint. Colours sampled from the photo replace the black panel everywhere: walnut-to-caramel panel
+(`#8E6545`→`#4E3726`) for the "1 minute" envelope, the 7× card and the close; caramel `#8C5F3B` italics; espresso
+buttons; the lime note became a latte note. Green still only means "Sent", orange only "your turn".
+**Weak, said plainly:** the photo's person sits behind the type box and the reply card, so she reads as a blurred
+owner in an apron, not a face; warm cream + serif + brown italics is close to a common template look, and what keeps
+it ours is the real photo and the live product. Waiting for his reaction before the plumber and florist photos.
+
+## 2026-10-08 — Home v14: a border of messages around the headline (his ask)
+
+**Asked:** *"on the opening page, can we throw a lot of messages that FollowUp is handling, sorting out, arranging,
+and following up? … show we are generating revenue … we have followed up with every single lead, and we are
+filtering out potential leads too … animations or texts that are popping up or flowing"*.
+**Built (v14, prototype only):** screen one keeps the headline in the centre (A-112) and gains two rows of messages
+above it and two below, full width, fading at both edges. Customers' messages (Gmail, Outlook, Instagram, website
+form, gone-quiet customers) drift in from the left, pass under a small FollowUp mark in the middle, and come out
+handled: *Answered · 1 min*, *Followed up · day 3/7/14*, *Booked · Fri 2 PM*, *Said yes · $2,400 job*, *Needs you ·
+price* (orange dot), *Holding note sent*, *Stopped · they said no*; newsletters, receipts and promos come out
+*Skipped* and drop away. Calm speed (32–42 px/s), runs only while on screen, stands still with reduced motion.
+**Honesty:** every outcome is something the product does (check-in days 3/7/14, the holding note, no reminders after
+a no, newsletters and receipts skipped). Money appears only as single example jobs; no total "revenue made with
+FollowUp" figure, because we have no real number yet (the landing proof number waits for ~50 answered customers a
+month).
+**Possibly his "border with a lot of things" (A-112); asked him, not assumed.**
+**Weak, said plainly:** four moving rows are close to R-007's "too much congested"; the headline still dominates, but
+it is busy; on a phone the rows are sparse because each message is wide. The café photo (R-046) is still on screen
+two until he chooses the changing photos or a no-trade photo.
+
+## 2026-10-08 — Home v15: one photo card with FollowUp's week; the rows and the full photo removed
+
+After R-047, R-048 and R-049. **Built (prototype only):** under the headline, one photo in a rounded frame (Adobe
+Stock 293359980, free licence, not AI: hands typing on a phone in warm outdoor light, no trade visible), treated per
+A-119 (warmer, softer, grain, a light blur). On it floats FollowUp's **"Your week"** card, marked *Example*: 46
+customers answered (avg. 1 min), 18 followed up after going quiet, 9 meetings booked, $14,600 in open deals, 212
+newsletters and receipts skipped, 2 prices waiting for you. Each line is something the app shows (meetings booked
+through the booking link and active revenue exist on the team screens); the figures are an example week. The numbers
+count up once when seen, then tick gently: newsletters skipped most often, a customer answered now and then. Screen
+one pins only after the photo card is fully on screen, then screen two (now a plain walnut block, A-119's colour)
+slides over it. The café photo is gone.
+Three other trade-neutral candidates were licensed free (403748411, 518856668, 490836759) and kept in the session
+scratchpad only. **Weak, said plainly:** a "your week" card is close to a dashboard tile, which earlier heroes
+avoided (R-005, R-009); it stays one card with six plain lines. Screen one is no longer "the headline alone" (A-112),
+at his request for something that shows the product's work.
+
+## 2026-10-08 — Home v16: messages thrown in and caught; colour from fully blurred photos (A-120, R-050)
+
+**Built (prototype only):** under the headline, a block filled with a blurred-photo colour field. Customers' messages
+fly in from the top-left and top-right corners, tumbling in 3D (turning on all three axes, coming towards the
+viewer, then settling), and land on one white surface tilted slightly back. Each lands at the top of a list of five,
+the others slide down, three dots show it being written, then its result pops in: *Answered · 1 min* (green),
+*Booked · Fri 2 PM*, *Needs you · price* (orange dot), *Followed up · day 3* for a customer who went quiet.
+Newsletters, receipts and promos stop just above the surface, turn into *Skipped · newsletter*, and are flicked away
+and fall. No logo, no title. One message every 1.5–2.2 s, only while on screen; still with reduced motion.
+**Colour, three options to choose from** (a [TO DECIDE] token, so proposed, not decided): **Forest** (recommended:
+deep green, the most professional; green already means "sent" in the app), **Moss** (olive with a lime light, his
+earlier lime ask), **Plum** (aubergine to mauve). Each is a real photo (Adobe Stock 328242925 leaves, 321971810 leaves
+in sun, 509912453 peonies; free licences, not AI) shrunk and blurred until nothing shows. The same field, darker,
+fills screen two, the "1 minute" envelope and the close. Page stays neutral paper; buttons ink; the italic takes the
+palette's deep tone. A small "Colour" switch sits bottom-left (prototype only).
+**Weak, said plainly:** forest green on screen two plus green italics comes close to R-043's all-green; the field
+is calm but carries little variation; the flights are quick (1.1–1.25 s), so a first-time visitor may need two or
+three to read what is happening.
+
+## 2026-10-08 — Home v17: one connected page; the animation removed; city photos (R-051, R-052, A-121)
+
+**Built (prototype only):** the thrown-and-caught animation is gone (R-051); the space under the headline is plain.
+Screen one no longer pins or gets slid over: the headline sits in the upper part of the first view and the type box
+sits right below it, *straddling the top edge of the demo block* (half on the paper, half on the block), so the eye
+runs headline → box → live demo as one piece (R-052). No "Try it yourself ↓" cue; the box is the invitation. The
+demo block's background is a softly blurred street photo, one of four to choose from with a small "Place" switch:
+New York (default: North America, the market), Paris, Rome, Bavaria (Adobe Stock 260838977, 227974770, 280196621,
+283582172; free licences, not AI). The headline's italic takes a deep tone from the chosen place.
+**Not yet on the page:** the "in your customer's language" message (it lived in the removed animation); waiting for
+his description of the new idea. He also selected assets in the Adobe widget twice; the widget only reports counts,
+so he was asked which.
+**Weak, said plainly:** the demo still runs its example stream on its own (with Pause); if that is the "video kind of
+thing" he meant, it goes next, on his word.
+
+## 2026-10-08 — Home v18: your question's whole journey; a transition into "try it"; green, grainy, varied photos
+
+**Asked:** *"don't use the same image for every single thing… make it a grainier thing… Add greens to it."* /
+*"When we are typing our question, it should visually tell them where this message went and what happened next…
+Tell them that we closed the deal… Tell them the workflow."* / *"add something like a transition from the opening
+page to that 'Try yourself' thing."*
+**Built (prototype only):**
+- **Journey.** After the visitor's reply is sent, the middle card keeps going as a time-lapse: *2 days later · no
+  reply yet* → a follow-up written and *sent on day 3* → *Day 3 · they replied* ("Yes please! Is Saturday OK?") →
+  the reply written in your words → *Viewing/Job/Appointment booked · Sat 10 AM* → *Deal won · $9,800, you marked
+  it*. The booking type and the deal value follow what was asked (a home → viewing, $9,800; a repair → job, $2,400;
+  a haircut → $85; a clinic → $320; otherwise a call, $1,200). Then: "That's the whole journey: caught, answered,
+  followed up, booked, won." Only the visitor's own question plays the journey; the examples stay short.
+- **Workflow rail** under the demo, always visible: Caught (from any inbox) → Answered (in your words) → Followed up
+  (if they go quiet) → Booked (on your calendar) → Won (you mark the deal). It lights up step by step during the
+  journey, each step's line replaced by what happened (now, 1 min, day 3, Sat 10 AM, $9,800).
+- **Transition.** As you scroll from the headline, the headline lifts and fades a little while the demo block widens
+  from an inset card to the full width and its photo drifts; with reduced motion it simply sits open.
+- **Photos.** A different street photo per block (demo: New York; 7× card: Paris; "1 minute" letter: Rome; close:
+  Bavaria), each blurred, toned towards forest green (half the photo, half a forest-to-sage duotone), with a heavier
+  film grain laid over it. The Place switch is gone. Headline italic in deep green.
+**Honesty:** every step is real: check-ins on days 3/7/14/30 stop on a reply; bookings come through the booking link;
+WON and the deal value are the owner's to set (the stage is never inferred), hence "you marked it".
+**Weak, said plainly:** the journey takes about 15 seconds, long for a skimmer (the rail summarises it in one look);
+"Deal won" values are invented examples, marked only by the demo's "Example" label.
+
+## 2026-10-08 — Home v19: the demo in the customer's language (A-123)
+
+**Built (prototype only):** the examples that play when nobody types now come in English, **Punjabi typed in English
+letters**, Hindi typed in English letters, French, Spanish, German and Italian, plus a Punjabi follow-up for a quiet
+customer. Each message carries a small language tag; the card says "Writing in Punjabi, in English letters" and
+"Sent from your Gmail · in Punjabi". The box's hint reads "You're the customer. Ask in English, Punjabi, Hindi, French
+or Spanish." and its rotating placeholder includes Punjabi, French, Hindi and Spanish lines. If the visitor types in one
+of the seven, a small word list recognises it (two matching words, or one greeting such as "sat sri akal",
+"namaste", "bonjour", "hola") and the fixed example reply comes back in that language and those letters, and so does
+the whole journey (the day-3 follow-up, their "yes", the reply that books it). Anything else gets the English
+examples, as before. Replies are fixed examples, never generated.
+**True to the product:** `src/lib/leadLanguage.ts` reads language, script ("Hindi typed in English letters is Latn")
+and formality from the first message and holds them for every message after.
+**Not yet checked by native speakers:** the Punjabi and Hindi lines (written by Claude); the founder was asked to
+check the Punjabi before this ships. Formal "usted/Sie/vous/Lei" is used where the customer's own words don't say.
+
+## 2026-10-08 — Home v20: six artifact comments from the founder, all applied
+
+1. **Header** ("This looks very simple"): a floating rounded bar of soft frosted glass (the only glass on the page),
+   a round green logo mark, a highlight that slides between the links on hover, an arrow that nudges on "Start
+   free"; it tightens on scroll and turns dark over dark sections.
+2. **English first** ("we are targeting an English audience mainly"): the demo opens with three English customers,
+   then Punjabi, French, Hindi, Spanish, German, Italian; the box's rotating hints start with three English lines.
+3. **Depth** ("we don't need the same grains… create a depth"): the demo's inner box is frosted (blurs the grainy
+   photo behind it), carries only a fine light grain, a top highlight and a shadow underneath.
+4. **Bottom bar** ("highlight these things as it changes… doing something automatically"): the current step gets a
+   white tag with what happened and a soft ring on its dot; a dot travels the line; a line under the bar says what
+   FollowUp just did; it now follows every example, not only the visitor's question.
+5. **Accurate answers** ("so it does not feel like we are writing anything just to show them"): a typed question is
+   answered by Claude through the page's `sample` capability (the viewer's own Claude, consent asked once), in the
+   customer's language and letters, with the rest of the story (day-3 follow-up, their yes, booking reply, booking
+   kind, a fitting deal value); never a price ("$___"). Everything returned is escaped or checked against a list.
+   Declined or unavailable: the fixed examples answer.
+6. **Cost and safety** (question, thread left open for his answer): this preview spends the viewer's own Claude, not
+   our OpenAI key. For the real site, proposed: key server-side only; 3 questions per visitor a day; a site-wide daily
+   cap (e.g. 300) after which the fixed examples answer; 140-character limit; a small model; the demo endpoint sees no
+   customer data. Cost per answer estimated, not measured, at a fraction of a cent. Waiting for his OK.
+
+## 2026-10-08 — Home v21: the inner demo box made see-through
+
+Founder, on v20's frosted box: *"This looks way odd. Add a little grain, not that much, and keep it more transparent.
+It should feel like it is a part of this game."* **Rule learned:** depth between layers comes from a light blur and a
+thin edge, not a heavy frosted slab; the inner layer must stay part of the same scene. **Built:** blur 22 → 6 px,
+tint .34 → .12, grain alpha .2 → .1 and finer, highlight and shadow softened.
+
+## 2026-10-08 — Home v22: logo symbol only (the green badge removed)
+
+Founder: *"this logo feels too odd. Can you just add the symbol and remove that background from the logo?"* v20 had put
+the mark on a green round badge, which broke an existing rule in `rejected.md` (the logo sits on the page's own
+surface, never on a sticker). **Fixed:** the symbol alone, slightly larger (12×19), in the word's colour (ink on
+light, white over dark). **Lesson:** check `rejected.md` for the logo before touching the header.
+
+## 2026-10-08 — Home v23: the speed message first; the letter shrunk to an aside
+
+Founder, on the letter section: *"Keep this a very small part, not here, because this is not what we are saying. Our
+main goal is to tell them that reducing the reply time can save their potential clients or leads."*
+**Principle (his words):** the page's main argument is speed: a faster reply keeps the lead. Everything else supports it.
+**Built:** right after the demo, "The faster you reply, *the more leads you keep.*" with the HBR 7× card first, then Time
+back / No lead wasted / Follow-ups on time. The letter moved to just before the close as one small line with three
+small tags (Weeks → A day. Or never. → 1 minute); stamps, flap lines and card text hidden.
+
+## 2026-10-08 — Home v24: a different blur per photo; a soft blend on the demo photo
+
+Founder: *"if we can blending touch in that image and a kind of motion blur just little and for others, we should
+use different blurs, not all the round ones. Just be creative… We don't have to be that creative, too. That feels
+unprofessional, but it should feel like a human."* **Principle:** one filter everywhere looks machine-made; varied,
+reasoned, subtle effects look like a person's choices. **Built:** demo (New York) a slight sideways motion blur (the
+street moving past) and a soft paper-coloured blend fading in from its top edge (soft-light); 7× card (Paris)
+tilt-shift, a calmer band across the middle; "1 minute" tag (Rome) a gentle zoom blur, i.e. speed; close (Bavaria)
+ribbed glass, like a shop window. All still green-toned and grainy (A-122). Made with Pillow (`gen/blurs.py`).
+
+## 2026-10-08 — Home v25: the whole process in the demo; sources; letter out; light motion blur only
+
+From comments: *"we are just going back and forth… answered, answered. Can we show the whole process anyway? Can we
+flip it, and we also have to show that we are collecting it from everywhere?"*, then *"dont stress we can tell them
+everything in that demo we will add it down too"*, R-053, R-054.
+**Built (prototype only):** a "From" strip at the top of the demo (Gmail, Outlook, Instagram, Messenger, WhatsApp, text,
+website form, Facebook ad form; all real channels in the app; plain line icons), the source lighting up as each message
+arrives; examples now come through those channels. After each example's reply, the card flips (3D, a quarter turn and
+back) to "What happened next · Name" and plays 3–4 steps: day-3 follow-up, they replied, booked, won; or a polite no and
+"Stopped, no more reminders". The right column is now "Handled" and shows outcomes (Won · $85, Booked, Stopped).
+Headline after the demo: "Reply faster. Follow up with everyone. *Close more deals.*" Letter removed. One light
+motion blur on every photo.
+
+## 2026-10-08 — Home v26: one short five-step story (A-124, R-055)
+
+After the reply is sent, three lines appear in the card one by one (Followed up · day 3, Booked · Sat 10 AM, Won · $X)
+while the bar lights the same steps; the right column shows "Won · $X". Removed: the flip, typed-out follow-ups and
+customer replies, the note line under the bar, the default sub-labels under the steps. Kept: the "From" strip (he asked
+for it one comment earlier), languages, real answers to typed questions, the type box.
+
+## 2026-10-08 — Home v27: real logos in the "From" strip; no 3D turn (A-125, R-056)
+
+Gmail, Instagram, Messenger, WhatsApp and Facebook logos in their brand colours on small white chips (the active one
+grows briefly with a soft ring); Outlook a plain envelope until we have Microsoft's file; text and website-form plain
+icons. The demo's cards slide flat (`--fl-tilt: 0`).
+
+## 2026-10-08 — Home v28: "Try it yourself", very simple
+
+Founder: *"The Try It Yourself feature: just keep it simple. We'll just show them how accurate this is, how this works,
+and how it helps you to close more leads… we'll be adding other stuff at the bottom of the page… Just keep it very
+simple… mention it: this is Try It Yourself, so they should click and try some typing."*
+**Built (prototype only):** a clear label above the box ("● Try it yourself / Type a question, as if you were a
+customer.", the dot softly pulsing); the box; one card in the middle that answers (real answers when allowed); the
+"From" logos above it; the five steps under it. Removed from view: the side columns of other customers and their
+labels, and the frosted frame around them. The hint under the box is now just the languages. Supersedes the
+streaming side columns of A-109 (the concept of a live, typed demo stays).
+**Asked again:** whether spam could break it or run up a bill; answered in chat (preview: viewer's own Claude; real
+site: server-side key, per-visitor and daily caps, fallback to fixed replies, plus his OpenAI monthly cap).
+
+## 2026-10-08 — Home v29: v27's demo restored, "Try it yourself" label kept (A-126)
+
+v28's removal of the side columns undone; no flip, flat slides, five-step story, real logos, label above the box.
+
+## 2026-10-09 — Home v30: the From bar, the hop, the five steps in plain words, one-tap questions
+
+From four comments. **From bar:** see-through like the five-step bar, no white chips, "From" bold with a divider,
+current full-colour logos (gilbarbara/logos via @iconify-json/logos, CC0: Gmail M, Messenger, WhatsApp, Facebook;
+Instagram's glyph given Instagram's gradient); Outlook still a plain envelope (no open file); the bar rises in and the
+logos pop in one by one when scrolled to. **The steps, in his words:** each example's message hops out of its logo
+into the card ("New message"); the card says "Sorted: a real customer"; every few, a "Weekly newsletter" hops in and is
+dropped ("Skipped · newsletter"); then "Followed up automatically · day 3", "Booked for you · Sat 10 AM", "You closed
+it · Won $X"; the bar's tags match (sorted, automatically, for you, $X). **Try it (A-127):** specific rotating
+questions (a listing, a tap repair, a car detail, a haircut slot, a clinic; Punjabi, Hindi, French) and three one-tap
+questions under the box.
+
+## 2026-10-09 — Home v31: "Leads go cold fast", rotating languages (A-128), calm-list kept (A-129)
+
+**The section after the demo** (his comment: "make them worry here… we'll be throwing facts… they should just click on
+Start"): heading "Leads go cold fast. *Answer in a minute and keep them warm.*"; a three-bar chart of the chance of
+turning an inquiry into a real conversation (within an hour = best; an hour later 7× lower; a day later 60× lower;
+HBR 2011, 1.25 M leads); three facts: 42 hours average reply (HBR 2011), 48% of real-estate agents never answered
+(WAV Group 2014), "about a day" a new lead stays warm (the founder's own conversations with realtors, credited only as
+"our conversations with realtors", no names). Ends on "Start free. Answer every lead in a minute." Grade-C numbers
+(47 hours for firms under 10, the Finnish test) left out on purpose. The bars grow when scrolled to; static under
+reduced motion. Replaces "Reply faster. Follow up with everyone. Close more deals." and its three items.
+**Weak spot (self-review):** the realtor line is our own anecdote beside two published studies; it is labelled as
+such, but it should be swapped for a sourced number or a quote he has permission to use before launch.
+
+## 2026-10-09 — Home v32: his fonts, no brown, no peach, colour logos, and four sections that show instead of tell
+
+From his chat and twelve comments in one sitting. **Fonts (A-131):** Tinos + DejaVu Sans + DejaVu Sans Mono, embedded
+(about 160 KB), Google Fonts links removed. **Colour (R-057, R-058, A-132):** page #F4F5F3; product frames on blurred
+green photos (six crops); written replies on the app's soft green; side bubbles mint. **From bar (R-059):** Outlook
+(Material Design Icons glyph in #0A6ED1), text (green bubble), website form (orange form); order keeps greens apart.
+**The catch:** logo bounces with a red dot, "New message · Priya" pops out and holds, glides into the card, the card
+pulses and says "Caught by FollowUp", then the story plays. **Leads go cold fast (R-060):** a five-stop clock you drag
+(1 min → Never) on a photo; Priya's card cools; the big number changes per stop; all numbers sourced as before; plays
+once by itself. **11 PM:** night and morning photo cards. **Today:** three numbered pins on the real screen + "learn it
+in a minute" steps. **It checks in:** a Tue–Sat week, your busy row vs. Priya's row, a "Today" frame walks the days.
+**You stay in charge:** "The main thing: You decide what it sends" card with the live switch, four promise cards, and a
+"Your data stays yours" strip, every line taken from the app's security page. **It gets better:** Every day (facts you
+teach, visible and deletable) / Every week (the real updates) / Never (we don't train AI on your data). **Footer:**
+five columns. **Size (R-061):** smaller headings and spacing. **Try it (A-133):** warmer, more exact prompt; fixed
+replies now echo the question ("Yes, the 2-bed on King Street is still available!"); human typing rhythm.
+**Weak spots (self-review):** the Outlook mark is a one-colour glyph, not Microsoft's file; DejaVu Sans is wide and
+less refined than Public Sans at body sizes, which I'd flag if he ever wants it tighter; the page is now ~1 MB because
+fonts and photos are embedded (fine for a prototype, the real site should serve them as files); the fixed replies still
+invent a slot ("Saturday at 10") as an example.
+
+## 2026-10-09 — Home v33: text font back to Public Sans (A-134), named logos (A-135)
+
+Public Sans 300–700 and IBM Plex Mono 400/500 embedded for text and labels; Tinos kept for headings. The "From" bar now
+names every channel; Outlook on a blue tile; SMS tile with "SMS" in the bubble.
+
+## 2026-10-09 — Home v34–v37: sections that explain themselves, a truth pass, varied people, a tidy close
+
+From ~20 comments. **Cold leads:** a plain question ("How fast do you reply?") with five buttons instead of a
+self-playing slider; one plain sentence per answer; opens on "1 day"; a different, specific customer each visit
+(Marcus the plumber, Lena's salon, Ella's car detail, Sam's dental clinic, Priya the realtor) with "Another example";
+the card is frosted green glass. **Why FollowUp:** one scene plays the night (11:04 PM Daniel writes on Messenger,
+11:05 PM the reply is written, the photo turns to morning, 7:30 AM Send). **How it works:** three cards side by side,
+each a small loop (inbox sorted, reply typed with a fact used, price left blank then Send), one screen tall.
+**Today:** pins and steps removed ("covered by our dashboard"). **The week:** Jordan's kitchen quote for a contractor;
+future days hidden, each day appears in order, loops. **Control:** the data promise is its own lit panel; the main card
+states the two real modes (Automatic: answers and follows up on its own, prices/dates/tense wait; Assisted: everything
+waits). **What's new:** no defensive wording ("It learns your business", "What it learns stays yours"). **Close:** a
+contained photo card, the eight logos in glass circles around "Every one answered", one ripple. **Footer:** brand + three
+short columns + base line; no logos; no "built for" line. **Demo track:** one side card each side, two lines, no
+channel names or times; the middle card sits clear of the From bar. **Try it:** fixed replies rewritten and tested on 28
+questions (keeps the customer's words, answers the exact question, blanks what only the owner knows, passes price
+negotiation to the owner).
+**Truth pass:** every claim checked against the code and the app's own pages. One over-correction made and undone the
+same hour: the app's onboarding offers Automatic (recommended), so "followed up automatically" is true.
+**Weak spots:** the page is ~1.3 MB (embedded photos repeated per section; the real site should serve them as files);
+the colourful-logos question is open with him (recommended: colour only in the From bar).

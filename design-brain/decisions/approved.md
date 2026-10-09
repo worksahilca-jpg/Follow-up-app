@@ -486,6 +486,9 @@ must be removed and re-added (iPhone: clear Safari website data first) before ju
 
 ## A-022 — The white hero (Hero v3 · light): black type, plain thin headline, the reply as the one black card ^A-022
 
+**PARTLY SUPERSEDED (2026-10-08) by [A-104](#^A-104):** the "no serif italic" part. The human phrase of a headline
+is set in italic serif again, as Wispr Flow does.
+
 **Headline weight reconfirmed (2026-09-26, [A-059](#^A-059)):** thin on both desktop and phone. A-058 briefly made the
 phone headline bold; that was reversed the same day.
 
@@ -645,6 +648,9 @@ right side. The rest should not be that highlighted."* Final rule for state pill
 - It's never a streak, never points.
 
 ## A-032 — The landing page's soft colour washes stay ^A-032
+
+**SUPERSEDED (2026-10-09) by R-058:** the peach-and-blue wash is out on the website; written replies sit on the
+app's own soft green.
 
 **Approved:** 2026-09-26, founder: "keep them".
 **What specifically:**
@@ -1911,3 +1917,318 @@ phone), and *"yes wait for trail"*: during the trial every "No answer" text wait
   week), then each person's three numbers; only someone calling with no meetings (from Wednesday, or sooner with
   calls a day late) gets the orange dot. No charts. Meetings are the booking link's.
 - The duplicate sentence under Team ("Admins can invite…" twice) is gone, as drawn.
+
+## A-104 — Headlines: plain words, then the human phrase in italic serif (Wispr's rule) ^A-104
+
+**PARTLY SUPERSEDED (2026-10-09) by A-131:** the typefaces changed (Tinos and DejaVu Sans, not Instrument Serif and
+Public Sans). The rule itself stays: plain part upright, the human part in italic serif.
+
+**Approved:** 2026-10-08, founder, asked whether the headline should take Wispr Flow's italic: *"yes slanted like
+wispr"*.
+**What specifically:** every big headline on the site is set in the display serif (Instrument Serif, already loaded),
+with the plain part upright and the human part in italic, one rule everywhere, as on wisprflow.ai ("Don't type,
+*just speak.*"). The hero: "Never lose a lead *because you forgot to follow up.*" (A-013 wording unchanged). Body text
+stays Public Sans.
+**Supersedes:** A-022's "no serif italic ('keep it plain')", for headlines only.
+**Evidence:** `research/landing-page/2026-10-08-four-favourites-teardown.md` (Wispr part 2, "seen in the screenshots").
+
+## A-105 — First screen layout A: headline left, one big colour stage right ^A-105
+
+**PARTLY SUPERSEDED (2026-10-08)** by [[rejected#^R-038|R-038]]: the founder asked for compositions beyond "headline left,
+stage right" (*"be creative, just use the info not the design"*). Layout A stays a valid option, not the default.
+
+**Approved:** 2026-10-08, founder, on the "First impression" page: *"I like the A1, but I don't like the concept."*
+**What specifically (inferred from "A1", marked inferred):** option A's layout and look, not its idea: the italic
+headline (A-104) large on the left with the line, one pill button and the trust line; a big rounded colour stage on
+the right holding the hero's moving picture; plain paper ground; a simple top bar. Option B (centred, the clock) was
+not chosen.
+
+
+## A-106 — Method: one real page, done properly, with the app's reply screen as the picture ^A-106
+
+**Approved:** 2026-10-08, founder, choosing between three methods after R-039 (*"not even close to those references"*):
+**"One real page, done properly"** over "add made visuals" and "hire a designer".
+**What specifically:** stop making batches of quick canvas options. Build one full home page in the browser that moves
+as you scroll (like the references), and use FollowUp's real reply screen, drawn in high detail, as the page's
+picture, the way Linear and Macro show their app. The option he picked said so in words: *"It means showing the app
+on the page; you said no dashboards before, so this would be the reply screen, not charts."*
+**Amends:** R-005 / R-009 in scope only: stats tiles, charts and dashboards stay out; the reply screen (a customer's
+message and the reply written for you) is now allowed as the hero picture.
+
+## A-107 — The first full page: "much better… I like the animations and stuff" ^A-107
+
+**Approved (direction, not final):** 2026-10-08, founder, on https://claude.ai/artifact/4nhihQ1jNDy8w5e97PgX4E:
+*"much better but we need improvement i like the animations and stuff no lets choose the colours first."*
+**What specifically was liked:** the page's motion as a whole: the real Today screen playing its story once on load
+(message arrives, reply types itself, Send, the undo line drains, "Sent from your Gmail") with Replay; the statement
+lighting up word by word as you scroll; the "How it works" picture changing with the step you read; the check-in line
+drawing across the week; the closing button growing as it arrives. Structure kept as the base.
+**Still open:** colours (being chosen next, on the page itself), and further improvement he hasn't named yet.
+
+## A-108 — The light-first page, and its colours from FollowUp's own soft colours ^A-108
+
+**QUESTIONED (2026-10-08):** the founder said *"I don't like the theme"* on the type-first opening; see R-042 and
+the options page in `design-decisions.md`. Light-first itself was not questioned.
+
+**Approved:** 2026-10-08, founder, on the light-first version of https://claude.ai/artifact/4nhihQ1jNDy8w5e97PgX4E:
+*"yes its good and we use that soft colours too so can we make those soft colours with our stuff."*
+**What specifically:** the light-first page (white ground, ink text, the app on a soft panel, one band at the end) is
+good. Next: take the page's colours from FollowUp's own soft colours, the ones the app already uses on the reply card
+(the A-043 wash: apricot, rose-sand, dusty blue on #f3efea), so the website and the app are one family.
+**Inferred (marked inferred):** "with our stuff" = with the app's own colours and pieces, not new ones.
+
+## A-109 — The opening screen is a live reply flow ^A-109
+
+**Approved:** 2026-10-08, founder, on https://claude.ai/artifact/UpeWaG55sBhBLM19CYQN75: *"Bro, this is a cool
+concept. Let's go. We should have this."*
+**What specifically:** under the headline, one wide soft panel where customers' messages stream in from the left
+("Waiting"), each reaches FollowUp in the middle, the reply is typed live in the owner's words, Send is tapped, and
+the conversation flows on to the right ("Answered", with a counter that goes up). The stream mixes kinds of
+business and channels (Gmail, Outlook, Instagram, a website form), includes one customer who went quiet (a
+follow-up is written) and one price question (the price is left blank and it waits: "Needs you"). Interactive:
+click a waiting customer to answer them next, or "Try it as a customer" by typing a question. The lede: "Every
+customer gets a reply, written in your words. You just tap Send."
+**Why it works (his words, from R-041):** a quick look says "Oh yeah, someone is replying", and shows the main job,
+why to use it and how it helps; it flows like Wispr Flow's concept and you can touch it.
+**Keep:** the owner's tap on Send stays in the animation (the default holds every reply for approval); prices wait
+for the owner; visitor replies are labelled examples, never presented as live.
+
+## A-110 — Type-first: the visitor tries it before anything else ^A-110
+
+**Approved:** 2026-10-08, founder: *"let's try to make them type something. We don't have to give them any other
+choice. They should come, land on the page, and they should directly try a feature… 'Type whatever you want to
+ask'… As a lead. Like Spotify does… 'Okay, let's just play'… We have to let them try this thing."* And, on the
+page: *"never lose a lead because you forgot to follow up. That should be the main hook… then the second eye should
+catch on to this example… so that they should just directly go and type the question, and they get the result.
+Then we'll say how we'll be helping them… how this is going to save them money and time."* And: *"There is 'Start
+free' right there, and we are saying 'Connect Gmail' and 'Start free' again in the same corner… We don't have to do
+that."*
+**What specifically:** the order of the first screen is (1) the headline as the hook, big and centred; (2) one box,
+"Type a customer's question…", with no chips, no second button and no other choice; what is typed appears in the
+middle card as it is typed, and Send runs the reply flow (A-109) on it; (3) "Connect Gmail, start free" appears
+only after the visitor has tried it, under the flow; the menu keeps "Start free". Then a section on how it helps:
+time, money (leads already paid for), follow-ups, with one sourced fact.
+**Keep:** visitor replies are fixed examples chosen by keywords, labelled "Example"; the stream plays on its own only
+when nobody is typing.
+
+## A-111 — Borrow from the references, in our own style ^A-111
+
+**Approved direction:** 2026-10-08, founder: *"We have to copy things from other references… We have to convert it
+into our own style… we don't have time to build everything from scratch… we'll move that reference thing into our
+own follow-up model or the direction that we are following."*
+**How it is applied (so it stays safe and ours):** take a reference's *pattern* directly (a section's layout, an
+interaction, a motion idea, the order of a story) and rebuild it with FollowUp's colours, type, words, symbols and
+real product screens. Never take their images, illustrations, video, copy, logos or the exact look of a screen.
+**Note:** this loosens CLAUDE.md's "Never copy a reference… extract the principle" from principle-only to
+pattern-level borrowing. CLAUDE.md itself is unchanged until the founder confirms the wording.
+
+## A-112 — Layout 3: two screens (the headline alone, then the box and the flow) ^A-112
+
+**PARTLY SUPERSEDED (2026-10-08)** by R-052: the headline must lead straight into the box, one connected page.
+
+**Approved:** 2026-10-08, founder, on https://claude.ai/artifact/4CTFfFCnWd9avFeJ5uLQC5: *"I like the two-screen one,
+but we have to make that header a bit smaller in the centre… this concept is good."*
+**What specifically:** screen one is the headline alone, centred, with "Try it yourself ↓"; screen two is the type
+box and the reply flow (A-109/A-110). **Change asked:** the headline a bit smaller. **Pending, not yet explained:**
+*"we have to create a border with a lot of things. I'll be telling you later on"*: do not guess it; wait.
+**Colours:** still open (R-042); he asked for research on how Wispr Flow uses colour, to be "more professional, like
+Wispr is".
+
+## A-113 — Direction: our own multi-colour theme on Wispr's pattern, with a little matte 3D ^A-113
+
+**Approved direction:** 2026-10-08, founder, after the Wispr colour study: *"As Wispr is using a lot of colours,
+they are making more sense. We'll be using these kinds of patterns, and we'll be creating our own theme. I want a
+bit of a gradientish touch in that, not just proper, but a little bit, something that looks like a 3D kind of
+thing."*
+**What it means in practice:** several colours, each with one job (Wispr's pattern, A-111), our own values; solid
+blocks with big corners alternating with paper; gradients only inside one colour family, used as matte light
+(lighter where the light falls, deeper underneath) for a soft 3D feel. **Still excluded:** shine, glows, glossy
+highlight edges (R-036), several hues blended in one gradient (R-042).
+**Supersedes in part:** A-108's soft peach-and-blue wash (already questioned by R-042). Light-first stays.
+
+## A-114 — Theme v1 colours ^A-114
+
+**PARTLY SUPERSEDED (2026-10-08) by A-115:** Sky and Apricot removed; Mint kept to buttons only.
+
+**Approved:** 2026-10-08, founder, on https://claude.ai/artifact/91FEmxYBCMMTKk7NCHszXj: *"colours are good bro"*.
+**What specifically:** the six colours and their jobs: Paper `#F8F6F1` (page), Ink `#0E0E0C` (words), Forest
+`#0F4A33` lit from the top left (heavy blocks), Mint `#CDEFD9` (only buttons), Apricot `#F4C49E` (warm highlights),
+Sky `#DCE6F3` (calm light blocks), with Sent `#0D6E3C` and Needs you `#C96A1B` kept as meanings; the matte 3D
+treatment (one-colour gradients lit from above, pressable buttons, lifted cards, the stream curving toward the
+middle). Supersedes A-108's colours (the soft peach-and-blue wash).
+
+## A-115 — Theme v2: fewer colours, no contradictions, a paper grain ^A-115
+
+**Direction:** 2026-10-08, founder: *"we gotta play with few colours whatever is contradicting let remove that colour
+we can add grainsh touch"*.
+**What:** Paper `#F8F6F1`, Ink `#0E0E0C`, Forest `#0F4A33` (lit), Mint `#CDEFD9` on buttons only; meanings Sent
+`#0D6E3C` and Needs you `#C96A1B` (a dot). Removed: **Sky** (a cool blue against warm paper, and the AI-tool blue we
+said to avoid) and **Apricot** (too close to the orange "needs you", so it blurred that meaning). Mint taken off
+everything that is not a button (the "You" badge, the help icons, the follow-up card, the stream's replies, now a
+green that means "sent"). Light blocks are a deeper paper ("stone"), not a new hue. A faint paper grain over the
+whole page. Published: https://claude.ai/artifact/4nhihQ1jNDy8w5e97PgX4E v10. Not yet confirmed by the founder.
+
+## A-116 — Green stays the main colour; a good green; the others as light touches; the old-letter idea ^A-116
+
+**Approved direction:** 2026-10-08, founder: *"okay green is good make it more like good green not like the stresed
+one then you just removed all other colours keep them as minimal touch you know"*, *"and we should use old letter
+idea too"*, *"cant we use lime and stuff family colours of green and the one that feels the same direction we are
+aiming"*.
+**What:** green remains the main colour, but fresher and lighter than the dark forest (inferred: the near-black
+green read as heavy, "stressed"). The other colours come back only as light touches, preferably from the green
+family (soft lime for warmth, sage for calm blocks); Mint stays buttons only; orange stays a "your turn" dot. The
+old-letter idea is in: postmarks and a "Then and now" section.
+**Supersedes in part:** A-115's removal of the touches.
+
+## A-117 — The letter, in one section only: "A letter took weeks. Today, a minute feels long." ^A-117
+
+**PARTLY SUPERSEDED (2026-10-08)**: the letter is now a small aside near the end, not a section after the demo (see design-decisions, home v23).
+
+**Approved:** 2026-10-08, founder: *"Just for one part, you can use that theme, and I like that. 'Good letter takes
+weeks. Now one minute is long.' That's a good one."* Keep the "Then and now" section (post → email → FollowUp, each
+with a postmark); the letter look appears nowhere else.
+
+## A-118 — Real photographs are welcome; human touch like Wispr ^A-118
+
+**Approved direction:** 2026-10-08, founder: *"if you want something, you can use real images that have been
+clicked, not AI-generated"* and *"Wispr is using real photos, right? I want this tool to have more of a human touch,
+not AI."*
+**What:** photographs taken by real photographers (licensed stock marked not-AI, or our own photos of real owners
+with permission), used the way Wispr uses people: real faces and hands, softly blurred behind product cards.
+**Source in use:** Adobe Stock free collection through the founder's Adobe connector; every result carries an
+`isGenTech` flag and only `false` (not AI) is used. Seven candidates licensed at no cost (florist at the counter,
+plumber in a kitchen, realtor outdoors, café owner, handyman on a call, pottery-shop owner, florist in a greenhouse);
+kept in the session scratchpad, not the repo, until chosen. He also selected some assets in the Adobe widget on his
+side; the tool does not pass his picks back, so he was asked which.
+
+## A-119 — The photo look of home v13: treated photo behind sharp cards, colour from the photo ^A-119
+
+**PARTLY SUPERSEDED (2026-10-08)**: the brown colours by R-050; photos are now blurred to colour only (A-120).
+
+**Approved (mildly):** 2026-10-08, founder, on home v13: *"looks good, not bad"* (in the same breath as R-046).
+**What specifically:** a real photo, warmer, less saturated, fine grain, blurred behind the live demo while the
+cards stay sharp on top; the page's colour sampled from the photo (walnut-to-caramel panel, caramel italics,
+espresso buttons, a latte note) in place of the black panel (R-044). What was *not* liked is the subject (R-046).
+
+## A-120 — Photos only as blurred colour; the hero shows messages thrown in and caught, no logo ^A-120
+
+**Direction:** 2026-10-08, founder: *"we'll be using irrelevant photos just to get the colour, like Wispr does, right?
+We'll be blurring every single thing. We don't want any context from the photos, just to use it as the background."*
+And: *"The messages are throwing up from the top-right corner or top-left corner, and they have been held by
+followup. Don't add followup's logo and stuff. Just show visually with animations, 3D motions, or whatever you can
+use to show what the direction of the product is, what we do, what we aim for."*
+**What:** (1) real photos (licensed, not AI), blurred until only colour is left, used as the background of blocks;
+(2) under the headline, customers' messages fly in from the top corners in 3D and are caught on one calm surface
+where each is handled; junk is thrown away; no logo or brand mark in the motion; almost no words.
+
+## A-121 — Aesthetic city photos (North America, Paris, Italy, Germany), softly blurred; say "in their language" ^A-121
+
+**Direction:** 2026-10-08, founder: *"I want aesthetic photos that have a North American touch, or maybe Italy's, or
+Paris, maybe Europe's, Germany's… It should say something about every language too, so we are covering this thing
+in every single language, right?"*
+**What:** real photos of streets (licensed, not AI), blurred softly enough that only the feel of the place remains
+(refines A-120's "blur everything"). One photo for everyone (R-048); he picks which.
+**Language, checked against the code:** true. FollowUp reads the customer's language from their first message and
+answers every message in it, keeping the same formality (tu/vous, du/Sie, tú/usted): `src/lib/leadLanguage.ts`,
+`src/lib/scoring.ts`. Wording to use: "in your customer's language", not "every language" (accuracy has not been
+reviewed by native speakers in every language).
+
+## A-122 — Home v18 as a whole ^A-122
+
+**Approved:** 2026-10-08, founder: *"looks way better"*, on v18: the journey after Send (followed up, booked, won),
+the five-step workflow rail, the scroll transition into the demo, and a different green-toned grainy photo per block.
+He did not single out one part; recorded as the whole version.
+
+## A-123 — The demo speaks the customer's language; Punjabi in English letters first ^A-123
+
+**Direction:** 2026-10-08, founder: *"when someone doesn't text a question… show them that we are following up in
+every single language we have right now… English, Punjabi in English. We have to show them."* He called it "the main
+thing". Built in v19 (see design-decisions). Wording stays "in your customer's language" (A-121).
+
+## A-124 — The demo's story is five steps: Caught, Answered, Followed up, Booked, Won ^A-124
+
+**Direction:** 2026-10-08, founder (R-055). Every conversation, example or the visitor's own, shows these five and
+only these; the bar under the demo names them; everything else is explained further down.
+
+## A-125 — Real channel logos where we name the channels we collect from ^A-125
+
+**Direction:** 2026-10-08, founder, on the "From" strip: *"Add the actual logos here."* Supersedes the earlier "plain
+line drawings, never the brands' own logos" choice for this strip. Logos come from Simple Icons (CC0 icon data; the
+trademarks stay their owners'); Outlook waits for Microsoft's own file; each brand's logo-use rules to be checked
+before launch.
+
+## A-126 — The v27 demo (side columns, see-through box, five steps, real logos), without any flip ^A-126
+
+**Approved:** 2026-10-08, founder, after v28 removed the side columns: *"Earlier, it was looking good, bro. I was just
+trying to make it simple in terms of not showing them everything; just the flip part was bad, else was good."*
+**Lesson (his words, generalised):** "keep it simple" meant fewer explanations, not fewer parts. Remove the part he names
+(the flip), keep the rest. Restored in v29, with the "Try it yourself" label he asked for in chat.
+
+## A-127 — "Try it yourself" is the heart of the page ^A-127
+
+**Approved:** 2026-10-09, founder: *"The main thing will be to let them hop on here, on this 'Try Yourself' part. This is
+the very interactive part. I loved it. Let's just make it more accurate."* Keep it front and centre; improve accuracy
+(real answers, real example questions), not breadth.
+
+## A-128 — The demo's language changes on every message, English first ^A-128
+
+**Direction:** 2026-10-09, founder, on the message list: *"we need to keep changing the language every time. I just
+noticed that we were showing the messages in English only, so let's just keep rotating every time."* The old order
+(three English first, A-123 / the "start with English" comment) meant most visitors never saw another language. Now:
+English opens, then the language changes with every message (English, Punjabi, English, French, English, Hindi,
+English, German, English, Spanish, Italian, Punjabi, loop); neighbours never share a language or a channel.
+Partly supersedes the ordering in A-123; "in your customer's language" (A-121) is unchanged.
+
+## A-129 — Keep "Open it to one calm list": the section that shows how easy the app is ^A-129
+
+**Direction:** 2026-10-09, founder: *"Then here, we will be showing how user-friendly we are. That's a good point, but
+we'll be updating this dashboard here. We'll be keeping this concept too."* The section stays; the app screen in it
+is replaced once he has updated the dashboard. Don't redesign it before then.
+
+## A-130 — The first-screen words, as they stand in v31 ^A-130
+
+**Approved:** 2026-10-09, founder, with a screenshot of the first screen: *"This text looks good bro."* What the
+screenshot shows, word for word: the "Free while in beta" pill; the headline "Never lose a lead *because you forgot to
+follow up.*" (second half in green italic); the label "Try it yourself" with "Type a question, as if you were a
+customer."; the "Or tap one:" questions; "Ask in English, Punjabi, Hindi, French or Spanish." Keep these words; change
+them only when he asks.
+
+## A-131 — Fonts: the ones in the preview screenshots (Tinos headings, DejaVu Sans text) ^A-131
+
+**PARTLY SUPERSEDED (2026-10-09) by A-134:** the text font went back to Public Sans; Tinos stays for headings.
+
+**Direction:** 2026-10-09, founder, after seeing screenshots: *"Bro, let's use this font that you just showed me right now."*
+**What it was:** the preview machine couldn't load the page's web fonts, so the screenshots showed Liberation Serif
+(headings) and DejaVu Sans / DejaVu Sans Mono (text and labels). Web equivalents now ship inside the page: **Tinos**
+(the same design as Liberation Serif, SIL Open Font License) and **DejaVu Sans / DejaVu Sans Mono** (free licence).
+**Inferred, to confirm:** that he meant the whole look of the screenshot (both the headings and the text), not just
+one of them. Supersedes the typefaces of A-104 (the italic rule stays). The app itself is unchanged until he says so.
+
+## A-132 — Blurred photos are the colour; product frames sit on them ^A-132
+
+**Approved:** 2026-10-09, founder: *"This concept of a blurred image is very good."* Every coloured block on the
+website is a blurred, green-toned city photo (A-120, A-121), not a flat or gradient fill: the demo, the cold-lead
+clock, the Today frame, How it works, the week, the "main thing" card, the closing. Each place uses its own crop.
+
+## A-133 — Try-it answers: accurate, positive, typed like a person ^A-133
+
+**Direction:** 2026-10-09, founder: *"make the answers to be very accurate and positive. It should feel like they are
+typing the replies… If it disappoints, the user is never going to come to our product… make sure nobody is
+disappointed."* The bar for every demo answer: it names the exact thing asked (the listing, the job, the day), says
+yes where it reasonably can, ends on one easy next step, sounds like the owner typing on a phone, never refuses,
+never quotes a price ($___). Typing is uneven with small pauses after commas and full stops. Same instructions in the
+prototype and in the real endpoint (PR #465).
+
+## A-134 — Text back in Public Sans; headings stay in Tinos ^A-134
+
+**Direction:** 2026-10-09, founder, minutes after A-131: *"the font that we are using right now has more width. I don't
+want that width, so make it simpler like we were using earlier."* DejaVu Sans is a wide face; the text, labels and
+buttons go back to **Public Sans** (labels: **IBM Plex Mono**), embedded. Headings keep **Tinos** (the serif from the
+screenshots he picked). **Lesson:** he reacts to width; prefer narrower faces for running text.
+
+## A-135 — Every logo in the "From" bar carries its name ^A-135
+
+**Direction:** 2026-10-09, founder, on the Outlook mark: *"Can you please make it more clear? I don't understand this."*
+and on the text-message icon: *"Don't feel like an SMS."* Each channel shows its name under the logo (Gmail, Outlook,
+Instagram, WhatsApp, Messenger, Text, Web form, Facebook ads); Outlook's mark is white on a blue tile; text messages
+are a green tile with a bubble that says "SMS". Names hide on phones.

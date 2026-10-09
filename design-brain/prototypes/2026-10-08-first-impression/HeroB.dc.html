@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>FollowUp first screen B, the clock</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Public+Sans:wght@300..700&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#faf7f2}
+a{color:inherit}
+:focus-visible{outline:2px solid #c96a1b;outline-offset:3px}
+@keyframes slideUp{from{opacity:0;transform:translateY(80px) rotate(0.6deg)}to{opacity:1;transform:rotate(0.6deg)}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(201,106,27,0.45)}50%{box-shadow:0 0 0 7px rgba(201,106,27,0)}}
+@keyframes pop{0%{transform:scale(0.9);opacity:0}100%{transform:scale(1);opacity:1}}
+.slideUp{animation:slideUp .8s cubic-bezier(.2,.9,.25,1) both}
+.pulse{animation:pulse 1.2s ease-in-out infinite}
+.pop{animation:pop .4s cubic-bezier(.34,1.56,.64,1) both}
+@media (prefers-reduced-motion: reduce){.slideUp,.pulse,.pop{animation:none}}
+</style>
+</helmet>
+<div style="position: relative; width: 100%; min-height: 900px; background: #faf7f2; color: #141312; font-family: 'Public Sans', system-ui, sans-serif; font-weight: 450; -webkit-font-smoothing: antialiased; overflow: hidden">
+
+<header style="position: absolute; top: 20px; left: 0; right: 0; z-index: 5; display: flex; justify-content: space-between; align-items: center; padding: 0 56px">
+<span style="display: inline-flex; align-items: center; gap: 9px; font-weight: 650; font-size: 19px"><svg width="13" height="20" viewBox="0 0 76.77 120" fill="currentColor" aria-hidden="true"><path d="M76.77 0 L73.12 20.29 C69.27 41.68 63.3 49.13 43.26 57.55 L9.78 71.61 L13.43 51.32 C17.29 29.93 23.26 22.48 43.3 14.06 Z"></path><path d="M41.97 67.16 L38 89.21 C35.69 102.04 32.11 106.51 20.08 111.56 L0 120 L3.97 97.95 C6.28 85.12 9.86 80.64 21.89 75.59 Z"></path></svg>FollowUp</span>
+<nav aria-label="Main" style="display: flex; align-items: center; gap: 28px; font-size: 15px">
+<a href="#how" style="text-decoration: none; color: #3f3a36">How it works</a>
+<a href="#prices" style="text-decoration: none; color: #3f3a36">Prices</a>
+<a href="#data" style="text-decoration: none; color: #3f3a36">Your data</a>
+<a href="#signin" style="text-decoration: none">Sign in</a>
+<a href="#start" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 20px; border-radius: 999px; background: #141312; color: #faf7f2; font-weight: 600; text-decoration: none">Start free</a>
+</nav>
+</header>
+
+<div style="padding-top: 104px; text-align: center">
+<h1 style="margin: 0 auto; max-width: 13em; font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 84px; line-height: 0.95; letter-spacing: -0.03em; text-wrap: balance">Never lose a lead <em>because you forgot to follow up.</em></h1>
+<p style="margin: 20px auto 0; max-width: 32em; font-size: 19px; line-height: 1.45; color: #2b2724">Every customer in your Gmail gets an answer in your words within a minute. You make the decisions.</p>
+<div style="margin-top: 26px; display: flex; justify-content: center; align-items: center; gap: 18px">
+<a href="#start" style="display: inline-flex; align-items: center; min-height: 56px; padding: 0 28px; border-radius: 999px; background: #141312; color: #faf7f2; font-weight: 600; font-size: 17px; text-decoration: none">Connect Gmail, start free</a>
+<span style="font-size: 14.5px; color: #736e68">Free in beta · No card</span>
+</div>
+</div>
+
+<div role="img" aria-label="An example: a customer's email with a clock counting how long she has waited. Within a minute FollowUp's reply, written in the owner's words, slides up over it and the clock stops." style="position: relative; margin: 44px auto 0; width: 920px; height: 380px">
+<div style="position: absolute; left: 0; right: 0; top: 0; border-radius: 28px; background: #ffffff; border: 1px solid #e6e0d6; padding: 26px 32px; box-shadow: 0 50px 80px -50px rgba(60,36,20,0.45)">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 16px">
+<div style="display: flex; align-items: center; gap: 12px"><span style="width: 40px; height: 40px; border-radius: 999px; background: #f1e4d8; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 650">PS</span><span><span style="display: block; font-size: 17px; font-weight: 650">Priya Sharma</span><span style="display: block; font-size: 13.5px; color: #736e68">to you · Gmail</span></span></div>
+<sc-if value="{{ waiting }}" hint-placeholder-val="{{ true }}"><span style="display: inline-flex; align-items: center; gap: 10px; padding: 9px 16px; border-radius: 999px; background: #fbeee2; color: #9a4f12; font-size: 15px; font-weight: 600"><span class="pulse" style="width: 9px; height: 9px; border-radius: 999px; background: #c96a1b"></span>Waiting for an answer · <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 500">{{ clock }}</span></span></sc-if>
+<sc-if value="{{ answered }}" hint-placeholder-val="{{ false }}"><span class="pop" style="display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 999px; background: #e6efe8; color: #2f6b4a; font-size: 15px; font-weight: 600"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Answer ready · <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 500">1:00</span></span></sc-if>
+</div>
+<p style="margin: 22px 0 0; font-family: 'Instrument Serif', Georgia, serif; font-size: 40px; line-height: 1.1">"Hi, is the 3-bedroom on Maple Street still available? Could I see it this weekend?"</p>
+</div>
+<sc-if value="{{ answered }}" hint-placeholder-val="{{ false }}">
+<div class="slideUp" style="position: absolute; left: 110px; right: -30px; top: 176px; border-radius: 28px; padding: 24px 30px; background: radial-gradient(70% 90% at 12% 10%, rgba(244,196,160,0.95), rgba(244,196,160,0) 70%), radial-gradient(70% 90% at 92% 95%, rgba(196,210,228,0.98), rgba(196,210,228,0) 70%), #f6f2ec; box-shadow: 0 50px 80px -40px rgba(60,36,20,0.55)">
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 12px"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: #57534e">Written in your words · waits for your OK</span><span style="font-size: 14px; color: #57534e">FollowUp</span></div>
+<p style="margin: 12px 0 0; font-family: 'Instrument Serif', Georgia, serif; font-size: 36px; line-height: 1.12">Hi Priya, yes, it's still available. Would Saturday morning work for a viewing?</p>
+<div style="margin-top: 16px; display: flex; align-items: center; gap: 14px"><span style="display: inline-flex; align-items: center; min-height: 46px; padding: 0 26px; border-radius: 999px; background: #141312; color: #faf7f2; font-size: 16px; font-weight: 600">Send</span><span style="font-size: 15px; color: #57534e">Edit</span><span style="margin-left: auto; font-size: 14px; color: #57534e">Goes from your own Gmail</span></div>
+</div>
+</sc-if>
+</div>
+<p style="margin: 34px 0 0; text-align: center; font-size: 12.5px; color: #736e68">An example, not a real customer. The clock runs fast here: a real reply takes about a minute.</p>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  state = { tick: 0 };
+  componentDidMount() {
+    const reduce = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) { this.setState({ tick: 20 }); return; }
+    this.timer = setInterval(() => { this.setState({ tick: this.state.tick >= 36 ? 0 : this.state.tick + 1 }); }, 250);
+  }
+  componentWillUnmount() { clearInterval(this.timer); }
+  renderVals() {
+    const t = Math.min(this.state.tick, 20);
+    const secs = t * 3;
+    const clock = '0:' + String(Math.min(secs, 59)).padStart(2, '0');
+    return { clock, waiting: t < 20, answered: t >= 20 };
+  }
+}
+</script>
+</body>
+</html>

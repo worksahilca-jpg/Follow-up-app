@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>FollowUp, how it works</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif&amp;family=Public+Sans:wght@300..700&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#fdfcfc}
+a{color:inherit}
+:focus-visible{outline:2px solid #c96a1b;outline-offset:3px}
+</style>
+</helmet>
+<div style="background: radial-gradient(60% 520px at 12% 0%, rgba(244,196,160,0.85), rgba(244,196,160,0) 70%), radial-gradient(55% 560px at 92% 0%, rgba(196,210,228,0.95), rgba(196,210,228,0) 70%), #fdfcfc; color: #0a0a0a; font-family: 'Public Sans', system-ui, sans-serif; font-weight: 420; -webkit-font-smoothing: antialiased; padding: 14px 16px 0">
+
+<header style="position: sticky; top: 14px; z-index: 10; display: flex; justify-content: center">
+<nav aria-label="Main" style="width: 100%; max-width: 1120px; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 7px 7px 7px 20px; background: rgba(255,255,255,0.72); backdrop-filter: blur(18px); border: 1px solid #e7e5e2; border-radius: 999px">
+<a href="#home" style="display: inline-flex; align-items: center; gap: 9px; font-weight: 600; font-size: 17px; text-decoration: none"><svg width="13" height="20" viewBox="0 0 76.77 120" fill="currentColor" aria-hidden="true"><path d="M76.77 0 L73.12 20.29 C69.27 41.68 63.3 49.13 43.26 57.55 L9.78 71.61 L13.43 51.32 C17.29 29.93 23.26 22.48 43.3 14.06 Z"></path><path d="M41.97 67.16 L38 89.21 C35.69 102.04 32.11 106.51 20.08 111.56 L0 120 L3.97 97.95 C6.28 85.12 9.86 80.64 21.89 75.59 Z"></path></svg>FollowUp</a>
+<div style="display: flex; gap: 28px; font-size: 14.5px; flex-wrap: wrap">
+<a href="#how" aria-current="page" style="text-decoration: none; font-weight: 600">How it works</a>
+<a href="#prices" style="text-decoration: none; color: #57534e">Prices</a>
+<a href="#data" style="text-decoration: none; color: #57534e">Your data</a>
+</div>
+<div style="display: flex; gap: 4px; align-items: center">
+<a href="#signin" style="font-size: 14.5px; padding: 12px 14px; text-decoration: none">Sign in</a>
+<a href="#start" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 20px; border-radius: 999px; background: #0a0a0a; color: #ffffff; font-size: 14.5px; font-weight: 500; text-decoration: none">Start free</a>
+</div>
+</nav>
+</header>
+
+<section aria-label="How it works" style="max-width: 1240px; margin: 0 auto; padding: 96px 8px 0">
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase; color: #57534e">How it works</div>
+<div style="display: flex; flex-wrap: wrap; gap: 24px 64px; align-items: flex-end; justify-content: space-between">
+<h1 style="margin: 18px 0 0; max-width: 9.5em; font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: clamp(60px, 8vw, 116px); line-height: 0.93; letter-spacing: -0.03em; text-wrap: balance">One customer's week, <span style="color: #8b857e">followed up.</span></h1>
+<p style="margin: 0 0 12px; max-width: 24em; font-size: 18px; line-height: 1.55; color: #3f3a36">Everything FollowUp does for one customer, from her first email to the booking. You step in only for the decisions.</p>
+</div>
+<div role="img" aria-label="A 40-second film recorded from the real app, with a play button." style="position: relative; margin-top: 56px; height: 560px; border-radius: 28px; overflow: hidden; background: linear-gradient(180deg, #0b1220 0%, #2b2536 55%, #6b4a4e 80%, #d9a48a 100%); box-shadow: 0 60px 120px -60px rgba(40,26,20,0.55)">
+<div aria-hidden="true" style="position: absolute; left: 50%; bottom: -60px; width: 78%; height: 420px; transform: translateX(-50%); border-radius: 20px 20px 0 0; background: #ffffff; box-shadow: 0 -20px 60px rgba(0,0,0,0.3); padding: 22px 26px; box-sizing: border-box">
+<div style="display: flex; gap: 8px"><span style="width: 9px; height: 9px; border-radius: 999px; background: #e7e5e2"></span><span style="width: 9px; height: 9px; border-radius: 999px; background: #e7e5e2"></span><span style="width: 9px; height: 9px; border-radius: 999px; background: #e7e5e2"></span></div>
+<div style="margin-top: 26px; font-family: 'Instrument Serif', Georgia, serif; font-size: 34px; color: #0a0a0a">4 customers are waiting on you.</div>
+<div style="margin-top: 18px; display: grid; gap: 10px">
+<div style="height: 54px; border-radius: 14px; background: #f6f3ef"></div>
+<div style="height: 54px; border-radius: 14px; border: 1px solid #efedea"></div>
+<div style="height: 54px; border-radius: 14px; border: 1px solid #efedea"></div>
+</div>
+</div>
+<span style="position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%); display: inline-flex; align-items: center; gap: 12px; padding: 10px 22px 10px 10px; border-radius: 999px; background: rgba(255,255,255,0.88); backdrop-filter: blur(16px); font-size: 16px; font-weight: 500; box-shadow: 0 20px 40px -20px rgba(0,0,0,0.5)"><span style="width: 48px; height: 48px; border-radius: 999px; background: #0a0a0a; display: inline-flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="#ffffff" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"></path></svg></span>Watch it · 40 sec</span>
+</div>
+<p style="margin: 14px 0 0; font-size: 13.5px; color: #736e68">Recorded from the real app, muted, with Pause. (To record before this ships.)</p>
+</section>
+
+<section aria-label="The week" style="max-width: 1240px; margin: 0 auto; padding: 140px 8px 0; display: flex; gap: 64px; align-items: flex-start">
+<nav aria-label="The week" style="position: sticky; top: 110px; flex: 0 0 250px; display: flex; flex-direction: column">
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #736e68; padding-bottom: 14px">Her week</div>
+<a href="#w1" style="text-decoration: none; padding: 12px 0 12px 16px; border-left: 2px solid #0a0a0a"><span style="display: flex; align-items: center; gap: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 0.05em; text-transform: uppercase"><span style="width: 8px; height: 8px; border-radius: 999px; background: #c96a1b"></span>Tue 11:48 PM</span><span style="display: block; margin-top: 4px; font-size: 16px; font-weight: 500">She writes</span></a>
+<a href="#w2" style="text-decoration: none; padding: 12px 0 12px 16px; border-left: 1px solid #e7e5e2; margin-left: 0.5px; color: #a39d97"><span style="display: block; font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 0.05em; text-transform: uppercase">Wed 7:02 AM</span><span style="display: block; margin-top: 4px; font-size: 16px">You tap Send</span></a>
+<a href="#w3" style="text-decoration: none; padding: 12px 0 12px 16px; border-left: 1px solid #e7e5e2; margin-left: 0.5px; color: #a39d97"><span style="display: block; font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 0.05em; text-transform: uppercase">Wed 2:10 PM</span><span style="display: block; margin-top: 4px; font-size: 16px">She asks the price</span></a>
+<a href="#w4" style="text-decoration: none; padding: 12px 0 12px 16px; border-left: 1px solid #e7e5e2; margin-left: 0.5px; color: #a39d97"><span style="display: block; font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 0.05em; text-transform: uppercase">Thursday</span><span style="display: block; margin-top: 4px; font-size: 16px">She goes quiet</span></a>
+<a href="#w5" style="text-decoration: none; padding: 12px 0 12px 16px; border-left: 1px solid #e7e5e2; margin-left: 0.5px; color: #a39d97"><span style="display: block; font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 0.05em; text-transform: uppercase">Fri 11:05 AM</span><span style="display: block; margin-top: 4px; font-size: 16px">She comes back</span></a>
+<a href="#w6" style="text-decoration: none; padding: 12px 0 12px 16px; border-left: 1px solid #e7e5e2; margin-left: 0.5px; color: #a39d97"><span style="display: block; font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 0.05em; text-transform: uppercase">Mon 8:00 AM</span><span style="display: block; margin-top: 4px; font-size: 16px">Your week, in one email</span></a>
+<p style="margin: 18px 0 0; font-size: 13px; line-height: 1.45; color: #736e68">The time you're reading lights up as you scroll.</p>
+</nav>
+
+<div style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column">
+
+<article id="w1" style="padding: 0 0 72px; display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 40px; align-items: start">
+<div>
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #57534e">Tue 11:48 PM</div>
+<h2 style="margin: 12px 0 0; font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 52px; line-height: 1; letter-spacing: -0.02em">She writes. <span style="color: #8b857e">You're asleep.</span></h2>
+<p style="margin: 16px 0 0; font-size: 17px; line-height: 1.55; color: #3f3a36">FollowUp reads her email, sees she's a customer and not a newsletter, and writes the reply in your words.</p>
+</div>
+<div style="border-radius: 24px; padding: 22px; background: linear-gradient(180deg, #0b1220, #2b2536); display: flex; flex-direction: column; gap: 12px">
+<div style="max-width: 320px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.18); border-radius: 18px; padding: 14px 16px; color: #f6efe6"><div style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #d9d2c9">Gmail · 11:48 PM</div><p style="margin: 6px 0 0; font-size: 15px; line-height: 1.45">Hi, is the 3-bedroom on Maple Street still available? Could I see it this weekend?</p></div>
+<div style="align-self: flex-end; max-width: 340px; border-radius: 18px; padding: 14px 16px; background: radial-gradient(70% 90% at 12% 10%, rgba(244,196,160,0.9), rgba(244,196,160,0) 70%), radial-gradient(70% 90% at 92% 95%, rgba(196,210,228,0.95), rgba(196,210,228,0) 70%), #f3efea"><div style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #57534e">Written · 11:49 PM · in your words</div><p style="margin: 6px 0 0; font-size: 15px; line-height: 1.45">Hi Priya, yes, it's still available. Would Saturday morning work for a viewing?</p></div>
+</div>
+</article>
+
+<article id="w2" style="padding: 72px 0; border-top: 1px solid #e7e5e2; display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 40px; align-items: start">
+<div>
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #57534e">Wed 7:02 AM</div>
+<h2 style="margin: 12px 0 0; font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 52px; line-height: 1; letter-spacing: -0.02em">You tap Send. <span style="color: #8b857e">That's your part.</span></h2>
+<p style="margin: 16px 0 0; font-size: 17px; line-height: 1.55; color: #3f3a36">The reply waits in Today, with the reason she's on top. Change a word or send it as it is. It goes from your own Gmail.</p>
+</div>
+<div style="border-radius: 24px; padding: 22px; background: #ffffff; border: 1px solid #ecebe8; box-shadow: 0 30px 60px -40px rgba(40,26,20,0.35)">
+<div style="display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 12px; padding: 12px; border-radius: 14px; background: #f6f3ef"><span style="width: 34px; height: 34px; border-radius: 999px; background: #f1e4d8; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600">PS</span><span><span style="display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 500">Priya Sharma <span style="width: 7px; height: 7px; border-radius: 999px; background: #c96a1b"></span></span><span style="display: block; margin-top: 2px; font-size: 14px; color: #57534e">Asked for a viewing this weekend · waiting 7 h</span></span><span style="font-size: 12.5px; color: #736e68">7 h</span></div>
+<p style="margin: 16px 4px 0; font-size: 15.5px; line-height: 1.5">Hi Priya, yes, the 3-bedroom on Maple Street is still available. Would Saturday morning work for a viewing?</p>
+<div style="margin: 16px 4px 0; display: flex; gap: 10px"><span style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 24px; border-radius: 999px; background: #0a0a0a; color: #ffffff; font-size: 15px; font-weight: 500">Send</span><span style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 20px; border-radius: 999px; border: 1px solid rgba(10,10,10,0.14); font-size: 15px">Edit</span></div>
+</div>
+</article>
+
+<article id="w3" style="padding: 72px 0; border-top: 1px solid #e7e5e2; display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 40px; align-items: start">
+<div>
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #57534e">Wed 2:10 PM</div>
+<h2 style="margin: 12px 0 0; font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 52px; line-height: 1; letter-spacing: -0.02em">She asks the price. <span style="color: #8b857e">That's your call.</span></h2>
+<p style="margin: 16px 0 0; font-size: 17px; line-height: 1.55; color: #3f3a36">A price, a date or anything tense always comes to you. If you're busy, after 30 minutes she gets a short note, word for word:</p>
+</div>
+<div style="display: flex; flex-direction: column; gap: 12px">
+<div style="border-radius: 20px; padding: 16px 18px; background: #ffffff; border: 1px solid #e7e5e2"><div style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #736e68">Sent for you · 2:40 PM</div><p style="margin: 6px 0 0; font-size: 15.5px; line-height: 1.5">Thanks for asking! Let me check and I'll send you the price soon.</p></div>
+<div style="border-radius: 20px; padding: 16px 18px; background: #ffffff; border: 1px solid #e7e5e2; box-shadow: 0 30px 60px -40px rgba(40,26,20,0.35)"><span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: #c96a1b; font-weight: 500"><span style="width: 7px; height: 7px; border-radius: 999px; background: #c96a1b"></span>Needs you · a price</span><p style="margin: 8px 0 0; font-size: 15.5px; line-height: 1.5">The asking price is <span style="display: inline-block; min-width: 92px; border-bottom: 1.5px solid #0a0a0a; color: #736e68">$</span>, and it includes the parking spot.</p><div style="margin-top: 14px"><span style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 24px; border-radius: 999px; background: #0a0a0a; color: #ffffff; font-size: 15px; font-weight: 500">Add the price and send</span></div></div>
+</div>
+</article>
+
+<article id="w4" style="padding: 72px 0; border-top: 1px solid #e7e5e2; display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 40px; align-items: start">
+<div>
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #57534e">Thursday</div>
+<h2 style="margin: 12px 0 0; font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 52px; line-height: 1; letter-spacing: -0.02em">She goes quiet. <span style="color: #8b857e">It doesn't forget.</span></h2>
+<p style="margin: 16px 0 0; font-size: 17px; line-height: 1.55; color: #3f3a36">A check-in is planned for Friday morning, in your words. You choose: it waits for your OK, or it goes by itself.</p>
+</div>
+<div style="border-radius: 24px; padding: 22px; background: radial-gradient(70% 90% at 12% 10%, rgba(244,196,160,0.9), rgba(244,196,160,0) 70%), radial-gradient(70% 90% at 92% 95%, rgba(196,210,228,0.95), rgba(196,210,228,0) 70%), #f3efea">
+<div style="display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 14px 16px; font-size: 15.5px; line-height: 1.5">
+<span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #57534e; padding-top: 3px">Wed 7:02</span><span>Your reply went out.</span>
+<span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #57534e; padding-top: 3px">Thu</span><span style="color: #57534e">No answer.</span>
+<span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #57534e; padding-top: 3px">Fri 9:00</span><span style="background: #ffffff; border-radius: 14px; padding: 12px 14px">Hi Priya, just checking in. Still keen to see the house this weekend?</span>
+</div>
+</div>
+</article>
+
+<article id="w5" style="padding: 72px 0; border-top: 1px solid #e7e5e2; display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 40px; align-items: start">
+<div>
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #57534e">Fri 11:05 AM</div>
+<h2 style="margin: 12px 0 0; font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 52px; line-height: 1; letter-spacing: -0.02em">She comes back. <span style="color: #8b857e">It stops.</span></h2>
+<p style="margin: 16px 0 0; font-size: 17px; line-height: 1.55; color: #3f3a36">The moment she replies, every check-in stops, and her answer is on top of Today.</p>
+</div>
+<div style="border-radius: 24px; padding: 22px; background: #ffffff; border: 1px solid #ecebe8">
+<div style="border-radius: 16px; padding: 14px 16px; background: #f6f3ef; font-size: 15.5px; line-height: 1.5"><div style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #736e68">Priya · 11:05 AM</div><div style="margin-top: 6px">Thanks! Booking the viewing now.</div></div>
+<div style="margin-top: 14px; display: flex; align-items: center; gap: 8px; font-size: 14.5px; color: #3f3a36"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Check-ins stopped. She replied.</div>
+</div>
+</article>
+
+<article id="w6" style="padding: 72px 0 0; border-top: 1px solid #e7e5e2; display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 40px; align-items: start">
+<div>
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #57534e">Mon 8:00 AM</div>
+<h2 style="margin: 12px 0 0; font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 52px; line-height: 1; letter-spacing: -0.02em">Your week, <span style="color: #8b857e">in one email.</span></h2>
+<p style="margin: 16px 0 0; font-size: 17px; line-height: 1.55; color: #3f3a36">Every Monday: who came back, who booked.</p>
+</div>
+<div style="border-radius: 24px; padding: 24px; background: #ffffff; border: 1px solid #ecebe8; box-shadow: 0 30px 60px -40px rgba(40,26,20,0.35)">
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #736e68">Your week · an example</div>
+<div style="margin-top: 14px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1px solid #e7e5e2">
+<div style="padding: 14px 14px 0 0; border-right: 1px solid #e7e5e2"><div style="font-family: 'Instrument Serif', Georgia, serif; font-size: 48px; line-height: 1">3</div><div style="margin-top: 6px; font-size: 14.5px; color: #57534e">came back after a follow-up</div></div>
+<div style="padding: 14px 0 0 14px"><div style="font-family: 'Instrument Serif', Georgia, serif; font-size: 48px; line-height: 1">2</div><div style="margin-top: 6px; font-size: 14.5px; color: #57534e">booked a viewing</div></div>
+</div>
+</div>
+</article>
+</div>
+</section>
+
+<section aria-label="Underneath" style="max-width: 1240px; margin: 0 auto; padding: 150px 8px 0">
+<h2 style="margin: 0; max-width: 14em; font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: clamp(44px, 5vw, 72px); line-height: 0.98; letter-spacing: -0.02em">Simple on the outside. <span style="color: #8b857e">The rest is there when you want it.</span></h2>
+<div style="margin-top: 44px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border-top: 1px solid #0a0a0a">
+<div style="padding: 22px 20px 0 0; border-right: 1px solid #e7e5e2"><div style="font-size: 17px; font-weight: 600">Today</div><div style="margin-top: 6px; font-size: 15px; line-height: 1.5; color: #57534e">Who needs you, and why.</div></div>
+<div style="padding: 22px 20px 0; border-right: 1px solid #e7e5e2"><div style="font-size: 17px; font-weight: 600">Follow-up plans</div><div style="margin-top: 6px; font-size: 15px; line-height: 1.5; color: #57534e">Check-ins you'd forget.</div></div>
+<div style="padding: 22px 20px 0; border-right: 1px solid #e7e5e2"><div style="font-size: 17px; font-weight: 600">Rules</div><div style="margin-top: 6px; font-size: 15px; line-height: 1.5; color: #57534e">What sends on its own.</div></div>
+<div style="padding: 22px 20px 0; border-right: 1px solid #e7e5e2"><div style="font-size: 17px; font-weight: 600">Your week</div><div style="margin-top: 6px; font-size: 15px; line-height: 1.5; color: #57534e">Every Monday: who booked.</div></div>
+<div style="padding: 22px 0 0 20px"><div style="font-size: 17px; font-weight: 600">Your team</div><div style="margin-top: 6px; font-size: 15px; line-height: 1.5; color: #57534e">Customers shared out evenly.</div></div>
+</div>
+</section>
+
+<section aria-label="Questions" style="max-width: 1240px; margin: 0 auto; padding: 150px 8px 0; display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 64px">
+<div>
+<h2 style="margin: 0; font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 64px; line-height: 0.98; letter-spacing: -0.02em">Straight <span style="color: #8b857e">answers.</span></h2>
+<p style="margin: 18px 0 0; font-size: 16.5px; line-height: 1.55; color: #57534e">And a real person on email if you want one: <a href="#contact" style="color: #0a0a0a">contact@followupbase.io</a></p>
+</div>
+<div style="border-top: 1px solid #0a0a0a">
+<div style="padding: 22px 0; border-bottom: 1px solid #e7e5e2"><div style="display: flex; justify-content: space-between; gap: 16px; font-size: 19px; font-weight: 500">Will it send things on its own? <span aria-hidden="true" style="color: #736e68">−</span></div><p style="margin: 12px 0 0; max-width: 38em; font-size: 16px; line-height: 1.6; color: #3f3a36">If you choose Automatic when you set up, yes: thanks, answers it is sure of, and check-ins. A price, a date or anything tense comes to you first. It stops the moment a customer answers. Prefer to check everything? Choose Assisted, or switch any time in Settings.</p></div>
+<div style="padding: 22px 0; border-bottom: 1px solid #e7e5e2; display: flex; justify-content: space-between; gap: 16px; font-size: 19px; font-weight: 500">Why not just set a reminder? <span aria-hidden="true" style="color: #736e68">+</span></div>
+<div style="padding: 22px 0; border-bottom: 1px solid #e7e5e2; display: flex; justify-content: space-between; gap: 16px; font-size: 19px; font-weight: 500">Is it for a team, or just me? <span aria-hidden="true" style="color: #736e68">+</span></div>
+<div style="padding: 22px 0; border-bottom: 1px solid #e7e5e2; display: flex; justify-content: space-between; gap: 16px; font-size: 19px; font-weight: 500">Can it answer my phone? <span aria-hidden="true" style="color: #736e68">+</span></div>
+</div>
+</section>
+
+<section aria-label="Start free" style="padding: 140px 0 24px">
+<div style="position: relative; max-width: 1240px; margin: 0 auto; box-sizing: border-box; border-radius: 40px; padding: 96px 24px 90px; text-align: center; color: #f6efe6; overflow: hidden; background: linear-gradient(180deg, #0b1220 0%, #2b2536 46%, #8a5a52 78%, #e8b08f 100%)">
+<h2 style="margin: 0; font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 96px; line-height: 0.92; letter-spacing: -0.03em">Start free.</h2>
+<div style="margin-top: 30px"><a href="#start" style="display: inline-flex; align-items: center; min-height: 56px; padding: 0 28px; border-radius: 999px; background: #f6efe6; color: #0a0a0a; font-weight: 500; font-size: 16.5px; text-decoration: none">Connect Gmail, start free</a></div>
+<p style="margin: 16px 0 0; font-size: 14.5px; color: #2a1d1a">Free while in beta · No credit card</p>
+</div>
+</section>
+
+<footer style="max-width: 1240px; margin: 0 auto; padding: 36px 8px 48px; display: flex; flex-wrap: wrap; gap: 12px 28px; font-size: 14.5px; color: #57534e">
+<span style="color: #0a0a0a; font-weight: 600">FollowUp</span><span>How it works</span><span>Prices</span><span>Your data</span><span>Privacy</span><span>Terms</span><span>contact@followupbase.io</span>
+</footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":5200}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

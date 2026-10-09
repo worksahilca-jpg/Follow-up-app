@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>FollowUp first screen A5, depth</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Public+Sans:wght@300..700&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#151210}
+a{color:inherit}
+button{font:inherit;cursor:pointer}
+input{font:inherit}
+#ask::placeholder{color:#8f877e}
+:focus-visible{outline:2px solid #f3cfb3;outline-offset:3px}
+@keyframes drift{from{transform:translateY(0)}to{transform:translateY(-50%)}}
+@keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.drift{animation:drift 80s linear infinite}
+.caret{animation:blink 1s steps(1) infinite}
+.rise{animation:rise .45s cubic-bezier(.2,.8,.2,1) both}
+.warm{transition:opacity 1.4s ease}
+.lift{transition:box-shadow 1.4s ease, transform 1.4s cubic-bezier(.2,.8,.2,1)}
+@media (prefers-reduced-motion: reduce){.drift,.caret,.rise{animation:none}.warm,.lift{transition:none}}
+</style>
+</helmet>
+<div style="position: relative; width: 100%; min-height: 900px; background: #151210; color: #faf7f2; font-family: 'Public Sans', system-ui, sans-serif; font-weight: 450; -webkit-font-smoothing: antialiased; overflow: hidden">
+<div aria-hidden="true" style="position: absolute; inset: 0; display: flex; gap: 40px; padding: 0 40px; font-family: 'Instrument Serif', Georgia, serif; font-style: italic; line-height: 1.15; color: #f3e9de; pointer-events: none; -webkit-mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent); mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent)"><div style="flex: 1 1 0; min-width: 0; overflow: hidden; font-size: 17px; opacity: 0.05; filter: blur(1.2px)"><div class="drift" style="animation-duration: 70s; animation-delay: -0s"><div style="padding: 16px 0">Is it still available?</div><div style="padding: 16px 0">How much for a full colour?</div><div style="padding: 16px 0">Can you come today?</div><div style="padding: 16px 0">Do you take new patients?</div><div style="padding: 16px 0">What time works Saturday?</div><div style="padding: 16px 0">Is the price firm?</div><div style="padding: 16px 0">Do you do weekends?</div><div style="padding: 16px 0">Could I see it this week?</div><div style="padding: 16px 0">Is it still available?</div><div style="padding: 16px 0">How much for a full colour?</div><div style="padding: 16px 0">Can you come today?</div><div style="padding: 16px 0">Do you take new patients?</div><div style="padding: 16px 0">What time works Saturday?</div><div style="padding: 16px 0">Is the price firm?</div><div style="padding: 16px 0">Do you do weekends?</div><div style="padding: 16px 0">Could I see it this week?</div></div></div><div style="flex: 1 1 0; min-width: 0; overflow: hidden; font-size: 21px; opacity: 0.08; filter: blur(0.7px)"><div class="drift" style="animation-duration: 83s; animation-delay: -9s"><div style="padding: 16px 0">Is the price firm?</div><div style="padding: 16px 0">Do you do weekends?</div><div style="padding: 16px 0">Could I see it this week?</div><div style="padding: 16px 0">Are condo fees included?</div><div style="padding: 16px 0">Can I book for two?</div><div style="padding: 16px 0">Is parking included?</div><div style="padding: 16px 0">Do you have evening slots?</div><div style="padding: 16px 0">How soon can you start?</div><div style="padding: 16px 0">Is the price firm?</div><div style="padding: 16px 0">Do you do weekends?</div><div style="padding: 16px 0">Could I see it this week?</div><div style="padding: 16px 0">Are condo fees included?</div><div style="padding: 16px 0">Can I book for two?</div><div style="padding: 16px 0">Is parking included?</div><div style="padding: 16px 0">Do you have evening slots?</div><div style="padding: 16px 0">How soon can you start?</div></div></div><div style="flex: 1 1 0; min-width: 0; overflow: hidden; font-size: 27px; opacity: 0.12; filter: blur(0px)"><div class="drift" style="animation-duration: 96s; animation-delay: -18s"><div style="padding: 16px 0">Is parking included?</div><div style="padding: 16px 0">Do you have evening slots?</div><div style="padding: 16px 0">How soon can you start?</div><div style="padding: 16px 0">Can you send a quote?</div><div style="padding: 16px 0">Is the Elm St house still on?</div><div style="padding: 16px 0">Any openings tomorrow?</div><div style="padding: 16px 0">Do you take insurance?</div><div style="padding: 16px 0">Can I change my booking?</div><div style="padding: 16px 0">Is parking included?</div><div style="padding: 16px 0">Do you have evening slots?</div><div style="padding: 16px 0">How soon can you start?</div><div style="padding: 16px 0">Can you send a quote?</div><div style="padding: 16px 0">Is the Elm St house still on?</div><div style="padding: 16px 0">Any openings tomorrow?</div><div style="padding: 16px 0">Do you take insurance?</div><div style="padding: 16px 0">Can I change my booking?</div></div></div><div style="flex: 1 1 0; min-width: 0; overflow: hidden; font-size: 31px; opacity: 0.13; filter: blur(0px)"><div class="drift" style="animation-duration: 109s; animation-delay: -27s"><div style="padding: 16px 0">Any openings tomorrow?</div><div style="padding: 16px 0">Do you take insurance?</div><div style="padding: 16px 0">Can I change my booking?</div><div style="padding: 16px 0">What's included in the price?</div><div style="padding: 16px 0">Are you open on Sunday?</div><div style="padding: 16px 0">Thanks, I'll think about it.</div><div style="padding: 16px 0">Still keen, can we talk?</div><div style="padding: 16px 0">Do you fix water heaters?</div><div style="padding: 16px 0">Any openings tomorrow?</div><div style="padding: 16px 0">Do you take insurance?</div><div style="padding: 16px 0">Can I change my booking?</div><div style="padding: 16px 0">What's included in the price?</div><div style="padding: 16px 0">Are you open on Sunday?</div><div style="padding: 16px 0">Thanks, I'll think about it.</div><div style="padding: 16px 0">Still keen, can we talk?</div><div style="padding: 16px 0">Do you fix water heaters?</div></div></div><div style="flex: 1 1 0; min-width: 0; overflow: hidden; font-size: 24px; opacity: 0.09; filter: blur(0.4px)"><div class="drift" style="animation-duration: 122s; animation-delay: -36s"><div style="padding: 16px 0">Thanks, I'll think about it.</div><div style="padding: 16px 0">Still keen, can we talk?</div><div style="padding: 16px 0">Do you fix water heaters?</div><div style="padding: 16px 0">Is the basement finished?</div><div style="padding: 16px 0">Is it still available?</div><div style="padding: 16px 0">How much for a full colour?</div><div style="padding: 16px 0">Can you come today?</div><div style="padding: 16px 0">Do you take new patients?</div><div style="padding: 16px 0">Thanks, I'll think about it.</div><div style="padding: 16px 0">Still keen, can we talk?</div><div style="padding: 16px 0">Do you fix water heaters?</div><div style="padding: 16px 0">Is the basement finished?</div><div style="padding: 16px 0">Is it still available?</div><div style="padding: 16px 0">How much for a full colour?</div><div style="padding: 16px 0">Can you come today?</div><div style="padding: 16px 0">Do you take new patients?</div></div></div><div style="flex: 1 1 0; min-width: 0; overflow: hidden; font-size: 19px; opacity: 0.06; filter: blur(1.0px)"><div class="drift" style="animation-duration: 135s; animation-delay: -45s"><div style="padding: 16px 0">How much for a full colour?</div><div style="padding: 16px 0">Can you come today?</div><div style="padding: 16px 0">Do you take new patients?</div><div style="padding: 16px 0">What time works Saturday?</div><div style="padding: 16px 0">Is the price firm?</div><div style="padding: 16px 0">Do you do weekends?</div><div style="padding: 16px 0">Could I see it this week?</div><div style="padding: 16px 0">Are condo fees included?</div><div style="padding: 16px 0">How much for a full colour?</div><div style="padding: 16px 0">Can you come today?</div><div style="padding: 16px 0">Do you take new patients?</div><div style="padding: 16px 0">What time works Saturday?</div><div style="padding: 16px 0">Is the price firm?</div><div style="padding: 16px 0">Do you do weekends?</div><div style="padding: 16px 0">Could I see it this week?</div><div style="padding: 16px 0">Are condo fees included?</div></div></div></div>
+<div aria-hidden="true" style="position: absolute; left: 0; top: 0; bottom: 0; width: 780px; background: radial-gradient(70% 62% at 40% 50%, #151210 55%, rgba(21,18,16,0) 100%); pointer-events: none"></div>
+<header style="position: absolute; top: 20px; left: 0; right: 0; z-index: 5; display: flex; justify-content: space-between; align-items: center; padding: 0 56px">
+<span style="display: inline-flex; align-items: center; gap: 9px; font-weight: 650; font-size: 19px"><svg width="13" height="20" viewBox="0 0 76.77 120" fill="currentColor" aria-hidden="true"><path d="M76.77 0 L73.12 20.29 C69.27 41.68 63.3 49.13 43.26 57.55 L9.78 71.61 L13.43 51.32 C17.29 29.93 23.26 22.48 43.3 14.06 Z"></path><path d="M41.97 67.16 L38 89.21 C35.69 102.04 32.11 106.51 20.08 111.56 L0 120 L3.97 97.95 C6.28 85.12 9.86 80.64 21.89 75.59 Z"></path></svg>FollowUp</span>
+<nav aria-label="Main" style="display: flex; align-items: center; gap: 28px; font-size: 15px">
+<a href="#how" style="text-decoration: none; color: #c9c1b7">How it works</a><a href="#prices" style="text-decoration: none; color: #c9c1b7">Prices</a><a href="#data" style="text-decoration: none; color: #c9c1b7">Your data</a><a href="#signin" style="text-decoration: none">Sign in</a>
+<a href="#start" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 20px; border-radius: 999px; background: #faf7f2; color: #141312; font-weight: 600; text-decoration: none">Start free</a>
+</nav>
+</header>
+<div style="position: absolute; left: 56px; top: 0; bottom: 0; width: 600px; display: flex; flex-direction: column; justify-content: center; z-index: 2">
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: #a39b91; display: flex; align-items: center; gap: 10px"><span style="width: 8px; height: 8px; border-radius: 999px; background: #c96a1b"></span>For Gmail · free while in beta</div>
+<h1 style="margin: 22px 0 0; font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 96px; line-height: 0.93; letter-spacing: -0.03em; color: #faf7f2">Never lose a lead <em style="color: #f3cfb3">because you forgot to follow up.</em></h1>
+<p style="margin: 26px 0 0; max-width: 27em; font-size: 19px; line-height: 1.5; color: #bdb5ab">FollowUp reads the customers in your Gmail, answers them in your words within minutes, and checks in if they go quiet. When something needs your decision, like a price or a date, it hands it to you.</p>
+<div style="margin-top: 30px; display: flex; align-items: center; gap: 18px; flex-wrap: wrap">
+<a href="#start" style="display: inline-flex; align-items: center; min-height: 58px; padding: 0 30px; border-radius: 999px; background: #faf7f2; color: #141312; font-weight: 600; font-size: 17px; text-decoration: none">Connect Gmail, start free</a>
+<span style="font-size: 15px; color: #a39b91">Or try it right here →</span>
+</div>
+</div>
+<div style="position: absolute; right: 48px; top: 92px; bottom: 36px; width: 620px; z-index: 2; border-radius: 36px; background: rgba(34,30,27,0.96); border: 1px solid rgba(255,240,225,0.08); box-shadow: 0 60px 120px -40px rgba(0,0,0,0.8); padding: 28px 30px; box-sizing: border-box; display: flex; flex-direction: column">
+
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #a39b91">Try it · ask what your customers ask</div>
+<div style="margin-top: 12px; display: flex; gap: 6px; flex-wrap: wrap">
+<sc-for list="{{ trades }}" as="t" hint-placeholder-count="4"><button type="button" onClick="{{ t.pick }}" aria-pressed="{{ t.on }}" style="min-height: 40px; padding: 0 15px; border-radius: 999px; border: 1px solid {{ t.bd }}; background: {{ t.bg }}; color: {{ t.fg }}; font-size: 14.5px; font-weight: 600">{{ t.label }}</button></sc-for>
+</div>
+<div style="margin-top: 14px; display: flex; flex-direction: column; gap: 6px">
+<sc-for list="{{ qs }}" as="q" hint-placeholder-count="3"><button type="button" onClick="{{ q.pick }}" style="text-align: left; min-height: 44px; padding: 10px 14px; border-radius: 14px; border: 1px solid {{ q.bd }}; background: {{ q.bg }}; color: #ece5dc; font-size: 14.5px; line-height: 1.35">“{{ q.q }}”</button></sc-for>
+</div>
+<form onSubmit="{{ submit }}" style="margin-top: 10px; display: flex; gap: 8px">
+<label for="ask" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Type a question your customer might ask</label>
+<input id="ask" value="{{ typed }}" onChange="{{ onType }}" placeholder="Or type your own customer question…" style="flex: 1 1 auto; min-width: 0; min-height: 44px; padding: 0 14px; border-radius: 14px; border: 1px solid rgba(255,240,225,0.16); background: rgba(255,240,225,0.05); font-size: 14.5px; color: #faf7f2">
+<button type="submit" style="flex: 0 0 auto; min-height: 44px; padding: 0 18px; border-radius: 999px; border: 0; background: #faf7f2; color: #141312; font-size: 14.5px; font-weight: 600">Ask</button>
+</form>
+<div style="margin-top: 22px; display: flex; flex-direction: column; gap: 12px">
+<div style="align-self: flex-start; max-width: 88%; background: #2a2521; border: 1px solid rgba(255,240,225,0.08); border-radius: 18px 18px 18px 6px; padding: 12px 14px"><div style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #8f877e">Your customer · Gmail</div><div style="margin-top: 5px; font-size: 16px; line-height: 1.4; color: #ece5dc">{{ asked }}</div></div>
+<div class="lift" style="margin-left: -64px; box-sizing: border-box; border-radius: 20px 20px 6px 20px; padding: 18px 22px; background: radial-gradient(70% 90% at 12% 10%, rgba(244,196,160,0.95), rgba(244,196,160,0) 70%), radial-gradient(70% 90% at 92% 95%, rgba(196,210,228,0.98), rgba(196,210,228,0) 70%), #f6f2ec; color: #141312; box-shadow: {{ replyGlow }}; transform: {{ replyLift }}">
+<sc-if value="{{ handed }}" hint-placeholder-val="{{ false }}"><div style="display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 650; color: #9a4f12"><span style="width: 7px; height: 7px; border-radius: 999px; background: #c96a1b"></span>Comes to you first</div></sc-if>
+<sc-if value="{{ notHanded }}" hint-placeholder-val="{{ true }}"><div style="display: inline-flex; align-items: center; gap: 7px; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #57534e"><svg width="9" height="14" viewBox="0 0 76.77 120" fill="currentColor" aria-hidden="true"><path d="M76.77 0 L73.12 20.29 C69.27 41.68 63.3 49.13 43.26 57.55 L9.78 71.61 L13.43 51.32 C17.29 29.93 23.26 22.48 43.3 14.06 Z"></path><path d="M41.97 67.16 L38 89.21 C35.69 102.04 32.11 106.51 20.08 111.56 L0 120 L3.97 97.95 C6.28 85.12 9.86 80.64 21.89 75.59 Z"></path></svg>Written in your words</div></sc-if>
+<div style="margin-top: 6px; min-height: 56px; font-family: 'Instrument Serif', Georgia, serif; font-size: 25px; line-height: 1.17">{{ shown }}<sc-if value="{{ writing }}" hint-placeholder-val="{{ false }}"><span class="caret">▍</span></sc-if></div>
+<sc-if value="{{ done }}" hint-placeholder-val="{{ true }}"><div class="rise" style="margin-top: 10px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap"><span style="display: inline-flex; align-items: center; min-height: 40px; padding: 0 18px; border-radius: 999px; background: #141312; color: #faf7f2; font-size: 14px; font-weight: 600">Send</span><span style="font-size: 14px; color: #57534e">Edit</span></div></sc-if>
+</div>
+<sc-if value="{{ hasNote }}" hint-placeholder-val="{{ false }}"><p class="rise" style="margin: 0; font-size: 13.5px; line-height: 1.45; color: #b8b0a6">{{ note }}</p></sc-if>
+</div>
+<p style="margin: auto 0 0; padding-top: 12px; font-size: 12px; color: #8f877e">Examples. In your account it uses your own hours, prices and facts.</p>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  state = { trade: 0, q: 0, typed: '', custom: null, n: 0, idle: 0 };
+  componentDidMount() {
+    this.data = [{"trade": "Realtor", "qs": [{"q": "Is the 3-bedroom on Maple Street still available?", "a": "Hi! Yes, it's still available. Would Saturday at 10 or 2 work for a viewing?"}, {"q": "Is the asking price negotiable?", "a": "Thanks for asking! Let me check and I'll send you the price soon.", "hand": "A price is yours to decide, so it comes to you. Meanwhile they get this short note."}, {"q": "Anything under $600k near downtown?", "a": "Hi! I have two that might fit. How many bedrooms do you need, and when would you like to move?"}]}, {"trade": "Plumber", "qs": [{"q": "My kitchen sink is leaking. Can someone come today?", "a": "Sorry about the leak! Turn off the valve under the sink for now. I can come by this afternoon. Does 3 PM work?"}, {"q": "How much do you charge to fix a leak?", "a": "Thanks for asking! Let me check and I'll send you the price soon.", "hand": "A price is yours to decide, so it comes to you. Meanwhile they get this short note."}, {"q": "Do you do weekend calls?", "a": "Yes, we do Saturday mornings. Would you like me to book you in?"}]}, {"trade": "Hair salon", "qs": [{"q": "Anything Saturday for a cut and colour?", "a": "Hi! Saturday at 11 is free for a cut and colour. Shall I book you in?"}, {"q": "How much is a full balayage?", "a": "Thanks for asking! Let me check and I'll send you the price soon.", "hand": "A price is yours to decide, so it comes to you. Meanwhile they get this short note."}, {"q": "Can I bring my daughter too?", "a": "Of course! I'll keep two chairs free. What time suits you both?"}]}, {"trade": "Dental clinic", "qs": [{"q": "I chipped a tooth. Do you take new patients?", "a": "Sorry to hear that! Yes, we take new patients and keep time for urgent visits. Could you come in tomorrow at 9?"}, {"q": "Do you have evening appointments?", "a": "Yes, Tuesdays and Thursdays until 7. Would one of those work for you?"}, {"q": "Is a cleaning covered by my insurance?", "a": "Most plans cover two cleanings a year. Send me your provider's name and I'll check yours."}]}];
+    const reduce = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) { this.setState({ n: 999 }); return; }
+    this.timer = setInterval(() => this.tick(), 70);
+  }
+  componentWillUnmount() { clearInterval(this.timer); }
+  current() {
+    const d = this.data || [{"trade": "Realtor", "qs": [{"q": "Is the 3-bedroom on Maple Street still available?", "a": "Hi! Yes, it's still available. Would Saturday at 10 or 2 work for a viewing?"}, {"q": "Is the asking price negotiable?", "a": "Thanks for asking! Let me check and I'll send you the price soon.", "hand": "A price is yours to decide, so it comes to you. Meanwhile they get this short note."}, {"q": "Anything under $600k near downtown?", "a": "Hi! I have two that might fit. How many bedrooms do you need, and when would you like to move?"}]}, {"trade": "Plumber", "qs": [{"q": "My kitchen sink is leaking. Can someone come today?", "a": "Sorry about the leak! Turn off the valve under the sink for now. I can come by this afternoon. Does 3 PM work?"}, {"q": "How much do you charge to fix a leak?", "a": "Thanks for asking! Let me check and I'll send you the price soon.", "hand": "A price is yours to decide, so it comes to you. Meanwhile they get this short note."}, {"q": "Do you do weekend calls?", "a": "Yes, we do Saturday mornings. Would you like me to book you in?"}]}, {"trade": "Hair salon", "qs": [{"q": "Anything Saturday for a cut and colour?", "a": "Hi! Saturday at 11 is free for a cut and colour. Shall I book you in?"}, {"q": "How much is a full balayage?", "a": "Thanks for asking! Let me check and I'll send you the price soon.", "hand": "A price is yours to decide, so it comes to you. Meanwhile they get this short note."}, {"q": "Can I bring my daughter too?", "a": "Of course! I'll keep two chairs free. What time suits you both?"}]}, {"trade": "Dental clinic", "qs": [{"q": "I chipped a tooth. Do you take new patients?", "a": "Sorry to hear that! Yes, we take new patients and keep time for urgent visits. Could you come in tomorrow at 9?"}, {"q": "Do you have evening appointments?", "a": "Yes, Tuesdays and Thursdays until 7. Would one of those work for you?"}, {"q": "Is a cleaning covered by my insurance?", "a": "Most plans cover two cleanings a year. Send me your provider's name and I'll check yours."}]}];
+    const t = d[this.state.trade];
+    if (this.state.custom) return { asked: this.state.custom, a: "I'm not sure what to say to this one yet, so I'm asking the owner first.", hand: "When FollowUp isn't sure, it doesn't guess. The question comes to you; you answer once, and it learns from your reply.", t };
+    const item = t.qs[this.state.q];
+    return { asked: item.q, a: item.a, hand: item.hand || '', t };
+  }
+  tick() {
+    const words = this.current().a.split(' ').length;
+    if (this.state.n < words) { this.setState({ n: this.state.n + 1 }); return; }
+    const idle = this.state.idle + 1;
+    if (idle < 75) { this.setState({ idle }); return; }
+    if (this.state.custom) { this.setState({ custom: null, n: 0, idle: 0 }); return; }
+    const nq = this.state.q + 1;
+    if (nq < 3) this.setState({ q: nq, n: 0, idle: 0 });
+    else this.setState({ trade: (this.state.trade + 1) % 4, q: 0, n: 0, idle: 0 });
+  }
+  renderVals() {
+    const d = this.data || [{"trade": "Realtor", "qs": [{"q": "Is the 3-bedroom on Maple Street still available?", "a": "Hi! Yes, it's still available. Would Saturday at 10 or 2 work for a viewing?"}, {"q": "Is the asking price negotiable?", "a": "Thanks for asking! Let me check and I'll send you the price soon.", "hand": "A price is yours to decide, so it comes to you. Meanwhile they get this short note."}, {"q": "Anything under $600k near downtown?", "a": "Hi! I have two that might fit. How many bedrooms do you need, and when would you like to move?"}]}, {"trade": "Plumber", "qs": [{"q": "My kitchen sink is leaking. Can someone come today?", "a": "Sorry about the leak! Turn off the valve under the sink for now. I can come by this afternoon. Does 3 PM work?"}, {"q": "How much do you charge to fix a leak?", "a": "Thanks for asking! Let me check and I'll send you the price soon.", "hand": "A price is yours to decide, so it comes to you. Meanwhile they get this short note."}, {"q": "Do you do weekend calls?", "a": "Yes, we do Saturday mornings. Would you like me to book you in?"}]}, {"trade": "Hair salon", "qs": [{"q": "Anything Saturday for a cut and colour?", "a": "Hi! Saturday at 11 is free for a cut and colour. Shall I book you in?"}, {"q": "How much is a full balayage?", "a": "Thanks for asking! Let me check and I'll send you the price soon.", "hand": "A price is yours to decide, so it comes to you. Meanwhile they get this short note."}, {"q": "Can I bring my daughter too?", "a": "Of course! I'll keep two chairs free. What time suits you both?"}]}, {"trade": "Dental clinic", "qs": [{"q": "I chipped a tooth. Do you take new patients?", "a": "Sorry to hear that! Yes, we take new patients and keep time for urgent visits. Could you come in tomorrow at 9?"}, {"q": "Do you have evening appointments?", "a": "Yes, Tuesdays and Thursdays until 7. Would one of those work for you?"}, {"q": "Is a cleaning covered by my insurance?", "a": "Most plans cover two cleanings a year. Send me your provider's name and I'll check yours."}]}];
+    const cur = this.current();
+    const words = cur.a.split(' ');
+    const n = Math.min(this.state.n, words.length);
+    const done = n >= words.length;
+    const handed = !!cur.hand && !this.state.custom;
+    return {
+      trades: d.map((t, i) => ({ label: t.trade, on: i === this.state.trade ? 'true' : 'false',
+        bg: i === this.state.trade ? '#faf7f2' : 'transparent', fg: i === this.state.trade ? '#141312' : '#d9d1c7', bd: i === this.state.trade ? '#faf7f2' : 'rgba(255,240,225,0.16)',
+        pick: () => this.setState({ trade: i, q: 0, custom: null, n: 0, idle: -60 }) })),
+      qs: d[this.state.trade].qs.map((x, j) => ({ q: x.q,
+        bg: !this.state.custom && j === this.state.q ? 'rgba(243,207,179,0.10)' : 'rgba(255,240,225,0.035)', bd: !this.state.custom && j === this.state.q ? 'rgba(243,207,179,0.55)' : 'rgba(255,240,225,0.10)',
+        pick: () => this.setState({ q: j, custom: null, n: 0, idle: -60 }) })),
+      typed: this.state.typed,
+      onType: (e) => this.setState({ typed: e.target.value, idle: -400 }),
+      submit: (e) => { if (e && e.preventDefault) e.preventDefault(); const v = (this.state.typed || '').trim(); if (v) this.setState({ custom: v.slice(0, 160), typed: '', n: 0, idle: -60 }); },
+      asked: cur.asked,
+      shown: words.slice(0, n).join(' '),
+      writing: !done, done,
+      handed, notHanded: !handed,
+      hasNote: done && !!cur.hand, note: cur.hand,
+      glow: done ? 1 : 0.5,
+      replyGlow: done ? '0 36px 70px -30px rgba(0,0,0,0.85)' : '0 20px 40px -26px rgba(0,0,0,0.6)',
+      replyLift: done ? 'translateY(-4px)' : 'translateY(0)'
+    };
+  }
+}
+</script>
+</body>
+</html>

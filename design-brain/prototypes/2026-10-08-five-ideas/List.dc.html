@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>FollowUp idea 2, the list</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Public+Sans:wght@300..700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=Geist:wght@300..700&amp;family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&amp;family=Inter+Tight:ital,wght@0,400..700;1,400..700&amp;display=swap">
+<style>
+body{margin:0;background:#f6d64a}
+a{color:inherit}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:2px solid currentColor;outline-offset:3px}
+.rv{transition:opacity .6s cubic-bezier(.22,1,.36,1), transform .6s cubic-bezier(.22,1,.36,1)}
+@keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
+.caret{animation:blink 1s steps(1) infinite}
+
+@media (prefers-reduced-motion: reduce){.caret{animation:none}.rv{transition:none}}
+</style>
+</helmet>
+<div style="position: relative; width: 100%; height: 900px; background: #f6d64a; color: #17150f; font-family: 'Public Sans', sans-serif; font-weight: 450; overflow: hidden">
+<header style="position: absolute; top: 22px; left: 64px; right: 64px; display: flex; justify-content: space-between; align-items: center; z-index: 10; font-family: 'Public Sans', sans-serif; color: #17150f">
+<span style="display: inline-flex; align-items: center; gap: 9px; font-weight: 650; font-size: 19px"><svg width="13" height="20" viewBox="0 0 76.77 120" fill="currentColor" aria-hidden="true"><path d="M76.77 0 L73.12 20.29 C69.27 41.68 63.3 49.13 43.26 57.55 L9.78 71.61 L13.43 51.32 C17.29 29.93 23.26 22.48 43.3 14.06 Z"></path><path d="M41.97 67.16 L38 89.21 C35.69 102.04 32.11 106.51 20.08 111.56 L0 120 L3.97 97.95 C6.28 85.12 9.86 80.64 21.89 75.59 Z"></path></svg>FollowUp</span>
+<nav aria-label="Main" style="display: flex; gap: 28px; align-items: center; font-size: 15px"><a href="#how" style="text-decoration: none; color: #4d4528">How it works</a><a href="#prices" style="text-decoration: none; color: #4d4528">Prices</a><a href="#data" style="text-decoration: none; color: #4d4528">Your data</a><a href="#signin" style="text-decoration: none">Sign in</a><a href="#start" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 20px; border-radius: 999px; background: #17150f; color: #f6d64a; font-weight: 650; text-decoration: none">Start free</a></nav>
+</header>
+<h1 style="position: absolute; left: 64px; right: 64px; top: 104px; margin: 0; font-family: 'Inter Tight', sans-serif; font-weight: 650; font-size: 72px; line-height: 0.95; letter-spacing: -0.05em">Never lose a lead <em style="font-family: 'Instrument Serif', serif; font-weight: 400; font-size: 80px; letter-spacing: -0.015em">because you forgot to follow up.</em></h1>
+<div role="img" aria-label="A to-do list of follow-ups an owner would forget. One by one FollowUp ticks them off: Priya answered, Ben answered, Sam checked in on, Daniel thanked. Mia's price stays open: it is the owner's to decide, and she got a short 'let me check'." style="position: absolute; left: 64px; right: 64px; top: 296px">
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.14em; color: #4d4528; margin-bottom: 10px">THE FOLLOW-UPS IN YOUR HEAD, TUESDAY NIGHT</div>
+<div style="display: grid; grid-template-columns: 64px 1fr 390px; align-items: center; height: 76px; border-top: 2px solid #17150f">
+<span style="width: 34px; height: 34px; border-radius: 7px; border: 3px solid #17150f; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; background: {{ r0.box }}; color: #f6d64a; transition: background .3s ease">{{ r0.mark }}</span>
+<span style="position: relative; justify-self: start; font-family: 'Inter Tight', sans-serif; font-weight: 500; font-size: 36px; letter-spacing: -0.03em; color: {{ r0.fg }}; transition: color .6s ease">Reply to Priya about the Maple Street house<span aria-hidden="true" style="position: absolute; left: -4px; top: 52%; height: 3px; background: #17150f; width: {{ r0.strike }}; transition: width .7s cubic-bezier(.22,1,.36,1)"></span></span>
+<span class="rv" style="opacity: {{ r0.o }}; justify-self: end; display: inline-flex; align-items: center; gap: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #17150f">{{ r0.note }}</span>
+</div><div style="display: grid; grid-template-columns: 64px 1fr 390px; align-items: center; height: 76px; border-top: 2px solid #17150f">
+<span style="width: 34px; height: 34px; border-radius: 7px; border: 3px solid #17150f; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; background: {{ r1.box }}; color: #f6d64a; transition: background .3s ease">{{ r1.mark }}</span>
+<span style="position: relative; justify-self: start; font-family: 'Inter Tight', sans-serif; font-weight: 500; font-size: 36px; letter-spacing: -0.03em; color: {{ r1.fg }}; transition: color .6s ease">Answer Ben about the leak<span aria-hidden="true" style="position: absolute; left: -4px; top: 52%; height: 3px; background: #17150f; width: {{ r1.strike }}; transition: width .7s cubic-bezier(.22,1,.36,1)"></span></span>
+<span class="rv" style="opacity: {{ r1.o }}; justify-self: end; display: inline-flex; align-items: center; gap: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #17150f">{{ r1.note }}</span>
+</div><div style="display: grid; grid-template-columns: 64px 1fr 390px; align-items: center; height: 76px; border-top: 2px solid #17150f">
+<span style="width: 34px; height: 34px; border-radius: 7px; border: 3px solid #17150f; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; background: {{ r2.box }}; color: #f6d64a; transition: background .3s ease">{{ r2.mark }}</span>
+<span style="position: relative; justify-self: start; font-family: 'Inter Tight', sans-serif; font-weight: 500; font-size: 36px; letter-spacing: -0.03em; color: {{ r2.fg }}; transition: color .6s ease">Check in with Sam, quiet since Tuesday<span aria-hidden="true" style="position: absolute; left: -4px; top: 52%; height: 3px; background: #17150f; width: {{ r2.strike }}; transition: width .7s cubic-bezier(.22,1,.36,1)"></span></span>
+<span class="rv" style="opacity: {{ r2.o }}; justify-self: end; display: inline-flex; align-items: center; gap: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #17150f">{{ r2.note }}</span>
+</div><div style="display: grid; grid-template-columns: 64px 1fr 390px; align-items: center; height: 76px; border-top: 2px solid #17150f">
+<span style="width: 34px; height: 34px; border-radius: 7px; border: 3px solid #17150f; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; background: {{ r3.box }}; color: #f6d64a; transition: background .3s ease">{{ r3.mark }}</span>
+<span style="position: relative; justify-self: start; font-family: 'Inter Tight', sans-serif; font-weight: 500; font-size: 36px; letter-spacing: -0.03em; color: {{ r3.fg }}; transition: color .6s ease">Send Mia the balayage price<span aria-hidden="true" style="position: absolute; left: -4px; top: 52%; height: 3px; background: #17150f; width: {{ r3.strike }}; transition: width .7s cubic-bezier(.22,1,.36,1)"></span></span>
+<span class="rv" style="opacity: {{ r3.o }}; justify-self: end; display: inline-flex; align-items: center; gap: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #17150f"><span style="width: 9px; height: 9px; border-radius: 999px; background: #c2410c"></span>{{ r3.note }}</span>
+</div><div style="display: grid; grid-template-columns: 64px 1fr 390px; align-items: center; height: 76px; border-top: 2px solid #17150f">
+<span style="width: 34px; height: 34px; border-radius: 7px; border: 3px solid #17150f; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; background: {{ r4.box }}; color: #f6d64a; transition: background .3s ease">{{ r4.mark }}</span>
+<span style="position: relative; justify-self: start; font-family: 'Inter Tight', sans-serif; font-weight: 500; font-size: 36px; letter-spacing: -0.03em; color: {{ r4.fg }}; transition: color .6s ease">Thank Daniel for the referral<span aria-hidden="true" style="position: absolute; left: -4px; top: 52%; height: 3px; background: #17150f; width: {{ r4.strike }}; transition: width .7s cubic-bezier(.22,1,.36,1)"></span></span>
+<span class="rv" style="opacity: {{ r4.o }}; justify-self: end; display: inline-flex; align-items: center; gap: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #17150f">{{ r4.note }}</span>
+</div>
+<div style="border-top: 2px solid #17150f"></div>
+</div>
+<div style="position: absolute; left: 64px; right: 64px; bottom: 40px; display: flex; justify-content: space-between; align-items: flex-end; gap: 40px">
+<p style="margin: 0; max-width: 34em; font-size: 18px; line-height: 1.5; color: #4d4528">FollowUp answers the customers in your Gmail in your words, checks in when they go quiet, and hands you the decisions. <span style="font-size: 13px; color: #6b6036">Examples, not real customers.</span></p>
+<div style="flex: 0 0 auto; display: flex; gap: 14px; align-items: center"><button type="button" onClick="{{ toggle }}" style="min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid #17150f; background: transparent; color: #17150f; font-size: 13px; font-weight: 600">{{ pauseLabel }}</button><a href="#start" style="display: inline-flex; align-items: center; min-height: 58px; padding: 0 30px; border-radius: 999px; background: #17150f; color: #f6d64a; font-weight: 650; font-size: 17px; text-decoration: none">Connect Gmail, start free</a></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+const R = [["Reply to Priya about the Maple Street house", "Done by FollowUp \u00b7 11:49 PM", false], ["Answer Ben about the leak", "Done by FollowUp \u00b7 7:13 AM", false], ["Check in with Sam, quiet since Tuesday", "Done by FollowUp \u00b7 Fri 9:00 AM", false], ["Send Mia the balayage price", "Yours to decide \u00b7 she got \u201cLet me check\u201d", true], ["Thank Daniel for the referral", "Done by FollowUp \u00b7 2:20 PM", false]];
+class Component extends DCLogic {
+  state = { k: 0, paused: false };
+  componentDidMount() {
+    const reduce = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) { this.setState({ k: 5, paused: true }); return; }
+    this.timer = setInterval(() => { if (!this.state.paused) this.setState({ k: this.state.k >= 9 ? 0 : this.state.k + 1 }); }, 1400);
+  }
+  componentWillUnmount() { clearInterval(this.timer); }
+  renderVals() {
+    const k = this.state.k, out = { pauseLabel: this.state.paused ? 'Play' : 'Pause', toggle: () => this.setState({ paused: !this.state.paused }) };
+    R.forEach((r, i) => { const d = k > i, price = r[2];
+      out['r' + i] = { o: d ? 1 : 0, note: r[1], box: d && !price ? '#17150f' : 'transparent', mark: d && !price ? '✓' : '',
+        strike: d && !price ? 'calc(100% + 8px)' : '0px', fg: d && !price ? 'rgba(23,21,15,0.55)' : '#17150f' }; });
+    return out;
+  }
+}
+</script>
+</body>
+</html>

@@ -616,3 +616,371 @@ means the honest kind (value first, a tiny ask, the right moment, an easy "Not n
 countdowns or fake urgency (brand principles 1, 2 and 7).
 
 **Do not propose again:** any multi-question form between setup and the owner's first look at Today.
+
+## R-028 — D2 and D3 (2026-10-08): a tidier version of the current page ^R-028
+
+**Rejected:** 2026-10-08, founder, on the canvas: *"BRO I THINK WE ARE GETTING THERE"* then *"NOT"*; then, shown the
+eight reference sites side by side: *"i love all these websites. That's why I have given you the references."*
+
+**What was rejected:** the D2/D3 boards as a whole (`prototypes/2026-10-08-taste-d2-d3/`): the same white page, the
+same Public Sans, the same wash, the same layout, tidied (slower story, floating menu, two-tone headings, a serif in
+D3). Not any single element.
+
+**Inferred principle (marked inferred):** when the founder hands over bold references and says he wants "that
+taste", a careful refinement of what ships is not an answer; the change has to be visible at a glance (scale, a
+committed colour, a display face, depth behind the product). Keep the guardrails (R-005, R-009, R-011, R-017,
+R-018), but don't spend the boldness budget on caution.
+
+**Do not propose again:** a "same page, finished" option as the main answer to a request for a new look.
+
+## R-029 — One reference site as the base of the new website ^R-029
+
+**Rejected:** 2026-10-08, founder, right after it was proposed: *"Bro. I didn't tell you to copy Wispr Flow or
+something, but what you should do is get the best things that they are using on our side, and then we'll design it
+according to our website. Let's try to reframe the whole website too."*
+
+**What was rejected:** the proposal to pick one of the eight references (Wispr Flow recommended) as the skeleton of
+the new landing page and follow its format and motion closely.
+
+**Principle (his words, plus inference marked):** take the **best technique** from each reference, bring it to
+FollowUp's side, and design FollowUp's own website with it. The references are a toolbox, not a base. *Inferred:*
+the work is the whole site (every public page), not the landing page alone, and the result should read as one
+FollowUp system, not as a page per reference.
+
+**Do not propose again:** "pick one site and follow it", in any wording.
+
+## R-030 — Mood photos that mean nothing (sunset skies, rooftops, a coffee by a window) ^R-030
+
+**PARTLY SUPERSEDED (2026-10-08)** by [[approved#^A-120|A-120]]: unrelated photos are now wanted, but only blurred until
+nothing in them is recognisable, as colour fields. A *visible* photo that means nothing stays rejected.
+
+**Rejected:** 2026-10-08, founder, as the first five Unsplash photos arrived (sunrise sky over rooftops, pink sky
+over houses, two coffee-by-the-window shots, red roofs under a blue sky): *"Bro, we got to use the photos that are
+relevant, not the irrelevant ones. What does the sunset mean, bro? Nothing."*
+
+**What was rejected:** photographs used as atmosphere behind the product (the Wispr/Granola "mood" technique),
+chosen to carry an abstract idea (the time of day) rather than anything in the owner's or the customer's world.
+
+**Principle (his words):** a photo has to be **relevant**: it must show something real about the work FollowUp
+serves (an owner busy on a job, between jobs, a customer writing, the deal that follows), so that a visitor gets a
+meaning from it without a caption. *Inferred, not confirmed:* the night-to-dawn colour idea of the reframed website
+may read the same way ("what does the sky mean?") and should be justified by what it shows, not by a metaphor.
+
+**Do not propose again:** skies, sunsets, landscapes, coffee cups, plants or other decorative photos as imagery.
+
+## R-031 — The dark blue night-to-sunrise look ^R-031
+
+**Rejected:** 2026-10-08, founder: *"we don't want to use that dark bluish sunrise kind of thing. It was looking good,
+but not my type."*
+
+**What was rejected:** the night-sky-to-dawn gradient heroes and the deep night-blue blocks: L2 "Morning light", L4,
+the "Website · reframed" pages (night hero, dawn closing panel, Sign in sky) and the deep blue stage (`#0f1a2c`) of
+the held v2 Home.
+
+**Principle (his words, plus inference marked):** it looked good but it isn't his taste. *Inferred:* he prefers the
+light, warm, editorial ground of Wispr Flow (cream, near-black, flat colour blocks) to cinematic dark-blue
+atmosphere; dark is fine as a near-black block (Wispr), not as a blue sky.
+
+**Do not propose again:** dark blue or navy grounds, night skies, sunrise/dawn gradients.
+
+## R-032 — Following Wispr's page as-is; the giant wordmark footer ^R-032
+
+**Rejected:** 2026-10-08, founder, on the "Around Wispr" Home: *"We don't have to copy as it is, bro. The thing that you
+have copied at the end, like a big FollowUp text, looks odd."*
+
+**What was rejected:** W1's section-by-section mirror of wisprflow.ai (hero device, colour band, pinned comparison,
+pinned three steps, lit list, trust card, FAQ, big closing) and specifically the footer's giant "FollowUp" wordmark.
+
+**Principle (his words, plus inference marked):** take Wispr's best techniques, not its page. *Inferred:* when a
+section exists only because Wispr has one there (the drifting logo band, the giant wordmark), it reads as copied and
+odd for FollowUp; every section must earn its place for our story.
+
+**Do not propose again:** a giant wordmark footer; Wispr's section order as our section order.
+
+## R-033 — W1's hero: a centred headline over two small cards ^R-033
+
+**Rejected:** 2026-10-08, founder: *"our first impression is very boring, very bad. We have to improve the first
+impression."*
+
+**What was rejected:** the "Around Wispr" first screen: label, centred serif headline, one line, one button, and the
+email → "1 min" → reply cards small and low on a plain paper ground.
+
+**Inferred principle (marked inferred):** the first screen needs one big, living moment that fills the screen and
+makes you feel the problem and the relief, not text with a small diagram under it. Scale, depth and motion belong in
+the first screen, inside the guardrails (no dashboard hero R-005/R-009, no person photo R-011, no dark blue R-031).
+
+## R-034 — The hero concept "your pile, cleared" (option A's pile of emails) ^R-034
+
+**Rejected:** 2026-10-08, founder: *"I like the A1, but I don't like the concept. It is good, but no, it's kind of
+boring."*
+
+**What was rejected:** the idea inside A's stage: a pile of customer emails, the top one flipping to the reply, a Sent
+stamp, the Answered pile. The layout stays (A-105).
+
+**Inferred principle (marked inferred):** one customer and one reply, however animated, still reads as "a message and
+a reply", which he has now seen many times (R-028, R-033). The hero needs a bigger idea than a single exchange.
+Note R-009's own words for what he wanted the hero to show: "leads are being caught from the sources and FollowUp is
+warming every lead."
+
+## R-035 — A2 "Without, then with FollowUp" (the grid of nine customer cards) ^R-035
+
+**Rejected:** 2026-10-08, founder, in a canvas comment anchored on A2's stage ("Who wrote this week / Without
+FollowUp / With FollowUp"): *"I don't like this."*
+
+**What was rejected:** A2's picture: a 3×3 grid of customer cards in cool grey-blue, four dropping away as "Lost",
+then the switch to "With FollowUp" and the cards warming to peach.
+
+**Reason:** not given. Asked in the thread which part (the grid of cards, the cold/warm colours, or the
+lost-customers story). *Inferred, not confirmed:* a grid of small cards reads like a dashboard or a list (R-005/R-009
+territory) rather than one big, felt moment.
+
+## R-036 — Shine: glows, light halos and glossy highlights ^R-036
+
+**Rejected:** 2026-10-08, founder, looking at A5 and its Charcoal version: *"Don't add that shiny thing, bro."*
+
+**What was rejected:** A5's lighting effects: the peach/amber light glowing behind the reply (and brightening when it
+was written), the rose haze, the coloured glow shadow under the reply card, the glow round the orange dot, the peach
+glow under the "Connect Gmail" button, and the thin highlight edges on the panel and the customer's bubble.
+
+**Reason:** "shiny" is his word. *Inferred (marked inferred):* he wants the depth and contrast he saw on Macro, but not
+by lighting tricks; glows read as effects, not as the product (close to the standing "no neon, no cheap gradients").
+Not asked which one he meant, because all of them were removed together.
+
+**Do not propose again:** glows, halos, light sources, coloured or glowing shadows, glossy highlight edges. Depth comes
+from contrast (dark ground, light text, the light button), plain dark shadows, one thing in front of another, and far
+things being smaller and fainter.
+
+## R-037 — Home v3: the charcoal + beige + peach palette, and a page with no "wow" after the first screen ^R-037
+
+**Rejected:** 2026-10-08, founder, on the "Website · v3" page: *"i didnt like this broooo."* Asked what (four
+choices, more than one allowed), he picked **"Colours"** and **"Not impressive"** (nothing makes you say wow after the
+first screen; it doesn't feel like Wispr, Macro or Linear). He did not pick "boring, same old" or "too long".
+
+**What was rejected:** the colour system of v3 and A5 (charcoal `#1e1e20`, warm paper `#faf7f2`, sand stages
+`#ebe3d7`, the peach/slate wash, peach italic) and the page's middle: small cards on sand panels, chapter by chapter.
+The structure (one story in chapters, the promises, questions as replies, one button) was not named as the problem.
+
+**Principle (inferred, marked inferred):** warm cream + serif + soft peach is a safe, common look and reads as
+generic, not premium; his four favourites each commit to a confident colour world (Macro black/white, Linear black,
+Wispr cream with a strong dark and a lilac button, Superhuman's saturated moods). And the "wow" has to continue past
+the first screen: big type, big moments, the product's story told at full size, not in small cards.
+
+**Do not propose again:** the charcoal + sand + peach-wash palette as the site's colours; chapters drawn as small
+cards on beige rounded panels.
+
+## R-038 — Five "themes" that were one layout in five colours ^R-038
+
+**Rejected:** 2026-10-08, founder, on the "Five themes" page: *"bro why you using the same design be creative bro just
+use the info not the design."*
+
+**What was rejected:** Signal, Greenhouse, Lilac, Blocks and Ledger as a set: all five shared one composition (top
+menu, headline and lede on the left, button, a moving demo on the right or below). Only colour, font and the demo
+changed.
+
+**Principle (his words):** keep the information (what FollowUp does, the headline, the button, the story), and make the
+*design* new each time. Variety has to be in the composition and the idea, not in the paint.
+**Inferred (marked inferred):** "layout A" (A-105, headline left and a stage right) has become a habit he's tired of;
+he wants each first screen to be a different picture, the way Wispr, Macro and Superhuman each look like nothing else.
+
+**Do not propose again:** a set of options that share one skeleton; headline-left/demo-right as the default answer.
+
+## R-039 — The "Five ideas" boards: "these designs look shit… not even close to those references" ^R-039
+
+**Rejected:** 2026-10-08, founder, on the "Five ideas" page (Night, The list, The letter, The poster, The receipt):
+*"tese designes looks shit man"* and *"bro its not even close to those refrences"*.
+
+**What was rejected:** the five boards, and with them the method behind every round today (A2–A5, v3, five themes,
+five ideas): quick first screens hand-drawn as HTML on the canvas, made of type, flat shapes and small cards.
+
+**Principle (inferred, marked inferred):** the gap is craft, not concept. Wispr, Macro, Linear and Superhuman reach
+their level through (1) the real product rendered in high fidelity as the picture, (2) art-directed media made by a
+team (film, photography, custom illustration), (3) scroll-driven motion across the whole page, and (4) hundreds of
+small details. Our boards had none of the four: they were text-only scenes, static frames on a canvas that cannot
+scroll-drive, five at a time and fast. More rounds of the same method will not close the gap.
+
+**Do not propose again:** another batch of quick canvas options as the answer to "make it look like the references".
+
+## R-040 — All five palettes on the full page ^R-040
+
+**Rejected:** 2026-10-08, founder, after trying the picker on https://claude.ai/artifact/4nhihQ1jNDy8w5e97PgX4E:
+*"not any of these."*
+**What was rejected:** 1 Ink and paper, 2 Forest and lime, 3 Plum and lilac, 4 Wine and rose, 5 Black and orange.
+**Inferred (marked inferred):** all five were dark-first (a dark first screen and a dark close, light only in the
+middle). His favourite, Wispr, is light-first; the app's own ground is white (A-090); he has called black "too much"
+before (R-018) and loved a black-to-white page only once (A-009). The miss may be the darkness, not the hue. Asked.
+
+## R-041 — Four opening screens (One line, Day and night, Your phone, Three words) ^R-041
+
+**Rejected:** 2026-10-08, founder, on https://claude.ai/artifact/1D4MG89T9aLMXVqE8buHpP: *"no one i dont like the
+concept, we have to make something catchy."*
+**What was rejected:** the four concepts as a set: a headline with one changing sentence; a 24-hour day line with
+customers answered; the headline split around a phone; "Replies. Follows up. Stops." in big type.
+**What he asked for instead (his words):** "If someone lands on our page, it should just give a quick look that says,
+'Oh yeah, someone is replying,' or 'What's the main job of FollowUp? Why should they use it? How is this going to
+help?' Not everything, but this should be the goal… Make it a bit more interactive too… like Wispr Flow, where they
+have something flowing according to their concept."
+**Inferred principle (marked inferred):** the four were quiet and explained FollowUp; none of them *showed the act*.
+The first look has to be the act of replying itself, moving and catchy, and the visitor should be able to touch it.
+Static type (1, 4), a diagram (2) and a still phone (3) all read as "about" the product, not the product working.
+**Do not propose again:** type-only openings; a timeline diagram as the opening; a phone mockup as the whole idea.
+
+## R-042 — The soft peach-and-blue theme on the type-first opening; the headline lost among things ^R-042
+
+**Rejected (in doubt):** 2026-10-08, founder, on the type-first opening (home v8): *"Bro, our idea is fire. Now, the
+colour… I think I'm a bit confused because I don't like the theme, and also 'never lose a lead because you forgot
+to follow' is a bit like hiding from all these things. We have to do something, like organise it in another way."*
+**What:** the A-108 soft wash (peach, blue and rose together) as the opening's colours, and the stacked layout
+where the headline, the box and the full stream all compete on one screen. The idea itself (A-109, A-110) is not
+in doubt: "our idea is fire".
+**Asked:** what bothers him about the colours (too many, too pale, wants dark) → *"Not sure, show me"*; how to
+organise the first screen → *"Show me options"*. So no principle is recorded yet; the options page answers it.
+**Inferred, marked inferred:** three hues at once reads as a theme, not a brand; the headline needs room to be the
+hook (his comment earlier the same day: the hook first, the box second).
+
+## R-043 — The all-green theme (green blocks, green italics, green-family touches) and the letter everywhere ^R-043
+
+**Rejected:** 2026-10-08, founder, on home v11 with five references (Ruul, Table22, Harmoniq, Lunora, Aethera):
+*"we don't have to use that whole letter theme everywhere. Just for one part… this greenish touch is not something
+that I'm looking for because we can't use the whole green theme. I don't like it. We have to make it a professional
+theme. Not just the all-go green."*
+**What:** green as the main colour across the page (Leaf/Sage/Emerald blocks, green headline italics, lime and sage
+touches) and the postmark stamped on the live demo card.
+**Principle (from his references, inferred and marked so):** professional = a neutral page (off-white, ink, grey
+second lines), black buttons, one strong image or dark panel with the product floating on it, and accents so small
+they are almost absent (Ruul's single lime pill). Colour is rare; it does not carry the page.
+**Supersedes:** A-116 (green as the main colour), A-113/A-114's green blocks. Green stays only as the app's meaning
+("sent").
+
+## R-044 — Theme v4, the professional neutral page (paper, ink, black buttons, one dark panel) ^R-044
+
+**Rejected:** 2026-10-08, founder, on https://claude.ai/artifact/4nhihQ1jNDy8w5e97PgX4E v12: *"i dont like it"*.
+**What:** paper `#F4F3EF` everywhere, grey second lines, black buttons, a near-black panel for the live flow, the 7×
+card, the "1 minute" envelope and the close; colour only as meaning; one lime pill.
+**Reason:** not given; asked which part (see the next design-decisions entry). *Inferred, not confirmed:* with the
+green gone and no imagery yet, the page lost its warmth and reads flat and dark, the opposite of the references he
+sent, whose colour comes from one strong human image.
+
+## R-045 — AI-generated images, of any style ^R-045
+
+**Rejected:** 2026-10-08, founder, while three AI example images (painted, cinematic, owner portrait; ElevenLabs)
+were being placed: *"I don't want any AI images. Arts are good, but not AI."* The examples were never published.
+**Rule:** no AI-generated imagery on FollowUp's site or product. Art is welcome when it is made by people: licensed
+or public-domain artwork, commissioned illustration, real photographs of real owners (with permission).
+**Inferred, marked inferred:** a product that writes in your words cannot show faked people or faked art; it reads
+as fake and costs trust (brand principle 1).
+
+## R-046 — One trade's photo as the page's photo ^R-046
+
+**Rejected:** 2026-10-08, founder, on home v13 (café photo behind the live demo): *"now I feel like I'm building this
+for a cafe"*. The look itself was liked (A-119).
+**Principle (his words plus `PRODUCT_DIRECTION.md`, "Who it's for", 2026-09-26: examples mixed so no reader thinks
+"this is for plumbers only"):** one business's photo makes FollowUp read as a tool for that business. Imagery must
+be mixed across trades or show no trade at all. The café was also a mismatch: none of the demo's customers is a café.
+
+## R-047 — Rows of messages flowing around the headline (home v14) ^R-047
+
+**Rejected:** 2026-10-08, founder: *"those rows that are just flowing … on the top and at the bottom of that page. I
+don't like that format. We'll be using that moving structure with the companies that will be using this or the
+reviews that we are getting … Let's create something else so that it justifies our product."*
+**Principle (his words):** a moving band reads as social proof (logos, reviews), so it is kept for that and not used
+to explain the product. The band waits for real customers and real reviews: no invented logos or quotes (A-023).
+
+## R-048 — A photo that changes with each customer or visitor ^R-048
+
+**Rejected:** 2026-10-08, founder, on the proposal to change the photo with each example customer: *"leave this
+concept: whoever will come, if the cafe owner comes, it will become a cafe. No, we need just one."*
+**Rule:** one photo for everyone; with R-046 it shows no single trade.
+
+## R-049 — A photo filling the whole demo block ^R-049
+
+**Rejected:** 2026-10-08, founder, on v13: *"For the opening one, we don't want to use whole photos like these
+pictures. I just want it to be used like Wispr Flow does."*
+**Principle (from our Wispr teardown, which matches his words):** Wispr puts photos inside a framed photo card (big
+corners, the product floating on it), never as the background of a whole section. A-119's treatment still applies.
+
+## R-050 — The brown (walnut, caramel, espresso) colours of v13–v15 ^R-050
+
+**Rejected:** 2026-10-08, founder: *"brown looks good but not professional"*. Supersedes the colour half of A-119.
+**Principle (his words):** warm and pleasant is not enough; the colour must read professional.
+
+## R-051 — The thrown-and-caught messages animation (home v16) ^R-051
+
+**Rejected:** 2026-10-08, founder: *"The animation that we're using, the example that you have added as a video kind
+of thing, is not even close. Just remove the whole thing. I'll be telling you what we're going to do. Keep it plain
+for now."* Removed in v17. Do not rebuild a version of it on a guess: he will describe what he wants.
+*Inferred, not confirmed:* the idea (messages arriving from everywhere and being held) still stands (A-120); the
+execution (a white list catching chips) did not match what he pictured.
+
+## R-052 — Screen one and the demo feeling like two separate pages ^R-052
+
+**Rejected:** 2026-10-08, founder: *"when I'm scrolling up to try it myself, the page feels like they both are
+different pages, and it is not attached. Do something that feels connected… After getting the eyes on the opening
+page, we should directly hop into the Try It Yourself one."* The cause was the slide-over: screen one pinned while
+the demo block slid over it, plus a gap screen in between. Supersedes the "two screens" part of A-112.
+
+## R-053 — The letter idea anywhere on the page ^R-053
+
+**Rejected:** 2026-10-08, founder: *"keep that letter thing out. We just need to show them that reducing the reply time
+and following up with everyone can save their potential clients and help them to close more deals."* Removed in v25.
+Supersedes A-117 entirely. **Principle (his words):** the page argues one thing: faster replies plus following up with
+everyone keep leads and close deals.
+
+## R-054 — Several blur styles (tilt-shift, zoom, ribbed glass) ^R-054
+
+**Rejected:** 2026-10-08, founder, on v24: *"don't use all these blurs. Just use motion blur… A little bit, not that
+much."* Rule: one light motion blur on the photos.
+
+## R-055 — A demo that explains too much (flip, typed follow-ups, notes, sub-labels) ^R-055
+
+**Rejected:** 2026-10-08, founder, on v25: *"now we made it very complex. Let's just show this: 1. caught 2. answered
+3. followed up 4. booked 5. won. Don't make it very complicated. We'll explain it further on our website."*
+**Principle (his words):** the demo shows the five steps and nothing more; detail belongs further down the page.
+
+## R-056 — Cards that turn or flip in 3D as they move ^R-056
+
+**Rejected:** 2026-10-08, founder, on the demo's middle card: *"Do not flip this. It looks very odd."* Supersedes the
+matte-3D tilt of A-113 for the demo's cards; they slide flat.
+
+## R-057 — Brown and taupe everywhere (the stone frames and the warm beige ground) ^R-057
+
+**Rejected:** 2026-10-09, founder: *"I'm not liking that brown theme everywhere"* and *"we don't want that brownish
+theme too."* The taupe gradient frames behind the product (Today, How it works, the thread, the switch) and the warm
+#F4F3EF page read as brown. **Instead:** blurred green photos (A-132) and a neutral, faintly green page (#F4F5F3).
+Same family as R-050.
+
+## R-058 — The peach-and-blue wash ^R-058
+
+**Rejected:** 2026-10-09, founder: *"use a different colour instead of peach and blue. That gradient looks way odd. It
+is good, but not what we are looking for. It should match with our theme of the app."* **Instead:** the app's own
+soft green (#DCF5E5 family) on white for written replies. Supersedes A-032 on the website.
+
+## R-059 — White or plain icons among colourful logos ^R-059
+
+**Rejected:** 2026-10-09, founder: *"These white logos look odd between all these colourful ones."* Every channel in
+the "From" bar is in colour: Outlook in Outlook blue, text messages a green bubble, the website form an orange form.
+
+## R-060 — Sections that only tell: "boring written information", "low effort", "2D" ^R-060
+
+**Rejected:** 2026-10-09, founder, on four sections at once (the cold-lead facts, the 11 PM sentence, "It checks in",
+and the page in general): *"It feels boring, so I don't want to read this information"*, *"We don't want to keep the
+whole page like a 2D model with boring written information"*, *"It feels like it's very low effort."*
+**Principle:** every section shows its point with something to look at or play with (a clock you drag, a week that
+plays, photo cards), and the words shrink to labels. A paragraph or a fact list on its own is not a section.
+
+## R-061 — Everything oversized ^R-061
+
+**Rejected:** 2026-10-09, founder: *"I don't know why this whole page is too big."* Headings, spacing and the scroll
+length were too large for a laptop. v32 brought the section headings to at most 60px, the hero to 82px, and cut the
+empty space. **Inferred:** size, not length alone — to confirm if it still feels big.
+
+## R-062 — The same person and trade in every section ^R-062
+
+**Rejected:** 2026-10-09, founder: *"see same name and same industry"*, and on the cold-lead card: *"be more specific,
+we should be using different examples every time."* **Instead:** each section has its own person and trade (mixed
+examples, as PRODUCT_DIRECTION already asks), and repeating examples rotate.
+
+## R-063 — Defensive wording about data and AI ^R-063
+
+**Rejected:** 2026-10-09, founder, on "It gets better every week": *"This is sounding like I'm defending."* Say what it
+does, positively ("It learns your business", "What it learns stays yours"); the plain data promises live once, in the
+data panel.

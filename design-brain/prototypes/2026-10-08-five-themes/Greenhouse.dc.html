@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>FollowUp theme 2, greenhouse</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Public+Sans:wght@300..700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=Geist:wght@300..700&amp;family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&amp;family=Inter+Tight:ital,wght@0,400..700;1,400..700&amp;display=swap">
+<style>
+body{margin:0;background:#0f2a1f}
+a{color:inherit}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:2px solid currentColor;outline-offset:3px}
+.rv{transition:opacity .6s cubic-bezier(.22,1,.36,1), transform .6s cubic-bezier(.22,1,.36,1)}
+@keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
+.caret{animation:blink 1s steps(1) infinite}
+
+@media (prefers-reduced-motion: reduce){.caret{animation:none}.rv{transition:none}}
+</style>
+</helmet>
+<div style="position: relative; width: 100%; height: 900px; background: #0f2a1f; color: #f3f1e7; font-family: 'Public Sans', sans-serif; font-weight: 450; overflow: hidden">
+<header style="position: absolute; top: 22px; left: 64px; right: 64px; display: flex; justify-content: space-between; align-items: center">
+<span style="display: inline-flex; align-items: center; gap: 9px; font-weight: 650; font-size: 19px"><svg width="13" height="20" viewBox="0 0 76.77 120" fill="currentColor" aria-hidden="true"><path d="M76.77 0 L73.12 20.29 C69.27 41.68 63.3 49.13 43.26 57.55 L9.78 71.61 L13.43 51.32 C17.29 29.93 23.26 22.48 43.3 14.06 Z"></path><path d="M41.97 67.16 L38 89.21 C35.69 102.04 32.11 106.51 20.08 111.56 L0 120 L3.97 97.95 C6.28 85.12 9.86 80.64 21.89 75.59 Z"></path></svg>FollowUp</span>
+<nav aria-label="Main" style="display: flex; gap: 28px; align-items: center; font-size: 15px"><a href="#how" style="text-decoration: none; color: #b7c2b5">How it works</a><a href="#prices" style="text-decoration: none; color: #b7c2b5">Prices</a><a href="#data" style="text-decoration: none; color: #b7c2b5">Your data</a><a href="#signin" style="text-decoration: none">Sign in</a><a href="#start" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 20px; border-radius: 999px; background: #d4f27a; color: #0f2a1f; font-weight: 650; text-decoration: none">Start free</a></nav>
+</header>
+<div style="position: absolute; left: 64px; right: 64px; top: 116px; display: grid; grid-template-columns: 1fr 380px; gap: 64px; align-items: end">
+<h1 style="margin: 0; font-family: 'Fraunces', serif; font-optical-sizing: auto; font-weight: 380; font-size: 76px; line-height: 0.97; letter-spacing: -0.03em">Never lose a lead <em style="font-weight: 340; color: #d4f27a">because you forgot to follow up.</em></h1>
+<div><p style="margin: 0; font-size: 17.5px; line-height: 1.5; color: #b7c2b5">FollowUp answers the customers in your Gmail in your words, checks in when they go quiet, and hands you the decisions.</p>
+<div style="margin-top: 20px; display: flex; align-items: center; gap: 14px"><a href="#start" style="display: inline-flex; align-items: center; min-height: 54px; padding: 0 26px; border-radius: 999px; background: #d4f27a; color: #0f2a1f; font-weight: 650; font-size: 16px; text-decoration: none">Connect Gmail, start free</a><span style="font-size: 14px; color: #8fa197">Free in beta</span></div></div>
+</div>
+<div aria-hidden="true" style="position: absolute; left: 64px; right: 64px; top: 432px; height: 1px; background: rgba(243,241,231,0.14)"></div>
+<div role="img" aria-label="Examples of customers' questions and FollowUp's replies, written in the owner's words, one after another." style="position: absolute; left: 64px; right: 64px; top: 470px">
+<div class="rv" style="opacity: {{ k.qo }}; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.06em; color: #8fa197">{{ k.t1 }} · {{ k.who }} · Gmail</div>
+<p class="rv" style="margin: 10px 0 0; opacity: {{ k.qo }}; font-family: 'Fraunces', serif; font-style: italic; font-weight: 340; font-size: 44px; line-height: 1.12; letter-spacing: -0.015em">“{{ k.q }}”</p>
+<div class="rv" style="margin-top: 30px; opacity: {{ k.ao }}; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.06em; color: #d4f27a">{{ k.t2 }} · FollowUp, in your words</div>
+<p style="margin: 10px 0 0; min-height: 106px; font-family: 'Fraunces', serif; font-weight: 400; font-size: 44px; line-height: 1.12; letter-spacing: -0.015em; color: #d4f27a">{{ k.shown }}<sc-if value="{{ k.writing }}" hint-placeholder-val="{{ false }}"><span class="caret">▍</span></sc-if></p>
+</div>
+<div style="position: absolute; left: 64px; right: 64px; bottom: 34px; display: flex; justify-content: space-between; align-items: center">
+<div style="display: flex; gap: 8px"><sc-for list="{{ dashes }}" as="d" hint-placeholder-count="4"><span style="display: block; width: 36px; height: 3px; border-radius: 3px; background: {{ d.c }}"></span></sc-for></div>
+<div style="display: flex; gap: 12px; align-items: center"><span style="font-size: 12.5px; color: #8fa197">Examples, not real customers.</span><button type="button" onClick="{{ toggle }}" style="min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid rgba(243,241,231,0.3); background: transparent; color: #f3f1e7; font-size: 13px; font-weight: 600">{{ pauseLabel }}</button></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+const C = [{"who": "Priya", "t1": "11:48 PM", "t2": "11:49 PM", "q": "Is the 3-bedroom on Maple Street still available?", "a": "Hi Priya, yes, it's still available! When would suit you for a viewing?"}, {"who": "Ben", "t1": "7:12 AM", "t2": "7:13 AM", "q": "My kitchen sink is leaking. Can someone come today?", "a": "Sorry about the leak! Turn off the valve under the sink for now. What's the best number to reach you?"}, {"who": "Mia", "t1": "9:30 PM", "t2": "9:31 PM", "q": "Do you do balayage? I've never had it done.", "a": "We do, and it's a lovely first colour. Would you like to come in for a quick chat first?"}, {"who": "Sam", "t1": "6:05 AM", "t2": "6:06 AM", "q": "I chipped a tooth. Do you take new patients?", "a": "Sorry to hear that! Yes, we take new patients and keep time for urgent visits."}];
+class Component extends DCLogic {
+  state = { i: 0, n: -8, paused: false };
+  componentDidMount() {
+    const reduce = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) { this.setState({ n: 99, paused: true }); return; }
+    this.timer = setInterval(() => this.tick(), 120);
+  }
+  componentWillUnmount() { clearInterval(this.timer); }
+  tick() {
+    if (this.state.paused) return;
+    const words = C[this.state.i].a.split(' ').length;
+    if (this.state.n < words + 28) this.setState({ n: this.state.n + 1 });
+    else this.setState({ i: (this.state.i + 1) % C.length, n: -8 });
+  }
+  renderVals() {
+    const c = C[this.state.i], w = c.a.split(' ');
+    const n = Math.max(0, Math.min(this.state.n, w.length));
+    return {
+      k: { ...c, qo: 1, ao: this.state.n >= 0 ? 1 : 0, shown: w.slice(0, n).join(' '), writing: this.state.n >= 0 && n < w.length },
+      dashes: C.map((x, j) => ({ c: j === this.state.i ? '#d4f27a' : 'rgba(243,241,231,0.18)' })),
+      pauseLabel: this.state.paused ? 'Play' : 'Pause', toggle: () => this.setState({ paused: !this.state.paused })
+    };
+  }
+}
+</script>
+</body>
+</html>

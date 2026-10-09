@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>FollowUp landing, D2</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#fdfcfc}
+a{color:#0a0a0a}a:hover{color:#57534e}
+button{font:inherit}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.rise{animation:rise .8s cubic-bezier(.2,.7,.2,1) both}
+:focus-visible{outline:2px solid #0a0a0a;outline-offset:3px}
+@media (prefers-reduced-motion: reduce){.rise{animation:none}}
+</style>
+</helmet>
+<div style="background: #fdfcfc; color: #0a0a0a; font-family: 'Public Sans', system-ui, sans-serif; -webkit-font-smoothing: antialiased">
+
+<header style="position: sticky; top: 14px; z-index: 10; display: flex; justify-content: center; padding: 14px 16px 0">
+<nav aria-label="Main" style="width: 100%; max-width: 1120px; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 8px 8px 8px 22px; background: rgba(255,255,255,0.86); backdrop-filter: blur(14px); border: 1px solid #e7e5e2; border-radius: 999px; box-shadow: 0 10px 30px -18px rgba(26,20,15,0.35)">
+<a href="#top" style="font-weight: 600; font-size: 17px; letter-spacing: -0.01em; text-decoration: none">FollowUp</a>
+<div style="display: flex; gap: 26px; font-size: 14.5px; flex-wrap: wrap">
+<a href="#how" style="text-decoration: none; color: #57534e">How it works</a>
+<a href="#control" style="text-decoration: none; color: #57534e">Your control</a>
+<a href="#prices" style="text-decoration: none; color: #57534e">Prices</a>
+</div>
+<div style="display: flex; gap: 6px; align-items: center">
+<a href="#signin" style="font-size: 14.5px; padding: 11px 14px; text-decoration: none">Sign in</a>
+<a href="#start" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 20px; border-radius: 999px; background: #0a0a0a; color: #ffffff; font-size: 14.5px; font-weight: 500; text-decoration: none">Start free</a>
+</div>
+</nav>
+</header>
+
+<section id="top" style="max-width: 1120px; margin: 0 auto; padding: 80px 24px 40px; box-sizing: border-box; display: flex; flex-wrap: wrap; gap: 56px; align-items: center">
+<div class="rise" style="flex: 1 1 440px; min-width: 0">
+<h1 style="margin: 0; font-weight: 300; font-size: clamp(46px, 6.2vw, 84px); line-height: 1.0; letter-spacing: -0.04em; text-wrap: balance">Never lose a lead <span style="color: #858079">because you forgot to follow up.</span></h1>
+<p style="margin: 30px 0 0; font-size: 19px; line-height: 1.55; color: #57534e; max-width: 30em">FollowUp reads the customers in your Gmail, answers them in your words within minutes, and checks in if they go quiet. When something needs your decision, like a price or a date, it hands it to you.</p>
+<div style="margin-top: 34px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center">
+<a href="#start" style="display: inline-flex; align-items: center; gap: 10px; min-height: 54px; padding: 0 26px; border-radius: 999px; background: #0a0a0a; color: #ffffff; font-weight: 500; font-size: 16.5px; text-decoration: none">Connect Gmail, start free
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"></path><path d="M13 6l6 6-6 6"></path></svg></a>
+<a href="#watch" style="display: inline-flex; align-items: center; gap: 12px; min-height: 54px; padding: 0 18px 0 8px; border-radius: 999px; font-size: 16.5px; text-decoration: none">
+<span style="width: 38px; height: 38px; border-radius: 999px; border: 1px solid #e7e5e2; background: #ffffff; display: inline-flex; align-items: center; justify-content: center"><svg width="12" height="12" viewBox="0 0 24 24" fill="#0a0a0a" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"></path></svg></span>
+See how it works <span style="color: #736e68; font-size: 14.5px">40 sec</span></a>
+</div>
+<p style="margin: 20px 0 0; font-size: 14.5px; color: #736e68; display: flex; gap: 8px; align-items: center">
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>
+Free while in beta · No credit card</p>
+</div>
+
+<div class="rise" style="flex: 1 1 500px; min-width: 0; animation-delay: .15s">
+<div role="img" aria-label="An example: a customer emails about a listing, FollowUp writes the reply in the owner's words, the owner sends it with one tap, and the customer writes back." style="position: relative; border-radius: 30px; padding: 30px 30px 22px; min-height: 500px; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px; overflow: hidden; background: radial-gradient(70% 90% at 12% 10%, rgba(244,196,160,0.9), rgba(244,196,160,0) 70%), radial-gradient(70% 90% at 92% 95%, rgba(196,210,228,0.95), rgba(196,210,228,0) 70%), radial-gradient(50% 70% at 88% 0%, rgba(238,212,204,0.9), rgba(238,212,204,0) 72%), #f3efea; box-shadow: inset 0 0 0 1px rgba(10,10,10,0.06), 0 40px 80px -48px rgba(26,20,15,0.45)">
+
+<div style="background: #ffffff; border-radius: 20px; padding: 18px 20px; box-shadow: 0 1px 2px rgba(26,20,15,0.06), 0 14px 32px -18px rgba(26,20,15,0.28); max-width: 420px">
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: #736e68; display: flex; align-items: center; gap: 8px">
+<span style="width: 7px; height: 7px; border-radius: 999px; background: #c96a1b"></span>Gmail · 2 hours ago · no reply yet</div>
+<p style="margin: 10px 0 0; font-size: 17px; line-height: 1.5">Hi, is the 3-bedroom on Maple Street still available? Could I see it this weekend?</p>
+<p style="margin: 6px 0 0; font-size: 14.5px; color: #736e68">Priya</p>
+</div>
+
+<sc-if value="{{ showReply }}" hint-placeholder-val="{{ true }}">
+<div class="rise" style="align-self: flex-end; width: 100%; max-width: 420px; box-sizing: border-box; background: rgba(255,255,255,0.62); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.7); border-radius: 20px; padding: 18px 20px; box-shadow: 0 18px 40px -22px rgba(26,20,15,0.35)">
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: #57534e">Reply written · in your words · 1 min</div>
+<p style="margin: 10px 0 0; font-size: 17px; line-height: 1.5">Hi Priya, yes, the 3-bedroom on Maple Street is still available. Would Saturday morning work for a viewing?</p>
+<sc-if value="{{ notSent }}" hint-placeholder-val="{{ true }}">
+<div style="margin-top: 14px; display: flex; align-items: center; gap: 14px">
+<span style="display: inline-flex; align-items: center; min-height: 40px; padding: 0 20px; border-radius: 999px; background: #0a0a0a; color: #ffffff; font-size: 15px; font-weight: 500">Send</span>
+<span style="font-size: 14.5px; color: #57534e">Edit</span>
+<span style="margin-left: auto; font-size: 13.5px; color: #57534e">Waits for your OK</span>
+</div>
+</sc-if>
+<sc-if value="{{ sent }}" hint-placeholder-val="{{ false }}">
+<div class="rise" style="margin-top: 14px; display: flex; align-items: center; gap: 8px; font-size: 14.5px; color: #3f3a36">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>
+Sent from your own Gmail</div>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ showBack }}" hint-placeholder-val="{{ false }}">
+<div class="rise" style="background: #ffffff; border-radius: 20px; padding: 18px 20px; box-shadow: 0 1px 2px rgba(26,20,15,0.06), 0 14px 32px -18px rgba(26,20,15,0.28); max-width: 380px">
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: #736e68">Priya · 4 min later</div>
+<p style="margin: 10px 0 0; font-size: 17px; line-height: 1.5">Saturday at 10 works. See you there!</p>
+<p style="margin: 8px 0 0; font-size: 13.5px; color: #57534e">FollowUp stops checking in. She replied.</p>
+</div>
+</sc-if>
+
+<div style="margin-top: auto; padding-top: 18px; display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end">
+<div style="flex: 1 1 300px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px">
+<sc-for list="{{ steps }}" as="s" hint-placeholder-count="4">
+<button type="button" onClick="{{ s.pick }}" style="all: unset; cursor: pointer; display: flex; flex-direction: column; gap: 8px; min-height: 44px">
+<span style="display: block; height: 2px; border-radius: 2px; background: {{ s.bar }}"></span>
+<span style="font-size: 12.5px; line-height: 1.3; color: {{ s.ink }}">{{ s.label }}</span>
+</button>
+</sc-for>
+</div>
+<div style="display: flex; gap: 6px">
+<button type="button" onClick="{{ toggle }}" style="min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid rgba(10,10,10,0.12); background: rgba(255,255,255,0.7); font-size: 13px; cursor: pointer; color: #0a0a0a">{{ pauseLabel }}</button>
+<button type="button" onClick="{{ replay }}" style="min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid rgba(10,10,10,0.12); background: rgba(255,255,255,0.7); font-size: 13px; cursor: pointer; color: #0a0a0a">Replay</button>
+</div>
+</div>
+</div>
+<p style="margin: 12px 0 0 6px; font-size: 13px; color: #736e68">An example, not a real customer.</p>
+</div>
+</section>
+
+<section aria-label="Works with" style="border-top: 1px solid #e7e5e2; border-bottom: 1px solid #e7e5e2; margin-top: 40px">
+<div style="max-width: 1120px; margin: 0 auto; padding: 22px 24px; box-sizing: border-box; display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: center">
+<span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #736e68">Works with</span>
+<span style="display: inline-flex; gap: 8px; align-items: center; font-size: 17px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3.5 6.5l8.5 6.5 8.5-6.5"></path></svg>Gmail</span>
+<span style="font-size: 15px; color: #57534e">Outlook, Instagram, Messenger, WhatsApp and a website form are coming. Tell us which you need.</span>
+</div>
+</section>
+
+<section aria-label="In numbers" style="max-width: 1120px; margin: 0 auto; padding: 88px 24px 24px; box-sizing: border-box; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 32px">
+<div style="border-top: 1px solid #0a0a0a; padding-top: 18px">
+<div style="font-size: 64px; font-weight: 300; letter-spacing: -0.04em; line-height: 1">2 min</div>
+<p style="margin: 12px 0 0; font-size: 16px; color: #57534e">to connect Gmail. Nothing to install.</p>
+</div>
+<div style="border-top: 1px solid #0a0a0a; padding-top: 18px">
+<div style="font-size: 64px; font-weight: 300; letter-spacing: -0.04em; line-height: 1">1 min</div>
+<p style="margin: 12px 0 0; font-size: 16px; color: #57534e">for a reply, written in your words.</p>
+</div>
+<div style="border-top: 1px solid #0a0a0a; padding-top: 18px">
+<div style="font-size: 64px; font-weight: 300; letter-spacing: -0.04em; line-height: 1">1 tap</div>
+<p style="margin: 12px 0 0; font-size: 16px; color: #57534e">to send it, from your own Gmail.</p>
+</div>
+</section>
+
+<section id="how" aria-label="How it works" style="max-width: 1120px; margin: 0 auto; padding: 96px 24px; box-sizing: border-box; display: flex; flex-wrap: wrap; gap: 56px">
+<div style="flex: 1 1 280px; min-width: 0">
+<div style="position: sticky; top: 120px">
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #736e68">How it works · one customer</div>
+<h2 style="margin: 16px 0 0; font-size: 44px; font-weight: 300; line-height: 1.05; letter-spacing: -0.035em; text-wrap: balance">Start to finish. <span style="color: #858079">You decide what goes out.</span></h2>
+<ol style="list-style: none; margin: 36px 0 0; padding: 0; display: flex; flex-direction: column">
+<li style="display: flex; gap: 14px; align-items: baseline; padding: 14px 0 14px 16px; border-left: 2px solid #0a0a0a; font-size: 17px">A customer writes</li>
+<li style="display: flex; gap: 14px; align-items: baseline; padding: 14px 0 14px 16px; border-left: 2px solid #e7e5e2; font-size: 17px; color: #736e68">The reply is written, in your words</li>
+<li style="display: flex; gap: 14px; align-items: baseline; padding: 14px 0 14px 16px; border-left: 2px solid #e7e5e2; font-size: 17px; color: #736e68">Anything you decide, it hands to you</li>
+<li style="display: flex; gap: 14px; align-items: baseline; padding: 14px 0 14px 16px; border-left: 2px solid #e7e5e2; font-size: 17px; color: #736e68">They go quiet, it checks in</li>
+<li style="display: flex; gap: 14px; align-items: baseline; padding: 14px 0 14px 16px; border-left: 2px solid #e7e5e2; font-size: 17px; color: #736e68">They write back, it stops</li>
+</ol>
+</div>
+</div>
+
+<div style="flex: 2 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 28px">
+<article style="border: 1px solid #e7e5e2; border-radius: 26px; background: #ffffff; padding: 32px; display: flex; flex-direction: column; gap: 18px">
+<h3 style="margin: 0; font-size: 24px; font-weight: 400; letter-spacing: -0.02em">Anything you decide, it hands to you. <span style="color: #858079">A price, a date, a promise.</span></h3>
+<div style="border-radius: 20px; padding: 22px; background: radial-gradient(70% 90% at 12% 10%, rgba(244,196,160,0.75), rgba(244,196,160,0) 70%), radial-gradient(70% 90% at 92% 95%, rgba(196,210,228,0.85), rgba(196,210,228,0) 70%), #f3efea">
+<div style="background: rgba(255,255,255,0.7); border-radius: 16px; padding: 16px 18px">
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: #57534e; display: flex; gap: 8px; align-items: center"><span style="width: 7px; height: 7px; border-radius: 999px; background: #c96a1b"></span>Waits for you · it names a price</div>
+<p style="margin: 10px 0 0; font-size: 16.5px; line-height: 1.55">Hi Sarah, the 3-month package is <span style="text-decoration: underline; text-decoration-color: #c96a1b; text-decoration-thickness: 2px; text-underline-offset: 4px">[your price]</span>. Would you like a free 20-minute call first?</p>
+</div>
+</div>
+</article>
+
+<article style="border: 1px solid #e7e5e2; border-radius: 26px; background: #ffffff; padding: 32px; display: flex; flex-direction: column; gap: 18px">
+<h3 style="margin: 0; font-size: 24px; font-weight: 400; letter-spacing: -0.02em">They go quiet, it checks in. <span style="color: #858079">Once, politely, then waits.</span></h3>
+<div style="display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 14px 18px; align-items: start; font-size: 16px; line-height: 1.5">
+<span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #736e68; padding-top: 3px">Tue 10:42</span>
+<span>Your reply goes out.</span>
+<span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #736e68; padding-top: 3px">Wed, Thu</span>
+<span style="color: #736e68">No answer.</span>
+<span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #736e68; padding-top: 3px">Fri 9:00</span>
+<span style="background: #f5f3f1; border-radius: 14px; padding: 12px 14px">Hi Priya, just checking in. Still keen to see the house this weekend?</span>
+</div>
+</article>
+
+<article style="border: 1px solid #e7e5e2; border-radius: 26px; background: #ffffff; padding: 32px; display: flex; flex-direction: column; gap: 18px">
+<h3 style="margin: 0; font-size: 24px; font-weight: 400; letter-spacing: -0.02em">They write back, it stops. <span style="color: #858079">The conversation is yours again.</span></h3>
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span style="align-self: flex-start; background: #f5f3f1; border-radius: 16px; padding: 12px 16px; font-size: 16px">Thanks! Booking the viewing now.</span>
+<span style="display: inline-flex; gap: 8px; align-items: center; font-size: 13.5px; color: #57534e"><span style="width: 7px; height: 7px; border-radius: 999px; background: #a8a29e"></span>Check-ins stopped · Priya replied</span>
+</div>
+</article>
+</div>
+</section>
+
+<section id="control" aria-label="Your control" style="padding: 0 16px">
+<div style="max-width: 1200px; margin: 0 auto; box-sizing: border-box; border-radius: 34px; background: #171513; color: #f3f1ee; padding: 72px clamp(24px, 5vw, 64px); display: flex; flex-wrap: wrap; gap: 56px; align-items: center">
+<div style="flex: 1 1 380px; min-width: 0">
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #958f88">Your control</div>
+<h2 style="margin: 16px 0 0; font-size: 48px; font-weight: 300; line-height: 1.02; letter-spacing: -0.035em">What it will <span style="color: #958f88">and won't do.</span></h2>
+<div style="margin-top: 34px; display: flex; flex-direction: column; font-size: 18px; line-height: 1.5">
+<p style="margin: 0; padding: 14px 0; border-top: 1px solid #2e2c2a"><span style="font-weight: 500">It stops</span> <span style="color: #b8b2ab">when a customer replies.</span></p>
+<p style="margin: 0; padding: 14px 0; border-top: 1px solid #2e2c2a"><span style="font-weight: 500">It asks</span> <span style="color: #b8b2ab">when it isn't sure.</span></p>
+<p style="margin: 0; padding: 14px 0; border-top: 1px solid #2e2c2a"><span style="font-weight: 500">It writes down</span> <span style="color: #b8b2ab">why it sent each message.</span></p>
+<p style="margin: 0; padding: 14px 0; border-top: 1px solid #2e2c2a; border-bottom: 1px solid #2e2c2a"><span style="font-weight: 500">It's yours.</span> <span style="color: #b8b2ab">Delete everything, any time.</span></p>
+</div>
+</div>
+<div style="flex: 1 1 340px; min-width: 0">
+<div style="border-radius: 24px; background: #23201e; border: 1px solid #2e2c2a; padding: 26px">
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #958f88">Settings</div>
+<div style="margin-top: 16px; display: flex; align-items: center; justify-content: space-between; gap: 16px">
+<div>
+<div style="font-size: 19px; font-weight: 500">Pause all sending</div>
+<div style="margin-top: 4px; font-size: 15px; color: #b8b2ab">One tap holds everything.</div>
+</div>
+<span aria-hidden="true" style="width: 52px; height: 30px; border-radius: 999px; background: #f3f1ee; position: relative; flex-shrink: 0"><span style="position: absolute; top: 3px; left: 25px; width: 24px; height: 24px; border-radius: 999px; background: #171513"></span></span>
+</div>
+</div>
+<a href="#security" style="display: inline-block; margin-top: 18px; color: #f3f1ee; font-size: 15px; text-underline-offset: 4px">How we keep your data safe</a>
+</div>
+</div>
+</section>
+
+<section id="start" aria-label="Start" style="max-width: 1120px; margin: 0 auto; padding: 120px 24px 72px; box-sizing: border-box; text-align: center">
+<h2 style="margin: 0 auto; max-width: 14em; font-size: clamp(40px, 5vw, 64px); font-weight: 300; line-height: 1.02; letter-spacing: -0.04em; text-wrap: balance">See who's waiting <span style="color: #858079">in your Gmail.</span></h2>
+<div style="margin-top: 32px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap">
+<a href="#start" style="display: inline-flex; align-items: center; gap: 10px; min-height: 54px; padding: 0 26px; border-radius: 999px; background: #0a0a0a; color: #ffffff; font-weight: 500; font-size: 16.5px; text-decoration: none">Connect Gmail, start free</a>
+</div>
+<p style="margin: 18px 0 0; font-size: 14.5px; color: #736e68">Free while in beta · No credit card</p>
+</section>
+
+<footer style="border-top: 1px solid #e7e5e2">
+<div style="max-width: 1120px; margin: 0 auto; padding: 28px 24px 40px; box-sizing: border-box; display: flex; flex-wrap: wrap; gap: 12px 28px; font-size: 14px; color: #736e68">
+<span style="color: #0a0a0a; font-weight: 600">FollowUp</span>
+<a href="#privacy" style="color: #736e68">Privacy</a>
+<a href="#security" style="color: #736e68">How we protect your data</a>
+<a href="#contact" style="color: #736e68">contact@followupbase.io</a>
+</div>
+</footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"beatSeconds":{"editor":"range","default":3.6,"min":2,"max":6,"step":0.2,"unit":"s","section":"Hero scene"},"$preview":{"width":1440,"height":4100}}'>
+class Component extends DCLogic {
+  state = { beat: 0, playing: true };
+  componentDidMount() {
+    const reduce = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) { this.setState({ beat: 3, playing: false }); return; }
+    const ms = Math.round((this.props.beatSeconds ?? 3.6) * 1000);
+    this.timer = setInterval(() => {
+      if (!this.state.playing) return;
+      this.setState({ beat: this.state.beat >= 4 ? 0 : this.state.beat + 1 });
+    }, ms);
+  }
+  componentWillUnmount() { clearInterval(this.timer); }
+  renderVals() {
+    const b = Math.min(this.state.beat, 3);
+    const labels = ['A customer writes', 'The reply is written', 'You OK it', 'They write back'];
+    return {
+      showReply: b >= 1,
+      notSent: b < 2,
+      sent: b >= 2,
+      showBack: b >= 3,
+      steps: labels.map((label, i) => ({
+        label,
+        bar: i <= b ? '#0a0a0a' : 'rgba(10,10,10,0.14)',
+        ink: i === b ? '#0a0a0a' : '#57534e',
+        pick: () => this.setState({ beat: i, playing: false }),
+      })),
+      pauseLabel: this.state.playing ? 'Pause' : 'Play',
+      toggle: () => this.setState({ playing: !this.state.playing }),
+      replay: () => this.setState({ beat: 0, playing: true }),
+    };
+  }
+}
+</script>
+</body>
+</html>

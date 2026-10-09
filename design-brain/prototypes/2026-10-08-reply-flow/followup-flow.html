@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FollowUp Reply Flow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Public+Sans:wght@300..700&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
+<style>
+:root { --paper: #ffffff; --ink: #0a0a0a; --ink-soft: #57534e; --ink-faint: #736e68; --line: #e8e5e1; --stage: #f3f2f0; --dot: #c96a1b; --good: #2f6b4a;
+  --serif: 'Instrument Serif', 'Iowan Old Style', Georgia, serif; --sans: 'Public Sans', system-ui, -apple-system, 'Segoe UI', sans-serif; --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --gut: clamp(16px, 4vw, 56px); --ease: cubic-bezier(.2, .7, .2, 1) }
+* { box-sizing: border-box }
+html, body { background: var(--paper) }
+body { margin: 0; color: var(--ink); font-family: var(--sans); font-weight: 420; font-size: 16px; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; overflow-x: hidden }
+a { color: inherit } h1, h2, h3, p { margin: 0 }
+.mono { font-family: var(--mono) }
+.wrap { max-width: 1320px; margin: 0 auto; padding-inline: var(--gut) }
+:focus-visible { outline: 2px solid var(--dot); outline-offset: 3px; border-radius: 8px }
+.nav { position: fixed; top: 0; left: 0; right: 0; z-index: 30; padding-top: env(safe-area-inset-top, 0px); background: rgba(255,255,255,.82); -webkit-backdrop-filter: saturate(1.4) blur(10px); backdrop-filter: saturate(1.4) blur(10px) }
+.nav .wrap { height: 68px; display: flex; align-items: center; justify-content: space-between; gap: 16px }
+.nav-l { display: flex; align-items: center; gap: 36px }
+.brand { display: inline-flex; align-items: center; gap: 9px; font-weight: 650; font-size: 18px; text-decoration: none }
+.links { display: flex; gap: 26px; font-size: 14.5px }
+.links a, .signin { text-decoration: none; opacity: .78 }
+.nav-r { display: flex; align-items: center; gap: 18px; font-size: 14.5px }
+.nav-cta { display: inline-flex; align-items: center; min-height: 44px; padding: 0 20px; border-radius: 999px; background: var(--ink); color: var(--paper); font-weight: 600; text-decoration: none }
+.foot { padding-block: 48px 72px }
+@media (max-width: 1000px) { .links { display: none } }
+@media (max-width: 640px) { .signin { display: none } }
+
+/* ---- opening: the reply flow, type-first ---- */
+.fl-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap }
+.fl-hero { --fl-slot: 262px; --fl-gap: 26px; --fl-lens: 430px; padding-top: calc(68px + env(safe-area-inset-top, 0px) + clamp(18px, 4vh, 44px)); padding-bottom: 36px; color: var(--ink); background: radial-gradient(55% 62% at 10% 0%, rgba(244,196,160,.55), rgba(244,196,160,0) 70%), radial-gradient(50% 60% at 92% 4%, rgba(196,210,228,.75), rgba(196,210,228,0) 70%), radial-gradient(40% 40% at 55% -8%, rgba(238,212,204,.6), rgba(238,212,204,0) 72%), var(--paper) }
+.fl-h1 { font-family: var(--serif); font-weight: 400; font-size: clamp(46px, 6.1vw, 94px); line-height: .9; letter-spacing: -.04em; text-align: center; text-wrap: balance; max-width: 20ch; margin: 0 auto }
+.fl-h1 em { font-style: italic; color: var(--ink-soft) }
+.fl-ask { position: relative; margin: clamp(22px, 3.6vh, 34px) auto 0; max-width: 760px; display: flex; align-items: center; gap: 10px; min-height: 68px; padding: 8px 8px 8px 10px; border-radius: 999px; background: var(--paper); box-shadow: 0 0 0 1.5px var(--ink), 0 24px 50px -30px rgba(10,10,10,.45) }
+.fl-ask:focus-within { box-shadow: 0 0 0 2.5px var(--ink), 0 24px 50px -30px rgba(10,10,10,.45) }
+.fl-you { flex: none; width: 46px; height: 46px; border-radius: 999px; display: grid; place-items: center; background: var(--stage); font-size: 12.5px; font-weight: 650 }
+.fl-ask input { flex: 1; min-width: 0; height: 50px; border: 0; outline: 0; background: none; font: inherit; font-size: clamp(16px, 1.4vw, 19px); color: var(--ink) }
+.fl-ask input::placeholder { color: #8a847d }
+.fl-go { font: inherit; flex: none; display: inline-flex; align-items: center; gap: 8px; min-height: 52px; padding: 0 22px 0 18px; border: 0; border-radius: 999px; background: var(--ink); color: #fff; font-weight: 600; font-size: 15.5px; cursor: pointer; transition: transform .15s ease }
+.fl-go:hover { transform: translateY(-1px) }
+.fl-hint { margin: 12px 0 0; text-align: center; font-size: 14.5px; color: var(--ink-faint) }
+.fl-river { position: relative; margin-top: clamp(22px, 3.4vh, 34px); height: 404px; border-radius: 32px; overflow: hidden; background: radial-gradient(60% 85% at 8% 0%, rgba(240,180,142,.85), rgba(240,180,142,0) 70%), radial-gradient(60% 95% at 96% 100%, rgba(158,182,214,.9), rgba(158,182,214,0) 70%), radial-gradient(45% 70% at 62% 0%, rgba(232,194,184,.75), rgba(232,194,184,0) 72%), #ece5de; box-shadow: inset 0 40px 60px -56px rgba(10,10,10,.4) }
+.fl-zone { position: absolute; top: 22px; z-index: 3; display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-soft) }
+.fl-zone.is-l { left: 28px } .fl-zone.is-r { right: 28px }
+.fl-zone b { font-weight: 500; color: var(--ink); font-variant-numeric: tabular-nums }
+.fl-zone i { width: 26px; height: 1px; background: currentColor; opacity: .5 }
+.fl-avs { display: none; gap: 4px }
+.fl-avs span { width: 22px; height: 22px; border-radius: 999px; display: grid; place-items: center; background: rgba(255,255,255,.8); font-family: var(--sans); font-size: 10.5px; font-weight: 650; letter-spacing: 0; color: var(--ink) }
+.fl-track { position: absolute; inset: 0; -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 9%, #000 91%, transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 9%, #000 91%, transparent 100%) }
+.fl-slot { position: absolute; top: 92px; left: 0; width: var(--fl-slot); transform-origin: 50% 0; transition: transform .9s var(--ease), opacity .7s ease; will-change: transform }
+.fl-slot .fl-q { box-shadow: 0 0 0 1px rgba(10,10,10,.04), 0 18px 32px -22px rgba(10,10,10,.4) }
+.fl-slot .fl-a { box-shadow: 0 18px 32px -20px rgba(10,10,10,.55) }
+.fl-slot.is-instant { transition: none }
+.fl-meta { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--ink-soft); white-space: nowrap; overflow: hidden }
+.fl-meta b { color: var(--ink); font-weight: 650 }
+.fl-meta .mono { font-family: var(--mono); font-size: 11.5px; color: var(--ink-faint) }
+.fl-q { margin-top: 8px; padding: 12px 15px; border-radius: 18px 18px 18px 6px; background: var(--paper); font-size: 15px; line-height: 1.38; box-shadow: 0 0 0 1px rgba(10,10,10,.05); overflow-wrap: anywhere }
+.fl-q.is-quiet { background: rgba(255,255,255,.55); color: var(--ink-soft); box-shadow: 0 0 0 1px rgba(10,10,10,.08) inset }
+.fl-a { margin: 10px 0 0 28px; padding: 12px 15px; border-radius: 18px 18px 6px 18px; background: var(--ink); color: #fff; font-size: 15px; line-height: 1.38 }
+.fl-blank { display: inline-block; min-width: 2.6em; border-bottom: 1.5px solid currentColor; opacity: .85 }
+.fl-tag { margin: 8px 0 0 28px; display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 650; color: var(--good) }
+.fl-tag.is-needs { color: var(--dot) }
+.fl-tag.is-needs::before { content: ""; width: 8px; height: 8px; border-radius: 999px; background: var(--dot) }
+.fl-lens { position: absolute; z-index: 2; top: 60px; left: 50%; width: var(--fl-lens); margin-left: calc(var(--fl-lens) / -2); min-height: 296px; padding: 18px 22px 20px; border-radius: 26px; background: var(--paper); box-shadow: 0 0 0 1px rgba(10,10,10,.05), 0 24px 40px -26px rgba(10,10,10,.3), 0 60px 100px -46px rgba(10,10,10,.5) }
+.fl-lhead { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 14px; border-bottom: 1px solid var(--line) }
+.fl-lbrand { display: inline-flex; align-items: center; gap: 7px; font-weight: 650; font-size: 14px }
+.fl-status { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-soft) }
+.fl-status i { width: 8px; height: 8px; border-radius: 999px; background: #b9b3ac }
+.fl-status.is-busy i { background: var(--ink); animation: fl-pulse 1s ease-in-out infinite }
+.fl-status.is-ok { color: var(--good) } .fl-status.is-ok i { background: var(--good) }
+.fl-status.is-needs { color: var(--dot) } .fl-status.is-needs i { background: var(--dot) }
+@keyframes fl-pulse { 50% { transform: scale(.6) } }
+.fl-lbody { padding-top: 14px; transition: opacity .22s ease }
+.fl-lbody.is-fade { opacity: 0 }
+.fl-lens .fl-q { font-size: 16.5px; background: var(--stage); box-shadow: none }
+.fl-lens .fl-q.is-quiet { background: transparent; box-shadow: 0 0 0 1px var(--line) inset }
+.fl-lens .fl-q.is-ghost { color: #8a847d }
+.fl-lens .fl-a { margin-left: 44px; font-size: 16.5px; min-height: 48px }
+.fl-lens .fl-a.is-hide { visibility: hidden }
+.fl-lens .fl-a.is-ghost { background: transparent; color: #8a847d; box-shadow: 0 0 0 1.5px #d6d0c9 inset; font-size: 14.5px }
+.fl-caret { display: inline-block; width: 2px; height: 1.05em; margin-left: 2px; vertical-align: -2px; background: currentColor; animation: fl-blink 1s steps(1) infinite }
+.fl-q .fl-caret { background: var(--ink) }
+@keyframes fl-blink { 50% { opacity: 0 } }
+.fl-dots { display: inline-flex; gap: 4px; padding: 6px 0 } .fl-dots i { width: 6px; height: 6px; border-radius: 999px; background: #fff; animation: fl-dot 1s ease-in-out infinite } .fl-dots i:nth-child(2) { animation-delay: .15s } .fl-dots i:nth-child(3) { animation-delay: .3s }
+@keyframes fl-dot { 0%, 100% { opacity: .3; transform: translateY(0) } 50% { opacity: 1; transform: translateY(-2px) } }
+.fl-lfoot { margin-top: 14px; margin-left: 44px; min-height: 40px; display: flex; align-items: center; gap: 12px }
+.fl-send { font: inherit; display: inline-flex; align-items: center; min-height: 40px; padding: 0 18px; border: 0; border-radius: 999px; background: var(--ink); color: #fff; font-weight: 600; font-size: 14.5px; transition: transform .15s ease, opacity .25s ease }
+.fl-send.is-press { transform: scale(.93) }
+.fl-send.is-hide, .fl-note.is-hide { opacity: 0 }
+.fl-note { font-size: 13px; color: var(--ink-faint); transition: opacity .25s ease }
+.fl-sent { display: inline-flex; align-items: center; gap: 7px; font-weight: 650; font-size: 14.5px; color: var(--good); animation: fl-rise .35s var(--ease) both }
+.fl-needs { display: inline-flex; align-items: center; gap: 8px; font-weight: 650; font-size: 14px; color: var(--dot); animation: fl-rise .35s var(--ease) both }
+.fl-needs::before { content: ""; width: 9px; height: 9px; border-radius: 999px; background: var(--dot) }
+@keyframes fl-rise { from { opacity: 0; transform: translateY(6px) } to { opacity: 1; transform: none } }
+.fl-under { margin-top: 16px; display: flex; align-items: center; justify-content: space-between; gap: 14px 24px; flex-wrap: wrap; min-height: 54px }
+.fl-next { display: flex; align-items: center; gap: 12px 18px; flex-wrap: wrap; font-size: 16px; color: var(--ink-soft); opacity: 0; transform: translateY(6px); transition: opacity .5s ease, transform .5s var(--ease); pointer-events: none }
+.fl-next.is-on { opacity: 1; transform: none; pointer-events: auto }
+.fl-next b { color: var(--ink); font-weight: 600 }
+.fl-cta { display: inline-flex; align-items: center; min-height: 50px; padding: 0 24px; border-radius: 999px; background: var(--ink); color: var(--paper); font-weight: 600; font-size: 15.5px; text-decoration: none }
+.fl-side { display: flex; align-items: center; gap: 14px; margin-left: auto }
+.fl-ex { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint) }
+.fl-ctl { font: inherit; font-family: var(--mono); font-size: 12px; letter-spacing: .06em; color: var(--ink-soft); background: none; border: 1px solid #d8d3cd; border-radius: 999px; min-height: 36px; padding: 0 14px; cursor: pointer }
+.fl-ctl:hover { color: var(--ink); border-color: var(--ink-faint) }
+@media (max-width: 640px) {
+  .fl-hero { --fl-slot: 210px; --fl-gap: 14px; --fl-lens: min(calc(100vw - 2 * var(--gut) - 24px), 420px) }
+  .fl-ask { min-height: 60px; padding: 6px 6px 6px 8px }
+  .fl-you { width: 38px; height: 38px; font-size: 11px }
+  .fl-go { min-height: 46px; padding: 0 14px }
+  .fl-go span { display: none }
+  .fl-river { height: 440px; border-radius: 24px }
+  .fl-zone { top: 16px } .fl-zone.is-l { left: 16px } .fl-zone.is-r { right: 16px }
+  .fl-zone i { display: none } .fl-avs { display: inline-flex }
+  .fl-lens { top: 52px; padding: 16px 16px 18px }
+  .fl-lens .fl-a, .fl-lfoot { margin-left: 20px }
+  .fl-slot { top: 84px }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fl-slot, .fl-lbody, .fl-send, .fl-note, .fl-next { transition: none }
+  .fl-status.is-busy i, .fl-caret, .fl-dots i, .fl-sent, .fl-needs { animation: none }
+}
+
+/* ---- how it helps: time, money, follow-ups ---- */
+.fl-help { padding-block: clamp(72px, 10vh, 120px) 24px; background: var(--paper); color: var(--ink) }
+.fl-help h2 { font-family: var(--serif); font-weight: 400; font-size: clamp(38px, 4.6vw, 68px); line-height: .95; letter-spacing: -.03em; max-width: 18ch; text-wrap: balance }
+.fl-help h2 em { font-style: italic; color: var(--ink-soft) }
+.fl-help-grid { margin-top: clamp(36px, 5vh, 56px); display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 2fr); gap: 24px; align-items: stretch }
+.fl-fact { border-radius: 28px; padding: 30px 30px 26px; display: flex; flex-direction: column; justify-content: space-between; gap: 20px; color: var(--ink); background: radial-gradient(70% 90% at 12% 10%, rgba(240,180,142,.8), rgba(240,180,142,0) 70%), radial-gradient(70% 90% at 92% 95%, rgba(158,182,214,.85), rgba(158,182,214,0) 70%), #ece5de; box-shadow: 0 30px 60px -40px rgba(10,10,10,.45) }
+.fl-fact b { display: block; font-family: var(--serif); font-weight: 400; font-size: clamp(88px, 10vw, 150px); line-height: .8; letter-spacing: -.05em }
+.fl-fact p { margin: 0; font-size: 17px; line-height: 1.45 }
+.fl-fact cite { font-style: normal; font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft) }
+.fl-help-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px }
+.fl-hi { border-radius: 24px; padding: 26px 24px; background: var(--paper); box-shadow: 0 0 0 1px var(--line), 0 26px 50px -36px rgba(10,10,10,.35) }
+.fl-hi .ic { width: 48px; height: 48px; border-radius: 999px; display: grid; place-items: center; background: var(--stage) }
+.fl-hi h3 { margin: 22px 0 0; font-family: var(--serif); font-weight: 400; font-size: 27px; text-wrap: balance; line-height: 1; letter-spacing: -.02em }
+.fl-hi p { margin: 10px 0 0; font-size: 15.5px; line-height: 1.5; color: var(--ink-soft) }
+@media (max-width: 1000px) { .fl-help-grid { grid-template-columns: minmax(0, 1fr) } }
+@media (max-width: 700px) { .fl-help-list { grid-template-columns: minmax(0, 1fr) } }
+</style></head>
+<body>
+<header class="nav"><div class="wrap"><div class="nav-l"><a class="brand" href="#top"><svg width="12" height="19" viewBox="0 0 76.77 120" fill="currentColor" aria-hidden="true"><path d="M76.77 0 L73.12 20.29 C69.27 41.68 63.3 49.13 43.26 57.55 L9.78 71.61 L13.43 51.32 C17.29 29.93 23.26 22.48 43.3 14.06 Z"></path><path d="M41.97 67.16 L38 89.21 C35.69 102.04 32.11 106.51 20.08 111.56 L0 120 L3.97 97.95 C6.28 85.12 9.86 80.64 21.89 75.59 Z"></path></svg>FollowUp</a><nav class="links" aria-label="Main"><a href="#how">How it works</a><a href="#control">Your control</a><a href="#new">What's new</a></nav></div>
+<div class="nav-r"><a class="signin" href="#signin">Sign in</a><a class="nav-cta" href="#start">Start free</a></div></div></header>
+<main id="top">
+<section class="fl-hero" aria-labelledby="h1"><div class="wrap">
+<h1 id="h1" class="fl-h1">Never lose a lead <em>because you forgot to follow up.</em></h1>
+<form class="fl-ask" id="fl-ask" autocomplete="off">
+<span class="fl-you" aria-hidden="true">You</span>
+<label class="fl-sr" for="fl-in">Write a message, as if you were a customer</label>
+<input id="fl-in" name="q" maxlength="140" placeholder="Type a customer's question…" enterkeyhint="send">
+<button type="submit" class="fl-go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"></path></svg><span>Send</span></button>
+</form>
+<p class="fl-hint">You're the customer. Watch FollowUp write the reply.</p>
+<div class="fl-river" id="fl-river">
+<p class="fl-sr">An example of FollowUp at work. Customers' messages from Gmail, Outlook, Instagram and website forms wait on the left. One at a time they reach FollowUp in the middle, which writes the reply in the owner's words; the owner taps Send and the conversation moves to Answered on the right. A price question waits for the owner. What you type above appears in the middle and is answered the same way.</p>
+<div class="fl-zone is-l" aria-hidden="true">Waiting<i></i><span class="fl-avs" id="fl-wait"></span></div>
+<div class="fl-zone is-r" aria-hidden="true"><i></i>Answered <b id="fl-count">12</b></div>
+<div class="fl-track" id="fl-track"></div>
+<div class="fl-lens" id="fl-lens">
+<div class="fl-lhead"><span class="fl-lbrand"><svg width="9" height="14" viewBox="0 0 76.77 120" fill="currentColor" aria-hidden="true"><path d="M76.77 0 L73.12 20.29 C69.27 41.68 63.3 49.13 43.26 57.55 L9.78 71.61 L13.43 51.32 C17.29 29.93 23.26 22.48 43.3 14.06 Z"></path><path d="M41.97 67.16 L38 89.21 C35.69 102.04 32.11 106.51 20.08 111.56 L0 120 L3.97 97.95 C6.28 85.12 9.86 80.64 21.89 75.59 Z"></path></svg>FollowUp</span><span class="fl-status" id="fl-status"><i></i>Waiting for you</span></div>
+<div class="fl-lbody" id="fl-lbody"></div>
+</div>
+</div>
+<div class="fl-under">
+<div class="fl-next" id="fl-next" aria-live="polite"><span>That's FollowUp. <b>Your customers get this, every time.</b></span><a class="fl-cta" href="#start" tabindex="-1">Connect Gmail, start free</a></div>
+<div class="fl-side"><span class="fl-ex">Example</span><button class="fl-ctl" type="button" id="fl-pause">Pause</button></div>
+</div>
+</div></section>
+
+<section class="fl-help" aria-labelledby="help-h"><div class="wrap">
+<h2 id="help-h">Less time in your inbox. <em>No lead you paid for, wasted.</em></h2>
+<div class="fl-help-grid">
+<div class="fl-fact"><div><b>7×</b><p>Leads that hear back within an hour are about seven times as likely to turn into a real conversation.</p></div><cite>Harvard Business Review, 2011</cite></div>
+<div class="fl-help-list">
+<div class="fl-hi"><span class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7a2.5 2.5 0 0 1-2.5 2.5H10l-4.5 3.5V16h-1A.5.5 0 0 1 4 15.5z"></path><path d="M8 8.5h8M8 11.5h5"></path></svg></span><h3>Time back</h3><p>Replies are written for you, in your words. You just tap Send.</p></div>
+<div class="fl-hi"><span class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="6" width="15.5" height="12.5" rx="2.5"></rect><path d="M4.5 7.5l7 5.2 7-5.2"></path><circle cx="19.2" cy="5.6" r="2.7" fill="currentColor" stroke="none"></circle></svg></span><h3>No lead wasted</h3><p>Every customer from your inbox, forms and ads gets an answer.</p></div>
+<div class="fl-hi"><span class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"></path><path d="M19.6 4.3v3.9h-3.9"></path><path d="M12 8.6V12l2.4 1.5"></path></svg></span><h3>Follow-ups on time</h3><p>When they go quiet, it follows up. When they reply, it stops.</p></div>
+</div>
+</div>
+</div></section>
+<div class="foot"></div></main>
+<script>
+/* ---- opening: the reply flow, type-first ---- */
+(function () {
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var CH = {"gmail": ["Gmail", "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"3.5\" y=\"5.5\" width=\"17\" height=\"13\" rx=\"2.5\"></rect><path d=\"M4.5 7l7.5 5.5L19.5 7\"></path></svg>"], "outlook": ["Outlook", "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"3.5\" y=\"5.5\" width=\"17\" height=\"13\" rx=\"2.5\"></rect><path d=\"M4.5 7l7.5 5.5L19.5 7\"></path></svg>"], "ig": ["Instagram", "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"4\" y=\"4\" width=\"16\" height=\"16\" rx=\"4.5\"></rect><circle cx=\"12\" cy=\"12\" r=\"3.6\"></circle><circle cx=\"16.6\" cy=\"7.4\" r=\".6\" fill=\"currentColor\"></circle></svg>"], "web": ["Website form", "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"3.5\" y=\"4.5\" width=\"17\" height=\"15\" rx=\"2.5\"></rect><path d=\"M3.5 8.5h17M7.5 12.5h9M7.5 15.5h5\"></path></svg>"], "quiet": ["Gone quiet", "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M19.5 12a7.5 7.5 0 1 1-2.2-5.3\"></path><path d=\"M19.6 4.3v3.9h-3.9\"></path><path d=\"M12 8.6V12l2.4 1.5\"></path></svg>"]}, TICK = "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12.5l4.5 4.5L19 7.5\"></path></svg>";
+  var D = [
+    { ch: 'web', who: 'Omar', t: '6:40 AM', q: 'Do you do kitchen renovations?', r: 'We do! Could you send a photo of the space?', k: 'reply' },
+    { ch: 'gmail', who: 'Ben', t: '5:55 AM', q: 'Are you taking new patients?', r: 'Yes, we are! Mornings or afternoons?', k: 'reply' },
+    { ch: 'gmail', who: 'Priya', t: '11:48 PM', q: 'Is the house on Maple Street still available?', r: 'Hi Priya, yes it is! Want to see it Saturday at 10?', k: 'reply' },
+    { ch: 'web', who: 'Marcus', t: '7:02 AM', q: 'Can someone fix a leaking tap today?', r: 'Yes, I can be there by 3 PM today. Does that work?', k: 'reply' },
+    { ch: 'quiet', who: 'Sam', t: '2 days', q: 'No reply for two days', r: 'Hi Sam, still keen to see the condo this week?', k: 'follow' },
+    { ch: 'ig', who: 'Lena', t: '9:15 PM', q: 'Any spots for a haircut on Friday?', r: 'Yes! 2 PM or 4 PM, which suits you?', k: 'reply' },
+    { ch: 'outlook', who: 'Ella', t: '10:30 PM', q: 'How much is a full car detail?', r: 'Hi Ella, a full detail is $___. Want to book a time?', k: 'needs' }
+  ];
+  var $ = function (id) { return document.getElementById(id); };
+  var river = $('fl-river'), track = $('fl-track'), lens = $('fl-lens'), body = $('fl-lbody'), status = $('fl-status');
+  var count = $('fl-count'), waitEl = $('fl-wait'), pauseBtn = $('fl-pause'), form = $('fl-ask'), input = $('fl-in'), nextBox = $('fl-next');
+  var answered = 12, seq = [], ptr = 0, k = 0, SPAN = 4, timers = [], mode = 'turn', paused = false, idleT = 0, IDLE = 6500;
+
+  function item(j) { while (seq.length <= j) { var d = D[ptr++ % D.length]; seq.push({ ch: d.ch, who: d.who, t: d.t, q: d.q, r: d.r, k: d.k }); } return seq[j]; }
+  function later(ms, fn) { timers.push(setTimeout(fn, ms)); }
+  function stopAll() { timers.forEach(clearTimeout); timers = []; }
+  function esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+  function withBlank(s) { return esc(s).replace('$___', '<span class="fl-blank">$</span>'); }
+  function meta(it) { var c = CH[it.ch]; return '<div class="fl-meta">' + c[1] + '<b>' + esc(it.who) + '</b><span>' + c[0] + '</span><span class="mono">' + esc(it.t) + '</span></div>'; }
+  function qHtml(it) { return '<div class="fl-q' + (it.k === 'follow' ? ' is-quiet' : '') + '">' + esc(it.q) + '</div>'; }
+
+  /* the stream around the middle: left waits, right is answered */
+  var slots = [];
+  for (var s = 0; s < SPAN * 2 + 1; s++) { var el = document.createElement('div'); el.className = 'fl-slot'; el.setAttribute('aria-hidden', 'true'); track.appendChild(el); slots.push({ el: el, j: null }); }
+  function geom() { var cs = getComputedStyle(river.parentNode.parentNode); return { w: river.clientWidth, slot: parseFloat(cs.getPropertyValue('--fl-slot')), gap: parseFloat(cs.getPropertyValue('--fl-gap')), lens: lens.offsetWidth }; }
+  function xFor(r, g) {
+    var c = g.w / 2; if (r === 0) return c - g.slot / 2;
+    var off = g.lens / 2 + g.gap + g.slot / 2 + (Math.abs(r) - 1) * (g.slot + g.gap);
+    return c + (r > 0 ? off : -off) - g.slot / 2;
+  }
+  function fill(sl, it, state) {
+    var key = (it.who + it.q + state);
+    if (sl.key === key) return; sl.key = key;
+    var h = meta(it) + qHtml(it);
+    if (state === 'done') h += '<div class="fl-a">' + withBlank(it.r) + '</div>' + (it.k === 'needs' ? '<div class="fl-tag is-needs">Needs you</div>' : '<div class="fl-tag">' + TICK + 'Sent</div>');
+    sl.el.innerHTML = h; sl.el.classList.toggle('is-waiting', state === 'waiting');
+  }
+  function layout(animate) {
+    var g = geom();
+    slots.forEach(function (sl, idx) {
+      if (sl.j === null) sl.j = k - (idx - SPAN);
+      var r = k - sl.j, jump = false;
+      while (r > SPAN) { sl.j += SPAN * 2 + 1; r = k - sl.j; jump = true; }
+      while (r < -SPAN) { sl.j -= SPAN * 2 + 1; r = k - sl.j; jump = true; }
+      sl.el.classList.toggle('is-instant', !animate || jump);
+      sl.el.classList.toggle('is-gone', sl.j < 0);
+      sl.el.classList.toggle('is-now', r === 0);
+      if (sl.j >= 0) fill(sl, item(sl.j), r > 0 ? 'done' : r < 0 ? 'waiting' : 'now');
+      var d = Math.abs(r), sc = d <= 1 ? 1 : 1 - (d - 1) * 0.09, op = (r === 0 || sl.j < 0) ? 0 : r < 0 ? [0, .9, .66, .45, .3][d] : [0, 1, .78, .55, .35][d];
+      sl.el.style.opacity = op;
+      sl.el.style.transform = 'translateX(' + xFor(r, g).toFixed(1) + 'px) scale(' + sc.toFixed(3) + ')';
+      if (jump) { void sl.el.offsetWidth; sl.el.classList.remove('is-instant'); }
+    });
+    var w = '';
+    for (var j = k + 1; j <= k + 3; j++) w += '<span>' + esc(item(j).who.charAt(0)) + '</span>';
+    waitEl.innerHTML = w;
+  }
+  function refresh() { slots.forEach(function (sl) { sl.key = null; }); }
+
+  /* the middle card */
+  function setStatus(txt, cls) { status.className = 'fl-status' + (cls ? ' ' + cls : ''); status.innerHTML = '<i></i>' + txt; }
+  function paintItem(it) {
+    body.innerHTML = meta(it) + qHtml(it) + '<div class="fl-a is-hide" id="fl-a"></div>' +
+      '<div class="fl-lfoot" id="fl-foot"><span class="fl-send is-hide" id="fl-send">Send</span><span class="fl-note is-hide" id="fl-note">You tap Send</span></div>';
+  }
+  function finish(it) {
+    var a = $('fl-a'), foot = $('fl-foot');
+    a.classList.remove('is-hide'); a.innerHTML = withBlank(it.r);
+    if (it.k === 'needs') { foot.innerHTML = '<span class="fl-needs">A price: it waits for you</span>'; setStatus('Needs you', 'is-needs'); }
+    else { foot.innerHTML = '<span class="fl-sent">' + TICK + 'Sent ' + (it.ch === 'ig' ? 'on Instagram' : it.ch === 'outlook' ? 'from your Outlook' : 'from your Gmail') + '</span>'; setStatus('Sent', 'is-ok'); answered++; count.textContent = answered; }
+  }
+  /* your turn: what you type shows here as you type it */
+  function draft() { return seq[k] && seq[k].draft ? seq[k] : null; }
+  function showTurn() {
+    mode = 'turn';
+    if (!draft()) { seq.splice(k, 0, { draft: true, user: true, ch: 'web', who: 'You', t: 'now', q: '', r: '', k: 'reply' }); refresh(); layout(true); }
+    setStatus('Waiting for you');
+    body.classList.remove('is-fade');
+    body.innerHTML = meta(draft()) + '<div class="fl-q is-ghost" id="fl-mirror"></div><div class="fl-a is-ghost">FollowUp writes the reply here, in your words.</div>';
+    mirror();
+    armIdle();
+  }
+  function mirror() {
+    var m = $('fl-mirror'); if (!m || mode !== 'turn') return;
+    var v = input.value.trim();
+    m.classList.toggle('is-ghost', !v);
+    m.innerHTML = v ? esc(input.value) + '<span class="fl-caret"></span>' : 'Your question shows up here…';
+  }
+  function armIdle() {
+    clearTimeout(idleT);
+    if (reduce || paused) return;
+    idleT = setTimeout(function () { if (mode === 'turn' && !input.value.trim()) startExamples(); }, IDLE);
+  }
+  function startExamples() {
+    if (draft()) { seq.splice(k, 1); refresh(); }
+    run();
+  }
+
+  /* one conversation: read, write in your words, you tap Send, it flows on */
+  function run() {
+    stopAll(); clearTimeout(idleT); mode = 'play';
+    var it = item(k), txt = it.r;
+    body.classList.add('is-fade');
+    later(220, function () {
+      paintItem(it); body.classList.remove('is-fade');
+      if (reduce) { finish(it); later(600, function () { done(it); }); return; }
+      setStatus(it.k === 'follow' ? 'Quiet for two days' : 'Reading', 'is-busy');
+      var a = $('fl-a');
+      later(800, function () {
+        setStatus(it.k === 'follow' ? 'Writing a follow-up' : it.k === 'needs' ? 'Writing, leaving the price to you' : 'Writing in your words', 'is-busy');
+        a.classList.remove('is-hide'); a.innerHTML = '<span class="fl-dots"><i></i><i></i><i></i></span>';
+        for (var i = 1; i <= txt.length; i++) (function (i) {
+          later(750 + i * 28, function () { a.innerHTML = withBlank(txt.slice(0, i)) + (i < txt.length ? '<span class="fl-caret"></span>' : ''); });
+        })(i);
+        var end = 750 + txt.length * 28;
+        if (it.k === 'needs') { later(end + 400, function () { finish(it); }); later(end + 2600, function () { done(it); }); }
+        else {
+          later(end + 300, function () { setStatus('Ready for you'); $('fl-send').classList.remove('is-hide'); $('fl-note').classList.remove('is-hide'); });
+          later(end + 1300, function () { $('fl-send').classList.add('is-press'); });
+          later(end + 1500, function () { finish(it); });
+          later(end + 3000, function () { done(it); });
+        }
+      });
+    });
+  }
+  function done(it) {
+    if (paused) return;
+    k++; layout(true);
+    if (it.user) { nextBox.classList.add('is-on'); nextBox.querySelector('a').removeAttribute('tabindex'); }
+    if (item(k).user || it.user || mode === 'turn') { if (item(k).user && !item(k).draft) run(); else showTurn(); return; }
+    run();
+  }
+
+  /* your message: the reply is a fixed example chosen by what you asked, never generated */
+  function replyFor(q) {
+    var s = q.toLowerCase();
+    if (/free (quote|estimate|consult)/.test(s)) return { r: 'Yes, quotes are free! When could I come by and take a look?', k: 'reply' };
+    if (/(price|cost|how much|\$|quote|rate|fee|charge|expensive|cheap|budget|discount)/.test(s)) return { r: 'Thanks for asking! It comes to $___. Want me to book you in?', k: 'needs' };
+    if (/(urgent|asap|emergency|right now|leak|flood|broken|not working|stopped working)/.test(s)) return { r: "So sorry to hear that! I can come by today. What's the address?", k: 'reply' };
+    if (/(still available|available|for sale|for rent|in stock|sold)/.test(s)) return { r: "Yes, it's still available! Would you like to see it this week?", k: 'reply' };
+    if (/(hours|open|close|closing)/.test(s)) return { r: "We're open Monday to Saturday, 9 to 6. Want to come by?", k: 'reply' };
+    if (/(where|address|location|located|area|near|parking|directions)/.test(s)) return { r: "We're on Maple Street, near the station. Want me to send directions?", k: 'reply' };
+    if (/(book|appointment|slot|schedule|today|tonight|tomorrow|weekend|saturday|sunday|monday|tuesday|wednesday|thursday|friday|time|when|come|visit|see it|viewing)/.test(s)) return { r: 'Yes! I have time tomorrow at 10 or 2. Which suits you?', k: 'reply' };
+    if (/^(do|can|could|would|will) you\b|\bdo you (do|offer|fix|have|sell|take|install|repair|clean)\b/.test(s)) return { r: "Yes, we do! Tell me a little more and I'll sort it out for you.", k: 'reply' };
+    if (/(thank|thanks|great|perfect|awesome)/.test(s)) return { r: "You're welcome! Talk soon.", k: 'reply' };
+    if (/^(hi|hey|hello|yo|good (morning|afternoon|evening))\W*$/.test(s)) return { r: 'Hi! Thanks for getting in touch. How can I help?', k: 'reply' };
+    return { r: "Thanks for your message! Happy to help. Could you tell me a bit more about what you need?", k: 'reply' };
+  }
+  function interrupt() {
+    // a visitor started typing while an example was being written: finish it at once and give them the middle
+    if (mode !== 'play') return;
+    var it = item(k); if (it.user) return;
+    stopAll(); paintItem(it); finish(it); k++; layout(true); showTurn();
+  }
+  input.addEventListener('input', function () { stopPlaceholder(); interrupt(); mirror(); armIdle(); });
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var text = input.value.trim().slice(0, 140); if (!text) { input.focus(); return; }
+    var rr = replyFor(text); input.value = '';
+    paused = false; pauseBtn.textContent = 'Pause';
+    if (mode === 'play' && item(k).user) { seq.splice(k + 1, 0, { ch: 'web', who: 'You', t: 'now', q: text, r: rr.r, k: rr.k, user: true }); refresh(); layout(true); return; }
+    interrupt();
+    if (!draft()) showTurn();
+    var d = draft(); d.draft = false; d.q = text; d.r = rr.r; d.k = rr.k;
+    lens.setAttribute('aria-live', 'polite');
+    run();
+  });
+  pauseBtn.addEventListener('click', function () {
+    paused = !paused; pauseBtn.textContent = paused ? 'Play' : 'Pause';
+    if (paused) { stopAll(); clearTimeout(idleT); } else if (mode === 'play') run(); else armIdle();
+  });
+
+  /* the box suggests a question, one letter at a time, until someone types */
+  var tips = ['Is it still available?', 'Can you come today?', 'How much would it cost?', 'Are you open on Sunday?', 'Do you do free quotes?'];
+  var tipT = 0, base = input.getAttribute('placeholder');
+  function stopPlaceholder() { clearTimeout(tipT); input.setAttribute('placeholder', base); }
+  function typeTip(n, i) {
+    if (input.value) return;
+    var t = tips[n % tips.length];
+    input.setAttribute('placeholder', t.slice(0, i) || base);
+    if (i < t.length) tipT = setTimeout(function () { typeTip(n, i + 1); }, 55);
+    else tipT = setTimeout(function () { typeTip(n + 1, 0); }, 2200);
+  }
+  if (!reduce) tipT = setTimeout(function () { typeTip(0, 0); }, 2600);
+  if (reduce) pauseBtn.style.display = 'none';
+
+  /* start: two answered on the right, the stream waiting on the left, the middle is yours */
+  k = 2; item(SPAN * 2 + 4); layout(false); showTurn();
+  if (window.matchMedia && window.matchMedia('(pointer: fine)').matches) { try { input.focus({ preventScroll: true }); } catch (e) {} }
+  var rt; window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(function () { layout(false); }, 120); });
+})();
+</script>
+</body></html>

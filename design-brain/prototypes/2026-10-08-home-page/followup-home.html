@@ -1,0 +1,1236 @@
+<title>FollowUp Home</title>
+<script>document.documentElement.setAttribute('data-lay', '3'); document.documentElement.setAttribute('data-col', 'f'); document.documentElement.setAttribute('data-pro', '1');</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Public+Sans:wght@300..700&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
+<style>
+/* One page that steps into the product: a dark night where a customer writes, the real app lit inside it,
+   then the page turns into the app's own paper for how it works, and closes dark. Deliberately single-look. */
+/* Light-first (founder: "Light, like Wispr"): a white page, ink text, colour in a few places, one dark band at the end.
+   --night/--moon are the page ground and its text; the close band re-maps them to its own --close-* values. */
+:root {
+  color-scheme: light;
+  --night: #ffffff; --night-2: #f6f6f5; --moon: #0a0a0a; --moon-soft: #57534e; --moon-faint: #736e68; --dim: #d9d6d2;
+  --paper: #ffffff; --ink: #0a0a0a; --ink-soft: #57534e; --ink-faint: #736e68; --line: #e8e5e1; --stage: #f3f2f0;
+  --dot: #c96a1b; --good: #2f6b4a;
+  --em: #57534e; --em-light: #57534e; --btn: #0a0a0a; --btn-fg: #ffffff;
+  --bed: var(--wash); --bed-pad: clamp(14px, 3.6vw, 52px);
+  --apricot: #fbeee4; --mist: #eef2f8; --rose: #f8eeea; --stage-how: var(--mist); --stage-thread: var(--apricot); --stage-ctl: var(--rose); --close-tone: light;
+  --app-ring: rgba(10,10,10,.08); --app-shadow: 0 50px 100px -50px rgba(10,10,10,.38), 0 18px 40px -30px rgba(10,10,10,.25);
+  --close-bg: var(--wash); --close-fg: #0a0a0a; --close-soft: #57534e; --close-faint: #6b665f; --close-dim: rgba(10,10,10,.14); --close-em: #57534e; --close-btn: #0a0a0a; --close-btn-fg: #ffffff;
+  --wash: radial-gradient(70% 90% at 12% 10%, rgba(244,196,160,0.9), rgba(244,196,160,0) 70%), radial-gradient(70% 90% at 92% 95%, rgba(196,210,228,0.95), rgba(196,210,228,0) 70%), radial-gradient(50% 70% at 88% 0%, rgba(238,212,204,0.9), rgba(238,212,204,0) 72%), #f3efea;
+  --serif: 'Instrument Serif', 'Iowan Old Style', Georgia, serif;
+  --sans: 'Public Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --ease: cubic-bezier(.22, 1, .36, 1);
+  --gut: clamp(16px, 4vw, 56px);
+}
+:root[data-pal="white"] { --bed: #f1efec; --stage-how: #f3f2f0; --stage-thread: #f3f2f0; --stage-ctl: #f3f2f0; --close-tone: dark;
+  --close-bg: #0a0a0a; --close-fg: #f4f2ef; --close-soft: #a8a49e; --close-faint: #7a7671; --close-dim: #2a2a2b; --close-em: #a8a49e; --close-btn: #ffffff; --close-btn-fg: #0a0a0a; }
+:root[data-pal="green"] { --stage-how: #edf2ee; --stage-thread: #edf2ee; --stage-ctl: #edf2ee; --close-tone: dark; --night: #fbfbf9; --night-2: #f2f4f1; --moon: #10231b; --moon-soft: #4d5e55; --moon-faint: #6c7b72; --dim: #d5ddd7;
+  --paper: #fbfbf9; --ink: #10231b; --ink-soft: #4d5e55; --ink-faint: #6c7b72; --line: #e1e8e2; --stage: #edf2ee;
+  --em: #1f6b4a; --em-light: #1f6b4a; --btn: #10231b; --btn-fg: #ffffff; --bed: #e2ece4;
+  --close-bg: #0f3d2e; --close-fg: #f2f6ef; --close-soft: #b5c9bb; --close-faint: #8aa597; --close-dim: #21503f; --close-em: #c8e6a0; --close-btn: #f2f6ef; --close-btn-fg: #0f3d2e; }
+:root[data-pal="lilac"] { --stage-how: #f3f0fb; --stage-thread: #f3f0fb; --stage-ctl: #f3f0fb; --close-tone: dark; --night: #fdfcff; --night-2: #f6f3fe; --moon: #141020; --moon-soft: #5a5368; --moon-faint: #7b7489; --dim: #dcd6e8;
+  --paper: #fdfcff; --ink: #141020; --ink-soft: #5a5368; --ink-faint: #7b7489; --line: #e9e4f4; --stage: #f3f0fb;
+  --em: #5b47c9; --em-light: #5b47c9; --btn: #141020; --btn-fg: #ffffff; --bed: #ebe5fd;
+  --close-bg: #141020; --close-fg: #f6f3fb; --close-soft: #b9b0c9; --close-faint: #8d849c; --close-dim: #2a2338; --close-em: #c9b8ff; --close-btn: #c9b8ff; --close-btn-fg: #141020; }
+:root[data-pal="orange"] { --stage-how: #f3f3f3; --stage-thread: #f3f3f3; --stage-ctl: #f3f3f3; --close-tone: dark; --night: #ffffff; --night-2: #f6f6f6; --moon: #0b0b0b; --moon-soft: #555555; --moon-faint: #737373; --dim: #dddddd;
+  --paper: #ffffff; --ink: #0b0b0b; --ink-soft: #555555; --ink-faint: #737373; --line: #e8e8e8; --stage: #f3f3f3;
+  --em: #e0560e; --em-light: #e0560e; --btn: #ff6a1f; --btn-fg: #160b04; --bed: #f2f2f2;
+  --close-bg: #0b0b0b; --close-fg: #ffffff; --close-soft: #a3a3a3; --close-faint: #7c7c7c; --close-dim: #2a2a2a; --close-em: #ff6a1f; --close-btn: #ff6a1f; --close-btn-fg: #160b04; }
+* { box-sizing: border-box }
+html { scroll-behavior: smooth }
+body { margin: 0; background: var(--night); color: var(--moon); font-family: var(--sans); font-weight: 420; font-size: 16px; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility }
+a { color: inherit }
+.wrap { max-width: 1280px; margin: 0 auto; padding-inline: var(--gut) }
+.mono { font-family: var(--mono) }
+.eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint) }
+:focus-visible { outline: 2px solid var(--dot); outline-offset: 3px; border-radius: 6px }
+h1, h2, h3 { font-weight: 400; margin: 0; text-wrap: balance }
+em { font-style: italic }
+
+/* nav: words invert over dark and light; the pill reads on both */
+.nav { position: fixed; top: 0; left: 0; right: 0; z-index: 50; padding-top: env(safe-area-inset-top, 0px); color: var(--close-fg); transition: background .3s ease, color .3s ease, border-color .3s ease; border-bottom: 1px solid transparent }
+.nav.solid { background: var(--close-bg); border-bottom-color: var(--close-dim) }
+.nav.light { color: var(--ink) }
+.nav.light.solid { background: var(--paper); border-bottom-color: var(--line) }
+.nav .pill { transition: background .3s ease, color .3s ease }
+.nav.light .pill { background: var(--ink); color: var(--paper); border-color: var(--ink) }
+.nav .wrap { height: 68px; display: flex; align-items: center; justify-content: space-between; gap: 16px }
+.nav .blend { display: flex; align-items: center; gap: 36px }
+.brand { display: inline-flex; align-items: center; gap: 9px; font-weight: 650; font-size: 18px; text-decoration: none }
+.nav-links { display: flex; gap: 26px; font-size: 14.5px }
+.nav-links a { text-decoration: none; opacity: .78 }
+.nav-links a:hover { opacity: 1 }
+.nav-right { display: flex; align-items: center; gap: 18px }
+.nav-right .signin { font-size: 14.5px; text-decoration: none }
+.pill { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 44px; padding: 0 20px; border-radius: 999px; background: var(--paper); color: var(--ink); font-weight: 600; font-size: 14.5px; text-decoration: none; border: 1px solid rgba(10,10,10,.14); transition: transform .18s var(--ease), background .18s ease }
+.pill:hover { transform: translateY(-1px) }
+.pill.ink { background: var(--ink); color: var(--paper); border-color: var(--ink) }
+
+/* hero */
+.hero { background: var(--night); padding-top: 124px; overflow: hidden }
+.hero .kicker { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--moon-faint) }
+.hero .kicker i { width: 8px; height: 8px; border-radius: 999px; background: var(--dot); display: inline-block }
+.hero h1 { margin-top: 22px; font-family: var(--serif); font-size: clamp(52px, 7.4vw, 104px); line-height: .9; letter-spacing: -.035em; max-width: 15ch }
+.hero h1 em { color: var(--em) }
+.hero-row { margin-top: 28px; display: grid; grid-template-columns: minmax(0,1fr) minmax(0, 440px); gap: 40px; align-items: end }
+.hero-note { font-family: var(--mono); font-size: 12.5px; line-height: 1.7; color: var(--moon-faint) }
+.hero-note b { color: var(--moon); font-weight: 500 }
+.hero-lede { margin: 0; font-size: 19px; line-height: 1.55; color: var(--moon-soft) }
+.hero-ctas { margin-top: 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 20px }
+.hero-ctas .pill { min-height: 56px; padding: 0 28px; font-size: 16.5px; background: var(--btn); color: var(--btn-fg); border-color: var(--btn) }
+.hero-ctas .see { font-size: 15px; color: var(--moon-soft); text-decoration: none }
+.hero-ctas .see:hover { color: var(--moon) }
+.app-wrap { margin-top: 48px; transform-origin: 50% 0; will-change: transform }
+.app-caption { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-top: 18px; font-size: 13px; color: var(--moon-faint) }
+.replay { font: inherit; font-family: var(--mono); font-size: 12px; letter-spacing: .06em; color: var(--moon-soft); background: none; border: 1px solid var(--dim); border-radius: 999px; min-height: 34px; padding: 0 14px; cursor: pointer }
+.replay:hover { color: var(--moon); border-color: var(--moon-faint) }
+
+/* the app window: FollowUp's real Today screen */
+.app { background: var(--paper); color: var(--ink); border-radius: 20px; overflow: hidden; display: grid; grid-template-columns: 212px minmax(0,1fr) 290px; min-height: 600px; box-shadow: 0 0 0 1px var(--app-ring), var(--app-shadow) }
+.app-bed { background: var(--bed); padding: var(--bed-pad); border-radius: 40px }
+.side { background: #f6f4f1; border-right: 1px solid var(--line); padding: 20px 14px; display: flex; flex-direction: column; gap: 4px }
+.side .brand { font-size: 15.5px; padding: 4px 8px 16px }
+.side a { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; font-size: 14px; color: var(--ink-soft); text-decoration: none }
+.side a.cur { background: #fff; color: var(--ink); font-weight: 600; box-shadow: 0 0 0 1px var(--line) }
+.side .count { margin-left: auto; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: var(--ink); color: #fff; font-size: 11.5px; display: inline-flex; align-items: center; justify-content: center }
+.side .status { margin-top: auto; display: flex; align-items: center; gap: 8px; padding: 10px; font-size: 12.5px; color: var(--ink-soft) }
+.side .status i { width: 7px; height: 7px; border-radius: 999px; background: var(--good) }
+.main { padding: 28px 32px; min-width: 0 }
+.main-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px }
+.main-head h4 { margin: 0; font-family: var(--serif); font-weight: 400; font-size: 38px; letter-spacing: -.02em }
+.main-head .mono { font-size: 11.5px; color: var(--ink-faint) }
+.main .eyebrow { margin-top: 20px }
+.item { margin-top: 10px; background: #fff; border-radius: 18px; padding: 18px 20px; box-shadow: 0 0 0 1px var(--line), 0 24px 48px -30px rgba(10,10,10,.25); transition: opacity .6s var(--ease), transform .6s var(--ease) }
+.item-top { display: flex; align-items: center; gap: 12px }
+.av { width: 34px; height: 34px; border-radius: 999px; background: #efe9e2; display: inline-flex; align-items: center; justify-content: center; font-weight: 650; font-size: 14px; flex: 0 0 auto }
+.item-top .who { font-weight: 650; font-size: 15px }
+.item-top .meta { font-size: 12.5px; color: var(--ink-faint) }
+.item-top .why { margin-left: auto; font-size: 12.5px; color: var(--ink-soft); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line) }
+.item .msg { margin: 12px 0 0; font-size: 15.5px; line-height: 1.5 }
+.reply { margin-top: 14px; border-radius: 18px; padding: 16px 18px; background: var(--wash); border: 1px solid rgba(10,10,10,.06); transition: opacity .6s var(--ease), transform .6s var(--ease) }
+.reply .eyebrow { margin: 0; color: #5d564f }
+.rc-subj { margin: 8px 0 0; font-weight: 600; font-size: 14.5px }
+.rc-body { margin: 6px 0 0; font-size: 15.5px; line-height: 1.5; min-height: 1.5em }
+.caret { display: inline-block; width: 2px; height: 1.05em; background: var(--ink); vertical-align: -2px; margin-left: 1px; animation: blink 1s steps(1) infinite }
+@keyframes blink { 50% { opacity: 0 } }
+.rc-btns { margin-top: 12px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap }
+.btn-ink { display: inline-flex; align-items: center; min-height: 34px; padding: 0 16px; border-radius: 999px; background: var(--ink); color: #fff; font-size: 13.5px; font-weight: 600 }
+.btn-line { display: inline-flex; align-items: center; min-height: 34px; padding: 0 14px; border-radius: 999px; border: 1px solid rgba(10,10,10,.18); background: rgba(255,255,255,.55); font-size: 13.5px; font-weight: 600 }
+.btn-text { font-size: 13.5px; color: var(--ink-soft); padding: 0 6px }
+.btn-ink.press { animation: press 1s var(--ease) 1 }
+@keyframes press { 0% { box-shadow: 0 0 0 0 rgba(10,10,10,.35) } 60% { box-shadow: 0 0 0 8px rgba(10,10,10,0) } 100% { box-shadow: 0 0 0 0 rgba(10,10,10,0) } }
+.undo { margin-top: 12px; font-size: 13.5px; color: var(--ink-soft) }
+.undo .bar { margin-top: 6px; height: 3px; border-radius: 3px; background: rgba(10,10,10,.1); overflow: hidden }
+.undo .bar i { display: block; height: 100%; width: 100%; background: var(--ink); transform-origin: 0 50% }
+.sent { margin-top: 12px; display: inline-flex; align-items: center; gap: 7px; font-size: 13.5px; font-weight: 600; color: var(--good) }
+.right { border-left: 1px solid var(--line); padding: 28px 24px; display: flex; flex-direction: column; gap: 22px; background: #fbfaf9 }
+.cu { margin-top: 10px; display: flex; flex-direction: column; gap: 12px }
+.cu div { font-size: 13.5px; line-height: 1.45 }
+.cu .mono { display: block; font-size: 11px; color: var(--ink-faint); margin-bottom: 2px }
+.kn { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; font-size: 13.5px }
+.kn div { display: flex; justify-content: space-between; gap: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--line) }
+.kn div span:first-child { color: var(--ink-faint) }
+.small { margin: 8px 0 0; font-size: 12.5px; line-height: 1.45; color: var(--ink-faint) }
+.is-hidden { opacity: 0; transform: translateY(12px) }
+.gone { display: none }
+
+/* statement */
+.statement { background: var(--night); padding-block: 140px 90px }
+.statement p { margin: 0; max-width: 23em; font-size: clamp(26px, 3.5vw, 46px); line-height: 1.16; letter-spacing: -.02em; font-weight: 400 }
+.statement .w { transition: color .35s ease }
+.statement.scrub .w { color: var(--dim) }
+.statement.scrub .w.lit { color: var(--moon) }
+.statement .w.soft { font-family: var(--serif); font-style: italic; font-size: 1.08em }
+.ramp { height: 150px; background: linear-gradient(var(--night), var(--paper)) }
+.ramp.up { background: linear-gradient(var(--paper), var(--night)) }
+
+/* light chapters */
+.light { background: var(--paper); color: var(--ink) }
+.chap { padding-block: 40px 140px }
+.chap-head { display: grid; grid-template-columns: minmax(0,1.1fr) minmax(0,.9fr); gap: 48px; align-items: end }
+.chap-head .eyebrow { margin-bottom: 18px }
+.chap-head h2 em { color: var(--em-light) }
+.chap-head h2 { font-family: var(--serif); font-size: clamp(42px, 6vw, 76px); line-height: .96; letter-spacing: -.03em }
+.chap-head p { margin: 0; font-size: clamp(18px, 1.6vw, 21px); line-height: 1.5; color: var(--ink-soft); max-width: 30em }
+.how-grid { margin-top: 40px; display: grid; grid-template-columns: minmax(0,.85fr) minmax(0,1.15fr); gap: 64px }
+.step { min-height: 74vh; display: flex; flex-direction: column; justify-content: center; opacity: .3; transition: opacity .5s var(--ease) }
+.step.on { opacity: 1 }
+.step-n { font-family: var(--mono); font-size: 12px; color: var(--ink-faint) }
+.step h3 { margin-top: 12px; font-family: var(--serif); font-size: clamp(34px, 3.6vw, 48px); line-height: 1; letter-spacing: -.02em }
+.step p { margin: 14px 0 0; font-size: 18px; line-height: 1.55; color: var(--ink-soft); max-width: 27em }
+.panel-inline { display: none }
+.stage { position: sticky; top: 14vh; height: 72vh; min-height: 520px; border-radius: 32px; background: var(--stage-how); overflow: hidden }
+.stage .panel, .stage-inner { position: absolute; inset: 0; padding: 44px 44px 40px; transition: opacity .55s var(--ease), transform .55s var(--ease) }
+.stage .panel { opacity: 0; transform: translateY(18px); pointer-events: none }
+.stage .panel.on { opacity: 1; transform: none }
+.pcard { position: relative; background: #fff; border-radius: 22px; padding: 22px 24px; box-shadow: 0 0 0 1px var(--line), 0 30px 60px -36px rgba(10,10,10,.35); color: var(--ink) }
+.pcard.float { position: absolute; width: min(330px, 70%) }
+.fl-br { right: 28px; bottom: 30px }
+.pc-head { display: flex; justify-content: space-between; font-size: 13px; color: var(--ink-faint); padding-bottom: 10px; border-bottom: 1px solid var(--line) }
+.pc-head .mono { font-size: 11.5px }
+.ib ul { list-style: none; margin: 0; padding: 0 }
+.ib-row { display: grid; grid-template-columns: 92px minmax(0,1fr); grid-template-areas: "who sub" "who tag"; column-gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--line); color: #b3aea8 }
+.ib-row .ib-who { grid-area: who; font-weight: 600; font-size: 14px }
+.ib-row .ib-sub { grid-area: sub; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.ib-row .ib-tag { grid-area: tag; font-family: var(--mono); font-size: 11px; margin-top: 2px }
+.ib-row.cust { color: var(--ink) }
+.ib-row.cust .ib-tag { color: var(--ink) }
+.big-num { margin: 6px 0 0; font-family: var(--serif); font-size: 40px; line-height: 1 }
+.wash-card { background: var(--wash); box-shadow: 0 0 0 1px rgba(10,10,10,.06), 0 30px 60px -36px rgba(10,10,10,.35) }
+.wash-card .eyebrow { color: #5d564f }
+.knows { display: flex; flex-direction: column; gap: 8px }
+.kn-row { display: grid; grid-template-columns: 74px minmax(0,1fr) auto; gap: 10px; font-size: 13.5px; padding: 7px 0; border-bottom: 1px solid var(--line) }
+.kn-row span:first-child { color: var(--ink-faint) }
+.kn-used { display: inline-flex; align-items: center; gap: 4px; font-family: var(--mono); font-size: 11px; color: var(--good) }
+.needs { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 650; color: #9a4f12 }
+.dot { width: 8px; height: 8px; border-radius: 999px; background: var(--dot); display: inline-block }
+.cust-msg { margin-top: 14px; padding: 12px 14px; border-radius: 14px; background: #f6f4f1 }
+.cust-msg .mono { font-size: 11px; color: var(--ink-faint) }
+.cust-msg p { margin: 4px 0 0; font-size: 15px }
+.wash-mini { margin-top: 12px; border-radius: 16px; padding: 14px 16px; background: var(--wash) }
+.wash-mini p { margin: 0; font-size: 15px; line-height: 1.55 }
+.blank { display: inline-block; padding: 0 8px; border-radius: 8px; border: 1.5px dashed var(--dot); background: rgba(201,106,27,.06); font-weight: 600 }
+.hold p { margin: 6px 0 0; font-size: 15px; line-height: 1.45 }
+.hold .small { font-size: 12.5px }
+
+/* keeps going: one thread across the week */
+.thread { margin-top: 56px; border-radius: 32px; background: var(--stage-thread); padding: 52px 48px 48px; position: relative }
+.thread .rail { position: absolute; left: 48px; right: 48px; top: 60px; height: 2px; background: var(--line) }
+.thread .rail i { display: block; height: 100%; width: 100%; background: var(--ink); transform-origin: 0 50%; transform: scaleX(var(--p, 1)) }
+.t-cols { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 24px; position: relative }
+.t-col { padding-top: 34px; position: relative }
+.t-col::before { content: ""; position: absolute; top: 2px; left: 0; width: 14px; height: 14px; border-radius: 999px; background: var(--ink); box-shadow: 0 0 0 6px var(--stage-thread) }
+.t-col.quiet::before { background: #c4beb6 }
+.t-col.done::before { background: var(--good) }
+.t-when { font-family: var(--mono); font-size: 11.5px; color: var(--ink-faint) }
+.t-what { margin-top: 6px; font-weight: 650; font-size: 16px }
+.t-card { margin-top: 12px; background: #fff; border-radius: 16px; padding: 14px 16px; font-size: 14.5px; line-height: 1.45; box-shadow: 0 0 0 1px var(--line), 0 20px 40px -30px rgba(10,10,10,.35) }
+.t-card.w { background: var(--wash); box-shadow: 0 0 0 1px rgba(10,10,10,.06), 0 20px 40px -30px rgba(10,10,10,.35) }
+.t-quiet { margin-top: 12px; font-size: 14.5px; line-height: 1.45; color: var(--ink-faint) }
+.t-stop { margin-top: 10px; display: inline-flex; gap: 6px; align-items: center; font-size: 13.5px; font-weight: 600; color: var(--good) }
+.t-note { margin: 18px 0 0; font-size: 13px; color: var(--ink-faint) }
+
+/* your control */
+.promises { margin-top: 56px; display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 28px }
+.promise { border-top: 1.5px solid var(--ink); padding-top: 18px }
+.promise h3 { font-family: var(--serif); font-size: 27px; line-height: 1.05; letter-spacing: -.01em }
+.promise p { margin: 10px 0 0; font-size: 15.5px; line-height: 1.5; color: var(--ink-soft) }
+.switch-card { margin-top: 48px; display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 24px; align-items: center; border-radius: 26px; background: var(--stage-ctl); padding: 28px 32px }
+.switch-card h3 { font-size: 19px; font-weight: 650; font-family: var(--sans) }
+.switch-card p { margin: 6px 0 0; font-size: 15.5px; color: var(--ink-soft) }
+.switch-state { display: inline-flex; align-items: center; gap: 8px }
+.sw { position: relative; width: 60px; height: 34px; border-radius: 999px; border: 0; padding: 0; background: #cfcac3; cursor: pointer; transition: background .2s ease; flex: 0 0 auto }
+.sw span { position: absolute; top: 4px; left: 4px; width: 26px; height: 26px; border-radius: 999px; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,.25); transition: transform .22s var(--ease) }
+.sw[aria-checked="true"] { background: var(--dot) }
+.sw[aria-checked="true"] span { transform: translateX(26px) }
+.ctl-link { display: inline-block; margin-top: 18px; font-size: 15px; font-weight: 600; text-underline-offset: 4px }
+
+/* what's new */
+.news { margin-top: 48px; position: relative; display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 32px; padding-top: 30px }
+.news::before { content: ""; position: absolute; left: 0; right: 0; top: 6px; height: 1px; background: var(--line) }
+.news article { position: relative }
+.news article::before { content: ""; position: absolute; top: -30px; left: 0; width: 11px; height: 11px; border-radius: 999px; background: #cfcac3; box-shadow: 0 0 0 5px var(--paper) }
+.news article:first-child::before { background: var(--dot) }
+.news time { font-family: var(--mono); font-size: 11.5px; letter-spacing: .06em; color: var(--ink-faint) }
+.news h3 { margin-top: 8px; font-family: var(--sans); font-size: 18px; font-weight: 650 }
+.news p { margin: 8px 0 0; font-size: 15px; line-height: 1.5; color: var(--ink-soft) }
+.news-foot { margin: 28px 0 0; font-size: 14px; color: var(--ink-faint) }
+
+/* close */
+.close { --night: var(--close-bg); --moon: var(--close-fg); --moon-soft: var(--close-soft); --moon-faint: var(--close-faint); --dim: var(--close-dim); --em: var(--close-em); --btn: var(--close-btn); --btn-fg: var(--close-btn-fg); background: var(--night); color: var(--moon); padding-block: 170px 0; text-align: center }
+.close h2 { font-family: var(--serif); font-size: clamp(54px, 9.5vw, 140px); line-height: .9; letter-spacing: -.035em; max-width: 11ch; margin: 0 auto }
+.close h2 em { color: var(--em) }
+.big-cta { margin-top: 56px; display: inline-flex; align-items: center; gap: 18px; min-height: 92px; padding: 0 52px; border-radius: 999px; background: var(--btn); color: var(--btn-fg); font-size: clamp(20px, 2.2vw, 28px); font-weight: 600; text-decoration: none; transform-origin: 50% 50%; will-change: transform; transition: background .2s ease }
+.big-cta:hover { filter: brightness(1.06) }
+.close .sub { margin: 22px 0 0; font-size: 15.5px; color: var(--moon-faint) }
+footer { margin-top: 170px; border-top: 1px solid var(--dim); padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 20px; font-size: 14px; color: var(--moon-faint); text-align: left }
+footer nav { display: flex; flex-wrap: wrap; gap: 22px }
+footer a { text-decoration: none }
+footer a:hover { color: var(--moon) }
+
+
+.picker { position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 70; display: flex; align-items: center; gap: 6px; padding: 6px; border-radius: 999px; background: #111112; border: 1px solid #2a2a2c; box-shadow: 0 18px 40px -16px rgba(0,0,0,.6); max-width: calc(100vw - 32px); overflow-x: auto }
+.picker .lbl { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: #8a8782; padding: 0 8px 0 10px; white-space: nowrap }
+.picker button { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 14px 0 8px; border-radius: 999px; border: 1px solid transparent; background: transparent; color: #e9e7e3; font: 600 13px/1 var(--sans); cursor: pointer; white-space: nowrap }
+.picker button[aria-pressed="true"] { background: #f4f2ef; color: #0a0a0a }
+.picker .sw2 { display: inline-flex }
+.picker .sw2 i { width: 16px; height: 16px; border-radius: 999px; display: inline-block; box-shadow: 0 0 0 1.5px rgba(255,255,255,.25) }
+.picker .sw2 i + i { margin-left: -5px }
+@media (max-width: 560px) { .picker .lbl { display: none } .picker button { padding: 0 10px 0 6px } .picker .nm { display: none } }
+
+
+/* ---- opening: the reply flow, type-first ---- */
+:root {
+  --fl-hero-bg: radial-gradient(55% 62% at 10% 0%, rgba(244,196,160,.55), rgba(244,196,160,0) 70%), radial-gradient(50% 60% at 92% 4%, rgba(196,210,228,.75), rgba(196,210,228,0) 70%), radial-gradient(40% 40% at 55% -8%, rgba(238,212,204,.6), rgba(238,212,204,0) 72%), var(--paper);
+  --fl-river-bg: radial-gradient(60% 85% at 8% 0%, rgba(240,180,142,.85), rgba(240,180,142,0) 70%), radial-gradient(60% 95% at 96% 100%, rgba(158,182,214,.9), rgba(158,182,214,0) 70%), radial-gradient(45% 70% at 62% 0%, rgba(232,194,184,.75), rgba(232,194,184,0) 72%), #ece5de; --fl-river-shadow: inset 0 40px 60px -56px rgba(10,10,10,.4);
+  --fl-zone-fg: var(--ink-soft); --fl-zone-strong: var(--ink); --fl-meta: var(--ink-soft); --fl-meta-b: var(--ink); --fl-meta-faint: var(--ink-faint);
+  --fl-q-bg: var(--paper); --fl-q-fg: var(--ink); --fl-a-bg: var(--ink); --fl-a-fg: #fff; --fl-la-bg: var(--ink); --fl-la-fg: #fff;
+  --fl-tag-good: var(--good); --fl-tag-needs: var(--dot); --fl-btn: var(--ink); --fl-btn-fg: #fff; --fl-em: var(--ink-soft);
+  --fl-avs-bg: rgba(255,255,255,.8); --fl-avs-fg: var(--ink);
+  --fl-fact-bg: radial-gradient(70% 90% at 12% 10%, rgba(240,180,142,.8), rgba(240,180,142,0) 70%), radial-gradient(70% 90% at 92% 95%, rgba(158,182,214,.85), rgba(158,182,214,0) 70%), #ece5de; --fl-fact-fg: var(--ink); --fl-fact-soft: var(--ink-soft);
+  --fl-spring: cubic-bezier(.34, 1.56, .64, 1); --fl-out: cubic-bezier(.22, 1, .36, 1);
+}
+.fl-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap }
+.fl-hero { --fl-slot: 262px; --fl-gap: 26px; --fl-lens: 430px; padding-top: calc(68px + env(safe-area-inset-top, 0px) + clamp(18px, 4vh, 44px)); padding-bottom: 36px; color: var(--ink); background: var(--fl-hero-bg) }
+.fl-h1 { font-family: var(--serif); font-weight: 400; font-size: clamp(46px, 6.1vw, 94px); line-height: .9; letter-spacing: -.04em; text-align: center; text-wrap: balance; max-width: 20ch; margin: 0 auto }
+.fl-h1 em { font-style: italic; color: var(--fl-em) }
+.fl-ask { transition: box-shadow .3s ease, transform .45s var(--fl-out); position: relative; margin: clamp(22px, 3.6vh, 34px) auto 0; max-width: 760px; display: flex; align-items: center; gap: 10px; min-height: 68px; padding: 8px 8px 8px 10px; border-radius: 999px; background: var(--paper); box-shadow: 0 0 0 1.5px var(--ink), 0 24px 50px -30px rgba(10,10,10,.45) }
+.fl-ask:focus-within { box-shadow: 0 0 0 2.5px var(--ink), 0 24px 50px -30px rgba(10,10,10,.45) }
+.fl-you { flex: none; width: 46px; height: 46px; border-radius: 999px; display: grid; place-items: center; background: var(--stage); font-size: 12.5px; font-weight: 650 }
+.fl-ask input { flex: 1; min-width: 0; height: 50px; border: 0; outline: 0; background: none; font: inherit; font-size: clamp(16px, 1.4vw, 19px); color: var(--ink) }
+.fl-ask input::placeholder { color: #8a847d }
+.fl-go { font: inherit; flex: none; display: inline-flex; align-items: center; gap: 8px; min-height: 52px; padding: 0 22px 0 18px; border: 0; border-radius: 999px; background: var(--fl-btn); color: var(--fl-btn-fg); font-weight: 600; font-size: 15.5px; cursor: pointer }
+.fl-hint { margin: 12px 0 0; text-align: center; font-size: 14.5px; color: var(--ink-faint) }
+.fl-river { position: relative; margin-top: clamp(22px, 3.4vh, 34px); height: 404px; border-radius: 32px; overflow: hidden; background: var(--fl-river-bg); box-shadow: var(--fl-river-shadow) }
+.fl-zone { position: absolute; top: 22px; z-index: 3; display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--fl-zone-fg) }
+.fl-zone.is-l { left: 28px } .fl-zone.is-r { right: 28px }
+.fl-zone b { display: inline-block; font-weight: 500; color: var(--fl-zone-strong); font-variant-numeric: tabular-nums }
+.fl-zone i { width: 26px; height: 1px; background: currentColor; opacity: .5 }
+.fl-avs { display: none; gap: 4px }
+.fl-avs span { width: 22px; height: 22px; border-radius: 999px; display: grid; place-items: center; background: var(--fl-avs-bg); font-family: var(--sans); font-size: 10.5px; font-weight: 650; letter-spacing: 0; color: var(--fl-avs-fg) }
+.fl-track { position: absolute; inset: 0; -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 9%, #000 91%, transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 9%, #000 91%, transparent 100%) }
+.fl-slot { position: absolute; top: 92px; left: 0; width: var(--fl-slot); transform-origin: 50% 0; transition: transform 1s var(--fl-out), opacity .8s ease; will-change: transform }
+.fl-slot .fl-q { box-shadow: 0 0 0 1px rgba(10,10,10,.04), 0 18px 32px -22px rgba(10,10,10,.4) }
+.fl-slot .fl-a { box-shadow: 0 18px 32px -20px rgba(10,10,10,.55) }
+.fl-slot.is-instant { transition: none }
+.fl-meta { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--fl-meta); white-space: nowrap; overflow: hidden }
+.fl-meta b { color: var(--fl-meta-b); font-weight: 650 }
+.fl-meta .mono { font-family: var(--mono); font-size: 11.5px; color: var(--fl-meta-faint) }
+.fl-lens .fl-meta { color: var(--ink-soft) } .fl-lens .fl-meta b { color: var(--ink) } .fl-lens .fl-meta .mono { color: var(--ink-faint) }
+.fl-q { margin-top: 8px; padding: 12px 15px; border-radius: 18px 18px 18px 6px; background: var(--fl-q-bg); color: var(--fl-q-fg); font-size: 15px; line-height: 1.38; box-shadow: 0 0 0 1px rgba(10,10,10,.05); overflow-wrap: anywhere }
+.fl-q.is-quiet { background: rgba(255,255,255,.55); color: var(--ink-soft); box-shadow: 0 0 0 1px rgba(10,10,10,.08) inset }
+.fl-a { margin: 10px 0 0 28px; padding: 12px 15px; border-radius: 18px 18px 6px 18px; background: var(--fl-a-bg); color: var(--fl-a-fg); font-size: 15px; line-height: 1.38 }
+.fl-blank { display: inline-block; min-width: 2.6em; border-bottom: 1.5px solid currentColor; opacity: .85 }
+.fl-tag { margin: 8px 0 0 28px; display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 650; color: var(--fl-tag-good) }
+.fl-tag.is-needs { color: var(--fl-tag-needs) }
+.fl-tag.is-needs::before { content: ""; width: 8px; height: 8px; border-radius: 999px; background: currentColor }
+.fl-lens { position: absolute; z-index: 2; top: 60px; left: 50%; width: var(--fl-lens); margin-left: calc(var(--fl-lens) / -2); min-height: 296px; padding: 18px 22px 20px; border-radius: 26px; background: var(--paper); box-shadow: 0 0 0 1px rgba(10,10,10,.05), 0 24px 40px -26px rgba(10,10,10,.3), 0 60px 100px -46px rgba(10,10,10,.5) }
+.fl-lhead { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 14px; border-bottom: 1px solid var(--line) }
+.fl-lbrand { display: inline-flex; align-items: center; gap: 7px; font-weight: 650; font-size: 14px }
+.fl-status { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-soft) }
+.fl-status i { width: 8px; height: 8px; border-radius: 999px; background: #b9b3ac }
+.fl-status.is-busy i { background: var(--ink); animation: fl-pulse 1s ease-in-out infinite }
+.fl-status.is-ok { color: var(--good) } .fl-status.is-ok i { background: var(--good) }
+.fl-status.is-needs { color: var(--dot) } .fl-status.is-needs i { background: var(--dot) }
+@keyframes fl-pulse { 50% { transform: scale(.6) } }
+.fl-lbody { padding-top: 14px; transition: opacity .28s ease, transform .4s var(--fl-out) }
+.fl-lbody.is-fade { opacity: 0; transform: translateY(8px) }
+.fl-lens .fl-q { font-size: 16.5px; background: var(--stage); color: var(--ink); box-shadow: none }
+.fl-lens .fl-q.is-quiet { background: transparent; box-shadow: 0 0 0 1px var(--line) inset }
+.fl-lens .fl-q.is-ghost { color: #8a847d }
+.fl-lens .fl-a { margin-left: 44px; font-size: 16.5px; min-height: 48px; background: var(--fl-la-bg); color: var(--fl-la-fg) }
+.fl-lens .fl-a.is-hide { visibility: hidden }
+.fl-lens .fl-a.is-ghost { background: transparent; color: #8a847d; box-shadow: 0 0 0 1.5px #d6d0c9 inset; font-size: 14.5px }
+.fl-caret { display: inline-block; width: 2px; height: 1.05em; margin-left: 2px; vertical-align: -2px; background: currentColor; animation: fl-blink 1s steps(1) infinite }
+.fl-q .fl-caret { background: var(--ink) }
+@keyframes fl-blink { 50% { opacity: 0 } }
+.fl-dots { display: inline-flex; gap: 4px; padding: 6px 0 } .fl-dots i { width: 6px; height: 6px; border-radius: 999px; background: currentColor; animation: fl-dot 1s ease-in-out infinite } .fl-dots i:nth-child(2) { animation-delay: .15s } .fl-dots i:nth-child(3) { animation-delay: .3s }
+@keyframes fl-dot { 0%, 100% { opacity: .3; transform: translateY(0) } 50% { opacity: 1; transform: translateY(-2px) } }
+.fl-lfoot { margin-top: 14px; margin-left: 44px; min-height: 40px; display: flex; align-items: center; gap: 12px }
+.fl-send { font: inherit; display: inline-flex; align-items: center; min-height: 40px; padding: 0 18px; border: 0; border-radius: 999px; background: var(--fl-btn); color: var(--fl-btn-fg); font-weight: 600; font-size: 14.5px; transition: transform .45s var(--fl-spring), opacity .25s ease }
+.fl-send.is-press { transform: scale(.88); transition-duration: .12s }
+.fl-send.is-hide, .fl-note.is-hide { opacity: 0 }
+.fl-note { font-size: 13px; color: var(--ink-faint); transition: opacity .25s ease }
+.fl-sent { display: inline-flex; align-items: center; gap: 7px; font-weight: 650; font-size: 14.5px; color: var(--good); animation: fl-rise .35s var(--ease) both }
+.fl-needs { display: inline-flex; align-items: center; gap: 8px; font-weight: 650; font-size: 14px; color: var(--dot); animation: fl-rise .35s var(--ease) both }
+.fl-needs::before { content: ""; width: 9px; height: 9px; border-radius: 999px; background: var(--dot) }
+@keyframes fl-rise { from { opacity: 0; transform: translateY(6px) } to { opacity: 1; transform: none } }
+.fl-under { margin-top: 16px; display: flex; align-items: center; justify-content: space-between; gap: 14px 24px; flex-wrap: wrap; min-height: 54px }
+.fl-next { display: flex; align-items: center; gap: 12px 18px; flex-wrap: wrap; font-size: 16px; color: var(--ink-soft); opacity: 0; transform: translateY(6px); transition: opacity .5s ease, transform .5s var(--ease); pointer-events: none }
+.fl-next.is-on { opacity: 1; transform: none; pointer-events: auto }
+.fl-next b { color: var(--ink); font-weight: 600 }
+.fl-cta { display: inline-flex; align-items: center; min-height: 50px; padding: 0 24px; border-radius: 999px; background: var(--fl-btn); color: var(--fl-btn-fg); font-weight: 600; font-size: 15.5px; text-decoration: none }
+.fl-side { display: flex; align-items: center; gap: 14px; margin-left: auto }
+.fl-ex { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint) }
+.fl-ctl { font: inherit; font-family: var(--mono); font-size: 12px; letter-spacing: .06em; color: var(--ink-soft); background: none; border: 1px solid #d8d3cd; border-radius: 999px; min-height: 36px; padding: 0 14px; cursor: pointer }
+.fl-ctl:hover { color: var(--ink); border-color: var(--ink-faint) }
+@media (max-width: 640px) {
+  .fl-hero { --fl-slot: 210px; --fl-gap: 14px; --fl-lens: min(calc(100vw - 2 * var(--gut) - 24px), 420px) }
+  .fl-ask { min-height: 60px; padding: 6px 6px 6px 8px }
+  .fl-you { width: 38px; height: 38px; font-size: 11px }
+  .fl-go { min-height: 46px; padding: 0 14px }
+  .fl-go span { display: none }
+  .fl-river { height: 440px; border-radius: 24px }
+  .fl-zone { top: 16px } .fl-zone.is-l { left: 16px } .fl-zone.is-r { right: 16px }
+  .fl-zone i { display: none } .fl-avs { display: inline-flex }
+  .fl-lens { top: 52px; padding: 16px 16px 18px }
+  .fl-lens .fl-a, .fl-lfoot { margin-left: 20px }
+  .fl-slot { top: 84px }
+}
+
+/* colours: A is today's soft colours; B clean white; C the app's sage green; D a black stage */
+html[data-col="b"] { --fl-hero-bg: var(--paper); --fl-river-bg: #f1f0ee; --fl-river-shadow: inset 0 0 0 1px rgba(10,10,10,.05); --fl-fact-bg: #f1f0ee }
+html[data-col="c"] { --fl-hero-bg: radial-gradient(60% 60% at 50% 0%, rgba(220,245,229,.95), rgba(220,245,229,0) 72%), var(--paper);
+  --fl-river-bg: radial-gradient(70% 90% at 14% 0%, #157a4b, rgba(21,122,75,0) 70%), #0b4a2c; --fl-river-shadow: inset 0 40px 70px -50px rgba(0,0,0,.5);
+  --fl-zone-fg: #bfe3cd; --fl-zone-strong: #fff; --fl-meta: #bfe3cd; --fl-meta-b: #fff; --fl-meta-faint: #9ccbb0;
+  --fl-a-bg: #dcf5e5; --fl-a-fg: #0b2a1a; --fl-la-bg: #0d6e3c; --fl-la-fg: #fff; --fl-tag-good: #a8e6bf; --fl-tag-needs: #f6b06b;
+  --fl-btn: #0d6e3c; --fl-em: #0d6e3c; --fl-avs-bg: rgba(255,255,255,.16); --fl-avs-fg: #fff;
+  --fl-fact-bg: radial-gradient(80% 90% at 12% 10%, #c9eed7, rgba(201,238,215,0) 70%), #eef7f1 }
+html[data-col="d"] { --fl-hero-bg: var(--paper); --fl-river-bg: radial-gradient(70% 90% at 20% 0%, #2a2a2a, rgba(42,42,42,0) 70%), #0c0c0c; --fl-river-shadow: none;
+  --fl-zone-fg: #a8a29e; --fl-zone-strong: #fff; --fl-meta: #a8a29e; --fl-meta-b: #fff; --fl-meta-faint: #8a847d;
+  --fl-q-bg: #1f1f1f; --fl-q-fg: #f5f5f4; --fl-a-bg: #ffffff; --fl-a-fg: #0a0a0a; --fl-tag-good: #86d3a0; --fl-tag-needs: #f2a35e;
+  --fl-avs-bg: rgba(255,255,255,.14); --fl-avs-fg: #fff; --fl-fact-bg: radial-gradient(70% 90% at 20% 0%, #2a2a2a, rgba(42,42,42,0) 70%), #0c0c0c; --fl-fact-fg: #fff; --fl-fact-soft: #a8a29e }
+html[data-col="d"] .fl-slot .fl-q.is-quiet, html[data-col="c"] .fl-slot .fl-q.is-quiet { background: rgba(255,255,255,.1); color: #e7e5e4; box-shadow: 0 0 0 1px rgba(255,255,255,.14) inset }
+
+/* layouts: none = stacked (the home page today); 1 = the headline owns the first screen; 2 = side by side; 3 = two screens */
+.fl-sub, .fl-cue { display: none }
+html[data-lay="1"] .fl-intro { min-height: calc(100svh - 68px - 110px); display: flex; flex-direction: column; justify-content: center; transition: min-height 1s var(--fl-out) }
+html[data-lay="1"] .fl-h1 { font-size: clamp(50px, 7.4vw, 116px) }
+html[data-lay="1"] .fl-stage { max-height: 0; opacity: 0; transform: translateY(56px); overflow: hidden; transition: max-height 1.1s var(--fl-out), opacity .8s ease, transform 1.1s var(--fl-out) }
+html[data-lay="1"] .fl-hero.is-open .fl-intro { min-height: 0 }
+html[data-lay="1"] .fl-hero.is-open .fl-stage { max-height: 660px; opacity: 1; transform: none }
+html[data-lay="2"] .fl-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 620px); gap: 32px 56px; align-items: center; min-height: calc(100svh - 68px - 90px) }
+html[data-lay="2"] .fl-h1 { text-align: left; margin: 0; font-size: clamp(44px, 5.4vw, 86px); max-width: 11ch }
+html[data-lay="2"] .fl-sub { display: block; margin-top: 22px; font-size: 19px; line-height: 1.5; color: var(--ink-soft); max-width: 30ch }
+html[data-lay="2"] .fl-ask { margin: 30px 0 0 }
+html[data-lay="2"] .fl-hint { text-align: left; padding-left: 8px }
+html[data-lay="2"] .fl-river { margin-top: 0; height: 470px }
+html[data-lay="2"] .fl-hero { --fl-lens: min(440px, calc(100vw - 2 * var(--gut) - 40px)) }
+html[data-lay="2"] .fl-zone i { display: none } html[data-lay="2"] .fl-avs { display: inline-flex }
+html[data-lay="3"] .fl-head { position: relative; min-height: calc(100svh - 68px - 150px); display: flex; flex-direction: column; justify-content: center; align-items: center }
+html[data-lay="3"] .fl-h1 { font-size: clamp(46px, 6.6vw, 108px); max-width: 15ch }
+html[data-lay="3"] .fl-cue { display: inline-flex; position: absolute; bottom: 0; align-items: center; gap: 10px; min-height: 44px; padding: 0 18px; border-radius: 999px; font-size: 14.5px; font-weight: 600; text-decoration: none; color: var(--ink); background: var(--paper); box-shadow: 0 0 0 1px var(--line), 0 18px 36px -24px rgba(10,10,10,.4); animation: fl-bob 2.6s ease-in-out infinite }
+html[data-lay="3"] .fl-try { padding-top: 64px }
+@keyframes fl-bob { 50% { transform: translateY(6px) } }
+@media (max-width: 1000px) {
+  html[data-lay="2"] .fl-grid { grid-template-columns: minmax(0, 1fr); min-height: 0 }
+  html[data-lay="2"] .fl-h1, html[data-lay="2"] .fl-sub { text-align: center; margin-inline: auto }
+  html[data-lay="2"] .fl-hint { text-align: center; padding: 0 }
+}
+
+/* motion: words rise in, the box and the stage follow, buttons spring, the tick draws, the count rolls */
+.fl-w { display: inline-block; animation: fl-word .95s var(--fl-out) both; animation-delay: calc(var(--i) * 55ms + 120ms) }
+@keyframes fl-word { from { opacity: 0; transform: translateY(.42em); filter: blur(6px) } to { opacity: 1; transform: none; filter: blur(0) } }
+.fl-try { animation: fl-up .9s var(--fl-out) .6s both }
+.fl-sub { animation: fl-up .9s var(--fl-out) .5s both }
+.fl-stage > .fl-river { animation: fl-up 1.1s var(--fl-out) .8s both }
+@keyframes fl-up { from { opacity: 0; transform: translateY(26px) } to { opacity: 1; transform: none } }
+.fl-go, .fl-cta { transition: transform .45s var(--fl-spring), background .2s ease }
+.fl-go:hover, .fl-cta:hover { transform: translateY(-2px) }
+.fl-go:active, .fl-cta:active { transform: scale(.94); transition-duration: .1s }
+.fl-ask:focus-within { transform: translateY(-1px) }
+.fl-go.is-launch svg { animation: fl-launch .65s var(--fl-out) }
+@keyframes fl-launch { 0% { transform: none; opacity: 1 } 40% { transform: translateY(-16px); opacity: 0 } 41% { transform: translateY(14px); opacity: 0 } 100% { transform: none; opacity: 1 } }
+.fl-ghost { position: fixed; z-index: 60; pointer-events: none; margin: 0; padding: 12px 15px; border-radius: 18px 18px 18px 6px; background: var(--stage); color: var(--ink); font-size: 16.5px; line-height: 1.38; box-shadow: 0 24px 44px -22px rgba(10,10,10,.45); white-space: nowrap; max-width: 380px; overflow: hidden; text-overflow: ellipsis }
+.fl-sent svg path { stroke-dasharray: 24; stroke-dashoffset: 24; animation: fl-draw .55s .12s var(--fl-out) forwards }
+@keyframes fl-draw { to { stroke-dashoffset: 0 } }
+.fl-zone b.is-bump { animation: fl-bump .55s var(--fl-spring) }
+@keyframes fl-bump { from { transform: translateY(80%); opacity: 0 } to { transform: none; opacity: 1 } }
+@media (prefers-reduced-motion: reduce) {
+  .fl-w, .fl-try, .fl-sub, .fl-stage > .fl-river, .fl-go.is-launch svg, .fl-sent svg path, .fl-zone b.is-bump, html[data-lay="3"] .fl-cue { animation: none }
+  .fl-sent svg path { stroke-dashoffset: 0 }
+  .fl-go, .fl-cta, .fl-ask, html[data-lay="1"] .fl-intro, html[data-lay="1"] .fl-stage { transition: none }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fl-slot, .fl-lbody, .fl-send, .fl-note, .fl-next { transition: none }
+  .fl-status.is-busy i, .fl-caret, .fl-dots i, .fl-sent, .fl-needs { animation: none }
+}
+
+
+/* ---- how it helps: time, money, follow-ups ---- */
+.fl-help { padding-block: clamp(72px, 10vh, 120px) 24px; background: var(--paper); color: var(--ink) }
+.fl-help h2 { font-family: var(--serif); font-weight: 400; font-size: clamp(38px, 4.6vw, 68px); line-height: .95; letter-spacing: -.03em; max-width: 18ch; text-wrap: balance }
+.fl-help h2 em { font-style: italic; color: var(--ink-soft) }
+.fl-help-grid { margin-top: clamp(36px, 5vh, 56px); display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 2fr); gap: 24px; align-items: stretch }
+.fl-fact { border-radius: 28px; padding: 30px 30px 26px; display: flex; flex-direction: column; justify-content: space-between; gap: 20px; color: var(--fl-fact-fg); background: var(--fl-fact-bg); box-shadow: 0 30px 60px -40px rgba(10,10,10,.45) }
+.fl-fact b { display: block; font-family: var(--serif); font-weight: 400; font-size: clamp(88px, 10vw, 150px); line-height: .8; letter-spacing: -.05em }
+.fl-fact p { margin: 0; font-size: 17px; line-height: 1.45 }
+.fl-fact cite { font-style: normal; font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--fl-fact-soft) }
+.fl-fact, .fl-hi { transition: opacity .8s ease, transform .9s var(--fl-out); transition-delay: var(--d, 0ms) }
+.fl-help .is-pre { opacity: 0; transform: translateY(30px) }
+@media (prefers-reduced-motion: reduce) { .fl-fact, .fl-hi { transition: none } }
+.fl-help-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px }
+.fl-hi { border-radius: 24px; padding: 26px 24px; background: var(--paper); box-shadow: 0 0 0 1px var(--line), 0 26px 50px -36px rgba(10,10,10,.35) }
+.fl-hi .ic { width: 48px; height: 48px; border-radius: 999px; display: grid; place-items: center; background: var(--stage) }
+.fl-hi h3 { margin: 22px 0 0; font-family: var(--serif); font-weight: 400; font-size: 27px; text-wrap: balance; line-height: 1; letter-spacing: -.02em }
+.fl-hi p { margin: 10px 0 0; font-size: 15.5px; line-height: 1.5; color: var(--ink-soft) }
+@media (max-width: 1000px) { .fl-help-grid { grid-template-columns: minmax(0, 1fr) } }
+@media (max-width: 700px) { .fl-help-list { grid-template-columns: minmax(0, 1fr) } }
+
+
+/* ---- FollowUp theme: Paper, Ink, Forest, Mint, Apricot, Sky; matte light, no shine ---- */
+:root { --paper: #F8F6F1; --ink: #0E0E0C; --stage: #F1EEE7; --line: #E6E1D8; --good: #0D6E3C; --dot: #C96A1B;
+  --forest-lit: radial-gradient(120% 100% at 20% 0%, #23785A 0%, #145A3E 38%, #0C412D 72%, #093322 100%);
+  --mint-lit: linear-gradient(180deg, #E4F8EB 0%, #BCE8CD 100%);
+  --apricot-lit: linear-gradient(160deg, #FBE3CF 0%, #F2C29C 55%, #E9A97A 100%);
+  --sky-lit: linear-gradient(170deg, #EEF3FA 0%, #D3E0F0 100%);
+  --card-lit: linear-gradient(180deg, #FFFFFF 0%, #F8F6F1 100%);
+  --lift: 0 1px 2px rgba(14,14,12,.06), 0 14px 28px -16px rgba(14,14,12,.28), 0 40px 70px -40px rgba(14,14,12,.35);
+  --press: 0 10px 22px -12px rgba(9,51,34,.55), inset 0 -3px 0 rgba(11,42,26,.14);
+}
+html[data-col="f"] { --fl-hero-bg: linear-gradient(180deg, #FBFAF6 0%, #F4F1EA 100%); --fl-em: #145A3E;
+  --fl-river-bg: linear-gradient(180deg, rgba(0,0,0,.18), rgba(0,0,0,.06)); --fl-river-shadow: inset 0 18px 40px -18px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.06);
+  --fl-zone-fg: #BFE3CD; --fl-zone-strong: #fff; --fl-meta: #BFE3CD; --fl-meta-b: #fff; --fl-meta-faint: #9CCBB0;
+  --fl-q-bg: #FFFFFF; --fl-q-fg: #0E0E0C; --fl-a-bg: #CDEFD9; --fl-a-fg: #0B2A1A; --fl-la-bg: #145A3E; --fl-la-fg: #fff;
+  --fl-tag-good: #A8E6BF; --fl-tag-needs: #F6B06B; --fl-btn: #CDEFD9; --fl-btn-fg: #0B2A1A; --fl-avs-bg: rgba(255,255,255,.16); --fl-avs-fg: #fff;
+  --fl-fact-bg: var(--apricot-lit); --fl-fact-fg: #2A1406; --fl-fact-soft: #7A4A26 }
+html[data-col="f"] body, html[data-col="f"] { background: var(--paper) }
+html[data-col="f"] .fl-hero { --fl-tilt: 16; overflow-x: clip }
+/* screen 1 stays put while screen 2 slides up over it, like a sheet of paper on a desk */
+html[data-col="f"] .fl-intro { position: sticky; top: 68px; z-index: 0 }
+html[data-col="f"] .fl-head { min-height: calc(100svh - 68px - 96px) }
+html[data-col="f"] .fl-stage { position: relative; z-index: 1; margin-inline: calc(50% - 50vw + 12px); padding: clamp(40px, 6vw, 72px) max(calc(50vw - 50% - 12px + var(--gut)), 16px) 36px;
+  border-radius: clamp(32px, 5vw, 64px); background: var(--forest-lit); color: #fff;
+  box-shadow: 0 -30px 60px -40px rgba(9,51,34,.5), inset 0 -60px 90px -60px rgba(0,0,0,.45) }
+html[data-col="f"] .fl-stage .fl-try { padding-top: 0 }
+html[data-col="f"] .fl-stage .fl-hint { color: #BFE3CD }
+html[data-col="f"] .fl-stage .fl-ex { color: #9CCBB0 }
+html[data-col="f"] .fl-stage .fl-ctl { color: #DCEFE3; border-color: rgba(255,255,255,.25) }
+html[data-col="f"] .fl-stage .fl-next { color: #DCEFE3 } html[data-col="f"] .fl-stage .fl-next b { color: #fff }
+html[data-col="f"] .fl-ask { background: var(--card-lit); box-shadow: 0 0 0 1px rgba(255,255,255,.4), 0 22px 44px -22px rgba(0,0,0,.6) }
+html[data-col="f"] .fl-ask:focus-within { box-shadow: 0 0 0 2.5px #CDEFD9, 0 22px 44px -22px rgba(0,0,0,.6) }
+html[data-col="f"] .fl-go, html[data-col="f"] .fl-cta, html[data-col="f"] .fl-send, html[data-col="f"] .nav-cta { background: var(--mint-lit); color: #0B2A1A; box-shadow: var(--press) }
+html[data-col="f"] .fl-go:active, html[data-col="f"] .fl-cta:active { box-shadow: 0 4px 10px -6px rgba(9,51,34,.55), inset 0 2px 4px rgba(11,42,26,.18) }
+html[data-col="f"] .nav-cta { box-shadow: 0 8px 18px -10px rgba(14,14,12,.35), inset 0 -3px 0 rgba(11,42,26,.12) }
+html[data-col="f"] .fl-lens { color: var(--ink); background: var(--card-lit); box-shadow: 0 0 0 1px rgba(255,255,255,.5), 0 30px 50px -26px rgba(0,0,0,.55), 0 70px 110px -50px rgba(0,0,0,.6) }
+html[data-col="f"] .fl-slot .fl-q { background: var(--card-lit); box-shadow: 0 16px 30px -18px rgba(0,0,0,.6) }
+html[data-col="f"] .fl-slot .fl-a { background: var(--mint-lit); box-shadow: 0 16px 30px -18px rgba(0,0,0,.6) }
+html[data-col="f"] .fl-track { perspective: 1400px }
+html[data-col="f"] .fl-lens .fl-send { background: linear-gradient(180deg, #2A2926, #0E0E0C); color: #fff; box-shadow: 0 8px 16px -8px rgba(14,14,12,.5) }
+@media (max-width: 640px) { html[data-col="f"] .fl-hero { --fl-lens: min(calc(100vw - 2 * var(--gut) - 64px), 420px) } }
+html[data-col="f"] .fl-cue { background: var(--card-lit); box-shadow: var(--lift) }
+html[data-col="f"] .fl-you { background: var(--mint-lit); color: #0B2A1A }
+/* how it helps: paper, lifted white cards, the 7x card in apricot */
+html[data-col="f"] .fl-help { background: var(--paper); position: relative; z-index: 1 }
+html[data-col="f"] .fl-hi { background: var(--card-lit); box-shadow: 0 0 0 1px var(--line), var(--lift) }
+html[data-col="f"] .fl-hi .ic { background: var(--mint-lit); box-shadow: inset 0 -2px 0 rgba(11,42,26,.1) }
+html[data-col="f"] .fl-fact { box-shadow: 0 30px 60px -36px rgba(122,74,38,.55), inset 0 -40px 70px -50px rgba(122,74,38,.35) }
+
+/* the theme sheet */
+.sheet { position: relative; z-index: 1; padding-block: 72px 160px; background: var(--paper) }
+.sheet h2 { font-family: var(--serif); font-weight: 400; font-size: clamp(36px, 4.4vw, 60px); letter-spacing: -.03em; line-height: .95; max-width: 20ch }
+.sheet h2 em { font-style: italic; color: #145A3E }
+.sheet .lede { margin-top: 14px; font-size: 18px; color: var(--ink-soft); max-width: 62ch }
+.sw8 { margin-top: 34px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px }
+.sw8 div { border-radius: 24px; overflow: hidden; background: var(--card-lit); box-shadow: 0 0 0 1px var(--line), var(--lift) }
+.sw8 .c { height: 112px }
+.sw8 .t { padding: 14px 16px 16px } .sw8 b { display: block; font-size: 16px } .sw8 .mono { font-size: 11.5px; color: var(--ink-faint) } .sw8 p { margin: 6px 0 0; font-size: 14px; color: var(--ink-soft); line-height: 1.4 }
+.spec { margin-top: 28px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px }
+.spec > div { border-radius: 28px; padding: 26px; min-height: 190px; display: flex; flex-direction: column; justify-content: space-between; gap: 18px }
+.spec .s1 { background: var(--forest-lit); color: #fff; box-shadow: inset 0 -50px 80px -50px rgba(0,0,0,.45), var(--lift) }
+.spec .s2 { background: var(--sky-lit); box-shadow: inset 0 -40px 70px -50px rgba(40,70,110,.25), var(--lift) }
+.spec .s3 { background: var(--apricot-lit); color: #2A1406; box-shadow: inset 0 -40px 70px -50px rgba(122,74,38,.35), var(--lift) }
+.spec small { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; opacity: .75 }
+.spec .demo-btn { align-self: flex-start; display: inline-flex; align-items: center; min-height: 48px; padding: 0 22px; border-radius: 999px; background: var(--mint-lit); color: #0B2A1A; font-weight: 600; box-shadow: var(--press) }
+.spec .demo-card { border-radius: 18px; padding: 14px 16px; background: var(--card-lit); color: var(--ink); box-shadow: 0 18px 32px -18px rgba(14,14,12,.4); font-size: 15px }
+.rules { margin-top: 28px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; list-style: none; padding: 0 }
+.rules li { padding-top: 14px; border-top: 1px solid var(--line); font-size: 15px; color: var(--ink-soft) } .rules b { display: block; color: var(--ink); font-size: 16px }
+@media (max-width: 900px) { .sw8 { grid-template-columns: repeat(2, minmax(0, 1fr)) } .spec, .rules { grid-template-columns: minmax(0, 1fr) } }
+
+
+/* ---- theme v1 (A-114) on the rest of the page: paper sections, Sky and Apricot light blocks, Forest for Today and the close, Mint buttons ---- */
+:root { --paper: #ffffff; --night: #F8F6F1; --night-2: #F3F0E8; --moon: #0E0E0C; --ink: #0E0E0C; --em: #145A3E; --em-light: #145A3E; --btn: #CDEFD9; --btn-fg: #0B2A1A;
+  --bed: var(--forest-lit); --stage-how: var(--sky-lit); --stage-thread: linear-gradient(170deg, #FDF0E4 0%, #F6D9C0 100%); --stage-ctl: var(--sky-lit);
+  --close-bg: var(--forest-lit); --close-fg: #FFFFFF; --close-soft: #BFE3CD; --close-faint: #9CCBB0; --close-dim: rgba(255,255,255,.16); --close-em: #CDEFD9; --close-btn: var(--mint-lit); --close-btn-fg: #0B2A1A; --close-tone: dark }
+html[data-col="f"], html[data-col="f"] body, .light, .today-sec, .fl-help, .statement { background: #F8F6F1 }
+.nav.light.solid { background: rgba(248,246,241,.92) }
+.nav .pill, .nav.light .pill { background: var(--mint-lit); color: #0B2A1A; border-color: transparent; box-shadow: 0 8px 18px -10px rgba(14,14,12,.35), inset 0 -3px 0 rgba(11,42,26,.12) }
+.app-bed { box-shadow: inset 0 -70px 100px -70px rgba(0,0,0,.5), 0 40px 80px -50px rgba(9,51,34,.5) }
+.stage, .switch-card { box-shadow: inset 0 -50px 80px -60px rgba(40,70,110,.3), 0 30px 60px -44px rgba(14,14,12,.3) }
+.thread { box-shadow: inset 0 -50px 80px -60px rgba(122,74,38,.3), 0 30px 60px -44px rgba(14,14,12,.3) }
+.t-col::before { box-shadow: 0 0 0 6px #FBE7D6 } .t-card { background: var(--card-lit) } .t-card.w { background: var(--mint-lit); box-shadow: 0 18px 32px -20px rgba(9,51,34,.45) }
+.close { border-radius: clamp(32px, 5vw, 64px) clamp(32px, 5vw, 64px) 0 0; margin-inline: 12px; box-shadow: inset 0 80px 120px -90px rgba(255,255,255,.0) }
+.big-cta { box-shadow: var(--press) } .big-cta:hover { filter: none; transform: translateY(-2px) }
+.fl-help h2 em { color: #145A3E }
+
+/* ---- theme v2: fewer colours, no contradictions. Sky and Apricot removed; Mint only on buttons; light grain over everything ---- */
+:root { --stone: linear-gradient(180deg, #F2EEE6 0%, #E9E3D8 100%); --stage-how: var(--stone); --stage-thread: var(--stone); --stage-ctl: var(--stone) }
+html[data-col="f"] { --fl-a-bg: #2A7A55; --fl-a-fg: #FFFFFF; --fl-fact-bg: var(--forest-lit); --fl-fact-fg: #FFFFFF; --fl-fact-soft: #BFE3CD }
+html[data-col="f"] .fl-slot .fl-a { background: linear-gradient(180deg, #2F8259 0%, #236B48 100%) }
+html[data-col="f"] .fl-you, html[data-col="f"] .fl-hi .ic { background: var(--stone); color: #145A3E; box-shadow: none }
+html[data-col="f"] .fl-fact { box-shadow: inset 0 -60px 90px -60px rgba(0,0,0,.45), 0 30px 60px -36px rgba(9,51,34,.5) }
+html[data-col="f"] .fl-fact b { color: #CDEFD9 }
+.stage, .switch-card, .thread { box-shadow: inset 0 -50px 80px -60px rgba(80,60,30,.22), 0 30px 60px -44px rgba(14,14,12,.28) }
+.t-col::before { box-shadow: 0 0 0 6px #EDE8DE }
+.t-card.w { background: var(--card-lit); box-shadow: 0 0 0 1.5px #145A3E, 0 18px 32px -20px rgba(9,51,34,.35) }
+/* grain: a faint paper texture over the whole page, like a printed letter */
+body::after { content: ""; position: fixed; inset: 0; z-index: 90; pointer-events: none; background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); background-size: 220px 220px; opacity: .09; mix-blend-mode: multiply }
+@media (prefers-reduced-transparency: reduce) { body::after { display: none } }
+
+/* ---- theme v3: a good green (lighter, fresher, not the heavy dark one), with sky and apricot back as light touches ---- */
+html[data-green="leaf"] { --forest-lit: radial-gradient(120% 100% at 20% 0%, #44A574 0%, #2E8A5C 36%, #22754C 70%, #1B6440 100%); --g-ink: #17603F; --g-reply: linear-gradient(180deg, #3F9C6E, #2F855B) }
+html[data-green="sage"] { --forest-lit: radial-gradient(120% 100% at 20% 0%, #78AD90 0%, #5C9479 36%, #4B8068 70%, #3E6E58 100%); --g-ink: #35664F; --g-reply: linear-gradient(180deg, #6EA587, #5A8F73) }
+html[data-green="emerald"] { --forest-lit: radial-gradient(120% 100% at 20% 0%, #2BB383 0%, #149467 36%, #0D7B55 70%, #0A6646 100%); --g-ink: #0A6646; --g-reply: linear-gradient(180deg, #26A87A, #138A60) }
+html[data-green="forest"] { --g-ink: #145A3E; --g-reply: linear-gradient(180deg, #2F8259 0%, #236B48 100%) }
+:root { --em: var(--g-ink); --em-light: var(--g-ink);
+  --sky-tint: linear-gradient(170deg, #F2F6FB 0%, #E3EBF5 100%); --apricot-tint: linear-gradient(170deg, #FDF4EC 0%, #F8E3D2 100%);
+  --stage-how: var(--sky-tint); --stage-ctl: var(--sky-tint); --stage-thread: var(--apricot-tint) }
+html[data-col="f"] { --fl-em: var(--g-ink); --fl-la-bg: var(--g-ink); --fl-meta: #E3F3E9; --fl-zone-fg: #E3F3E9; --fl-meta-faint: #C9E6D4;
+  --fl-fact-bg: var(--apricot-lit); --fl-fact-fg: #2A1406; --fl-fact-soft: #7A4A26 }
+html[data-col="f"] .fl-slot .fl-a { background: var(--g-reply) }
+html[data-col="f"] .fl-stage .fl-hint { color: #E3F3E9 }
+html[data-col="f"] .fl-you, html[data-col="f"] .fl-hi .ic { color: var(--g-ink) }
+html[data-col="f"] .fl-fact { box-shadow: 0 30px 60px -36px rgba(122,74,38,.45), inset 0 -40px 70px -50px rgba(122,74,38,.3) }
+html[data-col="f"] .fl-fact b { color: inherit }
+.fl-help h2 em { color: var(--g-ink) }
+.stage, .switch-card { box-shadow: inset 0 -50px 80px -60px rgba(40,70,110,.18), 0 30px 60px -44px rgba(14,14,12,.26) }
+.thread { box-shadow: inset 0 -50px 80px -60px rgba(122,74,38,.2), 0 30px 60px -44px rgba(14,14,12,.26) }
+.t-col::before { box-shadow: 0 0 0 6px #FAEADB }
+.t-card.w { box-shadow: 0 0 0 1.5px var(--g-ink), 0 18px 32px -20px rgba(9,51,34,.3) }
+/* review tool: try the greens */
+.gpk { position: fixed; left: 50%; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 95; display: flex; align-items: center; gap: 4px; padding: 6px; border-radius: 999px; background: #111; color: #fff; box-shadow: 0 18px 40px -16px rgba(0,0,0,.55); max-width: calc(100vw - 20px) }
+.gpk span { padding: 0 8px 0 12px; font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: #a8a29e }
+.gpk button { font: inherit; display: inline-flex; align-items: center; gap: 7px; min-height: 40px; padding: 0 14px; border: 0; border-radius: 999px; background: none; color: #e7e5e4; font-size: 13.5px; font-weight: 600; cursor: pointer }
+.gpk button i { width: 14px; height: 14px; border-radius: 999px } .gpk button[aria-pressed="true"] { background: #fff; color: #0a0a0a }
+@media (max-width: 560px) { .gpk span { display: none } .gpk button { padding: 0 10px } }
+
+/* ---- touches from the green family: soft lime for warmth, sage for calm blocks (default); sky + apricot to compare ---- */
+html[data-touch="green"] { --stage-how: linear-gradient(170deg, #F2F7EF 0%, #E1ECDB 100%); --stage-ctl: linear-gradient(170deg, #F2F7EF 0%, #E1ECDB 100%); --stage-thread: linear-gradient(170deg, #F7FBE9 0%, #E6F1C6 100%) }
+html[data-touch="green"][data-col="f"] { --fl-fact-bg: linear-gradient(160deg, #EFF9D2 0%, #D9EF9A 55%, #C4E37A 100%); --fl-fact-fg: #1D3410; --fl-fact-soft: #4A6A2A }
+html[data-touch="green"] .fl-fact { box-shadow: 0 30px 60px -36px rgba(70,100,30,.45), inset 0 -40px 70px -50px rgba(70,100,30,.28) }
+html[data-touch="green"] .t-col::before { box-shadow: 0 0 0 6px #EEF5DA }
+html[data-touch="green"] .thread { box-shadow: inset 0 -50px 80px -60px rgba(80,110,40,.22), 0 30px 60px -44px rgba(14,14,12,.26) }
+html[data-touch="green"] .stage, html[data-touch="green"] .switch-card { box-shadow: inset 0 -50px 80px -60px rgba(40,90,50,.2), 0 30px 60px -44px rgba(14,14,12,.26) }
+html[data-touch="green"] .fl-hi .ic { background: linear-gradient(180deg, #F2F7EF, #E1ECDB) }
+.gpk .sep { width: 1px; height: 24px; background: #333; margin: 0 4px; padding: 0 }
+
+/* ---- then and now: the old letter ---- */
+.letter { background: #F8F6F1; padding-block: clamp(80px, 11vh, 130px) 20px; position: relative; z-index: 1; overflow-x: clip }
+.letter .eyebrow { margin-bottom: 18px }
+.letter h2 { font-family: var(--serif); font-weight: 400; font-size: clamp(40px, 5.4vw, 72px); line-height: .95; letter-spacing: -.03em; max-width: 16ch; text-wrap: balance }
+.letter h2 em { color: var(--g-ink) }
+.env-row { margin-top: clamp(36px, 5vh, 56px); display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr); gap: 18px; align-items: stretch }
+.env { position: relative; border-radius: 26px; padding: 28px 26px 26px; min-height: 290px; display: flex; flex-direction: column; justify-content: flex-end; gap: 8px;
+  background: linear-gradient(180deg, #FFFFFF 0%, #F6F2EA 100%); box-shadow: 0 0 0 1px #E6E1D8, 0 26px 50px -34px rgba(14,14,12,.35); transition: opacity .8s ease, transform .9s var(--fl-out); transition-delay: var(--d, 0ms) }
+.env::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 120px; border-radius: 26px 26px 0 0; background: linear-gradient(to bottom right, transparent calc(50% - 1px), rgba(14,14,12,.12) 50%, transparent calc(50% + 1px)) left / 50.5% 100% no-repeat, linear-gradient(to bottom left, transparent calc(50% - 1px), rgba(14,14,12,.12) 50%, transparent calc(50% + 1px)) right / 50.5% 100% no-repeat }
+.env .how { font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-faint) }
+.env .big { font-family: var(--serif); font-size: clamp(40px, 4.4vw, 60px); line-height: .95; letter-spacing: -.03em }
+.env p { margin: 0; font-size: 15.5px; line-height: 1.45; color: var(--ink-soft) }
+.env .pm { position: absolute; top: 18px; right: 18px; color: rgba(14,14,12,.55); transform: rotate(-10deg) }
+.env.now { background: var(--forest-lit); color: #fff; box-shadow: inset 0 -60px 90px -60px rgba(0,0,0,.4), 0 30px 60px -36px rgba(9,51,34,.5) }
+.env.now::before { background: linear-gradient(to bottom right, transparent calc(50% - 1px), rgba(255,255,255,.22) 50%, transparent calc(50% + 1px)) left / 50.5% 100% no-repeat, linear-gradient(to bottom left, transparent calc(50% - 1px), rgba(255,255,255,.22) 50%, transparent calc(50% + 1px)) right / 50.5% 100% no-repeat }
+.env.now .how { color: #E3F3E9 } .env.now p { color: #E3F3E9 } .env.now .pm { color: #CDEFD9 }
+.env-arrow { align-self: center; font-size: 22px; color: var(--ink-faint) }
+.env.is-pre { opacity: 0; transform: translateY(30px) }
+.env .pm.is-wait { opacity: 0; transform: rotate(-24deg) scale(1.7) }
+.env .pm { transition: opacity .35s ease, transform .6s var(--fl-spring); transition-delay: calc(var(--d, 0ms) + 500ms) }
+@media (max-width: 900px) { .env-row { grid-template-columns: minmax(0, 1fr) } .env-arrow { transform: rotate(90deg); justify-self: center } .env { min-height: 230px } }
+
+/* ---- theme v4, professional (R-043): a neutral page, ink buttons, grey second lines, one dark panel for the product,
+   colour only as meaning (green = sent, orange = your turn) and one tiny lime note ---- */
+html[data-pro] { --paper: #FFFFFF; --night: #F4F3EF; --night-2: #ECEAE4; --ink: #0E0E0C; --ink-soft: #6B6862; --ink-faint: #8A867F; --line: #E4E1DA;
+  --g-ink: #6B6862; --em: #6B6862; --em-light: #6B6862; --btn: #0E0E0C; --btn-fg: #FFFFFF;
+  --panel: radial-gradient(110% 120% at 18% 0%, #2C302D 0%, #1B1E1C 42%, #121413 100%);
+  --forest-lit: var(--panel); --stone: linear-gradient(180deg, #F1EFEA 0%, #E8E5DE 100%);
+  --stage-how: var(--stone); --stage-thread: var(--stone); --stage-ctl: var(--stone); --bed: var(--stone);
+  --close-bg: var(--panel); --close-fg: #FFFFFF; --close-soft: #C9C6BF; --close-faint: #A19D96; --close-dim: rgba(255,255,255,.14); --close-em: #A19D96; --close-btn: #FFFFFF; --close-btn-fg: #0E0E0C;
+  --ink-btn: linear-gradient(180deg, #2A2926 0%, #0E0E0C 100%); --ink-press: 0 10px 22px -12px rgba(14,14,12,.55), inset 0 -2px 0 rgba(255,255,255,.06);
+  --fl-hero-bg: #F4F3EF; --fl-em: #8A867F; --fl-btn: #0E0E0C; --fl-btn-fg: #fff;
+  --fl-zone-fg: #A19D96; --fl-zone-strong: #FFFFFF; --fl-meta: #C9C6BF; --fl-meta-b: #FFFFFF; --fl-meta-faint: #A19D96;
+  --fl-q-bg: #FFFFFF; --fl-q-fg: #0E0E0C; --fl-a-bg: #E9E6DF; --fl-a-fg: #0E0E0C; --fl-la-bg: #0E0E0C; --fl-la-fg: #FFFFFF;
+  --fl-tag-good: #8FD3A8; --fl-tag-needs: #F2A35E; --fl-avs-bg: rgba(255,255,255,.14); --fl-avs-fg: #fff;
+  --fl-fact-bg: var(--panel); --fl-fact-fg: #FFFFFF; --fl-fact-soft: #A19D96 }
+html[data-pro], html[data-pro] body, html[data-pro] .light, html[data-pro] .today-sec, html[data-pro] .fl-help, html[data-pro] .statement, html[data-pro] .letter, html[data-pro] .fl-intro { background: #F4F3EF }
+html[data-pro] .fl-h1 em, html[data-pro] .chap-head h2 em, html[data-pro] .fl-help h2 em, html[data-pro] .letter h2 em, html[data-pro] .today-sec h2 em { color: #8A867F }
+html[data-pro] .nav .pill, html[data-pro] .nav.light .pill, html[data-pro] .fl-go, html[data-pro] .fl-cta, html[data-pro] .fl-send { background: var(--ink-btn); color: #fff; box-shadow: var(--ink-press) }
+html[data-pro] .fl-stage .fl-cta { background: #FFFFFF; color: #0E0E0C; box-shadow: 0 10px 22px -12px rgba(0,0,0,.6) }
+html[data-pro] .big-cta { background: #FFFFFF; color: #0E0E0C; box-shadow: 0 14px 30px -16px rgba(0,0,0,.6) }
+html[data-pro] .fl-stage { box-shadow: 0 -30px 60px -44px rgba(14,14,12,.5), inset 0 -60px 90px -60px rgba(0,0,0,.5) }
+html[data-pro] .fl-stage .fl-hint, html[data-pro] .fl-stage .fl-next { color: #C9C6BF } html[data-pro] .fl-stage .fl-next b { color: #fff }
+html[data-pro] .fl-stage .fl-ex { color: #A19D96 } html[data-pro] .fl-stage .fl-ctl { color: #C9C6BF; border-color: rgba(255,255,255,.2) }
+html[data-pro] .fl-ask:focus-within { box-shadow: 0 0 0 2.5px #FFFFFF, 0 22px 44px -22px rgba(0,0,0,.6) }
+html[data-pro] .fl-you, html[data-pro] .fl-hi .ic { background: #EFEDE8; color: #0E0E0C; box-shadow: none }
+html[data-pro] .fl-slot .fl-a { background: linear-gradient(180deg, #F1EFEA, #E2DFD8); color: #0E0E0C }
+html[data-pro] .fl-fact { box-shadow: inset 0 -60px 90px -60px rgba(0,0,0,.45), 0 30px 60px -36px rgba(14,14,12,.45) }
+html[data-pro] .fl-fact b { color: #FFFFFF }
+html[data-pro] .app-bed { box-shadow: inset 0 -40px 70px -50px rgba(80,60,30,.18), 0 30px 60px -44px rgba(14,14,12,.28) }
+html[data-pro] .stage, html[data-pro] .switch-card, html[data-pro] .thread { box-shadow: inset 0 -50px 80px -60px rgba(80,60,30,.16), 0 30px 60px -44px rgba(14,14,12,.24) }
+html[data-pro] .t-col::before { box-shadow: 0 0 0 6px #EDEAE3 } html[data-pro] .t-card.w { background: #fff; box-shadow: 0 0 0 1.5px #0E0E0C, 0 18px 32px -20px rgba(14,14,12,.3) }
+html[data-pro] .env.now { background: var(--panel); box-shadow: inset 0 -60px 90px -60px rgba(0,0,0,.45), 0 30px 60px -36px rgba(14,14,12,.45) }
+html[data-pro] .env.now .how, html[data-pro] .env.now p { color: #C9C6BF } html[data-pro] .env.now .pm { color: #FFFFFF }
+html[data-pro] .close { background: var(--panel) }
+/* the one tiny accent, like Ruul's pill: a lime note above the headline */
+.fl-note-pill { display: none }
+html[data-pro] .fl-note-pill { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 22px; padding: 6px 14px; border-radius: 999px; background: #E4F6B8; color: #26330C; font-size: 13.5px; font-weight: 600; box-shadow: inset 0 0 0 1px rgba(38,51,12,.08) }
+html[data-pro] .fl-note-pill i { width: 7px; height: 7px; border-radius: 999px; background: #5E8C1A }
+@media (prefers-reduced-motion: reduce) { .env, .env .pm { transition: none } }
+
+.today-sec { background: var(--paper); color: var(--ink); padding-block: 120px 40px }
+.today-sec .app-caption { color: var(--ink-faint) }
+.today-sec .replay { color: var(--ink-soft); border-color: var(--line) }
+@media (max-width: 1020px) {
+  .hero-top { grid-template-columns: minmax(0,1fr) }
+  .h-row { grid-template-columns: minmax(0,1fr) }
+  .h-side { display: none }
+  .legend { display: flex; overflow-x: auto; border-radius: 18px; justify-content: flex-start }
+  .legend li { flex: 0 0 auto }
+}
+@media (max-width: 560px) { .h-reply { margin-left: 14px } .fu-pill { font-size: 13px } .fp-meta { display: none } }
+@media (prefers-reduced-motion: reduce) { .hx { transition: none } .fp-dots i { animation: none } }
+@media (max-width: 1020px) {
+  .app { grid-template-columns: minmax(0,1fr) }
+  .side, .right { display: none }
+  .hero-row, .chap-head { grid-template-columns: minmax(0,1fr) }
+  .how-grid { grid-template-columns: minmax(0,1fr) }
+  .stage { display: none }
+  .step { min-height: 0; opacity: 1; padding-block: 28px }
+  .panel-inline { display: block; position: relative; margin-top: 24px; border-radius: 26px; background: var(--stage-how) }
+  .panel-inline .stage-inner { position: relative; inset: auto; padding: 24px 20px 28px }
+  .pcard.float { position: relative; right: auto; bottom: auto; width: auto; margin-top: 14px }
+  .t-cols { grid-template-columns: minmax(0,1fr) }
+  .thread .rail { display: none }
+  .promises, .news { grid-template-columns: minmax(0,1fr) }
+  .switch-card { grid-template-columns: minmax(0,1fr) }
+  .nav-links { display: none }
+}
+@media (max-width: 560px) {
+  .main { padding: 20px 18px }
+  .item { padding: 16px }
+  .nav .signin { display: none }
+  .thread { padding: 32px 20px }
+  .big-cta { min-height: 72px; padding: 0 30px }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto }
+  .caret { animation: none }
+  .item, .reply, .stage .panel, .step, .statement .w { transition: none }
+}
+</style>
+
+<header class="nav"><div class="wrap">
+<div class="blend"><a class="brand" href="#top"><svg width="12" height="19" viewBox="0 0 76.77 120" fill="currentColor" aria-hidden="true"><path d="M76.77 0 L73.12 20.29 C69.27 41.68 63.3 49.13 43.26 57.55 L9.78 71.61 L13.43 51.32 C17.29 29.93 23.26 22.48 43.3 14.06 Z"></path><path d="M41.97 67.16 L38 89.21 C35.69 102.04 32.11 106.51 20.08 111.56 L0 120 L3.97 97.95 C6.28 85.12 9.86 80.64 21.89 75.59 Z"></path></svg>FollowUp</a><nav class="nav-links" aria-label="Main"><a href="#how">How it works</a><a href="#control">Your control</a><a href="#new">What's new</a></nav></div>
+<div class="nav-right"><a class="signin" href="#signin">Sign in</a><a class="pill" href="#start">Start free</a></div>
+</div></header>
+
+<main id="top">
+
+<section class="fl-hero" id="fl-hero" aria-labelledby="h1"><div class="wrap fl-grid">
+<div class="fl-intro">
+<div class="fl-head">
+<span class="fl-note-pill"><i></i>Free while in beta</span>
+<h1 id="h1" class="fl-h1" aria-label="Never lose a lead because you forgot to follow up."><span class="fl-w" style="--i:0">Never</span> <span class="fl-w" style="--i:1">lose</span> <span class="fl-w" style="--i:2">a</span> <span class="fl-w" style="--i:3">lead</span> <em><span class="fl-w" style="--i:4">because</span> <span class="fl-w" style="--i:5">you</span> <span class="fl-w" style="--i:6">forgot</span> <span class="fl-w" style="--i:7">to</span> <span class="fl-w" style="--i:8">follow</span> <span class="fl-w" style="--i:9">up.</span></em></h1>
+<p class="fl-sub">Every customer gets a reply, written in your words. Try it: you be the customer.</p>
+<a class="fl-cue" href="#fl-try">Try it yourself ↓</a>
+</div>
+<div class="fl-try" id="fl-try">
+<form class="fl-ask" id="fl-ask" autocomplete="off">
+<span class="fl-you" aria-hidden="true">You</span>
+<label class="fl-sr" for="fl-in">Write a message, as if you were a customer</label>
+<input id="fl-in" name="q" maxlength="140" placeholder="Type a customer's question…" enterkeyhint="send">
+<button type="submit" class="fl-go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"></path></svg><span>Send</span></button>
+</form>
+<p class="fl-hint">You're the customer. Watch FollowUp write the reply.</p>
+</div>
+</div>
+<div class="fl-stage" id="fl-stage">
+<div class="fl-river" id="fl-river">
+<p class="fl-sr">An example of FollowUp at work. Customers' messages from Gmail, Outlook, Instagram and website forms wait on the left. One at a time they reach FollowUp in the middle, which writes the reply in the owner's words; the owner taps Send and the conversation moves to Answered on the right. A price question waits for the owner. What you type above appears in the middle and is answered the same way.</p>
+<div class="fl-zone is-l" aria-hidden="true">Waiting<i></i><span class="fl-avs" id="fl-wait"></span></div>
+<div class="fl-zone is-r" aria-hidden="true"><i></i>Answered <b id="fl-count">12</b></div>
+<div class="fl-track" id="fl-track"></div>
+<div class="fl-lens" id="fl-lens">
+<div class="fl-lhead"><span class="fl-lbrand"><svg width="9" height="14" viewBox="0 0 76.77 120" fill="currentColor" aria-hidden="true"><path d="M76.77 0 L73.12 20.29 C69.27 41.68 63.3 49.13 43.26 57.55 L9.78 71.61 L13.43 51.32 C17.29 29.93 23.26 22.48 43.3 14.06 Z"></path><path d="M41.97 67.16 L38 89.21 C35.69 102.04 32.11 106.51 20.08 111.56 L0 120 L3.97 97.95 C6.28 85.12 9.86 80.64 21.89 75.59 Z"></path></svg>FollowUp</span><span class="fl-status" id="fl-status"><i></i>Waiting for you</span></div>
+<div class="fl-lbody" id="fl-lbody"></div>
+</div>
+</div>
+<div class="fl-under">
+<div class="fl-next" id="fl-next" aria-live="polite"><span>That's FollowUp. <b>Your customers get this, every time.</b></span><a class="fl-cta" href="#start" tabindex="-1">Connect Gmail, start free</a></div>
+<div class="fl-side"><span class="fl-ex">Example</span><button class="fl-ctl" type="button" id="fl-pause">Pause</button></div>
+</div>
+</div>
+</div></section>
+
+<section class="letter" aria-labelledby="letter-h"><div class="wrap">
+<div class="eyebrow">Then and now</div>
+<h2 id="letter-h">A letter took weeks. <em>Today, a minute feels long.</em></h2>
+<div class="env-row">
+<div class="env"><span class="pm"><svg width="84" height="84" viewBox="0 0 100 100" fill="none" aria-hidden="true"><defs><path id="pmAt" d="M 17,50 A 33,33 0 1 1 83,50"/><path id="pmAb" d="M 10,50 A 40,40 0 0 0 90,50"/></defs><circle cx="50" cy="50" r="46" stroke="currentColor" stroke-width="2.4"/><circle cx="50" cy="50" r="26" stroke="currentColor" stroke-width="1.4"/><text font-family="IBM Plex Mono, ui-monospace, monospace" font-size="9.5" font-weight="600" letter-spacing="2" fill="currentColor"><textPath href="#pmAt" startOffset="50%" text-anchor="middle">POSTED</textPath></text><text font-family="IBM Plex Mono, ui-monospace, monospace" font-size="8.5" font-weight="600" letter-spacing="2" fill="currentColor"><textPath href="#pmAb" startOffset="50%" text-anchor="middle">BY POST</textPath></text><text x="50" y="54.5" text-anchor="middle" font-family="IBM Plex Mono, ui-monospace, monospace" font-size="11" font-weight="700" letter-spacing=".5" fill="currentColor">WEEKS</text></svg></span><span class="how">By post</span><span class="big">Weeks</span><p>Write it, post it, wait.</p></div>
+<span class="env-arrow" aria-hidden="true">&rarr;</span>
+<div class="env"><span class="pm"><svg width="84" height="84" viewBox="0 0 100 100" fill="none" aria-hidden="true"><defs><path id="pmBt" d="M 17,50 A 33,33 0 1 1 83,50"/><path id="pmBb" d="M 10,50 A 40,40 0 0 0 90,50"/></defs><circle cx="50" cy="50" r="46" stroke="currentColor" stroke-width="2.4"/><circle cx="50" cy="50" r="26" stroke="currentColor" stroke-width="1.4"/><text font-family="IBM Plex Mono, ui-monospace, monospace" font-size="9.5" font-weight="600" letter-spacing="2" fill="currentColor"><textPath href="#pmBt" startOffset="50%" text-anchor="middle">RECEIVED</textPath></text><text font-family="IBM Plex Mono, ui-monospace, monospace" font-size="8.5" font-weight="600" letter-spacing="2" fill="currentColor"><textPath href="#pmBb" startOffset="50%" text-anchor="middle">BY EMAIL</textPath></text><text x="50" y="54.5" text-anchor="middle" font-family="IBM Plex Mono, ui-monospace, monospace" font-size="11" font-weight="700" letter-spacing=".5" fill="currentColor">1 DAY?</text></svg></span><span class="how">By email</span><span class="big">A day. Or never.</span><p>Forget once, and they ask someone else.</p></div>
+<span class="env-arrow" aria-hidden="true">&rarr;</span>
+<div class="env now"><span class="pm"><svg width="84" height="84" viewBox="0 0 100 100" fill="none" aria-hidden="true"><defs><path id="pmCt" d="M 17,50 A 33,33 0 1 1 83,50"/><path id="pmCb" d="M 10,50 A 40,40 0 0 0 90,50"/></defs><circle cx="50" cy="50" r="46" stroke="currentColor" stroke-width="2.4"/><circle cx="50" cy="50" r="26" stroke="currentColor" stroke-width="1.4"/><text font-family="IBM Plex Mono, ui-monospace, monospace" font-size="9.5" font-weight="600" letter-spacing="2" fill="currentColor"><textPath href="#pmCt" startOffset="50%" text-anchor="middle">ANSWERED</textPath></text><text font-family="IBM Plex Mono, ui-monospace, monospace" font-size="8.5" font-weight="600" letter-spacing="2" fill="currentColor"><textPath href="#pmCb" startOffset="50%" text-anchor="middle">FOLLOWUP</textPath></text><text x="50" y="54.5" text-anchor="middle" font-family="IBM Plex Mono, ui-monospace, monospace" font-size="11" font-weight="700" letter-spacing=".5" fill="currentColor">1 MIN</text></svg></span><span class="how">With FollowUp</span><span class="big">1 minute</span><p>Written in your words. You tap Send.</p></div>
+</div>
+</div></section>
+
+<section class="fl-help" aria-labelledby="help-h"><div class="wrap">
+<h2 id="help-h">Less time in your inbox. <em>No lead you paid for, wasted.</em></h2>
+<div class="fl-help-grid">
+<div class="fl-fact"><div><b>7×</b><p>Leads that hear back within an hour are about seven times as likely to turn into a real conversation.</p></div><cite>Harvard Business Review, 2011</cite></div>
+<div class="fl-help-list">
+<div class="fl-hi"><span class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7a2.5 2.5 0 0 1-2.5 2.5H10l-4.5 3.5V16h-1A.5.5 0 0 1 4 15.5z"></path><path d="M8 8.5h8M8 11.5h5"></path></svg></span><h3>Time back</h3><p>Replies are written for you, in your words. You just tap Send.</p></div>
+<div class="fl-hi"><span class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="6" width="15.5" height="12.5" rx="2.5"></rect><path d="M4.5 7.5l7 5.2 7-5.2"></path><circle cx="19.2" cy="5.6" r="2.7" fill="currentColor" stroke="none"></circle></svg></span><h3>No lead wasted</h3><p>Every customer from your inbox, forms and ads gets an answer.</p></div>
+<div class="fl-hi"><span class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"></path><path d="M19.6 4.3v3.9h-3.9"></path><path d="M12 8.6V12l2.4 1.5"></path></svg></span><h3>Follow&#8209;ups on time</h3><p>When they go quiet, it follows up. When they reply, it stops.</p></div>
+</div>
+</div>
+</div></section>
+
+<section class="today-sec" aria-labelledby="today-h"><div class="wrap">
+<div class="chap-head"><div><div class="eyebrow">Your Today screen</div><h2 id="today-h">Open it to <em>one calm list.</em></h2></div><p>Everything waiting for you, in one place. This is the real app.</p></div>
+<figure class="app-wrap" style="margin-inline: 0; margin-bottom: 0" aria-label="FollowUp's Today screen: Priya's question and the reply FollowUp wrote, ready to send.">
+<div class="app-bed"><div class="app">
+<aside class="side" aria-hidden="true">
+<span class="brand"><svg width="10" height="16" viewBox="0 0 76.77 120" fill="currentColor" aria-hidden="true"><path d="M76.77 0 L73.12 20.29 C69.27 41.68 63.3 49.13 43.26 57.55 L9.78 71.61 L13.43 51.32 C17.29 29.93 23.26 22.48 43.3 14.06 Z"></path><path d="M41.97 67.16 L38 89.21 C35.69 102.04 32.11 106.51 20.08 111.56 L0 120 L3.97 97.95 C6.28 85.12 9.86 80.64 21.89 75.59 Z"></path></svg>FollowUp</span>
+<a class="cur"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 8v4l3 2"></path></svg>Today<span class="count">1</span></a>
+<a><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="9" r="3.2"></circle><path d="M3.5 19c.8-3 3-4.5 5.5-4.5s4.7 1.5 5.5 4.5"></path><path d="M16 6.5a3 3 0 0 1 0 5.8M17.5 14.6c1.6.5 2.6 2 3 4.4"></path></svg>Customers</a>
+<a><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2.5"></rect><path d="M4 9.5h16M8.5 3v4M15.5 3v4"></path></svg>Coming up</a>
+<a><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4.5h10.5L19 8v11.5H5z"></path><path d="M8.5 11h7M8.5 14.5h5"></path></svg>What FollowUp knows</a>
+<a><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8"></path></svg>Settings</a>
+<div class="status"><i></i>Sending is on</div>
+</aside>
+<div class="main">
+<div class="main-head"><h4>Today</h4><span class="mono">TUE · 11:49 PM</span></div>
+<div class="eyebrow">Needs your OK · 1</div>
+<div class="item" id="item">
+<div class="item-top"><span class="av">P</span><span><span class="who">Priya</span><br><span class="meta">New customer · Gmail · 11:48 PM</span></span><span class="why">Why it's here</span></div>
+<p class="msg">Hi, is the 3-bedroom on Maple Street still available? Could I see it this weekend?</p>
+<div class="reply" id="reply">
+<div class="eyebrow">Written by FollowUp · waits for your OK</div>
+<p class="rc-subj">Re: The 3-bedroom on Maple Street</p>
+<p class="rc-body" id="typed">Hi Priya, yes it is! I'm showing it Saturday, 10 to 2. Does that work?</p>
+<p class="rc-body" id="sign">Alex</p>
+<div class="rc-btns" id="btns"><span class="btn-ink" id="send">Send</span><span class="btn-line">Edit</span><span class="btn-text">Later</span></div>
+<div class="undo gone" id="undo">Sending to Priya in 7s · <u>Undo</u><div class="bar"><i id="drain"></i></div></div>
+<div class="sent" id="sent"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Sent from your Gmail · 11:49 PM</div>
+</div>
+</div>
+</div>
+<aside class="right" aria-hidden="true">
+<div><div class="eyebrow">Coming up</div><div class="cu"><div><span class="mono">FRI 9:00 AM</span>Check in with Sam, quiet since Tuesday</div><div><span class="mono">THU 2:00 PM</span>Later: Daniel's sister, the 2-bed</div></div></div>
+<div><div class="eyebrow">What FollowUp knows</div><div class="kn"><div><span>Showings</span><span>Sat, 10 to 2</span></div><div><span>Area</span><span>Westside</span></div><div><span>Sign-off</span><span>Alex</span></div></div><p class="small">Learned from replies you sent.</p></div>
+</aside>
+</div></div>
+<figcaption class="app-caption"><span>Example</span><button class="replay" type="button" id="replay">Replay ↺</button></figcaption>
+</figure>
+</div></section>
+
+<section class="statement" aria-label="Why FollowUp"><div class="wrap">
+<p id="statement">A customer writes at 11 PM. You see it the next morning. <span class="soft-run">FollowUp has already written the reply.</span></p>
+</div></section>
+
+<section class="light chap" data-tone="light" id="how" aria-labelledby="how-h"><div class="wrap">
+<div class="chap-head"><div><div class="eyebrow">How it works</div><h2 id="how-h">Three things, <em>while you're busy.</em></h2></div><p>Connect Gmail once. That's all the setup.</p></div>
+<div class="how-grid">
+<div class="steps"><div class="step on" data-i="0"><div class="step-n">01</div><h3>It finds your customers.</h3><p>It spots real customers and skips newsletters and receipts.</p><div class="panel-inline" aria-hidden="true"><div class="stage-inner"><div class="pcard ib"><div class="pc-head"><span>Your Gmail</span><span class="mono">41 new</span></div><ul><li class="ib-row"><span class="ib-who">Realty Weekly</span><span class="ib-sub">Market digest</span><span class="ib-tag">Skipped</span></li><li class="ib-row cust"><span class="ib-who">Priya</span><span class="ib-sub">Is the house still available?</span><span class="ib-tag">Customer</span></li><li class="ib-row"><span class="ib-who">Uber</span><span class="ib-sub">Your trip receipt</span><span class="ib-tag">Skipped</span></li><li class="ib-row cust"><span class="ib-who">Sam</span><span class="ib-sub">About the condo on Elm</span><span class="ib-tag">Customer</span></li></ul></div>
+<div class="pcard float fl-br"><div class="eyebrow">Found</div><p class="big-num">3 customers</p><p class="small">in 41 new emails</p></div></div></div></div><div class="step" data-i="1"><div class="step-n">02</div><h3>It writes in your words.</h3><p>Replies sound like you. Send as is, or change a word.</p><div class="panel-inline" aria-hidden="true"><div class="stage-inner"><div class="pcard wash-card"><div class="eyebrow">In your words</div><p class="rc-subj">Re: Maple Street</p><p class="rc-body">Hi Priya, yes it is! I'm showing it Saturday, 10 to 2. Does that work?</p><p class="rc-body">Alex</p><div class="rc-btns"><span class="btn-ink">Send</span><span class="btn-line">Edit</span><span class="btn-text">Later</span></div></div>
+<div class="pcard float fl-br knows"><div class="eyebrow">What FollowUp knows</div>
+<div class="kn-row used"><span>Showings</span><span>Saturdays, 10 to 2</span><span class="kn-used"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>used</span></div>
+<div class="kn-row used"><span>Sign-off</span><span>Alex</span><span class="kn-used"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>used</span></div>
+<p class="small">Learned from your replies.</p></div></div></div></div><div class="step" data-i="2"><div class="step-n">03</div><h3>It asks you first.</h3><p>Prices and dates come to you before anything goes out.</p><div class="panel-inline" aria-hidden="true"><div class="stage-inner"><div class="pcard"><div class="needs"><span class="dot"></span>Needs you</div>
+<div class="cust-msg"><span class="mono">Priya · 2:15 PM</span><p>Is the asking price negotiable?</p></div>
+<div class="wash-mini"><p>Hi Priya, the seller would consider <span class="blank">$ ______</span>.</p><div class="rc-btns"><span class="btn-ink">Send</span><span class="btn-line">Edit</span></div></div></div>
+<div class="pcard float fl-br hold"><div class="eyebrow">Meanwhile, after 30 min</div><p>“Thanks for asking! Let me check and I'll send you the price soon.”</p></div></div></div></div></div>
+<div><div class="stage" aria-hidden="true"><div class="panel on" data-i="0"><div class="pcard ib"><div class="pc-head"><span>Your Gmail</span><span class="mono">41 new</span></div><ul><li class="ib-row"><span class="ib-who">Realty Weekly</span><span class="ib-sub">Market digest</span><span class="ib-tag">Skipped</span></li><li class="ib-row cust"><span class="ib-who">Priya</span><span class="ib-sub">Is the house still available?</span><span class="ib-tag">Customer</span></li><li class="ib-row"><span class="ib-who">Uber</span><span class="ib-sub">Your trip receipt</span><span class="ib-tag">Skipped</span></li><li class="ib-row cust"><span class="ib-who">Sam</span><span class="ib-sub">About the condo on Elm</span><span class="ib-tag">Customer</span></li></ul></div>
+<div class="pcard float fl-br"><div class="eyebrow">Found</div><p class="big-num">3 customers</p><p class="small">in 41 new emails</p></div></div><div class="panel" data-i="1"><div class="pcard wash-card"><div class="eyebrow">In your words</div><p class="rc-subj">Re: Maple Street</p><p class="rc-body">Hi Priya, yes it is! I'm showing it Saturday, 10 to 2. Does that work?</p><p class="rc-body">Alex</p><div class="rc-btns"><span class="btn-ink">Send</span><span class="btn-line">Edit</span><span class="btn-text">Later</span></div></div>
+<div class="pcard float fl-br knows"><div class="eyebrow">What FollowUp knows</div>
+<div class="kn-row used"><span>Showings</span><span>Saturdays, 10 to 2</span><span class="kn-used"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>used</span></div>
+<div class="kn-row used"><span>Sign-off</span><span>Alex</span><span class="kn-used"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>used</span></div>
+<p class="small">Learned from your replies.</p></div></div><div class="panel" data-i="2"><div class="pcard"><div class="needs"><span class="dot"></span>Needs you</div>
+<div class="cust-msg"><span class="mono">Priya · 2:15 PM</span><p>Is the asking price negotiable?</p></div>
+<div class="wash-mini"><p>Hi Priya, the seller would consider <span class="blank">$ ______</span>.</p><div class="rc-btns"><span class="btn-ink">Send</span><span class="btn-line">Edit</span></div></div></div>
+<div class="pcard float fl-br hold"><div class="eyebrow">Meanwhile, after 30 min</div><p>“Thanks for asking! Let me check and I'll send you the price soon.”</p></div></div></div></div>
+</div>
+</div></section>
+
+<section class="light chap" data-tone="light" id="quiet" aria-labelledby="quiet-h"><div class="wrap">
+<div class="chap-head"><div><div class="eyebrow">When they go quiet</div><h2 id="quiet-h">It checks in <em>on the day you'd have forgotten.</em></h2></div><p>If they go quiet, it follows up. When they reply, it stops.</p></div>
+<div class="thread" id="thread">
+<div class="rail" aria-hidden="true"><i></i></div>
+<div class="t-cols">
+<div class="t-col"><div class="t-when">WED 7:02 AM</div><div class="t-what">Reply sent</div><div class="t-card">Hi Priya, yes it is! I'm showing it Saturday…</div></div>
+<div class="t-col quiet"><div class="t-when">THURSDAY</div><div class="t-what">Quiet</div><p class="t-quiet">No reply yet.</p></div>
+<div class="t-col"><div class="t-when">FRI 9:00 AM</div><div class="t-what">It followed up</div><div class="t-card w">Still keen to see the house?</div></div>
+<div class="t-col done"><div class="t-when">FRI 9:41 AM</div><div class="t-what">She replied</div><div class="t-card">Yes! Saturday at 10 works.</div><div class="t-stop"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Follow-ups stopped</div></div>
+</div>
+<p class="t-note">Example</p>
+</div>
+</div></section>
+
+<section class="light chap" data-tone="light" id="control" aria-labelledby="ctl-h"><div class="wrap">
+<div class="chap-head"><div><div class="eyebrow">Your control</div><h2 id="ctl-h">You stay <em>in charge.</em></h2></div><p>Four promises, and one off switch.</p></div>
+<div class="promises">
+<div class="promise"><h3>It stops the moment they reply.</h3><p>No chasing.</p></div>
+<div class="promise"><h3>Prices and dates come to you.</h3><p>With the reply ready.</p></div>
+<div class="promise"><h3>It writes down why.</h3><p>Every message has a reason.</p></div>
+<div class="promise"><h3>Delete everything, any time.</h3><p>It's your data.</p></div>
+</div>
+<div class="switch-card"><div><h3>Pause all sending</h3><p id="sw-text"><span class="switch-state"><span class="dot" style="background: var(--good)"></span>Sending is on.</span></p></div>
+<button class="sw" id="sw" type="button" role="switch" aria-checked="false" aria-label="Pause all sending"><span></span></button></div>
+<a class="ctl-link" href="#data">How we protect your data ›</a>
+</div></section>
+
+<section class="light chap" data-tone="light" id="new" aria-labelledby="new-h"><div class="wrap">
+<div class="chap-head"><div><div class="eyebrow">What's new</div><h2 id="new-h">It gets better <em>every week.</em></h2></div><p>Real updates, this week.</p></div>
+<div class="news">
+<article><time datetime="2026-10-07">OCT 7, 2026</time><h3>One question a day</h3><p>No long setup. One quick question a day.</p></article>
+<article><time datetime="2026-10-05">OCT 5, 2026</time><h3>It learns from every reply you send</h3><p>It remembers facts you write, like your hours.</p></article>
+<article><time datetime="2026-10-05">OCT 5, 2026</time><h3>Swipe for Later on your phone</h3><p>Swipe left to come back later.</p></article>
+</div>
+<p class="news-foot">Ideas? contact@followupbase.io</p>
+</div></section>
+
+<section class="close" id="start" aria-labelledby="close-h"><div class="wrap">
+<h2 id="close-h">Your customers are writing. <em>Answer every one.</em></h2>
+<a class="big-cta" id="bigcta" href="#start">Connect Gmail, start free <span aria-hidden="true">→</span></a>
+<p class="sub">Free in beta · No card needed</p>
+<footer>
+<span style="display: inline-flex; align-items: center; gap: 12px"><span class="brand" style="color: var(--moon)"><svg width="10" height="16" viewBox="0 0 76.77 120" fill="currentColor" aria-hidden="true"><path d="M76.77 0 L73.12 20.29 C69.27 41.68 63.3 49.13 43.26 57.55 L9.78 71.61 L13.43 51.32 C17.29 29.93 23.26 22.48 43.3 14.06 Z"></path><path d="M41.97 67.16 L38 89.21 C35.69 102.04 32.11 106.51 20.08 111.56 L0 120 L3.97 97.95 C6.28 85.12 9.86 80.64 21.89 75.59 Z"></path></svg>FollowUp</span>So no customer gets forgotten.</span>
+<nav aria-label="Footer"><a href="#how">How it works</a><a href="#data">Your data</a><a href="#privacy">Privacy</a><a href="#terms">Terms</a><span>contact@followupbase.io</span></nav>
+<span>© 2026 FollowUp</span>
+</footer>
+</div></section>
+</main>
+
+<script>
+(function () {
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var $ = function (s) { return document.querySelector(s); };
+
+
+
+/* the box belongs on screen 2: move it into the green block before the flow starts */
+(function () { var t = document.getElementById('fl-try'), st = document.getElementById('fl-stage'); if (t && st) st.insertBefore(t, st.firstChild); })();
+
+/* ---- opening: the reply flow, type-first ---- */
+(function () {
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var CH = {"gmail": ["Gmail", "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"3.5\" y=\"5.5\" width=\"17\" height=\"13\" rx=\"2.5\"></rect><path d=\"M4.5 7l7.5 5.5L19.5 7\"></path></svg>"], "outlook": ["Outlook", "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"3.5\" y=\"5.5\" width=\"17\" height=\"13\" rx=\"2.5\"></rect><path d=\"M4.5 7l7.5 5.5L19.5 7\"></path></svg>"], "ig": ["Instagram", "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"4\" y=\"4\" width=\"16\" height=\"16\" rx=\"4.5\"></rect><circle cx=\"12\" cy=\"12\" r=\"3.6\"></circle><circle cx=\"16.6\" cy=\"7.4\" r=\".6\" fill=\"currentColor\"></circle></svg>"], "web": ["Website form", "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"3.5\" y=\"4.5\" width=\"17\" height=\"15\" rx=\"2.5\"></rect><path d=\"M3.5 8.5h17M7.5 12.5h9M7.5 15.5h5\"></path></svg>"], "quiet": ["Gone quiet", "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M19.5 12a7.5 7.5 0 1 1-2.2-5.3\"></path><path d=\"M19.6 4.3v3.9h-3.9\"></path><path d=\"M12 8.6V12l2.4 1.5\"></path></svg>"]}, TICK = "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12.5l4.5 4.5L19 7.5\"></path></svg>";
+  var D = [
+    { ch: 'web', who: 'Omar', t: '6:40 AM', q: 'Do you do kitchen renovations?', r: 'We do! Could you send a photo of the space?', k: 'reply' },
+    { ch: 'gmail', who: 'Ben', t: '5:55 AM', q: 'Are you taking new patients?', r: 'Yes, we are! Mornings or afternoons?', k: 'reply' },
+    { ch: 'gmail', who: 'Priya', t: '11:48 PM', q: 'Is the house on Maple Street still available?', r: 'Hi Priya, yes it is! Want to see it Saturday at 10?', k: 'reply' },
+    { ch: 'web', who: 'Marcus', t: '7:02 AM', q: 'Can someone fix a leaking tap today?', r: 'Yes, I can be there by 3 PM today. Does that work?', k: 'reply' },
+    { ch: 'quiet', who: 'Sam', t: '2 days', q: 'No reply for two days', r: 'Hi Sam, still keen to see the condo this week?', k: 'follow' },
+    { ch: 'ig', who: 'Lena', t: '9:15 PM', q: 'Any spots for a haircut on Friday?', r: 'Yes! 2 PM or 4 PM, which suits you?', k: 'reply' },
+    { ch: 'outlook', who: 'Ella', t: '10:30 PM', q: 'How much is a full car detail?', r: 'Hi Ella, a full detail is $___. Want to book a time?', k: 'needs' }
+  ];
+  var $ = function (id) { return document.getElementById(id); };
+  var river = $('fl-river'), track = $('fl-track'), lens = $('fl-lens'), body = $('fl-lbody'), status = $('fl-status');
+  var hero = $('fl-hero'), stage = $('fl-stage'), goBtn = document.querySelector('.fl-go');
+  function lay() { return document.documentElement.getAttribute('data-lay') || '0'; }
+  function stageOn() { return lay() !== '1' || hero.classList.contains('is-open'); }
+  var count = $('fl-count'), waitEl = $('fl-wait'), pauseBtn = $('fl-pause'), form = $('fl-ask'), input = $('fl-in'), nextBox = $('fl-next');
+  var answered = 12, seq = [], ptr = 0, k = 0, SPAN = 4, timers = [], mode = 'turn', paused = false, idleT = 0, IDLE = 6500;
+
+  function item(j) { while (seq.length <= j) { var d = D[ptr++ % D.length]; seq.push({ ch: d.ch, who: d.who, t: d.t, q: d.q, r: d.r, k: d.k }); } return seq[j]; }
+  function later(ms, fn) { timers.push(setTimeout(fn, ms)); }
+  function stopAll() { timers.forEach(clearTimeout); timers = []; }
+  function esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+  function withBlank(s) { return esc(s).replace('$___', '<span class="fl-blank">$</span>'); }
+  function meta(it) { var c = CH[it.ch]; return '<div class="fl-meta">' + c[1] + '<b>' + esc(it.who) + '</b><span>' + c[0] + '</span><span class="mono">' + esc(it.t) + '</span></div>'; }
+  function qHtml(it) { return '<div class="fl-q' + (it.k === 'follow' ? ' is-quiet' : '') + '">' + esc(it.q) + '</div>'; }
+
+  /* the stream around the middle: left waits, right is answered */
+  var slots = [];
+  for (var s = 0; s < SPAN * 2 + 1; s++) { var el = document.createElement('div'); el.className = 'fl-slot'; el.setAttribute('aria-hidden', 'true'); track.appendChild(el); slots.push({ el: el, j: null }); }
+  function geom() { var cs = getComputedStyle(river.parentNode.parentNode); return { w: river.clientWidth, slot: parseFloat(cs.getPropertyValue('--fl-slot')), gap: parseFloat(cs.getPropertyValue('--fl-gap')), lens: lens.offsetWidth, tilt: parseFloat(cs.getPropertyValue('--fl-tilt')) || 0 }; }
+  function xFor(r, g) {
+    var c = g.w / 2; if (r === 0) return c - g.slot / 2;
+    var off = g.lens / 2 + g.gap + g.slot / 2 + (Math.abs(r) - 1) * (g.slot + g.gap);
+    return c + (r > 0 ? off : -off) - g.slot / 2;
+  }
+  function fill(sl, it, state) {
+    var key = (it.who + it.q + state);
+    if (sl.key === key) return; sl.key = key;
+    var h = meta(it) + qHtml(it);
+    if (state === 'done') h += '<div class="fl-a">' + withBlank(it.r) + '</div>' + (it.k === 'needs' ? '<div class="fl-tag is-needs">Needs you</div>' : '<div class="fl-tag">' + TICK + 'Sent</div>');
+    sl.el.innerHTML = h; sl.el.classList.toggle('is-waiting', state === 'waiting');
+  }
+  function layout(animate) {
+    var g = geom();
+    slots.forEach(function (sl, idx) {
+      if (sl.j === null) sl.j = k - (idx - SPAN);
+      var r = k - sl.j, jump = false;
+      while (r > SPAN) { sl.j += SPAN * 2 + 1; r = k - sl.j; jump = true; }
+      while (r < -SPAN) { sl.j -= SPAN * 2 + 1; r = k - sl.j; jump = true; }
+      sl.el.classList.toggle('is-instant', !animate || jump);
+      sl.el.classList.toggle('is-gone', sl.j < 0);
+      sl.el.classList.toggle('is-now', r === 0);
+      if (sl.j >= 0) fill(sl, item(sl.j), r > 0 ? 'done' : r < 0 ? 'waiting' : 'now');
+      var d = Math.abs(r), sc = d <= 1 ? 1 : 1 - (d - 1) * 0.09, op = (r === 0 || sl.j < 0) ? 0 : r < 0 ? [0, .9, .66, .45, .3][d] : [0, 1, .78, .55, .35][d];
+      sl.el.style.opacity = op;
+      var ry = r === 0 ? 0 : (r < 0 ? 1 : -1) * Math.min(d, 3) * g.tilt / 3;
+      sl.el.style.transform = 'translateX(' + xFor(r, g).toFixed(1) + 'px) rotateY(' + ry.toFixed(2) + 'deg) scale(' + sc.toFixed(3) + ')';
+      if (jump) { void sl.el.offsetWidth; sl.el.classList.remove('is-instant'); }
+    });
+    var w = '';
+    for (var j = k + 1; j <= k + 3; j++) w += '<span>' + esc(item(j).who.charAt(0)) + '</span>';
+    waitEl.innerHTML = w;
+  }
+  function refresh() { slots.forEach(function (sl) { sl.key = null; }); }
+
+  /* the middle card */
+  function setStatus(txt, cls) { status.className = 'fl-status' + (cls ? ' ' + cls : ''); status.innerHTML = '<i></i>' + txt; }
+  function paintItem(it) {
+    body.innerHTML = meta(it) + qHtml(it) + '<div class="fl-a is-hide" id="fl-a"></div>' +
+      '<div class="fl-lfoot" id="fl-foot"><span class="fl-send is-hide" id="fl-send">Send</span><span class="fl-note is-hide" id="fl-note">You tap Send</span></div>';
+  }
+  function finish(it) {
+    var a = $('fl-a'), foot = $('fl-foot');
+    a.classList.remove('is-hide'); a.innerHTML = withBlank(it.r);
+    if (it.k === 'needs') { foot.innerHTML = '<span class="fl-needs">A price: it waits for you</span>'; setStatus('Needs you', 'is-needs'); }
+    else { foot.innerHTML = '<span class="fl-sent">' + TICK + 'Sent ' + (it.ch === 'ig' ? 'on Instagram' : it.ch === 'outlook' ? 'from your Outlook' : 'from your Gmail') + '</span>'; setStatus('Sent', 'is-ok'); answered++; count.textContent = answered; count.classList.remove('is-bump'); void count.offsetWidth; count.classList.add('is-bump'); }
+  }
+  /* your turn: what you type shows here as you type it */
+  function draft() { return seq[k] && seq[k].draft ? seq[k] : null; }
+  function showTurn() {
+    mode = 'turn';
+    if (!draft()) { seq.splice(k, 0, { draft: true, user: true, ch: 'web', who: 'You', t: 'now', q: '', r: '', k: 'reply' }); refresh(); layout(true); }
+    setStatus('Waiting for you');
+    body.classList.remove('is-fade');
+    body.innerHTML = meta(draft()) + '<div class="fl-q is-ghost" id="fl-mirror"></div><div class="fl-a is-ghost">FollowUp writes the reply here, in your words.</div>';
+    mirror();
+    armIdle();
+  }
+  function mirror() {
+    var m = $('fl-mirror'); if (!m || mode !== 'turn') return;
+    var v = input.value.trim();
+    m.classList.toggle('is-ghost', !v);
+    m.innerHTML = v ? esc(input.value) + '<span class="fl-caret"></span>' : 'Your question shows up here…';
+  }
+  function armIdle() {
+    clearTimeout(idleT);
+    if (reduce || paused || !stageOn()) return;
+    idleT = setTimeout(function () { if (mode === 'turn' && !input.value.trim()) startExamples(); }, IDLE);
+  }
+  function startExamples() {
+    if (draft()) { seq.splice(k, 1); refresh(); }
+    run();
+  }
+
+  /* one conversation: read, write in your words, you tap Send, it flows on */
+  function run(keep) {
+    stopAll(); clearTimeout(idleT); mode = 'play';
+    var it = item(k), txt = it.r;
+    if (!keep) body.classList.add('is-fade');
+    later(keep ? 0 : 260, function () {
+      paintItem(it); body.classList.remove('is-fade');
+      if (reduce) { finish(it); later(600, function () { done(it); }); return; }
+      setStatus(it.k === 'follow' ? 'Quiet for two days' : 'Reading', 'is-busy');
+      var a = $('fl-a');
+      later(800, function () {
+        setStatus(it.k === 'follow' ? 'Writing a follow-up' : it.k === 'needs' ? 'Writing, leaving the price to you' : 'Writing in your words', 'is-busy');
+        a.classList.remove('is-hide'); a.innerHTML = '<span class="fl-dots"><i></i><i></i><i></i></span>';
+        for (var i = 1; i <= txt.length; i++) (function (i) {
+          later(750 + i * 28, function () { a.innerHTML = withBlank(txt.slice(0, i)) + (i < txt.length ? '<span class="fl-caret"></span>' : ''); });
+        })(i);
+        var end = 750 + txt.length * 28;
+        if (it.k === 'needs') { later(end + 400, function () { finish(it); }); later(end + 2600, function () { done(it); }); }
+        else {
+          later(end + 300, function () { setStatus('Ready for you'); $('fl-send').classList.remove('is-hide'); $('fl-note').classList.remove('is-hide'); });
+          later(end + 1300, function () { $('fl-send').classList.add('is-press'); });
+          later(end + 1500, function () { finish(it); });
+          later(end + 3000, function () { done(it); });
+        }
+      });
+    });
+  }
+  function done(it) {
+    if (paused) return;
+    k++; layout(true);
+    if (it.user) { nextBox.classList.add('is-on'); nextBox.querySelector('a').removeAttribute('tabindex'); }
+    if (item(k).user || it.user || mode === 'turn') { if (item(k).user && !item(k).draft) run(); else showTurn(); return; }
+    run();
+  }
+
+  /* your message: the reply is a fixed example chosen by what you asked, never generated */
+  function replyFor(q) {
+    var s = q.toLowerCase();
+    if (/free (quote|estimate|consult)/.test(s)) return { r: 'Yes, quotes are free! When could I come by and take a look?', k: 'reply' };
+    if (/(price|cost|how much|\$|quote|rate|fee|charge|expensive|cheap|budget|discount)/.test(s)) return { r: 'Thanks for asking! It comes to $___. Want me to book you in?', k: 'needs' };
+    if (/(urgent|asap|emergency|right now|leak|flood|broken|not working|stopped working)/.test(s)) return { r: "So sorry to hear that! I can come by today. What's the address?", k: 'reply' };
+    if (/(still available|available|for sale|for rent|in stock|sold)/.test(s)) return { r: "Yes, it's still available! Would you like to see it this week?", k: 'reply' };
+    if (/(hours|open|close|closing)/.test(s)) return { r: "We're open Monday to Saturday, 9 to 6. Want to come by?", k: 'reply' };
+    if (/(where|address|location|located|area|near|parking|directions)/.test(s)) return { r: "We're on Maple Street, near the station. Want me to send directions?", k: 'reply' };
+    if (/(book|appointment|slot|schedule|today|tonight|tomorrow|weekend|saturday|sunday|monday|tuesday|wednesday|thursday|friday|time|when|come|visit|see it|viewing)/.test(s)) return { r: 'Yes! I have time tomorrow at 10 or 2. Which suits you?', k: 'reply' };
+    if (/^(do|can|could|would|will) you\b|\bdo you (do|offer|fix|have|sell|take|install|repair|clean)\b/.test(s)) return { r: "Yes, we do! Tell me a little more and I'll sort it out for you.", k: 'reply' };
+    if (/(thank|thanks|great|perfect|awesome)/.test(s)) return { r: "You're welcome! Talk soon.", k: 'reply' };
+    if (/^(hi|hey|hello|yo|good (morning|afternoon|evening))\W*$/.test(s)) return { r: 'Hi! Thanks for getting in touch. How can I help?', k: 'reply' };
+    return { r: "Thanks for your message! Happy to help. Could you tell me a bit more about what you need?", k: 'reply' };
+  }
+  function interrupt() {
+    // a visitor started typing while an example was being written: finish it at once and give them the middle
+    if (mode !== 'play') return;
+    var it = item(k); if (it.user) return;
+    stopAll(); paintItem(it); finish(it); k++; layout(true); showTurn();
+  }
+  input.addEventListener('input', function () { stopPlaceholder(); interrupt(); mirror(); armIdle(); });
+  /* your question flies from the box into the middle card */
+  function fly(text, then) {
+    var m = $('fl-mirror');
+    if (reduce || !m || !m.getClientRects().length) { then(); return; }
+    m.textContent = text; m.classList.remove('is-ghost'); m.style.visibility = 'hidden';
+    var a = input.getBoundingClientRect(), b = m.getBoundingClientRect();
+    var g = document.createElement('div'); g.className = 'fl-ghost'; g.textContent = text; document.body.appendChild(g);
+    var x0 = a.left + 4, y0 = a.top + (a.height - g.offsetHeight) / 2;
+    g.style.left = x0 + 'px'; g.style.top = y0 + 'px';
+    var an = g.animate([
+      { transform: 'translate(0, 0) scale(.96)', opacity: 0 },
+      { transform: 'translate(0, -6px) scale(1)', opacity: 1, offset: .18 },
+      { transform: 'translate(' + (b.left - x0) + 'px, ' + (b.top - y0) + 'px) scale(1)', opacity: 1 }
+    ], { duration: 820, easing: 'cubic-bezier(.22, 1, .36, 1)' });
+    an.onfinish = function () { g.remove(); m.style.visibility = ''; then(); };
+  }
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var text = input.value.trim().slice(0, 140); if (!text) { input.focus(); return; }
+    var rr = replyFor(text); input.value = ''; stopPlaceholder();
+    goBtn.classList.remove('is-launch'); void goBtn.offsetWidth; goBtn.classList.add('is-launch');
+    paused = false; pauseBtn.textContent = 'Pause';
+    if (mode === 'play' && item(k).user) { seq.splice(k + 1, 0, { ch: 'web', who: 'You', t: 'now', q: text, r: rr.r, k: rr.k, user: true }); refresh(); layout(true); return; }
+    function go() {
+      interrupt();
+      if (!draft()) showTurn();
+      fly(text, function () {
+        var d = draft(); d.draft = false; d.q = text; d.r = rr.r; d.k = rr.k;
+        lens.setAttribute('aria-live', 'polite');
+        run(true);
+      });
+    }
+    if (!stageOn()) {
+      hero.classList.add('is-open');
+      setTimeout(function () { layout(false); var r = stage.getBoundingClientRect(); if (r.bottom > innerHeight) window.scrollBy({ top: r.bottom - innerHeight + 24, behavior: reduce ? 'auto' : 'smooth' }); setTimeout(go, reduce ? 0 : 450); }, reduce ? 0 : 700);
+    } else go();
+  });
+  /* a layout switch on the options page starts the opening fresh */
+  window.addEventListener('fl-relayout', function () { stopAll(); clearTimeout(idleT); hero.classList.remove('is-open'); paused = false; pauseBtn.textContent = 'Pause'; layout(false); showTurn(); });
+  pauseBtn.addEventListener('click', function () {
+    paused = !paused; pauseBtn.textContent = paused ? 'Play' : 'Pause';
+    if (paused) { stopAll(); clearTimeout(idleT); } else if (mode === 'play') run(); else armIdle();
+  });
+
+  /* the box suggests a question, one letter at a time, until someone types */
+  var tips = ['Is it still available?', 'Can you come today?', 'How much would it cost?', 'Are you open on Sunday?', 'Do you do free quotes?'];
+  var tipT = 0, base = input.getAttribute('placeholder');
+  function stopPlaceholder() { clearTimeout(tipT); input.setAttribute('placeholder', base); }
+  function typeTip(n, i) {
+    if (input.value) return;
+    var t = tips[n % tips.length];
+    input.setAttribute('placeholder', t.slice(0, i) || base);
+    if (i < t.length) tipT = setTimeout(function () { typeTip(n, i + 1); }, 55);
+    else tipT = setTimeout(function () { typeTip(n + 1, 0); }, 2200);
+  }
+  if (!reduce) tipT = setTimeout(function () { typeTip(0, 0); }, 2600);
+  if (reduce) pauseBtn.style.display = 'none';
+
+  /* start: two answered on the right, the stream waiting on the left, the middle is yours */
+  k = 2; item(SPAN * 2 + 4); layout(false); showTurn();
+  if (lay() !== '3' && window.matchMedia && window.matchMedia('(pointer: fine)').matches) { try { input.focus({ preventScroll: true }); } catch (e) {} }
+  var rt; window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(function () { layout(false); }, 120); });
+})();
+
+/* ---- how it helps: cards below the first screen rise in as you reach them; on screen at load, they just show ---- */
+(function () {
+  if (!('IntersectionObserver' in window) || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
+  var els = [].slice.call(document.querySelectorAll('.fl-help .fl-fact, .fl-help .fl-hi'));
+  var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.remove('is-pre'); io.unobserve(e.target); } }); }, { threshold: .2 });
+  els.forEach(function (el, i) { if (el.getBoundingClientRect().top > innerHeight) { el.style.setProperty('--d', (i * 90) + 'ms'); el.classList.add('is-pre'); io.observe(el); } });
+})();
+
+  /* ---- then and now: each envelope rises in, then its postmark lands ---- */
+  (function () {
+    if (!('IntersectionObserver' in window) || reduce) return;
+    var envs = [].slice.call(document.querySelectorAll('.env'));
+    var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.remove('is-pre'); var pm = e.target.querySelector('.pm'); if (pm) pm.classList.remove('is-wait'); io.unobserve(e.target); } }); }, { threshold: .3 });
+    envs.forEach(function (el, i) { if (el.getBoundingClientRect().top > innerHeight) { el.style.setProperty('--d', (i * 160) + 'ms'); el.classList.add('is-pre'); var pm = el.querySelector('.pm'); if (pm) pm.classList.add('is-wait'); io.observe(el); } });
+  })();
+
+  /* ---- the Today screen plays its story once it's in view, then rests ---- */
+  var REPLY = "Hi Priya, yes it is! I'm showing it Saturday, 10 to 2. Does that work?";
+  var item = $('#item'), reply = $('#reply'), typed = $('#typed'), sign = $('#sign'), btns = $('#btns'),
+      send = $('#send'), undo = $('#undo'), drain = $('#drain'), sent = $('#sent');
+  var timers = [];
+  function later(ms, fn) { timers.push(setTimeout(fn, ms)); }
+  function reset() { timers.forEach(clearTimeout); timers = []; }
+  function play() {
+    reset();
+    if (reduce) return;
+    item.classList.add('is-hidden'); reply.classList.add('is-hidden');
+    typed.textContent = ''; sign.style.visibility = 'hidden'; btns.style.visibility = 'hidden';
+    undo.classList.add('gone'); sent.classList.add('gone'); send.classList.remove('press');
+    drain.style.transition = 'none'; drain.style.transform = 'scaleX(1)';
+    later(350, function () { item.classList.remove('is-hidden'); });
+    later(1300, function () { reply.classList.remove('is-hidden'); });
+    var words = REPLY.split(' ');
+    words.forEach(function (w, i) {
+      later(1800 + i * 70, function () { typed.innerHTML = words.slice(0, i + 1).join(' ') + (i < words.length - 1 ? '<span class="caret"></span>' : ''); });
+    });
+    var t = 1800 + words.length * 70;
+    later(t + 150, function () { sign.style.visibility = 'visible'; btns.style.visibility = 'visible'; });
+    later(t + 1100, function () { send.classList.add('press'); });
+    later(t + 1800, function () { btns.style.visibility = 'hidden'; undo.classList.remove('gone');
+      requestAnimationFrame(function () { drain.style.transition = 'transform 2.4s linear'; drain.style.transform = 'scaleX(0)'; }); });
+    later(t + 4300, function () { undo.classList.add('gone'); btns.classList.add('gone'); sent.classList.remove('gone'); });
+  }
+  $('#replay').addEventListener('click', function () { btns.classList.remove('gone'); play(); });
+  if (!reduce && 'IntersectionObserver' in window) { var started = false; var tio = new IntersectionObserver(function (es) { if (!started && es[0].isIntersecting) { started = true; btns.classList.remove('gone'); play(); tio.disconnect(); } }, { threshold: 0.35 }); tio.observe(document.querySelector('.app-wrap')); } else { btns.classList.add('gone'); }
+
+  /* ---- scroll-linked moments: the window settles, the statement reads itself, the thread draws, the button grows ---- */
+  var scrubs = [];
+  function scrub(el, fn) { if (el) scrubs.push([el, fn]); }
+  function tick() {
+    var vh = window.innerHeight;
+    scrubs.forEach(function (s) { var r = s[0].getBoundingClientRect(); s[1](r, vh); });
+  }
+  var clamp = function (v) { return Math.max(0, Math.min(1, v)); };
+  if (!reduce) {
+    var win = $('.app-wrap');
+    scrub(win, function (r, vh) { var q = clamp((vh - r.top) / (vh * 0.75)); win.style.transform = 'translateY(' + ((1 - q) * 48).toFixed(1) + 'px) scale(' + (0.95 + 0.05 * q).toFixed(4) + ')'; });
+    var st = $('#statement');
+    var html = st.innerHTML.replace('<span class="soft-run">', '').replace('</span>', '');
+    var soft = false, out = '';
+    html.split(/(\s+)/).forEach(function (tok) {
+      if (tok.indexOf('') > -1) { soft = true; tok = tok.replace('', ''); }
+      var end = tok.indexOf('') > -1; tok = tok.replace('', '');
+      out += /^\s+$/.test(tok) || !tok ? tok : '<span class="w' + (soft ? ' soft' : '') + '">' + tok + '</span>';
+      if (end) soft = false;
+    });
+    st.innerHTML = out; st.parentNode.parentNode.classList.add('scrub');
+    var words = Array.prototype.slice.call(st.querySelectorAll('.w'));
+    scrub(st, function (r, vh) { var q = clamp((vh * 0.82 - r.top) / (r.height + vh * 0.25)); var n = Math.round(q * words.length);
+      words.forEach(function (w, i) { w.classList.toggle('lit', i < n); }); });
+    var rail = $('#thread .rail i');
+    scrub($('#thread'), function (r, vh) { rail.parentNode.style.setProperty('--p', clamp((vh * 0.8 - r.top) / (r.height * 0.9)).toFixed(3)); });
+    var cta = $('#bigcta');
+    scrub(cta, function (r, vh) { var q = clamp((vh - r.top) / (vh * 0.6)); cta.style.transform = 'scale(' + (0.82 + 0.18 * q).toFixed(4) + ')'; });
+    var raf = 0;
+    window.addEventListener('scroll', function () { if (!raf) raf = requestAnimationFrame(function () { raf = 0; tick(); }); }, { passive: true });
+    window.addEventListener('resize', tick);
+    tick();
+  }
+
+  /* ---- how it works: the stage follows the step you're reading ---- */
+  var steps = Array.prototype.slice.call(document.querySelectorAll('.step'));
+  var panels = Array.prototype.slice.call(document.querySelectorAll('.stage .panel'));
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (es) {
+      es.forEach(function (e) { if (!e.isIntersecting) return; var i = +e.target.getAttribute('data-i');
+        steps.forEach(function (s, j) { s.classList.toggle('on', j === i); });
+        panels.forEach(function (p, j) { p.classList.toggle('on', j === i); }); });
+    }, { rootMargin: '-45% 0px -45% 0px' });
+    steps.forEach(function (s) { io.observe(s); });
+  }
+
+
+  /* ---- the colour picker: the whole page changes, so colours are judged on the real thing ---- */
+  var pbtns = Array.prototype.slice.call(document.querySelectorAll('.picker button'));
+  function setPal(k) {
+    if (k === 'ours') document.documentElement.removeAttribute('data-pal'); else document.documentElement.setAttribute('data-pal', k);
+    pbtns.forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-pal') === k ? 'true' : 'false'); });
+    try { localStorage.setItem('fu-pal-ours', k); } catch (e) {}
+    if (nav) navTone();
+  }
+  pbtns.forEach(function (b) { b.addEventListener('click', function () { setPal(b.getAttribute('data-pal')); }); });
+
+
+  /* ---- the menu takes the colour of the section under it ---- */
+  var nav = document.querySelector('.nav');
+  var lights = Array.prototype.slice.call(document.querySelectorAll('[data-tone="light"]'));
+  function navTone() {
+    var y = 34, cr = document.querySelector('.close').getBoundingClientRect(), darkClose = getComputedStyle(document.documentElement).getPropertyValue('--close-tone').trim() === 'dark', onLight = !(darkClose && cr.top <= y && cr.bottom >= y);
+    nav.classList.toggle('light', onLight); nav.classList.toggle('solid', window.scrollY > 40);
+  }
+  window.addEventListener('scroll', navTone, { passive: true }); navTone();
+
+  /* ---- the real switch ---- */
+  var sw = $('#sw'), swText = $('#sw-text');
+  sw.addEventListener('click', function () {
+    var on = sw.getAttribute('aria-checked') !== 'true';
+    sw.setAttribute('aria-checked', on ? 'true' : 'false');
+    swText.innerHTML = on ? '<span class="switch-state"><span class="dot"></span>Everything is paused.</span>'
+                          : '<span class="switch-state"><span class="dot" style="background: var(--good)"></span>Sending is on.</span>';
+  });
+})();
+</script>

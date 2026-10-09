@@ -178,3 +178,23 @@ CRM, integration, real-time). Fewer things on the screen beats a clearer explana
 
 **Test:** read the section aloud to someone who runs a shop and has never used a CRM. If they
 ask "what does that mean?", the line is wrong, not the reader.
+
+**Reinforced 2026-10-08, website home page:** *"use simple information so that they read it its
+too much."* People skim a website; they do not read it. A line longer than about ten words, or
+a second sentence under a heading, mostly goes unread. **In practice:** a heading plus at most
+one short line; labels of one or two words ("Writes", "Sends", "Follows up", "Stops"); example
+messages as short as a real text ("Is the house still available?"); pictures of the product
+carry the detail, not paragraphs.
+
+**Added 2026-10-08, founder (A-110):** *"We have to let them try this thing."* On a public page, doing beats
+reading: the first action a visitor can take is the product itself (type a customer's question and watch it get
+answered), with no competing choice next to it. Explanations come after the try, not before.
+
+**Added 2026-10-08, founder (R-045):** *"I don't want any AI images. Arts are good, but not AI."* Every image on
+FollowUp is made by a person: public-domain or licensed art, commissioned illustration, or real photos of real
+owners with their permission. Never AI-generated pictures, in any style.
+
+**Added 2026-10-09, founder (R-060):** *"We don't want to keep the whole page like a 2D model with boring written
+information."* Show, don't tell, section by section: each point gets something to look at or play with (a control to
+drag, a moment that plays, a photo card), and the words shrink to labels. Facts still need sources; they just arrive
+inside the picture, not as a list.

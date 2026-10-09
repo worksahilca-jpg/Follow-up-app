@@ -5,6 +5,7 @@ import { runAutomationForAllBusinesses } from "@/lib/automation";
 import { runSequencesForAllBusinesses } from "@/lib/sequences";
 import { pruneInboundWebhookEvents, pruneSetAsideThreads } from "@/lib/inboundEvents";
 import { pruneRateLimitHits } from "@/lib/rateLimit";
+import { pruneDemoTries } from "@/lib/demoReply";
 import { remindStaleApprovalsForAllBusinesses } from "@/lib/staleApprovals";
 
 // One invocation covers every business with automation enabled — at real
@@ -110,6 +111,11 @@ export async function GET(request: NextRequest) {
       failed("rate-limit hit pruning")(err);
       return { deleted: 0 };
     });
+    // The home page demo's tries: at most a day's site cap a day, kept two days (demoReply.ts).
+    const prunedDemoTries = await pruneDemoTries().catch((err) => {
+      failed("demo try pruning")(err);
+      return { deleted: 0 };
+    });
 
     /*
      * 500 only when BOTH send paths died, which is the one case where the
@@ -122,7 +128,7 @@ export async function GET(request: NextRequest) {
      * the failure to Sentry either way. (This used to say console.error
      * did; it never did, as the server config has no console integration.)
      */
-    const body = { success: errors.length === 0, automation, sequences, staleApprovals, pruned, prunedSetAside, prunedRateLimitHits, errors };
+    const body = { success: errors.length === 0, automation, sequences, staleApprovals, pruned, prunedSetAside, prunedRateLimitHits, prunedDemoTries, errors };
     const nothingRan = automation === null && sequences === null;
     return NextResponse.json(body, { status: nothingRan ? 500 : 200 });
   } catch (err) {

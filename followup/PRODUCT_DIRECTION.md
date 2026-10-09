@@ -594,3 +594,21 @@ The five answers above settle the direction:
 - **Check-ins 3/7/14/30:** already the engine default (`QUIET_REMINDER_DEFAULT_DAYS`). No change needed.
 - **Existing accounts are not changed.** Every account that exists today keeps holding until its owner chooses
   Automatic in Settings.
+
+## The goal, restated: close more deals; the owner keeps the end (founder, 2026-10-09)
+
+> "Our goal is to make this product so good that it does not just act like a chat box or something that automatically
+> drafts anything. We'll be targeting this product to help the users close more deals by following up, keeping the
+> lead warm, and qualifying them accurately. It saves the user's time, plus whatever he forgets, it just keeps
+> nurturing them so that it keeps them warm, and then helps users book a meeting or close the deals. Maybe most of the
+> business wants them to handle the end part, the sales and the pricing negotiation parts, to be done by the business
+> owner. That part, we should not be getting more into it, but let's just keep training so that we are more accurate
+> with our replies and what we are saying."
+
+What this adds to the direction above (it confirms "only decisions go to the owner"):
+- **The measure is deals closed, not messages drafted.** FollowUp follows up, keeps the lead warm, qualifies it
+  accurately, and gets it to a booked meeting.
+- **The end of the sale is the owner's.** Sales conversations and price negotiation stay with the owner; FollowUp does
+  not go deeper there (the demo and the drafts pass negotiation to the owner).
+- **Accuracy keeps improving** through what the owner teaches (facts from sent replies, edits) and weekly product work.
+  This is not training an AI model on customer data (see `src/app/security/page.tsx`).

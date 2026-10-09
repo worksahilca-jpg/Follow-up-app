@@ -1321,3 +1321,11 @@ reply bubbles in particular read as WhatsApp.
 - green stays on the headline accent, booked/won/sent tags, "$ won, by you", "9 min" and the closed card;
 - lime stays the tiny accent (A-136).
 
+## R-104 — Recolouring the photo backgrounds ^R-104
+
+**Rejected:** 2026-10-09, founder: *"don't change the bg photo bro, that was good."* In v23 I blended the "Try it yourself"
+and "Your data stays yours" photos to an ink-green tone, misreading *"this background is not suiting our theme"* (a
+body-anchored comment) as being about the photos. **Principle:** the two photo panels are approved as they are (A-201
+and the founder's earlier "the theme we were using for Your data stays yours was the good one"). Do not retone, swap or
+recolour them without his ask. **Open:** which background he meant is asked in thread 004fdfc3.
+

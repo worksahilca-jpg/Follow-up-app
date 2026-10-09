@@ -3295,3 +3295,27 @@ FollowUp did at that moment:
 The line under the heading is now "You do your job. FollowUp does the follow-up." The heading sits on top, with the day
 below it at full width. On phones each row stacks: time, "You: …", then FollowUp's line.
 
+
+## A-207 — The home page, built: preview version 27 is the live page ^A-207
+
+**Approved:** 2026-10-09, founder: *"lets build this is the final one for now and merge as well"*, on preview version 27
+(https://claude.ai/artifact/QFyv7Uq2XnexzmaLAoDEn8).
+**What specifically:** the five sections exactly as previewed:
+- the hero: the sorting messages, the four-cell results bar (Qualified · Booked · Won by you · Time saved), the three
+  true promises and "Try it yourself";
+- "Two endings";
+- "What it does", You / FollowUp;
+- "You stay in charge", with the settings card;
+- the light close and the photo footer.
+
+**Changed on the way in, for truth and function, not taste** (`design-decisions.md`, 2026-10-09 "The home page goes
+into the app"):
+- Text messages (SMS) left the page: the From strip, the example customers and the closing notes. SMS is not live
+  (`CARRIER_CHANNELS_AVAILABLE = false`).
+- Every link goes to a real page. "Cookies" went: there is no cookies page.
+- The social icons in the footer went: there are no accounts behind them yet.
+- The try box asks FollowUp's own demo endpoint.
+- Facebook ad leads say "Sent by email", not "by text".
+
+**Status:** built in the app (src/landing/home.html). The phone and tablet fixes made with it (the results bar on
+phones, the bar's buttons on the right, notifications as rows) await his look.

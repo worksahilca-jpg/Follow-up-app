@@ -277,3 +277,12 @@ should be true."*
 **Founder:** *"we just have to make 4 to 5 sections only."* Every extra section must replace one, not add to them. If
 a section's answer already lives elsewhere on the page (FAQ, "nothing to learn"), fold it in as one line.
 
+
+## Every page is designed for the phone too (2026-10-09)
+
+**Founder:** *"we also need to design for mobile too."* An owner often sees FollowUp first on a phone, between jobs.
+- Every page is checked at 390 px and 360 px before it is called done, not only at desktop width.
+- A phone gets the same story, not a lesser one. If something is cut on a phone (the floating messages, the lanes of
+  the demo), the point it made must still land another way.
+- Nothing may sit under the screen's edge or overlap: buttons stay on one line, cards keep their spacing, and nothing
+  scrolls sideways.

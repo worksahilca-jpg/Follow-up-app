@@ -10904,3 +10904,55 @@ hard cut to a dark footer both read as "a different website".
   - **Thread deb079d8:** the footer's bottom-line "Free while in beta" pill is hidden. The hero pill and the close line
     keep it (asked).
 
+
+## 2026-10-09 — The home page goes into the app (A-207)
+
+**Founder:** *"lets build this is the final one for now and merge as well… make sure you're making all those animations
+smoother and rendering them accurately… run an agent to scan for bugs"*, then *"we also need to design for mobile
+too."*
+
+**How it's served:**
+- The approved preview became one document, `followup/src/landing/home.html`, served at `/` by `src/app/route.ts`.
+  It is rendered once at build time, so it is a static page.
+- Its photos and fonts moved out to `public/landing/`, named by a hash of their contents and cached for a year. The
+  page went from 2.7 MB to 0.6 MB.
+- It gained a real head: viewport, title, description, canonical, social cards, icons, the structured data and the
+  analytics every other page has.
+- The old React home page (`page.tsx` and the v2 demo, questions and pricing components) is gone. The truth tests that
+  read it (channels, trust copy) now read the new page, and `homePage.test.ts` checks every link and every asset.
+
+**Truth changes on the way in:** see A-207. They are the same rules as before (no channel that isn't live, no link to
+nowhere, no social proof that doesn't exist).
+
+**Fixed from the bug scan (qa-security-agent, 13 findings):**
+- **Phones:** they were getting the desktop layout shrunk to 40%, because there was no viewport tag. Fixed.
+- **Reduced motion:** the hero was stuck at 40% opacity and pushed 40 px up. It now shows finished, with the floating
+  cards off.
+- **The results bar:**
+  - The film and the live count no longer fight. The film counts to the week's opening numbers.
+  - A tag only flies into a number that can still rise.
+  - The spoken label always says what the bar shows.
+- **The demo card:** it no longer jumps from 296 px to 406 px and spills out of its panel between conversations.
+- **Smaller fixes:**
+  - two-line bubbles no longer show half a third line;
+  - the "Skipped" pill no longer lands on the card's header;
+  - skipped messages rest fully on screen before they sink;
+  - the faint v93 leftovers are hidden;
+  - small labels are up to 12 px;
+  - the menus follow the page's order (story, what it does, your control);
+  - the footer has room at the bottom.
+
+**Phones and tablets (my calls, to be seen):**
+- The top bar keeps Sign in and Start free on the right, up to 900 px.
+- The demo's lane labels give way to the From strip they overlapped.
+- The From strip and the demo card fit inside the dark panel.
+- The closing notifications become rows (icon on the left), so they no longer overlap.
+- The results bar is back on phones as a 2 × 2 grid. It had been hidden under 640 px since an early round, and "show
+  them money" applies to phones too. On phones it rests at the week's numbers, with no film.
+
+**Weak, honestly:**
+- The document is the preview's layers of patches: 0.6 MB, with many overridden rules. It works and is tested, but
+  editing it is slow. The next big change to the home page should rebuild it clean, from this as the drawing.
+- The phone bar doesn't play the film.
+- Several photos in `public/landing/` are referenced only by rules no element uses. They are never downloaded, but
+  they sit in the repo.

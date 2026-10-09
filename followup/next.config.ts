@@ -199,6 +199,13 @@ const nextConfig: NextConfig = {
         headers: [...commonHeaders, { key: "Content-Security-Policy", value: embedCsp }],
       },
       {
+        // The home page's photos and fonts (src/app/route.ts). Each file is
+        // named by a hash of its contents, so a changed file is a new name
+        // and an old one can be kept by browsers for a year.
+        source: "/landing/:path*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
+      },
+      {
         // API responses are for this origin's own pages and for
         // server-to-server callers (webhooks, cron), never for another
         // site's <script>/<img> tag. CORP only affects those no-cors

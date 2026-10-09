@@ -1262,3 +1262,21 @@ rule 6). Build the device from FollowUp's own world: time, the conversation, the
 - "She hears back in a minute" and a 7:03 reply broke A-187 (*"'Reply in a minute'… sounds like AI"*; it's the
   right moment, a natural few minutes later).
 - Preview 5 uses 7:11.
+
+## R-098 — A story you have to scroll through (pinned, scroll-driven, wheel-stepped) ^R-098
+
+**Rejected:** 2026-10-09, founder, on the preview: first *"too much scrolling… I accidentally scroll the other pages
+fast too"*, then, after one-swipe-one-moment stepping was added, *"this concept is shit, I kept scrolling."*
+Nadia's week ran as a sticky stage over 420–700vh, with the clock and messages driven by scroll position, and later
+the mouse wheel captured.
+**Principle:** never make the reader scroll to make content move forward, and never hold their scroll. A story fits
+one screen and plays by itself once when it arrives; the reader can jump to any moment or replay it. Scrolling only
+ever moves the page. This supersedes A-155's "scroll-driven beats timer-driven" for long stories. Short self-playing
+scenes with Replay are the default. Draft website rule 8 ("nothing traps the mouse wheel") stands.
+
+## R-099 — "It gets better": Day 1 vs Week 3 ^R-099
+
+**Rejected:** 2026-10-09, founder: *"feels odd"*, then *"make it more simple"*, then *"try new concepts, this is not
+something that I want."* The two-reply before/after (generic reply on day 1, your hours and sign-off by week 3) was
+rejected in full and in its simplified form. **Instead:** "it learns from your replies" becomes one of the key
+features in a new "What it does" section (founder's strategy, 2026-10-09).

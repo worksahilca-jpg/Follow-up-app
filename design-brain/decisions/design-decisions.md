@@ -10528,3 +10528,20 @@ Each section has a draft **Format** row: three new options plus **Current**. Not
   2. Should Your control sit on deep green instead of a photo?
   3. Should there be a Questions section, and in which style?
 
+## 2026-10-09 — The new order, shown before building (preview, nothing changed on the home page)
+
+- **Asked:** *"first show me how you gonna do it."*
+- **Shown:** a separate preview copy of the real page in the proposed order, at claude.ai/artifact/QFyv7Uq2XnexzmaLAoDEn8,
+  plus a side-by-side image of now and new. The home page artifact is untouched.
+- **What the preview changes, same colours:**
+  - Leads go cold is open on the page.
+  - "No reply? It checks in" is a lime band.
+  - Today is the app alone with a soft shadow.
+  - How it works is unchanged.
+  - You stay in charge is the Settings card (A-201) on deep green.
+  - Your data is The controls card (A-201) as a quiet card on the page.
+  - It gets better is two tiles plus a "new this week" tile.
+  - Questions is new: 5 plain questions, built only from facts already on the page.
+  - The close and the footer are unchanged.
+- **Waiting on:** his yes to build it into the home page, or his changes.
+

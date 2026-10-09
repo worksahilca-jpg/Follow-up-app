@@ -1127,3 +1127,10 @@ anybody is going to watch this or scroll through this for this information."* Th
 under a "1.25 million leads" line. **Principle (his words, generalised):** visitors won't study numbers; say "fast
 replies win" with one picture of the gap and the pain, and keep the proof to one sentence.
 
+## R-083 — A nine-step chat timeline with a warmth meter (v82) ^R-083
+
+**Rejected:** 2026-10-09, founder: *"It is vague and too complicated. I'm not trying to even read this thing… I don't want
+them to stress and read the whole stuff out to understand a simple logic."* Marcus's story as nine timed rows of chat
+bubbles with a "How warm Marcus is" bar. **Principle (his words):** a simple logic must be understood without reading;
+if it needs a list of messages, it is too much.
+

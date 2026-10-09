@@ -2688,7 +2688,7 @@ nothing in it asks to be read one by one.
 
 ## A-180 — The first hour, in big numbers; then one lead followed up until it's won (v82) ^A-180
 
-*Big-numbers part SUPERSEDED (2026-10-09) by [[#^A-183]] and [[rejected#^R-082]]; Marcus's follow-ups stay.*
+*SUPERSEDED (2026-10-09): the big numbers by [[#^A-183]] and [[rejected#^R-082]]; Marcus's follow-ups by [[#^A-184]] and [[rejected#^R-083]].*
 
 **Direction:** 2026-10-09, founder (thread 6c9f046d): *"without FollowUp, with FollowUp, what is this?… 1.2 million
 leads… you have written it very small. Highlight them… if they didn't reply, then you followed up again and again. You
@@ -2731,4 +2731,15 @@ line, read at a glance: 7:02 AM they ask → 7:03 AM FollowUp replies, in 1 minu
 already got someone." One sentence under it carries the checked figures (nearly 7×, over 60×, Harvard Business Review).
 Drawn once when in view; vertical on phones. Marcus's follow-ups follow. **Principle:** show the pain as a moment in
 time, not as statistics; one sentence of proof is enough.
+
+## A-184 — The follow-ups as one minimal dark card (v87) ^A-184
+
+**Direction:** 2026-10-09, founder (thread 350fc33a): *"It is vague and too complicated… my brain is not catching this…
+This first part did a good job… make it more accurate, simple, and as minimal as you can. Use some dark theme here to
+highlight stuff and make this more attractive and more engaging."* Under the gap picture ([[#^A-183]]), one dark green
+card: "No reply? FollowUp checks in. *Until they're ready.*" (the end in lime), and five stops on one line that light up
+in turn: Day 1 replied in 1 minute · Day 3 no reply, checked in · Day 7 still quiet, checked in again · they replied ·
+Day 9 booked, job won. One note: "It stops the moment they reply or say no." The days follow the product's real plan
+(3, 7, 14, 30). **Principle:** a sequence is understood from five words on a line, not from nine chat bubbles; dark is
+used once, to lift the one idea that matters.
 

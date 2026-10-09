@@ -2311,9 +2311,19 @@ the page. Body text stays Public Sans, labels IBM Plex Mono. **Supersedes** the 
 A-134. The app's re-theme (done in a side worktree with Tinos) must switch to Fraunces before it ships.
 
 ## A-143 — City photos in colour, a little dark ^A-143
+**SUPERSEDED (2026-10-09)** by [[#^A-144|A-144]]: evening and night photos instead of daytime ones.
 
 **Direction:** 2026-10-09, founder (R-074). Photo panels use the blurred city photos in their own colours (Rome's
 orange walls and blue sky, New York's dark street with amber lights, Bavaria's red and white facades with green,
 Paris's cream and pink), brightness about 0.75–0.8 (the night scene 0.5), saturation slightly up, red pulled down and
 blue up a touch so nothing turns brown. White words on top keep the existing dark veil. Refines A-138 (dark in light
 mode) and replaces R-065's grey grade.
+
+## A-144 — Evening city photos with city lights ^A-144
+
+**Direction:** 2026-10-09, founder: *"use more dark ones like evening stuff, city lights and stuff."* Six evening and
+night city photos, licensed free from Adobe Stock and not AI: Toronto skyline over the water (422420979, behind Today),
+a New York street at dusk with light trails (133285242, the demo block), Rome light trails at night (468657950, "How fast
+do you reply?"), Edinburgh's Victoria Street at blue hour (268536585, the week and data panels), Manhattan from above at
+evening (307866397, How it works), Paris Montmartre café street at night (551158017, the closing card). Softly blurred
+(A-121), colour kept, a touch cooler. The dark New York night scene stays as he asked (thread 76095413).

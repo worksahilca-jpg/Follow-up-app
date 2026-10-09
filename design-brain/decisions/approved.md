@@ -2320,6 +2320,7 @@ blue up a touch so nothing turns brown. White words on top keep the existing dar
 mode) and replaces R-065's grey grade.
 
 ## A-144 — Evening city photos with city lights ^A-144
+**Photos replaced (2026-10-09)** by [[#^A-145|A-145]], his own picks; the evening direction stands.
 
 **Direction:** 2026-10-09, founder: *"use more dark ones like evening stuff, city lights and stuff."* Six evening and
 night city photos, licensed free from Adobe Stock and not AI: Toronto skyline over the water (422420979, behind Today),
@@ -2327,3 +2328,14 @@ a New York street at dusk with light trails (133285242, the demo block), Rome li
 do you reply?"), Edinburgh's Victoria Street at blue hour (268536585, the week and data panels), Manhattan from above at
 evening (307866397, How it works), Paris Montmartre café street at night (551158017, the closing card). Softly blurred
 (A-121), colour kept, a touch cooler. The dark New York night scene stays as he asked (thread 76095413).
+
+## A-145 — The founder's own photo picks, one per panel ^A-145
+
+**Approved:** 2026-10-09, founder, picking in the Adobe Stock grids (a screen recording showed his ticks). All free
+licences, not AI. Placement (v49): light streaks 307728189 behind the demo; New York street at night 658429701 behind
+"How fast do you reply?"; Toronto at night 422420979 behind Today and the first How-it-works card; Manhattan in the
+rain 331799498 on the second card; a street hung with garlands 185828193 on the third; a lit old-town lane 241887241
+behind the week; a Naples alley at night 1879096924 on "You decide what it sends"; a winter street at night 430131401
+behind "Your data stays yours"; a lit restaurant door 392339565 on "What it learns stays yours"; a Paris café terrace
+542067500 on the closing card; the dark New York night scene (260838977) unchanged. Manhattan at evening 307866397 is
+kept for the How-it-works stage. Two more picks from the first grid weren't visible in the recording.

@@ -10772,3 +10772,29 @@ overstated. The heaviest block is the hero with the try-it panel (about 2 screen
 **Open:** thread 99c33d5a, "I don't know what we are trying to convey here, a bit complex", which part is still
 unanswered. My guess is the app screenshot in Nothing to learn.
 
+## 2026-10-09 — Preview version 17: five sections, money shown honestly
+
+**Founder:**
+- *"show them money bro, and we just have to make 4 to 5 sections only"* (on the hero numbers);
+- *"why a lot of space here, add minimal stuff or remove this space"* (under the demo).
+
+**Built:**
+- **Money:** the numbers bar shows "$2,400 won, by you". When a lead reaches Deal done, its value flies into that
+  cell, capped at $6,200 for the example week. It is credited to the owner, following the "lean toward the win, but
+  true" principle (brand-principles, 2026-10-09).
+- **Five sections:**
+  1. Hero with try-it.
+  2. Two endings.
+  3. What it does.
+  4. You stay in charge, with your data.
+  5. Start free, then the footer.
+
+  "Nothing to learn" (today-sec) and the questions section (faq) are hidden. "Set up in two minutes. Nothing to
+  learn." moves into the close. Every question is answered elsewhere on the page. The page is about 5,300 px at 1440
+  wide, down from 7,000.
+- **Gap under the demo:** the post-try line ("That's FollowUp…") takes no height until it appears, then opens with a
+  spring. Before that, the space was reserved but empty.
+
+**Note:** the Today app screenshot and the FAQ are gone from this preview. If he wants proof of "how easy it is",
+bring back one simple picture, not the full app screen. Thread 99c33d5a is still unanswered.
+

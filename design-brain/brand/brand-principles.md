@@ -272,3 +272,8 @@ should be true."*
 - Counters that run live must stop at a plausible total, never climb forever.
 - Prefer a promise FollowUp keeps by design ("0 forgotten") over a big money figure it can't prove.
 
+## The home page has 4–5 sections, no more (2026-10-09)
+
+**Founder:** *"we just have to make 4 to 5 sections only."* Every extra section must replace one, not add to them. If
+a section's answer already lives elsewhere on the page (FAQ, "nothing to learn"), fold it in as one line.
+

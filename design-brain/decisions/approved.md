@@ -2843,6 +2843,9 @@ Built on the home draft:
 
 ## A-188 — Home v96–v100: junk skipped, the wave, shorter sections, data band ^A-188
 
+> **PARTLY SUPERSEDED (2026-10-09)** by A-189: the data points no longer slide, the wave comes every 24 s, and How it works
+> defaults to the Scroll format.
+
 **Direction:** 2026-10-09, founder, in artifact comments (published as Version 83).
 
 **Built:**
@@ -2882,4 +2885,45 @@ Built on the home draft:
   keeps "Free while in beta · No card needed".
 
 **Open:** try box (Older / A / B), How it works format (Grid / Tabs / Original).
+
+## A-189 — Home v101–v102: leads worked through to closed, scroll steps, promises across the photo ^A-189
+
+**Direction:** 2026-10-09, founder, in artifact comments (published as Version 84).
+
+**Built:**
+- **Hero (thread dc6e0c94).** *"not spamming every time… collect the qualified ones to show that they are also being
+  closed… messages, deals booked, and deals closed are going up… money saved by FollowUp… the time we have saved."*
+  - The wave comes every 24 s.
+  - The five caught leads are worked through on the right: Caught → 3 Qualified (2 "Checking in" step back) → gather →
+    2 Booked → 1 Closed by you → they drop into the strip.
+  - Each step moves its own number. The strip has five: messages caught · deals booked · deals closed · saved by
+    FollowUp · of your time saved.
+  - The label tells the wave's story for a few seconds.
+- **Try box.**
+  - Thread adb95f19: the green edge was questioned. A draft "Edge" row compares Soft lift (default: hairline, deeper
+    shadow, ink ring while typing), Ink line, and Green (before). Recommended Soft lift.
+  - Thread c329d7b2: the label is "Try it yourself" / "Type what a customer would ask." No "no sign-up". This
+    supersedes that part of A-185.
+- **The gap line (thread 498ef464).** "Reply within the hour. **Nearly 7× more likely** to reach them." The comparison
+  moved into the source line.
+- **How it works (thread 5d356566).** *"some scrolling effect like Wispr… step 1 will come…"*
+  - A Scroll format is the default: the steps pin and change with scroll, and the index fills.
+  - The steps tell the accuracy story:
+    1. Qualify, with each answer's own-words proof.
+    2. Answer, with the question's parts ticked.
+    3. Hand over: booked, with "Why she's ready".
+    4. Close: "Did it close? Yes, closed".
+- **Promises (thread 4d06fe60).** One white panel, 2 × 2, across the photo card's edge: half on the page, half on the
+  photo.
+- **Your data (thread 55fe754e).** *"Don't scroll them, don't slide them… readable… in just one second."* The four
+  points stand still, 2 × 2.
+- **Closing card (thread 6106083c).** Notes arrive every 1.9 s and only use WhatsApp, Gmail, Instagram and Messenger.
+  The web-form icon is gone from the hero too.
+
+**Principles he made explicit:**
+- Movement has to carry a result: the counters move because a card visibly moved.
+- Facts and guarantees must be readable at a glance, so they never slide.
+- Use app icons owners recognise, not abstract ones.
+
+**Open:** try box (Older/A/B), edge (Lift/Ink/Green), How it works format (Scroll/Grid/Tabs/Original).
 

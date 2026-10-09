@@ -658,3 +658,31 @@ anything the site promises which the app doesn't do yet goes on that list.
 
 Research and the proposed build: `research/product/2026-10-09-lead-qualification-strategy.md`.
 
+## Qualification: one card per business, learning with permission (founder, 2026-10-09)
+
+**His words:** *"yes you can [draw the realtor card] and then we need it for every business: let it learn from the
+market… We'll use this thing: users' data. Whoever allows, I will ask them to allow, and then we'll be training the
+model to qualify the leads as accurately as we can."*
+
+**Decided:**
+- **Start:** the qualification card for realtors (location, price, motivation, agent, mortgage pre-approval,
+  appointment), drawn first.
+- **Then:** a card for every business type. Each starts from a template of what the market already asks, and the owner
+  can adjust it.
+- **Training data:** conversations from owners who opt in. No opt-in, no training.
+
+**Until there is enough consented data**, qualification runs on:
+- owner-defined criteria;
+- evidence quotes for each criterion;
+- the golden set of hand-labelled conversations;
+- one-tap "Was it hot?" feedback.
+
+All of this is in `research/product/2026-10-09-lead-qualification-strategy.md`.
+
+**Must happen before any training:**
+- an opt-in;
+- new wording where the site now says "We don't train AI models on it" (home page, Security page);
+- the privacy policy checked by the right adviser.
+
+All three are tracked in `research/product/website-promises-to-build.md` #12.
+

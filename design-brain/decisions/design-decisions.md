@@ -10298,3 +10298,16 @@ Design points 4–14 are built on the draft ([[approved#^A-186]]). Still to do:
 - **Why:** his comments asked for less reading, the main point highlighted, and proof that FollowUp handles volume
   accurately. Details: A-188, R-089.
 
+## 2026-10-09 — Home v101–v102: from caught to closed, scroll steps, still facts
+
+- **The hero's caught leads** are now worked through to "Closed by you", and each step moves a counter: five numbers,
+  including deals closed and time saved.
+- **How it works** pins and changes step by step as you scroll. The four steps show accuracy: proof quotes, ticked
+  answers, a hand-over with why, and a one-tap close.
+- **The promises** sit in one panel across the photo's edge.
+- **The data points** stand still.
+- **The closing card's notes** are faster and use only familiar apps.
+- **The try box** label drops "no sign-up". Its edge is up for a pick.
+- **Why:** his comments asked for motion that shows results, facts readable at a glance, and the accuracy story told
+  step by step. Details: A-189; brand principles "Learned 2026-10-09".
+

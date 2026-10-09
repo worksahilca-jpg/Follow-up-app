@@ -204,3 +204,12 @@ might be able to connect with the users more impactfully, rather than just expla
 explained: show the visitor things they already know from their own phone (home-screen app icons, notifications, the
 device's own font, the chat bubble colours of the app the message came from). Borrow the platform's language, never a
 company's whole screen (R-029, references are principles).
+
+## Learned 2026-10-09 (home page comments)
+
+- **Guarantees and facts never move.** *"Don't scroll them, don't slide them. It should be readable, so they should get
+  to know in just one second."* Anything a visitor must trust (data promises, privacy points, prices) is static and
+  readable in one glance.
+- **Use the apps owners know.** *"do not try to use the webhook logo. Use… WhatsApp, Gmail, Instagram, Messenger, so that
+  they can relate."* Show familiar channels, not abstract or technical icons.
+

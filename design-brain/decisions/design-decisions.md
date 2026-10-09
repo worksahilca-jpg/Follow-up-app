@@ -10739,3 +10739,36 @@ permission, credited by trade and area only (no names on the public page).
 **Page length: measured, not cut.** Seven sections, about 7.5 screens at 1440 × 900. My earlier "it's still long" was
 overstated. The heaviest block is the hero with the try-it panel (about 2 screens), and it is the hook, so it stays.
 
+## 2026-10-09 — Preview version 16: smoother, honest, connected
+
+**Founder's comments:**
+- *"make all the animations so smooth and attractive their eyes catch it and they read the stuff"*;
+- *"we can arrange this design a better way"* (You stay in charge);
+- *"make this dashboard more accurate, not just clickbait; lean towards it but it should be true"* (the hero numbers);
+- *"don't say most ready on top"*;
+- *"add a transition here with the next page, connected with the first, and they try it themselves"*.
+
+**Built:**
+- **Motion:** one curve everywhere, Apple's damped spring `cubic-bezier(.32,.72,0,1)`, with no bounce.
+  - Sections lead the eye: heading, then point.
+  - Two endings: red first, green 0.35 s later.
+  - Chat bubbles grow from their own side.
+  - What it does: each row turns from grey to ink as its tick lands.
+  - Everything plays once and never holds the scroll (R-098).
+- **You stay in charge:** two columns. The heading and one merged line sit left ("You decide what it sends, and you
+  can see why it sent each one. Every rule is one tap."), the settings card sits right, and Your data runs full width
+  below. The middle column with its second headline is gone, keeping A-201's settings card.
+- **Hero numbers, made true** (`brand-principles`: never fake):
+  - The example week is 36 messages caught, 11 qualified, 5 booked, 2 deals done "by you", 0 forgotten, and
+    2 h 24 min saved (4 min per reply).
+  - "$9,840 saved by FollowUp" is removed. FollowUp doesn't close deals, so crediting it with the money was the
+    clickbait.
+  - The counters start lower and stop at the week's total instead of climbing forever.
+  - Still labelled "An example week". Real numbers come from beta data later.
+- **Sorting label removed** at his request; the cards still re-order themselves.
+- **Hand-off into "Try it yourself":** as you scroll from the headline, the demo panel grows from 93% to full size,
+  driven by scroll position with only a scale change (no layout work). It is off on phones and with reduced motion.
+
+**Open:** thread 99c33d5a, "I don't know what we are trying to convey here, a bit complex", which part is still
+unanswered. My guess is the app screenshot in Nothing to learn.
+

@@ -261,3 +261,14 @@ it understood, or catch the attention of the user, in that one sec."*
 - **First applied:**
   - Nadia's week became "Two endings." with "Lost by tomorrow." in red and "Booked by Thursday." in green.
   - "What it does" dropped its description lines.
+
+## Lean toward the win, but every number must be true (2026-10-09)
+
+**Founder, on the hero numbers:** *"make this dashboard more accurate, not just a clickbait; lean towards it but it
+should be true."*
+- Example numbers must be believable for one small business in one week.
+- Never credit FollowUp with what the owner does. Deals are "done, by you"; FollowUp catches, answers, follows up and
+  books.
+- Counters that run live must stop at a plausible total, never climb forever.
+- Prefer a promise FollowUp keeps by design ("0 forgotten") over a big money figure it can't prove.
+

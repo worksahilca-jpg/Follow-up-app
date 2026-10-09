@@ -679,8 +679,12 @@ model to qualify the leads as accurately as we can."*
 
 All of this is in `research/product/2026-10-09-lead-qualification-strategy.md`.
 
+**The opt-in already exists:** Settings → Your data and onboarding step 2 (`Business.allowModelTraining`, off by
+default). Its copy says no model is trained yet. Today it only keeps the AI draft beside what was sent, for the weekly
+review. 2 of 12 businesses had it on (2026-10-09).
+
 **Must happen before any training:**
-- an opt-in;
+- the switch's copy updated to say what training means;
 - new wording where the site now says "We don't train AI models on it" (home page, Security page);
 - the privacy policy checked by the right adviser.
 

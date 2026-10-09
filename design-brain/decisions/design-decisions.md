@@ -10311,3 +10311,27 @@ Design points 4–14 are built on the draft ([[approved#^A-186]]). Still to do:
 - **Why:** his comments asked for motion that shows results, facts readable at a glance, and the accuracy story told
   step by step. Details: A-189; brand principles "Learned 2026-10-09".
 
+## 2026-10-09 — Drawn (not approved yet): the lead qualification card, realtors first
+
+**Prototype:** `prototypes/2026-10-09-qualification-card/index.html`.
+
+**Four boards:**
+1. On the lead page, the card sits at the top of the right column. It shows six criteria (location, price, why
+   moving, agent, mortgage, viewing), each with the customer's quote and time. States are known / not sure / not yet /
+   asks next. There is a "Is this right?" tap.
+2. Hot: booked, "Why she's ready" in her words, and "Was she really ready? Yes / No". After the viewing: "Did it close?
+   Yes, closed / Not yet".
+3. Settings, "What makes a lead hot": a template (Realtor · buyers) with "Ask about it" and "Must-have" switches per
+   criterion.
+4. Phone: the card folds into one line under the name.
+
+**Choices:**
+- Proof quotes, not confidence scores (research §4: model self-confidence is unreliable).
+- "Not sure" instead of guessing.
+- The agent question is never asked directly.
+- Must-haves are the owner's call.
+- The app's own tokens throughout.
+- No sparkle (S-13).
+
+**Waiting for:** Sahil's reaction.
+

@@ -612,3 +612,93 @@ What this adds to the direction above (it confirms "only decisions go to the own
   not go deeper there (the demo and the drafts pass negotiation to the owner).
 - **Accuracy keeps improving** through what the owner teaches (facts from sent replies, edits) and weekly product work.
   This is not training an AI model on customer data (see `src/app/security/page.tsx`).
+
+## Timing, qualification and closing, as the website now promises them (founder, 2026-10-09)
+
+Said on the home-page draft (artifact comments), in his words:
+
+> "'Reply in a minute' is not what we are aiming for. If we reply in a minute, it will sound like AI. We'll be telling
+> them that we'll be using strategies so that we'll be using proper time gaps and the strategies according to the
+> customers… We'll be doing that for real too."
+
+> "We're trying to use a proper strategy to qualify the leads. We will get as much information as we can ourselves
+> before handing it to the user to close the deal… the whole qualification will be handled by FollowUp only… end it
+> like we just booked it, and then… 'Moved: the lead is closed, confirmed by the user.'"
+
+> "You don't have to teach it; it will teach itself and reply as you want, in your own tone or language, or in the
+> professionalism that they use."
+
+What this adds:
+- **Reply timing is a strategy, not a speed.** It extends the 2026-09-19 rule ("1 or 2 mins so that it feels real"):
+  the gap is chosen per customer and situation, never instant, always within the window where they're still looking.
+- **FollowUp qualifies before it hands over.** It asks the questions a good assistant would (what they need, when,
+  budget, readiness) and hands the owner a qualified lead.
+- **The end is the owner's.** FollowUp books; the owner closes and confirms it ("Moved: closed, confirmed by you"),
+  matching the 2026-10-09 goal above.
+- **It learns tone, language and formality by itself.** There is no setup to teach it.
+
+What is built and what isn't is tracked in `research/product/website-promises-to-build.md`. The founder asked that
+anything the site promises which the app doesn't do yet goes on that list.
+
+## The funnel: from first message to booked (founder, 2026-10-09)
+
+> "We have to make the qualification process so accurate… I don't think the owner will be able to reply to every
+> single one… We'll be creating the funnel to qualify the leads that the business owner wants… That's why it is going
+> to save time for the user."
+
+1. Leads come in.
+2. We catch the correct lead: is it even a lead or not?
+3. We reply from the owner's perspective, voice and tone, to qualify the lead.
+4. The qualification process starts; FollowUp handles it.
+5. We qualify accurately; if they don't reply, we follow up again and again.
+6. We hand the hot lead to the owner to close the deal.
+7. We get the lead to the endpoint: a booked call, meeting or visit.
+
+> "That's the main job… We can't make any mistakes in qualifying the leads."
+
+Research and the proposed build: `research/product/2026-10-09-lead-qualification-strategy.md`.
+
+## Qualification: one card per business, learning with permission (founder, 2026-10-09)
+
+**His words:** *"yes you can [draw the realtor card] and then we need it for every business: let it learn from the
+market… We'll use this thing: users' data. Whoever allows, I will ask them to allow, and then we'll be training the
+model to qualify the leads as accurately as we can."*
+
+**Decided:**
+- **Start:** the qualification card for realtors (location, price, motivation, agent, mortgage pre-approval,
+  appointment), drawn first.
+- **Then:** a card for every business type. Each starts from a template of what the market already asks, and the owner
+  can adjust it.
+- **Training data:** conversations from owners who opt in. No opt-in, no training.
+
+**Until there is enough consented data**, qualification runs on:
+- owner-defined criteria;
+- evidence quotes for each criterion;
+- the golden set of hand-labelled conversations;
+- one-tap "Was it hot?" feedback.
+
+All of this is in `research/product/2026-10-09-lead-qualification-strategy.md`.
+
+**The opt-in already exists:** Settings → Your data and onboarding step 2 (`Business.allowModelTraining`, off by
+default). Its copy says no model is trained yet. Today it only keeps the AI draft beside what was sent, for the weekly
+review. 2 of 12 businesses had it on (2026-10-09).
+
+**Must happen before any training:**
+- the switch's copy updated to say what training means;
+- new wording where the site now says "We don't train AI models on it" (home page, Security page);
+- the privacy policy checked by the right adviser.
+
+All three are tracked in `research/product/website-promises-to-build.md` #12.
+
+**Added the same day (founder):** *"we have to be accurate for every single business to qualify and reply as well… the
+proper strategy of qualifying the leads, filtering them out, and then the reply should be very accurate… strategic
+according to every business. And also in every language."*
+
+So the qualification design must:
+- work per business type, each with its own template;
+- read customers in any language: the proof quote stays in the customer's own words and language, and the summary is
+  written for the owner;
+- keep the filter step (not a lead → set aside) ahead of qualification.
+
+Realtors ship first. The other templates follow once the realtor version is measured.
+

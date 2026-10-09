@@ -9,6 +9,7 @@ import { isAlertEmailConfigured, sendAlertEmail } from "@/lib/alertEmail";
 import { renderNoticeEmailHtml, noticeDate } from "@/lib/noticeEmailHtml";
 import { isPushConfigured, sendPushToUser, type PushPayload } from "@/lib/webPush";
 import { isUniqueViolation } from "@/lib/uniqueViolation";
+import { readQualification, readyWhy, templateById, templateFor, viewingOf, type Qualification } from "@/lib/qualification";
 
 /**
  * Telling the owner, outside the app, that a customer is waiting.
@@ -447,6 +448,106 @@ export function summaryPush(count: number): PushPayload {
 }
 
 /* ------------------------------------------------------------------ *
+ * "Nadia is ready."
+ *
+ * The other thing worth reaching an owner outside the app for (founder,
+ * 2026-10-09: "the owner gets only 'X is ready'"): everything on the
+ * customer's checklist is known (src/lib/qualification.ts), so it is time
+ * for a person to call. Once per customer — Lead.qualifiedAt is stamped
+ * once and is the claim's key — under the same quiet hours and the same
+ * "only if it's news" window as a waiting customer.
+ *
+ * It says why in a line, never the customer's own words: the proof is one
+ * tap away in FollowUp, and the alert is not where anyone should read it.
+ * ------------------------------------------------------------------ */
+
+export type ReadyCustomer = {
+  leadId: string;
+  businessId: string;
+  assignedToId: string | null;
+  leadName: string;
+  qualification: Qualification;
+  /** When the checklist completed. The alert's identity. */
+  qualifiedAt: Date;
+};
+
+/** Every customer who became ready recently enough to be news, where it isn't night. */
+export async function findReadyCustomers(now: Date = new Date()): Promise<ReadyCustomer[]> {
+  const rows = await prisma.lead.findMany({
+    where: { qualifiedAt: { gte: new Date(now.getTime() - ALERT_RECENT_MS - QUIET_LENGTH_MS) } },
+    select: {
+      id: true,
+      businessId: true,
+      assignedToId: true,
+      name: true,
+      stage: true,
+      qualification: true,
+      qualifiedAt: true,
+      business: { select: { industry: true, timezone: true } },
+    },
+  });
+  const out: ReadyCustomer[] = [];
+  for (const r of rows) {
+    // A deal already won or lost needs nobody to pick up the phone.
+    if (!r.qualifiedAt || r.stage === "WON" || r.stage === "LOST") continue;
+    if (!templateFor(r.business.industry)) continue;
+    const qualification = readQualification(r.qualification);
+    if (!qualification) continue;
+    const timeZone = r.business.timezone || "America/New_York";
+    if (inQuietHours(now, timeZone)) continue;
+    if (r.qualifiedAt < newsSince(now, timeZone)) continue;
+    out.push({
+      leadId: r.id,
+      businessId: r.businessId,
+      assignedToId: r.assignedToId,
+      leadName: r.name,
+      qualification,
+      qualifiedAt: r.qualifiedAt,
+    });
+  }
+  return out;
+}
+
+export function readyPush(c: ReadyCustomer): PushPayload {
+  const { first } = whoIs(c.leadName);
+  const viewing = viewingOf(c.qualification);
+  const why = readyWhy(c.qualification);
+  return {
+    title: `${first} is ready`,
+    body: [viewing, why].filter(Boolean).join(" · ") || "Everything FollowUp needed to know is in.",
+    url: `/leads/${c.leadId}`,
+    tag: `ready-${c.leadId}`,
+  };
+}
+
+export function readyEmail(c: ReadyCustomer, base: string, opts: EmailOptions = {}): EmailContent {
+  const { first } = whoIs(c.leadName);
+  const template = templateById(c.qualification.template);
+  const labels = new Map(template?.criteria.map((k) => [k.key, k.label]) ?? []);
+  const rows: [string, string][] = c.qualification.items.map((i) => [labels.get(i.key) ?? i.key, i.value]);
+  const url = `${base}/leads/${c.leadId}`;
+  const foot = footer(base);
+  const open = first === "A customer" ? "Open the conversation" : `Open ${first}'s conversation`;
+  const line = "Everything FollowUp needed to know is in. It's a good moment for you to call.";
+  return {
+    subject: `${first} is ready`,
+    text: [line, "", ...rows.map(([k, v]) => `${k}: ${v}`), "", url, "", foot.text].join("\n"),
+    html: renderNoticeEmailHtml({
+      base,
+      label: "Ready",
+      title: `${first} is ready`,
+      date: noticeDate(new Date(), opts.timeZone ?? "America/New_York"),
+      before: [line],
+      sub: { kind: "rows", rows },
+      button: { text: open, href: url },
+      why: "Each line is from what they wrote. Open the conversation to see their words.",
+      footnote: FOOTNOTE,
+      footnoteLink: foot.link,
+    }),
+  };
+}
+
+/* ------------------------------------------------------------------ *
  * Delivery.
  * ------------------------------------------------------------------ */
 
@@ -475,6 +576,8 @@ export type AlertRunResult = {
   emails: number;
   pushes: number;
   summaries: number;
+  /** Customers who became ready and someone was told. */
+  ready: number;
   /** Set when neither channel has keys: the run did nothing, on purpose. */
   skipped?: string;
 };
@@ -501,21 +604,32 @@ async function alertOne(
 
   const already = await prisma.ownerAlert.findMany({
     where: { userId: user.id, leadId: { in: mine.map((c) => c.leadId) } },
-    select: { leadId: true, waitStartedAt: true },
+    select: { leadId: true, waitStartedAt: true, kind: true, emailedAt: true, pushedAt: true },
   });
   const told = new Set(already.map((a) => `${a.leadId}|${a.waitStartedAt?.getTime()}`));
+  // "Nadia is ready" already reached this person since Nadia started
+  // waiting: that alert said her reply is ready too, so a second one about
+  // the same moment is the noise the founder asked to avoid ("one
+  // notification"). Claimed silently, so later ticks see it as told.
+  const readyAt = new Map<string, number>();
+  for (const a of already) {
+    if (a.kind === "ready" && a.leadId && a.waitStartedAt && (a.emailedAt || a.pushedAt)) {
+      readyAt.set(a.leadId, Math.max(readyAt.get(a.leadId) ?? 0, a.waitStartedAt.getTime()));
+    }
+  }
 
   // Claim before sending: the unique index decides, so a second tick that
   // races this one finds the row and skips rather than alerting twice.
   const claimed: { customer: WaitingCustomer; rowId: string }[] = [];
   for (const c of mine) {
     if (told.has(`${c.leadId}|${c.waitStartedAt.getTime()}`)) continue;
+    const coveredByReady = (readyAt.get(c.leadId) ?? 0) >= c.waitStartedAt.getTime();
     try {
       const row = await prisma.ownerAlert.create({
         data: { userId: user.id, businessId: c.businessId, leadId: c.leadId, waitStartedAt: c.waitStartedAt, kind: "customer" },
         select: { id: true },
       });
-      claimed.push({ customer: c, rowId: row.id });
+      if (!coveredByReady) claimed.push({ customer: c, rowId: row.id });
     } catch (err) {
       if (!isUniqueViolation(err)) console.error(`Owner alert claim failed for lead ${c.leadId}:`, err);
     }
@@ -624,6 +738,66 @@ async function alertOne(
   }
 }
 
+/** Tells one person about the customers of theirs who just became ready. */
+async function alertReady(
+  user: Recipient,
+  customers: ReadyCustomer[],
+  now: Date,
+  channels: { email: boolean; push: boolean },
+  result: AlertRunResult
+): Promise<void> {
+  const mine = customers.filter((c) => c.businessId === user.businessId);
+  if (mine.length === 0) return;
+  const base = inboundBaseUrl();
+  const emailOn = channels.email && user.alertEmailEnabled && Boolean(user.email);
+  const dayStart = startOfLocalDay(now, user.business?.timezone ?? "America/New_York");
+  let emailedToday = emailOn ? await prisma.ownerAlert.count({ where: { userId: user.id, emailedAt: { gte: dayStart } } }) : 0;
+
+  for (const c of mine) {
+    let rowId: string;
+    try {
+      // The claim, as for a waiting customer: the unique index decides.
+      const row = await prisma.ownerAlert.create({
+        data: { userId: user.id, businessId: c.businessId, leadId: c.leadId, waitStartedAt: c.qualifiedAt, kind: "ready" },
+        select: { id: true },
+      });
+      rowId = row.id;
+    } catch (err) {
+      if (!isUniqueViolation(err)) console.error(`Ready alert claim failed for lead ${c.leadId}:`, err);
+      continue;
+    }
+
+    let emailed = false;
+    let failed = false;
+    if (emailOn && emailedToday < DAILY_EMAIL_CAP) {
+      const sent = await sendAlertEmail({ to: user.email, ...readyEmail(c, base, { timeZone: user.business?.timezone }), idempotencyKey: rowId });
+      emailed = sent.sent;
+      if (sent.sent) {
+        emailedToday += 1;
+        result.emails += 1;
+      } else failed = true;
+    }
+    let pushed = false;
+    if (channels.push) {
+      const r = await sendPushToUser(user.id, readyPush(c));
+      result.pushes += r.delivered;
+      pushed = r.delivered > 0;
+      if (r.delivered === 0 && r.failed > 0) failed = true;
+    }
+
+    if (emailed || pushed) {
+      await prisma.ownerAlert.update({
+        where: { id: rowId },
+        data: { ...(emailed ? { emailedAt: new Date() } : {}), ...(pushed ? { pushedAt: new Date() } : {}) },
+      });
+      result.ready += 1;
+    } else if (failed) {
+      // Released so the next tick tries again, as for a waiting customer.
+      await prisma.ownerAlert.deleteMany({ where: { id: rowId, emailedAt: null, pushedAt: null } });
+    }
+  }
+}
+
 /**
  * One tick: find who is waiting, and tell each person who should know.
  * Run every minute by /api/cron/owner-alerts.
@@ -634,16 +808,26 @@ async function alertOne(
  * (and anything recent arrives as one summary, not a flood).
  */
 export async function runOwnerAlerts(now: Date = new Date()): Promise<AlertRunResult> {
-  const result: AlertRunResult = { customers: 0, emails: 0, pushes: 0, summaries: 0 };
+  const result: AlertRunResult = { customers: 0, emails: 0, pushes: 0, summaries: 0, ready: 0 };
   const channels = { email: isAlertEmailConfigured(), push: isPushConfigured() };
   if (!channels.email && !channels.push) return { ...result, skipped: "no alert channel is configured" };
 
+  // Ready first: a customer who is both newly ready and waiting gets the
+  // one "ready" alert, and the waiting one below sees it and stays quiet.
+  let ready: ReadyCustomer[] = [];
+  try {
+    ready = await findReadyCustomers(now);
+  } catch (err) {
+    console.error("Owner alerts: could not read who is ready:", err);
+  }
+  const readyByUser = ready.length > 0 ? await groupByRecipient(ready) : new Map<string, ReadyCustomer[]>();
+
   const waiting = await findWaitingCustomers(now);
-  if (waiting.length === 0) return result;
+  if (waiting.length === 0 && ready.length === 0) return result;
 
   const byUser = await groupByRecipient(waiting);
   const users = await prisma.user.findMany({
-    where: { id: { in: [...byUser.keys()] } },
+    where: { id: { in: [...new Set([...readyByUser.keys(), ...byUser.keys()])] } },
     // Only what an alert needs. The business relation is narrowed to its
     // timezone so this never pulls (and decrypts) the channel tokens on
     // the Business row.
@@ -651,6 +835,11 @@ export async function runOwnerAlerts(now: Date = new Date()): Promise<AlertRunRe
   });
 
   for (const user of users) {
+    try {
+      await alertReady(user, readyByUser.get(user.id) ?? [], now, channels, result);
+    } catch (err) {
+      console.error(`Ready alerts failed for user ${user.id}:`, err);
+    }
     try {
       await alertOne(user, byUser.get(user.id) ?? [], now, channels, result);
     } catch (err) {

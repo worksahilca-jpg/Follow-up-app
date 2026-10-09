@@ -885,6 +885,10 @@ reviews that we are getting … Let's create something else so that it justifies
 **Principle (his words):** a moving band reads as social proof (logos, reviews), so it is kept for that and not used
 to explain the product. The band waits for real customers and real reviews: no invented logos or quotes (A-023).
 
+> **EXCEPTION (2026-10-09):** the founder asked for a moving band of what FollowUp does in place of the "Start free" row
+> after the follow-ups (thread b589f2df, A-188). That one band is allowed. The rest of this rule stands: no other
+> explanatory bands, and reviews or logos only when real.
+
 ## R-048 — A photo that changes with each customer or visitor ^R-048
 
 **Rejected:** 2026-10-08, founder, on the proposal to change the photo with each example customer: *"leave this
@@ -978,9 +982,350 @@ empty space. **Inferred:** size, not length alone — to confirm if it still fee
 **Rejected:** 2026-10-09, founder: *"see same name and same industry"*, and on the cold-lead card: *"be more specific,
 we should be using different examples every time."* **Instead:** each section has its own person and trade (mixed
 examples, as PRODUCT_DIRECTION already asks), and repeating examples rotate.
+**Said again:** 2026-10-09, founder: *"use a variety of names, not just Priya."* One name on several sections is the
+same failure. v40 keeps any one name to one place on the page (Priya only in the hero's rotation).
 
 ## R-063 — Defensive wording about data and AI ^R-063
 
 **Rejected:** 2026-10-09, founder, on "It gets better every week": *"This is sounding like I'm defending."* Say what it
 does, positively ("It learns your business", "What it learns stays yours"); the plain data promises live once, in the
 data panel.
+
+## R-064 — The ring of logos at the close ^R-064
+
+**Rejected:** 2026-10-09, founder: *"The circle theme looks very odd. Can we improve this with something that looks more
+familiar for them? It's too bold and thingy. We can change the concept too."* The eight channel logos on an orbit
+around an "Every one answered" badge (v34–v39). **Principle (inferred, marked inferred):** an abstract diagram asks the
+visitor to decode it; owners trust what they already recognise from their own day. Show the thing itself (messages
+arriving, each answered), not a symbol of it. **Instead:** v40's stack of message notifications.
+
+## R-065 — Dark olive photo panels (brown, again) ^R-065
+
+**Rejected:** 2026-10-09, founder, on the whole page: *"Again, we are not using this dark brown theme. Can we just reduce
+this?"* The green-toned photos kept the warm buildings of the originals; darkened under a green-black veil they read
+olive, which reads brown (R-050, R-057). Ten of the page's panels were dark photos, plus a dark close. **Principle:** take
+the warm colour out of a photo before toning it, and keep dark panels few (the demo, the cold-lead panel, the night, the
+control and data panels in v40); the rest of the page is light.
+**PARTLY SUPERSEDED (2026-10-09)** by [[approved#^A-138|A-138]]: the cool grade stays, but in light mode the photo panels go
+back to dark; the light grade is kept for a dark-mode page.
+
+## R-066 — The full-width bar ^R-066
+
+**Rejected:** 2026-10-09, founder, on the header: *"It feels too 2D, like it's very '90s design. Let's get our references
+out here."* A pale capsule stretched across the whole screen with the items spread to its ends. **Instead (v40):** a
+short floating bar that hugs its contents, centred, lifted by a plain shadow (no shine, R-036), showing which part of
+the page you are in.
+
+## R-067 — Sections that read like separate pages ^R-067
+
+**Rejected:** 2026-10-09, founder: *"Let's try to keep connecting all the pages when we are scrolling. It's like we're just
+scrolling a regular PDF."* Every section was the same template (heading left, line right, one framed picture) with a big
+gap and nothing carrying from one to the next. Same family as R-052. **Instead (v40):** one thread down the page that
+fills as you read, pictures that settle in as you arrive, smaller gaps, no hard switch to dark at the end.
+
+## R-068 — The short floating capsule bar (v40) ^R-068
+
+**Rejected:** 2026-10-09, founder, minutes after R-066's fix: *"Now this looks way odd. Let's just fix this to Wispr
+Flow, maybe."* The centred capsule that hugged its contents. **Instead (v42):** a plain row with no box (brand left,
+links centred, Sign in and Start free right) that gains a soft see-through ground and a hairline only once you
+scroll. **Lesson (inferred):** both capsules (wide and short) read as a widget sitting on the page; the references
+he likes keep the bar quiet and part of the page.
+
+## R-069 — A thread line down the side to "connect" the sections ^R-069
+
+**Rejected:** 2026-10-09, founder, on v40: *"this bar that we have added on the left side doesn't mean we are connecting
+every single page. I just meant to add transitions when we are changing the concept or the information… we should use
+different templates too for every other thing."* **Instead (v43):** no line; each new topic arrives as a sheet sliding
+over the last (A-139), and sections use different layouts. **Lesson:** "connected" meant *transitions between ideas*,
+not a device that links them; and sameness of layout was half of the "PDF" feeling (R-067).
+
+## R-070 — A reply-time demo that waits for clicks ^R-070
+
+**Rejected:** 2026-10-09, founder, on "How fast do you reply?" (five buttons): *"They will be clicking on everything,
+so can we just use animation or something to make them feel like faster replies are the best one?"* **Instead (v43):**
+the times play on their own (a bar fills as time since the customer wrote runs out, the customer cools, the odds
+fall), then it snaps back to "1 minute · With FollowUp"; a tap takes over. Note the earlier swing (a self-playing
+slider read as "just playing", v34): what works is motion that is *labelled* (time visibly passing), not motion alone.
+
+## R-071 — Grain texture on the photo blocks ^R-071
+
+**Rejected:** 2026-10-09, founder, on the demo block under "Try it yourself": *"It's too grainy. It doesn't match the
+background."* The SVG noise layer over the stage photo. **Instead:** smooth blurred photos only; frosted strips where
+controls sit on a photo, the same glass as the demo panel.
+
+## R-072 — The v44 patterns (pinstripes, dot grid, side hatching) ^R-072
+
+**Rejected:** 2026-10-09, founder, minutes after asking for "a Granola kind of thing… stripes and different designs in
+the background": *"Not these ones, bro. I will send you examples later."* Removed in v45. **Inferred (marked
+inferred):** what he means by Granola's "stripes and designs" is its art: collage panels and drawn lines inside images,
+not a texture laid over the page ground. Wait for his examples before drawing patterns again.
+
+## R-073 — Sections that overlap like sliding sheets (v43) ^R-073
+
+**Rejected:** 2026-10-09, founder: *"Don't use that thing that overlaps each page. That feels very odd. Just try to
+connect like… how Granola connected its pages while scrolling and animations… remove that thing."* The rounded,
+overlapping sheets of A-139 (the per-topic layouts stay). **Instead:** wait for the Granola captures and copy its
+*technique* for hand-overs between sections.
+
+## R-074 — Grey photos (the v40 grey-sage grade) ^R-074
+
+**Rejected:** 2026-10-09, founder: *"I've told you to use the dark pictures, not just the black and white. It should not
+be that very dark, but it should be colourful… the city pictures."* The desaturated cool grade read as black and white.
+**Instead (v47):** each city photo rebuilt from its original in its own colour, a little darker, nudged slightly cool
+so warm walls don't go brown (A-143).
+
+## R-075 — The "missed, then caught" message cards around the headline (v42) ^R-075
+
+**Rejected:** 2026-10-09, founder: *"We should not show this. This doesn't make any sense, but it is good that we are
+showing messages. Keep it very light in the background, with blur, and keep it kind of moving."* Six readable
+notification cards that went from "No reply yet" to "✓ Answered". **Instead (v50):** the same messages as soft,
+blurred, light cards drifting slowly behind the headline, with no statuses or times. Not the scrolling rows of R-047:
+each floats on its own.
+
+## R-076 — Hand-drawn ink and paper notes (v55) ^R-076
+
+**Rejected:** 2026-10-09, founder: *"I think we should remove the scribble"*; asked which, he chose **all the ink**. Gone:
+the two paper notes (a light-green ticked list, an off-white clock at 11:04) on the demo's corners and above the closing
+card, the curly ink arrow to the try-it box, and the ink underline under "Answer every one." **Inferred principle
+(inferred):** Granola's hand-made print material doesn't translate to FollowUp; on our page it reads as decoration, not
+as calm or trust. Learn from Granola's motion and explaining, not its artwork. Don't re-propose scribbles, doodles,
+sketched icons or paper collages in another form.
+
+## R-077 — The demo as a Mac app window (v62) ^R-077
+
+**Rejected:** 2026-10-09, founder: *"you have changed the whole concept… You are showing the Mac or the iOS thing, the
+red, green, and yellow button… but this is not our actual dashboard that we're going to be building."* The window
+chrome, sidebar and conversation list. **Principle (his words):** the demo shows our product, not an imitation of
+another app; make the familiar feel come from details, not from a borrowed window.
+
+## R-078 — App logos in the footer ("Works with") (v54) ^R-078
+
+**Rejected:** 2026-10-09, founder: *"'works with' should not mention logos and stuff. We'll be putting our handles here."*
+The row of eight app tiles in the footer. **Principle (inferred):** the ending is about FollowUp itself (its links, its
+people, its profiles), not other companies' brands; the channels are shown where the product works, not as a logo wall.
+
+## R-079 — Taking money from a floating message (v65–v81) ^R-079
+
+**Rejected:** 2026-10-09, founder: *"you're collecting the money from them. Why?"* Floating lead messages that turned into
+"$X lost / $X saved" notes, "−$X" and "+$X" tokens, or added a deal and its value when they glided into the strip.
+**Principle (inferred):** a lead's message is a person writing, not a coin; showing money pulled out of people's
+messages reads as greedy, close to the "aggressive sales" look FollowUp must never have. Money belongs in an explained
+example (the strip, the won job in a story), not in the ambient background.
+
+## R-080 — The try-it box moved wholly inside the dark demo (v81) ^R-080
+
+**Rejected:** 2026-10-09, founder: *"Did you try it yourself here? No… I want them to click it right away… half on the
+screen, half above… it was making me curious."* Moving the box below the fold to separate the two screens. **Principle
+(his words):** the first thing to try must be visible on the first screen; separate screens with space, not by pushing
+the action away.
+
+## R-081 — Floating messages so slow they look stopped (v81) ^R-081
+
+**Rejected:** 2026-10-09, founder: *"you stopped the messages that were just floating."* Drift of ±34 px over 20–34 s.
+**Principle:** "quiet" means faint and smooth, not still; the background has to read as alive.
+
+## R-082 — Three big statistic cards (nearly 7×, over 60×, 21×) (v82) ^R-082
+
+**Rejected:** 2026-10-09, founder: *"I still don't understand the idea behind this… it's too much, and I don't think
+anybody is going to watch this or scroll through this for this information."* Three large figure cards with captions
+under a "1.25 million leads" line. **Principle (his words, generalised):** visitors won't study numbers; say "fast
+replies win" with one picture of the gap and the pain, and keep the proof to one sentence.
+
+## R-083 — A nine-step chat timeline with a warmth meter (v82) ^R-083
+
+**Rejected:** 2026-10-09, founder: *"It is vague and too complicated. I'm not trying to even read this thing… I don't want
+them to stress and read the whole stuff out to understand a simple logic."* Marcus's story as nine timed rows of chat
+bubbles with a "How warm Marcus is" bar. **Principle (his words):** a simple logic must be understood without reading;
+if it needs a list of messages, it is too much.
+
+## R-084 — A flat dark gradient in place of the photo panels (v89) ^R-084
+
+**Rejected:** 2026-10-09, founder: *"this gradient thing looks very odd. The photos were looking very premium."* The deep
+green radial gradient replacing the photo panels (Today frame, How it works pictures, Your control, the data card,
+What's new, the closing card). **Principle (his words):** the blurred photos are what make the page feel premium; a
+gradient reads as cheap next to them. Dark panels carry a photo under a dark veil (the follow-up card now too), never
+a bare gradient. Also no to "cheap gradients" in CLAUDE.md.
+
+## R-085 — An explanatory sentence under the headline (v89) ^R-085
+
+**Rejected:** 2026-10-09, founder: *"It looks too informative. It should be straight to the point."* "FollowUp has a reply
+ready for every new enquiry in a minute, in your words, and follows up until they book." **Instead:** "A reply in a
+minute. Follow-ups until they book." **Principle:** the line under the headline is a punch, not a description.
+
+## R-086 — "Reply in a minute" as the promise (v85–v92) ^R-086
+
+**Rejected:** 2026-10-09, founder: *"'Reply in a minute' is not what we are aiming for. If we reply in a minute, it will
+sound like AI."* Any copy that sells speed in minutes ("in a minute", "1 minute", "1 min"). **Instead:** the right reply at
+the right time, a natural gap while the customer is still looking. Facts about replying within the hour can stay.
+
+## R-087 — A founder quote on the home page (v89) ^R-087
+
+**Rejected:** 2026-10-09, founder: *"What is this, bro? Sahil, founder of FollowUp? Why?"* A centred quote from his
+product notes signed with his name. **Principle (inferred):** the page speaks as FollowUp, not as a person; no founder
+signature or quote unless he asks.
+
+## R-088 — Statistics in the opening (v66–v92) ^R-088
+
+**Rejected:** 2026-10-09, founder: *"I don't know why you're saying 'in a test of 1,300+ law firms…' Let's just show them
+later on. Let's just remove that part."* Any study figure in the first screen. Facts live further down (the gap
+picture's one sentence).
+
+## R-089 — The try-it box as one white card (v93–v95) ^R-089
+
+**Rejected:** 2026-10-09, founder (thread da6c7a35): *"This got too bad, bro. Earlier, it was good."*
+**What it was:** a serif "Try it yourself" title, a large field with the green edge, light chips and the languages,
+all in one white card across the demo's edge.
+**Principle (inferred):** the older half-and-half box already worked. Restyling a working, approved element into a
+bigger standalone card made it louder without making it clearer. Offer alternatives side by side and let him choose;
+never replace an approved element outright.
+
+## R-090 — A story where FollowUp replies and the lead is still lost (v97–v105) ^R-090
+
+**Rejected:** 2026-10-09, founder (thread 8c7276f7): *"Why follow-up replies, and then why does it go to someone else,
+bro? It should be like you don't reply."*
+**Principle:** a cause-and-effect picture must be causal. The cost-of-waiting picture shows *not* replying. FollowUp
+appears only as the fix, never inside the failure.
+
+## R-091 — Rome at blue hour for the follow-up card (v104) ^R-091
+
+**Rejected:** 2026-10-09, founder: *"the photo that you have changed for the bottom one is also not looking that
+good."* The card went back to Manhattan at evening.
+**Principle (inferred):** pink and blue light trails read busier than the calm city light he approved earlier. Prefer
+calm, even night light behind text.
+
+## R-092 — A giant faint wordmark at the bottom of the footer (v111) ^R-092
+
+**Rejected:** 2026-10-09, founder (thread c9e7eb16): *"Do not copy wispr for this thing."*
+**Principle:** a device that one reference is known for reads as copying it, however faint. Studied references give
+principles, never signature moves.
+
+## R-093 — A wire-mesh basket or a ribbed can standing in for the Mac's Trash (v116–v117) ^R-093
+
+**Rejected:** 2026-10-09, founder, twice. Thread ef1348e5 on the silver wire basket: *"this bin is not same as Mac's
+bin."* Thread 4abbb5be on the frosted can with vertical grooves: *"this is not the Mac one, go and check what Apple
+uses."*
+**Principle (inferred):** when he names a real object ("the Mac's bin"), match that object as people know it today. A
+look-alike from an older version or a generic "nice bin" reads as wrong. Check what the real thing looks like before
+drawing it. See A-197.
+
+## R-094 — The same photo box for every section ^R-094
+
+**Note (2026-10-09, later the same day):** the v119 answer to this was reverted at his word (*"keep what it was before, I will tell you what to change"*). The complaint stands, but he will say which sections change and how. Don't redo v119's open sections, graffiti wall or played-out learning on your own.
+
+**Rejected:** 2026-10-09, founder: *"we are using the same background box style format for every single page. Look how
+Wispr is creative, and other software. Be more creative."* Thread 6836d372 said the same: *"it looks like we're using
+that photo background everywhere."* By v118, six sections were a rounded dark box on a blurred photo: the demo, Leads go
+cold, the Today screen, How it works, Your control and the close.
+**Principle:** the photos stay premium (R-084 still holds: no flat gradient in their place), but only where a photo
+card earns it. Neighbouring sections must use different formats: open on the page, the product on its own, art, or
+motion. **v119:** photo cards are kept for the demo, How it works and the close. Leads go cold and the Today screen sit
+open on the page (the Today screen rises out of it as you scroll). Your control gets art. It learns is played out.
+Same family as R-067 and R-069 ("different templates for every other thing").
+
+## R-095 — Dark, see-through message cards (v116–v118, a bug) ^R-095
+
+**Rejected:** 2026-10-09, founder (threads 449ed1c5 and 792d6642): *"do not change the messages background"*, *"not
+readable, too dark."* The v116 learning-feed option reused the class name `.nb`, which the notification cards also use.
+Every message card got a dark photo panel with dark text on it. **Fix:** that rule is scoped to its own option. **Lesson
+for future sessions:** prefix new class names per version or variant. Check every screen that shows messages after a
+CSS change, not just the section you edited.
+
+
+## R-096 — Boxes and containers everywhere (new-order preview 1) ^R-096
+
+**Rejected:** 2026-10-09, founder, on the new-order preview: *"this also looks good but too much boxes and stuff
+everywhere."* The order was liked ([[approved#^A-202]]). The problem was the way each section was held: the race sat in a
+white card, the check-ins in a lime card, Your control in a deep-green card, Your data in a quiet card, It gets better
+in tiles. Each one had a fill, a radius and a shadow.
+**Principle (inferred, not yet confirmed by him):** content sits straight on the page, separated by space and thin
+lines. A frame is kept only for things that are pictures of the product: the app window, message cards, the Settings
+sheet and the How it works stage. A colour room has no edges: the whole page changes colour behind the content, so it is
+never a card. Same family as R-094: replacing the photo box with a coloured box is still a box.
+
+## R-097 — Preview 4 read as a copy of Wispr ^R-097
+
+**Rejected:** 2026-10-09, founder, on preview 4 (A-203): *"Going better but we don't have to copy everything, it
+should not say that we copied Wispr, so we have to be more creative from our side."*
+
+The direction stayed: one customer, start to finish. What gave the copy away was Wispr's signature moves, taken
+whole:
+- a deep-green room that lifts away with a rounded bottom edge;
+- one photo card held in the centre;
+- a step list on the left and text on the right;
+- each step snapping into place.
+
+**Principle (same as R-092, now broader):** a reference gives a *reason* ("one thing your eye can hold while the page
+changes"), never its *form*. If a visitor who knows the reference would recognise the move, it is wrong (CLAUDE.md,
+rule 6). Build the device from FollowUp's own world: time, the conversation, the day and week, the Today list.
+
+**Also wrong in preview 4, caught in the same pass:**
+- "She hears back in a minute" and a 7:03 reply broke A-187 (*"'Reply in a minute'… sounds like AI"*; it's the
+  right moment, a natural few minutes later).
+- Preview 5 uses 7:11.
+
+## R-098 — A story you have to scroll through (pinned, scroll-driven, wheel-stepped) ^R-098
+
+**Rejected:** 2026-10-09, founder, on the preview: first *"too much scrolling… I accidentally scroll the other pages
+fast too"*, then, after one-swipe-one-moment stepping was added, *"this concept is shit, I kept scrolling."*
+Nadia's week ran as a sticky stage over 420–700vh, with the clock and messages driven by scroll position, and later
+the mouse wheel captured.
+**Principle:** never make the reader scroll to make content move forward, and never hold their scroll. A story fits
+one screen and plays by itself once when it arrives; the reader can jump to any moment or replay it. Scrolling only
+ever moves the page. This supersedes A-155's "scroll-driven beats timer-driven" for long stories. Short self-playing
+scenes with Replay are the default. Draft website rule 8 ("nothing traps the mouse wheel") stands.
+
+## R-099 — "It gets better": Day 1 vs Week 3 ^R-099
+
+**Rejected:** 2026-10-09, founder: *"feels odd"*, then *"make it more simple"*, then *"try new concepts, this is not
+something that I want."* The two-reply before/after (generic reply on day 1, your hours and sign-off by week 3) was
+rejected in full and in its simplified form. **Instead:** "it learns from your replies" becomes one of the key
+features in a new "What it does" section (founder's strategy, 2026-10-09).
+
+## R-100 — The "Not leads" bin in the hero ^R-100
+
+**Rejected:** 2026-10-09, founder (thread 3abab155): *"remove this bin concept."* The bin had been asked for in thread
+b7a6b56f and redrawn three times as the Mac Trash (A-193, A-197, R-093). **Principle (inferred, marked inferred):**
+after three attempts the bin drew attention to itself and to a detail (what a Mac Trash looks like) that doesn't sell
+FollowUp; the hero should show leads being handled, not junk being thrown away. **Instead:** junk is tagged "Skipped" and
+sinks away; leads sort themselves (A-204). **Do not propose again:** a bin, trash can or wastebasket for non-leads.
+
+## R-101 — "What it does" as six notification cards in a grid ^R-101
+
+**Rejected (inferred, marked inferred):** 2026-10-09, founder, on the six-note grid: *"a good concept or the format we
+can use so they get to know what we do"*, then *"keep it simple, minimal and to the point."* He didn't call it bad, but
+asked for a new format. *Inferred:* six framed notes, each with a title, read as six things to study rather than one
+idea. **Instead:** one list that ticks itself off (A-206).
+
+## R-102 — A tonal gradient from the page into the footer ^R-102
+
+**Rejected:** 2026-10-09, founder: *"gradient looks bad."* This was a 270 px fade from page ground through green into the
+dark footer (preview v21), built because the hard cut "feels like landing on a different website". **Instead:** the
+footer is one more rounded panel (36 px top corners, 12 px from the screen edges). **Do not propose again:** gradients as
+section transitions on the home page.
+
+## R-103 — Green on every surface (the page "feels like WhatsApp") ^R-103
+
+**Rejected:** 2026-10-09, founder: *"we are using green everywhere, can we use other approved colours too?… it feels like
+I'm using WhatsApp."* Up to v21, green was on every surface:
+- the numbers bar was light green;
+- the replies were green chat bubbles;
+- the ticks, the times and the closing panel were green.
+
+**Principle:** green is a meaning (sent, booked, won, the good ending) and the headline accent, never a surface. Green
+reply bubbles in particular read as WhatsApp.
+**Instead (v22):**
+- surfaces are white, the page ground and ink;
+- FollowUp's replies are ink bubbles;
+- ticks and times are ink;
+- the numbers bar and the close are white;
+- green stays on the headline accent, booked/won/sent tags, "$ won, by you", "9 min" and the closed card;
+- lime stays the tiny accent (A-136).
+
+## R-104 — Recolouring the photo backgrounds ^R-104
+
+**Rejected:** 2026-10-09, founder: *"don't change the bg photo bro, that was good."* In v23 I blended the "Try it yourself"
+and "Your data stays yours" photos to an ink-green tone, misreading *"this background is not suiting our theme"* (a
+body-anchored comment) as being about the photos. **Principle:** the two photo panels are approved as they are (A-201
+and the founder's earlier "the theme we were using for Your data stays yours was the good one"). Do not retone, swap or
+recolour them without his ask. **Open:** which background he meant is asked in thread 004fdfc3.
+

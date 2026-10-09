@@ -36,6 +36,8 @@ import { plainHoldReason } from "@/lib/holdReasons";
 import CallBox from "@/components/app/CallBox";
 import { isCallablePhone, telHref } from "@/lib/callPlan";
 import { displayChannel } from "@/lib/displayChannel";
+import ReadyCard from "@/components/app/ReadyCard";
+import { isReady, readQualification, templateFor } from "@/lib/qualification";
 
 export const dynamic = "force-dynamic";
 
@@ -54,12 +56,13 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
   // who this is and why it's here, the conversation, then the reply.
   // Everything else about the customer sits below, under "More about".
   const ctx = await getSessionContext();
-  const [approval, business] = ctx
+  const [approval, business, checklist] = ctx
     ? await Promise.all([
         getPendingApprovals(ctx.businessId).then((all) => all.find((a) => a.leadId === lead.id) ?? null),
-        prisma.business.findUnique({ where: { id: ctx.businessId }, select: { timezone: true, teamCalls: true } }),
+        prisma.business.findUnique({ where: { id: ctx.businessId }, select: { timezone: true, teamCalls: true, industry: true } }),
+        prisma.lead.findFirst({ where: { id: lead.id, businessId: ctx.businessId }, select: { qualification: true, qualifiedAt: true } }),
       ])
-    : [null, null];
+    : [null, null, null];
   const timeZone = business?.timezone ?? "America/New_York";
   const basis = lead.suggestedMessage
     ? describeBasis({
@@ -87,6 +90,32 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
   const channel = channelName(displayChannel(lastInbound(lead.conversation)?.channel ?? firstMessage?.channel, lead.source), lead.source);
   const now = new Date();
 
+  // "Nadia is ready" (src/lib/qualification.ts): for a line of work with a
+  // checklist. Ready is shown while the deal is open; a closed or decided
+  // one keeps only the folded record of what was learned.
+  const template = templateFor(business?.industry);
+  const qualification = template ? readQualification(checklist?.qualification) : null;
+  const checklistShown = template && qualification && qualification.template === template.id ? qualification : null;
+  const showReady = Boolean(
+    template &&
+      checklistShown &&
+      checklist?.qualifiedAt &&
+      isReady(template, checklistShown) &&
+      lead.automationStatus?.kind !== "closed" &&
+      lead.stage !== "won" &&
+      lead.stage !== "lost"
+  );
+  const readyCard =
+    template && checklistShown ? (
+      <ReadyCard
+        leadName={lead.name}
+        template={template}
+        qualification={checklistShown}
+        ready={showReady}
+        callHref={isCallablePhone(lead.phone) ? telHref(lead.phone) : null}
+      />
+    ) : null;
+
   return (
     <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-10">
       <div className="min-w-0">
@@ -103,6 +132,9 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
             <p className="truncate text-[13px] text-ink-faint">{channel}</p>
           </div>
         </div>
+
+        {/* Phone: a ready customer's card comes first — it is what the alert was about. */}
+        {showReady && <div className="mt-4 lg:hidden">{readyCard}</div>}
 
         <Link href="/leads" className="hidden text-[13px] text-ink-faint hover:text-ink-soft lg:inline">
           ← Customers
@@ -140,7 +172,8 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
           </div>
         )}
 
-        <div className="mt-6">
+        {/* id: the target of the ready card's "Message". */}
+        <div id="reply" className="mt-6 scroll-mt-4">
           {siteReply ? (
             <SiteReplyCard key={lead.id} leadId={lead.id} leadName={lead.name} site={siteReply} draft={lead.suggestedMessage} waiting={Boolean(approval)} />
           ) : (
@@ -171,6 +204,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
           it. Each fact once: the channel is in the header, the language
           under "Why it may write". */}
       <aside className="mt-10 grid min-w-0 content-start gap-[18px] lg:mt-0 lg:pt-1.5">
+        {readyCard && <div className={showReady ? "hidden lg:block" : undefined}>{readyCard}</div>}
         <Facts lead={lead} approval={approval} now={now} />
 
         {/* Three pills, as drawn. The third is Call when there is a number
@@ -182,7 +216,8 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
             <WeTalkedButton leadId={lead.id} leadName={lead.name} talked={lead.automationStatus?.kind === "talked"} onSite={Boolean(siteReply)} />
           )}
           <CopyBookingLinkButton leadId={lead.id} />
-          {callable ? null : isCallablePhone(lead.phone) ? (
+          {/* The ready card already carries "Call {name}": one Call button, not two. */}
+          {callable || (showReady && isCallablePhone(lead.phone)) ? null : isCallablePhone(lead.phone) ? (
             <a href={telHref(lead.phone)} className={PILL}>
               Call
             </a>

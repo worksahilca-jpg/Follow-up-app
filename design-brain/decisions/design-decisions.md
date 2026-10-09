@@ -10142,3 +10142,765 @@ negotiation to the owner).
 same hour: the app's onboarding offers Automatic (recommended), so "followed up automatically" is true.
 **Weak spots:** the page is ~1.3 MB (embedded photos repeated per section; the real site should serve them as files);
 the colourful-logos question is open with him (recommended: colour only in the From bar).
+
+## 2026-10-09 — Home v38–v40: the chat card in app colours, the caught message, a connected page, a light close
+
+**v38–v39** (four comments): the night scene keeps its dark photo all the way (*"keep it same, the dark one looks
+good"*); the demo's chat card uses the app's colours (question in cool light grey, reply in soft green with dark text,
+the sent steps as one small timeline ending "You closed it · Won"); the catch animation now pops the customer's own
+message out of its logo and lands it on the question. Recommended against copying WhatsApp/Instagram screens in the
+demo card (our rule on references, and trademarks); offered a thin channel-colour accent instead, awaiting his "yes".
+
+**v40** (five comments + one chat note): **names** — one name per place (R-062); **photos** — regraded cool grey-sage
+with the warm colour removed first (R-065); Today, How it works, the week, "Only for you" and the close are light;
+**connected** — a thread down the left gutter (laptop widths) with a dot per section, filled as you read; the main
+picture of each section settles in with a scroll-linked rise (CSS view timeline, off for reduced motion); gaps cut
+(R-067); **close** — on the page ground, the ring replaced by a stack of message notifications that arrive every ~3 s
+and turn "✓ Answered" (a price question says "Waits for your OK") (R-064); **bar** — short, centred, raised, shows the
+current section (R-066); **lime** — A-136.
+**Weak spots:** the thread is a new device and could read as decoration; asked him to say if it feels like too much.
+The light week panel is softer than the dark one was; check it still reads as "the week plays". The notification cards
+are generic (no phone frame) on purpose, to stay clear of R-041's "phone mockup as the whole idea".
+**App theme (side work):** a helper re-themed the app's tokens to match (Tinos headings, faintly green #F4F5F3 ground,
+green wash, neutral greys) in a separate worktree, not pushed. It conflicts with A-090 ("the app's ground stays white")
+— to ask Sahil before it goes anywhere.
+
+## 2026-10-09 — Home v41–v42: light green accent, Apple's look, missed messages around the headline
+
+**v41:** the accent moved toward light green (A-136 amended). **v42** (five comments + chat): the headline is smaller
+(58px) and six missed messages sit around it as phone notifications, grey "No reply yet" at first, then caught one by
+one ("✓ Answered", "✓ Followed up · day 14", a price "Waits for your OK"), laptop widths only; the top bar is a plain
+row (R-068); the From bar's channels are home-screen app icons with names in the device font; the demo's catch is a
+phone notification that glides into the card; the reply bubble takes the channel's colour (A-137); the close's
+notifications use the same style. **Weak spots:** notifications now appear in three places (headline, demo, close);
+watch that the page doesn't feel repetitive. The system font means the page looks slightly different per device, on
+purpose. **Technical note:** CSS later in the prototype re-sets the bar and headline, so v42's rules are raised with
+`html body`; the real site should not inherit this layering.
+
+## 2026-10-09 — Home v43: dark photos again, sheets between topics, a reply-time demo that plays itself
+
+Six notes in four minutes. No grain on the demo block (R-071) and its questions in one frosted strip; the language
+line names three languages; the reply-time demo plays on its own with a time bar and snaps back to "1 minute" (R-070);
+the side thread removed (R-069) for sheets that slide over each other at each new topic and four different layouts
+(A-139); photo panels dark again in light mode, light grade parked for dark mode (A-138). **Weak spots:** the sheets add
+~44px overlaps and rounded tops everywhere; on a phone they are smaller (32px) but may still feel busy. "Your control" in
+a side column squeezes its cards on 1100–1300px screens. The page has no dark mode, so half of A-138 is waiting.
+
+## 2026-10-09 — Home v44: patterned grounds
+
+A-140. Pinstripes, dots and hatching as CSS `::before` layers behind each section (`isolation: isolate`, z-index −1),
+masked to the edges. **Weak spot:** at laptop distance they are barely visible on purpose; if he wants them to read,
+raise the ink from 7% to ~10% rather than adding more patterns.
+
+## 2026-10-09 — Home v51: handled messages rising, a warm demo photo, "really sent" ticks, a scroll bug
+
+Four notes. Handled messages rise in lanes behind the headline (A-147); the demo gets the warm New York street (A-148);
+sending gets chat-style ticks in two places (A-149). **Bug fixed:** the notification that hops into FollowUp's card was
+`position: fixed`, so scrolling mid-hop left it floating over other sections; it is now placed in page coordinates
+(`position: absolute` + scroll offsets) and scrolls with the card. **Second bug found while looking:** the app icons
+use SVG gradients with fixed ids; when the first copy of an id sat in a hidden element (`display: none`), every other
+copy lost its colour. Each copy now gets its own ids. The real site must do the same for any icon that repeats on a
+page. **Weak spots:** 18 moving cards is the most motion the page has had; if it reads as busy, cut to 12 before
+cutting the speed. The warm photo is the only warm one, so the demo now stands apart from the cool panels. That is on
+purpose, but watch it next to the closing card.
+
+## 2026-10-09 — Home v52: a mess of messages (trial)
+
+A-150. The v51 lanes swapped for 48 cards on a seeded random scatter, each with its own drift vector, tilt, speed,
+size, blur and opacity (`alternate` keyframes, so no jumps), masked out behind the headline. **Weak spots:** a few cards
+sit near "Try it yourself" and the input, which softens that line; one card clips at the hero's left edge. Fine for a
+trial; fix when his design arrives.
+
+## 2026-10-09 — Home v53–v54: where the reply lands, the week's Today frame, "Your control", the footer
+
+v53: A-151, the line under "Sent on …" says where the customer gets the reply. v54: three notes. **The week's Today frame
+(bug, thread 3dbbac78):** it was placed by `calc()` from assumed padding and gaps, so on the current layout it drifted
+off its day and its ring sat on the day's text. It is now measured from the real day column on every step and on
+resize, padded 7px each side, with a faint fill; the label is centred. Lesson for the real site: anything that
+highlights a column must measure the column, never re-derive its geometry. **"Your control"** (A-152) and **the footer**
+(A-153). **Weak spots:** the main card is now wide, so its paragraph runs ~60 characters, which is at the limit; the
+footer's "Works with" row repeats the From bar's icons, which is on purpose (the last thing seen is "it works where your
+customers already write") but it is the third time the icons appear.
+
+## 2026-10-09 — Home v55: the Granola draft
+
+A-154. How it is built: one scroll value (`--fu-p`, 0 at the top to 1 when the headline has scrolled away) drives the
+messages' drift (`translate`, so it composes with their own drift animation), the headline lift and the notes' exit;
+the index bars are set from each step's position against the middle of the screen; the giant line is `position:
+sticky` inside a wrapper that ends with the week panel, so the panel covers it and it never reappears; ink is SVG with
+`pathLength="1"` drawn by `stroke-dashoffset` once on view. Reduced motion: no drift, ink shown drawn, the index still
+updates. Phones: no notes or arrow; the index hides and the steps stack. **Weak spots, honestly:** the clock and ticked
+list are the only drawings, so they must earn their place or go; "It follows up." sits right after a step that already
+says it checks in, so the two may feel repeated; the notes on the demo's corners cover a little of the photo, and on
+screens near 1230 px wide they sit close to the edge.
+
+## 2026-10-09 — Home v57–v62: scroll-told stories, the Mac window, subtraction
+
+A-155 to A-159. **How the Mac window is built:** the demo's logic still runs on its sliding cards (`#fl-track`, now
+hidden); the conversation list is a mirror rebuilt from those cards and the open card through a MutationObserver, with
+fresh app-icon copies (their own gradient ids, v51 lesson). The From bar becomes the sidebar by CSS alone; the open
+inbox is highlighted with `:has()`. **Bugs met:** a sticky panel lost to a more specific `position: relative` from v55
+(raise the selector, don't add `!important`); a stagger delay from v34 hid the new booking message (an ID-scoped rule
+resets it). **Weak spots:** phones still show the older stage; the list's order is rebuilt rather than animated, so
+rows jump between steps; three long pinned moments remain (How it works, reply speed, the week); watch that they
+don't add up to "stuck".
+
+## 2026-10-09 — Parked: the demo's background when the theme changes
+
+Founder (thread b2a68af1, on the demo card): *"When we change the theme and stuff, we might have to change the
+background… Don't change anything yet. I will let you know later."* Nothing changed. When the theme work starts, the
+demo stage's photo (warm New York street, A-148) is to be revisited with it; show options first.
+
+## 2026-10-09 — Home v77–v83: opening, button flight, ending, follow-up story
+
+A-175 to A-180; R-078 to R-081. **How it is built:** the glide clones a message into `body` (absolute, document
+coordinates, so it scrolls with the page, [[approved#^A-173]]) and animates it with WAAPI to the strip's near edge; a
+message is only picked if 24 sample points along its path, padded by its own half-size, miss the headline, the fact and
+the beta pill. The scatter's mask is a radial gradient intersected with a bottom fade (`mask-composite: intersect`). The
+warmth bar is a full-width gradient revealed by `clip-path: inset()` so its colour stays tied to position. The button
+flight re-reads both rects every frame. **Weak spots, honestly:** the fact tiles use cards, which the brief warns about;
+they earn it only because the figures are the point. The Marcus story and the week section overlap until the founder
+decides. The headline's 2024 fact is the newest broad test we can check; the founder asked for newer data and for
+FollowUp's own numbers (asked in thread 73b89a86: a 2025 law-firm study exists, our own figures wait for ~50 answered
+customers a month). Social handles and a cookie page are still placeholders.
+
+## 2026-10-09 — The 17-point pass; sign-up opens before launch
+
+Founder decision (chat): **open sign-up before the new home page goes live**, so "Start free" no longer ends at the
+private-beta screen. Things to check before switching it on (nothing changed yet):
+- the `ALLOWED_EMAILS` gate in `src/lib/auth.ts`;
+- Google's limits for a not-yet-verified OAuth app (the CASA check is due Jan 4);
+- AI cost ceilings, already in place (H2, M1).
+
+Design points 4–14 are built on the draft ([[approved#^A-186]]). Still to do:
+- 2: tester quotes — the founder asks;
+- 3: social handles — the founder sends;
+- 15: measure tried / clicked / scrolled — goes with the build;
+- 16: the five-second test, `workflows/five-second-test.md`;
+- 17: build the page into the app.
+
+**How:** the old scroll script still looked for `#statement`; it now gets a detached stand-in instead of crashing.
+
+## 2026-10-09 — Home v96–v100: the wave, shorter sections, data band, no price
+
+- **Hero.** Junk is skipped and leads move through to "Closed by you". Every 15 s a wave of 12 messages from up to 8
+  channels shows FollowUp handling a rush: junk drops out, 5 leads come out tagged "Caught", and the strip reports the
+  wave for a few seconds.
+- **Shorter page:**
+  - the gap section is one highlighted line and four stops;
+  - How it works defaults to a 2 × 2 grid;
+  - Today says "Nothing to learn. Connect and it works."
+- **Your control.** Readable words on a frosted panel. The promises are a list in the left column. The data band runs
+  full width with sliding points.
+- **The "Start free" row** became a slow band of what FollowUp does (R-047 exception).
+- **The price line** is removed until he decides.
+- **Two draft compare rows** are still on the page (try box, How it works format). Remove the losers once he picks.
+- **Why:** his comments asked for less reading, the main point highlighted, and proof that FollowUp handles volume
+  accurately. Details: A-188, R-089.
+
+## 2026-10-09 — Home v101–v102: from caught to closed, scroll steps, still facts
+
+- **The hero's caught leads** are now worked through to "Closed by you", and each step moves a counter: five numbers,
+  including deals closed and time saved.
+- **How it works** pins and changes step by step as you scroll. The four steps show accuracy: proof quotes, ticked
+  answers, a hand-over with why, and a one-tap close.
+- **The promises** sit in one panel across the photo's edge.
+- **The data points** stand still.
+- **The closing card's notes** are faster and use only familiar apps.
+- **The try box** label drops "no sign-up". Its edge is up for a pick.
+- **Why:** his comments asked for motion that shows results, facts readable at a glance, and the accuracy story told
+  step by step. Details: A-189; brand principles "Learned 2026-10-09".
+
+## 2026-10-09 — Drawn (not approved yet): the lead qualification card, realtors first
+
+> **SUPERSEDED (2026-10-09)** by "Redrawn simpler: the owner only sees the result" below. The founder found the
+> four-board card confusing and asked whether it added a step.
+
+**Prototype:** `prototypes/2026-10-09-qualification-card/index.html`.
+
+**Four boards:**
+1. On the lead page, the card sits at the top of the right column. It shows six criteria (location, price, why
+   moving, agent, mortgage, viewing), each with the customer's quote and time. States are known / not sure / not yet /
+   asks next. There is a "Is this right?" tap.
+2. Hot: booked, "Why she's ready" in her words, and "Was she really ready? Yes / No". After the viewing: "Did it close?
+   Yes, closed / Not yet".
+3. Settings, "What makes a lead hot": a template (Realtor · buyers) with "Ask about it" and "Must-have" switches per
+   criterion.
+4. Phone: the card folds into one line under the name.
+
+**Choices:**
+- Proof quotes, not confidence scores (research §4: model self-confidence is unreliable).
+- "Not sure" instead of guessing.
+- The agent question is never asked directly.
+- Must-haves are the owner's call.
+- The app's own tokens throughout.
+- No sparkle (S-13).
+
+**Waiting for:** Sahil's reaction.
+
+## 2026-10-09 — Home v103–v105: every number has a visible cause
+
+- **Hero cards** end as Booked and Deal done, then fly into the strip and land on their own counters. Numbers only
+  move when something lands.
+- **The try box** is settled: the older layout, a soft edge, a chat composer and a paper-plane send.
+- **The gap** has an amber band, the HBR comparison chip, and the "Already got someone." fear moment.
+- **"7× more leads"** was declined as inaccurate; the line uses "qualify the lead".
+- **Elsewhere:**
+  - steps slide inside a box;
+  - the promises are four frosted lines;
+  - a bigger shield;
+  - the closing notes no longer pause;
+  - the footer opens with "Help us improve" and "Follow us everywhere".
+- Details: A-190.
+
+## 2026-10-09 — Home v106–v108: steady stream, Apple motion, causal story
+
+- **The hero** became a steady stream whose every step lands on its namesake counter (six numbers).
+- **One Apple-style motion language** across the page.
+- **The visitor's demo message** arrives on WhatsApp.
+- **The gap picture** now shows not replying (R-090), on a deep green layer, with the HBR chip under the line.
+- **The follow-up card's photo** went back to Manhattan (R-091).
+- **The ticker** is a dark band, centred.
+- Details: A-191.
+
+## 2026-10-09 — Home v109–v111: page-turn slides, tidier control, dark footer
+
+- **How it works:** slides turn like pages (no blending) and highlight each part as you scroll.
+- **Your control:** separates the main card from the promises and drops the dead space.
+- **The footer:** becomes its own dark ground with a lime invitation ("Built with the owners who use it.") and a
+  faint wordmark.
+- Details: A-192.
+
+## 2026-10-09 — Redrawn simpler: the owner only sees the result (qualification)
+
+**Founder:** *"What is this checklist going to do? Is it adding one more step…?"* Then, on the recommendation to show
+only the result with the checklist behind one tap: *"yes redraw it that way"*.
+
+**Prototype (same file):** `prototypes/2026-10-09-qualification-card/index.html`. Three phone screens:
+1. **One iPhone-style notification,** only when the lead is ready: "Nadia is ready. Viewing booked Sat 10:30.
+   Pre-approved to $650k, moving in March."
+2. **Her page:** one card with "Ready", the booked viewing, a one-line "Why" and Call / Message. "How FollowUp knows" is
+   folded away.
+3. **One tap** opens the checklist: four ticks, each with her own words.
+
+**Rules this sets:**
+- No setup: FollowUp picks the questions by business type.
+- Nothing to fill in.
+- Silence until a lead is ready.
+- The checklist is FollowUp's working notes (funnel steps 4–6), never a task for the owner.
+- The earlier "Is this right?" and "Was she ready?" taps are dropped from the main view, so no extra steps.
+
+**Waiting for:** Sahil's OK to build it. Given 2026-10-09 ("build it"); built, see the entry below.
+
+
+## 2026-10-09 — The Ready card, built (realtors)
+
+**Founder:** *"build it"*, then: *"we have to be accurate for every single business to qualify and reply… according to
+every business. And also in every language."*
+
+**Built (PR, not merged):**
+- **The checklist:** what they want, when, budget, viewing.
+- **Reading the conversation:** a model reads it after each customer message. An item is kept only when its quote is
+  found word for word in the customer's own messages, in any language. A booked call counts as the viewing.
+- **The reply:** it may end with one question about the first missing thing, once, after answering everything. If
+  they don't answer, it moves on and never asks twice.
+- **When all four are known:** one alert, and the Ready card on the customer's page. Details: A-194.
+
+**Self-review (design-review.md), honestly:**
+- **Strong:** the card reads in one glance (pill, title, when, why, two actions). The proof is one tap away, and every
+  line is checkable against the conversation above it. Light and dark both hold. No horizontal scroll at 390 px.
+- **Weak:**
+  - The "why" line is three summaries joined by dots, not a sentence. Accurate, but less warm than the drawing.
+  - The fold on not-ready customers is plain; it may be ignored, which is acceptable.
+  - The summaries are in English even when the customer wrote in another language. The quotes stay in theirs.
+- **Not yet:** other business types; owner-set must-haves; "Was it ready?" feedback for measuring accuracy. A
+  cancelled booking still shows as booked until the next message.
+
+## 2026-10-09 — Home v116: four sections offered as formats to pick (Version 89)
+
+**Founder:** *"I don't know, let's reframe, try two or three other things, I will select"* (the cold-lead picture). Then
+the same ask for Your control (*"a lot of empty space"*), the data band (*"feels that someone pasted this"*) and What's new
+(*"let's be creative"*).
+
+Each section has a draft **Format** row: three new options plus **Current**. Nothing is decided until he picks.
+
+| Section | A | B | C |
+|---|---|---|---|
+| Leads go cold | Drag the clock: one message cools as the wait grows | Two endings: same question, answered in the hour vs the next day | Your busy morning: the calendar fills while their message sits unread |
+| Your control | Live preview: the mode switch changes a real reply card | Settings: an iPhone-style list with the rules | Three choices: one card per mode, each showing what happens |
+| Your data | One quiet line, no band | The controls: Download / Delete as in Settings | At a glance: a fact-panel label |
+| What's new | Day 1 to week 3: the same reply, before and after it learns | Learning feed: "Learned" and "New" cards rise one by one | How well it knows you: a bar fills as things are learned |
+
+**Rules kept:**
+- Every option shows rather than tells (R-060).
+- The cold-lead options show *not* replying, never FollowUp failing (R-090).
+- Proof stays one line (R-082).
+- Photo panels, not gradients (R-084).
+- Data wording is plain, not defensive (R-063).
+- A new name in each place (R-062): Tomás, Lena, Bea, Chloe.
+
+**Self-review:**
+- **Strong:** "Two endings" and "Live preview" explain themselves without reading.
+- **Weak:**
+  - "Your busy morning" asks the most of the eye (a calendar plus a feed).
+  - "At a glance" borrows a familiar label form, so it's close to a convention but still original.
+
+**Waiting for:** his pick per section, and which part of the page was hard to read.
+
+## 2026-10-09 — The bin now matches the Mac's Trash (Version 91)
+
+- **What:** the "Not leads" bin beside the numbers bar is redrawn as a frosted white bin with a grid of square holes,
+  a thick rim, and crumpled paper once something is thrown in.
+- **Why:** the founder rejected the wire basket and then the ribbed can as "not the Mac one". Apple's Trash has been a
+  translucent white plastic bin since 2014. The look was checked first this time.
+- **How:** our own SVG, drawn to match. The holes narrow toward the sides to show the curve, and the far wall shows
+  through the holes. The papers stay hidden until the first throw.
+- **Weak spot:** at 46 px the far-wall detail is barely visible. The grid of holes and the white rim carry the look.
+- **Records:** A-197, R-093.
+
+## 2026-10-09 — Home v119: one format per section, art behind Your control, It learns played out (Version 92)
+
+- **Why:** the founder said in chat that every section was the same photo box (R-094). His comments in five threads
+  asked for graffiti or art in Your control, the three choices plus settings, "the controls" for data, motion to
+  explain learning, and the message cards back to the Mac look.
+- **What changed:**
+  - **Section formats.** Photo cards stay for the demo, How it works and the close. Leads go cold is now open on the
+    page. The Today screen sits on the page and rises as you scroll. Your data is on the page ground.
+  - **Your control.** Three choices plus an Always-on sheet (A-198). Behind it is a "Behind it" row: Graffiti wall
+    (default), Shapes, or Photo.
+    - The wall is our own composition: four tags ("your rules", "you decide", "ask me first", "pause any time") in
+      lime, white, sky and pink, with drips. They sit in bands above and below the cards so they can be read.
+    - The tags use Sedgwick Ave Display, an open-licence (OFL) font drawn by graffiti writers, embedded in the draft.
+      Per CLAUDE.md a new font needs his yes before it ships.
+    - Shapes is a set of flat circles and arches in the same colours.
+  - **It learns.** Option D, "Watch it learn" (A-200).
+  - **Message cards.** Fixed back to the Mac notification look (A-199, R-095).
+- **Weak spots, honestly:**
+  - Graffiti is the riskiest look for a trust product. It reads loud next to the calm sections. Shapes is the quieter
+    fallback.
+  - The three choice cards are still tall, with empty space under the text on desktop.
+  - The It learns scene takes about 15 seconds; someone scrolling fast sees only the first draft.
+  - The cold-lead section is open now, but its second card still has a pale photo.
+- **Open:** his pick of wall, shapes or photo; a yes on the graffiti font; whether the open Today screen still feels
+  premium to him.
+
+## 2026-10-09 — v119 reverted; the page is back to Version 91 plus the message-card fix (Version 93)
+
+- **What:** the founder replied to v119: *"keep what it was before, I will tell you what to change."* Everything v119
+  changed is undone. That covers the open cold-lead and Today sections, the graffiti / shapes / photo row, three choices
+  plus settings, Your data B, and "Watch it learn".
+- **Kept:** the message-card fix (A-199, R-095). It returns the cards to their pre-v116 look, which is what he asked for
+  in thread 449ed1c5.
+- **Saved:** the full v119 build is kept in the generator's backup, so any part he asks for can come back quickly.
+- **Next:** wait for his specific changes.
+
+## 2026-10-09 — Your control and Your data formats chosen (Version 94)
+
+- He picked B for both rows on the restored page (A-201).
+- The other draft rows are still open: the cold-lead format and What's new.
+- Nothing else changed.
+
+## 2026-10-09 — Footer made readable (Version 95)
+
+- **Asked:** the founder, thread e6c6f8b7: *"this is not readable."*
+- **Done:**
+  - On the dark base, links are 16px near-white (#E6EEE9).
+  - The lime labels are 12.5px, the small print is 14px, and the follow card's line is 16px.
+  - The social buttons have a clearer edge.
+- **Kept:** the dark base itself, from his v111 "differentiated" ask. I offered a light footer if he prefers.
+- **Lesson:** on a near-black ground, 13–14px soft grey reads as unreadable to him, even though it passes the contrast
+  check. Body-size text and near-white links are the floor on dark (see R-095 and the earlier "too dark" threads).
+
+## 2026-10-09 — How the best pages are organised: a page map, nothing built
+
+- **Asked:** the founder: *"Let's pull the research again… how they differentiate… our theme colours look best now, we
+  just need to organise it properly."*
+- **Study:** research/landing-page/2026-10-09-page-organisation-study.md, with a readable page at
+  claude.ai/artifact/BTNeLePiYBWBFLtsmTUkWB.
+- **Finding:** the best pages answer the visitor's questions in order. They use about six section types and take them
+  in turns, so two neighbours never share a type. Photos are one type among several.
+- **Our page now:** seven of eleven sections are the same photo box, four of them in a row.
+- **Proposed map, same colours:** 12 sections. Photos stay for the demo, How it works and the close. Leads go cold is
+  open on the page, the check-ins sit in a lime room, Today is the product alone, Your control is on deep green, Your
+  data is a quiet card, It gets better is a grid, and there is an optional Questions section.
+- **Waiting on him for three answers:**
+  1. Is the order right?
+  2. Should Your control sit on deep green instead of a photo?
+  3. Should there be a Questions section, and in which style?
+
+## 2026-10-09 — The new order, shown before building (preview, nothing changed on the home page)
+
+- **Asked:** *"first show me how you gonna do it."*
+- **Shown:** a separate preview copy of the real page in the proposed order, at claude.ai/artifact/QFyv7Uq2XnexzmaLAoDEn8,
+  plus a side-by-side image of now and new. The home page artifact is untouched.
+- **What the preview changes, same colours:**
+  - Leads go cold is open on the page.
+  - "No reply? It checks in" is a lime band.
+  - Today is the app alone with a soft shadow.
+  - How it works is unchanged.
+  - You stay in charge is the Settings card (A-201) on deep green.
+  - Your data is The controls card (A-201) as a quiet card on the page.
+  - It gets better is two tiles plus a "new this week" tile.
+  - Questions is new: 5 plain questions, built only from facts already on the page.
+  - The close and the footer are unchanged.
+- **Waiting on:** his yes to build it into the home page, or his changes.
+
+
+## 2026-10-09 — Fewer boxes, then connected the way Wispr connects (previews 2 and 3)
+
+- **Preview 2, after "too much boxes" (R-096):** the race and the check-ins sit straight on the page. Your control drops
+  its deep-green box, and only the Settings sheet stays framed. Your data is plain rows with thin lines. It gets better
+  goes back to the open format. Frames kept: the try-it stage, the How it works stage, the Today window, message cards,
+  the close.
+- **Then he said:** *"look at Wispr, how they designed their page connecting with each other"*. He sent a screen
+  recording of Wispr's whole page with *"observe deeply"*.
+- **What Wispr does, from the teardown doc in his Drive:**
+  1. The page colour changes behind the content. It goes green to cream, with no edge.
+  2. One object carries you across. The same photo card travels from the green section into the next.
+  3. One story is told the whole way: said, cleaned, sent.
+  4. The headline stays while one thing changes per scroll step.
+  5. The close repeats the hero.
+- **Not taken:**
+  - Wispr's rounded colour sheets sliding over each other (R-073).
+  - A line joining the sections (R-069).
+  - Anything that moves along with the scroll (A-173).
+- **Preview 3, built under those rules:**
+  - The page colour turns lime as you reach "No reply? FollowUp checks in". Above it sits a small label: "Same customer,
+    with FollowUp".
+  - Tomás's message flies from "Every hour you wait" onto the band's Day 1 dot. It plays once, the A-167 way, and is
+    not tied to the scroll.
+  - The page turns deep green while the four steps of How it works are pinned. It turns back before Your control comes
+    in. The menu bar changes with the page.
+- **Waiting on:** his reaction, and the notes from his recording.
+
+## 2026-10-09 — Preview 4: one customer, start to finish (A-203)
+
+- **Built** from the Wispr scroll read: Nadia's message card holds the middle of the page for about six screens.
+  - Wait, then lost, then answered at 7:03, all on a deep-green room.
+  - The room lifts away and "Four steps" comes up behind the card.
+  - The four approved step pictures play inside the same card.
+- **How it's built:** sticky stage, 700vh track, the room lifted by scroll. The step pictures are clones of the approved
+  How it works pictures, with their CSS re-scoped. Snapping happens only between the four steps, and not with reduced
+  motion.
+- **On phones** the same stage works: the card is 88vw wide, the step list is hidden, and the step text sits under the
+  card.
+- **Content change:** Mateo in step 2 became Nadia ("Could we see the house on Maple Street this weekend?"), so one
+  customer runs through the whole page.
+- **Weak spots, honestly:**
+  - The menu bar stays light over the deep-green room.
+  - The room is close to R-073's overlapping pages.
+  - Snapping can feel like the page moving itself (A-155 asks for the reader's pace).
+- **Waiting on:** his reaction.
+
+## 2026-10-09 — Preview 5: Nadia's week (our own device, after R-097)
+
+- **Feedback:** *"going better… it should not say that we copied Wispr… be more creative from our side."*
+- **Kept:** one customer, start to finish, and the order. Lost, then answered, then the four approved steps, then
+  Today.
+- **New device, from FollowUp's own world:** time. The left side is a large serif clock, a day label and a Tue–Sat
+  week strip; the scroll moves the clock.
+  - **The wait:** 7:02 AM Tuesday runs to 12:19 PM Wednesday and turns red. Her "Thanks, we found another agent"
+    arrives, and the lead is marked Lost.
+  - **The rewind:** the clock runs back to 7:02 as the lost messages blur away.
+  - **With FollowUp:** the reply comes at 7:11 AM, a natural few minutes later (A-187).
+  - **Then the four steps happen inside her real conversation:**
+    1. Tue 7:26: her answer, with the facts highlighted in lime in her own words, and FollowUp's "What she needs"
+       card.
+    2. Thu 6:40: her weekend question, and the reply using your showing times.
+    3. Thu 6:42: booked and handed to you.
+    4. Sat 11:15: "Did it close?" turns into "Closed · confirmed by you".
+- **The right side** is a light conversation window: a product picture, the only frame (R-096). Her bubbles are grey,
+  yours are green, and FollowUp's cards sit inside the thread.
+- **Not used:** a colour room, a photo card, the left list with right text, snapping (reader's pace, A-155).
+- **Phone:** the clock row and caption sit on top, and the conversation fills the rest.
+- **Weak spots:**
+  - During the wait, the window is mostly empty. That is meant (silence), but it may read as unfinished.
+  - The clock running fast could feel busy. Reduced motion turns off every transition.
+
+## 2026-10-09 — Preview comments: Your data back to the photo panel; It gets better lined up
+
+- **Thread 8f11846d**, on Your data: *"very congested… the theme we were using… was the good one."* The preview's
+  plain-lines version is undone. A-201's photo panel is back (noted under A-201).
+- **Thread a812ab5d**, on It gets better: *"feels odd"*, with no reason given.
+  - The visible fault is fixed: Day 1 and Week 3 were centred against each other, so their tags and cards sat at
+    different heights. They are now top-aligned, with the arrow level with the cards.
+  - Asked him whether the layout or the Day 1 → Week 3 idea is the problem, and offered formats B and C. The thread
+    stays open.
+
+## 2026-10-09 — Preview comments, round 2: one swipe per moment, readable, simpler, one notification size
+
+- **Thread d9b90037**, on scrolling: *"too much scrolling… I accidentally scroll the other pages fast too."*
+  - Nadia's week now moves one moment per swipe, through 7 moments.
+  - The rest of a trackpad flick is caught, so momentum can't throw you through the story or past it.
+  - At the end, one swipe takes you just past it and stops.
+  - The track is shorter: 640vh became 420vh.
+  - Keyboard, scrollbar and touch keep normal scrolling.
+  - This overrides draft website rule 8 ("nothing traps the mouse wheel") for this chapter only, at his request.
+  - Tested with simulated flicks: each one lands on the next moment.
+- **Thread 2889dc9d**, *"make this readable"* (anchored to the whole page):
+  - An audit of every visible line found 11–12px times and labels and 2.4–3.2:1 greys in Nadia's week. These are now
+    12.5–13px and at least 4.5:1.
+  - Message text is now 16px, explanations 17.5px, and the Day 1 grey is darker.
+  - Asked him which part was hardest to read.
+- **Thread f181bcaf**, *"the exact size actual iOS and Mac use"*:
+  - The closing messages were scaled 0.90–0.99 to fake depth. Now they are one size, 344px wide (about a Mac banner),
+    spaced, not shrunk.
+  - Apple's official numbers weren't found online, so we don't claim "exact". Asked for screenshots of a real Mac and
+    iPhone notification to match.
+- **Thread c035b885**, *"more simple and minimal and to the point"*:
+  - It gets better is now the headline, one line ("You don't have to teach it. It learns from the replies you send."),
+    then the same reply on Day 1 and Week 3, stacked.
+  - The arrow, captions and "New this week" are removed.
+
+## 2026-10-09 — Sections rise in as you reach them; the Mac Trash questioned again
+
+- **Thread f0dc48be:** *"we have to make a transition here as well… make it feel like they scrolled and something showed
+  up."*
+  - Each block below Nadia's week now rises 36px into place and fades up from 18% the first time it comes into view:
+    Today, Your control, Your data, It gets better, Questions, the close and the footer.
+  - It plays once and never tracks the scroll (A-173). Neighbouring blocks are staggered by 0.12s.
+  - Anything already on screen at load is left alone, and with reduced motion nothing moves.
+  - Asked whether he meant one spot in particular.
+- **Thread 82bc7ecd:** the square-hole Trash is the 2014–2024 Mac one. Asked for a screenshot of his Dock before
+  redrawing (see the A-197 note).
+
+## 2026-10-09 — The page strategy, and "What it does" (preview versions 10–11)
+
+- **The strategy he asked for** (*"how we help them, what makes it unique, convert directly, show the key features,
+  not a CRM, nothing to learn"*). The page answers the owner's seven questions in order:
+  1. What is it?
+  2. Does it work for me? (try it, sign-up at the answer)
+  3. Why do I need it? (Nadia's week)
+  4. What does it do? (key features)
+  5. Is it hard? (nothing to learn)
+  6. Can I trust it? (control, data)
+  7. How do I start? (questions, close)
+- **The three things that make FollowUp different, repeated:** it *does* the follow-up (not a CRM where you do the
+  work); every app and language in one place; you stay in charge.
+- **Nadia's week (version 10)** is now one normal section after R-098:
+  - On the left, without vs with FollowUp, with five tappable moments.
+  - On the right, her conversation plays once, 1.1s per moment, when it comes into view, with Replay.
+  - Nothing is pinned and nothing captures the wheel.
+- **"What it does while you're busy" (version 11)** replaces It gets better (R-099) and the ticker. It shows six
+  features, each as the note FollowUp sends you after doing it, timed through a normal Tuesday:
+  - every app, one list;
+  - your words, their language;
+  - follows up until they answer;
+  - knows who's serious;
+  - books it, hands it to you;
+  - learns as you go.
+- **How it looks:** no tiles. The notes are the only frames, as product pictures (R-096). The notes rise one after
+  another on arrival. The nav "What's new" now reads "What it does".
+- **Waiting on:** his reaction, a Dock screenshot for the Trash, and Mac/iPhone notification screenshots.
+
+## 2026-10-09 — Preview version 13: simpler, sorted
+
+**Founder's comments, in order:**
+- "What it does": *"a good concept or format so they get to know what we do"* and *"keep it simple, minimal and to the
+  point"*;
+- *"remove this bin concept"*;
+- *"is it possible to show sorting animation"* (on the headline);
+- "Two endings": *"they should be scared without follow-up… with FollowUp… yes, we help them close more"*;
+- *"let's be more simple and creative too."*
+
+**Built:**
+- **Hero:** the bin is gone (R-100). The lead cards sort themselves, most ready on top, under a small label (A-204).
+- **Two endings:** a red block (lost, 14 hours, someone else answered first) and a green block (booked, 9 minutes,
+  Saturday 10:30). The green one lights when the story reaches Booked (A-205).
+- **What it does:** a self-ticking list of six outcomes with times of day; the notification grid is out (A-206, R-101).
+
+**Checked:**
+- desktop 1440 and phone 390 render;
+- no script errors;
+- contrast all at least 4.5:1 (only the 12.5–13 px mono labels sit under 13.5 px, as before).
+
+**Weak spots, named:**
+- the sorting label sits near the faint background messages at the top right;
+- the list's times are illustrative;
+- the 14-hour and 9-minute figures belong to the example story, not measured data.
+
+## 2026-10-09 — Preview version 14: the trust line
+
+**Asked:** founder, *"let's fix the missing things"*, after my honest read that the page lacks:
+- real proof;
+- safety near the button;
+- a shorter page.
+
+**Built: safety beside the action.**
+- A row of three ticks under the hero numbers, in the first screen, right above "Try it yourself": "Prices and dates
+  always ask you first", "Stops the moment they reply", "Free in beta, no card".
+- The close's small line now ends "· Prices and dates always ask you first".
+- Wording is kept to what the product guarantees in every mode (PRODUCT_DIRECTION rule 3 and the FAQ). It does **not**
+  say "nothing sends without your OK": Automatic mode and the holding message both send without an OK.
+
+**Real proof: waiting on the founder.** Quotes are never invented. The ask is one sentence from 2–3 beta owners, with
+permission, credited by trade and area only (no names on the public page).
+
+**Page length: measured, not cut.** Seven sections, about 7.5 screens at 1440 × 900. My earlier "it's still long" was
+overstated. The heaviest block is the hero with the try-it panel (about 2 screens), and it is the hook, so it stays.
+
+## 2026-10-09 — Preview version 16: smoother, honest, connected
+
+**Founder's comments:**
+- *"make all the animations so smooth and attractive their eyes catch it and they read the stuff"*;
+- *"we can arrange this design a better way"* (You stay in charge);
+- *"make this dashboard more accurate, not just clickbait; lean towards it but it should be true"* (the hero numbers);
+- *"don't say most ready on top"*;
+- *"add a transition here with the next page, connected with the first, and they try it themselves"*.
+
+**Built:**
+- **Motion:** one curve everywhere, Apple's damped spring `cubic-bezier(.32,.72,0,1)`, with no bounce.
+  - Sections lead the eye: heading, then point.
+  - Two endings: red first, green 0.35 s later.
+  - Chat bubbles grow from their own side.
+  - What it does: each row turns from grey to ink as its tick lands.
+  - Everything plays once and never holds the scroll (R-098).
+- **You stay in charge:** two columns. The heading and one merged line sit left ("You decide what it sends, and you
+  can see why it sent each one. Every rule is one tap."), the settings card sits right, and Your data runs full width
+  below. The middle column with its second headline is gone, keeping A-201's settings card.
+- **Hero numbers, made true** (`brand-principles`: never fake):
+  - The example week is 36 messages caught, 11 qualified, 5 booked, 2 deals done "by you", 0 forgotten, and
+    2 h 24 min saved (4 min per reply).
+  - "$9,840 saved by FollowUp" is removed. FollowUp doesn't close deals, so crediting it with the money was the
+    clickbait.
+  - The counters start lower and stop at the week's total instead of climbing forever.
+  - Still labelled "An example week". Real numbers come from beta data later.
+- **Sorting label removed** at his request; the cards still re-order themselves.
+- **Hand-off into "Try it yourself":** as you scroll from the headline, the demo panel grows from 93% to full size,
+  driven by scroll position with only a scale change (no layout work). It is off on phones and with reduced motion.
+
+**Open:** thread 99c33d5a, "I don't know what we are trying to convey here, a bit complex", which part is still
+unanswered. My guess is the app screenshot in Nothing to learn.
+
+## 2026-10-09 — Preview version 17: five sections, money shown honestly
+
+**Founder:**
+- *"show them money bro, and we just have to make 4 to 5 sections only"* (on the hero numbers);
+- *"why a lot of space here, add minimal stuff or remove this space"* (under the demo).
+
+**Built:**
+- **Money:** the numbers bar shows "$2,400 won, by you". When a lead reaches Deal done, its value flies into that
+  cell, capped at $6,200 for the example week. It is credited to the owner, following the "lean toward the win, but
+  true" principle (brand-principles, 2026-10-09).
+- **Five sections:**
+  1. Hero with try-it.
+  2. Two endings.
+  3. What it does.
+  4. You stay in charge, with your data.
+  5. Start free, then the footer.
+
+  "Nothing to learn" (today-sec) and the questions section (faq) are hidden. "Set up in two minutes. Nothing to
+  learn." moves into the close. Every question is answered elsewhere on the page. The page is about 5,300 px at 1440
+  wide, down from 7,000.
+- **Gap under the demo:** the post-try line ("That's FollowUp…") takes no height until it appears, then opens with a
+  spring. Before that, the space was reserved but empty.
+
+**Note:** the Today app screenshot and the FAQ are gone from this preview. If he wants proof of "how easy it is",
+bring back one simple picture, not the full app screen. Thread 99c33d5a is still unanswered.
+
+## 2026-10-09 — Preview version 18: the trust line in plain words
+
+**Founder (thread e2229f27):** *"make it more sensible."* The lines "Prices and dates always ask you first" and "Stops
+the moment they reply" assumed the visitor already knew the product.
+**Now:**
+- "Asks you before quoting a price or a date"
+- "Stops following up once they reply"
+- "Free in beta, no card needed"
+The close uses the same wording. **Rule:** a promise in the first screen has to make sense to someone who has never
+seen FollowUp; name the action ("quoting", "following up"), not the setting.
+
+## 2026-10-09 — Preview version 19: a light close; the language promise up top
+
+**Founder:**
+- *"these both the designs look similar, can we change so we can differentiate between them"*;
+- *"let's add the factor too that it replies in the same language the lead messages in."*
+
+**Built:**
+- **The close is light green:** `#E4F0E7` with dark text, a green "Answer every one." and a black Start free button.
+  - "Your data stays yours" is now the only dark photo panel. Since the questions section was cut, the two had sat
+    side by side looking alike.
+  - This changes the close's dark photo and white button (A-195); he asked for the difference.
+  - *Inferred:* he meant those two. That was asked in the thread, not confirmed.
+- **Language in the first screen:**
+  - The hero line now reads "The right reply, in their language, at the right time. Until they book."
+  - What it does, row 2: "Replies in the language they wrote in."
+  - The try box's "Ask in your language" list already proves it.
+- **Version 20 (thread 1035f0e9):** the founder didn't understand *"Stops following up once they reply"*. It now reads
+  "Never pushy: no more reminders once they answer". **Rule:** state the benefit, then the mechanism; if the founder
+  has to ask, a visitor won't.
+
+## 2026-10-09 — Preview version 21: Two endings, calm; the footer grows out of the page
+
+**Founder:**
+- on Two endings: *"make it more aesthetic"*. This also answers thread 0094b8f6, *"feels off the page but the
+  information is good"*;
+- on the footer: *"add a gradient here, the last page looks way odd, it feels like I'm landing on a different
+  website… make it feel connected"*.
+
+**Built:**
+- **Two endings** became two hairline rows, with no boxes or icon circles. The reply time leads in big display type:
+  - "14 h", red, "with no reply": Lost by tomorrow. She booked with the agent who answered first.
+  - "9 min", green, "to the first reply": Booked by Thursday. A viewing on Saturday at 10:30, handed to you.
+  - Colour sits only on the number and its label; the outcome line is ink.
+  - "9 min" grows 6% when the chat reaches Booked.
+  - Supersedes A-205's tinted blocks; the fear-versus-relief content stays.
+- **Footer:** a tonal fade, page ground → soft green → `#2C5A45` → the footer's `#0B1510`, over about 270 px in the gap
+  below the close. Footer content starts below the fade.
+  - It is a fade within one hue family, for continuity; not a decorative gradient (CLAUDE.md "no cheap gradients"
+    respected).
+
+**Principle (founder, inferred, marked inferred):** sections must look like one family. Alert-style tinted boxes and a
+hard cut to a dark footer both read as "a different website".
+
+## 2026-10-09 — Preview version 23: the week as a film; the settings show themselves; photos on theme
+
+**Founder:**
+- on the numbers bar: *"make this cinematic"*;
+- on Your control: *"can we add motion here"* and *"same need motion"* (on the settings card);
+- *"this background is not suiting our theme"*.
+
+**Built:**
+- **The week, as a film:** on load the bar rises in. Its label runs Monday → Sunday (ink pill) while a 2 px line sweeps
+  across the top, and every number rolls from 0 to the week's total over about 5.6 s, easing out. Then the label returns
+  to "An example week with FollowUp" and the live numbers carry on. Plays once; skipped with reduced motion.
+- **The settings card plays itself once on arrival:**
+  1. How it sends slides to Auto and back to Ask me.
+  2. Pause everything flips on, then off.
+  3. The Always-on ticks pop in, 0.18 s apart.
+  The row in use gets a faint highlight, and the controls stay clickable.
+- **Photo panels on theme:** the "Try it yourself" and "Your data stays yours" photos were blended in luminosity over
+  `#1A2420`. They keep the photo's light and texture without the brown/orange cast (R-050, R-103).
+
+**Open:** which section the body-anchored "add motion here" meant was inferred (Your control) and asked.
+
+## 2026-10-09 — Preview version 25: numbers in glass; the footer on a photo
+
+**Founder:**
+- on the numbers bar: *"little darkish gradient kind of background… pop these numbers up in transparent bubbles,
+  like Apple or iOS or Mac style"*. This likely explains the earlier "this background is not suiting our theme": the
+  white bar.
+- on the footer: *"this dark-coloured theme is looking very odd. Can we add a background image here too, or maybe
+  lines that Wispr uses… strips or our trademark."*
+
+**Built:**
+- **Numbers bar:** a dark panel (`#1D2622` → `#0F1513` → `#18221D`) with two soft light pools (lime at the top left,
+  white at the bottom right).
+  - Each number sits in a frosted-glass bubble: 7% white, 16 px blur, a 1 px inner edge, 16 px corners and a 10 px gap.
+  - Numbers are white; "won, by you" is lime `#C2F09A`.
+  - The film's day pill is white on dark.
+  - This is his explicit ask: one glass panel, not glass everywhere (CLAUDE.md "no excessive glassmorphism").
+- **Footer:** the closing panel's approved blurred city photo, under a dark wash (55% → 80%), inside the rounded panel.
+  - Not Wispr's lines (R-097) and not a giant wordmark (R-032, R-092).
+  - Offered: a leaf-mark pattern if he prefers.
+- **Version 26 (thread 348919ea, *"way too dark, make it lighter"*):** the glass bar moved from near-black to a mid
+  slate-green (`#6B7B74` → `#56665F` → `#4E5D57`). It has a soft lime light at the top left, brighter glass (12% white,
+  18% edge), labels at 90% white and "won, by you" in pale green `#DDF8C4`. **Rule:** "darkish" means mid-tone, not
+  near-black.
+- **Version 27:**
+  - **Thread 84ef317b:** the numbers bar shows only the results: Qualified · Booked · Won by you · Time saved.
+    - "Forgotten" was removed at his ask. "Messages caught" was removed to match his list (offered back).
+    - Both cells stay in the DOM, hidden, so the flying-tag animation's cell order is unchanged.
+    - The flights are kept: tag → Qualified/Booked, deal card → Won by you (dollars add up), minutes → Time saved.
+  - **Thread deb079d8:** the footer's bottom-line "Free while in beta" pill is hidden. The hero pill and the close line
+    keep it (asked).
+

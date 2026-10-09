@@ -16,6 +16,8 @@ import { prisma } from "@/lib/db";
 import { createCalendarEvent, getGoogleCalendarBusyTimes } from "@/lib/integrations/gmail";
 import { SLOT_MINUTES, bookingHoursOf, type BookingHours } from "@/lib/bookingHours";
 import { isUniqueViolation } from "@/lib/uniqueViolation";
+import type { Prisma } from "@prisma/client";
+import { bookingWhen, isReady, mergeQualification, readQualification, templateFor } from "@/lib/qualification";
 
 const LOOKAHEAD_DAYS = 10;
 const MIN_NOTICE_MINUTES = 60; // don't offer a slot starting less than an hour out
@@ -148,6 +150,21 @@ type CreateBookingResult =
   | { success: true; scheduledAt: string }
   | { success: false; message: string };
 
+/** Marks the viewing known on the lead's checklist, and stamps the ready moment if that completes it. */
+export async function noteBookingOnChecklist(leadId: string, at: Date, timeZone: string): Promise<void> {
+  const row = await prisma.lead.findUnique({
+    where: { id: leadId },
+    select: { qualification: true, qualifiedAt: true, business: { select: { industry: true } } },
+  });
+  const template = templateFor(row?.business.industry);
+  if (!row || !template) return;
+  const qualification = mergeQualification(template, readQualification(row.qualification), null, [], bookingWhen(at, timeZone));
+  await prisma.lead.update({ where: { id: leadId }, data: { qualification: qualification as unknown as Prisma.InputJsonValue } });
+  if (!row.qualifiedAt && isReady(template, qualification)) {
+    await prisma.lead.updateMany({ where: { id: leadId, qualifiedAt: null }, data: { qualifiedAt: new Date() } });
+  }
+}
+
 /** Books a slot for this lead, re-validating everything server-side rather than trusting the client's slot list. */
 export async function createBooking(leadId: string, scheduledAtIso: string): Promise<CreateBookingResult> {
   const lead = await prisma.lead.findUnique({
@@ -263,6 +280,15 @@ export async function createBooking(leadId: string, scheduledAtIso: string): Pro
     // `nextFollowUp` or a calendar, which is a far smaller problem than a
     // duplicate booking and a no-show.
     console.error(`Booking ${booking.id} committed but post-booking steps failed:`, err);
+  }
+
+  // A booked call is the next step the realtor's checklist waits for
+  // (src/lib/qualification.ts), so it can be what makes a customer ready.
+  // Bookkeeping like the above: never reported to the customer as a failure.
+  try {
+    await noteBookingOnChecklist(lead.id, booking.scheduledAt, lead.business.timezone);
+  } catch (err) {
+    console.error(`Booking ${booking.id} committed but the checklist could not be updated:`, err);
   }
 
   return { success: true, scheduledAt: booking.scheduledAt.toISOString() };

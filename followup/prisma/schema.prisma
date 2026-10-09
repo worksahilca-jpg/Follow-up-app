@@ -934,6 +934,18 @@ model Lead {
   // this" flag: all three can legitimately be null for a language with
   // no register distinction, so a null `language` cannot be the test.
   languageSetAt         DateTime?
+  // What FollowUp has learned about what this customer wants, each item
+  // with the customer's own words as proof — the qualification checklist,
+  // src/lib/qualification.ts. Shape { v: 1, template, items: [{ key,
+  // value, quote, source? }] }. Null for every line of work without a
+  // checklist (all but real estate, for now), and for a lead nothing has
+  // been learned about yet.
+  qualification         Json?
+  // When every item on the checklist first became known: the moment the
+  // owner is told "Nadia is ready". Set once and never moved, so the
+  // alert (src/lib/ownerAlerts.ts) has one stable moment to claim and an
+  // owner is told once per customer, not on every later message.
+  qualifiedAt           DateTime?
   priority              Priority       @default(NONE)
   lastContacted         DateTime?
   nextFollowUp          DateTime?
@@ -1215,6 +1227,8 @@ model Lead {
   // The reactivation batch's "which of this business's quiet leads are cold"
   // scan — see quietOutcome above.
   @@index([businessId, quietOutcome])
+  // The ready alert's "who became ready in the last day" scan.
+  @@index([qualifiedAt])
   @@index([businessId, score])
   @@index([businessId, source])
   // The workflow cron's "which enrolled leads are due right now" scan.

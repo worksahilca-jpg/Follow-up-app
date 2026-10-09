@@ -29,6 +29,8 @@ const h = vi.hoisted(() => ({
   rows: [] as Row[],
   approvals: new Map<string, unknown[]>(),
   leads: [] as { id: string; businessId: string; assignedToId: string | null; createdAt: Date; suggestedDraftedFor: Date | null }[],
+  // Customers whose checklist completed (src/lib/qualification.ts), as the ready scan reads them.
+  ready: [] as Record<string, unknown>[],
   users: [] as { id: string; email: string; businessId: string; role: string; alertEmailEnabled: boolean }[],
   lastReply: new Map<string, Date>(),
   firstInbound: new Map<string, Date>(),
@@ -62,8 +64,9 @@ vi.mock("@/lib/db", () => {
         ),
       },
       lead: {
-        findMany: vi.fn(async ({ where }: { where: { id?: { in: string[] }; lastContacted?: unknown } }) => {
+        findMany: vi.fn(async ({ where }: { where: { id?: { in: string[] }; lastContacted?: unknown; qualifiedAt?: { gte: Date } } }) => {
           if (where.lastContacted) return [];
+          if (where.qualifiedAt) return h.ready.filter((r) => (r.qualifiedAt as Date) >= where.qualifiedAt!.gte);
           return h.leads.filter((l) => where.id?.in.includes(l.id));
         }),
       },
@@ -178,6 +181,7 @@ beforeEach(() => {
   h.rows.length = 0;
   h.approvals.clear();
   h.leads.length = 0;
+  h.ready.length = 0;
   h.lastReply.clear();
   h.firstInbound.clear();
   h.users.length = 0;
@@ -512,5 +516,118 @@ describe("quiet hours", () => {
   it("by the afternoon, the window is the usual six hours again", () => {
     const afternoon = new Date("2026-09-26T19:00:00Z"); // 3 pm Toronto
     expect(newsSince(afternoon, TZ).getTime()).toBe(afternoon.getTime() - ALERT_RECENT_MS);
+  });
+});
+
+describe("\"Nadia is ready\" — the qualification alert", () => {
+  const CHECKLIST = {
+    v: 1,
+    template: "realtor",
+    items: [
+      { key: "want", value: "3 bedrooms near a school", quote: "We need 3 bedrooms, near a good school." },
+      { key: "timing", value: "Moving in March", quote: "Our lease ends in March." },
+      { key: "budget", value: "Pre-approved to $650k", quote: "We're pre-approved up to 650." },
+      { key: "viewing", value: "Saturday at 10:30 AM", quote: "Saturday 10:30 works!" },
+    ],
+  };
+  function addReady(n: number, opts: { industry?: string; stage?: string; minutes?: number; assignedToId?: string | null } = {}) {
+    h.ready.push({
+      id: `lead${n}`,
+      businessId: "biz1",
+      assignedToId: opts.assignedToId ?? null,
+      name: "Nadia Khan",
+      stage: opts.stage ?? "QUALIFIED",
+      qualification: CHECKLIST,
+      qualifiedAt: minutesAgo(opts.minutes ?? 2),
+      business: { industry: opts.industry ?? "Real estate", timezone: "America/Toronto" },
+    });
+  }
+
+  it("tells the owner once, with the viewing and why — never the customer's own words", async () => {
+    addReady(1);
+    const r = await runOwnerAlerts(NOW);
+    expect(r.ready).toBe(1);
+    expect(h.sendPushToUser).toHaveBeenCalledTimes(1);
+    const push = h.sendPushToUser.mock.calls[0][1];
+    expect(push).toEqual({
+      title: "Nadia is ready",
+      body: "Saturday at 10:30 AM · Pre-approved to $650k · Moving in March · 3 bedrooms near a school",
+      url: "/leads/lead1",
+      tag: "ready-lead1",
+    });
+    const [mail] = emails();
+    expect(mail.subject).toBe("Nadia is ready");
+    expect(mail.text).toContain("Budget: Pre-approved to $650k");
+    expect(mail.text).toContain("https://www.followupbase.io/leads/lead1");
+    expect(JSON.stringify(mail)).not.toContain("pre-approved up to 650");
+    expect(h.rows).toMatchObject([{ kind: "ready", leadId: "lead1", emailedAt: expect.any(Date), pushedAt: expect.any(Date) }]);
+
+    h.sendPushToUser.mockClear();
+    fetchMock.mockClear();
+    const again = await runOwnerAlerts(new Date(NOW.getTime() + 60_000));
+    expect(again.ready).toBe(0);
+    expect(h.sendPushToUser).not.toHaveBeenCalled();
+    expect(emails()).toHaveLength(0);
+  });
+
+  it("is the one alert when the same customer is also waiting for a reply", async () => {
+    addCustomer(1, { name: "Nadia Khan" });
+    addReady(1, { minutes: 1 });
+    const r = await runOwnerAlerts(NOW);
+    expect(r.ready).toBe(1);
+    expect(r.customers).toBe(0);
+    expect(h.sendPushToUser).toHaveBeenCalledTimes(1);
+    expect(h.sendPushToUser.mock.calls[0][1].title).toBe("Nadia is ready");
+    expect(emails().map((m) => m.subject)).toEqual(["Nadia is ready"]);
+    // The wait is marked told, so the next tick doesn't announce it either.
+    expect(h.rows.map((row) => row.kind).sort()).toEqual(["customer", "ready"]);
+    h.sendPushToUser.mockClear();
+    await runOwnerAlerts(new Date(NOW.getTime() + 60_000));
+    expect(h.sendPushToUser).not.toHaveBeenCalled();
+  });
+
+  it("still announces a new wait that starts after they became ready", async () => {
+    addReady(1, { minutes: 30 });
+    await runOwnerAlerts(NOW);
+    h.sendPushToUser.mockClear();
+    addCustomer(1, { name: "Nadia Khan" }); // wrote 5 minutes ago, after the ready alert
+    const r = await runOwnerAlerts(NOW);
+    expect(r.customers).toBe(1);
+    expect(h.sendPushToUser.mock.calls[0][1].title).toBe("Nadia is waiting");
+  });
+
+  it("says nothing for a line of work without a checklist, a deal already decided, or old news", async () => {
+    addReady(1, { industry: "Plumbing" });
+    addReady(2, { stage: "WON" });
+    // 11 am in Toronto: the morning window reaches back to 10 pm last night, 13 hours. 14 is old news.
+    addReady(3, { minutes: 14 * 60 });
+    const r = await runOwnerAlerts(NOW);
+    expect(r.ready).toBe(0);
+    expect(h.sendPushToUser).not.toHaveBeenCalled();
+    expect(h.rows).toHaveLength(0);
+  });
+
+  it("waits for the morning at night, claiming nothing", async () => {
+    const night = new Date("2026-09-25T06:00:00Z"); // 2 am Toronto
+    h.ready.push({
+      id: "lead1",
+      businessId: "biz1",
+      assignedToId: null,
+      name: "Nadia Khan",
+      stage: "QUALIFIED",
+      qualification: CHECKLIST,
+      qualifiedAt: new Date(night.getTime() - 60_000),
+      business: { industry: "Real estate", timezone: "America/Toronto" },
+    });
+    const r = await runOwnerAlerts(night);
+    expect(r.ready).toBe(0);
+    expect(h.rows).toHaveLength(0);
+  });
+
+  it("goes to the assignee alone when someone is assigned", async () => {
+    h.users.push({ id: "agent2", email: "agent@shop.test", businessId: "biz1", role: "SALES", alertEmailEnabled: true });
+    addReady(1, { assignedToId: "agent2" });
+    await runOwnerAlerts(NOW);
+    expect(h.sendPushToUser.mock.calls.map((c) => c[0])).toEqual(["agent2"]);
   });
 });

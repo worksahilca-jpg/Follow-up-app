@@ -198,3 +198,82 @@ owners with their permission. Never AI-generated pictures, in any style.
 information."* Show, don't tell, section by section: each point gets something to look at or play with (a control to
 drag, a moment that plays, a photo card), and the words shrink to labels. Facts still need sources; they just arrive
 inside the picture, not as a list.
+
+**Added 2026-10-09, founder:** *"We'll be leaning more towards Mac or iOS, or Apple's thing… if we use their style, we
+might be able to connect with the users more impactfully, rather than just explaining to them."* Familiar beats
+explained: show the visitor things they already know from their own phone (home-screen app icons, notifications, the
+device's own font, the chat bubble colours of the app the message came from). Borrow the platform's language, never a
+company's whole screen (R-029, references are principles).
+
+## Learned 2026-10-09 (home page comments)
+
+- **Guarantees and facts never move.** *"Don't scroll them, don't slide them. It should be readable, so they should get
+  to know in just one second."* Anything a visitor must trust (data promises, privacy points, prices) is static and
+  readable in one glance.
+- **Use the apps owners know.** *"do not try to use the webhook logo. Use… WhatsApp, Gmail, Instagram, Messenger, so that
+  they can relate."* Show familiar channels, not abstract or technical icons.
+- **Motion speaks Apple.** *"everything should follow iOS- and Mac-based transition themes… I don't want any
+  out-of-the-box animation."*
+  - One damped spring (cubic-bezier(.32,.72,0,1)), 0.35–0.6 s, no overshoot or wobble.
+  - Badges, notifications and sent messages behave the way they do on an iPhone or a Mac.
+- **Every number moves for a visible reason.** A counter only changes when something visibly lands on it, and the thing
+  that lands carries the counter's own name ("Qualified" lands on "qualified").
+
+- **Scroll, not drag (2026-10-09).** *"nobody will be dragging this."* A picture that only tells its story when someone drags a control will go unseen. Drive it with the scroll, and keep dragging as an extra.
+
+## No two neighbouring sections in the same format (2026-10-09)
+
+**On hold:** the first attempt (v119) was reverted; apply this only to the sections he names, the way he describes.
+
+The founder: *"we are using the same background box style format for every single page… be more creative."* A page
+where every section is the same box reads like a template, however good each box is. Before adding a section, look at
+the one above and the one below. Pick a different format: a photo card, open on the page, the product on its own, art,
+or a short scene that plays. Keep photo cards for the places they earn it. See R-094.
+
+## On dark, go bigger and brighter than the contrast check asks (2026-10-09)
+
+He flagged dark areas as "not readable" three times in one day: the dark message cards, "too dark", and the footer.
+Each one passed or nearly passed the contrast check. On a dark ground, use at least 16px for anything meant to be read,
+and near-white text, not soft grey. Keep small labels for real labels only.
+
+
+## It must never sound like a CRM, and never like software you have to learn (2026-10-09)
+
+**Founder, in chat:** *"we also have to show the key features too right, it should not sound like a crm"* and *"it
+should sound like they don't have to learn this software, it's quick and easy to learn"*. He also said the page needs
+a strategy: show how we help, what makes FollowUp unique, and convert straight away ("this is the product they
+wanted").
+
+- **Not a CRM.** No CRM words on the page: CRM, pipeline, contacts, deals, dashboard, workflow, sequences, fields,
+  integrations. Use the owner's words: customers, messages, replies, your inbox, booked, closed. Features are named by
+  what they *do for the owner* ("answers every message", "follows up until they reply"), never by module.
+- **Nothing to learn.** Every feature is shown working, never explained as a setting. The setup claim stays true and
+  plain: connect your inbox once and it starts working. One question a day replaces a setup form.
+- **Key features are shown, not listed.** Each feature gets its own small picture of the product doing it.
+
+## One second per section (2026-10-09)
+
+**Founder, on the preview:** *"too much information. I will just look for a sec and I will move on. I want you to make
+it understood, or catch the attention of the user, in that one sec."*
+- **Rule:** each section must make its point in one glance, with one big line and one picture. Everything else is for
+  people who stay: the playing conversation, the details. If a section needs a paragraph to be understood, the picture
+  is wrong.
+- **First applied:**
+  - Nadia's week became "Two endings." with "Lost by tomorrow." in red and "Booked by Thursday." in green.
+  - "What it does" dropped its description lines.
+
+## Lean toward the win, but every number must be true (2026-10-09)
+
+**Founder, on the hero numbers:** *"make this dashboard more accurate, not just a clickbait; lean towards it but it
+should be true."*
+- Example numbers must be believable for one small business in one week.
+- Never credit FollowUp with what the owner does. Deals are "done, by you"; FollowUp catches, answers, follows up and
+  books.
+- Counters that run live must stop at a plausible total, never climb forever.
+- Prefer a promise FollowUp keeps by design ("0 forgotten") over a big money figure it can't prove.
+
+## The home page has 4–5 sections, no more (2026-10-09)
+
+**Founder:** *"we just have to make 4 to 5 sections only."* Every extra section must replace one, not add to them. If
+a section's answer already lives elsewhere on the page (FAQ, "nothing to learn"), fold it in as one line.
+

@@ -2178,3 +2178,11 @@ Partly supersedes the ordering in A-123; "in your customer's language" (A-121) i
 **Direction:** 2026-10-09, founder: *"Then here, we will be showing how user-friendly we are. That's a good point, but
 we'll be updating this dashboard here. We'll be keeping this concept too."* The section stays; the app screen in it
 is replaced once he has updated the dashboard. Don't redesign it before then.
+
+## A-130 — The first-screen words, as they stand in v31 ^A-130
+
+**Approved:** 2026-10-09, founder, with a screenshot of the first screen: *"This text looks good bro."* What the
+screenshot shows, word for word: the "Free while in beta" pill; the headline "Never lose a lead *because you forgot to
+follow up.*" (second half in green italic); the label "Try it yourself" with "Type a question, as if you were a
+customer."; the "Or tap one:" questions; "Ask in English, Punjabi, Hindi, French or Spanish." Keep these words; change
+them only when he asks.

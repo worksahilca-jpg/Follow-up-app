@@ -640,3 +640,21 @@ What this adds:
 What is built and what isn't is tracked in `research/product/website-promises-to-build.md`. The founder asked that
 anything the site promises which the app doesn't do yet goes on that list.
 
+## The funnel: from first message to booked (founder, 2026-10-09)
+
+> "We have to make the qualification process so accurate… I don't think the owner will be able to reply to every
+> single one… We'll be creating the funnel to qualify the leads that the business owner wants… That's why it is going
+> to save time for the user."
+
+1. Leads come in.
+2. We catch the correct lead: is it even a lead or not?
+3. We reply from the owner's perspective, voice and tone, to qualify the lead.
+4. The qualification process starts; FollowUp handles it.
+5. We qualify accurately; if they don't reply, we follow up again and again.
+6. We hand the hot lead to the owner to close the deal.
+7. We get the lead to the endpoint: a booked call, meeting or visit.
+
+> "That's the main job… We can't make any mistakes in qualifying the leads."
+
+Research and the proposed build: `research/product/2026-10-09-lead-qualification-strategy.md`.
+

@@ -2339,3 +2339,10 @@ behind the week; a Naples alley at night 1879096924 on "You decide what it sends
 behind "Your data stays yours"; a lit restaurant door 392339565 on "What it learns stays yours"; a Paris café terrace
 542067500 on the closing card; the dark New York night scene (260838977) unchanged. Manhattan at evening 307866397 is
 kept for the How-it-works stage. Two more picks from the first grid weren't visible in the recording.
+
+## A-146 — The top bar, v50 ^A-146
+
+**Direction:** 2026-10-09, founder: *"We still can improve this part."* (after R-066/R-068). v50: a plain row 76px tall
+(64px once scrolled, with a see-through ground and a hairline); links at 15px in full ink, medium weight; the current
+section marked by a small green dot under its link; on the right two buttons of equal height, "Sign in" outlined and
+"Start free" filled. On phones, Start free only.

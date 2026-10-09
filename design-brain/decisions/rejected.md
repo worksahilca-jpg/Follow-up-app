@@ -1069,3 +1069,11 @@ overlapping sheets of A-139 (the per-topic layouts stay). **Instead:** wait for 
 be that very dark, but it should be colourful… the city pictures."* The desaturated cool grade read as black and white.
 **Instead (v47):** each city photo rebuilt from its original in its own colour, a little darker, nudged slightly cool
 so warm walls don't go brown (A-143).
+
+## R-075 — The "missed, then caught" message cards around the headline (v42) ^R-075
+
+**Rejected:** 2026-10-09, founder: *"We should not show this. This doesn't make any sense, but it is good that we are
+showing messages. Keep it very light in the background, with blur, and keep it kind of moving."* Six readable
+notification cards that went from "No reply yet" to "✓ Answered". **Instead (v50):** the same messages as soft,
+blurred, light cards drifting slowly behind the headline, with no statuses or times. Not the scrolling rows of R-047:
+each floats on its own.

@@ -469,3 +469,11 @@ every 150 px, plus a 100 px pass through the hand-over, along with the page's ow
 photo card stays in the centre for about seven screens while the green room lifts away (its edge rounds from 0 to
 80 px) and the next title passes behind it. Six techniques are recorded. →
 [[landing-page/2026-10-09-wispr-scroll-read]]
+
+**2026-10-09: the whole app, simple and learnable.** Founder: *"research about user friendly and easy to learn design
+of the whole product, to the point, minimal and simple"*, and *"we will be using this same theme"* inside. The app was
+measured on desk and phone: Customers has 24 controls and 309 words for 17 people. Learnability research was read:
+the paradox of the active user, training wheels, recognition over recall, Tesler's law. Finding: the skeleton is
+right (two places, one reply card, undo, safe defaults). What's left is consistency (two vocabularies; the wash R-058
+rejected), Customers' extra ways to look, icons with no words, and one designed moment at the end of the day. Eight
+proposals for drawing and a five-task test. → [[ux-patterns/2026-10-09-whole-app-simple-and-learnable]]

@@ -10956,3 +10956,38 @@ nowhere, no social proof that doesn't exist).
 - The phone bar doesn't play the film.
 - Several photos in `public/landing/` are referenced only by rules no element uses. They are never downloaded, but
   they sit in the repo.
+
+## 2026-10-09 — The inside, drawn in the homepage's look (A-208)
+
+**Founder:** *"yes draw it, use the homepage words, just make sure nothing contradicts with the old research too."*
+
+**How it was drawn:** following the followup-design skill's draw-first rule, the changes were injected into the real app
+(local build, the test account's example customers) with Playwright (`prototypes/2026-10-09-app-inside/draw-on-the-app.cjs`)
+and shot before and after at 1280 px and 390 px. Board: https://claude.ai/artifact/F12ZLs1H4UBdCWRtumdRvg.
+
+**What's drawn:**
+- **One headline per screen:** the homepage's display face, with the human phrase in green italic. Desk and phone say the
+  same thing: "15 customers *need you.*"
+- **The reply card:** the peach-and-blue wash becomes soft green (`#F3F8F4`, edge `#DCEBE1`, label `#2A5A47`), as R-058
+  asked. Send stays the one black button.
+- **Customers:**
+  - tabs with nobody in them hide;
+  - on the desk, six columns become four: the channel icon sits beside the name, and the wait beside "Needs you";
+  - icons get words: Alerts, More, Add.
+- **Done for today:**
+  - desk: the homepage's slate glass results bar, with the account's real week (answered, qualified for realtors,
+    booked, and won by you when a deal is marked won);
+  - phone: one line (R-015).
+
+**Checked against earlier decisions:** a table on the board lists each change, the decision it touches, and whether it
+is unchanged, follows the founder's instruction, or needs his yes. Three need his yes:
+- the reply colour vs A-090;
+- the icon words vs A-089;
+- the serif in the app vs the design guide's "never in the app" line. Your "same theme" ask covers this one; the
+  guide gets updated if approved.
+
+**Weak, honestly:**
+- "Alerts" shortens the business name in the desk sidebar.
+- Checking in, Qualified and Booked aren't seen on a screen, because the test account has only "Needs you" customers.
+- Settings isn't redrawn.
+- The display face is a new font inside the app.

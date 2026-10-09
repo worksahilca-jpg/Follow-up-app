@@ -3319,3 +3319,27 @@ into the app"):
 
 **Status:** built in the app (src/landing/home.html). The phone and tablet fixes made with it (the results bar on
 phones, the bar's buttons on the right, notifications as rows) await his look.
+
+## A-208 — The inside in the homepage's look, with the homepage's words (direction) ^A-208
+
+**Approved (direction):** 2026-10-09, founder: *"yes draw it, use the homepage words, just make sure nothing contradicts
+with the old research too"*, on `research/ux-patterns/2026-10-09-whole-app-simple-and-learnable.md`.
+
+**What specifically:**
+- The app is drawn in the homepage's type, colour and words.
+- **Words:** the app's state words become the homepage's:
+  - Going quiet → Checking in;
+  - Waiting and Up to date → Answered;
+  - Ready (realtors) → Qualified;
+  - plus Booked;
+  - Needs you and Won stay.
+- **Dots:** A-029's colours and weights stay. Only "Needs you" is bold.
+- "Time saved" stays out of the app until it can be measured truthfully (my recommendation; not contradicted).
+
+**Drawn:** `prototypes/2026-10-09-app-inside/` (https://claude.ai/artifact/F12ZLs1H4UBdCWRtumdRvg). Today, the done
+moment, Customers and a customer, on desk and phone, drawn over the real app.
+
+**Status:** the drawings await his reaction, with three questions open:
+- the reply on soft green, which would replace A-090's gradient line;
+- "Alerts" on the desk or only on the phone;
+- the "Ready" pill becoming "Qualified".

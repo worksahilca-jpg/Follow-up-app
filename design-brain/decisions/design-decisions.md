@@ -10360,3 +10360,11 @@ Design points 4–14 are built on the draft ([[approved#^A-186]]). Still to do:
 - **The ticker** is a dark band, centred.
 - Details: A-191.
 
+## 2026-10-09 — Home v109–v111: page-turn slides, tidier control, dark footer
+
+- **How it works:** slides turn like pages (no blending) and highlight each part as you scroll.
+- **Your control:** separates the main card from the promises and drops the dead space.
+- **The footer:** becomes its own dark ground with a lime invitation ("Built with the owners who use it.") and a
+  faint wordmark.
+- Details: A-192.
+

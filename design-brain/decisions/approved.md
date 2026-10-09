@@ -2994,3 +2994,22 @@ handles.
 **Answered, not built (thread d1a8a657):** a website can't read the visitor's browser profile or photo. Their Google
 photo can show inside the app after Google sign-in.
 
+## A-192 — Home v109–v111: page-turn slides with highlighted parts, tidier control, a dark footer ^A-192
+
+**Direction:** 2026-10-09, founder, in artifact comments (published as Version 87).
+
+**Built:**
+- **How it works (thread ab16d8ec).**
+  - Slides no longer cross-fade. The current one leaves up-left and the next arrives from the bottom-right, both
+    fully visible and clipped by the box.
+  - Inside each slide, scroll walks through its parts: the current part grows 6% with a green edge, earlier parts
+    stay clear, later ones wait dimmed.
+  - Each step gets 60% of a screen of scroll.
+- **Your control (thread 9adfbbd0).** The photo is 600 px. "The main thing" is at the top-left and "Pause all sending"
+  at the top-right. The promises panel sits lower with space between, still reaching under the heading.
+- **Footer.**
+  - Thread 5a3bde75: the label is "Follow us".
+  - Thread f5143218: a dark, full-width base in the ticker's near-black green.
+  - The ideas tile is lime: "Built with the owners who use it." + "Share an idea". "Follow us" is an outlined tile.
+  - The links are light on dark, with a large faint "FollowUp" sign-off.
+

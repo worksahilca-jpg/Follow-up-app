@@ -141,17 +141,12 @@ describe("the guarantee on a holding account", () => {
  * against the live code and fixed 2026-09-22.
  */
 /**
- * The landing page's words live in page.tsx and the three client pieces it
- * renders (src/components/landing/v2, A-053 → A-060, A-063), so the copy
- * checks read all four together.
+ * The landing page's words: one document since 2026-10-09
+ * (src/landing/home.html, served by src/app/route.ts; A-204 → A-206).
+ * Until then they lived in page.tsx and the three client pieces it
+ * rendered (A-053 → A-060, A-063).
  */
-const LANDING_FILES = [
-  ["app", "page.tsx"],
-  ["components", "landing", "v2", "WatchDemo.tsx"],
-  ["components", "landing", "v2", "Pricing.tsx"],
-  ["components", "landing", "v2", "Questions.tsx"],
-];
-const landingSource = () => LANDING_FILES.map((parts) => readFileSync(join(__dirname, "..", "..", ...parts), "utf8")).join("\n");
+const landingSource = () => readFileSync(join(__dirname, "..", "..", "landing", "home.html"), "utf8");
 
 describe("what the landing page promises about team routing", () => {
   const landing = () =>
@@ -168,31 +163,10 @@ describe("what the landing page promises about team routing", () => {
     ).not.toMatch(/right person/i);
   });
 
-  it("still says what actually happens, rather than dropping the claim", () => {
-    // Deleting the sentence would pass the assertion above and tell a
-    // visitor with a team nothing. The honest version is the fix.
-    expect(landing(), "the landing page no longer explains team assignment at all").toMatch(
-      /shared out evenly/i
-    );
-  });
-
-  it("names the pool, the one case where a lead reaches nobody", () => {
-    // routeToPool leaves assignedToId null on purpose. A visitor told
-    // only about even sharing would be surprised by a lead sitting
-    // unassigned, so the FAQ carries the second half.
-    expect(landing(), "the FAQ does not mention the shared list anyone can claim").toMatch(
-      /shared list anyone can pick up/i
-    );
-  });
-
-  it("keeps the claim out of the paid tier's feature list too", () => {
-    // The Pro list is the copy a customer would quote back. Asserted
-    // separately because a page-wide match could pass on the other three
-    // being fixed while this one lingers.
-    const pro = landing().slice(landing().indexOf("Everything in Plus, plus:"));
-    expect(pro, "the Pro tier still sells routing to the right person").not.toMatch(/right person/i);
-    expect(pro, "the Pro tier no longer says what team assignment does").toMatch(/shared out evenly/i);
-  });
+  // The page of 2026-10-09 has no team section, FAQ or paid tiers, so the
+  // honest explanation that lived there ("shared out evenly", "a shared
+  // list anyone can pick up", the Pro list) has nothing to explain. What
+  // has to hold is the negative above: no routing promise comes back.
 });
 
 /**
@@ -229,19 +203,26 @@ describe("what the landing page says about sending", () => {
     );
   });
 
-  it("the FAQ names the choice, both ways", () => {
-    const faq = landingCopy().slice(landingCopy().indexOf("Will it send things on its own?"));
-    expect(faq, "the FAQ no longer says sending on its own is the owner's choice").toMatch(/If you choose Automatic when you set up/i);
-    expect(faq, "the FAQ no longer offers the way to check everything").toMatch(/Choose Assisted/i);
+  // The page of 2026-10-09 says it in its "You stay in charge" section,
+  // with the setting itself drawn as it is in Settings, instead of an FAQ.
+  it("names the choice: sending on its own, asking first, or off", () => {
+    const control = landingCopy().slice(landingCopy().indexOf("You stay"));
+    expect(control, "the page no longer shows how sending is chosen").toMatch(/How it sends/);
+    for (const choice of ["Auto", "Ask me", "Off"]) {
+      expect(control, `the sending choice lost "${choice}"`).toContain(`>${choice}<`);
+    }
+    expect(control, "the page lost the pause").toMatch(/Pause everything/);
   });
 
   it("never drops the decisions guarantee", () => {
-    const faq = landingCopy().slice(landingCopy().indexOf("Will it send things on its own?"));
-    expect(faq, "the FAQ lost the price/date/tense guarantee").toMatch(/A price, a date or anything tense comes to you first/i);
-    // Said once, in the hero's first line (A-063: each promise once), and
-    // shown in the demo, where the price comes to the owner.
-    expect(landingCopy(), "the hero lost the guarantee").toMatch(/When something needs your decision, like a price or a date, it hands it to you/i);
-    expect(landingCopy(), "the demo no longer shows the price coming to the owner").toMatch(/It comes to you, reply written/i);
+    // Said in the first screen, and again where the rules are.
+    expect(landingCopy(), "the first screen lost the guarantee").toMatch(/Asks you before quoting a price or a date/);
+    expect(landingCopy(), "the rules lost the guarantee").toMatch(/Prices and dates ask you first/);
+  });
+
+  it("does not claim nothing ever sends unasked", () => {
+    // False on Automatic, and the holding message sends on every account.
+    expect(landingCopy(), "the page promises every message waits").not.toMatch(/nothing (sends|is sent) without your (ok|okay|approval)/i);
   });
 
   it("does not promise a per-customer fully-automatic mode", () => {

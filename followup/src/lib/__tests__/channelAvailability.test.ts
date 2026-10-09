@@ -43,12 +43,18 @@ describe("dropped channels", () => {
     // them is recorded — so every comment form has to come out first,
     // including multi-line {/* ... */} JSX blocks, which a line-by-line
     // filter silently misses on its continuation lines.
-    const copy = read("app/page.tsx")
+    // The home page is one document since 2026-10-09 (src/app/route.ts).
+    const copy = read("landing/home.html")
       .replace(/\{\/\*[\s\S]*?\*\/\}/g, "")
       .replace(/\/\*[\s\S]*?\*\//g, "")
       .replace(/^\s*\/\/.*$/gm, "");
 
     expect(copy).not.toMatch(/SMS/);
+    // The page's own channel list: the strip of app icons in the demo, the
+    // order the demo's messages arrive in, and the example customers.
+    expect(copy, "the demo's From strip shows text messages").not.toMatch(/<i data-ch="sms"/);
+    expect(copy, "a demo message arrives by text").not.toMatch(/FU_CH_LIST = \[[^\]]*'sms'/);
+    expect(copy, "an example customer writes by text").not.toMatch(/\["sms", |\['sms', |"ch": "sms"/);
     // "Twilio" is vendor jargon that stood in for SMS on the logo row. It
     // goes whether or not carrier channels come back — a visitor does not
     // buy Twilio.
@@ -57,7 +63,7 @@ describe("dropped channels", () => {
   });
 
   it("still names the channels that do work", () => {
-    const landing = read("app/page.tsx");
+    const landing = read("landing/home.html");
     for (const live of ["Gmail", "Outlook", "Instagram", "Messenger", "WhatsApp"]) {
       expect(landing).toContain(live);
     }
@@ -103,11 +109,8 @@ describe("the landing page's components make the same promises as the page", () 
     "../src/components/landing/dark/NavDark.tsx",
     "../src/components/landing/dark/FaqDark.tsx",
     "../src/components/landing/dark/StickyCta.tsx",
-    // The page rebuilt from the canvas (A-053 → A-060, A-063).
-    "../src/app/page.tsx",
-    "../src/components/landing/v2/WatchDemo.tsx",
-    "../src/components/landing/v2/Pricing.tsx",
-    "../src/components/landing/v2/Questions.tsx",
+    // The home page, one document since 2026-10-09 (A-204 → A-206).
+    "../src/landing/home.html",
   ];
   const visible = (p: string) =>
     read(p)
@@ -155,19 +158,15 @@ describe("the landing page's components make the same promises as the page", () 
   });
 
   /**
-   * The pill says "Soon"; a visitor deciding whether to sign up needs to
-   * know what happens to their phone in the meantime. Without this the
-   * mark is decoration — they still find out after signing up, which is
-   * the failure described at the top of this file.
+   * The pill says "Soon" on the old hero above; a visitor deciding whether
+   * to sign up needs to know what happens to their phone in the meantime.
+   * The home page since 2026-10-09 has no FAQ to answer that, so it must
+   * not raise the question: it names no phone line or missed call at all.
    */
-  it("answers what 'Soon' means where a visitor will look", () => {
+  it("does not offer the phone line on the home page", () => {
     if (CARRIER_CHANNELS_AVAILABLE) return;
-    // The FAQ moved into its own component with the rebuilt page (A-060).
-    const faq = read("components/landing/v2/Questions.tsx");
-    expect(faq, "the FAQ does not mention the phone at all").toMatch(/phone/i);
-    expect(faq, "the FAQ does not say the phone line is not picked up yet").toMatch(
-      /nothing on your phone line is picked up/i
-    );
+    const home = visible("../src/landing/home.html");
+    expect(home, "the home page offers the phone line, which is not picked up yet").not.toMatch(/phone line|missed call/i);
   });
 });
 

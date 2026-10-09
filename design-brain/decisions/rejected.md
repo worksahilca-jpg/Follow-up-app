@@ -1296,3 +1296,28 @@ can use so they get to know what we do"*, then *"keep it simple, minimal and to 
 asked for a new format. *Inferred:* six framed notes, each with a title, read as six things to study rather than one
 idea. **Instead:** one list that ticks itself off (A-206).
 
+## R-102 — A tonal gradient from the page into the footer ^R-102
+
+**Rejected:** 2026-10-09, founder: *"gradient looks bad."* This was a 270 px fade from page ground through green into the
+dark footer (preview v21), built because the hard cut "feels like landing on a different website". **Instead:** the
+footer is one more rounded panel (36 px top corners, 12 px from the screen edges). **Do not propose again:** gradients as
+section transitions on the home page.
+
+## R-103 — Green on every surface (the page "feels like WhatsApp") ^R-103
+
+**Rejected:** 2026-10-09, founder: *"we are using green everywhere, can we use other approved colours too?… it feels like
+I'm using WhatsApp."* Up to v21, green was on every surface:
+- the numbers bar was light green;
+- the replies were green chat bubbles;
+- the ticks, the times and the closing panel were green.
+
+**Principle:** green is a meaning (sent, booked, won, the good ending) and the headline accent, never a surface. Green
+reply bubbles in particular read as WhatsApp.
+**Instead (v22):**
+- surfaces are white, the page ground and ink;
+- FollowUp's replies are ink bubbles;
+- ticks and times are ink;
+- the numbers bar and the close are white;
+- green stays on the headline accent, booked/won/sent tags, "$ won, by you", "9 min" and the closed card;
+- lime stays the tiny accent (A-136).
+

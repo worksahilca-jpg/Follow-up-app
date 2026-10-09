@@ -10892,4 +10892,8 @@ hard cut to a dark footer both read as "a different website".
 - **Footer:** the closing panel's approved blurred city photo, under a dark wash (55% → 80%), inside the rounded panel.
   - Not Wispr's lines (R-097) and not a giant wordmark (R-032, R-092).
   - Offered: a leaf-mark pattern if he prefers.
+- **Version 26 (thread 348919ea, *"way too dark, make it lighter"*):** the glass bar moved from near-black to a mid
+  slate-green (`#6B7B74` → `#56665F` → `#4E5D57`). It has a soft lime light at the top left, brighter glass (12% white,
+  18% edge), labels at 90% white and "won, by you" in pale green `#DDF8C4`. **Rule:** "darkish" means mid-tone, not
+  near-black.
 

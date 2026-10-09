@@ -1321,6 +1321,19 @@ reply bubbles in particular read as WhatsApp.
 - green stays on the headline accent, booked/won/sent tags, "$ won, by you", "9 min" and the closed card;
 - lime stays the tiny accent (A-136).
 
+**Recurred (2026-10-09, after go-live):** founder: *"when I am landing on the page I feel like it's a WhatsApp
+website."* The v22 fix took green off the surfaces lower down, but the first screen still says WhatsApp. Likely causes
+*(inferred, not yet confirmed by him)*, strongest first:
+1. **The try box is WhatsApp's composer:** their green logo on the left, their placeholder "Type a message...", and a
+   round black send arrow on the right. It's the most recognisable shape on the screen, at the moment of landing.
+2. **Green is still the first screen's main colour:** the italic headline, the "Free while in beta" pill, the sage glass
+   results bar and the green "Qualified" chips, all in the first 600 px.
+3. The drifting messages and the demo label carry WhatsApp icons.
+
+**Principle:** the first screen must read as FollowUp before it reads as any channel. A channel's logo, colour or
+composer is never the dominant shape on screen; channels appear as a small row of equals, never as the frame.
+**Status:** a redraw of the first screen is being drawn for his yes (the try box is an approved piece, v117).
+
 ## R-104 — Recolouring the photo backgrounds ^R-104
 
 **Rejected:** 2026-10-09, founder: *"don't change the bg photo bro, that was good."* In v23 I blended the "Try it yourself"

@@ -2578,3 +2578,12 @@ side with Marcus's same 7:02 AM question. Without FollowUp: no reply that day, a
 the next day, "Thanks, already got someone", "✕ The job went to whoever answered first". With FollowUp: the reply at
 7:03 answering exactly what he asked, his yes, "✓ Booked for 2 PM". One line of highlighted facts above. Plays once.
 
+## A-170 — Say each thing once (v72) ^A-170
+
+**Direction:** 2026-10-09, founder: *"let me know also if we are repeating any information"*, then *"yes go ahead"* on four
+cuts: the 7× / 60× / 21× boxes under the reply panel removed (the figures stay once, above it); How it works step 3
+keeps its title and one line plus "See a real week below ↓" (the week tells Jordan's story once); "your OK" stays in step
+4 and "You stay in charge" (the line by the reply panel's button lost it); "63%" stays under the headline only (above
+the chats: "Most businesses miss that window."). **Rule:** before adding a fact or example, search the page for it; if
+it is already there, point to it instead of saying it again.
+

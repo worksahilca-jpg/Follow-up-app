@@ -62,7 +62,7 @@ td.old { color: var(--faint); text-decoration: line-through; text-decoration-col
 
 <div class="page">
   <header>
-    <p class="label">FollowUp · the app, redrawn · drawing, nothing built</p>
+    <p class="label">FollowUp · the app, redrawn · version 2 · drawing, nothing built</p>
     <h1>The inside, in the <em>homepage's look.</em></h1>
     <p class="lede">These are the real app screens: on the left as they are today, on the right drawn over them. Same layout, same buttons and the same order, with the homepage's type, colour and words. The customers are the local test account's examples.</p>
     <div class="summary">
@@ -73,6 +73,46 @@ td.old { color: var(--faint); text-decoration: line-through; text-decoration-col
       <div><b>One good ending</b><span>When nobody needs you, Today shows your real week in the homepage's glass bar.</span></div>
     </div>
   </header>
+
+  <section id="strategy">
+    <div class="head"><p class="label">The strategy · version 2</p><h2>Four places, each built on an app you <em>already use.</em></h2>
+      <p>Each place has one job. Each works like an app the owner opens every day, so there's nothing to learn. We borrow how those apps work, not how they look: copying a screen is against our rules, and the pattern is what makes it easy.</p></div>
+    <div class="scroll"><table>
+      <thead><tr><th>Place</th><th>Its one job</th><th>Works like</th><th>On the screen, at most</th></tr></thead>
+      <tbody>
+        <tr><td><b>Today</b></td><td>What needs me now</td><td>A to-do app's "Today", plus a message already written and waiting for Send</td><td>One customer, their message, the reply, Send · Edit, then "Next". "All done" at the end.</td></tr>
+        <tr><td><b>Customers</b></td><td>Who all my customers are</td><td>WhatsApp's chat list; the phone's Contacts</td><td>Search, one list in order of who needs you; tap a name for the chat</td></tr>
+        <tr><td><b>Results</b></td><td>What FollowUp did for me</td><td>A bank app's balance; the phone's weekly Screen Time report</td><td>One sentence, four numbers beside last week, one 8-week chart. Real numbers only.</td></tr>
+        <tr><td><b>Settings</b></td><td>Change how it works</td><td>The iPhone's Settings</td><td>Grouped rows, one line each, switches for on/off; the one broken thing on top</td></tr>
+      </tbody>
+    </table></div>
+    <ul class="notes">
+      <li><b>The Wispr Flow lesson.</b> Wispr works inside the apps you already use; its own app is a quiet hub (your stats, your words, your style), and setup has you try it in a real app. For us: a phone alert opens straight to the reply with Send, replies go out from your own Gmail or WhatsApp, and setup ends on a real or practice customer, never a tour.</li>
+      <li><b>Results is the "Numbers" page we already have,</b> hidden under Settings today, back in the menu. Menu: Today · Customers · Results · Settings, each with a word.</li>
+      <li><b>Every screen keeps 10 rules from the Laws of UX:</b> one job, each fact said once, one black button, a word on every icon, machinery behind "Details", real numbers or none, and the desk follows the phone.</li>
+    </ul>
+  </section>
+
+  <section id="today-two">
+    <div class="head"><p class="label">Today · two ways to make it simpler</p><h2>A: fewer repeats. B: one customer <em>at a time.</em></h2>
+      <p>A keeps today's layout and removes the lines that say the same thing again. B gives the desk the phone's shape: the next customer and their reply, then "Next". Everyone else is one tap away in Customers.</p></div>
+    <div class="pair">
+      <figure><img src="img/d-today-simple.webp" alt="Option A: Today with the list and the open reply, repeated lines removed." loading="lazy"><figcaption><b>A, fewer repeats.</b> 239 → 213 words, 17 controls.</figcaption></figure>
+      <figure><img src="img/d-today-one.webp" alt="Option B: Today showing one customer and their reply, with a 'Next: Owen Shah, 17 days, See all 15' line." loading="lazy"><figcaption><b>B, one at a time.</b> 239 → 102 words, 17 → 9 controls. My pick.</figcaption></figure>
+    </div>
+    <div class="pair phone">
+      <figure><img src="img/m-today-one.webp" alt="Option B on a phone: one customer, then the Next line." loading="lazy"><figcaption><b>B</b>, phone. The rows below wait behind "See all".</figcaption></figure>
+    </div>
+  </section>
+
+  <section id="results">
+    <div class="head"><p class="label">Results · what FollowUp did for you</p><h2>It already exists. It's just <em>hidden.</em></h2>
+      <p>The "Numbers" page is built and honest: it shows only your own records and nothing estimated. Today it sits under Settings › Everything else. In the new menu it becomes Results, redrawn in the homepage's look with the homepage's words: answered · qualified · booked · won by you.</p></div>
+    <div class="pair">
+      <figure><img src="img/d-results-now.webp" alt="The current Numbers page: how fast customers heard back, answered, came back and booked beside last week, and an 8-week chart." loading="lazy"><figcaption><b>Now</b>, laptop. Next to draw, if you say yes.</figcaption></figure>
+      <figure style="max-width:330px"><img src="img/m-results-now.webp" alt="The current Numbers page on a phone." loading="lazy"><figcaption><b>Now</b>, phone.</figcaption></figure>
+    </div>
+  </section>
 
   <section id="today">
     <div class="head"><p class="label">Today · where you spend the day</p><h2>Who needs you, and the reply ready to send.</h2>
@@ -170,8 +210,10 @@ td.old { color: var(--faint); text-decoration: line-through; text-decoration-col
   </section>
 
   <section id="questions">
-    <div class="head"><p class="label">Your call</p><h2>Three quick questions.</h2></div>
+    <div class="head"><p class="label">Your call</p><h2>Five quick questions.</h2></div>
     <ol class="qs">
+      <li><b>Four places,</b> with Results back in the menu? I'd say yes.</li>
+      <li><b>Today B, one customer at a time,</b> or A, the list with fewer repeats? I'd pick B.</li>
       <li><b>Reply on soft green:</b> yes? It replaces the peach-and-blue wash everywhere in the app.</li>
       <li><b>"Alerts" on the desk too,</b> or on the phone only? I'd say phone only, so the business name stays readable.</li>
       <li><b>Realtors' "Ready" pill becomes "Qualified":</b> yes? The alert sentence "Nadia is ready" stays.</li>

@@ -477,3 +477,18 @@ the paradox of the active user, training wheels, recognition over recall, Tesler
 right (two places, one reply card, undo, safe defaults). What's left is consistency (two vocabularies; the wash R-058
 rejected), Customers' extra ways to look, icons with no words, and one designed moment at the end of the day. Eight
 proposals for drawing and a five-task test. → [[ux-patterns/2026-10-09-whole-app-simple-and-learnable]]
+
+**2026-10-09: the app strategy, four places built on apps people already use.** Founder: *"make a strategy with the help
+of references and the laws… copy the stuff that is on the market and is used on a regular basis… an analytics
+dashboard… what they need to do should be in Today"*, and *"make them feel like they are using the app they use daily;
+Wispr Flow has a very good user experience too."*
+
+Four places, each with one job and each borrowing an everyday pattern:
+- **Today:** a to-do app's Today, plus a ready draft.
+- **Customers:** WhatsApp's chat list.
+- **Results:** the existing Numbers page, which works like a bank app's balance or a weekly report.
+- **Settings:** the iPhone's Settings.
+
+Ten rules come from the Laws of UX. Wispr's lesson is that the work happens where you already are, and the app stays a
+quiet hub. Today was drawn two ways: B, one customer at a time, takes the desk from 239 to 102 words. Mobbin was not
+reachable (it needs a paid plan). → [[ux-patterns/2026-10-09-app-strategy-simple-familiar]]

@@ -10991,3 +10991,23 @@ is unchanged, follows the founder's instruction, or needs his yes. Three need hi
 - Checking in, Qualified and Booked aren't seen on a screen, because the test account has only "Needs you" customers.
 - Settings isn't redrawn.
 - The display face is a new font inside the app.
+
+## 2026-10-09 — The app strategy, version 2: four places, each like an app you already use
+
+**Founder:** a strategy from references and the Laws of UX, *"copy the stuff that is on the market"*, an analytics
+place, Today for what to do, and *"make them feel like they are using the app they use daily; Wispr Flow has a very
+good user experience."*
+
+**Proposed** (research: `ux-patterns/2026-10-09-app-strategy-simple-familiar.md`; board version 2:
+https://claude.ai/artifact/F12ZLs1H4UBdCWRtumdRvg):
+- Today · Customers · Results · Settings. Results is the existing Numbers page (A-066), back in the menu. This would
+  supersede A-082 and A-027's place list, at his ask.
+- Today option B, one customer at a time, replacing A-084's two columns on the desk. Option A only removes repeats.
+- "Copy the market" means borrowing patterns, never a company's screen (CLAUDE.md).
+- The Wispr lesson:
+  - a phone alert opens straight to the reply;
+  - replies go out from the owner's own accounts;
+  - setup ends on a real or practice customer;
+  - the app stays a quiet hub.
+
+**Status:** waiting on five answers (on the board).

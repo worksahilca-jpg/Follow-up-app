@@ -78,6 +78,57 @@ async function done(p, desk) {
     main.innerHTML = ""; const pad = document.createElement("div"); pad.style.cssText = desk ? "padding:32px 40px" : "padding:84px 16px 20px"; pad.appendChild(wrap); main.appendChild(pad);
   }, desk);
 }
+
+async function simpler(p, page) {
+  await p.evaluate((page) => {
+    const main = document.querySelector("main"); const hide = (e) => { if (e) e.style.display = "none"; };
+    const own = (sel, re) => [...main.querySelectorAll(sel)].filter(e => re.test(e.textContent.trim()) && ![...e.children].some(c => re.test(c.textContent.trim()) && c.tagName === e.tagName));
+    if (page === "today") {
+      own("p", /handled today/).forEach(hide);                         // the count, said again (rule 2)
+      own("p", /^Based on .* message/).forEach(hide);                  // machinery (rule 5)
+      own("p", /\d+ more need your OK/).forEach(hide);                // "Show 7 more" says it
+    }
+    if (page === "customers") {
+      own("p", /^\d+ customers\.$/).forEach(hide);                     // the 4th "17" on the screen
+      own("p", /\d+ of \d+ customers/).forEach(hide);
+      main.querySelectorAll('button[aria-label="More"]').forEach(hide); // import, clean-up live in Settings
+    }
+    if (page === "customer") {
+      own("p", /^Based on .* message/).forEach(hide);
+      const w = [...main.querySelectorAll("p")].find(e => e.textContent.trim() === "Waiting"); if (w) hide(w.parentElement); // repeats "16 days ago"
+      const h = main.querySelector("h1"); const pill = h && h.parentElement && [...h.parentElement.querySelectorAll("span")].find(s => /^Needs you$/.test(s.textContent.trim())); if (pill && document.querySelector(".fx-reply")) hide(pill.closest("span[class*='rounded-full']") || pill);
+    }
+  }, page);
+}
+
+async function todayOne(p, desk) {
+  await p.evaluate((desk) => {
+    const reply = document.querySelector(".fx-reply"); if (!reply) return;
+    const grid = [...document.querySelectorAll("main div")].find(e => /grid-cols-\[minmax\(280px/.test(e.className));
+    const next = document.createElement("div");
+    next.style.cssText = "margin-top:18px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border:1px solid var(--line);border-radius:16px;background:var(--card);font-size:14.5px";
+    next.innerHTML = '<span style="color:var(--ink-soft)">Next: <b style="color:var(--ink);font-weight:600">Owen Shah</b> · 17 days</span><a style="font-weight:500;text-decoration:underline;text-underline-offset:3px" href="#">See all 15</a>';
+    if (desk && grid) {
+      grid.children[0].style.display = "none"; grid.style.display = "block";
+      const right = grid.children[1]; right.style.display = "block"; right.style.position = "static"; right.style.maxWidth = "660px"; right.style.maxHeight = "none"; right.style.overflow = "visible";
+      right.appendChild(next);
+    } else {
+      // phone: the open card, then one "Next" line; the other rows wait behind "See all"
+      let row = reply; while (row.parentElement && row.parentElement.children.length < 3) row = row.parentElement;
+      const list = row.parentElement; let after = false;
+      for (const c of [...list.children]) { if (after) c.style.display = "none"; if (c === row || c.contains(reply)) after = true; }
+      const col = list.closest("div.min-w-0") || list.parentElement;
+      for (const e of [...col.querySelectorAll("p, button")]) if (/more need your OK|^Show \d+ more$/.test(e.textContent.trim())) e.style.display = "none";
+      row.after(next);
+    }
+    for (const e of document.querySelectorAll("main p")) if (/handled today|^Based on .* message/.test(e.textContent.trim())) e.style.display = "none";
+  }, desk);
+}
+async function measure(p) {
+  return p.evaluate(() => { const main = document.querySelector("main"); const vis = e => { const r = e.getBoundingClientRect(); const cs = getComputedStyle(e); return r.width > 0 && r.height > 0 && cs.visibility !== "hidden" && cs.display !== "none"; };
+    const words = main.innerText.split(/\s+/).filter(Boolean).length;
+    const ctl = [...main.querySelectorAll("a, button, input, select, textarea, [role=switch]")].filter(vis).length; return { words, ctl }; });
+}
 (async () => {
   const b = await chromium.launch({ args: ["--no-sandbox"] }); const log = [];
   for (const [w, h, tag] of [[1280, 860, "d"], [390, 844, "m"]]) {
@@ -86,15 +137,21 @@ async function done(p, desk) {
     const p = await ctx.newPage(); p.on("pageerror", e => log.push(tag + " " + e.message));
     const go = async (path) => { await p.goto(BASE + path, { waitUntil: "networkidle" }); await p.waitForTimeout(700); };
     const shot = async (name) => p.screenshot({ path: `${OUT}/${tag}-${name}.png`, fullPage: false });
+    const M = {};
     // Today
-    await go("/dashboard"); await shot("today-before"); await theme(p); await common(p); await today(p); await p.waitForTimeout(400); await shot("today-after");
+    await go("/dashboard"); M.today = [await measure(p)]; await shot("today-before"); await theme(p); await common(p); await today(p); await p.waitForTimeout(300); M.today.push(await measure(p)); await shot("today-after");
+    await simpler(p, "today"); await p.waitForTimeout(300); M.today.push(await measure(p)); await shot("today-simple");
+    await go("/dashboard"); await theme(p); await common(p); await today(p); await todayOne(p, w >= 768); await p.waitForTimeout(300); M.today.push(await measure(p)); await shot("today-one");
     // Done for today (after only)
     await go("/dashboard"); await theme(p); await common(p); await done(p, w >= 768); await p.waitForTimeout(400); await shot("done-after");
     // Customers
-    await go("/leads"); await shot("customers-before"); await theme(p); await common(p); await customers(p); await p.waitForTimeout(400); await shot("customers-after");
+    await go("/leads"); M.customers = [await measure(p)]; await shot("customers-before"); await theme(p); await common(p); await customers(p); await p.waitForTimeout(300); M.customers.push(await measure(p)); await shot("customers-after");
+    await simpler(p, "customers"); await p.waitForTimeout(300); M.customers.push(await measure(p)); await shot("customers-simple");
     // A customer
-    await go("/leads/lead_x9"); await shot("customer-before"); await theme(p); await common(p); await customerPage(p); await p.waitForTimeout(400); await shot("customer-after");
+    await go("/leads/lead_x9"); M.customer = [await measure(p)]; await shot("customer-before"); await theme(p); await common(p); await customerPage(p); await p.waitForTimeout(300); M.customer.push(await measure(p)); await shot("customer-after");
+    await simpler(p, "customer"); await p.waitForTimeout(300); M.customer.push(await measure(p)); await shot("customer-simple");
+    log.push(tag + " " + JSON.stringify(M));
     await ctx.close();
   }
-  console.log("errors:", JSON.stringify(log)); await b.close();
+  console.log(log.join("\n")); await b.close();
 })();

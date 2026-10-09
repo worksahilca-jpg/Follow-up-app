@@ -456,3 +456,7 @@ the four-sites report (all four now complete) and `landing-page/2026-10-08-four-
 
 - 2026-10-08 · Wispr Flow colour study (how, why, gradients, three FollowUp palettes) →
   `landing-page/2026-10-08-wispr-colour-study.md`
+
+- 2026-10-09 · The hook: first-ten-seconds psychology (50 ms judgement, one action, the aha on screen, IKEA effect and
+  labour illusion, framing, warm/cool colour roles), an audit of the home draft and what v88 changed →
+  `landing-page/2026-10-09-hook-psychology.md`

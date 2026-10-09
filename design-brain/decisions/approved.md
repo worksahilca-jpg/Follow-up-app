@@ -2743,3 +2743,22 @@ Day 9 booked, job won. One note: "It stops the moment they reply or say no." The
 (3, 7, 14, 30). **Principle:** a sequence is understood from five words on a line, not from nine chat bubbles; dark is
 used once, to lift the one idea that matters.
 
+## A-185 — The hook: one action on the first screen, and the answer brought on screen (v88) ^A-185
+
+**Direction:** 2026-10-09, founder (chat): *"land them on the page, and they're like, 'Oh yeah, boom, this is what I'm
+looking for. Let's just try this out.' … big companies … make the user click on that option only."* Research:
+`research/landing-page/2026-10-09-hook-psychology.md`. Built:
+1. **The aha on screen.** On a 1440 × 900 window the answer to a visitor's own question appeared below the fold and the
+   page stayed still. Now, once their message lands in the demo, the page glides so the demo card is mid-screen, and
+   "That's FollowUp. Your customers get this, every time. · Connect Gmail, start free" appears as soon as the reply is
+   written.
+2. **One action.** While the try-it box is on screen and nothing has been tried, the bar's "Start free" is an outline;
+   the try-it box has the page's one solid green edge (flat, no glow, [[rejected#^R-036]]). After the first try the bar
+   button is solid again.
+3. **What it is, and that trying is free:** "Try it yourself · no sign-up" / "Ask what a customer would ask. FollowUp
+   answers in about a minute, in your words."
+4. **Colour roles:** warm amber marks the cost of waiting (the opening's numbers about businesses not answering); cool
+   green marks FollowUp's results (strip, 1-minute reply, booked, won). **Principle:** colour by meaning and contrast,
+   not mood; one isolated accent for the one action.
+Status: built on the draft for the founder's reaction, not yet confirmed by him.
+

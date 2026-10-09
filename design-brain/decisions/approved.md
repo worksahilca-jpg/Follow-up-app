@@ -2383,3 +2383,12 @@ first."* v52: 48 messages from 48 different first names, all eight channels, sca
 drifts its own way (to and fro, slight tilt) at its own speed; near ones larger and sharper, far ones smaller and very
 blurred; a soft oval mask fades them out where the headline sits. Green "handled" ticks kept from A-147. A trial only:
 he will send the design he wants next.
+
+## A-151 — Say where the customer gets the reply (v53) ^A-151
+
+**Approved:** 2026-10-09, founder ("yes", thread b962b7e0), choosing this over a full copy of WhatsApp's or Messenger's
+screen. After a reply is sent, one small grey line under "Sent on …": "Your customer gets this right in WhatsApp." It
+follows the channel: "right in Messenger", "right in Instagram", "as a normal text" (text and Facebook ads), "in their
+email inbox" (Gmail, Outlook, web form). The card stays FollowUp's own design: app icon, channel bubble colour, no
+other app's wallpaper or header.
+

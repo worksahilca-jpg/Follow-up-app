@@ -1016,3 +1016,11 @@ the page you are in.
 scrolling a regular PDF."* Every section was the same template (heading left, line right, one framed picture) with a big
 gap and nothing carrying from one to the next. Same family as R-052. **Instead (v40):** one thread down the page that
 fills as you read, pictures that settle in as you arrive, smaller gaps, no hard switch to dark at the end.
+
+## R-068 — The short floating capsule bar (v40) ^R-068
+
+**Rejected:** 2026-10-09, founder, minutes after R-066's fix: *"Now this looks way odd. Let's just fix this to Wispr
+Flow, maybe."* The centred capsule that hugged its contents. **Instead (v42):** a plain row with no box (brand left,
+links centred, Sign in and Start free right) that gains a soft see-through ground and a hairline only once you
+scroll. **Lesson (inferred):** both capsules (wide and short) read as a widget sitting on the page; the references
+he likes keep the bar quiet and part of the page.

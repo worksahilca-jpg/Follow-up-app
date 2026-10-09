@@ -10164,3 +10164,15 @@ are generic (no phone frame) on purpose, to stay clear of R-041's "phone mockup 
 **App theme (side work):** a helper re-themed the app's tokens to match (Tinos headings, faintly green #F4F5F3 ground,
 green wash, neutral greys) in a separate worktree, not pushed. It conflicts with A-090 ("the app's ground stays white")
 — to ask Sahil before it goes anywhere.
+
+## 2026-10-09 — Home v41–v42: light green accent, Apple's look, missed messages around the headline
+
+**v41:** the accent moved toward light green (A-136 amended). **v42** (five comments + chat): the headline is smaller
+(58px) and six missed messages sit around it as phone notifications, grey "No reply yet" at first, then caught one by
+one ("✓ Answered", "✓ Followed up · day 14", a price "Waits for your OK"), laptop widths only; the top bar is a plain
+row (R-068); the From bar's channels are home-screen app icons with names in the device font; the demo's catch is a
+phone notification that glides into the card; the reply bubble takes the channel's colour (A-137); the close's
+notifications use the same style. **Weak spots:** notifications now appear in three places (headline, demo, close);
+watch that the page doesn't feel repetitive. The system font means the page looks slightly different per device, on
+purpose. **Technical note:** CSS later in the prototype re-sets the bar and headline, so v42's rules are raised with
+`html body`; the real site should not inherit this layering.

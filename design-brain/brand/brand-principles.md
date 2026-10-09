@@ -198,3 +198,9 @@ owners with their permission. Never AI-generated pictures, in any style.
 information."* Show, don't tell, section by section: each point gets something to look at or play with (a control to
 drag, a moment that plays, a photo card), and the words shrink to labels. Facts still need sources; they just arrive
 inside the picture, not as a list.
+
+**Added 2026-10-09, founder:** *"We'll be leaning more towards Mac or iOS, or Apple's thing… if we use their style, we
+might be able to connect with the users more impactfully, rather than just explaining to them."* Familiar beats
+explained: show the visitor things they already know from their own phone (home-screen app icons, notifications, the
+device's own font, the chat bubble colours of the app the message came from). Borrow the platform's language, never a
+company's whole screen (R-029, references are principles).

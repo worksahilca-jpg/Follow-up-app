@@ -2240,3 +2240,21 @@ very few, but it should look like a good theme."* v40 uses #D4F36B (on dark pane
 light page) in four places only: the "Free while in beta" pill, the "1 minute · With FollowUp" choice, the "The main
 thing" tag, and the ticks on "Your data stays yours". Never a fill bigger than a pill, never body text. This fits R-043's
 own principle (accents so small they are almost absent); green stays the app's meaning ("sent", "answered").
+**Amended 2026-10-09** (founder, on the beta pill: *"make it more towards light green"*): the accent moved from
+lemon-lime to a light green: #C2F09A on dark panels, a #E3F6D6 pill with a #74BE45 dot on the light page.
+
+## A-137 — Apple's look, so visitors recognise their own phone ^A-137
+
+**Direction:** 2026-10-09, founder, in four comments and a chat note: *"the icons or the font and stuff that Apple
+uses"*, *"the popping-up message thing that app uses… so that it feels like their own message popping up"*, *"they
+should feel like it's their interface… they are only replying from WhatsApp"*, *"we'll be leaning more towards Mac or
+iOS."* Built in v42:
+- channels shown as home-screen app icons (rounded square, the app's colour, a white symbol; Gmail and Messenger on
+  white tiles);
+- messages shown as phone notifications (icon, name, "now", their words) in the device's own font
+  (`-apple-system`, so San Francisco on Apple devices, Segoe UI on Windows);
+- the demo's catch pops out of the app icon as a notification, then lands in FollowUp's card;
+- the reply bubble takes the channel's colour (WhatsApp light green, Messenger blue-purple, Instagram purple, texts
+  Apple green; email stays FollowUp green); the customer's bubble is Apple's grey.
+**Line held:** no copy of a whole WhatsApp/Messenger screen (wallpaper, header, layout). Put to him as "go further?"
+in thread b962b7e0, with the recommendation to stay here.

@@ -2436,3 +2436,15 @@ green; scrolling back reverses it; a one-line cue ("Keep scrolling to let the ti
 **Principle (his words, generalised):** a demonstration that carries the page's message must go at the reader's pace;
 scroll-driven beats timer-driven. Same rule as the teardown's Questrade warning.
 
+## A-156 — The reply-speed panel speaks in gains (v59) ^A-156
+
+**Direction:** 2026-10-09, founder (thread 6507eb81): *"We have to make them feel that replying within an hour, or in a
+minute, or in 5 minutes is the best thing that can boost their business."* The fast end now states the gain, with
+checked figures and their sources on the page: "1 minute" opens on "7× more likely" (HBR 2011, 1.25 million leads:
+within an hour, nearly 7× as likely to qualify the lead as an hour later, and more than 60× as likely as after 24
+hours); the end of the scroll lands on "21× more likely" in light green (Lead Response Management Study, Oldroyd with
+MIT and InsideSales.com, 2007: 5 minutes rather than 30, 21× the odds of qualifying the lead), the card warm again
+("Answered first. Marcus is talking to you."). Under the panel, three figures (7×, 60×, 21×) with one source line. The
+slow steps still show the loss. **Rule kept:** every figure is a real one, worded no stronger than its study ("a real
+sales conversation" for "qualify", not "a customer").
+

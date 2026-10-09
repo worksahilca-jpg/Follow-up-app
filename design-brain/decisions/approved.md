@@ -3109,6 +3109,8 @@ pages as you scroll) is final. The draft Format row is hidden; Grid, Tabs and Or
 
 ## A-197 — The "Not leads" bin is drawn like the Mac's Trash: frosted white, grid of square holes (v118) ^A-197
 
+*Questioned (2026-10-09, thread 82bc7ecd on the preview): "check the latest trash bin that mac uses, this is not the same one." The square-hole bin is the 2014–2024 Trash; the newest macOS redrew its icons in the glass style. No reliable picture of the new Trash was found online, so a screenshot of his own Dock was asked for before redrawing. Do not redraw from memory.*
+
 **Asked:** 2026-10-09, founder (thread 4abbb5be): *"this is not the Mac one, go and check what Apple uses for Mac for their
 trash bin."* Apple's Trash has been a translucent white plastic bin since OS X Yosemite (2014), when it replaced the
 shiny wire basket.

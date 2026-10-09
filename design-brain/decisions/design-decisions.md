@@ -10204,3 +10204,10 @@ page. **Weak spots:** 18 moving cards is the most motion the page has had; if it
 cutting the speed. The warm photo is the only warm one, so the demo now stands apart from the cool panels. That is on
 purpose, but watch it next to the closing card.
 
+## 2026-10-09 — Home v52: a mess of messages (trial)
+
+A-150. The v51 lanes swapped for 48 cards on a seeded random scatter, each with its own drift vector, tilt, speed,
+size, blur and opacity (`alternate` keyframes, so no jumps), masked out behind the headline. **Weak spots:** a few cards
+sit near "Try it yourself" and the input, which softens that line; one card clips at the hero's left edge. Fine for a
+trial; fix when his design arrives.
+

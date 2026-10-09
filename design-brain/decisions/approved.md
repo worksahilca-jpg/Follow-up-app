@@ -2349,6 +2349,8 @@ section marked by a small green dot under its link; on the right two buttons of 
 
 ## A-147 — Handled messages rising behind the headline (v51) ^A-147
 
+*SUPERSEDED (2026-10-09) by [[#^A-150]] for now: the lanes became a trial "mess".*
+
 **Direction:** 2026-10-09, founder (thread a3dcbf35): *"Keep all the text moving and make it look like a lot of messages
 that have been handled by follow-up."* Builds on v50's drift (after [[rejected#^R-075]]). v51: 18 small, light message
 cards (app icon, first name, a short line) rise slowly in four lanes, two each side of the headline, and fade out at
@@ -2372,3 +2374,12 @@ it glides into FollowUp's card, its tail moving from the right side to the left 
 message. (2) FollowUp's reply settles with a small bounce; the line under it reads "Sending…" then "Sent from your Gmail"
 / "Sent on WhatsApp" while a double tick draws in. Ticks in our green, not any one app's colour. Reduced motion: no
 movement, ticks shown drawn.
+
+## A-150 — A mess of messages around the headline (v52, trial) ^A-150
+
+**Direction (trial):** 2026-10-09, founder (thread 703b8766): *"Keep moving those blur SMS around these, make a mess there,
+and with those messages, throw a lot of messages, and then I'll show you the design to make. Let's try that out
+first."* v52: 48 messages from 48 different first names, all eight channels, scattered all round the headline; each
+drifts its own way (to and fro, slight tilt) at its own speed; near ones larger and sharper, far ones smaller and very
+blurred; a soft oval mask fades them out where the headline sits. Green "handled" ticks kept from A-147. A trial only:
+he will send the design he wants next.

@@ -10825,4 +10825,7 @@ seen FollowUp; name the action ("quoting", "following up"), not the setting.
   - The hero line now reads "The right reply, in their language, at the right time. Until they book."
   - What it does, row 2: "Replies in the language they wrote in."
   - The try box's "Ask in your language" list already proves it.
+- **Version 20 (thread 1035f0e9):** the founder didn't understand *"Stops following up once they reply"*. It now reads
+  "Never pushy: no more reminders once they answer". **Rule:** state the benefit, then the mechanism; if the founder
+  has to ask, a visitor won't.
 

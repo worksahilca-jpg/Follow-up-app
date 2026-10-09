@@ -1210,6 +1210,8 @@ drawing it. See A-197.
 
 ## R-094 — The same photo box for every section ^R-094
 
+**Note (2026-10-09, later the same day):** the v119 answer to this was reverted at his word (*"keep what it was before, I will tell you what to change"*). The complaint stands, but he will say which sections change and how. Don't redo v119's open sections, graffiti wall or played-out learning on your own.
+
 **Rejected:** 2026-10-09, founder: *"we are using the same background box style format for every single page. Look how
 Wispr is creative, and other software. Be more creative."* Thread 6836d372 said the same: *"it looks like we're using
 that photo background everywhere."* By v118, six sections were a rounded dark box on a blurred photo: the demo, Leads go

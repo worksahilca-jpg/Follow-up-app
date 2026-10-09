@@ -3124,6 +3124,8 @@ shiny wire basket.
 
 ## A-198 — Your control: three choices with an Always-on sheet; Your data: "The controls" (v119) ^A-198
 
+**REVERTED (2026-10-09)** at the founder's word: *"keep what it was before, I will tell you what to change."* The v119 build is undone in Version 93. Don't rebuild it; wait for his specific changes.
+
 **Approved:** 2026-10-09, founder.
 - **Your control (thread 6836d372):** *"this third choice is good, or maybe we can use settings too."* The three
   choices (Automatic · Assisted · Paused) are the default. Under them is an "Always on" settings sheet: stops when they
@@ -3134,6 +3136,8 @@ shiny wire basket.
 
 ## A-199 — Message cards are always the light Mac notification (v119) ^A-199
 
+**Kept** when the rest of v119 was reverted (Version 93): it restores the look the cards had before v116.
+
 **Asked:** 2026-10-09, founder (thread 449ed1c5): *"do not change the messages background, make it same as Apple and Mac
 style."* The same day (thread 792d6642): *"this part is not readable, too dark."*
 **Built:** wherever a message arrives as a card, it is the frosted white macOS-style notification: app icon, name,
@@ -3142,6 +3146,8 @@ around the headline. The background never changes with state or section. The dar
 shared the cards' class name. See R-095.
 
 ## A-200 — It learns, played out: "Watch it learn" (v119, option D, default) ^A-200
+
+**REVERTED (2026-10-09)** at the founder's word: *"keep what it was before, I will tell you what to change."* The v119 build is undone in Version 93. Don't rebuild it; wait for his specific changes.
 
 **Asked:** 2026-10-09, founder (thread 33a6105f): *"be more creative, use animations, motion and visuals to explain."*
 **Built:** a short scene that plays when you reach it:

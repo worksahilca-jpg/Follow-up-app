@@ -223,6 +223,8 @@ company's whole screen (R-029, references are principles).
 
 ## No two neighbouring sections in the same format (2026-10-09)
 
+**On hold:** the first attempt (v119) was reverted; apply this only to the sections he names, the way he describes.
+
 The founder: *"we are using the same background box style format for every single page… be more creative."* A page
 where every section is the same box reads like a template, however good each box is. Before adding a section, look at
 the one above and the one below. Pick a different format: a photo card, open on the page, the product on its own, art,

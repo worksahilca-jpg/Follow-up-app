@@ -10484,3 +10484,13 @@ Each section has a draft **Format** row: three new options plus **Current**. Not
 - **Open:** his pick of wall, shapes or photo; a yes on the graffiti font; whether the open Today screen still feels
   premium to him.
 
+## 2026-10-09 — v119 reverted; the page is back to Version 91 plus the message-card fix (Version 93)
+
+- **What:** the founder replied to v119: *"keep what it was before, I will tell you what to change."* Everything v119
+  changed is undone. That covers the open cold-lead and Today sections, the graffiti / shapes / photo row, three choices
+  plus settings, Your data B, and "Watch it learn".
+- **Kept:** the message-card fix (A-199, R-095). It returns the cards to their pre-v116 look, which is what he asked for
+  in thread 449ed1c5.
+- **Saved:** the full v119 build is kept in the generator's backup, so any part he asks for can come back quickly.
+- **Next:** wait for his specific changes.
+

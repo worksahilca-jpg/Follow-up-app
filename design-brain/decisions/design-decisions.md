@@ -10896,4 +10896,11 @@ hard cut to a dark footer both read as "a different website".
   slate-green (`#6B7B74` → `#56665F` → `#4E5D57`). It has a soft lime light at the top left, brighter glass (12% white,
   18% edge), labels at 90% white and "won, by you" in pale green `#DDF8C4`. **Rule:** "darkish" means mid-tone, not
   near-black.
+- **Version 27:**
+  - **Thread 84ef317b:** the numbers bar shows only the results: Qualified · Booked · Won by you · Time saved.
+    - "Forgotten" was removed at his ask. "Messages caught" was removed to match his list (offered back).
+    - Both cells stay in the DOM, hidden, so the flying-tag animation's cell order is unchanged.
+    - The flights are kept: tag → Qualified/Booked, deal card → Won by you (dollars add up), minutes → Time saved.
+  - **Thread deb079d8:** the footer's bottom-line "Free while in beta" pill is hidden. The hero pill and the close line
+    keep it (asked).
 

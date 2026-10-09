@@ -2331,6 +2331,8 @@ evening (307866397, How it works), Paris Montmartre café street at night (55115
 
 ## A-145 — The founder's own photo picks, one per panel ^A-145
 
+*On the home draft, SUPERSEDED (2026-10-09) by [[#^A-186]] point 10 (one dark surface instead of photo panels; the demo stage keeps its photo). Flagged to the founder to confirm; easy to restore.*
+
 **Approved:** 2026-10-09, founder, picking in the Adobe Stock grids (a screen recording showed his ticks). All free
 licences, not AI. Placement (v49): light streaks 307728189 behind the demo; New York street at night 658429701 behind
 "How fast do you reply?"; Toronto at night 422420979 behind Today and the first How-it-works card; Manhattan in the
@@ -2761,4 +2763,32 @@ looking for. Let's just try this out.' … big companies … make the user click
    green marks FollowUp's results (strip, 1-minute reply, booked, won). **Principle:** colour by meaning and contrast,
    not mood; one isolated accent for the one action.
 Status: built on the draft for the founder's reaction, not yet confirmed by him.
+
+## A-186 — The 17-point pass, design part (v89) ^A-186
+
+**Direction:** 2026-10-09, founder (chat), on the 17-point list: *"we'll go with that, and let's just keep working on all
+those 17 points."* Also decided: **sign-up opens before the new page goes live** (point 1; see design-decisions).
+Built on the home draft:
+- **4 · Phones:** the try-it box is on the first screen (the example strip is left out on phones).
+- **5 · Under the headline:** "FollowUp has a reply ready for every new enquiry in a minute, in your words, and follows
+  up until they book." The fact is one line: "In a 2025 test of 1,300+ law firms, 26% never answered an online enquiry
+  at all."
+- **6 · The strip** opens with a visible tag, "An example week with FollowUp".
+- **7 · Phones** show 10 floating messages instead of 16.
+- **8 · Repeats removed:**
+  - the 11 PM statement;
+  - How it works step 3, so it is now "Three steps";
+  - the closing card's "Answered" notifications.
+  Desktop goes from 9.6 to 9.1 screens and phone from 13.7 to 12.3; about 1,430 words instead of 1,570.
+- **9 · One button wording:** "Start free".
+- **10 · One dark surface:** the follow-up card's deep green replaces the photo panels (Today frame, How it works
+  pictures, Your control, the data card, What's new, the closing card). The demo stage keeps its photo, which the
+  founder parked (thread b2a68af1). On that dark surface the button is lime with dark text.
+- **11 · Readable small text:** labels at 12–12.5 px, greys darkened to #5C635E. Text under 12.5 px went from 52 to 31
+  places on desktop.
+- **12 · True in both modes:** "reply ready in 1 minute".
+- **13 · One price line:** "After the beta: Plus $39 a month, Pro $79 a month." (from `src/lib/pricing.ts`).
+- **14 · The founder's line:** his own words from PRODUCT_DIRECTION's mission, "Nobody is concerned about the leads
+  that are going cold… A business owner should not lose a lead because of not following up, not following up in time,
+  or not following up correctly." Signed "Sahil, founder of FollowUp". Awaiting his OK on the wording.
 

@@ -10264,3 +10264,20 @@ decides. The headline's 2024 fact is the newest broad test we can check; the fou
 FollowUp's own numbers (asked in thread 73b89a86: a 2025 law-firm study exists, our own figures wait for ~50 answered
 customers a month). Social handles and a cookie page are still placeholders.
 
+## 2026-10-09 — The 17-point pass; sign-up opens before launch
+
+Founder decision (chat): **open sign-up before the new home page goes live**, so "Start free" no longer ends at the
+private-beta screen. Things to check before switching it on (nothing changed yet):
+- the `ALLOWED_EMAILS` gate in `src/lib/auth.ts`;
+- Google's limits for a not-yet-verified OAuth app (the CASA check is due Jan 4);
+- AI cost ceilings, already in place (H2, M1).
+
+Design points 4–14 are built on the draft ([[approved#^A-186]]). Still to do:
+- 2: tester quotes — the founder asks;
+- 3: social handles — the founder sends;
+- 15: measure tried / clicked / scrolled — goes with the build;
+- 16: the five-second test, `workflows/five-second-test.md`;
+- 17: build the page into the app.
+
+**How:** the old scroll script still looked for `#statement`; it now gets a detached stand-in instead of crashing.
+

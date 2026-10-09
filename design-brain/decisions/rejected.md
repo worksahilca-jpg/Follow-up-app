@@ -1094,3 +1094,29 @@ red, green, and yellow button… but this is not our actual dashboard that we're
 chrome, sidebar and conversation list. **Principle (his words):** the demo shows our product, not an imitation of
 another app; make the familiar feel come from details, not from a borrowed window.
 
+## R-078 — App logos in the footer ("Works with") (v54) ^R-078
+
+**Rejected:** 2026-10-09, founder: *"'works with' should not mention logos and stuff. We'll be putting our handles here."*
+The row of eight app tiles in the footer. **Principle (inferred):** the ending is about FollowUp itself (its links, its
+people, its profiles), not other companies' brands; the channels are shown where the product works, not as a logo wall.
+
+## R-079 — Taking money from a floating message (v65–v81) ^R-079
+
+**Rejected:** 2026-10-09, founder: *"you're collecting the money from them. Why?"* Floating lead messages that turned into
+"$X lost / $X saved" notes, "−$X" and "+$X" tokens, or added a deal and its value when they glided into the strip.
+**Principle (inferred):** a lead's message is a person writing, not a coin; showing money pulled out of people's
+messages reads as greedy, close to the "aggressive sales" look FollowUp must never have. Money belongs in an explained
+example (the strip, the won job in a story), not in the ambient background.
+
+## R-080 — The try-it box moved wholly inside the dark demo (v81) ^R-080
+
+**Rejected:** 2026-10-09, founder: *"Did you try it yourself here? No… I want them to click it right away… half on the
+screen, half above… it was making me curious."* Moving the box below the fold to separate the two screens. **Principle
+(his words):** the first thing to try must be visible on the first screen; separate screens with space, not by pushing
+the action away.
+
+## R-081 — Floating messages so slow they look stopped (v81) ^R-081
+
+**Rejected:** 2026-10-09, founder: *"you stopped the messages that were just floating."* Drift of ±34 px over 20–34 s.
+**Principle:** "quiet" means faint and smooth, not still; the background has to read as alive.
+

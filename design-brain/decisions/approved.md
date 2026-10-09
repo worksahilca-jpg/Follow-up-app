@@ -2515,6 +2515,8 @@ without a source we have checked; when in doubt, leave it out and ask.
 
 ## A-163 — At risk → saved, around the headline (v64) ^A-163
 
+*SUPERSEDED (2026-10-09) by [[#^A-179]]: notes under single messages pulled the eye; messages now glide into the strip.*
+
 **Direction:** 2026-10-09, founder (thread dfb35840): *"convey that they are losing leads if they're not following up…
 you followed up… closed the deal… you saved actual money"* and *"you are saving a lot of your time."* Every ~5 s one
 nearer message comes into focus; a note pops under it, amber "Gone quiet · $X at risk", then green "✓ Followed up ·
@@ -2576,6 +2578,8 @@ following up, time back, which keep counting as messages are followed up. Seeded
 
 ## A-169 — The same message, without and with FollowUp (v71) ^A-169
 
+*SUPERSEDED (2026-10-09) by [[#^A-180]]: the two chats became big facts plus one lead followed up until it is won.*
+
 **Direction:** 2026-10-09, founder (thread a991c722): *"Readable, and also show them what they are missing, like we used
 to show in the first one. I don't know if we need to show them the reply bar here."* The timeline went. Two cards side by
 side with Marcus's same 7:02 AM question. Without FollowUp: no reply that day, a sorry-for-the-late-reply at 12:19 PM
@@ -2601,6 +2605,8 @@ screen. "Connect Gmail" moves out of the button; the line under it still says ho
 
 ## A-172 — The money moves into the strip; text stays readable (v74) ^A-172
 
+*Money part SUPERSEDED (2026-10-09) by [[#^A-179]] and [[rejected#^R-079]]: no money is taken from floating messages. The readable-text part stays.*
+
 **Direction:** 2026-10-09, founder (thread a6ab8b71, on the strip): *"This is good. Keep it smoother and slow… connect it
 with the background that is running: we saved, this will catch those dollars… if we lost something, how to present
 that… add something behind the text so it is readable."* One message every ~7.6 s. Red moment: "No follow-up · $X lost"
@@ -2618,10 +2624,72 @@ area; scrolling moves the page and nothing else.
 
 ## A-174 — Without vs with, on a light panel, with the wait written out (v76) ^A-174
 
+*Without/with part SUPERSEDED (2026-10-09) by [[#^A-180]]; the light panel stays.*
+
 **Direction:** 2026-10-09, founder (thread 99a6436d): *"change the background. It is not readable, and I don't know what
 we're doing here… make it more accurate and enhanced."* No photo: a light panel in the page's tone. A label: "Same
 customer. Same question. Two endings." In each chat a time divider: "29 hours later" (the 2024 average, 1 day 5 h 17 min
 = 7:02 AM to 12:19 PM next day) and "1 minute later". Each card ends on "Result:" (a lost customer / a booked job,
 three minutes after he asked). FollowUp's card has a green edge, the other is grey. **Principle:** text panels that
 carry the argument sit on calm, light ground; photos are for mood, not for paragraphs.
+
+## A-175 — An opening the headline leads (v77) ^A-175
+
+**Direction:** 2026-10-09, founder (thread 2d4acfb7): *"the headline that we have is not that visible… 463 businesses
+never answered… let's fix this opening page first… if I scroll up, it should be very smooth."* The headline is up to
+76 px with clear space (the messages fade out further from it). The fact is a count: "In a 2024 test, 635 of 1,000
+businesses never answered a new enquiry. The rest took over a day." The strip steps back (lighter, smaller figures).
+Smoothness: the demo stage keeps one shape instead of changing width and corners on scroll, and the floating messages
+pause while the opening is off screen. **Principle:** nothing re-lays out on every scroll frame.
+
+## A-176 — The flying "Start free" button moves only by position and size (v79) ^A-176
+
+**Direction:** 2026-10-09, founder (thread 283aa369): *"Make the animation for this button more smooth and accurate."* A
+fixed copy styled like the big button moves by `transform` only (translate and scale, no width, height or font
+changes). Both buttons are re-measured on every frame, so it lands exactly even mid-scroll. 0.7 s, ease in-out, a
+gentle arc. Amends [[#^A-171]].
+
+## A-177 — A professional ending (v80) ^A-177
+
+**Direction:** 2026-10-09, founder (thread 6def10c3): *"'works with' should not mention logos… We'll be putting our
+handles here… make it like a professional ending"* and *"add 'Help us to improve'… privacy policy, terms, cookies."* The
+footer: brand, line and contact; columns Product, Trust (Your data, Security), Legal (Privacy policy, Terms of service,
+Cookies), Account; a row with "Help us improve FollowUp. Tell us what's missing or what got in your way." and "Share an
+idea →" (an email to contact@ with the subject filled in) on the left, "Follow us" with five profile buttons on the
+right; a base line: ©, the beta pill, Back to top. Each link appears once. The profile buttons are placeholders until
+the founder sends the handles; Cookies is a placeholder until a cookie page exists (the app has /privacy, /terms and
+/security). See [[rejected#^R-078]].
+
+## A-178 — The try-it box sits across the edge of the demo (v83) ^A-178
+
+**Direction:** 2026-10-09, founder (thread 26ade1a5), after v81 moved it wholly inside the dark demo: *"I want them to
+click it right away. Earlier, it was good… half on the screen, half above, and it was visible, so it was making me
+curious."* The box sits half on the light opening and half on the dark demo, inside the first screen, with a little
+more air between it and the strip above. His earlier note (thread 5d619100, *"I can't differentiate between these two
+screens"*) is answered by that space, not by moving the box down. See [[rejected#^R-080]].
+
+## A-179 — Messages float freely; one at a time glides into the strip (v81, v83) ^A-179
+
+**Direction:** 2026-10-09, founder (thread 3f2eb3a4): *"disturbing the whole screen… a border that is cutting them off on
+the right side. Spread them out and make them feel free… at a level where the eye should not catch it… 'we're getting a
+lot of leads, and whatever we are following up on, let's just add it here in our data'… smooth."* Then (thread
+df4eaf62): *"you stopped the messages that were just floating, and you're collecting the money from them. Why?"* The
+messages use the whole window width (nothing clips them), sit on an even shuffled 5 × 9 grid, are faint, and float
+freely (±50–110 px, 11–20 s, eased). Every ~3 s one message on the sides glides into the strip's near edge on a path
+that never crosses the headline or the fact, and the strip adds +1 message caught and 4 minutes back. No money and no
+deals come from a floating message. Phones: no glide. **Principle:** the background says "a lot of leads" as a whole;
+nothing in it asks to be read one by one.
+
+## A-180 — The first hour, in big numbers; then one lead followed up until it's won (v82) ^A-180
+
+**Direction:** 2026-10-09, founder (thread 6c9f046d): *"without FollowUp, with FollowUp, what is this?… 1.2 million
+leads… you have written it very small. Highlight them… if they didn't reply, then you followed up again and again. You
+made them warm, and that helped you to book the call and close the deal… show something like that"* and (thread
+89e7fa7b) *"convey… why fast replies are important… make it more accurate."* The panel opens with "1.25 million leads
+show it: the first hour decides it." and three large figures (nearly 7×, over 60×, 21×), each with one line and the
+sources right under. Then "Then keep following up until they're ready.": Marcus asks (Mon 7:02) → answered in 1 minute
+→ no reply for 2 days → check-in 1 → still quiet → check-in 2 → he replies → booked → $8,400 job won. A "How warm Marcus
+is" bar rises with each reply and check-in and dips while he is quiet; steps play once, in order, when in view. "FollowUp
+stops following up the moment he says no." The 2024 line above the panel is gone (the opening says it, [[#^A-170]]).
+**Open:** the week section ("It follows up") tells part of the same story; asked whether to cut it back.
 

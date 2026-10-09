@@ -10251,3 +10251,16 @@ Founder (thread b2a68af1, on the demo card): *"When we change the theme and stuf
 background… Don't change anything yet. I will let you know later."* Nothing changed. When the theme work starts, the
 demo stage's photo (warm New York street, A-148) is to be revisited with it; show options first.
 
+## 2026-10-09 — Home v77–v83: opening, button flight, ending, follow-up story
+
+A-175 to A-180; R-078 to R-081. **How it is built:** the glide clones a message into `body` (absolute, document
+coordinates, so it scrolls with the page, [[approved#^A-173]]) and animates it with WAAPI to the strip's near edge; a
+message is only picked if 24 sample points along its path, padded by its own half-size, miss the headline, the fact and
+the beta pill. The scatter's mask is a radial gradient intersected with a bottom fade (`mask-composite: intersect`). The
+warmth bar is a full-width gradient revealed by `clip-path: inset()` so its colour stays tied to position. The button
+flight re-reads both rects every frame. **Weak spots, honestly:** the fact tiles use cards, which the brief warns about;
+they earn it only because the figures are the point. The Marcus story and the week section overlap until the founder
+decides. The headline's 2024 fact is the newest broad test we can check; the founder asked for newer data and for
+FollowUp's own numbers (asked in thread 73b89a86: a 2025 law-firm study exists, our own figures wait for ~50 answered
+customers a month). Social handles and a cookie page are still placeholders.
+

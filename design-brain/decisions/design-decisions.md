@@ -10494,3 +10494,9 @@ Each section has a draft **Format** row: three new options plus **Current**. Not
 - **Saved:** the full v119 build is kept in the generator's backup, so any part he asks for can come back quickly.
 - **Next:** wait for his specific changes.
 
+## 2026-10-09 — Your control and Your data formats chosen (Version 94)
+
+- He picked B for both rows on the restored page (A-201).
+- The other draft rows are still open: the cold-lead format and What's new.
+- Nothing else changed.
+

@@ -3160,3 +3160,18 @@ Four numbered steps beside it light up in turn. Reduced motion shows the finishe
 nothing is taken from Wispr (see the "Do not copy wispr" rejection). **Status:** built from his direction; his
 reaction is still to come.
 
+## A-201 — Your control is B · Settings; Your data is B · The controls (v121) ^A-201
+
+**Approved:** 2026-10-09, founder, on the version that was restored after v119 was reverted.
+- Thread 22e2d5f5: *"B settings is good."* "You stay in charge" uses the settings sheet:
+  - **Sending:** How it sends (Auto · Ask me · Off) and Pause everything.
+  - **Always on:** stop when they reply; prices and dates ask you first; write down why; download or delete your
+    data.
+  - It sits beside "You decide what it sends." on the photo panel.
+- Thread b109f29a: *"B the controls is good."* "Your data stays yours" uses the photo panel with the Download /
+  Delete everything card.
+- Both draft picker rows are hidden.
+- Tidy-up done at the same time: "How it sends" keeps to one line and the switch fits inside the card.
+
+**Supersedes** the v119 picks in A-198 (already reverted).
+

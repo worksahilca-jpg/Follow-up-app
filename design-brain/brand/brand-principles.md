@@ -193,3 +193,8 @@ answered), with no competing choice next to it. Explanations come after the try,
 **Added 2026-10-08, founder (R-045):** *"I don't want any AI images. Arts are good, but not AI."* Every image on
 FollowUp is made by a person: public-domain or licensed art, commissioned illustration, or real photos of real
 owners with their permission. Never AI-generated pictures, in any style.
+
+**Added 2026-10-09, founder (R-060):** *"We don't want to keep the whole page like a 2D model with boring written
+information."* Show, don't tell, section by section: each point gets something to look at or play with (a control to
+drag, a moment that plays, a photo card), and the words shrink to labels. Facts still need sources; they just arrive
+inside the picture, not as a list.

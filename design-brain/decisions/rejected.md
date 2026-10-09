@@ -940,3 +940,35 @@ much."* Rule: one light motion blur on the photos.
 
 **Rejected:** 2026-10-08, founder, on the demo's middle card: *"Do not flip this. It looks very odd."* Supersedes the
 matte-3D tilt of A-113 for the demo's cards; they slide flat.
+
+## R-057 — Brown and taupe everywhere (the stone frames and the warm beige ground) ^R-057
+
+**Rejected:** 2026-10-09, founder: *"I'm not liking that brown theme everywhere"* and *"we don't want that brownish
+theme too."* The taupe gradient frames behind the product (Today, How it works, the thread, the switch) and the warm
+#F4F3EF page read as brown. **Instead:** blurred green photos (A-132) and a neutral, faintly green page (#F4F5F3).
+Same family as R-050.
+
+## R-058 — The peach-and-blue wash ^R-058
+
+**Rejected:** 2026-10-09, founder: *"use a different colour instead of peach and blue. That gradient looks way odd. It
+is good, but not what we are looking for. It should match with our theme of the app."* **Instead:** the app's own
+soft green (#DCF5E5 family) on white for written replies. Supersedes A-032 on the website.
+
+## R-059 — White or plain icons among colourful logos ^R-059
+
+**Rejected:** 2026-10-09, founder: *"These white logos look odd between all these colourful ones."* Every channel in
+the "From" bar is in colour: Outlook in Outlook blue, text messages a green bubble, the website form an orange form.
+
+## R-060 — Sections that only tell: "boring written information", "low effort", "2D" ^R-060
+
+**Rejected:** 2026-10-09, founder, on four sections at once (the cold-lead facts, the 11 PM sentence, "It checks in",
+and the page in general): *"It feels boring, so I don't want to read this information"*, *"We don't want to keep the
+whole page like a 2D model with boring written information"*, *"It feels like it's very low effort."*
+**Principle:** every section shows its point with something to look at or play with (a clock you drag, a week that
+plays, photo cards), and the words shrink to labels. A paragraph or a fact list on its own is not a section.
+
+## R-061 — Everything oversized ^R-061
+
+**Rejected:** 2026-10-09, founder: *"I don't know why this whole page is too big."* Headings, spacing and the scroll
+length were too large for a laptop. v32 brought the section headings to at most 60px, the hero to 82px, and cut the
+empty space. **Inferred:** size, not length alone — to confirm if it still feels big.

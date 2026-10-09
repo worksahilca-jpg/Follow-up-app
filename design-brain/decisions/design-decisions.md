@@ -10094,3 +10094,24 @@ HBR 2011, 1.25 M leads); three facts: 42 hours average reply (HBR 2011), 48% of 
 reduced motion. Replaces "Reply faster. Follow up with everyone. Close more deals." and its three items.
 **Weak spot (self-review):** the realtor line is our own anecdote beside two published studies; it is labelled as
 such, but it should be swapped for a sourced number or a quote he has permission to use before launch.
+
+## 2026-10-09 — Home v32: his fonts, no brown, no peach, colour logos, and four sections that show instead of tell
+
+From his chat and twelve comments in one sitting. **Fonts (A-131):** Tinos + DejaVu Sans + DejaVu Sans Mono, embedded
+(about 160 KB), Google Fonts links removed. **Colour (R-057, R-058, A-132):** page #F4F5F3; product frames on blurred
+green photos (six crops); written replies on the app's soft green; side bubbles mint. **From bar (R-059):** Outlook
+(Material Design Icons glyph in #0A6ED1), text (green bubble), website form (orange form); order keeps greens apart.
+**The catch:** logo bounces with a red dot, "New message · Priya" pops out and holds, glides into the card, the card
+pulses and says "Caught by FollowUp", then the story plays. **Leads go cold fast (R-060):** a five-stop clock you drag
+(1 min → Never) on a photo; Priya's card cools; the big number changes per stop; all numbers sourced as before; plays
+once by itself. **11 PM:** night and morning photo cards. **Today:** three numbered pins on the real screen + "learn it
+in a minute" steps. **It checks in:** a Tue–Sat week, your busy row vs. Priya's row, a "Today" frame walks the days.
+**You stay in charge:** "The main thing: You decide what it sends" card with the live switch, four promise cards, and a
+"Your data stays yours" strip, every line taken from the app's security page. **It gets better:** Every day (facts you
+teach, visible and deletable) / Every week (the real updates) / Never (we don't train AI on your data). **Footer:**
+five columns. **Size (R-061):** smaller headings and spacing. **Try it (A-133):** warmer, more exact prompt; fixed
+replies now echo the question ("Yes, the 2-bed on King Street is still available!"); human typing rhythm.
+**Weak spots (self-review):** the Outlook mark is a one-colour glyph, not Microsoft's file; DejaVu Sans is wide and
+less refined than Public Sans at body sizes, which I'd flag if he ever wants it tighter; the page is now ~1 MB because
+fonts and photos are embedded (fine for a prototype, the real site should serve them as files); the fixed replies still
+invent a slot ("Saturday at 10") as an example.

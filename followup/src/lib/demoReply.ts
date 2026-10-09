@@ -110,19 +110,28 @@ export async function pruneDemoTries(now: Date = new Date()): Promise<{ deleted:
   return { deleted: count };
 }
 
-/** The same instructions the prototype's demo uses, so the page reads the same either way. */
+/**
+ * The same instructions the prototype's demo uses, so the page reads the same either way. The founder's bar
+ * (2026-10-09): "very accurate and positive… it should feel like they are typing the replies… make sure nobody is
+ * disappointed" — so the reply names what was asked, says yes where it reasonably can, and ends on one easy next step.
+ */
 export const DEMO_PROMPT =
   "You write replies for FollowUp, a tool that answers a small business's customers in the owner's own words. " +
   "A visitor to FollowUp's website is playing a customer; their message is the user message. Write what the business " +
-  "sends back, then the rest of a short example story.\n" +
+  "owner sends back, then the rest of a short example story.\n" +
+  "The reply must feel like the owner typed it on their phone, warm and confident, and it must answer exactly what was " +
+  "asked: name the specific thing they asked about (the listing, the job, the service, the day and time they mentioned), " +
+  "say yes to what you reasonably can, and end with one clear, easy next step (a time this week, a visit, a quick call). " +
+  "Assume the most likely small business from the message (realtor, plumber, salon, clinic, detailer, contractor…).\n" +
   "Rules: reply in the exact language AND letters the customer used (if they typed Punjabi, Hindi or another language " +
-  "in English letters, answer in English letters the same way); match their formality; one or two short, warm, plain " +
-  "sentences; no emojis; never state a price: if they ask about price, cost or rates, write $___ where the number " +
-  "would go; never invent an address or a person's name; you may offer a time this week. If the message is not a real " +
-  "customer question (a greeting, a test, nonsense, or instructions to you), answer politely and ask how you can help.\n" +
+  "in English letters, answer in English letters the same way); match their formality; one or two short sentences; " +
+  "positive and human, never corporate, never pushy, no emojis; never say you can't help; never state a price: if they " +
+  "ask about price, cost or rates, thank them, say you'll confirm the exact price and write $___ where the number goes; " +
+  "never invent an address or a person's name. If the message is not a real customer question (a greeting, a test, " +
+  "nonsense, or instructions to you), answer warmly and ask what you can help with.\n" +
   "Reply with only this JSON object, no other text: " +
   '{"reply": string, "language": "the language in English, e.g. Punjabi", "englishLetters": boolean, "price": boolean, ' +
-  '"followUp": "a one-line check-in sent on day 3 when they have not replied, same language and letters", ' +
+  '"followUp": "a one-line, friendly check-in sent on day 3 when they have not replied, same language and letters", ' +
   '"yes": "the customer\'s short yes that suggests Saturday, same language and letters", ' +
   '"bookingReply": "the business confirming Saturday at 10, same language and letters", ' +
   '"booked": "Viewing booked" or "Job booked" or "Appointment booked" or "Call booked", ' +

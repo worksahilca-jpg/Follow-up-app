@@ -649,6 +649,9 @@ right side. The rest should not be that highlighted."* Final rule for state pill
 
 ## A-032 — The landing page's soft colour washes stay ^A-032
 
+**SUPERSEDED (2026-10-09) by R-058:** the peach-and-blue wash is out on the website; written replies sit on the
+app's own soft green.
+
 **Approved:** 2026-09-26, founder: "keep them".
 **What specifically:**
 - On the landing page only, two soft washes (apricot, rose-sand and a little dusty blue) with a fine paper grain, in exactly two
@@ -1917,6 +1920,9 @@ phone), and *"yes wait for trail"*: during the trial every "No answer" text wait
 
 ## A-104 — Headlines: plain words, then the human phrase in italic serif (Wispr's rule) ^A-104
 
+**PARTLY SUPERSEDED (2026-10-09) by A-131:** the typefaces changed (Tinos and DejaVu Sans, not Instrument Serif and
+Public Sans). The rule itself stays: plain part upright, the human part in italic serif.
+
 **Approved:** 2026-10-08, founder, asked whether the headline should take Wispr Flow's italic: *"yes slanted like
 wispr"*.
 **What specifically:** every big headline on the site is set in the display serif (Instrument Serif, already loaded),
@@ -2186,3 +2192,27 @@ screenshot shows, word for word: the "Free while in beta" pill; the headline "Ne
 follow up.*" (second half in green italic); the label "Try it yourself" with "Type a question, as if you were a
 customer."; the "Or tap one:" questions; "Ask in English, Punjabi, Hindi, French or Spanish." Keep these words; change
 them only when he asks.
+
+## A-131 — Fonts: the ones in the preview screenshots (Tinos headings, DejaVu Sans text) ^A-131
+
+**Direction:** 2026-10-09, founder, after seeing screenshots: *"Bro, let's use this font that you just showed me right now."*
+**What it was:** the preview machine couldn't load the page's web fonts, so the screenshots showed Liberation Serif
+(headings) and DejaVu Sans / DejaVu Sans Mono (text and labels). Web equivalents now ship inside the page: **Tinos**
+(the same design as Liberation Serif, SIL Open Font License) and **DejaVu Sans / DejaVu Sans Mono** (free licence).
+**Inferred, to confirm:** that he meant the whole look of the screenshot (both the headings and the text), not just
+one of them. Supersedes the typefaces of A-104 (the italic rule stays). The app itself is unchanged until he says so.
+
+## A-132 — Blurred photos are the colour; product frames sit on them ^A-132
+
+**Approved:** 2026-10-09, founder: *"This concept of a blurred image is very good."* Every coloured block on the
+website is a blurred, green-toned city photo (A-120, A-121), not a flat or gradient fill: the demo, the cold-lead
+clock, the Today frame, How it works, the week, the "main thing" card, the closing. Each place uses its own crop.
+
+## A-133 — Try-it answers: accurate, positive, typed like a person ^A-133
+
+**Direction:** 2026-10-09, founder: *"make the answers to be very accurate and positive. It should feel like they are
+typing the replies… If it disappoints, the user is never going to come to our product… make sure nobody is
+disappointed."* The bar for every demo answer: it names the exact thing asked (the listing, the job, the day), says
+yes where it reasonably can, ends on one easy next step, sounds like the owner typing on a phone, never refuses,
+never quotes a price ($___). Typing is uneven with small pauses after commas and full stops. Same instructions in the
+prototype and in the real endpoint (PR #465).

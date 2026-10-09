@@ -11011,3 +11011,35 @@ https://claude.ai/artifact/F12ZLs1H4UBdCWRtumdRvg):
   - the app stays a quiet hub.
 
 **Status:** waiting on five answers (on the board).
+
+## 2026-10-09 — The home page made smooth (no visible change)
+
+**Founder:** *"the animation and the motions are not smooth, I want all the frames to be smooth."*
+
+**Measured first** (Chrome trace and frame times, 1440 desk and 390 phone; the page's own scripts):
+- Main thread while scrolling the first screen: busy 36%, **44 tasks over 16 ms** (each a dropped frame), longest 41 ms.
+- Whole page, desk: 23 tasks over 16 ms. Phone at 4x slower CPU: 27.
+- Sitting still on the first screen: 23% of frames slow.
+
+**Causes, worst first:**
+1. A scroll value written on `<html>` every frame made the demo block change width and corner radius and repaint its
+   photo, and restyled all 1,284 elements.
+2. A second value on the hero flowed into the ~600 elements of the drifting messages.
+3. Frosted glass (backdrop blur) over moving things: results cells, chips, demo panel, closing notifications.
+4. A blur filter on each of 22 drifting messages, and a blur-in on the headline words.
+5. Four scroll listeners measuring the page on every scroll event.
+6. The week counter rewrote all five numbers every frame for 6 s after landing.
+
+**After:**
+- First screen scroll: main thread 16% busy, **0 tasks over 16 ms**, longest 8.5 ms.
+- Whole page desk: 0 over 16 ms.
+- Phone at 4x slower CPU: 3. All three are one-off moments, not per-frame: a demo swap, and the first paint of the close.
+- Sitting still: 0% slow frames.
+- No frost or blur left on the first screen.
+
+**Looks the same:** compared side by side at 1440 and 390. Two tiny differences:
+- the demo block's photo no longer drifts as you scroll;
+- the faint background messages are sharp instead of slightly blurred.
+
+The rules are now in brand-principles ("Every frame is smooth"). Builder patch 21 in the preview pipeline.
+

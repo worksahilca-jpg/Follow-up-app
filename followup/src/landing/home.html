@@ -3622,10 +3622,10 @@ html[data-col="f"] .fl-stage .fl-ask { margin-top: 12px }
 })();
 
 (function () {
-  var st = document.getElementById('fl-stage'), html = document.documentElement; if (!st) return;
+  var st = document.getElementById('fl-stage'), html = document.documentElement, hd = document.querySelector('#fl-hero .fl-head'); if (!st) return;
   var still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches, raf = 0;
   function upd() { raf = 0; var top = st.getBoundingClientRect().top + scrollY, span = Math.max(220, top - 120);
-    html.style.setProperty('--tr-p', still ? 1 : Math.min(1, Math.max(0, scrollY / span)).toFixed(3)); }
+    var v = Math.min(1, Math.max(0, scrollY / span)); [].forEach.call(hd ? hd.children : [], function (k) { k.style.transform = 'translateY(' + (-40 * v).toFixed(1) + 'px)'; k.style.opacity = (1 - .6 * v).toFixed(3); }); }
   if (still) { html.style.setProperty('--tr-p', 1); return; }
   addEventListener('scroll', function () { if (!raf) raf = requestAnimationFrame(upd); }, { passive: true });
   addEventListener('resize', upd); upd();
@@ -3738,7 +3738,7 @@ html[data-col="f"] .fl-stage .fl-ask { margin-top: 12px }
   }
   links.forEach(function (a) { a.addEventListener('mouseenter', function () { hover = a; }); });
   nl.addEventListener('mouseleave', function () { hover = null; spy(); });
-  addEventListener('scroll', spy, { passive: true }); addEventListener('resize', spy); spy();
+  addEventListener('scroll', function () { if (!spy.q) { spy.q = 1; requestAnimationFrame(function () { spy.q = 0; spy(); }); } }, { passive: true }); addEventListener('resize', spy); spy();
 })();
 
 /* ---- v40 the thread: one line from the first section to the last, filled as far as you've read ---- */
@@ -3763,7 +3763,7 @@ html[data-col="f"] .fl-stage .fl-ask { margin-top: 12px }
     fill.style.setProperty('--fill', Math.max(0, Math.min(len, reach - top0)) + 'px');
     dots.forEach(function (d, i) { d.classList.toggle('is-on', ys[i] <= reach); });
   }
-  addEventListener('scroll', draw, { passive: true }); addEventListener('resize', place); addEventListener('load', place);
+  addEventListener('scroll', function () { if (!draw.q) { draw.q = 1; requestAnimationFrame(function () { draw.q = 0; draw(); }); } }, { passive: true }); addEventListener('resize', place); addEventListener('load', place);
   if ('ResizeObserver' in window) new ResizeObserver(place).observe(main);
   place(); setTimeout(place, 600); setTimeout(place, 2000);
 })();
@@ -3868,7 +3868,9 @@ html[data-col="f"] .fl-stage .fl-ask { margin-top: 12px }
   var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (head && !reduce) {
     var t = false;
-    function upd() { t = false; var r = head.getBoundingClientRect(); hero.style.setProperty('--fu-p', Math.max(0, Math.min(1, -r.top / Math.max(1, r.height * .85))).toFixed(3)); }
+    var ms = hero.querySelector('#fl-missed'), h1 = hero.querySelector('.fl-h1');
+    function upd() { t = false; var r = head.getBoundingClientRect(), v = Math.max(0, Math.min(1, -r.top / Math.max(1, r.height * .85))).toFixed(3);
+      [ms, h1].concat(ms ? [].slice.call(ms.querySelectorAll('.fm')) : []).forEach(function (e) { if (e) e.style.setProperty('--fu-p', v); }); }
     addEventListener('scroll', function () { if (!t) { t = true; requestAnimationFrame(upd); } }, { passive: true }); upd();
   }
 })();
@@ -4422,11 +4424,11 @@ window.fuToken = function (from, text, to, done) {
   var FILMING = !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
   (function film() { if (!FILMING) return; var tag = strip.querySelector('.fu-strip-tag'), keep = tag ? tag.textContent : '', DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], KEYS = ['caught', 'qual', 'booked', 'done', 'time'];
     var line = document.createElement('i'); line.className = 'fu-film'; line.setAttribute('aria-hidden', 'true'); strip.appendChild(line); strip.classList.add('is-film');
-    function show(z) { KEYS.forEach(function (k) { var e = document.getElementById(C[k][0]); if (e) e.textContent = C[k][2](Math.round(C[k][1] * z)) || '0 min'; }); }
+    function show(z) { KEYS.forEach(function (k) { var e = document.getElementById(C[k][0]), v = C[k][2](Math.round(C[k][1] * z)) || '0 min'; if (e && e.textContent !== v) e.textContent = v; }); }
     show(0); if (tag) tag.textContent = DAYS[0];
     setTimeout(function () { var t0 = performance.now(), D = 5600;
       (function f(t) { var q = Math.min(1, (t - t0) / D), z = 1 - Math.pow(1 - q, 3); show(z);
-        if (tag) tag.textContent = DAYS[Math.min(6, Math.floor(q * 7))]; line.style.transform = 'scaleX(' + q.toFixed(4) + ')';
+        if (tag && tag.textContent !== DAYS[Math.min(6, Math.floor(q * 7))]) tag.textContent = DAYS[Math.min(6, Math.floor(q * 7))]; line.style.transform = 'scaleX(' + q.toFixed(4) + ')';
         if (q < 1) requestAnimationFrame(f); else { FILMING = false; show(1); if (tag) tag.textContent = keep; strip.classList.remove('is-film'); strip.classList.add('is-filmed'); } })(t0); }, 1100); })();
   var CELL = { caught: 0, qual: 1, booked: 2, done: 3, saved: 4, time: 5 };
   function roll(e, from, to, fmt) { var t0 = performance.now(); (function f(t) { var q = Math.min(1, (t - t0) / 1200), z = q < .5 ? 4 * q * q * q : 1 - Math.pow(-2 * q + 2, 3) / 2;
@@ -4561,7 +4563,7 @@ window.fuToken = function (from, text, to, done) {
 function fuSeen(el, play, key) {
   if (!el) return; var done = false;
   function go() { if (done || !el.offsetParent) return; var r = el.getBoundingClientRect(); if (r.top < innerHeight * .85 && r.bottom > 0) { done = true; play(); } }
-  addEventListener('scroll', go, { passive: true }); setTimeout(go, 300);
+  addEventListener('scroll', function () { if (!go.q) { go.q = 1; requestAnimationFrame(function () { go.q = 0; go(); }); } }, { passive: true }); setTimeout(go, 300);
   document.addEventListener('fu-pick', function (e) { if (e.detail.k === key) { done = false; setTimeout(go, 60); } });
 }
 
@@ -4806,7 +4808,7 @@ window.FU_THINK = (function () {
     var y = 34, cr = document.querySelector('.close').getBoundingClientRect(), darkClose = getComputedStyle(document.documentElement).getPropertyValue('--close-tone').trim() === 'dark', onLight = !(darkClose && cr.top <= y && cr.bottom >= y);
     nav.classList.toggle('light', onLight); nav.classList.toggle('solid', window.scrollY > 40);
   }
-  window.addEventListener('scroll', navTone, { passive: true }); navTone();
+  window.addEventListener('scroll', function () { if (!navTone.q) { navTone.q = 1; requestAnimationFrame(function () { navTone.q = 0; navTone(); }); } }, { passive: true }); navTone();
 
   /* ---- the real switch ---- */
   var sw = $('#sw'), swText = $('#sw-text');
@@ -5132,6 +5134,22 @@ html body footer.foot5 { padding-bottom: 26px }
   /* the floating messages don't run on phones; their faint resting cards sat behind the headline */
   html body #fl-missed { display: none !important }
 }
+
+/* 21. smooth frames: nothing blurs or frosts over moving things; the parts that move every scroll frame get their own layer */
+/* the hand-off value stays on the elements that read it: it no longer flows into the ~600 elements inside them */
+@property --fu-p { syntax: '<number>'; inherits: false; initial-value: 0 }
+html body #fl-missed.is-flow2.is-wave .fm:not(.fl-lead):not(.fu-wv) { filter: opacity(.3) }
+html body #fl-missed.is-flow2 .fm.is-junk { filter: grayscale(1) }
+html body #fl-hero .fu-strip > div, html body #fl-try .fl-chips, html body #fl-river, html body #fl-river .fl-srcs, html body .cl-n {
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important }
+@keyframes fl-word { from { opacity: 0; transform: translateY(.42em) } to { opacity: 1; transform: none } }
+.fl-try-l b { position: relative }
+.fl-try-l b::before { animation: none !important; box-shadow: none !important }
+.fl-try-l b::after { content: ""; position: absolute; left: 0; top: 50%; width: 8px; height: 8px; margin-top: -4px; border-radius: 999px; background: #2A7A55; pointer-events: none; animation: fu-ring 1.8s ease-out infinite }
+@keyframes fu-ring { from { transform: scale(1); opacity: .5 } to { transform: scale(3.25); opacity: 0 } }
+html body #fl-stage, html body #fl-hero .fl-head, html body #bigcta { will-change: transform }
+html[data-col="f"] body .fl-stage { --tr-p: 1 }
+@media (prefers-reduced-motion: reduce) { .fl-try-l b::after { animation: none; opacity: 0 } }
 </style>
 <script>
 (function () { var sh = document.querySelector('#control .cb-sheet'); if (!sh || !('IntersectionObserver' in window)) return;

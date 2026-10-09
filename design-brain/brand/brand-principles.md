@@ -286,3 +286,20 @@ a section's answer already lives elsewhere on the page (FAQ, "nothing to learn")
   the demo), the point it made must still land another way.
 - Nothing may sit under the screen's edge or overlap: buttons stay on one line, cards keep their spacing, and nothing
   scrolls sideways.
+
+## Every frame is smooth, on an ordinary laptop and a mid phone (2026-10-09)
+
+**Founder:** *"the animation and the motions are not smooth, I want all the frames to be smooth."*
+A stutter reads as cheap and breaks trust, however good the design is. Motion that can't run at 60 frames is cut, not
+kept. How we keep it smooth (measured on the home page, see design-decisions 2026-10-09):
+- Animate only **transform and opacity**. Never width, height, margin, top/left, padding, box-shadow or filter blur.
+- **Never write a scroll value onto a big container** (`<html>`, a whole section). A CSS variable flows into every
+  element inside it, so the browser restyles all of them each frame. Write the value onto the few elements that read
+  it, and register it as non-inherited (`@property … inherits: false`).
+- **No frosted glass (backdrop-filter) or blur over anything that moves.** Each frame re-blurs the area. Use a plain
+  see-through fill instead; over a calm background it looks the same.
+- Scroll listeners measure **at most once a frame** (requestAnimationFrame). Never read layout on every scroll event.
+- A counter writes a number **only when it changes**.
+- Things that move on every scroll frame get their own layer (`will-change: transform`).
+- Check with a trace before calling it done: no main-thread task over 16 ms while scrolling, desk and phone.
+

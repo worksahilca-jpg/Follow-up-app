@@ -572,6 +572,9 @@ on "needs you" and the reminders keep coming (principle 1: the owner can always 
 
 ## A-027 — Three places on the phone, four on the desktop ^A-027
 
+**SUPERSEDED IN PART (2026-10-09) by [A-209](#^A-209):** Numbers is back in the menu as Results.
+
+
 **SUPERSEDED IN PART (2026-10-04)** by [A-082](#^A-082): Inbox left the nav; the phone tabs are Today · Customers ·
 Settings and the desk has Today · Customers. The 30-account guard still holds: the Inbox code is parked, not deleted.
 
@@ -1575,6 +1578,9 @@ going all in"*; research in `followup/research/customers/2026-10-04-gmail-only-w
 
 ## A-082 — Two places: Today and Customers; Inbox folds in ^A-082
 
+**SUPERSEDED IN PART (2026-10-09) by [A-209](#^A-209):** the menu has four places: Today · Customers · Results · Settings.
+
+
 **Approved:** 2026-10-04, founder: *"today and inbox is same no?"*, then *"yes"* to Today + Customers with Inbox gone
 (the name "Customers" for the everyone list, as proposed). Research:
 `research/ux-patterns/2026-10-04-today-inbox-customers.md`, concept C2.
@@ -1604,6 +1610,9 @@ different kinds of replies"*, then *"yes do all"* to: ask the trade in setup, an
 **Not yet:** playbooks for other trades; the proven-reply library.
 
 ## A-084 — Today's reply pane stays in view while the list scrolls ^A-084
+
+**SUPERSEDED (2026-10-09) by [A-209](#^A-209):** Today shows one customer at a time on the desk too; there is no list column beside the reply.
+
 
 **Approved:** 2026-10-05, founder, using Today with a long list: *"the message should pop up, it should float,
 otherwise when I scroll down and click on another lead I need to scroll up to check what happened."*
@@ -1694,6 +1703,9 @@ accounts for one person (#22: one Gmail per login today; a schema change), and c
 sends as results.
 
 ## A-090 — The app's ground stays white (colour A) ^A-090
+
+**SUPERSEDED IN PART (2026-10-09) by [A-209](#^A-209):** the reply card's gradient. Written replies are soft green (R-058). The white ground stays.
+
 
 **Approved 2026-10-05**, founder: *"a is fine"*. He was shown Today on desktop and phone side by side: A, the current
 near-white ground (`--paper #fdfcfc`, white cards, `--sidebar #f9f8f6`), and B, a warm cream ground like the landing
@@ -3037,6 +3049,9 @@ photo can show inside the app after Google sign-in.
 
 ## A-194 — The Ready card, built for realtors ^A-194
 
+**SUPERSEDED IN PART (2026-10-09) by [A-209](#^A-209):** the pill reads "Qualified". The alert and title sentence ("Nadia is ready") stay.
+
+
 **Direction:** 2026-10-09, founder: *"build it"*, on the simplified prototype
 (`prototypes/2026-10-09-qualification-card/index.html`, Version 2). Built in `followup/` (PR, not merged).
 
@@ -3343,3 +3358,32 @@ moment, Customers and a customer, on desk and phone, drawn over the real app.
 - the reply on soft green, which would replace A-090's gradient line;
 - "Alerts" on the desk or only on the phone;
 - the "Ready" pill becoming "Qualified".
+
+## A-209 — The app strategy: four places, one customer at a time, the homepage's look ^A-209
+
+**Approved:** 2026-10-09, founder: *"all yes, draw the rest"*, to the five questions on board version 2
+(https://claude.ai/artifact/F12ZLs1H4UBdCWRtumdRvg; research: `ux-patterns/2026-10-09-app-strategy-simple-familiar.md`).
+
+**What specifically:**
+1. **Four places:** Today · Customers · Results · Settings, in the phone's tab bar and the desk sidebar, each with a
+   word. **Results** is the Numbers page (A-066), back in the menu. Each place borrows an everyday pattern:
+   - Today: a to-do app's Today;
+   - Customers: a chat list;
+   - Results: a bank app's balance or a weekly report;
+   - Settings: the iPhone's Settings.
+2. **Today shows one customer at a time,** on the desk as on the phone: their message, the reply, Send · Edit, then
+   "Next: name · wait · See all N". Everyone else is in Customers.
+3. **Written replies are soft green** (`#F3F8F4`, edge `#DCEBE1`, label `#2A5A47`). The peach-and-blue wash is gone
+   from the app.
+4. **"Alerts" is written beside the bell on the phone only.** On the desk the bell keeps its tooltip, and the business
+   name stays readable.
+5. **The realtors' pill reads "Qualified".** The sentence "Nadia is ready" stays.
+
+Also in force from A-208:
+- the homepage's state words (Needs you · Checking in · Answered · Qualified · Booked · Won);
+- the display headline with the green italic phrase;
+- "More" and "Add" written on the phone's Customers buttons;
+- empty tabs hidden.
+
+**Supersedes:** A-082 and A-027 (place lists), A-084, A-090's gradient line, A-089's icon-only buttons, and A-194's
+pill word.

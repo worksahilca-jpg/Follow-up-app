@@ -140,3 +140,38 @@ by name; pause all sending. Plus one new task: "show me what FollowUp did for yo
   builtformars.com/ux-bites (onboarding review)
 - Screen Time weekly report (daily bars, change vs last week; a critique of an unexplained "below average"):
   vickiboykis.com/2019/04/29/breaking-down-apples-ios-screen-time-report
+
+## The founder's recording of Wispr Flow's desktop app (2026-10-09)
+
+**Founder:** *"look how cool and calm, to the point, also easy to use this is."* A 23-second screen recording of the
+Windows app. The recording stays private: it shows his account. Only principles are kept here.
+
+What makes it calm, as observed:
+- **One quiet sidebar:** a small line icon **plus a word** for every place, about eight of them. Below them, a short
+  bottom group (invite, Settings, Help). The current place gets only a soft grey fill.
+- **A setup checklist lives in the sidebar:** a small card with a thin progress bar and four steps, ticked as they're
+  done. Never a tour or a modal.
+- **The content sits on one white sheet** with rounded corners, on a light grey frame. Almost no other boxes.
+- **Plain page titles, text tabs underlined.** Lists are grouped under small uppercase day labels (WED, OCT 7). Each row
+  has a small icon, a title and a time. Its actions (edit, delete, star) appear only on hover, at the row's end.
+- **One black pill button per screen** ("Add new").
+- **Numbers page:** three number cards in a row, each a big figure with a small label. A relatable comparison ("you've
+  written 1 book chapter") and one small "+135% this month" chip. Then a usage bar list and a streak grid. Mostly
+  monochrome, with one deep teal.
+- **Each feature page opens with one dismissible banner:** a dark photo, a serif headline with one italic word (the
+  same move as our homepage headline), one line of explanation and example chips. Then the plain list.
+- **Settings opens over the page as a sheet** with its own short list on the left. Each setting is a row: label, one
+  grey line of explanation, and the control on the right (switch, "Change" button or dropdown). Rows are grouped in
+  soft boxes.
+- **Almost nothing moves.** Pages swap instantly, a sheet dims the page behind it, and that's it.
+
+**For FollowUp's app drawing (A-209):**
+- the sidebar with words and the setup card;
+- Today and Customers as one white sheet;
+- Customers grouped by day;
+- row actions on hover on the desk (the phone keeps the swipe);
+- Results as three or four number cards plus one plain comparison;
+- Settings as grouped rows with one line each.
+
+**For the home page:** calm means few things moving at once. The smoothness fix (design-decisions 2026-10-09) makes the
+motion cheap; whether there is still too much of it is his call.

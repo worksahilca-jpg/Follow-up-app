@@ -2448,3 +2448,32 @@ MIT and InsideSales.com, 2007: 5 minutes rather than 30, 21× the odds of qualif
 slow steps still show the loss. **Rule kept:** every figure is a real one, worded no stronger than its study ("a real
 sales conversation" for "qualify", not "a customer").
 
+## A-157 — The week is told by the scroll, and ends in a booking (v60) ^A-157
+
+**Direction:** 2026-10-09, founder (thread c478ef16): *"what happened to this part? Why is it not moving… let them
+visualise: it actually followed up after no reply, and then it helped me to book it, by talking to the lead."* The
+week was a timed loop that only ran above 900 px. Now the scroll drives seven steps at every width: Tue you replied ·
+Wed no reply · Thu no reply · Fri FollowUp checks in · Jordan says yes · FollowUp writes the booking and **you tap
+Send** (dates wait for your OK, A-096 / the product rule) · Sat "Visit booked". On a computer the panel holds still
+while you scroll. Scroll back and it rewinds.
+
+## A-158 — The live demo is a Mac app window (v62) ^A-158
+
+**Direction:** 2026-10-09, founder (thread 0a2e81a7): *"This feels like I'm using a different interface. I want it to feel
+to the user that they're using their own stuff… because they see the iOS or the Mac thing daily. Customise it
+properly."* On a computer the demo is a window on the photo "desktop": a title bar with the three window buttons and
+"FollowUp — Inbox"; a sidebar (Inboxes: the eight apps with their icons, the open conversation's inbox highlighted;
+FollowUp: Waiting, Handled 12); a conversation list (open one in light green, waiting ones with a blue unread dot,
+answered ones ticked); the conversation on the right. System font throughout. Familiar layout, our own window and
+content, no copy of any one app's screen (CLAUDE.md: references are principles). Phones keep the older stage for now;
+an iPhone-style screen is the next step if he wants it.
+
+## A-159 — Less motion, more meaning (v62) ^A-159
+
+**Direction:** 2026-10-09, founder (thread 19e53eb4): *"Still need a lot of improvement in the animation and transition
+stuff… make it feel a bit more understandable… as simple as you can… minimal."* Subtraction: no rise-and-scale entrance
+on cards; the five-dot lifecycle bar under the demo removed (the window shows it, one caption line says it); in How it
+works only the current step moves; the two scroll-told stories shortened (reply speed +120vh, the week +150vh); a new
+message lights its inbox row instead of bouncing. **Principle:** every moving thing must have one job a visitor can
+name; anything else stands still.
+

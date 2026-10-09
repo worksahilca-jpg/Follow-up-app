@@ -10234,3 +10234,14 @@ list are the only drawings, so they must earn their place or go; "It follows up.
 says it checks in, so the two may feel repeated; the notes on the demo's corners cover a little of the photo, and on
 screens near 1230 px wide they sit close to the edge.
 
+## 2026-10-09 — Home v57–v62: scroll-told stories, the Mac window, subtraction
+
+A-155 to A-159. **How the Mac window is built:** the demo's logic still runs on its sliding cards (`#fl-track`, now
+hidden); the conversation list is a mirror rebuilt from those cards and the open card through a MutationObserver, with
+fresh app-icon copies (their own gradient ids, v51 lesson). The From bar becomes the sidebar by CSS alone; the open
+inbox is highlighted with `:has()`. **Bugs met:** a sticky panel lost to a more specific `position: relative` from v55
+(raise the selector, don't add `!important`); a stagger delay from v34 hid the new booking message (an ID-scoped rule
+resets it). **Weak spots:** phones still show the older stage; the list's order is rebuilt rather than animated, so
+rows jump between steps; three long pinned moments remain (How it works, reply speed, the week); watch that they
+don't add up to "stuck".
+

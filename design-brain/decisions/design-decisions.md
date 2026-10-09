@@ -11043,3 +11043,28 @@ https://claude.ai/artifact/F12ZLs1H4UBdCWRtumdRvg):
 
 The rules are now in brand-principles ("Every frame is smooth"). Builder patch 21 in the preview pipeline.
 
+## 2026-10-09 — First screen without the WhatsApp feel: "a little cinematic, not that dark"
+
+**Drawn:**
+- **A:** FollowUp's own try box (no WhatsApp logo, "Ask what a customer would ask…", a worded "Try it" button), with
+  white number cards.
+- **B:** A, with the headline accent in black.
+
+**Founder:** *"make it just a little cinematic, not that dark."*
+- Read as: A's direction, but the numbers shouldn't be flat white.
+- B's black headline is too dark *(inferred)*, so the green accent stays.
+
+**Drawn next, C1:**
+- A's box;
+- the numbers sit on one of the page's own sunlit street photos (d5dc60f92bca, already blurred), under a warm light
+  wash;
+- white cells, ink numbers, green only on "$ won";
+- the beta pill is neutral.
+
+**Dropped, C2:** daylight behind the hero too. An inner layer showed as a pale box. Not offered.
+
+**Not touched:** the dark "Try it yourself" photo panel below (R-104: no retone without his ask). Offered as a
+follow-up.
+
+**Status:** waiting for his yes on C1, then build and PR.
+

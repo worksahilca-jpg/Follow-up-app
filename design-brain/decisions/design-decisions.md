@@ -11106,5 +11106,6 @@ everyone under "Earlier". Grouping by state keeps the approved order.
 - the phone chart labels shorten to the month;
 - the display serif is a new font inside the app.
 
-**Status:** waiting for his yes to build.
+**Founder (2026-10-09):** *"looks good, but this needs a lot more changes too."* Direction holds; specifics asked.
+**Status:** not approved to build yet; round 4 follows his list.
 

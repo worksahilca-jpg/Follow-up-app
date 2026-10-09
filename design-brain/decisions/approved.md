@@ -2410,6 +2410,8 @@ No giant wordmark.
 
 ## A-154 — Granola's lessons, in FollowUp's own form (v55 draft) ^A-154
 
+*Item 1 (scroll hand-off) SUPERSEDED (2026-10-09) by [[#^A-173]]: the messages no longer move with the scroll.*
+
 **Direction:** 2026-10-09, founder: *"yes go ahead"*, on four proposals drawn from the Granola + Questrade teardown
 ([[references/landing-pages/2026-10-09-granola-questrade-teardown]]). A draft to react to, not yet liked or disliked.
 1. **Scroll hand-off from the hero to the demo:** as you scroll, the messages around the headline drift apart and fade,
@@ -2606,4 +2608,20 @@ and a small red "−$X" slips down and fades. Green moment: "✓ Followed up · 
 message into the strip's saved figure, which then counts up (1.3 s). The lines under the headline sit on a soft frosted
 panel; the headline and the try-it lines carry a halo in the page's own colour. **Principle:** a number that changes
 should visibly come from somewhere on the page.
+
+## A-173 — Floating things float in place (v75) ^A-173
+
+**Direction:** 2026-10-09, founder (thread 08675a63): *"if I scroll down or up, it comes along with the scroll… It should
+stay where it is. It should float within its boundary only."* The v55 hand-off (messages sliding and fading with the
+scroll, the headline lifting) is removed. **Principle (his words):** anything that floats moves only inside its own
+area; scrolling moves the page and nothing else.
+
+## A-174 — Without vs with, on a light panel, with the wait written out (v76) ^A-174
+
+**Direction:** 2026-10-09, founder (thread 99a6436d): *"change the background. It is not readable, and I don't know what
+we're doing here… make it more accurate and enhanced."* No photo: a light panel in the page's tone. A label: "Same
+customer. Same question. Two endings." In each chat a time divider: "29 hours later" (the 2024 average, 1 day 5 h 17 min
+= 7:02 AM to 12:19 PM next day) and "1 minute later". Each card ends on "Result:" (a lost customer / a booked job,
+three minutes after he asked). FollowUp's card has a green edge, the other is grey. **Principle:** text panels that
+carry the argument sit on calm, light ground; photos are for mood, not for paragraphs.
 

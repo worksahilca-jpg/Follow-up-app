@@ -11069,3 +11069,42 @@ follow-up.
 **Status:** approved ("yes c1", A-210). Built as builder patch 22. Still smooth: no main-thread task over 16 ms
 while scrolling, desk or phone.
 
+## 2026-10-09 — The app, version 3: our look, Wispr's calm (drawn)
+
+**Founder:** *"we should use our colour and theme, but the interface should be leaning towards Wispr, but do not copy
+everything, take reference"* (A-211).
+
+**Drawn on the real app** (local test account; desk 1280, phone 390; board version 3:
+https://claude.ai/artifact/F12ZLs1H4UBdCWRtumdRvg; script `prototypes/2026-10-09-app-inside/draw-wispr-leaning.cjs`):
+- **Shell:**
+  - the sidebar sits on a soft grey frame (#F2F1ED), and the page is one white sheet (18px radius);
+  - Today · Customers · Results each have a word, with Settings below;
+  - only Today keeps a count;
+  - a "Finish setting up" card has a thin green progress bar and the real steps from Settings (email ✓,
+    Instagram/Facebook/WhatsApp, website form).
+- **Phone:** four tabs with words, and "Alerts" beside the bell. The setup card sits at the top of Settings.
+- **Today:** one customer at a time (A-209).
+- **Customers:**
+  - plain display title and text tabs;
+  - the list is grouped by state ("Needs you · 15", with the orange dot) in the app's own order, so the per-row
+    "Needs you" pill goes (each fact said once);
+  - the wait sits at the row's end;
+  - Reply · Later appear on hover (desk).
+- **Results:** the Numbers page redrawn:
+  - display headline "Customers heard back in *3 days.*";
+  - four real numbers on the homepage's sunlit card (C1), each beside last week;
+  - the 8-week chart on soft grey and a quiet list.
+- **Settings:** soft grey grouped rows, Change as a small outlined pill, one grey line on Booking hours and Pause all
+  sending, and on/off as a switch.
+
+**Grouping by day (Wispr's pattern) was tried and dropped.** The list is ordered by who needs you, so day groups put
+everyone under "Earlier". Grouping by state keeps the approved order.
+
+**Weak:**
+- "qualified" isn't counted on Results yet ("came back after a follow-up" stands in);
+- "Needs you" isn't sorted by longest wait;
+- the phone chart labels shorten to the month;
+- the display serif is a new font inside the app.
+
+**Status:** waiting for his yes to build.
+

@@ -10,281 +10,155 @@
 <style>
 /* The app's own tokens (followup/src/app/globals.css), light and dark. */
 :root {
-  --paper: #fdfcfc; --card: #ffffff; --card-2: #f7f6f4; --ink: #0a0a0a; --ink-soft: #57534e; --ink-faint: #736e68;
+  --paper: #fdfcfc; --card: #ffffff; --card-2: #f5f3f1; --ink: #0a0a0a; --ink-soft: #57534e; --ink-faint: #736e68;
   --line: #e7e5e2; --line-strong: rgba(10,10,10,.18); --accent: #0a0a0a; --on-accent: #ffffff; --accent-soft: #f1eeea;
-  --sage: #0d6e3c; --sage-soft: #dcf5e5; --gold: #a35904; --gold-soft: #fef3c7; --needs: #c96a1b; --checked: #a8a29e;
+  --sage: #0d6e3c; --sage-soft: #dcf5e5; --page: #f3f2ef; --lock: #1b1a19; --lock-ink: #f3f1ee;
   --shadow-box: 0 0 0 1px var(--line); --shadow-lift: 0 0 0 1px var(--line), 0 24px 48px -24px rgba(10,10,10,.22);
-  --page: #f3f2ef; --font: "Public Sans", ui-sans-serif, system-ui, sans-serif; --mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font: "Public Sans", ui-sans-serif, system-ui, sans-serif; --mono: "IBM Plex Mono", ui-monospace, monospace;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --paper: #121110; --card: #1b1a19; --card-2: #232120; --ink: #f3f1ee; --ink-soft: #b8b2ab; --ink-faint: #958f88;
   --line: #2e2c2a; --line-strong: rgba(243,241,238,.22); --accent: #f3f1ee; --on-accent: #121110; --accent-soft: #2a2826;
-  --sage: #7fcf9f; --sage-soft: #16291e; --gold: #e3a95a; --gold-soft: #2b2112; --needs: #e0893d; --checked: #8a847d;
-  --shadow-lift: 0 0 0 1px var(--line), 0 24px 48px -24px rgba(0,0,0,.6); --page: #0c0b0b; } }
+  --sage: #7fcf9f; --sage-soft: #16291e; --page: #0c0b0b; --lock: #000; --lock-ink: #f3f1ee;
+  --shadow-lift: 0 0 0 1px var(--line), 0 24px 48px -24px rgba(0,0,0,.6); } }
 :root[data-theme="dark"] {
   --paper: #121110; --card: #1b1a19; --card-2: #232120; --ink: #f3f1ee; --ink-soft: #b8b2ab; --ink-faint: #958f88;
   --line: #2e2c2a; --line-strong: rgba(243,241,238,.22); --accent: #f3f1ee; --on-accent: #121110; --accent-soft: #2a2826;
-  --sage: #7fcf9f; --sage-soft: #16291e; --gold: #e3a95a; --gold-soft: #2b2112; --needs: #e0893d; --checked: #8a847d;
-  --shadow-lift: 0 0 0 1px var(--line), 0 24px 48px -24px rgba(0,0,0,.6); --page: #0c0b0b; }
+  --sage: #7fcf9f; --sage-soft: #16291e; --page: #0c0b0b; --lock: #000; --lock-ink: #f3f1ee;
+  --shadow-lift: 0 0 0 1px var(--line), 0 24px 48px -24px rgba(0,0,0,.6); }
 
 * { box-sizing: border-box }
 body { margin: 0; background: var(--page); color: var(--ink); font: 400 15px/1.5 var(--font); -webkit-font-smoothing: antialiased; padding-inline: 16px }
 .doc { max-width: 1180px; margin: 0 auto; padding-block: 48px 80px }
-.doc > header { max-width: 720px }
 .k { font: 500 11.5px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-faint) }
 h1 { font-size: clamp(28px, 4vw, 40px); line-height: 1.1; letter-spacing: -.02em; font-weight: 600; margin: 8px 0 12px; text-wrap: balance }
-.lede { color: var(--ink-soft); font-size: 16.5px; margin: 0; max-width: 64ch }
-.board { margin-top: 56px }
-.board > h2 { font-size: 20px; font-weight: 600; letter-spacing: -.01em; margin: 6px 0 4px }
-.board > p { color: var(--ink-soft); margin: 0 0 18px; max-width: 70ch }
-.frame { background: var(--paper); border-radius: 20px; box-shadow: var(--shadow-box); padding: 28px; overflow: hidden }
+.lede { color: var(--ink-soft); font-size: 17px; margin: 0; max-width: 60ch }
 
-/* the lead page (desktop): thread + side column */
-.lead { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 40px }
-.who { display: flex; align-items: center; gap: 14px }
-.av { width: 44px; height: 44px; border-radius: 99px; background: var(--accent-soft); display: grid; place-items: center; font-weight: 600; font-size: 15px; flex: none }
-.who h3 { margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.01em; line-height: 1.15 }
-.who small { color: var(--ink-faint); font-size: 13.5px }
-.thread { margin-top: 26px; display: grid; gap: 14px }
-.msg { max-width: 78%; padding: 11px 14px; border-radius: 18px; font-size: 14.5px; line-height: 1.45 }
-.msg.in { background: var(--card); box-shadow: var(--shadow-box); border-bottom-left-radius: 6px }
-.msg.out { justify-self: end; background: var(--accent); color: var(--on-accent); border-bottom-right-radius: 6px }
-.msg time { display: block; margin-top: 4px; font-size: 12px; opacity: .65 }
-mark.q { background: var(--gold-soft); color: inherit; border-radius: 4px; padding: 0 2px; box-decoration-break: clone; -webkit-box-decoration-break: clone }
-.reply { margin-top: 18px; padding: 14px 16px; border-radius: 16px; background: var(--card); box-shadow: var(--shadow-box) }
-.reply .k { color: var(--ink-faint) }
-.reply p { margin: 6px 0 10px; font-size: 14.5px }
-.reply .row { display: flex; gap: 8px; flex-wrap: wrap }
+.steps { margin-top: 44px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; align-items: start }
+.step > .k { display: block; margin-bottom: 6px }
+.step > h2 { margin: 0 0 4px; font-size: 18px; font-weight: 600; letter-spacing: -.01em }
+.step > p { margin: 0 0 16px; color: var(--ink-soft); font-size: 14.5px; min-height: 44px }
 
-/* buttons and pills */
-.btn { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: 99px; border: 0; font: 600 13px/1 var(--font); cursor: pointer; background: var(--accent); color: var(--on-accent) }
+.phone { width: 100%; max-width: 340px; aspect-ratio: 340 / 640; border-radius: 40px; padding: 14px; background: var(--paper); box-shadow: 0 0 0 1px var(--line), 0 30px 60px -30px rgba(0,0,0,.35); overflow: hidden; position: relative }
+.phone.lock { background: var(--lock); color: var(--lock-ink) }
+.clock { text-align: center; margin-top: 46px; font-size: 64px; font-weight: 300; letter-spacing: -.02em; line-height: 1 }
+.date { text-align: center; font-size: 15px; opacity: .75; margin-top: 6px }
+.note { margin-top: 40px; padding: 12px 14px; border-radius: 22px; background: rgba(255,255,255,.14); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); color: #fff }
+.note-top { display: flex; align-items: center; gap: 8px; font-size: 12.5px; opacity: .8 }
+.note-top span:last-child { margin-left: auto }
+.app { width: 22px; height: 22px; border-radius: 6px; background: #fff; display: grid; place-items: center; flex: none }
+.app svg { width: 14px; height: 14px }
+.note b { display: block; margin-top: 6px; font-size: 15px }
+.note p { margin: 2px 0 0; font-size: 14px; line-height: 1.4; opacity: .9 }
+.lock .hint { position: absolute; left: 0; right: 0; bottom: 26px; text-align: center; font-size: 12.5px; opacity: .55 }
+
+.bar { display: flex; align-items: center; gap: 10px; padding: 8px 4px 12px; border-bottom: 1px solid var(--line) }
+.av { width: 36px; height: 36px; border-radius: 99px; background: var(--accent-soft); display: grid; place-items: center; font-weight: 600; font-size: 13px; flex: none }
+.bar b { display: block; font-size: 16px } .bar small { color: var(--ink-faint); font-size: 12.5px }
+
+.ready { margin-top: 14px; padding: 16px; border-radius: 18px; background: var(--card); box-shadow: var(--shadow-lift) }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 99px; font-size: 12.5px; font-weight: 600; background: var(--sage-soft); color: var(--sage) }
+.pill::before { content: ""; width: 6px; height: 6px; border-radius: 99px; background: currentColor }
+.ready h3 { margin: 10px 0 4px; font-size: 19px; font-weight: 600; letter-spacing: -.01em }
+.booked { display: flex; gap: 8px; align-items: center; margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: var(--card-2); font-size: 14px }
+.booked svg { flex: none; color: var(--sage) }
+.why { margin: 12px 0 0; font-size: 14px; color: var(--ink-soft); line-height: 1.5 }
+.why b { color: var(--ink); font-weight: 600 }
+.acts { display: flex; gap: 8px; margin-top: 14px }
+.btn { flex: 1; display: inline-flex; align-items: center; justify-content: center; height: 42px; border-radius: 99px; border: 0; font: 600 14px/1 var(--font); background: var(--accent); color: var(--on-accent); cursor: pointer }
 .btn.ghost { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 1px var(--line-strong) }
-.btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px }
-.pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 99px; font-size: 12.5px; font-weight: 600; white-space: nowrap }
-.pill.warm { background: var(--gold-soft); color: var(--gold) }
-.pill.hot { background: var(--sage-soft); color: var(--sage) }
-.pill.must { background: transparent; color: var(--ink-faint); box-shadow: inset 0 0 0 1px var(--line); font-weight: 500; font-size: 11.5px; padding: 1px 7px }
+.btn:focus-visible, .how:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px }
+.how { display: flex; align-items: center; justify-content: space-between; width: 100%; margin-top: 12px; padding: 10px 2px 0; border: 0; border-top: 1px solid var(--line); background: none; color: var(--ink-soft); font: 500 13.5px/1.3 var(--font); cursor: pointer; text-align: left }
+.how svg { transition: transform .35s cubic-bezier(.32,.72,0,1) }
+.how[aria-expanded="true"] svg { transform: rotate(90deg) }
+.msg { margin-top: 14px; max-width: 88%; padding: 10px 13px; border-radius: 18px 18px 18px 6px; background: var(--card); box-shadow: var(--shadow-box); font-size: 14px }
 
-/* the qualification card */
-.qc { background: var(--card); border-radius: 16px; box-shadow: var(--shadow-lift); padding: 18px 18px 14px }
-.qc-h { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px }
-.qc-h h4 { margin: 0; font-size: 16px; font-weight: 600; letter-spacing: -.005em }
-.qc-h p { margin: 2px 0 0; font-size: 13px; color: var(--ink-soft) }
-.meter { display: flex; gap: 4px; margin: 14px 0 4px }
-.meter i { flex: 1; height: 4px; border-radius: 4px; background: var(--line) }
-.meter i.on { background: var(--sage) } .meter i.next { background: var(--needs) }
-.crit { list-style: none; margin: 10px 0 0; padding: 0 }
-.crit li { display: grid; grid-template-columns: 18px minmax(0, 1fr); column-gap: 10px; padding: 11px 0; border-top: 1px solid var(--line) }
-.crit li:first-child { border-top: 0 }
-.dot { width: 18px; height: 18px; border-radius: 99px; display: grid; place-items: center; margin-top: 1px }
-.dot svg { width: 11px; height: 11px }
-.dot.ok { background: var(--sage-soft); color: var(--sage) }
-.dot.no { box-shadow: inset 0 0 0 1.5px var(--checked) }
-.dot.next { box-shadow: inset 0 0 0 1.5px var(--needs) } .dot.next::after { content: ""; width: 6px; height: 6px; border-radius: 99px; background: var(--needs) }
-.dot.unsure { background: var(--gold-soft); color: var(--gold); font: 700 11px/1 var(--font) }
-.c-top { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap }
-.c-top b { font-size: 12.5px; font-weight: 500; color: var(--ink-faint); min-width: 84px }
-.c-top span { font-size: 14.5px; font-weight: 600 }
-.c-top span.none { font-weight: 400; color: var(--ink-faint) }
-.c-q { margin: 3px 0 0; font-size: 13px; color: var(--ink-soft); line-height: 1.4 }
-.c-q q { quotes: "“" "”"; font-style: italic }
-.c-q small { color: var(--ink-faint); font-size: 12px }
-.c-q.next { color: var(--ink) }
-.c-q.next em { font-style: normal; color: var(--ink-soft) }
-.qc-f { margin-top: 8px; padding-top: 12px; border-top: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap }
-.qc-f p { margin: 0; font-size: 13px; color: var(--ink-soft) }
-.qc-f .row { display: flex; gap: 6px }
-.why { margin: 14px 0 0; padding: 12px 14px; border-radius: 12px; background: var(--card-2); font-size: 13.5px; line-height: 1.5 }
-.why b { display: block; font: 500 11px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--sage); margin-bottom: 4px }
-.booked { display: flex; align-items: center; gap: 10px; margin-top: 12px; padding: 10px 12px; border-radius: 12px; box-shadow: var(--shadow-box); font-size: 14px }
-.side-facts { margin-top: 22px; display: grid; gap: 14px }
-.side-facts div p { margin: 0 } .side-facts .l { font-size: 12.5px; color: var(--ink-faint) } .side-facts .v { font-size: 15px; margin-top: 2px }
+.list { list-style: none; margin: 10px 0 0; padding: 0 }
+.list li { display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 10px; padding: 10px 0; border-top: 1px solid var(--line) }
+.list li:first-child { border-top: 0 }
+.tick { width: 20px; height: 20px; border-radius: 99px; background: var(--sage-soft); color: var(--sage); display: grid; place-items: center; margin-top: 1px }
+.tick svg { width: 11px; height: 11px }
+.list b { display: block; font-size: 12.5px; font-weight: 500; color: var(--ink-faint) }
+.list span { display: block; font-size: 14.5px; font-weight: 600 }
+.list q { display: block; quotes: "“" "”"; font-style: italic; font-size: 13px; color: var(--ink-soft); margin-top: 2px }
+.foot { margin-top: 10px; font-size: 12.5px; color: var(--ink-faint) }
 
-/* board 2: two cards side by side */
-.pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; align-items: start }
-.cap { margin: 10px 2px 0; font-size: 13px; color: var(--ink-faint) }
+.rules { margin-top: 48px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px }
+.rules div { padding: 18px; border-radius: 16px; background: var(--card); box-shadow: var(--shadow-box) }
+.rules h4 { margin: 0 0 6px; font-size: 15px; font-weight: 600 }
+.rules p { margin: 0; font-size: 14px; color: var(--ink-soft) }
 
-/* board 3: the owner's rules */
-.rules { max-width: 720px; margin: 0 auto; background: var(--card); border-radius: 16px; box-shadow: var(--shadow-box); padding: 22px }
-.rules h4 { margin: 0; font-size: 18px; font-weight: 600 }
-.rules > p { margin: 4px 0 16px; color: var(--ink-soft); font-size: 14px }
-.tmpl { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; background: var(--card-2); font-size: 14px; margin-bottom: 8px }
-.tmpl b { font-weight: 600 } .tmpl span { margin-left: auto; color: var(--ink-faint); font-size: 13px }
-table { width: 100%; border-collapse: collapse; font-size: 14px }
-th { text-align: left; font: 500 11.5px/1.4 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-faint); padding: 10px 8px 8px; border-bottom: 1px solid var(--line) }
-th:not(:first-child), td:not(:first-child) { text-align: center; width: 110px }
-td { padding: 12px 8px; border-bottom: 1px solid var(--line); vertical-align: top }
-td small { display: block; color: var(--ink-faint); font-size: 12.5px; margin-top: 2px }
-.sw { display: inline-block; width: 34px; height: 20px; border-radius: 99px; background: var(--line); position: relative; vertical-align: middle }
-.sw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 99px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.25) }
-.sw.on { background: var(--sage) } .sw.on::after { left: 16px }
-.rule-sum { margin: 16px 0 0; padding: 12px 14px; border-radius: 12px; box-shadow: inset 0 0 0 1px var(--line); font-size: 14px }
-.rule-sum b { font-weight: 600 }
-
-/* board 4: phone */
-.phones { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap }
-.phone { width: 360px; max-width: 100%; border-radius: 34px; background: var(--paper); box-shadow: 0 0 0 1px var(--line), 0 30px 60px -30px rgba(0,0,0,.35); padding: 16px 16px 22px; overflow: hidden }
-.ph-top { display: flex; align-items: center; gap: 10px; padding: 6px 2px 12px; border-bottom: 1px solid var(--line) }
-.ph-top b { font-size: 17px } .ph-top small { display: block; color: var(--ink-faint); font-size: 12.5px }
-.strip { margin-top: 12px; display: flex; align-items: center; gap: 10px; padding: 11px 12px; border-radius: 14px; background: var(--card); box-shadow: var(--shadow-box); font-size: 13.5px }
-.strip .meter { margin: 0; width: 70px; flex: none }
-.strip span { flex: 1; min-width: 0 } .strip svg { flex: none; color: var(--ink-faint) }
-.phone .thread { margin-top: 14px } .phone .msg { max-width: 86%; font-size: 14px }
-.phone .qc { box-shadow: var(--shadow-box); margin-top: 12px }
-
-.notes { margin-top: 56px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px }
-.notes div { padding: 16px; border-radius: 14px; background: var(--card); box-shadow: var(--shadow-box) }
-.notes h5 { margin: 0 0 6px; font-size: 14px; font-weight: 600 }
-.notes p, .notes li { margin: 0; font-size: 13.5px; color: var(--ink-soft) }
-.notes ul { margin: 0; padding-left: 18px }
-
-@media (max-width: 960px) { .lead, .pair, .notes { grid-template-columns: minmax(0, 1fr) } .frame { padding: 18px } th:not(:first-child), td:not(:first-child) { width: 64px } }
+@media (max-width: 960px) { .steps, .rules { grid-template-columns: minmax(0, 1fr) } .phone { margin-inline: auto } .step > p { min-height: 0 } }
+@media (prefers-reduced-motion: reduce) { .how svg { transition: none } }
 </style>
 </head>
 <body>
 <main class="doc">
 <header>
-  <div class="k">Draft for Sahil · realtors first · 2026-10-09</div>
-  <h1>Is this lead ready? The qualification card</h1>
-  <p class="lede">One card on each customer's page. It shows what FollowUp knows about them, the customer's own words behind every answer, what it will ask next, and when it hands them to you. Realtor version, built on the six things agents already ask: location, price, why they're moving, agent, mortgage and a viewing.</p>
+  <div class="k">Draft for Sahil · simpler version · 2026-10-09</div>
+  <h1>“Nadia is ready.” That's all the owner sees.</h1>
+  <p class="lede">FollowUp qualifies every lead on its own. The owner doesn't fill anything in or set anything up, and hears nothing until a customer is ready. Then they get one alert, with the reason in the customer's own words.</p>
 </header>
 
-<!-- Board 1 -->
-<section class="board" aria-labelledby="b1">
-  <div class="k">1 · Still learning</div>
-  <h2 id="b1">On the customer's page, beside the conversation</h2>
-  <p>The card sits at the top of the right-hand column, above "Came from". Every tick has her words under it, highlighted in the thread too. Nothing is guessed: if she hasn't said it, it says "Not yet". If she said something unclear, it says "Not sure" and shows why.</p>
-  <div class="frame">
-    <div class="lead">
-      <div>
-        <div class="who"><div class="av" aria-hidden="true">NK</div><div><h3>Nadia K.</h3><small>Instagram · first message 2 hours ago</small></div></div>
-        <div class="thread">
-          <div class="msg in">Hi! Is the 3-bed on Maple still available? <mark class="q">We need 3 bedrooms, near a good school.</mark> <mark class="q">Our lease ends in March</mark> so we're moving then.<time>Mon 9:14 AM</time></div>
-          <div class="msg out">Hi Nadia, yes, it's still available! It's a 5-minute walk to Maple Public School. Are you hoping to stay under a certain price, so I can send you similar homes too?<time>Mon 9:31 AM · FollowUp, in your words</time></div>
-          <div class="msg in">Ideally under 650. <mark class="q">We're pre-approved up to 650</mark> with our bank. <mark class="q">My cousin is helping us look</mark> but she's not an agent lol<time>Mon 9:40 AM</time></div>
-        </div>
-        <div class="reply">
-          <div class="k">Reply ready · waits for your OK</div>
-          <p>That's a great budget for the area. Would you like to see the Maple house this Saturday? I have 10:30 or 1:00 open.</p>
-          <div class="row"><button class="btn" type="button">Send</button><button class="btn ghost" type="button">Edit</button></div>
-        </div>
+<section class="steps" aria-label="What the owner sees">
+  <div class="step">
+    <span class="k">1 · The alert</span>
+    <h2>One notification, only when it matters</h2>
+    <p>No updates while FollowUp is still asking. Just this, once she's ready.</p>
+    <div class="phone lock" role="img" aria-label="Phone lock screen with a FollowUp notification: Nadia is ready. Viewing booked Saturday 10:30. Pre-approved to 650k, moving in March.">
+      <div class="clock">9:41</div>
+      <div class="date">Monday, October 12</div>
+      <div class="note">
+        <div class="note-top"><span class="app"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#0a0a0a" d="M14.5 3 7 13h4.5L9.5 21 17 11h-4.5z"/></svg></span><span>FollowUp</span><span>now</span></div>
+        <b>Nadia is ready</b>
+        <p>Viewing booked Sat 10:30. Pre-approved to $650k, moving in March.</p>
       </div>
-      <aside>
-        <article class="qc" aria-label="Qualification: Nadia K.">
-          <div class="qc-h">
-            <div><h4>Is Nadia ready?</h4><p>4 of 6 known · hot once she picks a viewing</p></div>
-            <span class="pill warm">Warm</span>
-          </div>
-          <div class="meter" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="next"></i><i></i></div>
-          <ul class="crit">
-            <li><span class="dot ok" aria-label="Known"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 6.2l2.3 2.3 4.7-4.9"/></svg></span>
-              <div><div class="c-top"><b>Location</b><span>3-bed near a good school</span></div><p class="c-q"><q>We need 3 bedrooms, near a good school.</q> <small>Mon 9:14</small></p></div></li>
-            <li><span class="dot ok" aria-label="Known"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 6.2l2.3 2.3 4.7-4.9"/></svg></span>
-              <div><div class="c-top"><b>Price</b><span>Under $650k</span><span class="pill must">must-have</span></div><p class="c-q"><q>Ideally under 650.</q> <small>Mon 9:40</small></p></div></li>
-            <li><span class="dot ok" aria-label="Known"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 6.2l2.3 2.3 4.7-4.9"/></svg></span>
-              <div><div class="c-top"><b>Why moving</b><span>Lease ends in March</span></div><p class="c-q"><q>Our lease ends in March</q> <small>Mon 9:14</small></p></div></li>
-            <li><span class="dot ok" aria-label="Known"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 6.2l2.3 2.3 4.7-4.9"/></svg></span>
-              <div><div class="c-top"><b>Mortgage</b><span>Pre-approved to $650k</span><span class="pill must">must-have</span></div><p class="c-q"><q>We're pre-approved up to 650</q> <small>Mon 9:40</small></p></div></li>
-            <li><span class="dot unsure" aria-label="Not sure">?</span>
-              <div><div class="c-top"><b>Agent</b><span>Not sure</span></div><p class="c-q"><q>My cousin is helping us look</q>. Sounds like no agent, but it's your call. <small>Mon 9:40</small></p></div></li>
-            <li><span class="dot next" aria-label="Asking next"></span>
-              <div><div class="c-top"><b>Viewing</b><span class="none">Not yet</span><span class="pill must">must-have</span></div><p class="c-q next">Asks next, after answering her: <em>"Would you like to see it this Saturday?"</em></p></div></li>
-          </ul>
-          <div class="qc-f"><p>Is this right?</p><div class="row"><button class="btn ghost" type="button">Yes</button><button class="btn ghost" type="button">Fix something</button></div></div>
-        </article>
-        <div class="side-facts">
-          <div><p class="l">Why it's here</p><p class="v">A reply is ready and waits for your OK.</p></div>
-          <div><p class="l">Came from</p><p class="v">Instagram · @nadia.k</p></div>
-        </div>
-      </aside>
+      <div class="hint">Tap to open</div>
     </div>
   </div>
-</section>
 
-<!-- Board 2 -->
-<section class="board" aria-labelledby="b2">
-  <div class="k">2 · Ready</div>
-  <h2 id="b2">Hot: booked and handed to you, with why</h2>
-  <p>When every must-have is known, the card turns green, the viewing is booked, and you get one alert: "Nadia is ready". The "Why" line is in her own words, so you can check it in three seconds. One tap tells FollowUp whether it was right. That tap is how it gets more accurate.</p>
-  <div class="pair">
-    <div>
-      <article class="qc" aria-label="Qualification: Nadia K., ready">
-        <div class="qc-h"><div><h4>Nadia is ready</h4><p>All 3 must-haves, from her own words</p></div><span class="pill hot">Hot · to you</span></div>
-        <div class="meter" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div>
-        <div class="booked"><span class="pill hot">Booked</span>Viewing · Saturday 10:30 AM · 14 Maple St</div>
-        <p class="why"><b>Why she's ready</b>“We're pre-approved up to 650” · “Our lease ends in March” · “Saturday 10:30 works!”</p>
-        <div class="qc-f"><p>Was she really ready?</p><div class="row"><button class="btn" type="button">Yes</button><button class="btn ghost" type="button">No</button></div></div>
+  <div class="step">
+    <span class="k">2 · Her page</span>
+    <h2>The result, and why, in one card</h2>
+    <p>The viewing is already booked. Call her or message her.</p>
+    <div class="phone">
+      <div class="bar"><div class="av" aria-hidden="true">NK</div><div><b>Nadia K.</b><small>Instagram</small></div></div>
+      <article class="ready" aria-label="Nadia is ready">
+        <span class="pill">Ready</span>
+        <h3>Nadia is ready to view</h3>
+        <div class="booked"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>Sat 10:30 AM · 14 Maple St</div>
+        <p class="why"><b>Why:</b> pre-approved to $650k, moving in March, wants 3 bedrooms near a school.</p>
+        <div class="acts"><button class="btn" type="button">Call Nadia</button><button class="btn ghost" type="button">Message</button></div>
+        <button class="how" type="button" aria-expanded="false">How FollowUp knows <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
       </article>
-      <p class="cap">Your answer goes into the accuracy check. "No" asks one thing: what was missing?</p>
-    </div>
-    <div>
-      <article class="qc" aria-label="Qualification: Nadia K., after the viewing">
-        <div class="qc-h"><div><h4>After the viewing</h4><p>Saturday 10:30 AM · 14 Maple St</p></div><span class="pill hot">Hot</span></div>
-        <div class="booked" style="justify-content:space-between"><span>Did it close?</span><span class="row" style="display:flex;gap:6px"><button class="btn" type="button">Yes, closed</button><button class="btn ghost" type="button">Not yet</button></span></div>
-        <p class="why"><b>If not yet</b>FollowUp keeps checking in, gently, on day 3, 7, 14 and 30. It stops the moment she replies or says no.</p>
-      </article>
-      <p class="cap">"Yes, closed" moves her to Won and adds the deal to your numbers.</p>
+      <div class="msg">Saturday 10:30 works! See you there 😊</div>
     </div>
   </div>
-</section>
 
-<!-- Board 3 -->
-<section class="board" aria-labelledby="b3">
-  <div class="k">3 · Your rules</div>
-  <h2 id="b3">What makes a lead hot: you decide, once</h2>
-  <p>In Settings. FollowUp starts from what agents already ask, and you switch things on or off. "Ask about it" means FollowUp may ask, gently, one question at a time, always after answering theirs. "Must-have" means it won't call a lead hot without it.</p>
-  <div class="rules">
-    <h4>What makes a lead hot</h4>
-    <p>For your business. Change it any time; it applies to new messages.</p>
-    <div class="tmpl"><b>Starting point:</b> Realtor · buyers <span>Change</span></div>
-    <table>
-      <thead><tr><th scope="col">What to find out</th><th scope="col">Ask about it</th><th scope="col">Must-have</th></tr></thead>
-      <tbody>
-        <tr><td>Location<small>Area, type of home, schools</small></td><td><span class="sw on" role="img" aria-label="On"></span></td><td><span class="sw" role="img" aria-label="Off"></span></td></tr>
-        <tr><td>Price<small>The most they'd spend</small></td><td><span class="sw on" role="img" aria-label="On"></span></td><td><span class="sw on" role="img" aria-label="On"></span></td></tr>
-        <tr><td>Why they're moving<small>And by when</small></td><td><span class="sw on" role="img" aria-label="On"></span></td><td><span class="sw" role="img" aria-label="Off"></span></td></tr>
-        <tr><td>Already with an agent?<small>Never asked directly; noted if they say it</small></td><td><span class="sw" role="img" aria-label="Off"></span></td><td><span class="sw" role="img" aria-label="Off"></span></td></tr>
-        <tr><td>Mortgage<small>Pre-approved, and up to how much</small></td><td><span class="sw on" role="img" aria-label="On"></span></td><td><span class="sw on" role="img" aria-label="On"></span></td></tr>
-        <tr><td>A viewing<small>Offers your showing times</small></td><td><span class="sw on" role="img" aria-label="On"></span></td><td><span class="sw on" role="img" aria-label="On"></span></td></tr>
-      </tbody>
-    </table>
-    <p class="rule-sum">FollowUp hands you a lead when it knows <b>price</b>, <b>mortgage</b> and a <b>viewing</b>, all from the customer's own words. If it's not sure, it tells you instead of guessing.</p>
-  </div>
-</section>
-
-<!-- Board 4 -->
-<section class="board" aria-labelledby="b4">
-  <div class="k">4 · On the phone</div>
-  <h2 id="b4">One line at the top; tap to open</h2>
-  <p>On a phone, the card folds into one line under the name so the conversation stays first. Tap it to see the full card.</p>
-  <div class="phones">
-    <div class="phone" aria-label="Phone, folded">
-      <div class="ph-top"><div class="av" aria-hidden="true" style="width:36px;height:36px;font-size:13px">NK</div><div><b>Nadia K.</b><small>Instagram</small></div></div>
-      <div class="strip"><div class="meter" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="next"></i><i></i></div><span><b>Warm</b> · 4 of 6 · asks about a viewing next</span><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg></div>
-      <div class="thread">
-        <div class="msg in">Ideally under 650. <mark class="q">We're pre-approved up to 650</mark> with our bank.<time>9:40 AM</time></div>
-        <div class="msg out">That's a great budget for the area. Would you like to see the Maple house this Saturday?<time>Waiting for your OK</time></div>
-      </div>
-    </div>
-    <div class="phone" aria-label="Phone, open">
-      <div class="ph-top"><div class="av" aria-hidden="true" style="width:36px;height:36px;font-size:13px">NK</div><div><b>Nadia K.</b><small>Instagram</small></div></div>
-      <article class="qc" aria-label="Qualification, open on phone">
-        <div class="qc-h"><div><h4>Is Nadia ready?</h4><p>4 of 6 known</p></div><span class="pill warm">Warm</span></div>
-        <ul class="crit">
-          <li><span class="dot ok"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 6.2l2.3 2.3 4.7-4.9"/></svg></span><div><div class="c-top"><b>Price</b><span>Under $650k</span></div><p class="c-q"><q>Ideally under 650.</q></p></div></li>
-          <li><span class="dot ok"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 6.2l2.3 2.3 4.7-4.9"/></svg></span><div><div class="c-top"><b>Mortgage</b><span>Pre-approved to $650k</span></div><p class="c-q"><q>We're pre-approved up to 650</q></p></div></li>
-          <li><span class="dot next"></span><div><div class="c-top"><b>Viewing</b><span class="none">Not yet</span></div><p class="c-q next">Asks next, after answering her</p></div></li>
+  <div class="step">
+    <span class="k">3 · Only if they want to</span>
+    <h2>One tap shows the proof</h2>
+    <p>Every tick is her own words, so nothing is guessed.</p>
+    <div class="phone">
+      <div class="bar"><div class="av" aria-hidden="true">NK</div><div><b>Nadia K.</b><small>Instagram</small></div></div>
+      <article class="ready" aria-label="How FollowUp knows Nadia is ready">
+        <button class="how" type="button" aria-expanded="true" style="margin-top:0;border-top:0;padding-top:0">How FollowUp knows <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+        <ul class="list">
+          <li><span class="tick"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 6.2l2.3 2.3 4.7-4.9"/></svg></span><div><b>What she wants</b><span>3 bedrooms near a school</span><q>We need 3 bedrooms, near a good school.</q></div></li>
+          <li><span class="tick"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 6.2l2.3 2.3 4.7-4.9"/></svg></span><div><b>Budget</b><span>Pre-approved to $650k</span><q>We're pre-approved up to 650.</q></div></li>
+          <li><span class="tick"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 6.2l2.3 2.3 4.7-4.9"/></svg></span><div><b>When</b><span>Moving in March</span><q>Our lease ends in March.</q></div></li>
+          <li><span class="tick"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 6.2l2.3 2.3 4.7-4.9"/></svg></span><div><b>Viewing</b><span>Sat 10:30 AM, booked</span><q>Saturday 10:30 works!</q></div></li>
         </ul>
-        <div class="qc-f"><p>Is this right?</p><div class="row"><button class="btn ghost" type="button">Yes</button><button class="btn ghost" type="button">Fix</button></div></div>
+        <p class="foot">FollowUp asked one thing at a time, after answering her questions.</p>
       </article>
     </div>
   </div>
 </section>
 
-<section class="notes" aria-label="How it stays accurate">
-  <div><h5>Never guessed</h5><p>Each answer is filled only from something the customer actually wrote, kept with the quote. No quote, no tick.</p></div>
-  <div><h5>Not sure? It says so</h5><p>Unclear answers are marked "Not sure" and shown to you. A lead is never dropped quietly; when in doubt, it comes to you.</p></div>
-  <div><h5>Gets better with your taps</h5><ul><li>"Is this right?" and "Was she ready?" feed a weekly accuracy check.</li><li>Planned: with your permission (Settings → Your data), it also learns from conversations to qualify better.</li></ul></div>
+<section class="rules" aria-label="How it stays simple">
+  <div><h4>Nothing to set up</h4><p>FollowUp picks the right questions for your kind of business: budget, timing and a viewing for realtors, for example.</p></div>
+  <div><h4>Nothing to fill in</h4><p>It asks one question at a time, inside the normal conversation, and checks in if they go quiet.</p></div>
+  <div><h4>Quiet until it matters</h4><p>Not ready yet? You hear nothing. You only get the alert when someone is ready, with the viewing booked.</p></div>
 </section>
 </main>
 </body>

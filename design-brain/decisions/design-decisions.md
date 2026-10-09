@@ -10313,6 +10313,9 @@ Design points 4–14 are built on the draft ([[approved#^A-186]]). Still to do:
 
 ## 2026-10-09 — Drawn (not approved yet): the lead qualification card, realtors first
 
+> **SUPERSEDED (2026-10-09)** by "Redrawn simpler: the owner only sees the result" below. The founder found the
+> four-board card confusing and asked whether it added a step.
+
 **Prototype:** `prototypes/2026-10-09-qualification-card/index.html`.
 
 **Four boards:**
@@ -10367,4 +10370,25 @@ Design points 4–14 are built on the draft ([[approved#^A-186]]). Still to do:
 - **The footer:** becomes its own dark ground with a lime invitation ("Built with the owners who use it.") and a
   faint wordmark.
 - Details: A-192.
+
+## 2026-10-09 — Redrawn simpler: the owner only sees the result (qualification)
+
+**Founder:** *"What is this checklist going to do? Is it adding one more step…?"* Then, on the recommendation to show
+only the result with the checklist behind one tap: *"yes redraw it that way"*.
+
+**Prototype (same file):** `prototypes/2026-10-09-qualification-card/index.html`. Three phone screens:
+1. **One iPhone-style notification,** only when the lead is ready: "Nadia is ready. Viewing booked Sat 10:30.
+   Pre-approved to $650k, moving in March."
+2. **Her page:** one card with "Ready", the booked viewing, a one-line "Why" and Call / Message. "How FollowUp knows" is
+   folded away.
+3. **One tap** opens the checklist: four ticks, each with her own words.
+
+**Rules this sets:**
+- No setup: FollowUp picks the questions by business type.
+- Nothing to fill in.
+- Silence until a lead is ready.
+- The checklist is FollowUp's working notes (funnel steps 4–6), never a task for the owner.
+- The earlier "Is this right?" and "Was she ready?" taps are dropped from the main view, so no extra steps.
+
+**Waiting for:** Sahil's OK to build it.
 

@@ -3280,3 +3280,16 @@ fill green one after another, about 0.4 s apart:
 times say "while you're busy". No cards or tiles (R-096), nothing scroll-driven (R-098).
 **Status:** built; reaction to come.
 
+**Updated (preview v15, thread 6317ae44, *"can we make it more effective and understandable too"*):** the list became
+two columns, **You** and **FollowUp**, so "while you're busy" is visible. Each row pairs what you're doing with what
+FollowUp did at that moment:
+- with a customer / answers every message;
+- driving / writes in your words;
+- on a job / follows up;
+- at lunch / spots who's ready;
+- in a meeting / books them;
+- you answer one yourself / learns from it for next time.
+
+The line under the heading is now "You do your job. FollowUp does the follow-up." The heading sits on top, with the day
+below it at full width. On phones each row stacks: time, "You: …", then FollowUp's line.
+

@@ -236,3 +236,17 @@ He flagged dark areas as "not readable" three times in one day: the dark message
 Each one passed or nearly passed the contrast check. On a dark ground, use at least 16px for anything meant to be read,
 and near-white text, not soft grey. Keep small labels for real labels only.
 
+
+## It must never sound like a CRM, and never like software you have to learn (2026-10-09)
+
+**Founder, in chat:** *"we also have to show the key features too right, it should not sound like a crm"* and *"it
+should sound like they don't have to learn this software, it's quick and easy to learn"*. He also said the page needs
+a strategy: show how we help, what makes FollowUp unique, and convert straight away ("this is the product they
+wanted").
+
+- **Not a CRM.** No CRM words on the page: CRM, pipeline, contacts, deals, dashboard, workflow, sequences, fields,
+  integrations. Use the owner's words: customers, messages, replies, your inbox, booked, closed. Features are named by
+  what they *do for the owner* ("answers every message", "follows up until they reply"), never by module.
+- **Nothing to learn.** Every feature is shown working, never explained as a setting. The setup claim stays true and
+  plain: connect your inbox once and it starts working. One question a day replaces a setup form.
+- **Key features are shown, not listed.** Each feature gets its own small picture of the product doing it.

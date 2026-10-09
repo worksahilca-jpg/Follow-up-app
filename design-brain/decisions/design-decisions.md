@@ -10626,3 +10626,28 @@ Each section has a draft **Format** row: three new options plus **Current**. Not
     different heights. They are now top-aligned, with the arrow level with the cards.
   - Asked him whether the layout or the Day 1 → Week 3 idea is the problem, and offered formats B and C. The thread
     stays open.
+
+## 2026-10-09 — Preview comments, round 2: one swipe per moment, readable, simpler, one notification size
+
+- **Thread d9b90037**, on scrolling: *"too much scrolling… I accidentally scroll the other pages fast too."*
+  - Nadia's week now moves one moment per swipe, through 7 moments.
+  - The rest of a trackpad flick is caught, so momentum can't throw you through the story or past it.
+  - At the end, one swipe takes you just past it and stops.
+  - The track is shorter: 640vh became 420vh.
+  - Keyboard, scrollbar and touch keep normal scrolling.
+  - This overrides draft website rule 8 ("nothing traps the mouse wheel") for this chapter only, at his request.
+  - Tested with simulated flicks: each one lands on the next moment.
+- **Thread 2889dc9d**, *"make this readable"* (anchored to the whole page):
+  - An audit of every visible line found 11–12px times and labels and 2.4–3.2:1 greys in Nadia's week. These are now
+    12.5–13px and at least 4.5:1.
+  - Message text is now 16px, explanations 17.5px, and the Day 1 grey is darker.
+  - Asked him which part was hardest to read.
+- **Thread f181bcaf**, *"the exact size actual iOS and Mac use"*:
+  - The closing messages were scaled 0.90–0.99 to fake depth. Now they are one size, 344px wide (about a Mac banner),
+    spaced, not shrunk.
+  - Apple's official numbers weren't found online, so we don't claim "exact". Asked for screenshots of a real Mac and
+    iPhone notification to match.
+- **Thread c035b885**, *"more simple and minimal and to the point"*:
+  - It gets better is now the headline, one line ("You don't have to teach it. It learns from the replies you send."),
+    then the same reply on Day 1 and Week 3, stacked.
+  - The arrow, captions and "New this week" are removed.

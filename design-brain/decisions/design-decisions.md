@@ -10651,3 +10651,15 @@ Each section has a draft **Format** row: three new options plus **Current**. Not
   - It gets better is now the headline, one line ("You don't have to teach it. It learns from the replies you send."),
     then the same reply on Day 1 and Week 3, stacked.
   - The arrow, captions and "New this week" are removed.
+
+## 2026-10-09 — Sections rise in as you reach them; the Mac Trash questioned again
+
+- **Thread f0dc48be:** *"we have to make a transition here as well… make it feel like they scrolled and something showed
+  up."*
+  - Each block below Nadia's week now rises 36px into place and fades up from 18% the first time it comes into view:
+    Today, Your control, Your data, It gets better, Questions, the close and the footer.
+  - It plays once and never tracks the scroll (A-173). Neighbouring blocks are staggered by 0.12s.
+  - Anything already on screen at load is left alone, and with reduced motion nothing moves.
+  - Asked whether he meant one spot in particular.
+- **Thread 82bc7ecd:** the square-hole Trash is the 2014–2024 Mac one. Asked for a screenshot of his Dock before
+  redrawing (see the A-197 note).

@@ -250,3 +250,14 @@ wanted").
 - **Nothing to learn.** Every feature is shown working, never explained as a setting. The setup claim stays true and
   plain: connect your inbox once and it starts working. One question a day replaces a setup form.
 - **Key features are shown, not listed.** Each feature gets its own small picture of the product doing it.
+
+## One second per section (2026-10-09)
+
+**Founder, on the preview:** *"too much information. I will just look for a sec and I will move on. I want you to make
+it understood, or catch the attention of the user, in that one sec."*
+- **Rule:** each section must make its point in one glance, with one big line and one picture. Everything else is for
+  people who stay: the playing conversation, the details. If a section needs a paragraph to be understood, the picture
+  is wrong.
+- **First applied:**
+  - Nadia's week became "Two endings." with "Lost by tomorrow." in red and "Booked by Thursday." in green.
+  - "What it does" dropped its description lines.

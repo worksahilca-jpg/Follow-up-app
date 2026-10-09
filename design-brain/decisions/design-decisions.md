@@ -10222,3 +10222,15 @@ highlights a column must measure the column, never re-derive its geometry. **"Yo
 footer's "Works with" row repeats the From bar's icons, which is on purpose (the last thing seen is "it works where your
 customers already write") but it is the third time the icons appear.
 
+## 2026-10-09 — Home v55: the Granola draft
+
+A-154. How it is built: one scroll value (`--fu-p`, 0 at the top to 1 when the headline has scrolled away) drives the
+messages' drift (`translate`, so it composes with their own drift animation), the headline lift and the notes' exit;
+the index bars are set from each step's position against the middle of the screen; the giant line is `position:
+sticky` inside a wrapper that ends with the week panel, so the panel covers it and it never reappears; ink is SVG with
+`pathLength="1"` drawn by `stroke-dashoffset` once on view. Reduced motion: no drift, ink shown drawn, the index still
+updates. Phones: no notes or arrow; the index hides and the steps stack. **Weak spots, honestly:** the clock and ticked
+list are the only drawings, so they must earn their place or go; "It follows up." sits right after a step that already
+says it checks in, so the two may feel repeated; the notes on the demo's corners cover a little of the photo, and on
+screens near 1230 px wide they sit close to the edge.
+

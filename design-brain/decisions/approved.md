@@ -2408,3 +2408,20 @@ and Account link columns; a "Works with" row showing the eight app icons with na
 Messenger, Text, Web forms, Facebook ads); a base line with the light-green "Free while in beta" pill and "Back to top ↑".
 No giant wordmark.
 
+## A-154 — Granola's lessons, in FollowUp's own form (v55 draft) ^A-154
+
+**Direction:** 2026-10-09, founder: *"yes go ahead"*, on four proposals drawn from the Granola + Questrade teardown
+([[references/landing-pages/2026-10-09-granola-questrade-teardown]]). A draft to react to, not yet liked or disliked.
+1. **Scroll hand-off from the hero to the demo:** as you scroll, the messages around the headline drift apart and fade,
+   the headline lifts a little, two paper notes behind the demo slide away; the demo carries on (it already widens).
+2. **How it works as a pinned index of four steps:** "A message comes in", "FollowUp answers", "It checks in on the day",
+   "You step in". The index stays on the left with a thin green bar filling under the current step; each step (title,
+   one line, a moving example) scrolls past on the right. Pin about 1.5 screens. The heading is now "Four steps, while
+   you're busy." The new third example shows Tue reply, Wed–Thu quiet, a Friday check-in, the reply, "Follow-ups stopped."
+3. **One giant line, "It follows up.":** sticks in the middle of the screen while the dark week panel slides over it;
+   then "It checks in on the day you'd have forgotten." The only transition of its kind on the page.
+4. **Paper and ink, twice:** a light-green note with a hand-drawn ticked list and an off-white note with a hand-drawn clock
+   at 11:04 sit on the demo's top corners (and peek above the closing card); an ink arrow curls from "Try it yourself" to
+   the box; an ink underline draws under "Answer every one." Ink draws in once when seen. Flat paper, no grain (R-071),
+   no background patterns (R-072).
+

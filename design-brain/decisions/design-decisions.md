@@ -11066,5 +11066,6 @@ The rules are now in brand-principles ("Every frame is smooth"). Builder patch 2
 **Not touched:** the dark "Try it yourself" photo panel below (R-104: no retone without his ask). Offered as a
 follow-up.
 
-**Status:** waiting for his yes on C1, then build and PR.
+**Status:** approved ("yes c1", A-210). Built as builder patch 22. Still smooth: no main-thread task over 16 ms
+while scrolling, desk or phone.
 

@@ -3044,8 +3044,8 @@ html[data-col="f"] .fl-stage .fl-ask { margin-top: 12px }
 <form class="fl-ask" id="fl-ask" autocomplete="off">
 <span class="fl-you" aria-hidden="true">You</span>
 <label class="fl-sr" for="fl-in">Write a message, as if you were a customer</label>
-<input id="fl-in" name="q" maxlength="140" placeholder="Type a message…" enterkeyhint="send">
-<button type="submit" class="fl-go" aria-label="Send"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3.4 20.6c-.5.2-1-.3-.8-.8L5.3 13l8.2-1-8.2-1L2.6 4.2c-.2-.5.3-1 .8-.8l17.4 7.8c.5.2.5 1 0 1.2Z"/></svg><span>Send</span></button>
+<input id="fl-in" name="q" maxlength="140" placeholder="A customer's question…" enterkeyhint="send">
+<button type="submit" class="fl-go"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3.4 20.6c-.5.2-1-.3-.8-.8L5.3 13l8.2-1-8.2-1L2.6 4.2c-.2-.5.3-1 .8-.8l17.4 7.8c.5.2.5 1 0 1.2Z"/></svg><span>Try it</span></button>
 </form>
 <div class="fl-chips" role="group" aria-label="Or tap a question"><span>Or tap one:</span><button type="button" class="fl-chip" data-q="Is the 2-bed on King Street still available?">Is the 2-bed still available?</button><button type="button" class="fl-chip" data-q="How much for a full car detail?">How much for a car detail?</button><button type="button" class="fl-chip" data-q="Hi, can someone fix a leaking kitchen tap today?">Can you fix a leaking tap today?</button></div>
 <div class="fl-hint fu-langs"><span class="fu-langs-l">Ask in your language</span><div class="fu-lt" aria-label="English, Français, Español, ਪੰਜਾਬੀ, हिन्दी, Italiano, Português, 中文, العربية, Tagalog, Deutsch, Tiếng Việt, Русский, 한국어, اردو, Polski, Türkçe, فارسی, Українська, 日本語, ગુજરાતી, தமிழ், বাংলা, Nederlands"><div class="fu-lt-in" aria-hidden="true"><span>English</span><span>Français</span><span>Español</span><span>ਪੰਜਾਬੀ</span><span>हिन्दी</span><span>Italiano</span><span>Português</span><span>中文</span><span>العربية</span><span>Tagalog</span><span>Deutsch</span><span>Tiếng Việt</span><span>Русский</span><span>한국어</span><span>اردو</span><span>Polski</span><span>Türkçe</span><span>فارسی</span><span>Українська</span><span>日本語</span><span>ગુજરાતી</span><span>தமிழ்</span><span>বাংলা</span><span>Nederlands</span><span>English</span><span>Français</span><span>Español</span><span>ਪੰਜਾਬੀ</span><span>हिन्दी</span><span>Italiano</span><span>Português</span><span>中文</span><span>العربية</span><span>Tagalog</span><span>Deutsch</span><span>Tiếng Việt</span><span>Русский</span><span>한국어</span><span>اردو</span><span>Polski</span><span>Türkçe</span><span>فارسی</span><span>Українська</span><span>日本語</span><span>ગુજરાતી</span><span>தமிழ்</span><span>বাংলা</span><span>Nederlands</span></div></div></div>
@@ -5150,6 +5150,25 @@ html body #fl-hero .fu-strip > div, html body #fl-try .fl-chips, html body #fl-r
 html body #fl-stage, html body #fl-hero .fl-head, html body #bigcta { will-change: transform }
 html[data-col="f"] body .fl-stage { --tr-p: 1 }
 @media (prefers-reduced-motion: reduce) { .fl-try-l b::after { animation: none; opacity: 0 } }
+
+/* 22. FollowUp's own try box and sunlit numbers (A-210) */
+html body #fl-try #fl-ask { border-radius: 16px }
+html body #fl-try #fl-ask .fl-you { display: none }
+html body #fl-try #fl-ask #fl-in { padding-left: 20px }
+html body #fl-try #fl-ask .fl-go { width: auto; height: auto; min-width: 0; min-height: 48px; padding: 0 22px; border-radius: 11px; background: #0E0E0C; color: #fff; display: inline-flex; align-items: center; justify-content: center }
+html body #fl-try #fl-ask .fl-go:hover { background: #2B2B28 }
+html body #fl-try #fl-ask .fl-go svg { display: none }
+html body #fl-try #fl-ask .fl-go span { position: static; display: inline; width: auto; height: auto; overflow: visible; clip: auto; margin: 0; font: 600 15px/1 var(--apple, system-ui); white-space: nowrap }
+html[data-pal] body .fl-note-pill, html[data-pro] body .fl-note-pill { background: rgba(255,255,255,.7); color: #2B2B28; box-shadow: inset 0 0 0 1px rgba(14,14,12,.08) }
+html body #fl-hero .fu-strip { background: linear-gradient(180deg, rgba(255,251,244,.42), rgba(255,250,242,.30)), url(/landing/d5dc60f92bca.jpg) center 62% / cover no-repeat !important;
+  box-shadow: 0 0 0 1px rgba(14,14,12,.06), 0 24px 48px -30px rgba(60,40,20,.55) !important }
+html body #fl-hero .fu-strip > div { background: rgba(255,255,255,.74) !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.6), 0 6px 16px -12px rgba(40,30,20,.35) !important }
+html body #fl-hero .fu-strip > div, html body #fl-hero .fu-strip > div * { color: #0E0E0C !important }
+html body #fl-hero .fu-strip > div small, html body #fl-hero .fu-strip > div span:not([id]) { color: #5E5C56 !important }
+html body #fl-hero .fu-strip #fu-s-closed, html body #fl-hero .fu-strip #fu-s-closed * { color: #1F6B45 !important }
+html body #fl-hero .fu-strip .fu-strip-tag { background: rgba(255,255,255,.82) !important; color: #2B2B28 !important; box-shadow: none !important }
+html body #fl-hero .fu-strip .fu-film { background: rgba(14,14,12,.28) !important }
+@media (max-width: 700px) { html body #fl-try #fl-ask .fl-go { min-height: 44px; padding: 0 16px } }
 </style>
 <script>
 (function () { var sh = document.querySelector('#control .cb-sheet'); if (!sh || !('IntersectionObserver' in window)) return;

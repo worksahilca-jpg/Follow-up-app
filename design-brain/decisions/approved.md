@@ -3101,8 +3101,23 @@ pages as you scroll) is final. The draft Format row is hidden; Grid, Tabs and Or
   dragging this."* The clock follows the scroll; dragging still works. **Principle:** visitors scroll, they don't drag. A
   control that needs dragging to tell its story is a story nobody sees.
 - **The bin (thread ef1348e5).** *"this bin is not same as Mac's bin."* Redrawn as today's desktop bin: white frosted
-  body, vertical grooves, light rim. Our own drawing.
+  body, vertical grooves, light rim. Our own drawing. **SUPERSEDED (2026-10-09)** by the bin line below and R-093.
 - **The try box (thread b1492223).** *"keep shuffling the send message, like first WhatsApp then Insta and all."* The
   badge in the box shows the app the next message arrives from (WhatsApp first) and turns after each send.
 - **Under the demo (thread d5c7a8e3).** *"this looks congested."* One centred line, the button under it, and
   Example · Pause on their own quiet row.
+
+## A-197 — The "Not leads" bin is drawn like the Mac's Trash: frosted white, grid of square holes (v118) ^A-197
+
+**Asked:** 2026-10-09, founder (thread 4abbb5be): *"this is not the Mac one, go and check what Apple uses for Mac for their
+trash bin."* Apple's Trash has been a translucent white plastic bin since OS X Yosemite (2014), when it replaced the
+shiny wire basket.
+
+**Built** (Version 91), our own vector drawn to match the look, not Apple's artwork file:
+- a frosted white body, slightly wider at the top, with soft side shading;
+- a grid of small rounded square holes, narrower toward the sides as the bin curves away;
+- the far wall shows faintly through the holes, which gives the see-through look;
+- a thick white rim and a grey opening;
+- once a message is thrown in, crumpled paper shows inside through the holes and above the rim.
+
+**Status:** built from his direction; his reaction is still to come.

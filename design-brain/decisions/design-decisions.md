@@ -10446,3 +10446,15 @@ Each section has a draft **Format** row: three new options plus **Current**. Not
   - "At a glance" borrows a familiar label form, so it's close to a convention but still original.
 
 **Waiting for:** his pick per section, and which part of the page was hard to read.
+
+## 2026-10-09 — The bin now matches the Mac's Trash (Version 91)
+
+- **What:** the "Not leads" bin beside the numbers bar is redrawn as a frosted white bin with a grid of square holes,
+  a thick rim, and crumpled paper once something is thrown in.
+- **Why:** the founder rejected the wire basket and then the ribbed can as "not the Mac one". Apple's Trash has been a
+  translucent white plastic bin since 2014. The look was checked first this time.
+- **How:** our own SVG, drawn to match. The holes narrow toward the sides to show the curve, and the far wall shows
+  through the holes. The papers stay hidden until the first throw.
+- **Weak spot:** at 46 px the far-wall detail is barely visible. The grid of holes and the white rim carry the look.
+- **Records:** A-197, R-093.
+

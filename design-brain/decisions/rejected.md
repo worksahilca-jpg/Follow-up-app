@@ -1199,3 +1199,12 @@ calm, even night light behind text.
 **Principle:** a device that one reference is known for reads as copying it, however faint. Studied references give
 principles, never signature moves.
 
+## R-093 — A wire-mesh basket or a ribbed can standing in for the Mac's Trash (v116–v117) ^R-093
+
+**Rejected:** 2026-10-09, founder, twice. Thread ef1348e5 on the silver wire basket: *"this bin is not same as Mac's
+bin."* Thread 4abbb5be on the frosted can with vertical grooves: *"this is not the Mac one, go and check what Apple
+uses."*
+**Principle (inferred):** when he names a real object ("the Mac's bin"), match that object as people know it today. A
+look-alike from an older version or a generic "nice bin" reads as wrong. Check what the real thing looks like before
+drawing it. See A-197.
+

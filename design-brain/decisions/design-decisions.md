@@ -11404,3 +11404,26 @@ Production, read-only aggregates:
 **Next in the plan (A-215 order):**
 1. The Help window bug (it opens under the page). A small fix, which needs his OK.
 2. "How it sends": decisions 4 and 5.
+
+## 2026-10-10 — Step 2 drawn: FollowUp sends the easy replies, only if the owner says yes
+
+**Founder:**
+- First, the plan was too much: *"What ???"* A three-line version followed.
+- Then he asked: *"easy reply ??? Only if they allow right?"*
+- He was told yes, only with the owner's yes, and that "easy" means no price, no date and nothing tricky. He answered *"Yes bro"* to drawing it.
+- **Principle he confirmed** (it matches A-070 and 2026-09-22): sending on its own is always asked for, never assumed.
+
+**Drawn on the real Today** (https://claude.ai/artifact/U1Wn84DQz5LkoEJ69RyhEt):
+- **One card, in the same slot as the alerts card.** It never shows at the same time as the alerts card; alerts come first.
+- **The card:** "Let FollowUp send the easy replies?" Under it, the owner's own proof: "You sent 11 of your last 13 replies
+  just as FollowUp wrote them" (from `FollowUp.draftEdited` on sent replies).
+- **Two lines:**
+  - goes out on its own: simple answers, with an example;
+  - always waits for you: prices, dates, anything tricky, and the phone buzzes for those.
+- **Buttons:** "Yes, send the easy ones" is outlined (Send stays the only black button), plus "Not now".
+- **Fine print:** "Starts with new messages. Turn it off any time in Settings."
+- **After yes:** "Done. FollowUp sends the easy replies now", with Undo.
+- **When it shows (my default, not his):** after at least 5 replies sent through FollowUp, with most sent unchanged.
+- **Yes uses the same switch** as Automatic in Settings and setup (`autoSendPermission`). Nothing already waiting goes out.
+
+**Status:** drawn, waiting for his yes.

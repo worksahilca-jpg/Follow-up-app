@@ -63,3 +63,7 @@ inside `<main>`. The page with every screenshot (private): https://claude.ai/art
 
 **Bug found (from step 1, live):** the Help window opens under the page, the same stacking problem fixed for Search, so
 the list and reply card paint over it. The fix is to render it into `<body>`.
+
+**Feedback on the page itself (founder, 2026-10-10):** *"I am not able to zoom this, bro."* Every screenshot now opens
+full size on a tap, with + and −, pinch and double-tap to zoom, and next/previous. Rule for every study page from now
+on: screenshots must open full size and zoom, on a phone too.

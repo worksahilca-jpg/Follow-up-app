@@ -1774,6 +1774,9 @@ phone too, so there are no closed rows left to swipe. "Later" stays as a word un
 **Back in force (2026-10-10, later the same day):** step 2 was never approved, and its code came off the branch before
 the phone-buzz step (A-216). The live app still has the swipe. Decide again when Today is redrawn on the shared card.
 
+**SUPERSEDED again (2026-10-10, build 1 of A-220):** Today shows one card and a "Next" row, never a list, so there are
+no rows to swipe. Later is a button under Send. Whether Customers' rows get the swipe is decided in build 2.
+
 **Approved 2026-10-05**, founder: *"cool lets go"* to both ideas from the Macro study (swipe for Later, a phone speed
 check). Built on the phone's closed Today rows only.
 - **Swipe left past 96px and let go:** the person is set aside until Later today (2 pm) when that's still ahead,

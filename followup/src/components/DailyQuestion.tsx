@@ -49,8 +49,8 @@ export default function DailyQuestion({ question }: { question: DailyQuestionPro
 
   if (done === "saved") {
     return (
-      <section className="mt-8 box p-5 max-w-3xl" role="status">
-        <p className="text-[17px] leading-snug">Saved. FollowUp will use your words when a customer asks.</p>
+      <section className="mt-5 box p-4 sm:p-5 max-w-[640px]" role="status">
+        <p className="text-[15px] leading-snug">Saved. FollowUp will use your words when a customer asks.</p>
         <Link href="/settings#business" className="mt-3 inline-block text-[14px] text-ink-soft underline underline-offset-2">
           See what FollowUp knows
         </Link>
@@ -61,12 +61,12 @@ export default function DailyQuestion({ question }: { question: DailyQuestionPro
 
   const value = answer.trim();
   return (
-    <section className="mt-8 box p-5 max-w-3xl" aria-labelledby="daily-question">
-      <p className="text-[13px] text-ink-soft">One quick question</p>
-      <h2 id="daily-question" className="mt-1.5 text-[21px] leading-[1.25]">
+    <section className="mt-5 box p-4 sm:p-5 max-w-[640px]" aria-labelledby="daily-question">
+      <p className="text-[12.5px] text-ink-soft">One quick question</p>
+      <h2 id="daily-question" className="mt-1 text-[17px] font-semibold leading-snug tracking-[-0.01em]">
         {question.question}
       </h2>
-      <p className="mt-2 text-[14.5px] leading-relaxed text-ink-soft">{question.why}</p>
+      <p className="mt-1 text-[13.5px] leading-normal text-ink-soft">{question.why}</p>
       <label htmlFor="daily-answer" className="sr-only">
         Your answer
       </label>
@@ -77,19 +77,19 @@ export default function DailyQuestion({ question }: { question: DailyQuestionPro
         value={answer}
         onChange={(e) => setAnswer(e.target.value)}
         placeholder={question.example}
-        className="mt-4 w-full rounded-[14px] border border-line bg-paper px-4 py-3 text-[16px] leading-relaxed"
+        className="mt-3 w-full rounded-[14px] border border-line bg-paper px-3.5 py-2.5 text-[16px] leading-normal"
       />
       {error && (
         <p className="mt-2 text-[13px]" role="alert" style={{ color: "var(--coral)" }}>
           {error}
         </p>
       )}
-      <div className="mt-4 flex items-center gap-4">
+      <div className="mt-3 flex items-center gap-4">
         <button
           type="button"
           disabled={busy || !value}
           onClick={() => void send(question.label, value)}
-          className="h-11 rounded-full bg-ink px-6 text-[15px] font-medium text-paper disabled:opacity-60"
+          className="h-11 rounded-full bg-ink px-6 text-[14.5px] font-medium text-paper disabled:opacity-60"
         >
           {busy && value ? "Saving…" : "Save"}
         </button>

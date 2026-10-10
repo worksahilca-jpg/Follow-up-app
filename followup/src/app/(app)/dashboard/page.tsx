@@ -27,14 +27,19 @@ import { getIncompleteSetupSteps } from "@/lib/setupStatus";
 import { getGmailStatus } from "@/lib/integrations/gmail";
 import { getOutlookStatus } from "@/lib/integrations/outlook";
 import { ArrowRight } from "lucide-react";
-import { Eyebrow, Initials } from "@/components/app/canvasBits";
 import FirstValueNote from "@/components/FirstValueNote";
 import { FIRST_VALUE_SEND, firstValueNote } from "@/lib/firstValue";
 import HabitQuestion from "@/components/HabitQuestion";
 import DailyQuestion from "@/components/DailyQuestion";
 import { AlertsCard } from "@/components/app/AlertsSetup";
+import ReplyForMeCard from "@/components/app/ReplyForMeCard";
+import { GoingQuietRow, WhatFollowUpDid } from "@/components/app/TodayRows";
+import { replyForMeOffer } from "@/lib/replyForMeOffer";
+import { getActivityFeed } from "@/lib/activity";
+import { didToday } from "@/lib/didToday";
 import { todaysQuestion } from "@/lib/dailyQuestionData";
 import { planLine } from "@/lib/comingUp";
+import { oneQueue } from "@/lib/approvalGroups";
 import { findHabitSuggestion } from "@/lib/habits";
 
 // "last checked 2 minutes ago" — deliberately coarse (minutes/hours/days,
@@ -222,55 +227,34 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       ? { email: outlook.email, instant: false }
       : null;
 
-  /**
-   * The banner's one computed sentence, replacing the fixed string "Here's
-   * what needs your attention today." — which was the same words whether the
-   * owner had nine drafts waiting or a completely clear morning. A line that
-   * never changes tells you nothing, and it sat at the top of the screen this
-   * ICP opens twenty times a day (S-12).
+  /*
+   * The headline (A-220): one number, "3 customers need you", the same
+   * count the tab badge uses. On a clear day it says 0 and the card under
+   * it says what that means, so the line never has to claim calm itself.
    *
-   * Order matters: the thing blocked on a human first, then the thing the
-   * product exists to prevent. When neither is true the sentence says so
-   * outright rather than leaving the owner to infer calm from an empty page.
+   * A brand-new account gets a sentence instead. "0 customers need you" is
+   * what a product says to someone who has been working and is caught up;
+   * a tester who signed up two minutes ago and connected nothing read the
+   * old calm line ("Nothing needs your OK right now") as their very first
+   * words, above a box explaining that FollowUp is not watching anything
+   * yet (#301). It says nothing about what is or isn't connected: the box
+   * below owns that, with its three reasoned branches.
    */
-  function headline(): string {
-    const parts: string[] = [];
-    if (approvalItems.length > 0) {
-      parts.push(`${approvalItems.length} draft${approvalItems.length === 1 ? "" : "s"} need${approvalItems.length === 1 ? "s" : ""} your OK`);
-    }
-    if (lost.total > 0) {
-      parts.push(`${lost.total} customer${lost.total === 1 ? "" : "s"} going quiet`);
-    }
-    if (parts.length > 0) return parts.join(" · ");
-
-    const answered = rescue?.answeredForYou ?? 0;
-    if (answered > 0) {
-      return `Nothing needs your OK. FollowUp answered ${answered} for you this week.`;
-    }
-
-    /*
-     * Nothing has ever arrived. Checked BEFORE the calm sentence, because
-     * on a brand-new account that sentence is true and still misleading.
-     *
-     * "Nothing needs your OK right now" is what a product says to someone
-     * who has been working and is caught up. A tester who signed up two
-     * minutes ago and connected nothing read it as their very first line
-     * — a reassurance the account has not earned, sitting directly above
-     * a box explaining that FollowUp is not watching anything yet. The
-     * page contradicted itself the same way Settings did (#301): one
-     * true-sounding sentence, one accurate one, in the same glance.
-     *
-     * Deliberately says nothing about what IS or ISN'T connected. This
-     * screen can see an inbox, and cannot see a website snippet someone
-     * pasted into their own site — so "nothing is connected" would be a
-     * guess, and guessing is what caused the sentence above. The box
-     * below owns that explanation and has three properly-reasoned
-     * branches for it; this line only has to stop claiming calm.
-     */
+  function headline(): string | null {
     if (leads.length === 0) return "No customers yet.";
-
-    return "Nothing needs your OK right now.";
+    return null;
   }
+  const sentence = headline();
+
+  // "Let FollowUp reply for you?" (A-217, A-218): an admin, asked once, with
+  // their own proof. Never on the visit the phone link opened (that visit
+  // is for alerts), so Today asks one thing at a time.
+  const offer = ctx && isAdmin && leads.length > 0 && !alertsOpen ? await replyForMeOffer(ctx.businessId) : null;
+  // The same first person the card would open on (the queue's own order).
+  const firstWaiting = oneQueue(approvalItems).flatMap((g) => g.needsYou)[0] ?? approvalItems[0] ?? null;
+  // What FollowUp did today, under an all-caught-up Today (A-220). Read only
+  // on a clear day, so a working Today pays nothing for it.
+  const did = ctx && leads.length > 0 && needYou === 0 ? didToday(await getActivityFeed(ctx.businessId), startOfLocalDay(now, timezone)) : [];
 
   return (
     <div>
@@ -282,41 +266,63 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           not need a hero. */}
       {/* The canvas Today header (TodayCalm): the date, then one sentence
           that says how many people are waiting on the owner. */}
-      <div className="text-[13px] text-ink-faint">
+      <div className="text-[12.5px] text-ink-faint">
         {new Intl.DateTimeFormat(undefined, { timeZone: timezone, weekday: "long", month: "long", day: "numeric" }).format(now)}
       </div>
-      <h1 className="mt-1.5 text-[30px] sm:text-[34px] leading-[1.1]">
-        {needYou > 0 ? (
-          <>
-            {/* The phone's shorter line, as TodayCalmPhone draws it. */}
-            <span className="sm:hidden">{`${needYou} ${needYou === 1 ? "customer needs" : "customers need"} you.`}</span>
-            <span className="hidden sm:inline">{`${needYou} ${needYou === 1 ? "customer is" : "customers are"} waiting on you.`}</span>
-          </>
-        ) : (
-          headline()
-        )}
-      </h1>
+      {/* One number, then the words (A-220), at phone sizes (R-107). */}
+      {sentence ? (
+        <h1 className="mt-1 text-[24px] font-semibold leading-[1.15] tracking-[-0.02em] sm:text-[28px]">{sentence}</h1>
+      ) : (
+        <h1 className="mt-0.5 flex items-baseline gap-2.5">
+          <span className="text-[34px] font-semibold leading-none tracking-[-0.035em] tabular-nums sm:text-[40px]">{needYou}</span>
+          <span className="text-[17px] font-medium leading-tight tracking-[-0.01em] sm:text-[20px]">
+            {needYou === 1 ? "customer needs you" : "customers need you"}
+          </span>
+        </h1>
+      )}
 
+      {/* Everything under the headline is one column: on a phone the cards run
+          a little wider than the text (12px from the edge, A-220); on a computer
+          it stays one reading width, so Today reads as one decision at a time. */}
+      <div className="-mx-2 sm:mx-0 sm:max-w-[640px]">
+      <div className="min-w-0">
       {sendingPaused && <SendingPausedBanner canResume={isAdmin} />}
       {cantSend && (
         <CantSendNotice reconnectEmail={"needsReconnect" in gmail && gmail.needsReconnect ? (gmail.email ?? "your inbox") : null} />
       )}
       {firstValue && <FirstValueNote title={firstValue.title} body={firstValue.body} />}
       {/* A buzz on the owner's phone when a customer needs them (A-216): shown
-          until this device has alerts on, or "Not now". */}
-      <AlertsCard open={alertsOpen} />
+          until this device has alerts on, or "Not now". Not on the visit
+          that asks the one-time question below: one question at a time. */}
+      {!offer && <AlertsCard open={alertsOpen} />}
       {/* One decision per screen (A-080): the queue is the page. The
           Coming up card went; automated check-ins live on their own page,
           and a booked call is the one line below. */}
-      <div className="mt-4">
-      <div className="min-w-0">
+      <div className="mt-3.5 sm:mt-5">
       {/* With no customers at all, the box below says what FollowUp checked; a second
           "Nothing needs your OK" card above it said the same thing twice (A-088). */}
       {/* Calls to make first, as drawn (A-103): on a team that calls customers the call is the job. The first Call is black only when no reply below has the black Send. */}
       {callCards.length > 0 && <CallsToMake items={callCards} firstIsPrimary={approvalItems.length === 0} />}
-      {leads.length > 0 && (approvalItems.length > 0 || callCards.length === 0) && (
-        <ApprovalQueue items={approvalItems} plan={approvalItems.length === 0 && comingUp ? planLine(comingUp.groups) : null} weekResults={weekResults} answeredForYou={rescue?.answeredForYou ?? 0} sendLocked={sendLocked} handledToday={handledToday} laterToday={laterTodayAvailable(now, timezone)} setAside={setAside} holdAll={holdAll} />
-      )}
+      {leads.length > 0 && (approvalItems.length > 0 || callCards.length === 0) && (() => {
+        const queue = (
+          <ApprovalQueue items={approvalItems} plan={approvalItems.length === 0 && comingUp ? planLine(comingUp.groups) : null} weekResults={weekResults} answeredForYou={rescue?.answeredForYou ?? 0} sendLocked={sendLocked} handledToday={handledToday} laterToday={laterTodayAvailable(now, timezone)} setAside={setAside} holdAll={holdAll} />
+        );
+        return offer ? (
+          <ReplyForMeCard
+            proof={offer}
+            first={firstWaiting ? { leadId: firstWaiting.leadId, name: firstWaiting.leadName, words: firstWaiting.leadLastMessage?.replace(/\s+/g, " ") ?? null } : null}
+          >
+            {queue}
+          </ReplyForMeCard>
+        ) : (
+          queue
+        );
+      })()}
+
+      {/* Going quiet, as one row (A-220: Today never shows a list). Anyone
+          already waiting above is left out (A-046, once each). */}
+      {atRisk.length > 0 && <GoingQuietRow first={{ id: atRisk[0].id, name: atRisk[0].name, reason: atRisk[0].rescue.reason }} total={lost.total} />}
+      <WhatFollowUpDid items={did} />
 
       {isAdmin && <HabitQuestion suggestion={habitSuggestion} />}
       {isAdmin && <DailyQuestion question={dailyQuestion} />}
@@ -476,29 +482,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             </>
           )}
 
-          {/* About to be lost, under the list, as drawn. Anyone already in
-              Needs you is left out (A-046, once each). */}
-          {atRisk.length > 0 && (
-            <section className="mt-7">
-              <div className="mb-2.5">
-                <Eyebrow>About to be lost · {lost.total}</Eyebrow>
-              </div>
-              <div className="overflow-hidden rounded-2xl border border-line bg-card divide-y divide-[var(--line-2)]">
-                {atRisk.map((lead) => (
-                  <Link key={lead.id} href={`/leads/${lead.id}`} className="flex items-center gap-3 px-[18px] py-3.5 hover:bg-paper">
-                    <Initials name={lead.name} size={30} />
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-[14.5px] font-medium">{lead.name}</span>
-                      <span className="block text-[13.5px] leading-snug text-ink-soft">{lead.rescue.reason}</span>
-                    </span>
-                    <span className="h-8 shrink-0 rounded-full border border-line bg-card px-3.5 text-[13px] font-medium leading-8">Open</span>
-                  </Link>
-                ))}
-              </div>
-              <p className="mt-2 px-0.5 text-[13px] text-ink-faint">Anyone already above isn&apos;t listed again.</p>
-            </section>
-          )}
-
           {/* What FollowUp did since yesterday, in one quiet line at the foot
               of a working Today (A-088, the labour illusion); it opens
               Numbers. The week's results moved to the end of the day.
@@ -510,6 +493,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           )}
         </>
       )}
+      </div>
       </div>
       </div>
     </div>

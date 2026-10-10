@@ -11494,4 +11494,55 @@ No logo, colour, words or screen of theirs.
 - No computer version drawn yet.
 - The Scotiabank screenshots haven't arrived. This drawing uses only public descriptions.
 
-**Status:** drawn, waiting for his yes.
+**Status:** drawn, waiting for his yes. **Updated the same day:** text and boxes too big for a phone (R-107), made
+compact, then approved (A-220). See the next two entries.
+
+## 2026-10-10 — Redesign drawing made compact (R-107), then approved (A-220)
+
+**Rejected:** *"Bro why we keeping fonts and stuff to big make it compatible for mobile bro"*. Recorded as R-107 with
+phone sizes: the number about 34px, a title about 22px, names about 14px, lines about 13px, meta 11 to 12px, buttons
+44px, gutters 12 to 16px. Nothing a decision depends on goes below 13px.
+
+**Redrawn** at those sizes (version 2 of the same page). **Approved:** *"Yes"*. Recorded as A-220, with the build order:
+Today, Customers, One customer, Settings, Results, one screen per PR, each shown on phone and computer before "merge".
+
+## 2026-10-10 — Build 1/5: Today, built (A-220)
+
+**Built as drawn:**
+- The date, then one number and the words: "15 customers need you". On a clear day it says 0; a brand-new account still
+  gets "No customers yet." (the #301 rule).
+- One card: who and the channel, their words (the biggest text), "Your reply, ready" on the wash, at most one line on
+  why it waits, Send (the one black button, full width on a phone), Edit and Later under it, then "Don't send ·
+  Already spoke" as quiet links. Edit in place, the answer blank, Later's two times, undo and kept edits all stay.
+- A "Next" row under it: their name and their words; the row opens them in the card. Today shows no list.
+- All caught up: a green check, "You're all caught up.", the honest line about what waits, and "What FollowUp did
+  today" in up to three rows from the activity record, then "See everything it did".
+- The one-time question (A-217, A-218): it takes the card's place, with the first waiting customer as one row under
+  it, as drawn. Either answer brings the card back. It is recorded once and never asked again.
+- Cards run 12px from the phone's edge; text stays at 20px. On a computer, Today is one 640px column.
+
+**Calls made while building (for his eyes in the PR):**
+- **Going quiet** was a list under the queue ("About to be lost", A-046). Today shows no list now, so it became one row:
+  the first name and "and 2 more", opening that customer. The rest are under Going quiet in Customers.
+- **Swipe for Later** (A-095) leaves Today with the rows it lived on. Whether Customers' rows get it is decided in
+  build 2.
+- **The question is asked only when a yes can work:** an admin, on "ask me first", on a plan that allows sending, with
+  sending not paused, and with at least 5 recent replies of which 60% went out unchanged.
+- **One question at a time:** on the visit that asks it, the alerts card waits. The phone link (?alerts=on) never
+  shows the question.
+- **"Your reply, ready"** replaces "Written by FollowUp · waits for your OK", as drawn. "Edited by you" still shows
+  once the owner changes it.
+- The daily question card got the same sizes (title 17px), and the bell's count now sits beside the word "Alerts"
+  instead of over its last letter.
+
+**Self-review (design-review.md), weak spots said plainly:**
+- An email reply with a greeting and sign-off still makes the card long on a phone. The drawing used a short reply.
+- The answer blank leaves an empty gap under it where the draft had a blank line. It was like this before.
+- The rows under "What FollowUp did today" can only say what the record holds: no bookings yet, because bookings
+  aren't in the activity record.
+- The top bar is unchanged (FollowUp and Alerts). The drawing's Help and bell come with a later step.
+
+**Checked:** types, lint, 3,545 tests, a production build, and the running app at 390×844 and 1440×900 (working day,
+Edit, Later, Next, the question and "Not now", all caught up). Nothing scrolls sideways; Send is 44px tall.
+
+**Status:** built, PR open, waiting for his "merge".

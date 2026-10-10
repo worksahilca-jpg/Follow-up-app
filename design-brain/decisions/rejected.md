@@ -1349,3 +1349,27 @@ founder answered: *"make it just a little cinematic, not that dark."* **Principl
 made less WhatsApp-like, the answer is lighter and warmer, not darker. The green italic accent stays as the one
 colour in the headline. Confirm with him if a black headline comes up again.
 
+
+## R-106 — "Easy replies": automatic sending framed as handling the simple ones ^R-106
+
+**Rejected:** 2026-10-10, founder, on the step 2 drawing (https://claude.ai/artifact/U1Wn84DQz5LkoEJ69RyhEt): *"No, we
+will be using proper strategy. No lead should be taken lightly. We will try our best to convert the lead, or at least
+book the appointment."*
+
+**What was rejected:**
+- the idea and the words "easy replies";
+- "Let FollowUp send the easy replies?";
+- "Goes out on its own: simple answers".
+
+These framed automatic sending as FollowUp taking care of the unimportant messages.
+
+**Principle (his words, plus inferred and marked):**
+- Every reply, automatic or not, is written with a strategy: move the customer toward a booked appointment, or a sale.
+- No message is "easy" or "simple". Every lead matters.
+- *Inferred:* calling some replies "easy" told the owner that FollowUp handles leads lightly. That is the opposite of
+  the product's promise.
+
+**Do not propose again:** any wording that makes an automatic reply sound casual, low-stakes or "just the simple
+ones". Describe what a reply does (answers, then asks for the booking), never how easy it is.
+
+**Still open:** whether FollowUp should send on its own at all after the owner's yes. Asked him the same day.

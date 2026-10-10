@@ -11287,3 +11287,14 @@ strategise and study our whole app first, bro, then only we can design the softw
 5. one strategy page for his yes;
 6. only then design.
 
+
+## 2026-10-10 — Whole-app study, part 5: the plan put to the founder
+
+**Founder:** *"start part 5"*.
+
+**Done:** one page with 16 decisions for the whole app, each with Yes / No / Not sure and a note
+(`research/ux-patterns/2026-10-10-whole-app-study-part-5.md`). The plan in one sentence: FollowUp does the work and
+comes to you when it needs a decision; the app is where you check, not where you work.
+
+**Status:** proposed, nothing approved. Each answer gets recorded here and in `approved.md` / `rejected.md` when he
+gives it. Part 6 (design) starts only after that, at step 1 of the build order.

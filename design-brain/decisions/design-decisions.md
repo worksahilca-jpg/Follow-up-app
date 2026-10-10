@@ -11122,3 +11122,18 @@ Drawn on the real local app, desk 1280. Board version 4: https://claude.ai/artif
   - the "qualified" count and longest-wait order are build steps.
 - **Status:** waiting for his yes to build.
 
+## 2026-10-10 — The app map, and version 5: windows (A-213)
+
+- **The map** (`components/app-map.md`):
+  - a fixed skeleton: three places, Settings as a window, small windows, a customer page with a side panel, and
+    alerts;
+  - seven slots where any new feature goes;
+  - each of today's 15 screens mapped (Inbox, Waiting, Coming up and Pipeline fold into Customers views; Activity
+    into the side panel and Results; Workflows and Teach into the Settings window);
+  - every feature in PRODUCT_DIRECTION placed. None needs a new place.
+- **Version 5 drawn on the real app:** the Settings window over Today (three sections shown), Add a customer as a
+  small window, and the phone sheets. Board version 5: https://claude.ai/artifact/F12ZLs1H4UBdCWRtumdRvg.
+- **Open for the founder:** Pipeline as a Customers view, or dropped? Where does the team view live?
+- **Weak:** the section "Account" holds sign-ins, data and Advanced, while plan and team live under "Your business" (the
+  app's current grouping). The map suggests moving plan and team to Account when we build.
+

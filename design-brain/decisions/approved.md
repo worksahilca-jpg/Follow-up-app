@@ -3459,3 +3459,23 @@ after *"looks good but needs a lot more changes."*
 4. **Settings with a side list of sections:** Follow-up plan, Where customers write, How it writes, Your business,
    Account. Picking one shows only its rows, under a display-font section title.
 
+## A-213 — Settings and single tasks open as windows over the page, like Wispr ^A-213
+
+**Approved (direction, to draw):** 2026-10-10, founder: *"make it a bit towards Wispr, see how they pop up a new window
+for settings and stuff."*
+
+**What specifically:**
+- **Settings is a window, not a page.** It opens over the current page, which stays behind, dimmed (a plain see-through
+  layer, no blur: brand principle "Every frame is smooth"). It has a side list of sections on soft grey, a display-font
+  section title with one grey line, and the rows on soft grey. It closes with × or Esc, back to where you were.
+- **Single tasks get a small window.** Add a customer is the first. Its fields stay; company, deal value and source fold
+  under "More details". Cancel is a word, and "Add customer" is the one black button.
+- **Phone:** both rise as a sheet from the bottom (a grab bar, "Done" for Settings).
+- Sidebar: Settings stays at the bottom and shows as open while its window is up.
+
+**Supersedes:** Settings as a page (A-209 kept it as a place, and A-212 gave it a side list on the page). The side list
+moves into the window.
+
+**Also asked (2026-10-10):** *"keep the plan in mind while building, because we have to fit new features too."* The
+plan is `components/app-map.md`: the fixed skeleton, the seven slots, and where every feature on the way goes.
+

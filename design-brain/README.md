@@ -21,6 +21,8 @@ twelve different products. With it, each session starts where the last one ended
 
 ## The map — what to read for what you're doing
 
+**Adding or placing any feature in the app** → `components/app-map.md` first (the skeleton and the seven slots), then `[[approved]]`.
+
 **Designing a new screen** → `[[design-workflow]]`, `[[brand-principles]]`,
 `[[rejected]]`, `references/<category>/`, then the `components/` specs you'll use.
 

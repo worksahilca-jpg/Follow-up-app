@@ -54,6 +54,10 @@ td.old { color: var(--faint); text-decoration: line-through; text-decoration-col
 .ask { color: var(--needs); font-weight: 600 }
 .qs { display: grid; gap: 12px; margin-top: 16px; max-width: 80ch; padding-left: 22px }
 .qs li { padding-left: 4px }
+.map svg { display: block; width: 100%; height: auto; max-width: 980px; color: var(--fg) }
+.map figcaption { max-width: 80ch }
+.slots { margin: 18px 0 0; padding-left: 22px; display: grid; gap: 8px; max-width: 86ch }
+.slots b { font-weight: 600 }
 @media (max-width: 720px) {
   .pair, .pair.phone { grid-template-columns: minmax(0, 1fr) }
   .page { padding-block: 28px 60px }
@@ -62,7 +66,7 @@ td.old { color: var(--faint); text-decoration: line-through; text-decoration-col
 
 <div class="page">
   <header>
-    <p class="label">FollowUp · the app, redrawn · version 4 · drawing, nothing built</p>
+    <p class="label">FollowUp · the app, redrawn · version 5 · drawing, nothing built</p>
     <h1>Our look. Wispr's <em>calm.</em></h1>
     <p class="lede">Our colours, type and words, with an interface that leans toward Wispr Flow's calm: a quiet sidebar where every place has a word, the page on one white sheet, plain titles, one black button, and almost nothing moving. Patterns borrowed, not their screens. These are drawn over the real app with the local test account's examples.</p>
     <div class="summary">
@@ -72,6 +76,79 @@ td.old { color: var(--faint); text-decoration: line-through; text-decoration-col
       <div><b>Said once</b><span>Customers groups people under "Needs you · 15", so the "Needs you" pill on every row goes.</span></div>
     </div>
   </header>
+
+  <section id="map">
+    <div class="head"><p class="label">The map · so new features fit</p><h2>Three places, one window, and seven slots <em>for everything else.</em></h2>
+      <p>You asked for a plan before building, so new features fit. The skeleton stays fixed. Every feature, today's and the ones on the way, goes into one of seven slots. Nothing gets squeezed in, and the app never grows a fifth tab.</p></div>
+    <figure class="map">
+      <svg viewBox="0 0 980 400" role="img" aria-label="The app's skeleton: a sidebar with Today, Customers and Results, and Settings and Help at the bottom; the page as one white sheet showing a customer with a side panel; a Settings window and a small task window that open over the page; and alerts from the bell.">
+        <rect x="1" y="1" width="978" height="398" rx="18" fill="#F2F1ED" stroke="#E2E0DA"/>
+        <g font-family="Public Sans, system-ui, sans-serif" font-size="13" fill="#0E0E0C">
+          <text x="24" y="40" font-weight="600">Maple Realty ⌄</text><path d="M178 42h14M181 42v-6a4 4 0 0 1 8 0v6M183.5 45.5a2 2 0 0 0 3 0" fill="none" stroke="#736e68" stroke-width="1.5" stroke-linecap="round"/>
+          <rect x="16" y="62" width="180" height="30" rx="8" fill="#E7E6E1"/><text x="28" y="82" font-weight="600">Today</text><text x="176" y="82" text-anchor="end" fill="#736e68">15</text>
+          <text x="28" y="116">Customers</text><text x="28" y="146">Results</text>
+          <text x="28" y="186" font-size="11" fill="#736e68" letter-spacing="1">PLACES (FIXED)</text>
+          <rect x="16" y="246" width="180" height="70" rx="12" fill="#fff" stroke="#E2E0DA"/><text x="28" y="268" font-size="12" font-weight="600">Finish setting up</text>
+          <rect x="28" y="278" width="156" height="4" rx="2" fill="#ECEBE7"/><rect x="28" y="278" width="52" height="4" rx="2" fill="#2A5A47"/><text x="28" y="302" font-size="11.5" fill="#736e68">goes away when done</text>
+          <text x="28" y="346">Settings</text><text x="28" y="374">Help</text>
+          <rect x="216" y="12" width="752" height="376" rx="16" fill="#fff" stroke="#E2E0DA"/>
+          <text x="244" y="52" font-family="Fraunces, Georgia, serif" font-size="24">15 customers <tspan fill="#2A5A47" font-style="italic">need you.</tspan></text>
+          <rect x="244" y="74" width="420" height="190" rx="14" fill="#F3F8F4" stroke="#DCEBE1"/><text x="262" y="100" font-size="11" fill="#2A5A47" letter-spacing="1">SLOT 1 · TODAY CARD</text><text x="262" y="124" fill="#57534e">one decision at a time</text>
+          <rect x="262" y="214" width="70" height="30" rx="15" fill="#0E0E0C"/><text x="297" y="234" text-anchor="middle" fill="#fff" font-weight="600">Send</text>
+          <rect x="684" y="74" width="260" height="190" rx="14" fill="#F6F5F2"/><text x="700" y="100" font-size="11" fill="#736e68" letter-spacing="1">SLOT 2 · SIDE PANEL</text><text x="700" y="124" fill="#57534e">all about one customer</text><text x="700" y="146" fill="#57534e">(phone: "Details")</text>
+          <rect x="244" y="284" width="190" height="84" rx="12" fill="#F6F5F2"/><text x="256" y="306" font-size="11" fill="#736e68" letter-spacing="1">SLOT 3 · CUSTOMERS</text><text x="256" y="328" fill="#57534e">a tab or filter</text>
+          <rect x="450" y="284" width="190" height="84" rx="12" fill="#F6F5F2"/><text x="462" y="306" font-size="11" fill="#736e68" letter-spacing="1">SLOT 4 · RESULTS</text><text x="462" y="328" fill="#57534e">a real number</text>
+          <rect x="590" y="190" width="330" height="190" rx="16" fill="#fff" stroke="#0E0E0C" stroke-opacity=".18"/><rect x="590" y="190" width="104" height="190" rx="16" fill="#F6F5F2"/>
+          <text x="602" y="214" font-size="11" fill="#736e68" letter-spacing="1">SETTINGS</text><text x="602" y="238" font-size="12">Plan</text><text x="602" y="258" font-size="12" font-weight="600">Channels</text><text x="602" y="278" font-size="12">Writing</text><text x="602" y="298" font-size="12">Business</text><text x="602" y="318" font-size="12">Account</text>
+          <text x="708" y="216" font-size="11" fill="#736e68" letter-spacing="1">SLOT 5 · SETTINGS WINDOW</text><text x="708" y="240" fill="#57534e">a section or a row</text>
+          <rect x="708" y="300" width="196" height="64" rx="12" fill="#fff" stroke="#0E0E0C" stroke-opacity=".18"/><text x="720" y="322" font-size="11" fill="#736e68" letter-spacing="1">SLOT 6 · SMALL WINDOW</text><text x="720" y="344" fill="#57534e">one task, then gone</text>
+          <text x="182" y="24" font-size="11" fill="#c96a1b" letter-spacing="1" text-anchor="middle">SLOT 7 · ALERT</text>
+        </g>
+      </svg>
+      <figcaption>The skeleton. The three places and Settings never grow. New things go into the numbered slots.</figcaption>
+    </figure>
+    <ol class="slots">
+      <li><b>The owner must decide now</b> → a card in Today, one at a time.</li>
+      <li><b>It's about one customer</b> → a short block in that customer's side panel ("Details" on the phone).</li>
+      <li><b>It's a way to find people</b> → a tab in Customers (only when it has people) or a filter.</li>
+      <li><b>It shows what FollowUp did</b> → a number on Results, real records only, beside last week.</li>
+      <li><b>It's how FollowUp works, or a connection</b> → a section or row in the Settings window.</li>
+      <li><b>It's one task with a start and an end</b> → a small window (a sheet on the phone).</li>
+      <li><b>It happened while you were away</b> → an alert that opens straight to the customer.</li>
+    </ol>
+    <div class="scroll"><table>
+      <thead><tr><th>On the way</th><th>Where it goes</th></tr></thead>
+      <tbody>
+        <tr><td><b>Qualification</b> (realtors first)</td><td>Today: "Qualified, hand off" · Panel: the card, with their own words · Customers: "Qualified" tab · Results: qualified · Settings: "What you ask"</td></tr>
+        <tr><td><b>Booking</b></td><td>Panel: "Booked: Sat 10:30" · Customers: "Booked" · Results: booked · Settings: hours and calendar · Window: pick a time</td></tr>
+        <tr><td><b>Closing</b> ("closed, confirmed by you")</td><td>Panel: "Mark won" · Window: deal value · Customers: "Won" · Results: won by you</td></tr>
+        <tr><td><b>Voice agent</b></td><td>Today: "Called, needs you" · Panel: call summary · Results: calls answered · Settings: phone and calls</td></tr>
+        <tr><td><b>More channels</b></td><td>Settings: where customers write · Window: connect · Panel: "Wrote on Instagram"</td></tr>
+        <tr><td><b>Team</b> (Pro)</td><td>Settings: team · Window: invite · Customers: "Mine / Everyone" · Panel: assigned to · Results: who's behind</td></tr>
+        <tr><td><b>Old customers</b> ("Send all")</td><td>Today: one card with the count · Window: review and send</td></tr>
+        <tr><td><b>What FollowUp knows</b></td><td>Today: "not known yet" moments · Panel: "Used: Commission 2.5%" · Settings: your business</td></tr>
+      </tbody>
+    </table></div>
+    <ul class="notes">
+      <li><b>Today's 15 screens fold into this:</b> Inbox, Waiting, Coming up and Pipeline become views of Customers; Activity becomes each customer's "What FollowUp did" plus Results; Follow-up plan and Teach move into the Settings window.</li>
+      <li><b>Two questions for you:</b> does Pipeline (stages) stay as a Customers view? And does the team view ("who's behind") live on Results?</li>
+      <li>The full map, with every feature on the way: <code>design-brain/components/app-map.md</code>.</li>
+    </ul>
+  </section>
+
+  <section id="v5">
+    <div class="head"><p class="label">Version 5 · windows, like Wispr</p><h2>Settings opens <em>over the page.</em></h2>
+      <p>Settings is a window now, not a page: the page stays behind, dimmed, and closes back to where you were. Single tasks, like adding a customer, get a small window. On the phone they rise as a sheet.</p></div>
+    <figure><img src="img/v5-d-win-channels.webp" alt="The Settings window over Today: a side list of sections and 'Where customers write' with Email, Website form, and Instagram, Facebook, WhatsApp." loading="lazy"><figcaption><b>Settings window, "Where customers write."</b> The side list: Follow-up plan, Where customers write, How it writes, Your business, and Account and data. Close with × or Esc.</figcaption></figure>
+    <div class="pair" style="margin-top:22px">
+      <figure><img src="img/v5-d-win-writes.webp" alt="The Settings window on 'How it writes': Replies and check-ins, Booking hours, and Pause all sending as a switch." loading="lazy"><figcaption><b>How it writes.</b> Pause all sending is a switch.</figcaption></figure>
+      <figure><img src="img/v5-d-win-add.webp" alt="A small window over Customers: Add a customer, with Name, Email, Phone, Notes, More details folded, Cancel and Add customer." loading="lazy"><figcaption><b>Add a customer, as a small window.</b> Same fields as today; company, deal value and source fold under "More details".</figcaption></figure>
+    </div>
+    <div class="pair phone" style="margin-top:22px">
+      <figure><img src="img/v5-m-sheet.webp" alt="On a phone, Settings rises as a sheet over Today: Finish setting up, the sections as rows, Account and data, Something broke? and Sign out." loading="lazy"><figcaption><b>Phone:</b> Settings rises as a sheet; "Done" closes it.</figcaption></figure>
+      <figure><img src="img/v5-m-win-add.webp" alt="On a phone, Add a customer rises as a sheet from the bottom." loading="lazy"><figcaption><b>Phone:</b> Add a customer as a sheet.</figcaption></figure>
+    </div>
+  </section>
 
   <section id="v4">
     <div class="head"><p class="label">Version 4 · your "all 4"</p><h2>Four changes, <em>drawn.</em></h2>

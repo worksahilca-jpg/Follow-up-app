@@ -11952,3 +11952,25 @@ It also feels designed rather than stripped down (R-001).
 - First reply, Booked and Won still use the same seven days, but "Came back after a follow-up this week" in
   Everything else is still the last 7×24 hours (it comes from the weekly email's report). A small mismatch, left
   for now.
+
+## 2026-10-10 — Helping testers, part 2: the daily stuck-testers email (A-227)
+
+Asked *"a short daily email that lists testers who signed up but never connected anything, so you can reach out.
+Build it?"* → *"Yes, build it"*.
+
+**Built:**
+- It reuses /admin's stuck list (`loadActivation`, the same numbers as "Who reaches first value"), so the email and the
+  page never disagree.
+- It goes out with the daily setup-health cron, on its own step, so a failure can't stop the setup check or the
+  Instagram token renewal.
+- One email per founder per day (Resend idempotency key).
+- Checked against the local database with three example testers: one stuck 3 days was named; two stuck 19 and 20 days
+  were counted in one line. 7 new tests (one makes sure only this email reads every tester without a sign-in); all
+  3,568 pass.
+
+**Weak spots:**
+- It lists every step short of a first sent reply, a little wider than the question's "never connected anything".
+  Each line names the step.
+- A tester stuck 1–14 days is named every day until they move. That's deliberate (it's a to-do list), but it can feel
+  repetitive.
+- **Open, his call:** a buzz for each new sign-up.

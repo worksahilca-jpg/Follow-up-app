@@ -11427,3 +11427,11 @@ Production, read-only aggregates:
 - **Yes uses the same switch** as Automatic in Settings and setup (`autoSendPermission`). Nothing already waiting goes out.
 
 **Status:** drawn, waiting for his yes.
+
+## 2026-10-10 — Feature answers before the redesign (1 to 3)
+
+The founder asked to settle the features first, then redesign the phone app once.
+1. **Sending by itself:** only after the owner says yes, and every reply works toward the booking. See A-217 and R-106.
+2. **Owners who set up before** get asked once (A-218).
+3. **A text message (SMS) to the owner when a customer needs them:** *"Not now then."* Texting stays off. The phone
+   buzz and the email do the job. Ask again only if owners miss alerts. (This was part 5's decision 3.)

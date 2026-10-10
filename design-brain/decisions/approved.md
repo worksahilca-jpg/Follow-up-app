@@ -1768,6 +1768,9 @@ needs explaining, change the words, not add a "More" (R-026: an expander is stil
 
 ## A-095 — Swipe a Today row left for "Later" (phone) ^A-095
 
+**SUPERSEDED (2026-10-10)** by [[approved#^A-209|A-209]] as built in step 2: Today shows one customer at a time on the
+phone too, so there are no closed rows left to swipe. "Later" stays as a word under the reply.
+
 **Approved 2026-10-05**, founder: *"cool lets go"* to both ideas from the Macro study (swipe for Later, a phone speed
 check). Built on the phone's closed Today rows only.
 - **Swipe left past 96px and let go:** the person is set aside until Later today (2 pm) when that's still ahead,

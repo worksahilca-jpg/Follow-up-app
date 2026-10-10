@@ -23,8 +23,10 @@ export const dynamic = "force-dynamic";
  * minus anyone already going quiet. One place each (customerPlaces), so a
  * tab's count is always the number of rows under it.
  */
-export default async function LeadsPage({ searchParams }: { searchParams: Promise<{ p?: string }> }) {
-  const { p } = await searchParams;
+export default async function LeadsPage({ searchParams }: { searchParams: Promise<{ p?: string; show?: string }> }) {
+  const { p, show } = await searchParams;
+  // "See all N" on Today opens the Needs you tab (?show=needs).
+  const initialPlace = show === "needs" ? ("needs" as const) : undefined;
   const ctx = await getSessionContext();
   const leads = await getLeads();
   if (!ctx) return <LeadsPageClient leads={leads} places={{ needs: [], quiet: [], waiting: [] }} />;
@@ -53,7 +55,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
   // A customer opened beside the list (A-025, the canvas App board). Only
   // one of this business's own customers: getLeads is already scoped.
   const open = p ? leads.find((l) => l.id === p) ?? null : null;
-  if (!open) return <LeadsPageClient leads={leads} places={places} />;
+  if (!open) return <LeadsPageClient leads={leads} places={places} initialPlace={initialPlace} />;
 
   const approval = approvals.find((a) => a.leadId === open.id) ?? null;
   const place: { state: StateKey; label: string } = needs.has(open.id)

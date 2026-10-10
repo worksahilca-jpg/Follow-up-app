@@ -11225,3 +11225,47 @@ the Search window opened from the sticky sidebar was painted under the page.
 - The side list's icons are generic (lucide), like everyone's.
 - "Search" is one more row than Wispr has.
 
+## 2026-10-10 — Step 2 built: Today, one customer at a time
+
+**Founder:** *"merge and start today"* (after step 1 merged as PR #470).
+
+**Built**, as drawn in board version 4 (A-209, A-212), in the simpler look of A-214:
+- **The headline** is the homepage's display face with its green italic phrase: "15 customers *need you.*", the same
+  on the phone and the desk.
+- **One customer at a time**, on the desk as on the phone:
+  - their name, channel and wait;
+  - their words in a white card;
+  - FollowUp's reply in **soft green** (`--wash #f3f8f4`, edge `#dcebe1`, label `--reply-ink #2a5a47`; dark mode
+    redrawn);
+  - Send, Edit, and the three quiet words.
+  - The peach-and-blue wash is gone from every reply card in the app (Today, the customer page, site replies,
+    onboarding).
+- **One line under it:** "Next: Owen Shah · 17 days · See all 15". Next opens them; "See all" opens Customers on its
+  Needs you tab (`/leads?show=needs`).
+- **"About Ivy" beside them (desk only), on soft grey:** Came from (the same words as her page), First wrote, Writes in
+  (only when it isn't English), and "Open Ivy's page".
+- **Later:** the person stays on screen with "set aside until…" and Undo until the owner moves on with Next.
+- **Routine drafts** stay as one quiet row with their one-press send. "3 of 15 handled" shows only once something is
+  handled.
+
+**Left out on purpose** (say each fact once):
+- the drawing's "What FollowUp did" (the reply's label already says it);
+- "Parking: not known yet" (the line under the reply already says it).
+
+**Superseded:** A-095 (swipe a phone row for Later). There are no rows on Today any more; Later is a word on the card.
+
+**Checked in a real browser** (1440 desk, 1024, 390 phone, dark):
+- Next moves from Ivy to Owen;
+- Later then Undo works;
+- See all lands on Needs you;
+- no sideways scroll;
+- no errors.
+- Full tests: 3,515 pass.
+
+**Weak, said honestly:**
+- The draft itself has empty lines around the answer blank, which looks like a gap. That is the draft's text, not the
+  layout; it is worth trimming in the writer later.
+- The header says "Email" and Came from may say "Website form" (her first message came by email, but she was recorded
+  from the website form). Both are true, and it reads oddly.
+- Swiping is gone on the phone.
+

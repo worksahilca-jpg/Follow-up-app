@@ -131,8 +131,11 @@ export default function LeadsPageClient({
   leads,
   places,
   openId = null,
+  initialPlace = "all",
 }: {
   leads: Lead[];
+  /** The tab it opens on: "needs" from Today's "See all N". */
+  initialPlace?: "all" | "needs";
   /** The customer open beside the list (?p=), if any (A-025). */
   openId?: string | null;
   /** The canvas's places, worked out on the server from the same sources Today uses. */
@@ -140,7 +143,7 @@ export default function LeadsPageClient({
 }) {
   const { data: session } = useSession();
   const [filter, setFilter] = useState<FilterId>("all");
-  const [place, setPlace] = useState<Place>("all");
+  const [place, setPlace] = useState<Place>(initialPlace);
   const [showFilters, setShowFilters] = useState(false);
   const placeOf = useMemo(() => {
     const m = new Map<string, Exclude<Place, "all">>();

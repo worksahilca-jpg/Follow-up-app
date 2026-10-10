@@ -82,13 +82,12 @@
   /* Height of the fixed mobile top bar in components/Sidebar.tsx. */
   --app-header-h: 57px;
 
-  /* The reply card's warm wash (A-043), a soft glass field on it, and the
-     scrim behind a dialog: tokens so the dark theme can redraw them. */
-  --wash:
-    radial-gradient(70% 90% at 12% 10%, rgba(244, 196, 160, 0.9), rgba(244, 196, 160, 0) 70%),
-    radial-gradient(70% 90% at 92% 95%, rgba(196, 210, 228, 0.95), rgba(196, 210, 228, 0) 70%),
-    radial-gradient(50% 70% at 88% 0%, rgba(238, 212, 204, 0.9), rgba(238, 212, 204, 0) 72%), #f3efea;
-  --wash-edge: rgba(10, 10, 10, 0.06);
+  /* A written reply is soft green (A-209: the peach-and-blue wash is gone
+     from the app), with its label in a deeper green; a soft glass field on
+     it, and the scrim behind a dialog. Tokens so the dark theme can redraw them. */
+  --wash: #f3f8f4;
+  --wash-edge: #dcebe1;
+  --reply-ink: #2a5a47;
   --glass: rgba(255, 255, 255, 0.55);
   --glass-strong: rgba(255, 255, 255, 0.6);
   --scrim: rgba(0, 0, 0, 0.4);
@@ -142,11 +141,9 @@
     --state-checked: #8a847d;
     --state-done: #4a4642;
     --shadow-box-lift: 0 0 0 1px var(--line), 0 24px 48px -24px rgba(0, 0, 0, 0.6);
-    --wash:
-      radial-gradient(70% 90% at 12% 10%, rgba(150, 92, 52, 0.38), rgba(150, 92, 52, 0) 70%),
-      radial-gradient(70% 90% at 92% 95%, rgba(70, 88, 116, 0.42), rgba(70, 88, 116, 0) 70%),
-      radial-gradient(50% 70% at 88% 0%, rgba(120, 84, 76, 0.3), rgba(120, 84, 76, 0) 72%), #1f1d1b;
-    --wash-edge: rgba(243, 241, 238, 0.08);
+    --wash: #17211c;
+    --wash-edge: rgba(159, 208, 179, 0.16);
+    --reply-ink: #9fd0b3;
     --glass: rgba(255, 255, 255, 0.06);
     --glass-strong: rgba(255, 255, 255, 0.08);
     --scrim: rgba(0, 0, 0, 0.6);

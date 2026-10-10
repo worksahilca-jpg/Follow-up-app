@@ -11586,4 +11586,23 @@ Edit, Later, Next, the question and "Not now", all caught up). Nothing scrolls s
 Ready to book with Call, each list, the stage filter with its total, search, both old links, a customer open beside
 the list). Nothing scrolls sideways.
 
-**Status:** built, PR open, waiting for his "merge".
+**Status:** merged (PR #474), 2026-10-10.
+
+## 2026-10-10 — Landing page: smoother scrolling on a computer
+
+**Reported:** *"when i am scrolling the page the animations motions and all are not rendering very smoothly"*, on a
+computer.
+
+**Found:** about 50 looping animations kept running at once while scrolling, most of them off screen. 30 of them were
+the blurred messages rising behind the headline, still moving long after they had scrolled away.
+
+**Changed (motion only; nothing looks different at rest):**
+- A part of the page that is off screen holds its animations still, and picks them up 300px before it comes back.
+- While the page is being scrolled, the four biggest loops hold still: the rising messages, the language strip and the
+  two tickers. They carry on about 0.2s after scrolling stops.
+
+**Honest about the measurement:** this test machine draws without a graphics card. Holding the loops took a scroll of
+the top of the page from about 120 to about 190 drawn frames. Over the whole page, though, the gain was lost in the
+noise of software drawing. The real check is the founder scrolling the preview on his own computer.
+
+**Status:** PR open with a preview link, waiting for his check and "merge".

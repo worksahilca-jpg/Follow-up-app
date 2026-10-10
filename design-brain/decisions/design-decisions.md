@@ -11355,3 +11355,34 @@ Home Screen opens the website, not the app. The fix (start at `/dashboard`) goes
 - Setup becomes four steps.
 
 **Status:** drawn, waiting for his yes.
+
+## 2026-10-10 — Step 1 built: the phone buzz (A-216)
+
+**Built as drawn.** Checked in a real browser on the local build (Android phone, iPhone in Safari, a computer, an
+existing owner on a phone and on a computer). There were no page errors and no sideways scroll at 390px.
+- **Setup:** "Step 4 of 4". The last step turns alerts on, sends a test, then shows "Did your phone buzz?".
+  - Setup is marked finished before this step, so a Home Screen app opened halfway lands on Today.
+  - Step 3's button now says "Continue", not "Go to Today".
+- **Real test, real failure:** the test browser has no push service, so the real test failed. The screen said, plainly,
+  "Alerts are on, but the test didn't go out. Send another."
+- **Blocked alerts:** say how to allow them, and that email goes out until then.
+- **iPhone in Safari:** the three steps, then "Just email me for now".
+- **Computer:**
+  - the code, read back with a QR reader: it opens `/dashboard?alerts=on`;
+  - "Waiting for your phone", which moved on by itself within 4 seconds of a phone being added;
+  - "Email me the link instead" failed politely when email wasn't available.
+- **Today card:**
+  - It shows until the device has alerts on.
+  - "Not now" hides it on that device for 14 days, including after a reload.
+  - The hand-over link shows it again.
+  - On a computer it opens the code inside the card.
+  - It goes away once a phone is on.
+- **Home Screen start page** is `/dashboard` (it was the website).
+- **Settings › Alerts** runs on the same shared device code.
+
+**Weak spots, said plainly:**
+- **No real phone has buzzed yet.** The test browser can't receive push, so the subscription was faked. The real test
+  is on the founder's phone after merge.
+- **A brand-new owner sees two asks on Today:** the alerts card and "One quick question".
+- The iPhone wording still needs a real iPhone.
+- Send is still below the fold on a customer's page; that's step 3.

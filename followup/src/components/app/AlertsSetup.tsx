@@ -543,8 +543,9 @@ export function AlertsCard({ open = false }: { open?: boolean }) {
         </div>
       </div>
 
+      {/* Full width on a phone: indented, the chips wrapped mid-word at 390px. */}
       {a.kind === "phone" && a.device === "needs-home-screen" && (
-        <div className="pl-12">
+        <div className="sm:pl-12">
           <IphoneSteps compact />
         </div>
       )}

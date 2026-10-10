@@ -3617,8 +3617,8 @@ its page are removed. Help is the one place to tell us something; old `#feedback
 
 ## A-220 — The phone app redesign, drawing 1 (compact) ^A-220
 
-**Progress (2026-10-10):** builds 1 and 2 merged (#473, #474). Build 3 merged (#476). Build 4 (Settings) built and
-shown; waiting for "merge".
+**Progress (2026-10-10):** builds 1–4 merged (#473, #474, #476, #480). Build 5 (Results) built and shown; waiting
+for "merge".
 
 **Approved:** 2026-10-10, founder: *"Yes"*, on https://claude.ai/artifact/MuhSgCMAi5KaEJSdBkvkzP (version 2, the compact
 one after R-107). Source: `prototypes/2026-10-10-phone-redesign/`.

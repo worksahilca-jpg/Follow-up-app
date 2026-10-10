@@ -3581,3 +3581,14 @@ every reply wait?"* He answered: *"by itself after owner says yes"*.
 **Order agreed the same day:** *"finalise the feature first or the design?"* Features first, as quick answers. Then the
 whole phone app is redesigned once (simple, Scotiabank and Claude as references). No new screens get built before
 that redesign. The step 2 card drawing (R-106) is not built.
+
+## A-218 — Owners who set up before get asked once ^A-218
+
+**Approved:** 2026-10-10, founder: *"yes ask once"*. The question was: owners who already use FollowUp were never
+asked about sending by itself (A-217), so should the app ask them once?
+
+**What specifically:**
+- Each owner who is still on "ask me first" gets the question **once**, inside the app.
+- Nothing changes unless they say yes. They can change it any time in Settings.
+- The question is part of the phone-app redesign, not a separate screen built now. Its wording follows R-106: no
+  "easy replies"; say that each reply works toward the booking.

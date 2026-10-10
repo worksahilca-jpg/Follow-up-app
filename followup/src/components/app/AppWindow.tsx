@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useContext, useEffect, useRef } from "react";
+import { createContext, useContext, useEffect, useRef, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
 /**
@@ -15,6 +16,10 @@ import { X } from "lucide-react";
  * The dimmed page is a plain see-through layer, never a blur (brand
  * principle "Every frame is smooth": a blur over the page is redrawn every
  * frame).
+ *
+ * It renders into <body>, so a window opened from inside the sidebar (Search)
+ * or a page is never painted under the page: the sidebar is sticky, and a
+ * sticky box keeps whatever is inside it in its own layer.
  */
 const InWindow = createContext(false);
 
@@ -25,17 +30,22 @@ export function useInWindow(): boolean {
 
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-export default function AppWindow({
-  label,
-  onClose,
-  size = "large",
-  children,
-}: {
+type Props = {
   label: string;
   onClose: () => void;
   size?: "large" | "small";
   children: React.ReactNode;
-}) {
+};
+
+const noop = () => () => {};
+
+export default function AppWindow(props: Props) {
+  // true in the browser, false while rendering on the server (no <body> to portal into there).
+  const inBrowser = useSyncExternalStore(noop, () => true, () => false);
+  return inBrowser ? createPortal(<Window {...props} />, document.body) : null;
+}
+
+function Window({ label, onClose, size = "large", children }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const close = useRef(onClose);
   useEffect(() => {

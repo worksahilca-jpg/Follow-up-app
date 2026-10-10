@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { Sun, Users, ChartColumn, Settings, CircleHelp, ChevronDown, LogOut } from "lucide-react";
+import { Sun, Users, ChartColumn, Settings, CircleHelp, ChevronsUpDown, LogOut } from "lucide-react";
 import SidebarSearch from "@/components/app/SidebarSearch";
 import NotificationBell from "./NotificationBell";
 import FeedbackDialog from "./FeedbackDialog";
@@ -12,14 +12,15 @@ import LogoMark from "@/components/LogoMark";
 
 /**
  * The app frame (step 1 of the app plan: A-209, A-211, A-212, A-213; the
- * map is design-brain/components/app-map.md).
+ * map is design-brain/components/app-map.md). Simplified after the founder,
+ * 2026-10-10: "simplify, copy Wispr if you want".
  *
- * Desk: the sidebar sits on a quiet frame beside the page's white sheet.
- * Three places, each with a word: Today, Customers, Results. Only Today
- * keeps a count, because that's who needs you. Settings and Help sit at
- * the foot. Your email, plan, team and Sign out live in a menu under the
- * business name, so the foot stays short. Settings opens as a window over
- * the page (src/app/(app)/@modal).
+ * Desk, like Wispr's sidebar: the brand at the top with the bell, then
+ * plain rows: Search, and the three places (Today, Customers, Results).
+ * Only Today keeps a count, because that's who needs you. Settings and Help
+ * sit at the foot, and under them the account: the business name, which
+ * opens your email, plan, team and Sign out. Search and Settings open as
+ * windows over the page (src/app/(app)/@modal).
  *
  * Phone: four tabs at the bottom (Today, Customers, Results, Settings),
  * and "Alerts" written beside the bell at the top.
@@ -89,15 +90,18 @@ export default function Sidebar({ businessName = "", counts = {} }: { businessNa
       </nav>
 
       {/* Desk column, on the frame. */}
-      <aside className="hidden lg:flex w-[232px] shrink-0 flex-col h-screen sticky top-0 px-3 py-3.5">
-        <div className="flex items-center justify-between gap-1">
-          <BusinessMenu initial={initial} name={businessName || "FollowUp"} />
+      <aside className="hidden lg:flex w-[224px] shrink-0 flex-col h-screen sticky top-0 px-3 pb-3 pt-2.5">
+        <div className="flex h-9 items-center justify-between">
+          <Link href="/dashboard" className="flex items-center gap-2 rounded-lg px-2.5 py-1">
+            <LogoMark height={17} />
+            <span className="text-[15px] font-semibold tracking-[-0.01em]">FollowUp</span>
+          </Link>
           <NotificationBell />
         </div>
 
-        <SidebarSearch />
-
-        <nav aria-label="Main" className="mt-4 flex flex-col gap-0.5">
+        <nav aria-label="Main" className="mt-5 flex flex-col gap-0.5">
+          <SidebarSearch className={rowClass + " text-left"} style={rowStyle(false)} />
+          <div className="h-2" aria-hidden />
           {places.map(({ href, label, icon: Icon, count }) => {
             const active = isActive(pathname, href);
             const n = count ? counts[count] : undefined;
@@ -118,6 +122,8 @@ export default function Sidebar({ businessName = "", counts = {} }: { businessNa
           </Link>
           {/* Help: tell the people building FollowUp what broke, from any screen. */}
           <FeedbackDialog label="Help" icon={CircleHelp} className={rowClass + " text-left"} />
+          <div className="mx-2.5 my-2 border-t border-line" aria-hidden />
+          <BusinessMenu initial={initial} name={businessName || "Your business"} />
         </div>
       </aside>
     </>
@@ -125,9 +131,10 @@ export default function Sidebar({ businessName = "", counts = {} }: { businessNa
 }
 
 /**
- * The business name opens a small menu: which account this is (founder,
- * 2026-10-04: "I am not able to see which id I am logged in"), the plan,
- * the team, and Sign out. Plan and Team open Settings at their page.
+ * The business name, at the foot, opens a small menu upward: which account
+ * this is (founder, 2026-10-04: "I am not able to see which id I am logged
+ * in"), the plan, the team, and Sign out. Plan and Team open Settings at
+ * their page.
  */
 function BusinessMenu({ initial, name }: { initial: string; name: string }) {
   const { data: session } = useSession();
@@ -152,26 +159,26 @@ function BusinessMenu({ initial, name }: { initial: string; name: string }) {
 
   const item = "flex h-9 w-full items-center justify-between gap-3 rounded-[9px] px-2.5 text-left text-sm text-ink hover:bg-[var(--nav-on)]";
   return (
-    <div className="relative min-w-0 flex-1" ref={box}>
+    <div className="relative" ref={box}>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="flex h-9 w-full min-w-0 items-center gap-2.5 rounded-lg px-1.5 hover:bg-[var(--nav-on)]"
+        className="flex h-9 w-full min-w-0 items-center gap-2.5 rounded-lg px-2 hover:bg-[var(--nav-on)]"
       >
         <span
           aria-hidden
-          className="h-6 w-6 shrink-0 rounded-[7px] inline-flex items-center justify-center text-xs font-semibold"
+          className="h-5 w-5 shrink-0 rounded-[6px] inline-flex items-center justify-center text-[11px] font-semibold"
           style={{ background: "var(--accent)", color: "var(--on-accent)" }}
         >
           {initial}
         </span>
-        <span className="min-w-0 truncate text-sm font-semibold text-ink">{name}</span>
-        <ChevronDown className="h-3.5 w-3.5 shrink-0 text-ink-faint" strokeWidth={2} />
+        <span className="min-w-0 flex-1 truncate text-left text-sm font-medium text-ink">{name}</span>
+        <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 text-ink-faint" strokeWidth={2} />
       </button>
       {open && (
-        <div role="menu" aria-label={name} className="box-lift absolute left-0 top-11 z-50 w-[256px] p-1.5">
+        <div role="menu" aria-label={name} className="box-lift absolute bottom-11 left-0 z-50 w-[256px] p-1.5">
           {session?.user?.email && (
             <p className="truncate px-2.5 pb-1.5 pt-2 text-[12.5px] text-ink-faint" title={session.user.email}>
               {session.user.email}

@@ -11190,3 +11190,38 @@ Back, "Your plan" landing on billing, Help, a direct `/settings#billing` load, A
 - "Your business" still holds plan and team (the app's current grouping); the map suggests moving them to Account.
   Left as is so step 1 changes no Settings page.
 - The setup card in the sidebar is drawn but not built yet (it belongs with step 5, when onboarding ends on a customer).
+
+## 2026-10-10 — Step 1 simplified, closer to Wispr
+
+**Founder** (on the step 1 screenshots): *"simplify. Bro, copy Wispr if you want, or use other references too."*
+Recorded as A-214; A-211's "never their layout" is marked partly superseded.
+
+**Read first:** his Wispr app recording again (private; principles only). What made it feel simpler than our step 1:
+- the brand at the top of the sidebar, not a business switcher;
+- no search box in the sidebar;
+- the sheet bleeds off the edges;
+- the Settings window is smaller;
+- rows sit on soft grey with a "Change" button, not inside bordered boxes;
+- small windows use a plain title.
+
+**Changed** (all in PR #470, nothing merged yet): the sidebar, sheet, Settings window, Add a customer and Search changes
+listed under A-214.
+
+**Fixed on the way:** a global hover rule (`[tabindex]:hover { filter: brightness(.96) }`) dimmed the whole Settings
+window under the pointer, because the window takes focus with `tabindex="-1"`. Windows also render into `<body>` now:
+the Search window opened from the sticky sidebar was painted under the page.
+
+**Checked in a real browser** (desk 1280, 1024; phone 390; dark):
+- Search finds Ivy, and Enter opens her;
+- Ctrl+K opens Search;
+- the Settings window opens and closes with Esc and Back, and "Your plan" lands on billing;
+- a direct `/settings#billing` load shows the page;
+- Add a customer focuses Name and closes on Esc;
+- no sideways scroll.
+
+**Weak, said honestly:**
+- Today and Customers are still the busy screens behind every window. They are steps 2 and 3, and they get the same
+  Wispr treatment: Today one customer at a time, Customers as plain two-line rows.
+- The side list's icons are generic (lucide), like everyone's.
+- "Search" is one more row than Wispr has.
+

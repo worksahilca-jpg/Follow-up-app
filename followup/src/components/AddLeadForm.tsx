@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 import AppWindow from "@/components/app/AppWindow";
 
-const inputClass = "w-full rounded-[11px] border border-line bg-card px-3.5 py-2.5 text-[15px]";
-const labelClass = "mb-1.5 block text-[13.5px] text-ink-soft";
+const inputClass = "w-full rounded-[10px] border border-line bg-card px-3 py-2.5 text-[15px] lg:py-2";
+const labelClass = "mb-1 block text-[13px] text-ink-soft";
 
 export default function AddLeadForm({ onClose }: { onClose: () => void }) {
   const router = useRouter();
@@ -56,17 +56,18 @@ export default function AddLeadForm({ onClose }: { onClose: () => void }) {
 
   return (
     <AppWindow label="Add a customer" onClose={onClose} size="small">
-      <div className="px-1 pb-1 lg:px-8 lg:pb-7 lg:pt-7">
-        <h2 className="title-serif text-[28px] leading-tight">Add a customer</h2>
-        <p className="mt-1 text-[14.5px] text-ink-faint">Someone who called or walked in. FollowUp takes it from here.</p>
+      {/* A small window, the way Wispr's are: a plain title, one line, the few fields that matter. */}
+      <div className="px-1 pb-1 lg:px-6 lg:pb-6 lg:pt-6">
+        <h2 className="text-[19px] font-semibold leading-tight tracking-[-0.01em] lg:text-[17px]">Add a customer</h2>
+        <p className="mt-1 text-[14px] text-ink-faint">Someone who called or walked in. FollowUp takes it from here.</p>
 
-        <form onSubmit={handleSubmit} className="mt-5 grid gap-3.5">
+        <form onSubmit={handleSubmit} className="mt-5 grid gap-3">
           <div>
             <label htmlFor="add-name" className={labelClass}>Name</label>
             <input id="add-name" value={name} onChange={(e) => setName(e.target.value)} className={inputClass} placeholder="Their name" autoFocus />
           </div>
 
-          <div className="grid gap-3.5 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label htmlFor="add-email" className={labelClass}>Email</label>
               <input id="add-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} placeholder="name@example.com" />
@@ -79,20 +80,20 @@ export default function AddLeadForm({ onClose }: { onClose: () => void }) {
 
           <div>
             <label htmlFor="add-notes" className={labelClass}>Notes</label>
-            <textarea id="add-notes" value={notes} onChange={(e) => setNotes(e.target.value)} className={inputClass} rows={3} placeholder="What they asked about" />
+            <textarea id="add-notes" value={notes} onChange={(e) => setNotes(e.target.value)} className={inputClass} rows={2} placeholder="What they asked about" />
           </div>
 
           <button
             type="button"
             onClick={() => setMore((v) => !v)}
             aria-expanded={more}
-            className="flex items-center gap-1.5 justify-self-start text-left text-[14px] text-ink-soft hover:text-ink"
+            className="flex items-center gap-1.5 justify-self-start text-left text-[13.5px] text-ink-soft hover:text-ink"
           >
-            More details: company, deal value, where they came from
+            More details
             <ChevronDown className={"h-3.5 w-3.5 transition-transform " + (more ? "rotate-180" : "")} strokeWidth={2} />
           </button>
           {more && (
-            <div className="grid gap-3.5 sm:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-2">
               <div>
                 <label htmlFor="add-company" className={labelClass}>Company</label>
                 <input id="add-company" value={company} onChange={(e) => setCompany(e.target.value)} className={inputClass} placeholder="Optional" />
@@ -114,14 +115,14 @@ export default function AddLeadForm({ onClose }: { onClose: () => void }) {
             </p>
           )}
 
-          <div className="mt-1 flex items-center justify-end gap-5">
-            <button type="button" onClick={onClose} className="text-[14.5px] text-ink-soft hover:text-ink">
+          <div className="mt-2 flex items-center justify-end gap-4">
+            <button type="button" onClick={onClose} className="px-1 text-[14px] text-ink-soft hover:text-ink">
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="rounded-[11px] px-5 py-2.5 text-[15px] font-semibold disabled:opacity-60"
+              className="rounded-[10px] px-4 py-2.5 text-[14.5px] font-semibold disabled:opacity-60 lg:py-2"
               style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
             >
               {saving ? "Saving…" : "Add customer"}

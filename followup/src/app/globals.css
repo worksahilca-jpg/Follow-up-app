@@ -284,8 +284,10 @@ details.open-in-place[open]::details-content {
 
 /* A quiet default hover cue for the many flat buttons/links in the app
    that never had one — subtle enough to just add on top of anything that
-   already defines its own hover: class without looking doubled. */
-button:not(:disabled):hover, a:hover, [tabindex]:hover {
+   already defines its own hover: class without looking doubled. Not on
+   tabindex="-1": that's a container that only takes focus (a window), and
+   dimming it would dim the whole window under the pointer. */
+button:not(:disabled):hover, a:hover, [tabindex]:not([tabindex="-1"]):hover {
   filter: brightness(0.96);
 }
 
@@ -460,11 +462,15 @@ input::placeholder, textarea::placeholder {
   font-weight: 400;
   letter-spacing: -0.015em;
 }
+/* Desk: the sheet starts a hair below the top and runs off the right and
+   bottom edges, with one rounded corner by the sidebar (Wispr's frame;
+   founder 2026-10-10: "simplify, copy Wispr if you want"). */
 @media (min-width: 64rem) {
   .app-sheet {
-    min-height: calc(100vh - 20px);
-    border: 1px solid var(--line);
-    border-radius: 18px;
+    min-height: calc(100vh - 8px);
+    border-top: 1px solid var(--line);
+    border-left: 1px solid var(--line);
+    border-radius: 16px 0 0 0;
     background: var(--paper);
   }
 }
@@ -538,24 +544,32 @@ input::placeholder, textarea::placeholder {
     right: auto;
     top: 50%;
     bottom: auto;
-    width: min(980px, calc(100vw - 48px));
-    border-radius: 18px;
+    width: min(860px, calc(100vw - 48px));
+    border-radius: 16px;
+    overflow: hidden;
     transform: translate(-50%, -50%);
     animation: app-win-in 0.18s cubic-bezier(0.22, 1, 0.36, 1);
   }
   .app-win--large {
-    height: min(720px, calc(100vh - 64px));
+    height: min(600px, calc(100vh - 96px));
   }
   .app-win--small {
-    width: min(540px, calc(100vw - 48px));
-    max-height: min(760px, calc(100vh - 48px));
+    width: min(460px, calc(100vw - 48px));
+    max-height: min(720px, calc(100vh - 64px));
   }
   .app-win__grab {
     display: none;
   }
   .app-win__x {
-    right: 14px;
-    top: 14px;
+    right: 12px;
+    top: 12px;
+    width: 32px;
+    height: 32px;
+    box-shadow: none;
+    background: transparent;
+  }
+  .app-win__x:hover {
+    background: var(--card-2);
   }
   .app-win__body {
     padding: 0;

@@ -34,7 +34,7 @@ import SignInsSection from "@/components/SignInsSection";
 import YourRulesCard from "@/components/YourRulesCard";
 import RuleCard, { RuleNumber, type RuleRecordCounts } from "@/components/RuleCard";
 import { TIER_INFO, VOICE_ADDON_INFO, VOICE_ADDON_AVAILABLE, CARRIER_CHANNELS_AVAILABLE, FREE_TIER_LEAD_CAP } from "@/lib/pricing";
-import { Mail, Calendar, Check, RefreshCw, CreditCard, Search } from "lucide-react";
+import { Mail, Calendar, Check, RefreshCw, CreditCard, Search, Repeat, Inbox, PenLine, Store, UserRound, type LucideIcon } from "lucide-react";
 import { safeBannerText } from "@/lib/bannerText";
 
 /** Section headings on a setting's page read like the list's group labels
@@ -87,6 +87,15 @@ function pageFor(id: string): string | null {
   for (const [page, def] of Object.entries(PAGES)) if (def.sections.includes(id)) return page;
   return null;
 }
+
+/** Each group's icon in the side list, beside its word (Wispr's Settings window). */
+const GROUP_ICON: Record<SettingsGroup, LucideIcon> = {
+  "Follow-up plan": Repeat,
+  "Where customers write": Inbox,
+  "How it writes": PenLine,
+  "Your business": Store,
+  Account: UserRound,
+};
 
 /** One grey line under each group's title in the side list's pane (A-213). */
 const GROUP_WHY: Record<SettingsGroup, string> = {
@@ -821,17 +830,18 @@ function SettingsPageInner() {
   return (
     // Desk: a side list of the groups beside the open one (A-212, A-213,
     // like Wispr's Settings window). Phone: the one list, as before.
-    <div className={"lg:grid lg:grid-cols-[212px_minmax(0,1fr)] " + (inWindow ? "lg:min-h-full" : "lg:gap-10")}>
+    <div className={"lg:grid lg:grid-cols-[236px_minmax(0,1fr)] " + (inWindow ? "lg:min-h-full" : "lg:gap-10")}>
       <nav
         aria-label="Settings sections"
         className={
-          "hidden lg:flex lg:flex-col lg:gap-0.5 text-[14.5px] " +
-          (inWindow ? "lg:bg-card-2 lg:px-3 lg:py-5" : "lg:sticky lg:top-6 lg:self-start lg:rounded-[14px] lg:bg-card-2 lg:p-3")
+          "hidden lg:flex lg:flex-col lg:gap-0.5 text-[14px] " +
+          (inWindow ? "lg:bg-card-2 lg:px-3 lg:pb-4 lg:pt-5" : "lg:sticky lg:top-6 lg:self-start lg:rounded-[14px] lg:bg-card-2 lg:p-3")
         }
       >
         <p className="px-2.5 pb-2 font-mono text-[11px] uppercase tracking-[0.09em] text-ink-faint">Settings</p>
         {SETTINGS_GROUPS.map((g) => {
           const on = g === navGroup && openPage !== "feedback";
+          const Icon = GROUP_ICON[g];
           return (
             <button
               key={g}
@@ -841,18 +851,23 @@ function SettingsPageInner() {
                 setGroup(g);
                 if (openPage) openMore(null);
               }}
-              className="rounded-[9px] px-2.5 py-2 text-left hover:bg-paper"
-              style={on ? { background: "var(--paper)", color: "var(--ink)", fontWeight: 600, boxShadow: "0 0 0 1px var(--line)" } : { color: "var(--ink-soft)" }}
+              className="flex min-h-8 items-center gap-2.5 whitespace-nowrap rounded-lg px-2.5 py-1 text-left hover:bg-[var(--nav-on)]"
+              style={on ? { background: "var(--nav-on)", color: "var(--ink)", fontWeight: 500 } : { color: "var(--ink-soft)" }}
             >
+              <Icon className="h-4 w-4 shrink-0" strokeWidth={1.8} />
               {g}
             </button>
           );
         })}
-        <button type="button" onClick={() => openMore("feedback")} className="mt-6 px-2.5 py-2 text-left text-[13px] text-ink-faint hover:text-ink">
+        <button
+          type="button"
+          onClick={() => openMore("feedback")}
+          className={"px-2.5 py-2 text-left text-[13px] text-ink-faint hover:text-ink " + (inWindow ? "lg:mt-auto" : "mt-6")}
+        >
           Something broke? Tell us
         </button>
       </nav>
-      <div className={"min-w-0 " + (inWindow ? "lg:px-10 lg:pb-10 lg:pt-8" : "")}>
+      <div className={"min-w-0 " + (inWindow ? "lg:px-9 lg:pb-9 lg:pt-7" : "")}>
       {!page ? (
         // The list (A-080): one column, the plan on top, five groups of
         // rows, each opening its own page. On the desk, only the group
@@ -860,10 +875,10 @@ function SettingsPageInner() {
         <div>
           <h1 className="title-serif text-[32px] leading-[1.1] lg:hidden">Settings</h1>
           <div className="hidden lg:block">
-            <h1 className="title-serif text-[32px] leading-[1.12]">{navGroup}</h1>
-            <p className="mt-1.5 text-[14.5px] text-ink-faint">{GROUP_WHY[navGroup]}</p>
+            <h1 className="title-serif text-[28px] leading-[1.12]">{navGroup}</h1>
+            <p className="mt-1 text-[14px] text-ink-faint">{GROUP_WHY[navGroup]}</p>
           </div>
-          <div className="mt-6">
+          <div className="mt-6 lg:mt-5">
             <SettingsList
               gmail={{ connected: gmailConnected, email: gmailEmail }}
               outlook={{ connected: outlookConnected, email: outlookEmail }}
@@ -883,7 +898,7 @@ function SettingsPageInner() {
             <span className="lg:hidden">← Settings</span>
             <span className="hidden lg:inline">← {openPage === "feedback" ? "Settings" : navGroup}</span>
           </button>
-          <h1 className="title-serif mt-2 text-[30px] leading-[1.12] lg:text-[32px]">{page.title}</h1>
+          <h1 className="title-serif mt-2 text-[30px] leading-[1.12] lg:text-[28px]">{page.title}</h1>
           {page.lede && <p className="mt-2 text-[15px] leading-relaxed text-ink-soft">{page.lede}</p>}
         </div>
       )}

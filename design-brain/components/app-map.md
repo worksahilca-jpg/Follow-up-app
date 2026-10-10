@@ -10,6 +10,7 @@ for the founder, not something to squeeze in.
 - A-211: our look, Wispr's calm.
 - A-212: side panel, two-line rows, tidy sidebar, Settings sections.
 - A-213: Settings and single tasks open as windows.
+- A-214: the layout may follow Wispr's app closely; never its logo, words or assets.
 - Research: `research/ux-patterns/2026-10-09-app-strategy-simple-familiar.md`.
 
 ---
@@ -26,7 +27,8 @@ for the founder, not something to squeeze in.
 | **Small windows** | One task each (add a customer, mark won, invite a teammate…) | Centred window | Sheet from the bottom |
 | **Alerts** | Phone notifications; the bell holds the recent ones | Bell (no word) | Bell + "Alerts" |
 | **Setup card** | Temporary. "Finish setting up", until it's done | Sidebar | Top of Settings |
-| **Your business menu** | Email, plan, team, "Something broke?", Sign out | Under the business name | In the Settings sheet |
+| **Your business menu** | Email, plan, team, Sign out | The business name at the foot of the sidebar (opens upward) | In the Settings sheet |
+| **Search** | Find a customer by name, email or phone | A "Search" row, opening a small window (Ctrl+K or ⌘K) | The search box on Customers |
 
 **Hard limits:**
 - **Three places + Settings.** A fourth place needs one removed (the phone's tab bar holds 4 comfortably, 5 at most).

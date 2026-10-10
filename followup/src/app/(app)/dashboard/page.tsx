@@ -32,6 +32,7 @@ import FirstValueNote from "@/components/FirstValueNote";
 import { FIRST_VALUE_SEND, firstValueNote } from "@/lib/firstValue";
 import HabitQuestion from "@/components/HabitQuestion";
 import DailyQuestion from "@/components/DailyQuestion";
+import { AlertsCard } from "@/components/app/AlertsSetup";
 import { todaysQuestion } from "@/lib/dailyQuestionData";
 import { planLine } from "@/lib/comingUp";
 import { findHabitSuggestion } from "@/lib/habits";
@@ -66,7 +67,9 @@ export const dynamic = "force-dynamic";
  * shouting for attention on the one screen that should read as a queue
  * of decisions, not a wall of numbers.
  */
-export default async function DashboardPage() {
+export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ alerts?: string | string[] }> }) {
+  // The link a computer hands to the phone (src/lib/alertsSetup.ts) opens the alerts card.
+  const alertsOpen = (await searchParams).alerts === "on";
   // Speed (check-up #21, A-089): Today used to make eighteen database trips one after another,
   // each waiting for the last. The independent ones now go together in two rounds: everything
   // that needs only the session, then everything that needs the business's time zone.
@@ -299,6 +302,9 @@ export default async function DashboardPage() {
         <CantSendNotice reconnectEmail={"needsReconnect" in gmail && gmail.needsReconnect ? (gmail.email ?? "your inbox") : null} />
       )}
       {firstValue && <FirstValueNote title={firstValue.title} body={firstValue.body} />}
+      {/* A buzz on the owner's phone when a customer needs them (A-216): shown
+          until this device has alerts on, or "Not now". */}
+      <AlertsCard open={alertsOpen} />
       {/* One decision per screen (A-080): the queue is the page. The
           Coming up card went; automated check-ins live on their own page,
           and a booked call is the one line below. */}

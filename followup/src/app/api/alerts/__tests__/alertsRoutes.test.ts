@@ -19,13 +19,20 @@ const h = vi.hoisted(() => ({
   subDeleteMany: vi.fn(async () => ({ count: 1 })),
   userFindUnique: vi.fn(),
   userUpdate: vi.fn(async () => ({})),
+  subAggregate: vi.fn(),
 }));
 
 vi.mock("@/lib/session", () => ({ getSessionContext: h.getSessionContext }));
 vi.mock("@/lib/rateLimit", () => ({ tooManyRecentActions: h.tooManyRecentActions }));
 vi.mock("@/lib/db", () => ({
   prisma: {
-    pushSubscription: { findUnique: h.subFindUnique, create: h.subCreate, update: h.subUpdate, deleteMany: h.subDeleteMany },
+    pushSubscription: {
+      findUnique: h.subFindUnique,
+      create: h.subCreate,
+      update: h.subUpdate,
+      deleteMany: h.subDeleteMany,
+      aggregate: h.subAggregate,
+    },
     user: { findUnique: h.userFindUnique, update: h.userUpdate },
   },
 }));
@@ -46,6 +53,7 @@ beforeEach(() => {
   h.tooManyRecentActions.mockResolvedValue(false);
   h.subFindUnique.mockResolvedValue(null);
   h.userFindUnique.mockResolvedValue({ alertEmailEnabled: true });
+  h.subAggregate.mockResolvedValue({ _count: { _all: 0 }, _max: { lastUsedAt: null } });
   vi.stubEnv("VAPID_PUBLIC_KEY", "BPublic");
   vi.stubEnv("VAPID_PRIVATE_KEY", "private");
   vi.stubEnv("VAPID_SUBJECT", "mailto:contact@followupbase.io");
@@ -75,9 +83,17 @@ describe("GET /api/alerts", () => {
     expect(data).toEqual({
       success: true,
       email: { available: true, enabled: true },
-      push: { available: true, publicKey: "BPublic" },
+      push: { available: true, publicKey: "BPublic", devices: 0, lastDeliveredAt: null },
     });
     expect(JSON.stringify(data)).not.toContain("private");
+  });
+
+  it("counts only the signed-in person's own devices, and when one last took an alert", async () => {
+    h.subAggregate.mockResolvedValue({ _count: { _all: 2 }, _max: { lastUsedAt: new Date("2026-10-10T15:00:00Z") } });
+    const data = await (await GET()).json();
+    expect(h.subAggregate).toHaveBeenCalledWith(expect.objectContaining({ where: { userId: "user1" } }));
+    expect(data.push.devices).toBe(2);
+    expect(data.push.lastDeliveredAt).toBe("2026-10-10T15:00:00.000Z");
   });
 
   it("reports a channel without keys as unavailable", async () => {
@@ -85,7 +101,7 @@ describe("GET /api/alerts", () => {
     vi.stubEnv("VAPID_SUBJECT", "");
     const data = await (await GET()).json();
     expect(data.email.available).toBe(false);
-    expect(data.push).toEqual({ available: false, publicKey: null });
+    expect(data.push).toEqual({ available: false, publicKey: null, devices: 0, lastDeliveredAt: null });
   });
 });
 

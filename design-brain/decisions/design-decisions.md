@@ -11225,3 +11225,164 @@ the Search window opened from the sticky sidebar was painted under the page.
 - The side list's icons are generic (lucide), like everyone's.
 - "Search" is one more row than Wispr has.
 
+## 2026-10-10 — Step 2 built: Today, one customer at a time
+
+**Founder:** *"merge and start today"* (after step 1 merged as PR #470).
+
+**Built**, as drawn in board version 4 (A-209, A-212), in the simpler look of A-214:
+- **The headline** is the homepage's display face with its green italic phrase: "15 customers *need you.*", the same
+  on the phone and the desk.
+- **One customer at a time**, on the desk as on the phone:
+  - their name, channel and wait;
+  - their words in a white card;
+  - FollowUp's reply in **soft green** (`--wash #f3f8f4`, edge `#dcebe1`, label `--reply-ink #2a5a47`; dark mode
+    redrawn);
+  - Send, Edit, and the three quiet words.
+  - The peach-and-blue wash is gone from every reply card in the app (Today, the customer page, site replies,
+    onboarding).
+- **One line under it:** "Next: Owen Shah · 17 days · See all 15". Next opens them; "See all" opens Customers on its
+  Needs you tab (`/leads?show=needs`).
+- **"About Ivy" beside them (desk only), on soft grey:** Came from (the same words as her page), First wrote, Writes in
+  (only when it isn't English), and "Open Ivy's page".
+- **Later:** the person stays on screen with "set aside until…" and Undo until the owner moves on with Next.
+- **Routine drafts** stay as one quiet row with their one-press send. "3 of 15 handled" shows only once something is
+  handled.
+
+**Left out on purpose** (say each fact once):
+- the drawing's "What FollowUp did" (the reply's label already says it);
+- "Parking: not known yet" (the line under the reply already says it).
+
+**Superseded:** A-095 (swipe a phone row for Later). There are no rows on Today any more; Later is a word on the card.
+
+**Checked in a real browser** (1440 desk, 1024, 390 phone, dark):
+- Next moves from Ivy to Owen;
+- Later then Undo works;
+- See all lands on Needs you;
+- no sideways scroll;
+- no errors.
+- Full tests: 3,515 pass.
+
+**Weak, said honestly:**
+- The draft itself has empty lines around the answer blank, which looks like a gap. That is the draft's text, not the
+  layout; it is worth trimming in the writer later.
+- The header says "Email" and Came from may say "Website form" (her first message came by email, but she was recorded
+  from the website form). Both are true, and it reads oddly.
+- Swiping is gone on the phone.
+
+## 2026-10-10 — Paused: study the whole app before designing more
+
+**Founder**, on the step 2 Today screenshots: *"what is this"*, then, after it was explained: *"no, I guess we need to
+strategise and study our whole app first, bro, then only we can design the software user friendly."*
+
+**Recorded:**
+- Step 2 (Today, one at a time, PR #471) is **not approved**. It stays unmerged and paused.
+- *Inferred, marked inferred:* designing screen by screen, before one picture of the whole app exists, isn't working
+  for him. A screen should only be designed once its place in the whole app is agreed.
+
+**Next:** a whole-app study before any more screens. The plan, put to him first:
+1. A walk through every screen of the real app;
+2. the owner's real jobs;
+3. matching the two;
+4. how familiar apps handle the same jobs;
+5. one strategy page for his yes;
+6. only then design.
+
+
+## 2026-10-10 — Whole-app study, part 5: the plan put to the founder
+
+**Founder:** *"start part 5"*.
+
+**Done:** one page with 16 decisions for the whole app, each with Yes / No / Not sure and a note
+(`research/ux-patterns/2026-10-10-whole-app-study-part-5.md`). The plan in one sentence: FollowUp does the work and
+comes to you when it needs a decision; the app is where you check, not where you work.
+
+**Status:** proposed, nothing approved. Each answer gets recorded here and in `approved.md` / `rejected.md` when he
+gives it. Part 6 (design) starts only after that, at step 1 of the build order.
+
+## 2026-10-10 — The whole-app plan approved (A-215)
+
+**Founder**, on the part 5 page: *"WHAT ??"*. The plan was retold in chat as three lines:
+1. Your phone buzzes when a customer needs you.
+2. FollowUp sends the easy replies itself.
+3. The app gets simpler.
+
+He answered *"YES AND WHAT IS THREE"*. Three was explained as:
+- one customer card;
+- Settings with four things up front;
+- doubles removed.
+
+**Recorded:** A-215 says what exactly was approved and what still needs his word (the text-message cost, the offer to
+existing accounts, the remove list, analytics). How to put decisions to him is now in `workflows/design-workflow.md`.
+
+**Next:** part 6, step 1. Draw the phone buzz:
+- setup asks how to reach you;
+- it sends a test;
+- the alert opens the one reply.
+
+## 2026-10-10 — Step 1 drawn: the phone buzz (A-215 #1)
+
+**Founder:** *"yes start"*.
+
+**Drawn on the real app** (local build of main, injected with Playwright; page:
+https://claude.ai/artifact/GDt8BqNmchi8hW7GdPv4EH):
+1. **Setup gets a 4th step, "Get a buzz when someone needs you".** It comes after the customers list, so FollowUp has
+   already shown it is useful (R-027).
+   - Shows an example alert, in the light notification look (A-199).
+   - Three facts, all true of `src/lib/ownerAlerts.ts` today:
+     - one alert per customer;
+     - quiet from 10 pm to 7 am;
+     - an email too.
+   - Buttons: "Turn on alerts", and "Not now".
+2. **iPhone in Safari:** three taps to add FollowUp to the Home Screen (Apple only lets Home Screen web apps send
+   alerts), then "Turn on alerts" from there.
+3. **A real test alert:** "Did your phone buzz?", with "Yes, it buzzed" and "No buzz? Send another test".
+4. **On a computer:** a code to scan with the phone, "Waiting for your phone…", or "Email me the link instead".
+5. **Owners who signed up before:** one card on Today (outlined button, so Send stays the only black one), with
+   "Not now".
+6. **The alert on the lock screen** ("Ivy is waiting" plus her words) opens her page with the reply ready. This is
+   built already.
+
+**Found while drawing:** the manifest's `start_url` is `/`, the static home page. So FollowUp added to an iPhone
+Home Screen opens the website, not the app. The fix (start at `/dashboard`) goes with this step.
+
+**Weak spots, said plainly:**
+- On her page, Send sits below the fold on a phone, so the tap from the alert still needs a scroll. The full fix is
+  step 3's one customer card. A small fix now would scroll to the reply when the page is opened from an alert.
+- The code on the computer screen needs a QR library. That is a new dependency, so ask first. "Email me the link"
+  needs nothing new.
+- The iPhone wording ("Share, or under ⋯ first") must be checked on a real iPhone before shipping.
+- A Home Screen app may ask the owner to sign in again; step 3 of the iPhone screen says so.
+- Setup becomes four steps.
+
+**Status:** drawn, waiting for his yes.
+
+## 2026-10-10 — Step 1 built: the phone buzz (A-216)
+
+**Built as drawn.** Checked in a real browser on the local build (Android phone, iPhone in Safari, a computer, an
+existing owner on a phone and on a computer). There were no page errors and no sideways scroll at 390px.
+- **Setup:** "Step 4 of 4". The last step turns alerts on, sends a test, then shows "Did your phone buzz?".
+  - Setup is marked finished before this step, so a Home Screen app opened halfway lands on Today.
+  - Step 3's button now says "Continue", not "Go to Today".
+- **Real test, real failure:** the test browser has no push service, so the real test failed. The screen said, plainly,
+  "Alerts are on, but the test didn't go out. Send another."
+- **Blocked alerts:** say how to allow them, and that email goes out until then.
+- **iPhone in Safari:** the three steps, then "Just email me for now".
+- **Computer:**
+  - the code, read back with a QR reader: it opens `/dashboard?alerts=on`;
+  - "Waiting for your phone", which moved on by itself within 4 seconds of a phone being added;
+  - "Email me the link instead" failed politely when email wasn't available.
+- **Today card:**
+  - It shows until the device has alerts on.
+  - "Not now" hides it on that device for 14 days, including after a reload.
+  - The hand-over link shows it again.
+  - On a computer it opens the code inside the card.
+  - It goes away once a phone is on.
+- **Home Screen start page** is `/dashboard` (it was the website).
+- **Settings › Alerts** runs on the same shared device code.
+
+**Weak spots, said plainly:**
+- **No real phone has buzzed yet.** The test browser can't receive push, so the subscription was faked. The real test
+  is on the founder's phone after merge.
+- **A brand-new owner sees two asks on Today:** the alerts card and "One quick question".
+- The iPhone wording still needs a real iPhone.
+- Send is still below the fold on a customer's page; that's step 3.

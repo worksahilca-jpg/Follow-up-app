@@ -15,7 +15,10 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "FollowUp",
     short_name: "FollowUp",
     description: "The AI teammate that catches the lead that went quiet.",
-    start_url: "/",
+    // The app, not the home page: "/" is the public website (src/app/route.ts),
+    // so FollowUp added to an iPhone Home Screen used to open the website.
+    // Signed out, it goes through sign-in and lands here too (A-216).
+    start_url: "/dashboard",
     display: "standalone",
     background_color: "#ffffff",
     theme_color: "#1e1e20",

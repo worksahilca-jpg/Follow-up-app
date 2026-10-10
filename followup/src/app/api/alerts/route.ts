@@ -23,10 +23,25 @@ export async function GET() {
   const user = await prisma.user.findUnique({ where: { id: ctx.userId }, select: { alertEmailEnabled: true } });
   if (!user) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
 
+  // How many devices this person has alerts on, and when one last took an
+  // alert. Setup on a computer watches these to see the phone finish
+  // ("Waiting for your phone…"): turning alerts on there sends a test, so
+  // either a new device or a fresh delivery means it worked.
+  const devices = await prisma.pushSubscription.aggregate({
+    where: { userId: ctx.userId },
+    _count: { _all: true },
+    _max: { lastUsedAt: true },
+  });
+
   return NextResponse.json({
     success: true,
     email: { available: isAlertEmailConfigured(), enabled: user.alertEmailEnabled },
-    push: { available: isPushConfigured(), publicKey: vapidPublicKey() },
+    push: {
+      available: isPushConfigured(),
+      publicKey: vapidPublicKey(),
+      devices: devices._count._all,
+      lastDeliveredAt: devices._max.lastUsedAt?.toISOString() ?? null,
+    },
   });
 }
 

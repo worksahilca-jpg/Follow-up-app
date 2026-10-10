@@ -595,6 +595,21 @@ The five answers above settle the direction:
 - **Existing accounts are not changed.** Every account that exists today keeps holding until its owner chooses
   Automatic in Settings.
 
+## FollowUp comes to the owner (founder, 2026-10-10)
+
+Approved on the whole-app plan (design-brain A-215), in three lines:
+1. **The owner's phone buzzes when a customer needs them.** They tap it, check the reply and send it. Setup makes sure
+   this works.
+2. **FollowUp sends the easy replies on its own.** Price, dates and tricky replies wait for the owner. This confirms
+   "Day one: Automatic or Assisted" above, with Automatic as the recommended choice.
+3. **The app gets simpler:** one customer card everywhere, a small Settings, no doubles.
+
+**Why:** in production (last 30 days), 306 replies waited for an OK and owners sent 13 of them. Only one phone ever
+turned alerts on. The replies were written, but nobody came to send them.
+
+Status: NOT BUILT. Each step is drawn and shown to the founder first. Still needs his word: a text message to the
+owner's phone (cost), and offering Automatic to existing accounts.
+
 ## The goal, restated: close more deals; the owner keeps the end (founder, 2026-10-09)
 
 > "Our goal is to make this product so good that it does not just act like a chat box or something that automatically

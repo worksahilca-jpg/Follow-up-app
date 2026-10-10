@@ -96,7 +96,12 @@ export type PushResult = { delivered: number; removed: number; failed: number };
  * endpoint as abuse. Anything else is logged and the row kept: a 5xx or a
  * timeout says nothing about whether the device still wants these.
  */
-export async function sendPushToUser(userId: string, payload: PushPayload): Promise<PushResult> {
+export async function sendPushToUser(
+  userId: string,
+  payload: PushPayload,
+  /** Only this one device of theirs, e.g. the phone that just turned alerts on and asked for a test. */
+  opts: { endpoint?: string } = {}
+): Promise<PushResult> {
   const vapid = vapidDetails();
   if (!vapid) {
     if (!loggedMissingKeys) {
@@ -107,7 +112,7 @@ export async function sendPushToUser(userId: string, payload: PushPayload): Prom
   }
 
   const subscriptions = await prisma.pushSubscription.findMany({
-    where: { userId },
+    where: { userId, ...(opts.endpoint ? { endpoint: opts.endpoint } : {}) },
     select: { id: true, endpoint: true, p256dh: true, auth: true },
   });
 

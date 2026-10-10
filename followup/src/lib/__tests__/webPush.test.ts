@@ -93,6 +93,15 @@ describe("delivery", () => {
     expect(h.touched).toEqual(["s1", "s2"]);
   });
 
+  it("asks for only the person's own devices, and only the one named for a test", async () => {
+    await sendPushToUser("u1", payload);
+    expect(prisma.pushSubscription.findMany).toHaveBeenLastCalledWith(expect.objectContaining({ where: { userId: "u1" } }));
+    await sendPushToUser("u1", payload, { endpoint: "https://fcm.googleapis.com/fcm/send/one" });
+    expect(prisma.pushSubscription.findMany).toHaveBeenLastCalledWith(
+      expect.objectContaining({ where: { userId: "u1", endpoint: "https://fcm.googleapis.com/fcm/send/one" } })
+    );
+  });
+
   it.each([404, 410])("forgets a device the push service reports as gone (%i)", async (status) => {
     h.subs.push(sub("gone"), sub("alive"));
     h.sendNotification.mockRejectedValueOnce(new h.WebPushError(status));

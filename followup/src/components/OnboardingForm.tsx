@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, Check, Loader2 } from "lucide-react";
 import LogoMark from "@/components/LogoMark";
@@ -10,6 +10,7 @@ import { INDUSTRIES, INDUSTRY_SHORT } from "@/lib/industries";
 import { useUndoableSend } from "@/components/useUndoableSend";
 import UndoLine from "@/components/UndoLine";
 import { safeBannerText } from "@/lib/bannerText";
+import { AlertsSetupStep } from "@/components/app/AlertsSetup";
 
 /** The one full-width black button at the foot of each setup step. */
 const PRIMARY =
@@ -19,9 +20,11 @@ const H1 = "text-[30px] leading-[1.1] tracking-[-0.025em]";
 const LEDE = "mt-2.5 text-[15.5px] leading-relaxed text-ink-soft";
 
 /**
- * Three steps (A-081, Gmail first, founder 2026-10-04): connect Gmail, choose
+ * Four steps (A-081, Gmail first, founder 2026-10-04): connect Gmail, choose
  * how FollowUp should work while it reads the inbox, then the customers who
- * were already waiting.
+ * were already waiting, then (A-216, 2026-10-10) a buzz on the owner's phone
+ * when a customer needs them, with a real test. Setup is marked finished
+ * before that last step; leaving it, whatever was chosen, opens Today.
  *
  * ## What this replaces, and why
  *
@@ -65,7 +68,7 @@ export default function OnboardingForm(props: OnboardingFormProps) {
   );
 }
 
-type Step = 1 | 2 | 3;
+type Step = 1 | 2 | 3 | 4;
 
 function OnboardingFormInner({ sources }: OnboardingFormProps) {
   const router = useRouter();
@@ -125,10 +128,12 @@ function OnboardingFormInner({ sources }: OnboardingFormProps) {
       });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.message ?? "Couldn't finish — try again.");
-      // Straight to Today: no questions before FollowUp has shown it is
-      // useful (R-027). They come one a day on Today (A-101).
-      router.push("/dashboard");
-      router.refresh();
+      // Setup is finished here, before the alerts step, so an iPhone
+      // opened from the Home Screen in the middle of that step lands on
+      // Today rather than back in setup. Then the alerts step (A-216);
+      // still no questions before FollowUp has shown it is useful (R-027).
+      setStep(4);
+      setFinishing(false);
     } catch {
       // Rare (a DB hiccup) — let them press again rather than stranding
       // them on a dead click.
@@ -136,9 +141,15 @@ function OnboardingFormInner({ sources }: OnboardingFormProps) {
     }
   }
 
+  // Leaving setup for Today, from the alerts step: whatever was chosen there.
+  const openToday = useCallback(() => {
+    router.push("/dashboard");
+    router.refresh();
+  }, [router]);
+
   return (
     // As the Gmail-first board draws setup (prototypes/2026-10-04-gmail-first.html,
-    // #setup): the mark on the left, "Step N of 3" on the right, three bars,
+    // #setup): the mark on the left, "Step N of 4" on the right, four bars,
     // a left-aligned title and one black button at the foot.
     <div className="min-h-[100dvh] bg-paper">
       <div className="mx-auto flex min-h-[100dvh] w-full max-w-[480px] flex-col px-5">
@@ -157,10 +168,10 @@ function OnboardingFormInner({ sources }: OnboardingFormProps) {
               </span>
             )}
             {/* On a phone the bars say the step once the head start is shown; the words would wrap. */}
-            <span className={"whitespace-nowrap text-[12.5px] text-ink-faint" + (step >= 2 && inboxConnected ? " hidden sm:inline" : "")}>Step {step} of 3</span>
+            <span className={"whitespace-nowrap text-[12.5px] text-ink-faint" + (step >= 2 && inboxConnected ? " hidden sm:inline" : "")}>Step {step} of 4</span>
             {/* Ink, not the accent: the screen's one accent moment is its button (A-006). */}
             <span className="flex gap-1" aria-hidden="true">
-              {([1, 2, 3] as const).map((n) => (
+              {([1, 2, 3, 4] as const).map((n) => (
                 <span
                   key={n}
                   className="h-[3px] w-[18px] rounded-full"
@@ -175,6 +186,7 @@ function OnboardingFormInner({ sources }: OnboardingFormProps) {
           {step === 1 && <ConnectGmail outlookAvailable={sources.outlookAvailable} error={inboxError} />}
           {step === 2 && <HowItShouldWork reading={autoSyncState === "syncing"} onChosen={() => setStep(3)} />}
           {step === 3 && <WaitingCustomers syncDone={autoSyncState !== "syncing"} onDone={finishOnboarding} finishing={finishing} />}
+          {step === 4 && <AlertsSetupStep onDone={openToday} />}
         </main>
       </div>
     </div>
@@ -528,7 +540,8 @@ function WaitingCustomers({ syncDone, onDone, finishing }: { syncDone: boolean; 
         </p>
         <div className="mt-auto pb-7 pt-6">
           <button onClick={onDone} disabled={finishing} className={PRIMARY} style={PRIMARY_STYLE}>
-            {finishing ? "Taking you there…" : "Go to Today"}
+            {/* One more step after this one (alerts, A-216), so not "Go to Today". */}
+            {finishing ? "One moment…" : "Continue"}
           </button>
         </div>
       </div>

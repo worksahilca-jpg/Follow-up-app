@@ -1768,6 +1768,12 @@ needs explaining, change the words, not add a "More" (R-026: an expander is stil
 
 ## A-095 — Swipe a Today row left for "Later" (phone) ^A-095
 
+**SUPERSEDED (2026-10-10)** by [[approved#^A-209|A-209]] as built in step 2: Today shows one customer at a time on the
+phone too, so there are no closed rows left to swipe. "Later" stays as a word under the reply.
+
+**Back in force (2026-10-10, later the same day):** step 2 was never approved, and its code came off the branch before
+the phone-buzz step (A-216). The live app still has the swipe. Decide again when Today is redrawn on the shared card.
+
 **Approved 2026-10-05**, founder: *"cool lets go"* to both ideas from the Macro study (swipe for Later, a phone speed
 check). Built on the phone's closed Today rows only.
 - **Swipe left past 96px and let go:** the person is set aside until Later today (2 pm) when that's still ahead,
@@ -3504,3 +3510,57 @@ Our colours, type, words and logo stay (A-208, A-211). The landing page is not c
 - **Add a customer, like Wispr's small windows:** a plain title (not the display face), one line, compact fields, notes
   two lines high, "More details" in two words. On a phone it now fits one screen with the buttons showing.
 
+
+## A-215 — The whole-app plan: FollowUp comes to you; it sends the easy ones; the app gets simpler ^A-215
+
+**Approved:** 2026-10-10, founder, on part 5 of the whole-app study. The 16-line page was too much (*"WHAT ??"*), so
+it was put to him as three lines in chat. He answered *"YES"*, and asked what the third meant. It was explained, and
+he didn't object.
+
+**What was approved, specifically:**
+1. **FollowUp comes to the owner.** The owner's phone buzzes when a customer needs them. They tap it, check the reply
+   and send it. (Part 5, decisions 1–2.)
+2. **FollowUp sends the easy replies on its own.** Price, dates and tricky replies still wait for the owner. (Decision
+   4. This matches PRODUCT_DIRECTION "Day one: Automatic or Assisted" with Automatic recommended. It confirms the
+   recommendation; it doesn't add a new behaviour.)
+3. **The app gets simpler.** The explanation he was given:
+   - one customer card that looks the same everywhere (decision 6);
+   - a small Settings with four things up front and the rest under "More" (decision 11);
+   - doubles removed, e.g. two feedback boxes become one (decision 15).
+
+**Not yet confirmed (ask when the step comes):**
+- a text to the owner's phone, and what it costs (decision 3);
+- the one-time offer to existing accounts (decision 5);
+- each item on the remove list (decision 15);
+- page analytics and their price (decision 16).
+
+Decisions 7–10 and 12–14 sit under "simpler" and "one card". Each gets drawn and shown before it is built.
+
+**Lesson about the founder (also in `workflows/design-workflow.md`):** a page with 16 decisions and buttons didn't work for
+him. Three plain lines in chat did. Put decisions to him as a few short lines, one question at a time.
+
+**First step:** draw #1, the phone buzz: setup asks how to reach you, sends a test, and the alert opens the one reply.
+
+## A-216 — Step 1, the phone buzz, approved to build ^A-216
+
+**Approved:** 2026-10-10, founder, on the drawing (https://claude.ai/artifact/GDt8BqNmchi8hW7GdPv4EH): *"yes build it"*.
+
+**What specifically:**
+- **Setup's new last step.** "Get a buzz when someone needs you", shown after the customers list:
+  - an example alert;
+  - three true facts;
+  - "Turn on alerts" and "Not now".
+- **iPhone in Safari:** the three Home Screen taps.
+- **The test:** "Did your phone buzz?", with "Yes, it buzzed" and "No buzz? Send another test".
+- **On a computer:** hand over to the phone with "Waiting for your phone…", or "Email me the link instead". **The QR
+  code** was approved the same day: asked "code ok or just email", he answered *"OKAY"*, taken as yes to the
+  recommendation. It uses `uqr` 0.1.3 (MIT, no dependencies, pinned exactly; npm audit shows 0 production
+  vulnerabilities).
+- **"Not now" on Today's card** hides it on that device for 14 days, then it comes back once. This was my default,
+  not his call; change it if he says so.
+- **Owners who signed up before:** one card on Today, with "Turn on alerts" and "Not now".
+- **The alert opens the customer with the reply ready.** The Home Screen start page goes to the app, not the
+  website.
+
+**He asked "what is that QR".** He didn't recognise it. *Inferred:* say what a pictured thing is for in the caption,
+in a few words. The code was explained as "the square you point your phone's camera at, like WhatsApp on a computer".

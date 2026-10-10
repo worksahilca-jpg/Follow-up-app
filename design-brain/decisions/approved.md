@@ -3740,3 +3740,19 @@ changes. I'll also add an automatic speed test so the page never gets slow again
 - The frosted top bar stays in both modes (R-109).
 - A test in the normal checks fails any change that brings back the known costly patterns: a filter fade on moving
   things, a blend over the whole page, or a scroll script that doesn't rest off screen.
+
+## A-225 — A tester's Help message reaches the founder at once ^A-225
+
+**Approved:** 2026-10-10, founder. He asked *"what if a tester comes in how we eill be helping them"*. Found: a Help
+message only sat in the database (one had ever been sent) and nobody was told. He was asked: *"When a tester taps
+Help and writes 'it's not working', should your phone buzz right away so you can help them?"* He chose *"Yes, buzz
+me"*.
+
+**What specifically:**
+- On every Help message, each address in `PLATFORM_ADMIN_EMAILS` gets:
+  - an email with who wrote (name and business), their words, and "Reply to: their address";
+  - a buzz on every device that person turned alerts on for: "Help: <business>", then the first line of the message;
+  - a Slack post too, when Slack is set up.
+- It runs after the tester's "Sent", so it can never make their message fail.
+- The Help window now says: *"Sent. We'll reply to you by email, usually the same day."* That is a promise the
+  founder keeps by hand.

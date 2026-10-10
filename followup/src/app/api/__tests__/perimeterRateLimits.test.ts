@@ -37,9 +37,13 @@ vi.mock("@/lib/db", () => ({
   prisma: {
     lead: { findUnique: h.leadFindUnique },
     user: { findUnique: h.userFindUnique },
+    business: { findUnique: vi.fn(async () => ({ name: "Shop" })) },
     productFeedback: { create: h.feedbackCreate },
   },
 }));
+// The founder's email and buzz run after the answer (src/lib/helpAlert.ts); not this file's subject.
+vi.mock("@/lib/helpAlert", () => ({ tellFounderAboutHelp: vi.fn(async () => undefined) }));
+vi.mock("next/server", async (orig) => ({ ...(await orig<typeof import("next/server")>()), after: vi.fn() }));
 vi.mock("@/lib/billing", () => ({
   requireActiveBilling: h.requireActiveBilling,
   billingLockedMessage: async () => "Billing is locked.",
@@ -73,7 +77,7 @@ beforeEach(() => {
   h.requireActiveBilling.mockResolvedValue(true);
   h.leadFindUnique.mockResolvedValue({ businessId: "biz1" });
   h.userFindUnique.mockResolvedValue({ name: "Owner" });
-  h.feedbackCreate.mockResolvedValue({});
+  h.feedbackCreate.mockResolvedValue({ id: "fb1" });
   h.runAutomationForBusiness.mockResolvedValue({ checked: 0, sent: 0 });
   h.runSequencesForBusiness.mockResolvedValue({ ran: 0 });
   h.inviteMember.mockResolvedValue({ success: true });

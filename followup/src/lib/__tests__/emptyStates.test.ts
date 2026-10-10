@@ -36,7 +36,6 @@ const app = (...parts: string[]) => readFileSync(join(__dirname, "..", "..", "ap
 
 const EMPTY_SCREENS: [string, string][] = [
   ["Leads", "(app)/leads/LeadsPageClient.tsx"],
-  ["Pipeline", "(app)/pipeline/PipelinePageClient.tsx"],
   ["Analytics", "(app)/analytics/page.tsx"],
 ];
 
@@ -120,10 +119,10 @@ describe("what an empty screen still has to do", () => {
     expect(source).toMatch(/filtered\.length === 0 && leads\.length > 0/);
   });
 
-  it("Pipeline keeps its separate wording for 'none assigned to you'", () => {
-    // A shared pipeline filtered to one person is empty for a different
-    // reason, and telling them to connect a source would be wrong.
-    const source = app("(app)/pipeline/PipelinePageClient.tsx");
-    expect(source).toContain("No customers assigned to you");
+  it("the old Pipeline and Waiting pages land in Customers (A-219)", () => {
+    // Pipeline folded into Customers as the stage filter on Everyone, and
+    // Waiting as its own group; an old link must not land on an empty page.
+    expect(app("(app)/pipeline/page.tsx")).toContain('redirect("/leads?show=all")');
+    expect(app("(app)/waiting/page.tsx")).toContain('redirect("/leads?show=waiting")');
   });
 });

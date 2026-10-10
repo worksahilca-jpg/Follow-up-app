@@ -32,3 +32,22 @@ describe("customerPlaces", () => {
     expect(new Set(all)).toEqual(new Set(["a", "b", "c", "d", "e"]));
   });
 });
+
+describe("customerGroups (A-220)", () => {
+  it("puts each customer in one group, in order: needs you, booked, ready, quiet, waiting", async () => {
+    const { customerGroups } = await import("@/lib/customerPlaces");
+    const g = customerGroups({
+      needs: ["a"],
+      ready: ["a", "b", "c"],
+      booked: ["c", "d"],
+      quiet: ["b", "d", "e"],
+      waiting: ["e", "f"],
+    });
+    expect(g).toEqual({ needs: ["a"], ready: ["b"], booked: ["c", "d"], quiet: ["e"], waiting: ["f"] });
+  });
+
+  it("keeps the order each list came in", async () => {
+    const { customerGroups } = await import("@/lib/customerPlaces");
+    expect(customerGroups({ needs: ["z", "y"], ready: [], booked: [], quiet: [], waiting: [] }).needs).toEqual(["z", "y"]);
+  });
+});

@@ -11545,4 +11545,45 @@ Today, Customers, One customer, Settings, Results, one screen per PR, each shown
 **Checked:** types, lint, 3,545 tests, a production build, and the running app at 390×844 and 1440×900 (working day,
 Edit, Later, Next, the question and "Not now", all caught up). Nothing scrolls sideways; Send is 44px tall.
 
+**Status:** merged (PR #473), 2026-10-10.
+
+## 2026-10-10 — Build 2/5: Customers, built (A-220, A-219)
+
+**Built as drawn:**
+- "Customers" (22px), the round More and Add buttons, then search ("Search a name, email or phone"; it also finds
+  phone numbers).
+- **Needs you:** the people waiting, their last words, and how long; about eight, then "Show all N".
+- **Ready to book** (the flame): customers FollowUp has qualified (#466, `Lead.qualifiedAt`), with the reason
+  ("Pre-approved to $650k · Moving this month · 2-bed near the lake") and an outlined **Call** button (a phone link,
+  44px target). Shown only when someone is in it.
+- Then one card of rows, each with a count, opening its own list: **Going quiet**, **Waiting on them**, **Booked**,
+  **Everyone**.
+- One group per customer, so every count equals its rows. Who wins: Needs you, then Booked, then Ready to book,
+  then Going quiet, then Waiting.
+
+**The copies removed (A-219), each shown to him in this PR:**
+- The **State column** is gone: the group a row sits in says it.
+- The **Waiting page** became the Waiting on them list, with what happens next on each row; `/waiting` lands there.
+- The **Pipeline page** became the stage filter on Everyone, with the stage's total ("$650,000 in Qualified");
+  `/pipeline` lands there. Dragging a card between stages is gone; a stage still changes on the customer's own page.
+- Left for build 4 (Settings): the second feedback box.
+
+**Calls made while building (for his eyes):**
+- **Going quiet** wasn't in the drawing. It is the first of the four rows, because Today's "Going quiet" row now
+  opens it.
+- **Swipe for Later (A-095)** is not on these rows. A row opens the customer; Later lives on Today's card.
+- **The filters** (Mine, Unclaimed, Hot, Follow-up today, Cold, the stages, saved views, Custom filter) live on
+  Everyone only, behind the Filter button. Every button and chip is 44px tall.
+- **The side panel** says "Ready to book" or "Booked" for those customers, instead of "Up to date".
+
+**Self-review, weak spots said plainly:**
+- The computer gets the phone's layout in a 720px column. No computer drawing exists; it reads fine but is plain.
+- Ready to book needs the realtor checklist (#466). Other trades never fill this group yet.
+- The open customer's panel is unchanged. That is build 3.
+- "You:" before the owner's last message is kept, even when FollowUp wrote it.
+
+**Checked:** types, lint, 3,545 tests, a production build, and the running app at 390×844 and 1440×900 (groups,
+Ready to book with Call, each list, the stage filter with its total, search, both old links, a customer open beside
+the list). Nothing scrolls sideways.
+
 **Status:** built, PR open, waiting for his "merge".

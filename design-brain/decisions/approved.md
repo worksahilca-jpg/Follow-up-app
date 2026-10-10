@@ -3715,3 +3715,20 @@ landing now (two screens) against the phone way (one screen), and chose *"Yes, b
   you" with the reply and "✓ Answered in 1 min". It keeps one fixed height. The demo window shows only for the
   visitor's own Try it question, then gives way to the notifications again.
 
+
+## A-224 — The landing page calms itself on a slow computer, and a speed test guards every change ^A-224
+
+**Approved:** 2026-10-10, founder. After the lag fixes he asked *"what is someone else sees it bro i want permanent
+soloution"*. He was asked *"Should the page notice [a slow laptop] and calm itself down for them?"* and chose *"Yes,
+do that"* ("On a slow laptop, the moving messages stop moving so scrolling stays smooth. On a good laptop, nothing
+changes. I'll also add an automatic speed test so the page never gets slow again.").
+
+**What specifically:**
+- The page watches its own frame rate while the visitor scrolls. If the computer can't keep up, it adds
+  `html.fu-calm` for the rest of the visit.
+- In calm mode, the drifting messages behind the headline and the other always-moving strips hold still where they
+  are, and stop being separate layers. Nothing is hidden and nothing changes colour.
+- On a computer that keeps up, nothing changes.
+- The frosted top bar stays in both modes (R-109).
+- A test in the normal checks fails any change that brings back the known costly patterns: a filter fade on moving
+  things, a blend over the whole page, or a scroll script that doesn't rest off screen.

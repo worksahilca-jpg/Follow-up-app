@@ -3695,3 +3695,23 @@ desktop in this mobile one. Can you figure out how big companies do that"*. He w
 - **The rule going forward:** each phone screen gets its own layout. The look and the words stay the same (A-221).
   Never the computer's columns stacked into one.
 
+## A-223 — The landing page's first screen on a phone shows FollowUp at work ^A-223
+
+**Approved:** 2026-10-10, founder. He asked *"What about the landing page for mobile bro"*, was shown the phone
+landing now (two screens) against the phone way (one screen), and chose *"Yes, build it"*.
+
+**What specifically (640px and narrower; tablet and computer unchanged):**
+- **First screen:** the headline and its one line, then FollowUp's chat window with the live demo (the customer's
+  question, then the reply writing itself), then "Try it yourself" with the box and two example questions. The chat
+  sits on the plain page with a light shadow.
+- **Then:** the three ticks, then the example week (9 qualified, 4 booked, $2,400, 2 h 4 min).
+- **Not drawn on a phone:** the dark photo stage, the "From" logos, the river of messages, the five step dots,
+  Example · Pause, and the "Ask in your language" strip.
+- It keeps R-021 ("on a phone, the first screen shows FollowUp doing its job") and A-186's "try-it box on the first
+  screen".
+- The same elements are moved once at load; the demo's own script keeps running them.
+- **The example (after R-108), founder 2026-10-10: *"chose the notification and lets build other stuff"*:** two
+  notifications in everyday English. A customer writes (Marcus, Lena or Priya, in turn), then "FollowUp replied for
+  you" with the reply and "✓ Answered in 1 min". It keeps one fixed height. The demo window shows only for the
+  visitor's own Try it question, then gives way to the notifications again.
+

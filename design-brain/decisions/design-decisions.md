@@ -11706,3 +11706,73 @@ The computer is unchanged. Added to PR #476.
 **Weak spots:** a long thread pushes a ready reply below the fold on a phone, the same as before. Swipe-down to close
 the sheet isn't built (× or a tap outside closes it). On a tablet the action bar is centred while the card is aligned
 left.
+
+## 2026-10-10 — Landing page: the real cause of the scroll lag (round 2)
+
+**Reported again after #475 went live:** *"I still feel lag when I am scrolling the landing page… I don't know if it is my
+laptop's issue or it is not able to render it properly."*
+
+**Measured (1440×900, a scripted wheel scroll from top to bottom):**
+- **The page's own code is not the problem.** Even with the processor slowed 4×, scripts, style and layout keep every
+  frame at about 16.7 ms.
+- **The cost is in drawing the frame.** The paper grain (`body::after`, A-115) is a full-screen layer set to
+  `mix-blend-mode: multiply`. That made the browser re-blend every pixel of the screen on every scroll frame. It
+  accounted for about 45% of the drawing work (about 2.1 s down to about 1.15 s over the same scroll). The 48 frosted-
+  glass panels (`backdrop-filter`) are the next biggest cost, about another 28% in this test.
+
+**Changed:** the grain's blend mode only. The grain is black dots on clear, and for black, multiply and a plain overlay
+give the same pixels. Checked pixel by pixel at four scroll positions: the largest difference is 1 level out of 255. So
+the look is unchanged (A-115 stands).
+
+**Honest about the measurement:** this machine draws in software, without a graphics card, so these are relative
+numbers. The real check is his laptop. The frosted glass is left as it is: removing it would change the look, so that's
+his call.
+
+**Status:** PR open, waiting for "merge".
+
+## 2026-10-10 — Landing page on a phone, the phone way (drawn)
+
+**Asked:** *"What about the landing page for mobile bro"*, after the app got its own phone layout (A-222).
+
+**Found (390×844, page at rest):** most sections already read as phone pages (Two endings, What it does, Your control,
+Your data, the close, the footer). The hero doesn't:
+- **The first screen breaks R-021** ("on a phone, the first screen has to show FollowUp doing its job"). The live demo
+  starts on the second screen, under the example-week numbers and three ticks.
+- **The second screen is the computer's demo squeezed in:** the dark photo stage, the "From" logos, the river of
+  messages, a mostly empty chat window, the five-step dots, and Example · Pause.
+
+**Drawn on the real page (injected, no code changed):**
+- headline and the one line under it;
+- then FollowUp's chat window live: the customer's question, then the reply writing itself, on the plain page with no
+  dark photo;
+- then "Try it yourself" with two of the three example questions;
+- then the three ticks and the example week, moved below;
+- on a phone only: no photo stage, no river, no step dots, no Pause. The computer is unchanged.
+
+**Weak spots:** the language strip ("Ask in your language") is left out on phones in this drawing. The example-week
+numbers move off the first screen.
+
+**Answer:** *"Yes, build it"* → A-223. Built in `home.html`: a phone-only script moves the chat window and Try it under
+the headline once at load and sets `html.fl-phone-on`; the styles key on that class. The demo's hop from the "From" row
+now skips when that row isn't drawn. Checked at 390×844 and 360×740 (chat in view on the first screen; on 360×740 the
+Try it box sits just under the fold), at 768 and 1440 (unchanged), the demo running on its own, and Try it answering a
+typed question. No errors, nothing scrolls sideways. Added to PR #477.
+
+## 2026-10-10 — The phone's first-screen example: three versions (after R-108)
+
+**Said:** *"the example below never lose a lead one looks odd"* → "The example itself" → "Draw me 2-3 versions". The
+merge of PR #477 is held until he picks.
+**Drawn on the real page (390×844, injected), all in everyday English:**
+- **A · Two notifications:** Marcus on WhatsApp ("Can someone fix a leaking tap today?"), then "FollowUp replied for
+  you" with the reply and "✓ Answered in 1 min". It has the closing section's notification look. In motion, the reply
+  would arrive about a second after the question.
+- **B · Plain chat:** "Lena wrote at 9:15 PM", her question, FollowUp's ink reply, and "Sent by FollowUp · 1 min later".
+  There's no app-window bar.
+- **C · Three at a glance:** a plumber, a salon and a realtor, each with a question and a short reply, in one card.
+**My pick:** A. It reads in one glance, says who did the work and how fast, matches the rest of the page, and leaves
+Try it on the first screen.
+**Answer:** *"i dont know"*. I chose A as the default and am building it, to be shown on a phone before "merge". B or C
+can still replace it.
+Then: *"chose the notification and lets build other stuff"* → A is the pick (A-223 updated). Built and checked at
+390×844 and 360×740: notifications cycle at one height, a tapped or typed question shows in the demo window, and the
+example returns afterwards.

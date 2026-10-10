@@ -1396,3 +1396,15 @@ compatible for mobile."*
 nothing a decision depends on goes below 13px, and every target stays at least 44px.
 
 **Do not propose again:** marketing-sized type or padding inside the phone app.
+
+## R-108 — The phone's first-screen example as the cycling demo window ^R-108
+
+**Rejected:** 2026-10-10, founder, on the phone first screen built for A-223 (PR #477, not merged): *"the example below
+never lose a lead one looks odd"*. When asked what, he picked **"The example itself"**, not "starts empty", "jumps", or
+"looks like an app window".
+**What was rejected:** the computer's demo window under the headline on a phone. It cycles through 12 conversations
+(house viewings, a leaking tap, a haircut, car detailing) in seven languages (Punjabi and Hindi in English letters,
+Italian, French, German, Spanish), with names like Priya, Harpreet and Giulia.
+**Inferred principle (marked inferred, he hasn't said why):** on a phone's first screen, the example has to be read in
+one glance. A rotating mix of languages and trades is more than a glance can take, so it reads as odd rather than
+"someone is replying". He asked to see 2–3 versions instead of choosing a rule.

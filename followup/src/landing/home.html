@@ -579,7 +579,9 @@ html[data-col="f"] .fl-fact b { color: #CDEFD9 }
 .t-col::before { box-shadow: 0 0 0 6px #EDE8DE }
 .t-card.w { background: var(--card-lit); box-shadow: 0 0 0 1.5px #145A3E, 0 18px 32px -20px rgba(9,51,34,.35) }
 /* grain: a faint paper texture over the whole page, like a printed letter */
-body::after { content: ""; position: fixed; inset: 0; z-index: 90; pointer-events: none; background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); background-size: 220px 220px; opacity: .09; mix-blend-mode: multiply }
+/* The paper grain (A-115). Black dots on clear, so a plain overlay draws the same pixels as
+   multiply did; multiply made the browser re-blend the whole screen on every scroll frame. */
+body::after { content: ""; position: fixed; inset: 0; z-index: 90; pointer-events: none; background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); background-size: 220px 220px; opacity: .09 }
 @media (prefers-reduced-transparency: reduce) { body::after { display: none } }
 
 /* ---- theme v3: a good green (lighter, fresher, not the heavy dark one), with sky and apricot back as light touches ---- */
@@ -3390,7 +3392,7 @@ html[data-col="f"] .fl-stage .fl-ask { margin-top: 12px }
   function hop(it) {
     if (reduce || !document.body.animate) return 0;
     var src = document.querySelector('.fl-srcs [data-ch="' + it.ch + '"]'), L = lens.getBoundingClientRect();
-    if (!src || L.bottom < 0 || L.top > innerHeight) return 0;
+    if (!src || !src.getClientRects().length || L.bottom < 0 || L.top > innerHeight) return 0;
     src.classList.remove('is-new'); void src.offsetWidth; src.classList.add('is-new');
     setTimeout(function () { src.classList.remove('is-new'); }, 1500);
     setStatus('New message', 'is-busy');
@@ -5178,6 +5180,47 @@ html body .is-offscreen, html body .is-offscreen * { animation-play-state: pause
    the language strip and the two tickers. They cost the most to draw, and measured on a computer, holding them took
    a scroll from about 120 drawn frames to about 190. They carry on the moment scrolling stops. */
 html.is-scrolling body .fl-missed .fm, html.is-scrolling .fu-lt-in, html.is-scrolling body .fu-tk-track, html.is-scrolling body #control #data ul { animation-play-state: paused !important }
+
+/* A-223: the phone's own first screen (R-021: on a phone the first screen shows FollowUp at work). The chat and Try it
+   sit right under the headline on the plain page; the computer's stage (photo, river of messages, step dots, Pause)
+   is not drawn on a phone. Keyed on a class the script below sets once, so a turned phone keeps one layout. */
+html.fl-phone-on #fl-stage { display: none }
+html.fl-phone-on #fl-hero .fl-head { padding-bottom: 0 }
+html.fl-phone-on .fl-phone { margin: 22px auto 0; max-width: 520px; display: grid; gap: 16px }
+html.fl-phone-on body .fl-phone #fl-lens { position: relative; z-index: 1; top: auto; left: auto; width: auto; margin: 0; min-height: 0; box-shadow: 0 0 0 1px var(--line), 0 18px 40px -26px rgba(10,10,10,.3) }
+html.fl-phone-on body .fl-phone #fl-try { position: static; top: auto; margin: 0; padding: 0; transform: none; background: none }
+html.fl-phone-on body .fl-phone #fl-try .fl-try-l, html.fl-phone-on body .fl-phone #fl-try .fl-try-l b { color: var(--ink) !important; text-shadow: none !important }
+html.fl-phone-on body .fl-phone #fl-try .fl-try-l span { color: var(--ink-soft) !important }
+html.fl-phone-on body .fl-phone #fl-ask { margin-top: 10px; background: #fff; box-shadow: 0 0 0 1px var(--line), 0 14px 30px -20px rgba(10,10,10,.35) }
+html.fl-phone-on body .fl-phone #fl-ask:focus-within { box-shadow: 0 0 0 2.5px var(--ink), 0 14px 30px -20px rgba(10,10,10,.35) }
+html.fl-phone-on body .fl-phone #fl-try .fl-chips { margin-top: 10px; background: none !important; box-shadow: none !important; border: 0 !important }
+html.fl-phone-on body .fl-phone #fl-try .fl-chips > span, html.fl-phone-on body .fl-phone #fl-try .fu-langs { display: none }
+html.fl-phone-on body .fl-phone #fl-try .fl-chip { background: #fff !important; color: var(--ink) !important; box-shadow: 0 0 0 1px var(--line) !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important }
+html.fl-phone-on body .fl-phone #fl-try .fl-chip:nth-of-type(n+3) { display: none }
+html.fl-phone-on body .fl-phone #fl-try .fl-chip:focus-visible { outline-color: var(--ink) }
+html.fl-phone-on #fl-hero .fu-trust { margin-top: 26px }
+html.fl-phone-on #fl-hero .fu-strip { margin-top: 18px }
+/* A-223 after R-108: the example on a phone is two notifications in everyday English: a customer writes, FollowUp
+   replies. The demo window comes back only for the visitor's own question (Try it). */
+html.fl-phone-on body .fl-phone #fl-lens { display: none }
+html.fl-phone-on body .fl-phone.is-try #fl-lens { display: block }
+html.fl-phone-on .fl-phone.is-try .pn { display: none }
+.pn { display: grid; gap: 10px; align-content: start }
+.pn-row { display: flex; gap: 11px; align-items: flex-start; padding: 12px 14px; border-radius: 20px; background: #fff; box-shadow: 0 0 0 1px var(--line), 0 18px 40px -26px rgba(10,10,10,.3); transition: opacity .35s ease, transform .45s cubic-bezier(.22,1,.36,1) }
+.pn-out { margin-left: 18px }
+.pn-ic { width: 34px; height: 34px; flex: none; border-radius: 9px; overflow: hidden; display: grid; place-items: center }
+.pn-ic svg { width: 34px; height: 34px; display: block }
+.pn-ic.is-fu { background: #0E0E0C; color: #fff }
+.pn-ic.is-fu svg { width: 11px; height: 17px }
+.pn-txt { min-width: 0; flex: 1 }
+.pn-h { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; line-height: 1.3 }
+.pn-h time { color: var(--ink-faint); font-size: 12.5px; white-space: nowrap }
+.pn-m { margin: 2px 0 0; font-size: 15px; line-height: 1.35; color: var(--ink-soft) }
+.pn-out .pn-m { color: var(--ink) }
+.pn-ok { display: inline-block; margin-top: 6px; padding: 2px 9px; border-radius: 99px; background: #E3F2E8; color: #0D6E3C; font-size: 12.5px }
+.pn.is-wait .pn-out { opacity: 0; transform: translateY(8px) }
+.pn.is-swap .pn-row { opacity: 0 }
+@media (prefers-reduced-motion: reduce) { .pn-row { transition: none } }
 </style>
 <script>
 (function () { var sh = document.querySelector('#control .cb-sheet'); if (!sh || !('IntersectionObserver' in window)) return;
@@ -5248,6 +5291,67 @@ html.is-scrolling body .fl-missed .fm, html.is-scrolling .fu-lt-in, html.is-scro
     }, { passive: true });
   })();
 })();
+</script>
+<script>
+  (function phoneHero() {
+    // A-223 (R-021): on a phone, FollowUp at work on the first screen: the chat, then Try it, under the headline.
+    // The demo's own scripts keep running; these are the same elements, moved. Once, at load.
+    if (!window.matchMedia || !matchMedia('(max-width: 640px)').matches) return;
+    var head = document.querySelector('#fl-hero .fl-head'), lens = document.getElementById('fl-lens'), tr = document.getElementById('fl-try');
+    if (!head || !lens || !tr || !head.parentNode) return;
+    var trust = head.querySelector('.fu-trust'), strip = head.querySelector('.fu-strip');
+    var box = document.createElement('div'); box.className = 'fl-phone';
+    head.parentNode.insertBefore(box, head.nextSibling);
+    box.appendChild(lens); box.appendChild(tr);
+    // The ticks and the example week follow the demo, outside the headline block (which fades as you scroll).
+    if (trust) box.parentNode.insertBefore(trust, box.nextSibling);
+    if (strip) box.parentNode.insertBefore(strip, (trust || box).nextSibling);
+    document.documentElement.classList.add('fl-phone-on');
+
+    // The example (R-108): a customer writes, FollowUp replies a minute later. Three everyday ones, in turn.
+    var EX = [
+      { who: 'Marcus', ch: 'whatsapp', t: '7:02 AM', r: '7:03 AM', q: 'Can someone fix a leaking tap today?', a: 'Yes, I can be there by 3 PM today. Does that work?' },
+      { who: 'Lena', ch: 'ig', t: '9:15 PM', r: '9:16 PM', q: 'Any spots for a haircut on Friday?', a: 'Yes! 2 PM or 4 PM, which suits you?' },
+      { who: 'Priya', ch: 'gmail', t: '11:48 PM', r: '11:49 PM', q: 'Is the house on Maple Street still available?', a: 'Hi Priya, yes it is! Want to see it Saturday at 10?' }
+    ];
+    var tiles = window.FU_TILE || {}, mark = lens.querySelector('.fl-lbrand svg');
+    var pn = document.createElement('div'); pn.className = 'pn'; pn.setAttribute('role', 'group'); pn.setAttribute('aria-label', 'Example: a customer writes and FollowUp replies');
+    pn.innerHTML =
+      '<div class="pn-row pn-in"><span class="pn-ic"></span><div class="pn-txt"><div class="pn-h"><b></b><time></time></div><p class="pn-m"></p></div></div>' +
+      '<div class="pn-row pn-out"><span class="pn-ic is-fu"></span><div class="pn-txt"><div class="pn-h"><b>FollowUp replied for you</b><time></time></div><p class="pn-m"></p><span class="pn-ok">\u2713 Answered in 1 min</span></div></div>';
+    if (mark) pn.querySelector('.is-fu').appendChild(mark.cloneNode(true));
+    var inIc = pn.querySelector('.pn-in .pn-ic'), inWho = pn.querySelector('.pn-in b'), inT = pn.querySelector('.pn-in time'), inM = pn.querySelector('.pn-in .pn-m'),
+        outT = pn.querySelector('.pn-out time'), outM = pn.querySelector('.pn-out .pn-m');
+    function show(e) { inIc.innerHTML = tiles[e.ch] || ''; inWho.textContent = e.who; inT.textContent = e.t; inM.textContent = e.q; outT.textContent = e.r; outM.textContent = '\u201c' + e.a + '\u201d'; }
+    box.insertBefore(pn, lens);
+    // One height for all three, so Try it never moves.
+    var tall = 0; EX.forEach(function (e) { show(e); tall = Math.max(tall, pn.offsetHeight); }); pn.style.minHeight = tall + 'px';
+    var k = 0, still = matchMedia('(prefers-reduced-motion: reduce)').matches, seen = true, timer = 0;
+    show(EX[0]);
+    function play() {
+      if (still || !seen || document.hidden || box.classList.contains('is-try')) return;
+      pn.classList.add('is-swap');
+      setTimeout(function () { k = (k + 1) % EX.length; show(EX[k]); pn.classList.remove('is-swap'); pn.classList.add('is-wait'); setTimeout(function () { pn.classList.remove('is-wait'); }, 1100); }, 350);
+    }
+    if (!still) { pn.classList.add('is-wait'); setTimeout(function () { pn.classList.remove('is-wait'); }, 1100); timer = setInterval(play, 6500); }
+    if ('IntersectionObserver' in window) new IntersectionObserver(function (es) { seen = es[0].isIntersecting; }).observe(pn);
+
+    // Try it: the demo window shows the visitor's own question and reply, then gives way to the example again once the
+    // demo moves on to its own conversations (or back to its empty prompt).
+    var since = 0;
+    function trying() { since = Date.now(); box.classList.add('is-try'); }
+    var form = document.getElementById('fl-ask'), input = document.getElementById('fl-in'), lb = document.getElementById('fl-lbody');
+    if (form && input) form.addEventListener('submit', function () { if (input.value.trim()) trying(); }, true);
+    [].forEach.call(tr.querySelectorAll('.fl-chip'), function (c) { c.addEventListener('click', trying, true); });
+    if (lb && 'MutationObserver' in window) new MutationObserver(function () {
+      if (!box.classList.contains('is-try')) return;
+      var m = lb.querySelector('.fl-meta'), ghost = lb.querySelector('.fl-q.is-ghost');
+      // The demo shows its empty prompt for a moment while it takes the question in; only an empty prompt that stays,
+      // or the demo's own next conversation, hands back to the example.
+      var who = m ? ((m.querySelector('b') || m).textContent || '').trim() : '';
+      if ((ghost && Date.now() - since > 4000) || (m && who.indexOf('You') !== 0)) box.classList.remove('is-try');
+    }).observe(lb, { childList: true });
+  })();
 </script>
 </body>
 </html>

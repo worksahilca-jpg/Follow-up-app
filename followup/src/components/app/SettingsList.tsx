@@ -2,16 +2,21 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useSession } from "next-auth/react";
-import { ChevronRight } from "lucide-react";
+import { signOut, useSession } from "next-auth/react";
+import { Bell, ChevronRight, CircleHelp, Ellipsis, Inbox, Send, Store, type LucideIcon } from "lucide-react";
 import { describeBookingHours, describeTimeZone, type BookingHours } from "@/lib/bookingHours";
+import { readPushState } from "@/lib/pushDevice";
+import FeedbackDialog from "@/components/FeedbackDialog";
 import type { StateKey } from "./canvasBits";
-import type { SettingsGroup } from "@/lib/settingsGroups";
+import { GROUP_PAGE, type SettingsGroup } from "@/lib/settingsGroups";
 
 /**
- * Settings as the one-decision board draws it (A-080): one column, the
- * follow-up plan on top, then five groups of plain rows, each opening its
- * own page. The one broken thing shows first, only when there is one.
+ * Settings (A-220, the phone redesign): on a phone, four rows (where customers
+ * write, how replies go out, alerts, your business), then More, then Help and
+ * Sign out. A row opens its page, or a short list of pages first. On the desk
+ * the side list holds the same five and this draws the open one's rows
+ * (A-222: same words, each its own layout). The one broken thing shows first,
+ * only when there is one.
  * Built from the research, not taste:
  *
  * - Stripe (three layers): the everyday places first, and what most
@@ -49,7 +54,9 @@ export default function SettingsList({
   paused,
   planStatus,
   onOpen,
-  selected,
+  onGroup,
+  group,
+  groupOpen,
 }: {
   gmail: { connected: boolean; email?: string };
   outlook: { connected: boolean; email?: string };
@@ -59,16 +66,20 @@ export default function SettingsList({
   paused: boolean;
   planStatus: string;
   onOpen: (page: string) => void;
-  /** Desk only: the group the side list has open. The rest hide from lg up; the phone shows them all. */
-  selected?: SettingsGroup;
+  /** Opens a group's short list (the phone steps into it; the desk's side list shows it). */
+  onGroup: (g: SettingsGroup) => void;
+  /** The group whose rows show: the desk always shows one, the phone once a home row opened it. */
+  group: SettingsGroup;
+  /** The phone has stepped into `group`; until then it shows the five home rows. */
+  groupOpen: boolean;
 }) {
-  const deskOnly = (g: SettingsGroup) => (selected && selected !== g ? " lg:hidden" : "");
-  const deskLabel = selected ? " lg:sr-only" : "";
   const [social, setSocial] = useState<Social | null>(null);
   const [booking, setBooking] = useState<string | null>(null);
   const [team, setTeam] = useState<number | null>(null);
   // What the business does; null once loaded means never told (setup asks since 2026-10-04).
   const [trade, setTrade] = useState<string | null | undefined>(undefined);
+  const [businessName, setBusinessName] = useState<string | null>(null);
+  const [alerts, setAlerts] = useState<string>("");
   useEffect(() => {
     const get = (url: string) =>
       fetch(url)
@@ -86,8 +97,16 @@ export default function SettingsList({
       const city = data.timezone ? describeTimeZone(data.timezone).replace(/\s*\(.*$/, "") : "";
       setBooking(describeBookingHours({ days: data.days, startMinute: data.startMinute, endMinute: data.endMinute }) + (city ? ` · ${city}` : ""));
     });
-    get("/api/onboarding").then((data: { success?: boolean; industry?: string | null }) => {
-      if (data?.success) setTrade(data.industry ?? null);
+    get("/api/onboarding").then((data: { success?: boolean; industry?: string | null; name?: string; namePlaceholder?: boolean }) => {
+      if (!data?.success) return;
+      setTrade(data.industry ?? null);
+      setBusinessName(data.namePlaceholder || !data.name ? "Add your business name" : data.name);
+    });
+    // Alerts in one line: on for this device, on for the phone set up earlier (A-216), by email, or off.
+    Promise.all([get("/api/alerts"), readPushState().catch(() => "unsupported" as const)]).then(([a, push]) => {
+      const device = window.matchMedia("(min-width: 64rem)").matches ? "computer" : "phone";
+      const elsewhere = (a?.push?.devices ?? 0) > 0;
+      setAlerts(push === "on" ? `On for this ${device}` : elsewhere ? "On for your phone" : a?.email?.enabled ? "By email" : "Off");
     });
     get("/api/team").then((data: { members?: unknown[] }) => setTeam(Array.isArray(data?.members) ? data.members.length : null));
   }, []);
@@ -133,7 +152,7 @@ export default function SettingsList({
       ],
     },
     {
-      title: "How it writes",
+      title: "How replies go out",
       rows: [
         { page: "replies", name: "Replies and check-ins", status: holdAll ? "Every reply waits for you" : "Simple replies send themselves" },
         { page: "booking", name: "Booking hours", status: booking ?? "" },
@@ -141,22 +160,38 @@ export default function SettingsList({
       ],
     },
     {
-      title: "Your business",
+      title: "More",
       rows: [
-        { page: "business", name: "Your business" },
         { page: "team", name: "Team", status: team === null ? "" : team <= 1 ? "Just you" : `${team} people` },
         { page: "billing", name: "Your plan", status: planStatus },
-      ],
-    },
-    {
-      title: "Account",
-      rows: [
         { page: "security", name: "Sign-ins and security" },
         { page: "data", name: "Your data", status: "Download or delete", cta: "Open" },
         { page: "advanced", name: "Advanced: CRM, Zapier, routing" },
       ],
     },
   ];
+
+  // The phone's home rows, each with one line of what's set.
+  const connected = [
+    gmail.connected ? "Gmail" : outlook.connected ? "Outlook" : "",
+    social?.instagram.connected ? "Instagram" : "",
+    social?.facebook.connected ? "Facebook" : "",
+    social?.whatsapp ? "WhatsApp" : "",
+  ].filter(Boolean);
+  const where: Pick<Row, "status" | "state"> =
+    socialRow.state === "needs" ? socialRow : connected.length ? { status: andList(connected) } : social ? { status: "Nothing connected yet", state: "needs" } : { status: "" };
+  const home: { g: SettingsGroup; icon: LucideIcon; status: string; state?: StateKey }[] = [
+    { g: "Where customers write", icon: Inbox, status: where.status ?? "", state: where.state },
+    { g: "How replies go out", icon: Send, status: paused ? "Paused" : holdAll ? "Every reply waits for your OK" : "FollowUp replies for you", state: paused ? "needs" : undefined },
+    { g: "Alerts", icon: Bell, status: alerts },
+    { g: "Your business", icon: Store, status: businessName ?? "" },
+  ];
+  const open = (g: SettingsGroup) => {
+    const page = GROUP_PAGE[g];
+    if (page) onOpen(page);
+    else onGroup(g);
+  };
+  const shown = groups.find((x) => x.title === group);
 
   return (
     <div className="grid max-w-[640px] gap-[26px]">
@@ -175,35 +210,58 @@ export default function SettingsList({
         </button>
       )}
 
-      <section className={"grid gap-2" + deskOnly("Follow-up plan")}>
-        {/* Desk: the pane's title names it, and "Change" sits in the box. */}
-        <div className="flex items-baseline justify-between lg:hidden">
-          <h2 className="text-[13px] text-ink-faint" style={{ fontWeight: 400, letterSpacing: 0 }}>
-            Your follow-up plan
-          </h2>
-          <Link href="/workflows" className="ml-auto text-sm underline underline-offset-[3px]">
-            Change
-          </Link>
+      {/* The phone's Settings (A-220): four rows, More, then Help and Sign out. */}
+      <div className={(groupOpen ? "hidden" : "grid") + " gap-2.5 lg:hidden"}>
+        <div className={BOX}>
+          {home.map((h, i) => (
+            <HomeRow key={h.g} name={h.g} icon={h.icon} status={h.status} state={h.state} first={!i} onClick={() => open(h.g)} />
+          ))}
         </div>
-        <div className={BOX + " lg:flex lg:items-start"}>
-          <div className="min-w-0 lg:flex-1 lg:py-1.5">
-            {instantAck && <PlanRow when="Right away" what="A quick “got your message” reply." first />}
-            <PlanRow when={days} what="A check-in, if they go quiet." first={!instantAck} />
-            <PlanRow when="Always" what={holdAll ? "Every reply waits for your OK." : "Prices and dates always come to you."} />
-          </div>
-          <Link href="/workflows" className={CTA + " hidden lg:mr-4 lg:mt-4 lg:inline-flex"}>
-            Change
-          </Link>
+        <div className={BOX}>
+          <HomeRow name="More" icon={Ellipsis} status="Team, plan, your data, advanced" first onClick={() => onGroup("More")} />
         </div>
-      </section>
+        <div className="mt-2 grid justify-items-start px-1">
+          <FeedbackDialog label="Help" icon={CircleHelp} className="flex min-h-11 items-center gap-2.5 text-[15px] text-ink" />
+          <button type="button" onClick={() => signOut({ callbackUrl: "/" })} className="min-h-11 text-[15px] text-ink-soft">
+            Sign out
+          </button>
+        </div>
+        {signedInAs && (
+          <p className="break-all px-1 text-[13.5px] text-ink-faint">
+            Signed in as <span className="text-ink-soft">{signedInAs}</span>
+          </p>
+        )}
+      </div>
 
-      {groups.map((g) => (
-        <section key={g.title} className={"grid gap-2" + deskOnly(g.title as SettingsGroup)}>
-          <h2 className={"text-[13px] text-ink-faint" + deskLabel} style={{ fontWeight: 400, letterSpacing: 0 }}>
-            {g.title}
-          </h2>
+      {/* One group's rows: the desk's open group, or the one the phone stepped into. */}
+      <div className={(groupOpen ? "grid" : "hidden lg:grid") + " gap-[26px]"}>
+        {group === "How replies go out" && (
+          <section className="grid gap-2">
+            {/* Desk: "Change" sits in the box. */}
+            <div className="flex items-baseline justify-between lg:hidden">
+              <h2 className="text-[13px] text-ink-faint" style={{ fontWeight: 400, letterSpacing: 0 }}>
+                Your follow-up plan
+              </h2>
+              <Link href="/workflows" className="ml-auto text-sm underline underline-offset-[3px]">
+                Change
+              </Link>
+            </div>
+            <div className={BOX + " lg:flex lg:items-start"}>
+              <div className="min-w-0 lg:flex-1 lg:py-1.5">
+                {instantAck && <PlanRow when="Right away" what="A quick “got your message” reply." first />}
+                <PlanRow when={days} what="A check-in, if they go quiet." first={!instantAck} />
+                <PlanRow when="Always" what={holdAll ? "Every reply waits for your OK." : "Prices and dates always come to you."} />
+              </div>
+              <Link href="/workflows" className={CTA + " hidden lg:mr-4 lg:mt-4 lg:inline-flex"}>
+                Change
+              </Link>
+            </div>
+          </section>
+        )}
+
+        {shown && (
           <div className={BOX + " lg:py-1.5"}>
-            {g.rows.map((r, i) => (
+            {shown.rows.map((r, i) => (
               <button
                 key={r.name}
                 type="button"
@@ -235,17 +293,42 @@ export default function SettingsList({
               </button>
             ))}
           </div>
-        </section>
-      ))}
+        )}
 
-      {/* In full, under the last group: a row status would cut it short on a phone. */}
-      {signedInAs && (
-        <p className={"-mt-3 break-all px-1 text-[13.5px] text-ink-faint" + deskOnly("Account")}>
-          Signed in as <span className="text-ink-soft">{signedInAs}</span>
-        </p>
-      )}
+        {group === "More" && signedInAs && (
+          <p className="-mt-3 break-all px-1 text-[13.5px] text-ink-faint">
+            Signed in as <span className="text-ink-soft">{signedInAs}</span>
+          </p>
+        )}
+      </div>
     </div>
   );
+}
+
+/** A home row (the approved drawing): the group's icon on a soft tile, its name over one line of what's set. */
+function HomeRow({ name, icon: Icon, status, state, first, onClick }: { name: string; icon: LucideIcon; status: string; state?: StateKey; first: boolean; onClick: () => void }) {
+  return (
+    <button type="button" onClick={onClick} className={"flex min-h-[62px] w-full items-center gap-3 px-3.5 py-2.5 text-left hover:bg-card-2 " + (first ? "" : "border-t border-line-2")}>
+      <span className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-[9px] bg-card-2 text-ink" aria-hidden>
+        <Icon className="h-[18px] w-[18px]" strokeWidth={1.8} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[15.5px] font-medium">{name}</span>
+        {status && (
+          <span className="mt-0.5 flex items-center gap-1.5 text-[13.5px] text-ink-faint">
+            {state && <span className="h-[7px] w-[7px] shrink-0 rounded-full" style={{ background: `var(--state-${state})` }} aria-hidden />}
+            <span className="truncate">{status}</span>
+          </span>
+        )}
+      </span>
+      <ChevronRight className="h-4 w-4 shrink-0 text-ink-faint" aria-hidden />
+    </button>
+  );
+}
+
+/** "Gmail and Instagram", "Gmail, Instagram and WhatsApp". */
+function andList(xs: string[]): string {
+  return xs.length < 2 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`;
 }
 
 /** A group's box: white with a line on the phone; soft grey, no line, on the desk (Wispr). */

@@ -11838,3 +11838,36 @@ do it ?"* (answered: a speed limit on every change, pages that adapt to the devi
 **Weak spots:** the frame watcher is a guess at "struggling". It was tuned on a software-drawn test machine, not on
 real laptops. Real-visitor speed data (Vercel Speed Insights) would show whether it's right; that's the founder's
 switch to turn on.
+
+## 2026-10-10 — Build 4/5: Settings (A-220, A-219)
+
+**Said:** *"Merge + start Settings"*.
+**Built as approved (A-220):** on a phone, Settings has:
+- four rows, each an icon tile with the name over one line of what's set:
+  - Where customers write: "Gmail and Instagram", or what's broken;
+  - How replies go out: "Every reply waits for your OK", "FollowUp replies for you", or "Paused" with the orange dot;
+  - Alerts: "On for this phone", "On for your phone", "By email" or "Off";
+  - Your business: the business's name;
+- then More ("Team, plan, your data, advanced"), then Help and Sign out, and "Signed in as".
+**My calls (not in the drawing), for him to see:**
+- **Opening a row:**
+  - A row with several pages opens a short list first: Where customers write, How replies go out (the follow-up plan
+    on top, then Replies and check-ins, Booking hours, Pause all sending), and More.
+  - Alerts and Your business are one page each and open straight away. Alerts became its own page; it used to sit
+    under Replies.
+- **Going back:** "←" takes one step back (page → its list → Settings) and uses the browser's own Back, so Back never
+  loops. Old links (#billing, #alerts, #integrations, #phone…) still land on the right page.
+- **Computer:** the side list holds the same five groups (A-222: same words, own layout), with no Help or Sign out of
+  its own. The app's side list already has Help, and the account menu has Sign out (A-219: nothing twice).
+- **Removed:** the Alerts section's own small "Alerts" label, now that its page title says it.
+**Checked** (local build, real browser, 390×844 and 1440×900):
+- every row opens the right thing;
+- back steps, browser Back and old links all land right;
+- the Help dialog opens;
+- no page errors (only Vercel's analytics script, which never loads locally).
+- `tsc`, `eslint` and all 3,553 tests pass. The groups test now also checks there is no feedback page, that the
+  one-page groups open real pages, and that every list group has an address.
+**Weak spots:**
+- "Your business" shows the name only. "What FollowUp knows" stays inside its page.
+- The Alerts status reads this device's notification state. In a browser that blocks notifications it falls back
+  to "By email".

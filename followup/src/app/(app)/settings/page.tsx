@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import SettingsList from "@/components/app/SettingsList";
-import { SETTINGS_GROUPS, groupOfPage, type SettingsGroup } from "@/lib/settingsGroups";
+import { SETTINGS_GROUPS, GROUP_PAGE, GROUP_SLUG, groupOfPage, groupOfSlug, type SettingsGroup } from "@/lib/settingsGroups";
 import { useInWindow } from "@/components/app/AppWindow";
 import { quietReminderDays, SILENCE_DEFAULT_TRIGGER_DAYS } from "@/lib/reminderCadence";
 import TeamSection from "@/components/TeamSection";
@@ -34,7 +34,7 @@ import SignInsSection from "@/components/SignInsSection";
 import YourRulesCard from "@/components/YourRulesCard";
 import RuleCard, { RuleNumber, type RuleRecordCounts } from "@/components/RuleCard";
 import { TIER_INFO, VOICE_ADDON_INFO, VOICE_ADDON_AVAILABLE, CARRIER_CHANNELS_AVAILABLE, FREE_TIER_LEAD_CAP } from "@/lib/pricing";
-import { Mail, Calendar, Check, RefreshCw, CreditCard, Search, Repeat, Inbox, PenLine, Store, UserRound, type LucideIcon } from "lucide-react";
+import { Mail, Calendar, Check, RefreshCw, CreditCard, Search, Inbox, Send, Bell, Store, Ellipsis, type LucideIcon } from "lucide-react";
 import { safeBannerText } from "@/lib/bannerText";
 
 /** Section headings on a setting's page read like the list's group labels
@@ -68,7 +68,8 @@ const PAGES: Record<string, SettingsPage> = {
   email: { title: "Email", lede: "Connect Gmail or Outlook. FollowUp reads new customers’ emails and replies from your own address.", sections: ["integrations"] },
   website: { title: "Website form", lede: "A contact form for your own site. What people send lands in Today.", sections: ["website-widget"] },
   social: { title: "Instagram, Facebook, WhatsApp", lede: "Customers who message your Instagram, your Facebook Page or your WhatsApp Business number show up in Today.", sections: ["social", "whatsapp"] },
-  replies: { title: "Replies and check-ins", lede: "What FollowUp writes on its own, and when. Anything about a price or a date still comes to you.", sections: ["automation", "alerts"] },
+  replies: { title: "Replies and check-ins", lede: "What FollowUp writes on its own, and when. Anything about a price or a date still comes to you.", sections: ["automation"] },
+  alerts: { title: "Alerts", lede: "How FollowUp tells you a customer needs you: on your phone, by email, or both.", sections: ["alerts"] },
   booking: { title: "Booking hours", lede: "When customers can book a call through your link, and which calendar it checks.", sections: ["booking"] },
   pause: { title: "Pause all sending", sections: ["pause"] },
   business: { title: "Your business", sections: ["business"] },
@@ -76,7 +77,6 @@ const PAGES: Record<string, SettingsPage> = {
   billing: { title: "Your plan", sections: ["billing"] },
   security: { title: "Sign-ins and security", sections: ["security"] },
   data: { title: "Your data", lede: "Download everything, or permanently delete this business.", sections: ["data"] },
-  feedback: { title: "Tell us something", lede: "Not a support ticket. A place to tell us what’s working or what isn’t.", sections: ["feedback"] },
   // One page for what most businesses never need (A-080): the CRM, other
   // tools, phone, and routing by source.
   advanced: { title: "Advanced", lede: "Your CRM, other tools like Zapier or Make, and where new customers go by the place they wrote. Most businesses never need these.", sections: ["crm", "lead-webhook", "outbound-webhook", "phone", "lead-routing"] },
@@ -88,22 +88,22 @@ function pageFor(id: string): string | null {
   return null;
 }
 
-/** Each group's icon in the side list, beside its word (Wispr's Settings window). */
+/** Each group's icon, beside its word: the phone's home rows and the desk's side list (A-220). */
 const GROUP_ICON: Record<SettingsGroup, LucideIcon> = {
-  "Follow-up plan": Repeat,
   "Where customers write": Inbox,
-  "How it writes": PenLine,
+  "How replies go out": Send,
+  Alerts: Bell,
   "Your business": Store,
-  Account: UserRound,
+  More: Ellipsis,
 };
 
-/** One grey line under each group's title in the side list's pane (A-213). */
+/** One grey line under a group's title (A-213). */
 const GROUP_WHY: Record<SettingsGroup, string> = {
-  "Follow-up plan": "What FollowUp does, and when. Change it any time.",
   "Where customers write": "The places FollowUp reads and answers for you.",
-  "How it writes": "How replies are written, and when they go.",
-  "Your business": "Who you are, who's on your team, and your plan.",
-  Account: "How you sign in, and your data.",
+  "How replies go out": "What FollowUp sends, and when. Change it any time.",
+  Alerts: "How FollowUp tells you a customer needs you.",
+  "Your business": "Who you are, so replies sound like you.",
+  More: "Your team, your plan, how you sign in, and your data.",
 };
 
 function SettingsPageInner() {
@@ -111,7 +111,9 @@ function SettingsPageInner() {
   // Opened over a page (src/app/(app)/@modal): moving between Settings'
   // own pages adds no history, so closing returns in one step.
   const inWindow = useInWindow();
-  const [group, setGroup] = useState<SettingsGroup>("Follow-up plan");
+  const [group, setGroup] = useState<SettingsGroup>("Where customers write");
+  // The phone has stepped from the five home rows into one group's list (#write, #replies-out, #more).
+  const [groupOpen, setGroupOpen] = useState(false);
   // A link elsewhere in the app (a Sidebar nag, the dashboard's setup strip)
   // points at a specific section's id, e.g. /settings#billing — honor that
   // by opening straight into the tab that section lives in, so the browser's
@@ -159,11 +161,18 @@ function SettingsPageInner() {
       const id = window.location.hash.slice(1);
       return pageFor(id) ?? (params.get("instagram") ? "social" : params.get("gmail") || params.get("outlook") ? "email" : params.get("billing") ? "billing" : null);
     };
+    const readGroup = () => {
+      const g = groupOfSlug(window.location.hash.slice(1));
+      if (g) setGroup(g);
+      setGroupOpen(Boolean(g));
+    };
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setOpenPage(read());
-    // Back and forward move between the list and a page.
+    readGroup();
+    // Back and forward move between Settings, a group's list and a page.
     const onPop = () => {
       setOpenPage(read());
+      readGroup();
       window.scrollTo(0, 0);
     };
     window.addEventListener("popstate", onPop);
@@ -230,10 +239,6 @@ function SettingsPageInner() {
   // not a new checkout; see handleSubscribe).
   const [voiceAddonWanted, setVoiceAddonWanted] = useState(false);
 
-  const [feedbackText, setFeedbackText] = useState("");
-  const [feedbackSending, setFeedbackSending] = useState(false);
-  const [feedbackSent, setFeedbackSent] = useState(false);
-  const [feedbackError, setFeedbackError] = useState<string | null>(null);
 
   // "This week" under each rule (A-044). Null until counted, and stays
   // null if counting failed, so a card shows no record rather than zeros.
@@ -505,10 +510,29 @@ function SettingsPageInner() {
   function openMore(section: string | null) {
     const page = section ? pageFor(section) : null;
     const first = page ? PAGES[page].sections[0] : "";
-    const url = window.location.pathname + (first ? `#${first}` : "");
-    if (inWindow) window.history.replaceState(window.history.state, "", url);
-    else window.history.pushState(null, "", url);
+    go(window.location.pathname + (first ? `#${first}` : ""));
     setOpenPage(page);
+    if (!page) setGroupOpen(false);
+  }
+
+  /** "←" to `hash`: the browser's Back when that is where this step came from, so Back never loops. */
+  function back(hash: string, open: () => void) {
+    if (!inWindow && window.history.state?.settingsFrom === hash) window.history.back();
+    else open();
+  }
+
+  /** A group's short list: the phone steps into it, the desk's side list shows it. */
+  function openGroup(g: SettingsGroup) {
+    go(window.location.pathname + `#${GROUP_SLUG[g]}`);
+    setGroup(g);
+    setGroupOpen(true);
+    setOpenPage(null);
+  }
+
+  function go(url: string) {
+    // Each step remembers where it came from, so "←" can be the browser's own Back (see back()).
+    if (inWindow) window.history.replaceState(window.history.state, "", url);
+    else window.history.pushState({ settingsFrom: window.location.hash }, "", url);
     if (inWindow) document.querySelector(".app-win__body")?.scrollTo(0, 0);
     else window.scrollTo(0, 0);
   }
@@ -790,30 +814,10 @@ function SettingsPageInner() {
     }
   }
 
-  async function handleSendFeedback() {
-    if (!feedbackText.trim()) return;
-    setFeedbackSending(true);
-    setFeedbackError(null);
-    try {
-      const res = await fetch("/api/feedback", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: feedbackText.trim() }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.message ?? "Couldn't send — try again.");
-      setFeedbackText("");
-      setFeedbackSent(true);
-    } catch (err) {
-      setFeedbackError(err instanceof Error ? err.message : "Couldn't send — try again.");
-    } finally {
-      setFeedbackSending(false);
-    }
-  }
-
   const page = openPage ? PAGES[openPage] : null;
   // The side list follows the page that's open (a link to #billing lands in "Your business").
-  const navGroup: SettingsGroup = (openPage ? groupOfPage(openPage) : null) ?? group;
+  const pageGroup = openPage ? groupOfPage(openPage) : null;
+  const navGroup: SettingsGroup = pageGroup ?? group;
   const visible = (id: string) => Boolean(page?.sections.includes(id));
   // A page with one section: its title is the h1, so the section's own
   // label would say it twice.
@@ -840,17 +844,15 @@ function SettingsPageInner() {
       >
         <p className="px-2.5 pb-2 font-mono text-[11px] uppercase tracking-[0.09em] text-ink-faint">Settings</p>
         {SETTINGS_GROUPS.map((g) => {
-          const on = g === navGroup && openPage !== "feedback";
+          const on = g === navGroup;
           const Icon = GROUP_ICON[g];
+          const only = GROUP_PAGE[g];
           return (
             <button
               key={g}
               type="button"
               aria-current={on ? "true" : undefined}
-              onClick={() => {
-                setGroup(g);
-                if (openPage) openMore(null);
-              }}
+              onClick={() => (only ? openMore(only) : openGroup(g))}
               className="flex min-h-8 items-center gap-2.5 whitespace-nowrap rounded-lg px-2.5 py-1 text-left hover:bg-[var(--nav-on)]"
               style={on ? { background: "var(--nav-on)", color: "var(--ink)", fontWeight: 500 } : { color: "var(--ink-soft)" }}
             >
@@ -859,23 +861,19 @@ function SettingsPageInner() {
             </button>
           );
         })}
-        <button
-          type="button"
-          onClick={() => openMore("feedback")}
-          className={"px-2.5 py-2 text-left text-[13px] text-ink-faint hover:text-ink " + (inWindow ? "lg:mt-auto" : "mt-6")}
-        >
-          Something broke? Tell us
-        </button>
+        {/* No Help or Sign out here: on a computer the app's own side list has Help and the account menu has
+            Sign out (A-219: nothing twice). The phone's Settings list carries both (SettingsList). */}
       </nav>
       <div className={"min-w-0 " + (inWindow ? "lg:px-9 lg:pb-9 lg:pt-7" : "")}>
       {!page ? (
-        // The list (A-080): one column, the plan on top, five groups of
-        // rows, each opening its own page. On the desk, only the group
-        // the side list has open.
+        // Phone: Settings' five rows, or the group a row stepped into. Desk: the group the side list has open.
         <div>
-          <h1 className="title-serif text-[32px] leading-[1.1] lg:hidden">Settings</h1>
-          <div className="hidden lg:block">
-            <h1 className="title-serif text-[28px] leading-[1.12]">{navGroup}</h1>
+          <h1 className={"title-serif text-[32px] leading-[1.1] lg:hidden" + (groupOpen ? " hidden" : "")}>Settings</h1>
+          <div className={groupOpen ? "" : "hidden lg:block"}>
+            <button type="button" onClick={() => back("", () => openMore(null))} className="min-h-11 text-[13px] text-ink-faint hover:text-ink lg:hidden">
+              ← Settings
+            </button>
+            <h1 className="title-serif text-[30px] leading-[1.12] lg:text-[28px]">{navGroup}</h1>
             <p className="mt-1 text-[14px] text-ink-faint">{GROUP_WHY[navGroup]}</p>
           </div>
           <div className="mt-6 lg:mt-5">
@@ -888,17 +886,25 @@ function SettingsPageInner() {
               paused={sendingPaused}
               planStatus={planStatus}
               onOpen={openMore}
-              selected={navGroup}
+              onGroup={openGroup}
+              group={navGroup}
+              groupOpen={groupOpen}
             />
           </div>
         </div>
       ) : (
         <div className="max-w-[640px]">
-          <button type="button" onClick={() => openMore(null)} className="text-[13px] text-ink-faint hover:text-ink">
-            <span className="lg:hidden">← Settings</span>
-            <span className="hidden lg:inline">← {openPage === "feedback" ? "Settings" : navGroup}</span>
+          {/* Back one step: to the page's group, or to Settings for a group that is this one page. */}
+          <button
+            type="button"
+            onClick={() =>
+              pageGroup && !GROUP_PAGE[pageGroup] ? back(`#${GROUP_SLUG[pageGroup]}`, () => openGroup(pageGroup)) : back("", () => openMore(null))
+            }
+            className={"min-h-11 text-[13px] text-ink-faint hover:text-ink lg:min-h-0" + (pageGroup && GROUP_PAGE[pageGroup] ? " lg:hidden" : "")}
+          >
+            ← {pageGroup && !GROUP_PAGE[pageGroup] ? pageGroup : "Settings"}
           </button>
-          <h1 className="title-serif mt-2 text-[30px] leading-[1.12] lg:text-[28px]">{page.title}</h1>
+          <h1 className="title-serif mt-1 text-[30px] leading-[1.12] lg:mt-2 lg:text-[28px]">{page.title}</h1>
           {page.lede && <p className="mt-2 text-[15px] leading-relaxed text-ink-soft">{page.lede}</p>}
         </div>
       )}
@@ -1650,10 +1656,9 @@ function SettingsPageInner() {
 
       </section>
 
-      {/* Directly under Automation: that section decides that replies wait
-          for the owner, and this is how the owner hears one is waiting.
-          Renders nothing until the server has at least one alert channel
-          set up — see the component. */}
+      {/* Alerts, its own row since the phone redesign (A-220): how the owner
+          hears that a reply is waiting. Renders nothing until the server has
+          at least one alert channel set up — see the component. */}
       <div hidden={!visible("alerts")}>
         <AlertsSection />
       </div>
@@ -1856,49 +1861,6 @@ function SettingsPageInner() {
             )}
           </div>
         )}
-      </section>
-
-      <section id="feedback" hidden={!visible("feedback")} className="scroll-mt-16">
-        <h2 className={sectionLabel} style={SECTION_STYLE}>
-          Something we should know?
-        </h2>
-        <p className="mt-1 text-[14.5px] leading-relaxed text-ink-soft">
-          Not a support ticket — just a place to tell us what&apos;s working or what isn&apos;t. Entirely optional,
-          only here if you want it.
-        </p>
-        <div className="mt-4 box p-5">
-          {feedbackSent ? (
-            <p className="text-sm flex items-center gap-1.5" style={{ color: "var(--sage)" }}>
-              <Check className="h-4 w-4" /> Sent — thank you.
-            </p>
-          ) : (
-            <>
-              <textarea
-                value={feedbackText}
-                onChange={(e) => setFeedbackText(e.target.value)}
-                placeholder="Whatever's on your mind about FollowUp…"
-                rows={3}
-                maxLength={2000}
-                className="w-full rounded-[12px] border border-line bg-paper px-3 py-2 text-sm resize-none"
-              />
-              <div className="mt-2 flex items-center justify-between">
-                <button
-                  onClick={handleSendFeedback}
-                  disabled={feedbackSending || !feedbackText.trim()}
-                  className="text-sm font-medium rounded-full px-3.5 py-2 disabled:opacity-60"
-                  style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
-                >
-                  {feedbackSending ? "Sending…" : "Send"}
-                </button>
-                {feedbackError && (
-                  <span className="text-[13px]" style={{ color: "var(--coral)" }}>
-                    {feedbackError}
-                  </span>
-                )}
-              </div>
-            </>
-          )}
-        </div>
       </section>
 
       <section id="security" hidden={!visible("security")} className="scroll-mt-16">

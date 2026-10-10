@@ -1342,3 +1342,10 @@ body-anchored comment) as being about the photos. **Principle:** the two photo p
 and the founder's earlier "the theme we were using for Your data stays yours was the good one"). Do not retone, swap or
 recolour them without his ask. **Open:** which background he meant is asked in thread 004fdfc3.
 
+## R-105 — A black headline on the first screen (option B) ^R-105
+
+**Rejected (inferred):** 2026-10-09. Shown A and B (B = the headline's italic phrase in black instead of green), the
+founder answered: *"make it just a little cinematic, not that dark."* **Principle (inferred):** when the first screen is
+made less WhatsApp-like, the answer is lighter and warmer, not darker. The green italic accent stays as the one
+colour in the headline. Confirm with him if a black headline comes up again.
+

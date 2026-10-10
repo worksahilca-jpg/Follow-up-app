@@ -11043,3 +11043,69 @@ https://claude.ai/artifact/F12ZLs1H4UBdCWRtumdRvg):
 
 The rules are now in brand-principles ("Every frame is smooth"). Builder patch 21 in the preview pipeline.
 
+## 2026-10-09 — First screen without the WhatsApp feel: "a little cinematic, not that dark"
+
+**Drawn:**
+- **A:** FollowUp's own try box (no WhatsApp logo, "Ask what a customer would ask…", a worded "Try it" button), with
+  white number cards.
+- **B:** A, with the headline accent in black.
+
+**Founder:** *"make it just a little cinematic, not that dark."*
+- Read as: A's direction, but the numbers shouldn't be flat white.
+- B's black headline is too dark *(inferred)*, so the green accent stays.
+
+**Drawn next, C1:**
+- A's box;
+- the numbers sit on one of the page's own sunlit street photos (d5dc60f92bca, already blurred), under a warm light
+  wash;
+- white cells, ink numbers, green only on "$ won";
+- the beta pill is neutral.
+
+**Dropped, C2:** daylight behind the hero too. An inner layer showed as a pale box. Not offered.
+
+**Not touched:** the dark "Try it yourself" photo panel below (R-104: no retone without his ask). Offered as a
+follow-up.
+
+**Status:** approved ("yes c1", A-210). Built as builder patch 22. Still smooth: no main-thread task over 16 ms
+while scrolling, desk or phone.
+
+## 2026-10-09 — The app, version 3: our look, Wispr's calm (drawn)
+
+**Founder:** *"we should use our colour and theme, but the interface should be leaning towards Wispr, but do not copy
+everything, take reference"* (A-211).
+
+**Drawn on the real app** (local test account; desk 1280, phone 390; board version 3:
+https://claude.ai/artifact/F12ZLs1H4UBdCWRtumdRvg; script `prototypes/2026-10-09-app-inside/draw-wispr-leaning.cjs`):
+- **Shell:**
+  - the sidebar sits on a soft grey frame (#F2F1ED), and the page is one white sheet (18px radius);
+  - Today · Customers · Results each have a word, with Settings below;
+  - only Today keeps a count;
+  - a "Finish setting up" card has a thin green progress bar and the real steps from Settings (email ✓,
+    Instagram/Facebook/WhatsApp, website form).
+- **Phone:** four tabs with words, and "Alerts" beside the bell. The setup card sits at the top of Settings.
+- **Today:** one customer at a time (A-209).
+- **Customers:**
+  - plain display title and text tabs;
+  - the list is grouped by state ("Needs you · 15", with the orange dot) in the app's own order, so the per-row
+    "Needs you" pill goes (each fact said once);
+  - the wait sits at the row's end;
+  - Reply · Later appear on hover (desk).
+- **Results:** the Numbers page redrawn:
+  - display headline "Customers heard back in *3 days.*";
+  - four real numbers on the homepage's sunlit card (C1), each beside last week;
+  - the 8-week chart on soft grey and a quiet list.
+- **Settings:** soft grey grouped rows, Change as a small outlined pill, one grey line on Booking hours and Pause all
+  sending, and on/off as a switch.
+
+**Grouping by day (Wispr's pattern) was tried and dropped.** The list is ordered by who needs you, so day groups put
+everyone under "Earlier". Grouping by state keeps the approved order.
+
+**Weak:**
+- "qualified" isn't counted on Results yet ("came back after a follow-up" stands in);
+- "Needs you" isn't sorted by longest wait;
+- the phone chart labels shorten to the month;
+- the display serif is a new font inside the app.
+
+**Founder (2026-10-09):** *"looks good, but this needs a lot more changes too."* Direction holds; specifics asked.
+**Status:** not approved to build yet; round 4 follows his list.
+

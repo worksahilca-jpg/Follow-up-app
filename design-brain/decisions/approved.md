@@ -3387,3 +3387,53 @@ Also in force from A-208:
 
 **Supersedes:** A-082 and A-027 (place lists), A-084, A-090's gradient line, A-089's icon-only buttons, and A-194's
 pill word.
+
+## A-210 — The first screen is FollowUp's, not WhatsApp's: own try box, sunlit numbers ^A-210
+
+**Approved:** 2026-10-09, founder: *"yes c1"*, after *"make it just a little cinematic, not that dark"*. This fixes the
+recurrence of R-103: *"when I am landing on the page I feel like it's a WhatsApp website."*
+
+**What specifically:**
+- **The try box is FollowUp's own:**
+  - no channel logo inside it;
+  - the placeholder reads "A customer's question…", never "Type a message";
+  - a rounded-rectangle box (16px), not a pill;
+  - a black **"Try it"** button with its word, not a round arrow.
+- **The example week's numbers sit on a sunlit street photo** (`/landing/d5dc60f92bca.jpg`, the page's own, already
+  blurred) under a warm, light wash:
+  - white cells with ink numbers;
+  - green only on "$ won by you";
+  - a white day tag.
+  - It replaces the green-grey glass bar. Bright, a little cinematic, never dark.
+- **The "Free while in beta" pill is neutral:** white with ink text. Its small green dot stays.
+- **Unchanged:**
+  - the headline keeps its green italic accent (R-105: black was "too dark");
+  - the "Try it yourself" photo panel stays as approved (R-104).
+
+**Supersedes:** the results bar's glass look (v119, A-195 era) and the v117 channel tile inside the try box. The demo
+still shows which app a message came from.
+
+## A-211 — The app: our colours and look, an interface that leans toward Wispr Flow ^A-211
+
+**Approved (direction):** 2026-10-09, founder: *"we should use our colour and theme, but the interface should be
+leaning towards Wispr, but do not copy everything, take reference."* This follows his recording of Wispr's desktop app
+(*"look how cool and calm, to the point, also easy to use"*; principles in
+`research/ux-patterns/2026-10-09-app-strategy-simple-familiar.md`).
+
+**What specifically:**
+- **Ours:** the homepage's colours, display headline with the green italic phrase, state words, soft-green reply
+  (A-208, A-209, A-210).
+- **Leaning toward Wispr:** the structure and the calm:
+  - a quiet sidebar where every place has a word;
+  - a setup card in the sidebar while setup isn't finished;
+  - content on one white sheet;
+  - plain titles and text tabs;
+  - lists grouped by day;
+  - row actions shown on hover (desk);
+  - one black button per screen;
+  - Results as a few big numbers;
+  - Settings as grouped rows, one line each;
+  - almost nothing moves.
+- **Never:** their layout copied screen for screen, their banners, their purple "Pro" badge, their wording. Reference,
+  not template (CLAUDE.md).
+

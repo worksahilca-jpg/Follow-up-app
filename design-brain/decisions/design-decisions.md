@@ -11435,3 +11435,16 @@ The founder asked to settle the features first, then redesign the phone app once
 2. **Owners who set up before** get asked once (A-218).
 3. **A text message (SMS) to the owner when a customer needs them:** *"Not now then."* Texting stays off. The phone
    buzz and the email do the job. Ask again only if owners miss alerts. (This was part 5's decision 3.)
+
+## 2026-10-10 — Feature answers before the redesign (4 and 5)
+
+4. **Remove the screens that show the same thing twice:** yes (A-219).
+5. **Count which screens owners use:** *"Yes, after a price check."* Checked the same day:
+   - Vercel Web Analytics on Pro is usage-based, $0.03 per 1,000 events, and counts against Pro's monthly usage credit.
+   - Hobby includes 50,000 events a month and can't buy more. (Vercel docs, updated 2026-06.)
+   - FollowUp's traffic is small, so the cost is cents a month.
+   - The app already loads it (`src/components/SiteAnalytics.tsx`, which removes ids from paths), and the privacy page
+     already mentions "basic product analytics (pages visited, features used)".
+   - Only the project's Analytics switch in Vercel is off. The founder turns it on himself, since it's a billing setting.
+
+**All feature questions are answered.** Next: the phone-app redesign, done once.

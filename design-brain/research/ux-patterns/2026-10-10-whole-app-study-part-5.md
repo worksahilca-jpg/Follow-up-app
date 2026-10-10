@@ -5,9 +5,10 @@ this page uses the recommended answers from part 4 and lets him say yes or no to
 
 Page (private): https://claude.ai/artifact/6m6pkjSZK25r9ZkW5umnLt. Each decision has **Yes / No / Not sure** and an
 optional note. Answers save on the page (the page's own database, collection `answers`, one document per decision
-`d01`–`d16`) and are read back from there. **Status: proposed. Nothing below is approved until he answers.** When he
-does, record each yes in `decisions/approved.md`, each no in `decisions/rejected.md`, and date it in
-`decisions/design-decisions.md`.
+`d01`–`d16`) and are read back from there.
+
+**Status (2026-10-10): approved in three lines, see A-215.** The page was too much for him (*"WHAT ??"*). Put as three
+plain lines in chat, he said *"YES"*. Decisions 3, 5, 15 and 16 still need his word when their step comes.
 
 Built from parts 1–4 (same folder). Numbers are production, last 30 days, read-only aggregates.
 

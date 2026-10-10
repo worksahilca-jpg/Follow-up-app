@@ -129,3 +129,12 @@ Not every change needs thirteen steps. **Say which you're skipping and why.**
 | Change to an existing screen | Steps 1, 5, 7, 9, 11, 12, 13 |
 | New screen | All of it |
 | Anything touching trust, permission, or sending | **All of it, no exceptions** |
+
+## Putting a decision to the founder (learned 2026-10-10)
+
+A page with 16 decisions and Yes/No buttons didn't work. His answer was *"WHAT ??"*. The same plan, as three plain
+lines in chat ending in one question, got a *"YES"* straight away.
+
+- Three short lines at most, in his words, not ours. Put the numbers behind them in one sentence above.
+- One question at a time, with a recommendation.
+- Pages and buttons are for looking at drawings, not for making decisions.

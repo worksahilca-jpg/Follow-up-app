@@ -11298,3 +11298,23 @@ comes to you when it needs a decision; the app is where you check, not where you
 
 **Status:** proposed, nothing approved. Each answer gets recorded here and in `approved.md` / `rejected.md` when he
 gives it. Part 6 (design) starts only after that, at step 1 of the build order.
+
+## 2026-10-10 — The whole-app plan approved (A-215)
+
+**Founder**, on the part 5 page: *"WHAT ??"*. The plan was retold in chat as three lines:
+1. Your phone buzzes when a customer needs you.
+2. FollowUp sends the easy replies itself.
+3. The app gets simpler.
+
+He answered *"YES AND WHAT IS THREE"*. Three was explained as:
+- one customer card;
+- Settings with four things up front;
+- doubles removed.
+
+**Recorded:** A-215 says what exactly was approved and what still needs his word (the text-message cost, the offer to
+existing accounts, the remove list, analytics). How to put decisions to him is now in `workflows/design-workflow.md`.
+
+**Next:** part 6, step 1. Draw the phone buzz:
+- setup asks how to reach you;
+- it sends a test;
+- the alert opens the one reply.

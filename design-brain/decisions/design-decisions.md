@@ -11646,3 +11646,28 @@ noise of software drawing. The real check is the founder scrolling the preview o
 scrolls sideways.
 
 **Status:** PR open, waiting for his look and "merge".
+
+## 2026-10-10 — "Keep everything organised, and use the new theme if possible"
+
+**Said:** after build 3's screenshots, *"Cool. We have to keep everything organised too bro and try to use new theme if
+possible."* "Cool" is read as liking build 3; it is not a "merge" (PR #476 waits for that word).
+
+**Found:** the app still wears the old peach-and-blue wash on the reply card. A-209 (approved 2026-10-09) already said
+written replies are soft green (`#F3F8F4`, edge `#DCEBE1`, label `#2A5A47`) and the wash leaves the app. It was never
+built. The homepage's display face is in the app but only titles windows.
+
+**Drawn on the real app (injected, no code changed):** Today, Customers and One customer, before and after.
+- the reply card in A-209's soft green, its label in the deep green;
+- the big titles in the homepage's display face, with "need you" in green italics on Today (A-211's "display headline
+  with the green italic phrase");
+- the white ground stays (A-090); nothing else moves.
+
+**Read of "organised":** one look on every screen, built once in the shared tokens, so later screens (Settings,
+Results) pick it up by themselves. Asked him to confirm with the drawing.
+
+**Answer:** *"Yes, new look"* → A-221. Built in the shared tokens (`--wash`, `--wash-edge`, new `--green-ink`) and
+the one title class, then checked at 390×844 and 1440×900 and in dark mode on Today, Customers, a customer, Results
+and What FollowUp did. Added to PR #476 with build 3.
+
+**Weak spots:** the display face is lighter than the old bold titles, so a long customer name reads quieter. Inbox's
+compact desk header keeps the plain face (a list header, not a page title).

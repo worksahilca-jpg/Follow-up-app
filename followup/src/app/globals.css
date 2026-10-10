@@ -82,13 +82,14 @@
   /* Height of the fixed mobile top bar in components/Sidebar.tsx. */
   --app-header-h: 57px;
 
-  /* The reply card's warm wash (A-043), a soft glass field on it, and the
-     scrim behind a dialog: tokens so the dark theme can redraw them. */
-  --wash:
-    radial-gradient(70% 90% at 12% 10%, rgba(244, 196, 160, 0.9), rgba(244, 196, 160, 0) 70%),
-    radial-gradient(70% 90% at 92% 95%, rgba(196, 210, 228, 0.95), rgba(196, 210, 228, 0) 70%),
-    radial-gradient(50% 70% at 88% 0%, rgba(238, 212, 204, 0.9), rgba(238, 212, 204, 0) 72%), #f3efea;
-  --wash-edge: rgba(10, 10, 10, 0.06);
+  /* The written reply's soft green (A-209, built A-221: the homepage's
+     green, replacing A-043's peach-and-blue wash), the deep green that
+     labels it and colours a title's italic phrase, a soft glass field on
+     it, and the scrim behind a dialog: tokens so the dark theme can redraw
+     them. */
+  --wash: #f3f8f4;
+  --wash-edge: #dcebe1;
+  --green-ink: #2a5a47;
   --glass: rgba(255, 255, 255, 0.55);
   --glass-strong: rgba(255, 255, 255, 0.6);
   --scrim: rgba(0, 0, 0, 0.4);
@@ -142,11 +143,9 @@
     --state-checked: #8a847d;
     --state-done: #4a4642;
     --shadow-box-lift: 0 0 0 1px var(--line), 0 24px 48px -24px rgba(0, 0, 0, 0.6);
-    --wash:
-      radial-gradient(70% 90% at 12% 10%, rgba(150, 92, 52, 0.38), rgba(150, 92, 52, 0) 70%),
-      radial-gradient(70% 90% at 92% 95%, rgba(70, 88, 116, 0.42), rgba(70, 88, 116, 0) 70%),
-      radial-gradient(50% 70% at 88% 0%, rgba(120, 84, 76, 0.3), rgba(120, 84, 76, 0) 72%), #1f1d1b;
-    --wash-edge: rgba(243, 241, 238, 0.08);
+    --wash: #1a231f;
+    --wash-edge: rgba(143, 195, 168, 0.18);
+    --green-ink: #8fc3a8;
     --glass: rgba(255, 255, 255, 0.06);
     --glass-strong: rgba(255, 255, 255, 0.08);
     --scrim: rgba(0, 0, 0, 0.6);
@@ -178,6 +177,7 @@
   --color-slate-soft: var(--slate-soft);
   --color-sage: var(--sage);
   --color-sage-soft: var(--sage-soft);
+  --color-green-ink: var(--green-ink);
   --color-gold: var(--gold);
   --color-gold-soft: var(--gold-soft);
   --color-coral: var(--coral);
@@ -457,10 +457,16 @@ input::placeholder, textarea::placeholder {
   font-weight: 100 900;
   font-display: swap;
 }
+/* Every page title in the app (A-221): the homepage's display face, and
+   its one italic phrase in the deep green ("15 customers need you"). */
 .title-serif {
   font-family: "FU Display", Georgia, "Times New Roman", serif;
   font-weight: 400;
   letter-spacing: -0.015em;
+}
+.title-serif em {
+  font-style: italic;
+  color: var(--green-ink);
 }
 /* Desk: the sheet starts a hair below the top and runs off the right and
    bottom edges, with one rounded corner by the sidebar (Wispr's frame;

@@ -140,7 +140,7 @@ export default function WorkflowsPage() {
       <Link href="/settings" className="text-[13px] text-ink-faint hover:text-ink">
         ← Settings
       </Link>
-      <h1 className="mt-2 text-[30px] leading-[1.12] lg:text-[34px]">Follow-up plans</h1>
+      <h1 className="title-serif mt-2 text-[30px] leading-[1.12] lg:text-[34px]">Follow-up plans</h1>
       {/* The stop-on-reply guarantee (PRODUCT_DIRECTION Rule 3) is said
           here, in the one sentence everyone reads, as drawn (A-066). */}
       <p className="mt-2 max-w-[640px] text-[15px] leading-relaxed text-ink-soft">

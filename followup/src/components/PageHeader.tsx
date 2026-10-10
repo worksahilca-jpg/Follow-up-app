@@ -54,7 +54,7 @@ export function PageHeader({ title, subtitle, back, actions, primary, className 
 
       <div className={"sm:flex sm:items-start sm:justify-between sm:gap-4 " + (back ? "mt-2" : "")}>
         <div className="min-w-0">
-          <h1 className="text-[32px] leading-[1.1]">{title}</h1>
+          <h1 className="title-serif text-[32px] leading-[1.1]">{title}</h1>
           {subtitle && <p className="text-ink-soft mt-1 max-w-xl">{subtitle}</p>}
         </div>
 

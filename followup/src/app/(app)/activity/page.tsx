@@ -93,7 +93,7 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
       <Link href="/settings" className="text-[13px] text-ink-faint hover:text-ink">
         ← Settings
       </Link>
-      <h1 className="mt-2 text-[30px] leading-[1.12] lg:text-[34px]">What FollowUp did</h1>
+      <h1 className="title-serif mt-2 text-[30px] leading-[1.12] lg:text-[34px]">What FollowUp did</h1>
       <p className="mt-2 hidden max-w-[640px] text-[15px] leading-relaxed text-ink-soft lg:block">
         Every message it sent, every time it stopped because someone wrote, and every reply it held for you.
         {weekParts.length > 0 && ` This week: ${weekParts.join(" · ")}.`}

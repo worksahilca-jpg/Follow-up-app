@@ -82,7 +82,7 @@ export default async function NumbersPage() {
           This week · {fmtDay(weekStart)} to {fmtDay(now)}
         </Eyebrow>
       </div>
-      <h1 className="mt-2 text-[28px] leading-[1.12] lg:text-[34px]">
+      <h1 className="title-serif mt-2 text-[28px] leading-[1.12] lg:text-[34px]">
         {heardBack != null ? `Customers heard back in ${formatSpan(heardBack)}.` : "Nobody wrote in this week yet."}
       </h1>
       <p className="mt-2 max-w-[640px] text-[15px] leading-relaxed text-ink-soft">

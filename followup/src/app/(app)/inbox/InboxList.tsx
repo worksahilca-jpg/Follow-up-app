@@ -60,7 +60,7 @@ export default async function InboxList({ searchParams }: { searchParams: Promis
     <div className="app-bleed lg:grid lg:h-screen lg:grid-cols-[380px_minmax(0,1fr)]">
     <div className={(c ? "hidden lg:block " : "") + "lg:overflow-y-auto lg:border-r lg:border-line"}>
       {/* Phone: the big title (InboxPhone). Desktop: the Inbox board's 56px bar with the count. */}
-      <h1 className="text-[32px] leading-[1.1] lg:hidden">Inbox</h1>
+      <h1 className="title-serif text-[32px] leading-[1.1] lg:hidden">Inbox</h1>
       <div className="hidden h-14 items-baseline gap-2 border-b border-line px-4 lg:flex lg:items-center">
         <h1 className="text-[16px] leading-none" style={{ fontWeight: 600, letterSpacing: 0 }}>
           Inbox

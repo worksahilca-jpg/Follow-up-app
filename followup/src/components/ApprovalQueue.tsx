@@ -422,7 +422,7 @@ function ApprovalCard({
       {/* The reply on the wash (A-220): "Your reply, ready" until the owner
           changes it, then theirs (A-089: who wrote it, at a glance). */}
       <div className="mt-2.5 rounded-[14px] px-3 py-[11px] sm:px-4 sm:py-3.5" style={WARM_CARD}>
-        <Eyebrow>{`${mine ? "Edited by you" : "Your reply, ready"}${sendLocked ? " · an admin sends it" : ""}`}</Eyebrow>
+        <Eyebrow green>{`${mine ? "Edited by you" : "Your reply, ready"}${sendLocked ? " · an admin sends it" : ""}`}</Eyebrow>
         {item.textTo && <p className="mt-1 text-[12.5px] text-ink-soft">Text to {item.textTo}</p>}
         {item.draftSubject && <p className="mt-1.5 text-[14px] font-medium">{item.draftSubject}</p>}
         {editing ? (

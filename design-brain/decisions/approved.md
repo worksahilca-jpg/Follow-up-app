@@ -3606,3 +3606,39 @@ is lost."* He chose "Yes, remove the copies".
 - Pipeline as its own page, which becomes a filter in Customers.
 
 **Promised to him:** each one is shown to him before it goes, as part of the phone-app redesign.
+
+## A-220 — The phone app redesign, drawing 1 (compact) ^A-220
+
+**Approved:** 2026-10-10, founder: *"Yes"*, on https://claude.ai/artifact/MuhSgCMAi5KaEJSdBkvkzP (version 2, the compact
+one after R-107). Source: `prototypes/2026-10-10-phone-redesign/`.
+
+**What specifically:**
+- **Today:**
+  - the date, then one number ("3 customers need you", about 34px);
+  - then one decision card: who and the channel, their words, "Your reply, ready" on the wash, Send (the one black
+    button, 44px), Edit, Later;
+  - then a "Next" row. Today never shows a list.
+- **All caught up:** "0 customers need you", a calm check card, and "What FollowUp did today" in three rows.
+- **The one-time question:** "Let FollowUp reply for you?" with the owner's own proof, "Yes, reply for me", "Not now"
+  (A-217, A-218, R-106).
+- **Customers:**
+  - search on top;
+  - groups with counts: Needs you, Ready to book (a Call pill), then Waiting on them, Booked and Everyone as rows;
+  - no State column, no Pipeline page (A-219).
+- **One customer:**
+  - Wants, Budget and When at the top;
+  - the chat as bubbles, with "Sent by FollowUp" under FollowUp's own;
+  - "What FollowUp did" in one line;
+  - one reply box pinned at the bottom.
+- **Settings:** four rows (Where customers write, How replies go out, Alerts, Your business), then More, Help and Sign out.
+- **Results:** one number for the week against last week, then Booked, First reply and Won. Real records only.
+- **Top bar and tabs:** the mark and the name; Help (?) and the bell on the right; four tabs (Today, Customers, Results,
+  Settings).
+- **Sizes:** phone sizes everywhere (R-107).
+
+**Build order (one screen per PR, each shown on phone and computer before "merge"):**
+1. Today
+2. Customers
+3. One customer
+4. Settings
+5. Results

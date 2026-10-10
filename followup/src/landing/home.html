@@ -5169,6 +5169,15 @@ html body #fl-hero .fu-strip #fu-s-closed, html body #fl-hero .fu-strip #fu-s-cl
 html body #fl-hero .fu-strip .fu-strip-tag { background: rgba(255,255,255,.82) !important; color: #2B2B28 !important; box-shadow: none !important }
 html body #fl-hero .fu-strip .fu-film { background: rgba(14,14,12,.28) !important }
 @media (max-width: 700px) { html body #fl-try #fl-ask .fl-go { min-height: 44px; padding: 0 16px } }
+/* Smooth scrolling (2026-10-10, founder: "the animations are not rendering smoothly" on a computer): every looping
+   animation kept running after it left the screen, about 50 at once, 30 of them the blurred messages behind the
+   headline. A part of the page that is off screen now holds its animations still and picks them up again just before
+   it comes back (the script at the end). Nothing on screen looks or moves differently. */
+html body .is-offscreen, html body .is-offscreen * { animation-play-state: paused !important }
+/* And while the page is being scrolled, the four big loops hold still too: the messages rising behind the headline,
+   the language strip and the two tickers. They cost the most to draw, and measured on a computer, holding them took
+   a scroll from about 120 drawn frames to about 190. They carry on the moment scrolling stops. */
+html.is-scrolling body .fl-missed .fm, html.is-scrolling .fu-lt-in, html.is-scrolling body .fu-tk-track, html.is-scrolling body #control #data ul { animation-play-state: paused !important }
 </style>
 <script>
 (function () { var sh = document.querySelector('#control .cb-sheet'); if (!sh || !('IntersectionObserver' in window)) return;
@@ -5223,6 +5232,20 @@ html body #fl-hero .fu-strip .fu-film { background: rgba(14,14,12,.28) !importan
     groups.forEach(function (sel) { [].forEach.call(document.querySelectorAll(sel), function (el) { if (el.getBoundingClientRect().top < innerHeight * .9) return; el.classList.add('rv5'); els.push(el); }); });
     var io2 = new IntersectionObserver(function (es) { es.forEach(function (en) { if (en.isIntersecting) { en.target.classList.add('is-in'); io2.unobserve(en.target); } }); }, { rootMargin: '0px 0px -12% 0px', threshold: .08 });
     els.forEach(function (el) { var sib = el.previousElementSibling; if (!el.classList.contains('is-good')) el.style.setProperty('--rv-d', sib && sib.classList.contains('rv5') ? '.12s' : '0s'); io2.observe(el); });
+  })();
+  /* Off screen, held still (see .is-offscreen above): each section, and the blurred messages behind the headline on
+     their own, since they leave the screen long before the hero does. 300px early, so nothing restarts in view. */
+  (function pauseOffscreen() {
+    if (!('IntersectionObserver' in window)) return;
+    var io3 = new IntersectionObserver(function (es) { es.forEach(function (en) { en.target.classList.toggle('is-offscreen', !en.isIntersecting); }); }, { rootMargin: '300px 0px' });
+    [].forEach.call(document.querySelectorAll('.fl-missed, section, footer'), function (el) { io3.observe(el); });
+  })();
+  (function holdWhileScrolling() {
+    var root = document.documentElement, idle = 0;
+    addEventListener('scroll', function () {
+      if (!idle) root.classList.add('is-scrolling'); else clearTimeout(idle);
+      idle = setTimeout(function () { idle = 0; root.classList.remove('is-scrolling'); }, 180);
+    }, { passive: true });
   })();
 })();
 </script>

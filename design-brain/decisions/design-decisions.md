@@ -11897,3 +11897,5 @@ into that list, and "Won" there now says "all time".
 - "Booked" counts bookings made this week, not calls happening this week.
 **Answer:** *"cool"* (2026-10-10). Recorded in A-220's progress note; merging waits for his "merge" after green
 checks.
+Then: *"i mean we wil bedesigning it too but yes these features are good"*. The features are approved, and the look
+is not final; a design pass on Results is still to come.

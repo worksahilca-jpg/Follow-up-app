@@ -3618,7 +3618,9 @@ its page are removed. Help is the one place to tell us something; old `#feedback
 ## A-220 — The phone app redesign, drawing 1 (compact) ^A-220
 
 **Progress (2026-10-10):** builds 1–4 merged (#473, #474, #476, #480). Build 5 (Results, PR #481) shown on phone and
-computer: *"cool"*. What he saw:
+computer: *"cool"*, then *"i mean we wil bedesigning it too but yes these features are good"*. So what is approved
+is **what Results shows** (the features and numbers below), **not its final look**: the visual design will be redone
+later. What he saw:
 - "N customers answered" big, with one line against last week (green only when up);
 - then Booked, First reply ("Half of your customers heard back faster") and Won, as rows on the phone and three
   columns on the computer;

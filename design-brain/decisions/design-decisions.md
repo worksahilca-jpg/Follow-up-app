@@ -11386,3 +11386,21 @@ existing owner on a phone and on a computer). There were no page errors and no s
 - **A brand-new owner sees two asks on Today:** the alerts card and "One quick question".
 - The iPhone wording still needs a real iPhone.
 - Send is still below the fold on a customer's page; that's step 3.
+
+## 2026-10-10 — The phone buzz is live and works on a real phone
+
+**Merged:** PR #471 (9ca0d5e). The founder then turned alerts on from his own phone. **"Yes it buzzed."**
+
+Production, read-only aggregates:
+- devices with alerts went from 1 to 2;
+- the test delivery is recorded (`lastUsedAt` 2026-10-10 03:37 UTC).
+
+**Learned:**
+- Settings › Alerts turns alerts on but sends no test. Only the setup step and the Today card send one. I first pointed
+  him at Settings, which was wrong, and corrected it.
+- A phone that already has alerts on never sees the Today card, so it has no way to send itself a test.
+- *Proposed, not built:* a "Send a test" link in Settings › Alerts. Ask him first.
+
+**Next in the plan (A-215 order):**
+1. The Help window bug (it opens under the page). A small fix, which needs his OK.
+2. "How it sends": decisions 4 and 5.

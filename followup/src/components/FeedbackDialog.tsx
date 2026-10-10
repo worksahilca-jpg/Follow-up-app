@@ -1,7 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 import { MessageSquare, X } from "lucide-react";
+
+const noSubscribe = () => () => {};
 
 /**
  * "Tell us what broke" — one button in the sidebar, one box, one send.
@@ -9,6 +12,11 @@ import { MessageSquare, X } from "lucide-react";
  * Beta testers have to be able to say what went wrong from any screen,
  * without hunting for it (founder, 2026-09-19: "users can test and we
  * will improve accordingly").
+ *
+ * The box renders into <body>, like AppWindow: the button lives in the
+ * sticky sidebar, and a sticky box keeps whatever is inside it in its own
+ * layer, so a box drawn there was painted under the page (live since the
+ * step 1 frame, PR #470).
  */
 export default function FeedbackDialog({
   label = "Something broke?",
@@ -24,6 +32,8 @@ export default function FeedbackDialog({
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // true in the browser, false while rendering on the server (no <body> to portal into there).
+  const inBrowser = useSyncExternalStore(noSubscribe, () => true, () => false);
 
   async function send() {
     if (!text.trim()) return;
@@ -59,7 +69,7 @@ export default function FeedbackDialog({
         {label}
       </button>
 
-      {open && (
+      {open && inBrowser && createPortal(
         <div
           className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-4"
           style={{ backgroundColor: "var(--scrim)" }}
@@ -111,7 +121,8 @@ export default function FeedbackDialog({
               </>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

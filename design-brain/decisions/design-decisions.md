@@ -11605,4 +11605,44 @@ the blurred messages rising behind the headline, still moving long after they ha
 the top of the page from about 120 to about 190 drawn frames. Over the whole page, though, the gain was lost in the
 noise of software drawing. The real check is the founder scrolling the preview on his own computer.
 
-**Status:** PR open with a preview link, waiting for his check and "merge".
+**Status:** merged (PR #475), 2026-10-10. Live; waiting for his check on his own computer.
+
+## 2026-10-10 — Build 3/5: One customer, built (A-220)
+
+**Built as drawn:**
+- One header: "‹ Customers" back (44px), initials, the name, and one line for the channel and when they first wrote
+  ("Email · first wrote Oct 10").
+- **Wants · Budget · When** in one quiet strip under the name, from the realtor checklist (#466). Shown only when
+  FollowUp knows at least one of them.
+- **The chat as bubbles.** Theirs on the left (white, hairline); the owner's and FollowUp's on the right (black).
+  Who and when sits under each bubble ("Mia · 9:01 AM", "Sent by FollowUp · …", "You · …").
+- **What FollowUp did** in one line under the chat: the last thing it did, and the next check-in when there is one.
+  Hidden when it has done nothing yet.
+- **One reply box pinned at the bottom** (the Claude idea), above the phone's tabs. Type, press the arrow, and it
+  goes, with the same ten seconds to take it back (A-048). The old box's tools stay, one tap away and only when they
+  apply: "Write one for me" on an empty box; Shorter, Warmer, More formal and the customer's language once there is
+  text.
+
+**Calls made while building (for his eyes):**
+- **A reply FollowUp has ready keeps its own card** ("Your reply, ready", the same warm card as Today), and the
+  pinned box is not shown under it. Two places to send from on one screen would be one too many.
+- **The box shows focus on its own rounded edge** (2px black), not a square outline inside it. On a phone a soft fade
+  of the page colour sits behind it, so the page's words don't show through between the buttons.
+- **The box is 16px text**, so a phone doesn't zoom in when it's tapped.
+- On a computer the box sits at the bottom of the chat column and stays there while scrolling. The side column
+  (what FollowUp knows, the facts, Already spoke, Copy booking link, Details) is unchanged.
+
+**Self-review, weak spots said plainly:**
+- **"Why it's here" sits under the reply card on a phone**, not inside it. The reason should be read before Send.
+  It is the side column's first fact, which a phone stacks after the chat. Worth moving into the card in a later
+  pass; not drawn yet, so not changed here.
+- **"State · Waiting on Mia"** still shows in the facts. It repeats what the Customers group already says (A-219's
+  spirit). Left for his call.
+- **The Wants strip needs the realtor checklist.** Other trades never see it yet.
+- The computer gets the phone's column with the side column beside it. No computer drawing exists; it reads fine.
+
+**Checked:** types, lint, the full test suite, a production build, and the running app at 390×844 and 1440×900
+(a customer waiting on them, one with a ready reply, one ready to book, typing with the tools showing). Nothing
+scrolls sideways.
+
+**Status:** PR open, waiting for his look and "merge".

@@ -11269,3 +11269,21 @@ the Search window opened from the sticky sidebar was painted under the page.
   from the website form). Both are true, and it reads oddly.
 - Swiping is gone on the phone.
 
+## 2026-10-10 — Paused: study the whole app before designing more
+
+**Founder**, on the step 2 Today screenshots: *"what is this"*, then, after it was explained: *"no, I guess we need to
+strategise and study our whole app first, bro, then only we can design the software user friendly."*
+
+**Recorded:**
+- Step 2 (Today, one at a time, PR #471) is **not approved**. It stays unmerged and paused.
+- *Inferred, marked inferred:* designing screen by screen, before one picture of the whole app exists, isn't working
+  for him. A screen should only be designed once its place in the whole app is agreed.
+
+**Next:** a whole-app study before any more screens. The plan, put to him first:
+1. A walk through every screen of the real app;
+2. the owner's real jobs;
+3. matching the two;
+4. how familiar apps handle the same jobs;
+5. one strategy page for his yes;
+6. only then design.
+

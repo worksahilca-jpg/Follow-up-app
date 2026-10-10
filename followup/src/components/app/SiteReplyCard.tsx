@@ -153,7 +153,7 @@ export default function SiteReplyCard({
 
   return (
     <div className={"relative overflow-hidden rounded-[20px] p-5" + (dense ? " lg:rounded-[16px] lg:px-5 lg:py-[18px]" : "")} style={WARM_CARD}>
-      <Eyebrow tone="reply">{site.phone ? `Call or reply on ${site.name}` : `Reply on ${site.name}`}</Eyebrow>
+      <Eyebrow>{site.phone ? `Call or reply on ${site.name}` : `Reply on ${site.name}`}</Eyebrow>
       <p className="mt-2 text-[15px] font-medium leading-snug">
         {site.phone ? (
           <>

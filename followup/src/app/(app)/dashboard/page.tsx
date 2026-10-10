@@ -35,8 +35,6 @@ import DailyQuestion from "@/components/DailyQuestion";
 import { todaysQuestion } from "@/lib/dailyQuestionData";
 import { planLine } from "@/lib/comingUp";
 import { findHabitSuggestion } from "@/lib/habits";
-import { languageName } from "@/lib/leadLanguage";
-import { isSocialLeadId } from "@/lib/instagramId";
 
 // "last checked 2 minutes ago" — deliberately coarse (minutes/hours/days,
 // no seconds) since this is a status line, not a live clock.
@@ -150,24 +148,8 @@ export default async function DashboardPage() {
       last: tried ? `Last call ${tried}: no answer.${c.texted ? ` Your text asked for a good time. No reply yet.` : ""}` : null,
     };
   });
-  // The "About" panel beside the one customer on the desk (A-212): where
-  // they came from and when they first wrote, from their own record, said
-  // the way their page says it (src/app/(app)/leads/[id]/page.tsx).
-  const leadById = new Map(leads.map((l) => [l.id, l]));
-  const firstWroteAt = new Intl.DateTimeFormat("en-US", { weekday: "long", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: timezone });
-  const aboutOf = (leadId: string): ApprovalItem["about"] => {
-    const l = leadById.get(leadId);
-    if (!l) return null;
-    const firstIn = l.conversation.find((m) => m.direction === "inbound");
-    return {
-      cameFrom: [l.source, l.email || (l.phone && !isSocialLeadId(l.phone) ? l.phone : null)].filter(Boolean).join(" · ") || null,
-      firstWrote: firstIn ? firstWroteAt.format(new Date(firstIn.date)) : null,
-      language: l.languageRead && l.languageRead.language !== "en" ? languageName(l.languageRead.language) : null,
-    };
-  };
   const approvalItems: ApprovalItem[] = withBasisItems.map((a) => ({
     ...a,
-    about: aboutOf(a.leadId),
     wait: describeWait(a, now),
     waitClause: describeWaitClause(a, now),
     // "FollowUp told Sarah you're on it · 6:40 pm" (A-060), in the
@@ -300,12 +282,12 @@ export default async function DashboardPage() {
       <div className="text-[13px] text-ink-faint">
         {new Intl.DateTimeFormat(undefined, { timeZone: timezone, weekday: "long", month: "long", day: "numeric" }).format(now)}
       </div>
-      {/* The homepage's display headline with its green italic phrase (A-208, A-209). */}
-      <h1 className="title-serif mt-1.5 text-[34px] leading-[1.08] sm:text-[40px]">
+      <h1 className="mt-1.5 text-[30px] sm:text-[34px] leading-[1.1]">
         {needYou > 0 ? (
           <>
-            {`${needYou} ${needYou === 1 ? "customer" : "customers"} `}
-            <em style={{ color: "var(--reply-ink)" }}>{needYou === 1 ? "needs you." : "need you."}</em>
+            {/* The phone's shorter line, as TodayCalmPhone draws it. */}
+            <span className="sm:hidden">{`${needYou} ${needYou === 1 ? "customer needs" : "customers need"} you.`}</span>
+            <span className="hidden sm:inline">{`${needYou} ${needYou === 1 ? "customer is" : "customers are"} waiting on you.`}</span>
           </>
         ) : (
           headline()

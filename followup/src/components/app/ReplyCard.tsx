@@ -233,7 +233,7 @@ export default function ReplyCard({
 
   return (
     <div className={"relative overflow-hidden rounded-[20px] p-5" + (dense ? " lg:rounded-[16px] lg:px-5 lg:py-[18px]" : "")} style={WARM_CARD}>
-      <Eyebrow tone="reply">{label}</Eyebrow>
+      <Eyebrow>{label}</Eyebrow>
       {textTo && <p className="mt-1.5 text-[13px] text-ink-soft">Text to {textTo}</p>}
 
       <AnimatePresence initial={false} mode="wait">

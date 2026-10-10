@@ -1,24 +1,29 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { Check } from "lucide-react";
+import { Check, ChevronRight } from "lucide-react";
+import { ChannelIcon } from "@/components/app/ChannelIcon";
 import { WARM_CARD } from "@/components/app/ReplyCard";
-import { oneQueue, summariseGroups, UNKNOWN_SOURCE_LABEL, WHOLE_QUEUE } from "@/lib/approvalGroups";
+import { isSafeToSendInBulk, oneQueue, summariseGroups, UNKNOWN_SOURCE_LABEL, WHOLE_QUEUE } from "@/lib/approvalGroups";
 import { plainHoldReason } from "@/lib/holdReasons";
-import { Eyebrow } from "@/components/app/canvasBits";
+import { Eyebrow, Initials } from "@/components/app/canvasBits";
+import { ONE_LIST_PAGE_SIZE, nextStep, visibleCount } from "@/lib/queuePaging";
 import { useUndoableSend } from "@/components/useUndoableSend";
 import SiteReplyCard from "@/components/app/SiteReplyCard";
 import type { PendingApproval } from "@/lib/pendingApprovals";
 import SafePileAction from "@/components/SafePileAction";
 import SafePilePeek from "@/components/SafePilePeek";
 import UndoLine from "@/components/UndoLine";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import { MOTION, OPEN_IN_PLACE, RESULT_HOLD_MS } from "@/lib/motion";
 import { fillPriceSlot, hasPriceSlot, slotOf, splitAtPriceSlot } from "@/lib/priceSlot";
 import { RememberPrice } from "@/components/app/RememberPrice";
 import MarkedText from "@/components/app/MarkedText";
 import { dropKeptEdit, keepEdit, readKeptEdit } from "@/lib/keptEdit";
+
+/** How far a phone row must be pulled left before letting go sets it aside (A-095). */
+const SWIPE_FOR_LATER_PX = 96;
 
 /**
  * "Needs your OK" — research/product/2026-09-10-ux-simplification.md
@@ -73,8 +78,6 @@ export type ApprovalItem = PendingApproval & {
   waitClause?: string | null;
   /** When the customer was told the owner is on it, in the business's time (A-060). */
   toldAt?: string | null;
-  /** Facts for the "About" panel beside them on the desk (A-212), worked out on the server. */
-  about?: { cameFrom: string | null; firstWrote: string | null; language: string | null } | null;
 };
 
 const CHANNEL_NAME: Record<string, string> = {
@@ -99,28 +102,71 @@ const CHANNEL_LABEL: Record<string, string> = {
   lead_form: "your Facebook lead form",
 };
 
+/**
+ * True on a phone-width screen. The server has no screen, so it says false
+ * and the phone opens the first card right after hydrating (TodayCalmPhone:
+ * the first customer is open, with the reply in front of the owner).
+ */
+const PHONE_QUERY = "(max-width: 639px)";
+function usePhone(): boolean {
+  return useSyncExternalStore(
+    (onChange) => {
+      const mq = window.matchMedia(PHONE_QUERY);
+      mq.addEventListener("change", onChange);
+      return () => mq.removeEventListener("change", onChange);
+    },
+    () => window.matchMedia(PHONE_QUERY).matches,
+    () => false
+  );
+}
+
 function ApprovalCard({
   item,
   onResolved,
   sendLocked = false,
   laterToday = true,
+  featured = false,
+  mode = "row",
+  selected = false,
+  onSelect,
   onSetAside,
 }: {
   item: ApprovalItem;
+  /** The first customer on Today: opens by itself on a phone (TodayCalmPhone). */
+  featured?: boolean;
   /** Done with this card. `result` is what happened, said for a moment before it leaves (A-048). */
   onResolved: (leadId: string, result: string | null, sent?: boolean) => void;
   /** Only admins send, and this person isn't one (A-041). */
   sendLocked?: boolean;
   /** Whether "Later today" (2pm) is still ahead in the owner's day (A-046). */
   laterToday?: boolean;
+  /**
+   * A-080, one decision per screen. On the desk the list on the left is
+   * plain rows ("row" with `onSelect`), and the one person the owner is
+   * looking at is open on the right ("pane": always open, no row header,
+   * no Close). On a phone a row opens in place, as before (R-015).
+   */
+  mode?: "row" | "pane";
+  /** This row is the one open in the pane. */
+  selected?: boolean;
+  /** The desk row's only job: become the one in the pane. */
+  onSelect?: () => void;
   /** Set aside with Later (or back with Undo), so the list can drop or restore the row. */
   onSetAside?: (leadId: string, until: string | null) => void;
 }) {
   const [busy, setBusy] = useState<"send" | "dismiss" | "talked" | "later" | null>(null);
   const firstName = item.leadName.split(" ")[0] || item.leadName;
+  // The canvas Today (TodayCalm): each person is one quiet row; Review
+  // opens the reply in place.
+  const phone = usePhone();
+  // null until the owner opens or closes it; the featured card starts open on a phone.
+  const [openChoice, setOpen] = useState<boolean | null>(null);
+  const open = mode === "pane" ? true : (openChoice ?? (featured && phone));
+  const routine = isSafeToSendInBulk(item) && !hasPriceSlot(item.draftMessage);
   // "Later" (A-046): set aside until a time, back by itself or as soon as
   // the customer writes. Not "handled", so it never counts toward the day.
   const [laterOpen, setLaterOpen] = useState(false);
+  const swiped = useRef(false);
   const [laterUntil, setLaterUntil] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   // The price blank (A-060): a price question's reply is written with a
@@ -363,18 +409,120 @@ function ApprovalCard({
     );
   }
 
+  // A row says what they wrote. Why the reply waits is said once, on the
+  // open card (A-087), not squeezed onto every row and cut off mid-word.
+  const why = routine
+    ? `“${item.draftMessage.replace(/\s+/g, " ").slice(0, 90)}${item.draftMessage.length > 90 ? "…" : ""}”`
+    : item.leadLastMessage
+      ? `“${item.leadLastMessage.replace(/\s+/g, " ").slice(0, 80)}${item.leadLastMessage.length > 80 ? "…" : ""}”`
+      : (plainReason ?? "A reply is written for you.");
   const channelAndWait = [CHANNEL_NAME[item.leadLastMessageChannel ?? ""] ?? item.source, item.wait?.toLowerCase()].filter(Boolean).join(" · ");
+
+  // The desk row (A-080): the person, their own words, how long they have
+  // waited. Nothing to press but the row itself; Send lives in the pane,
+  // so it is the one black thing on the screen.
+  if (mode === "row" && !phone && onSelect) {
+    const said = item.leadLastMessage
+      ? `“${item.leadLastMessage.replace(/\s+/g, " ").slice(0, 110)}${item.leadLastMessage.length > 110 ? "…" : ""}”`
+      : why;
+    return (
+      <button
+        type="button"
+        onClick={onSelect}
+        aria-current={selected ? "true" : undefined}
+        className={
+          "flex w-full items-start gap-3 rounded-xl border px-[14px] py-3.5 text-left " +
+          (selected ? "border-line bg-card" : "hover:bg-card")
+        }
+        // Inline: globals.css gives every element the line colour, and that
+        // unlayered rule beats the border-transparent utility.
+        style={selected ? undefined : { borderColor: "transparent" }}
+      >
+        <Initials name={item.leadName} size={36} />
+        <span className="min-w-0 flex-1">
+          <span className="flex items-center gap-1.5 text-[15px] font-semibold">
+            {item.leadName}
+            <ChannelIcon channel={item.leadLastMessageChannel} />
+          </span>
+          <span className="mt-0.5 block text-[14px] leading-snug text-ink-soft line-clamp-2">{said}</span>
+        </span>
+        {item.wait && <span className="shrink-0 pt-0.5 text-[13px] text-ink-faint tabular-nums">{item.wait.replace(/^Waiting /, "")}</span>}
+      </button>
+    );
+  }
 
   return (
     <div>
-      {/* Who, where and how long (Today shows one customer at a time, A-209). */}
-      <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
-        <Link href={`/leads/${item.leadId}`} className="text-[20px] font-semibold hover:underline">
-          {item.leadName}
-        </Link>
-        <span className="text-[13px] text-ink-faint">{channelAndWait}</span>
+      {mode === "pane" ? (
+        <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
+          <Link href={`/leads/${item.leadId}`} className="text-[20px] font-semibold hover:underline">
+            {item.leadName}
+          </Link>
+          <span className="text-[13px] text-ink-faint">{channelAndWait}</span>
+        </div>
+      ) : (
+      !open ? (
+        // A closed row on the phone (A-087): the whole row opens it. No black
+        // Review on every row, so Send on the open card is the one black thing.
+        // Swipe left sets the person aside until Later (A-095, from the Macro study): the
+        // phone's own gesture for "not now", under the thumb. Never Send; the Later button
+        // inside the row stays, and the set-aside line that follows has its Undo.
+        <div className="relative overflow-hidden">
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 flex items-center justify-end pr-5 text-[13.5px] text-ink-soft"
+            style={{ background: "var(--card-2)" }}
+          >
+            {/* One word: the row only slides about a third of the way, and the exact time is in the line that follows. */}
+            {busy === "later" ? "…" : "Later"}
+          </div>
+        <motion.button
+          type="button"
+          drag={phone && busy === null ? "x" : false}
+          dragDirectionLock
+          dragConstraints={{ left: 0, right: 0 }}
+          dragElastic={{ left: 0.7, right: 0 }}
+          dragSnapToOrigin
+          onDragStart={() => { swiped.current = true; }}
+          onDragEnd={(_e, info) => {
+            if (info.offset.x < -SWIPE_FOR_LATER_PX) void setLater(laterToday ? "later_today" : "tomorrow_morning");
+            // The click that ends a drag must not also open the row.
+            setTimeout(() => { swiped.current = false; }, 0);
+          }}
+          onClick={() => { if (!swiped.current) setOpen(true); }}
+          className="relative flex w-full items-center gap-3 px-[18px] py-3.5 text-left"
+          style={{ background: "var(--card)", touchAction: "pan-y" }}
+        >
+          <Initials name={item.leadName} size={30} />
+          <span className="min-w-0 flex-1">
+            <span className="flex items-center gap-1.5 text-[14.5px] font-medium">
+              {item.leadName}
+              <ChannelIcon channel={item.leadLastMessageChannel} />
+            </span>
+            <span className="mt-0.5 block text-[13.5px] leading-snug text-ink-soft line-clamp-2">{why}</span>
+          </span>
+          {item.wait && <span className="shrink-0 text-[12.5px] text-ink-faint tabular-nums">{item.wait.replace(/^Waiting /, "")}</span>}
+          <ChevronRight className="h-4 w-4 shrink-0 text-ink-faint" aria-hidden="true" />
+        </motion.button>
+        </div>
+      ) : (
+      <div className="flex items-center gap-3 px-[18px] py-3.5">
+        <Initials name={item.leadName} size={30} />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5 text-[14.5px] font-medium">
+            <Link href={`/leads/${item.leadId}`} className="hover:underline">
+              {item.leadName}
+            </Link>
+            <ChannelIcon channel={item.leadLastMessageChannel} />
+          </div>
+          <p className="mt-0.5 text-[13.5px] text-ink-faint">{channelAndWait}</p>
+        </div>
       </div>
-      <div className="mt-3">
+      ))}
+      <AnimatePresence initial={false}>
+      {open && (
+      // Opens from the row it came from (A-048: open in place).
+      <motion.div key="open" {...OPEN_IN_PLACE} className={mode === "pane" ? "mt-3" : "px-[18px] pb-4 sm:pl-[60px]"}>
 
       {/* What they actually said, before what we're about to reply with —
           approving a draft with no visible context for what it's replying
@@ -387,13 +535,13 @@ function ApprovalCard({
           between the two keeps the same "what they said, then what we'll
           say" distinction without stacking boxes inside boxes. */}
       {item.leadLastMessage && (
-        // Their words sit in a white card, as the board draws them (A-080),
-        // so the message and the reply read as two things.
-        <div className="rounded-[16px] border border-line bg-card px-[18px] py-4 leading-relaxed">
+        // In the pane their words sit in a white card, as the board draws
+        // them (A-080), so the message and the reply read as two things.
+        <div className={mode === "pane" ? "rounded-[16px] border border-line bg-card px-[18px] py-4 leading-relaxed" : "mt-1 leading-relaxed sm:mt-3"}>
           <p className="sr-only">
             {item.leadName.split(" ")[0]} wrote, over {CHANNEL_LABEL[item.leadLastMessageChannel ?? ""] ?? "message"}:
           </p>
-          <p className="whitespace-pre-wrap text-[17px] leading-[1.45] text-ink sm:text-[16px]">{item.leadLastMessage}</p>
+          <p className={"whitespace-pre-wrap leading-[1.45] text-ink " + (mode === "pane" ? "text-[16px]" : "text-[17px] sm:text-[15px]")}>{item.leadLastMessage}</p>
           {/* The 30-minute holding message went (A-060): the customer is not
               waiting in silence, and the owner should know that before
               deciding how fast this one has to be. */}
@@ -425,7 +573,7 @@ function ApprovalCard({
       <div className="mt-3.5 rounded-[20px] p-4 sm:p-5" style={WARM_CARD}>
         {/* Who wrote it, at a glance (A-089, the Granola lesson): FollowUp's words until
             the owner changes them, then theirs. */}
-        <Eyebrow tone="reply">{`${mine ? "Edited by you" : "Written by FollowUp"} · ${sendLocked ? "an admin sends it" : "waits for your OK"}`}</Eyebrow>
+        <Eyebrow>{`${mine ? "Edited by you" : "Written by FollowUp"} · ${sendLocked ? "an admin sends it" : "waits for your OK"}`}</Eyebrow>
         {item.textTo && <p className="mt-1.5 text-[13px] text-ink-soft">Text to {item.textTo}</p>}
         {item.draftSubject && <p className="mt-2 text-[15px] font-medium">{item.draftSubject}</p>}
         {editing ? (
@@ -685,7 +833,14 @@ function ApprovalCard({
       {/* Says what IS true (nothing left) rather than "Cancelled", which
           describes the press instead of the outcome. */}
       {send.cancelled && <p className="mt-1.5 text-xs text-ink-soft">Stopped — nothing was sent.</p>}
-      </div>
+      {mode !== "pane" && (
+        <button type="button" onClick={() => { setOpen(false); setLaterOpen(false); }} className="mt-3 text-[13px] text-ink-faint hover:text-ink-soft">
+          Close
+        </button>
+      )}
+      </motion.div>
+      )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -754,14 +909,26 @@ export default function ApprovalQueue({
   // What still needs a decision: the counts and the "Start with" line
   // never include a card that is on its way out.
   const active = visible.filter((i) => !leaving[i.leadId]);
-  // One customer at a time, on the desk as on the phone (A-209). Null
-  // means "the first one who needs you"; "Next" picks someone else.
+  /**
+   * How many needs-you cards each source has been asked to show.
+   *
+   * Keyed by source name, absent meaning ONE_LIST_PAGE_SIZE — so a source
+   * that appears later (the owner connects Instagram, a first DM lands)
+   * starts folded like every other, with no entry to seed.
+   *
+   * A COUNT and not a set of ids, which is what makes the pile behave
+   * like a queue: resolve the top card and the sixth rises into view by
+   * itself, because slice(0, 5) now lands one further down a shorter
+   * list. A set of "revealed ids" would leave a hole instead.
+   */
+  const [expanded, setExpanded] = useState<Record<string, number>>({});
+  // A-080: on the desk the owner looks at one person at a time, in the
+  // pane on the right. Null means "the first one who needs you".
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  // Set aside with Later: they stay on screen with the set-aside note and
-  // its Undo until the owner moves on with Next.
+  // Set aside with Later from the pane: the row leaves the list, the pane
+  // keeps showing the set-aside note with its Undo, which brings the row back.
   const [setAsideIds, setSetAsideIds] = useState<Set<string>>(new Set());
-  const setAsideHere = useCallback((leadId: string, until: string | null) => {
-    setSelectedId(leadId);
+  const setAsideFromPane = useCallback((leadId: string, until: string | null) => {
     setSetAsideIds((prev) => {
       const next = new Set(prev);
       if (until) next.add(leadId);
@@ -839,24 +1006,32 @@ export default function ApprovalQueue({
   // single routine row and reintroduce the twin buttons.
   const groupsWithRoutine = groups.filter((g) => g.safeToSend.length > 0).length;
   const total = handled + active.length;
-  // Everyone still waiting on a decision, in order: not leaving, not set aside.
-  // (The groups keep the items they were given, so these are the page's ApprovalItems.)
-  const queue = (groups.flatMap((g) => g.needsYou) as ApprovalItem[]).filter((i) => !leaving[i.leadId] && !setAsideIds.has(i.leadId));
-  // The one on screen: the owner's pick while it is still here, else the
-  // first who needs them. A set-aside person stays until the owner moves
-  // on, so Undo is still in reach.
-  const selected = (selectedId && visible.find((i) => i.leadId === selectedId)) || queue[0] || null;
-  // Who comes after them: the next in line, or the first when they were picked from further down.
-  const at = selected ? queue.findIndex((i) => i.leadId === selected.leadId) : -1;
-  const next = queue.slice(at + 1).find((i) => i.leadId !== selected?.leadId) ?? queue.find((i) => i.leadId !== selected?.leadId) ?? null;
+  // The first customer on screen: open in the pane on the desk (A-080),
+  // opened by itself on a phone (TodayCalmPhone).
+  const firstNeedsYou = groups.flatMap((g) => g.needsYou).find((i) => !leaving[i.leadId])?.leadId ?? null;
+  // The one in the pane: the owner's pick while it is still on the list,
+  // else the first who needs them. A set-aside person stays in the pane
+  // until the owner moves on, so Undo is still in reach.
+  const selected =
+    (selectedId && visible.find((i) => i.leadId === selectedId)) ||
+    (firstNeedsYou && visible.find((i) => i.leadId === firstNeedsYou)) ||
+    null;
 
   return (
-    <div className="mt-6 lg:grid lg:grid-cols-[minmax(0,700px)_260px] lg:items-start lg:gap-12">
+    <div className="mt-6 sm:grid sm:grid-cols-[minmax(280px,400px)_minmax(0,1fr)] sm:items-start sm:gap-10 lg:gap-12">
       <div className="min-w-0">
-      {/* Said once, above everything, rather than 48 times on 48 cards. */}
+      {/* Said once, above everything, rather than 48 times on 48 cards.
+          The cards still carry their own sentence — this is the line that
+          stops an owner concluding the product is repeating itself before
+          they have read the second one. */}
       {summary.fromBeforePermission > 0 && (
         <p className="mb-4 text-xs text-ink-soft leading-relaxed">
-          {summary.fromBeforePermission} of the drafts waiting were already there before you turned sending on. FollowUp
+          {/* "of the drafts below", not "of these". This line sits under
+              the "Needs your OK (N)" heading and counts BOTH piles, so
+              "2 of these" under a heading reading (1) read as the screen
+              contradicting itself. Caught by rendering it; the number was
+              right and the word it attached to was not. */}
+          {summary.fromBeforePermission} of the drafts below were already waiting before you turned sending on. FollowUp
           left them for you rather than sending them all at once — send them whenever you&apos;re ready.
         </p>
       )}
@@ -877,94 +1052,150 @@ export default function ApprovalQueue({
         </div>
       )}
 
-      {/* The one customer (A-209): their words, the reply, Send. Keyed by
-          person so Later, Already spoke and the answer blank start fresh. */}
-      {selected &&
-        (leaving[selected.leadId] ? (
-          <p className="flex items-center gap-2 py-2 text-[15px] text-ink-soft" role="status">
-            <Check className="h-4 w-4 shrink-0" aria-hidden="true" />
-            {leaving[selected.leadId]}
-          </p>
-        ) : (
-          <motion.div key={selected.leadId} initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { duration: MOTION.move, ease: MOTION.easeOut } }}>
-            <ApprovalCard item={selected} onResolved={resolve} sendLocked={sendLocked} laterToday={laterToday} onSetAside={setAsideHere} />
-          </motion.div>
-        ))}
+      <LayoutGroup>
+      <div className="flex flex-col gap-6 relative">
+        {groups.map((group) => {
+          // Rows set aside from the pane are off the list until Undo.
+          const rows = group.needsYou.filter((i) => !setAsideIds.has(i.leadId));
+          const shownHere = visibleCount(rows.length, expanded[group.source] ?? ONE_LIST_PAGE_SIZE);
+          const hiddenHere = rows.length - shownHere;
+          // Not counting a card that is saying "Sent to Priya" on its way out.
+          const needHere = rows.filter((i) => !leaving[i.leadId]).length;
+          return (
+          <motion.section key={group.source} layout="position" transition={{ layout: MOTION.layout }}>
+            {/* Dense heading, not a box — see the note above. */}
+            <div className={(groups.length > 1 ? "flex" : "hidden") + " mb-2 flex-wrap items-baseline justify-between gap-2"}>
+              <h3 className="text-sm font-medium">{group.source}</h3>
+              <p className="text-xs text-ink-soft tabular-nums">
+                {needHere > 0 && `${needHere} need${needHere === 1 ? "s" : ""} you`}
+                {needHere > 0 && group.safeToSend.length > 0 && " · "}
+                {group.safeToSend.length > 0 && `${group.safeToSend.length} routine`}
+              </p>
+            </div>
 
-      {/* Then one line: who's next, and everyone else in Customers (A-209). */}
-      {next && (
-        <p className="mt-6 flex flex-wrap items-baseline gap-x-1.5 gap-y-1 text-[14px] text-ink-soft">
-          <span>Next:</span>
-          <button type="button" onClick={() => setSelectedId(next.leadId)} className="font-medium text-ink underline-offset-[3px] hover:underline">
-            {next.leadName}
-          </button>
-          {next.wait && <span className="tabular-nums">· {next.wait.replace(/^Waiting /, "")}</span>}
-          <span aria-hidden>·</span>
-          <Link href="/leads?show=needs" className="underline underline-offset-[3px] hover:text-ink">
-            See all {queue.length}
-          </Link>
-        </p>
-      )}
+            {/* A box on the phone (rows open in place inside it); on the
+                desk the rows are plain and the chosen one is the box (A-080). */}
+            <div className="relative flex flex-col overflow-hidden rounded-2xl border border-line bg-card divide-y divide-[var(--line-2)] sm:overflow-visible sm:rounded-none sm:border-0 sm:bg-transparent sm:divide-y-0">
+              {/* A-048: a finished card folds into what happened, then
+                  leaves, and the cards below slide up into its place
+                  rather than jumping. Position only, so nothing is
+                  stretched; reduced motion skips all of it. */}
+              <AnimatePresence initial={false} mode="popLayout">
+                {rows.slice(0, shownHere).map((item) => (
+                  <motion.div
+                    key={item.leadId}
+                    layout="position"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1, transition: { duration: MOTION.move, ease: MOTION.easeOut } }}
+                    exit={{ opacity: 0, transition: { duration: MOTION.exit, ease: MOTION.easeIn } }}
+                    transition={{ layout: MOTION.layout }}
+                  >
+                    {leaving[item.leadId] ? (
+                      <div className="px-[18px] py-3.5 flex items-center gap-2 text-sm text-ink-soft sm:px-[14px]" role="status">
+                        <Check className="h-4 w-4 shrink-0" aria-hidden="true" />
+                        {leaving[item.leadId]}
+                      </div>
+                    ) : (
+                      <ApprovalCard
+                        item={item}
+                        onResolved={resolve}
+                        sendLocked={sendLocked}
+                        laterToday={laterToday}
+                        featured={item.leadId === firstNeedsYou}
+                        selected={selected?.leadId === item.leadId}
+                        onSelect={() => setSelectedId(item.leadId)}
+                      />
+                    )}
+                  </motion.div>
+                ))}
+              </AnimatePresence>
 
-      {/* Routine drafts: one quiet row per source, sent together on one press. */}
-      {groups
-        .filter((g) => g.safeToSend.length > 0)
-        .map((group) => (
-          <div key={group.source} className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-line px-4 py-3">
-            <p className="text-sm text-ink-soft">
-              {group.safeToSend.length} routine {group.safeToSend.length === 1 ? "draft" : "drafts"}
-              {group.source === WHOLE_QUEUE ? "" : group.source === UNKNOWN_SOURCE_LABEL ? " added by hand" : ` from ${group.source}`}
-              {group.safeToSend[0] && <span className="text-ink"> — top is {group.safeToSend[0].leadName}</span>}
-            </p>
-            {!sendLocked && <SafePileAction count={group.safeToSend.length} source={group.source === WHOLE_QUEUE ? null : group.source} />}
-            <SafePilePeek items={group.safeToSend} />
-          </div>
-        ))}
+              {/* The folded tail. Same row shape as the routine pile
+                  below it — a sentence, the best name in it, and one
+                  control — because they are the same kind of thing: a
+                  count standing in for cards nobody needs on screen yet. */}
+              {hiddenHere > 0 && (
+                <motion.div layout="position" transition={{ layout: MOTION.layout }} className="px-[18px] py-3 flex flex-wrap items-center justify-between gap-3 sm:px-[14px]">
+                  <p className="text-sm text-ink-soft">
+                    {hiddenHere} more {hiddenHere === 1 ? "needs" : "need"} your OK
+                    {rows[shownHere] && (
+                      <span className="text-ink"> — next is {rows[shownHere].leadName}</span>
+                    )}
+                  </p>
+                  <button
+                    onClick={() =>
+                      setExpanded((prev) => ({ ...prev, [group.source]: shownHere + ONE_LIST_PAGE_SIZE }))
+                    }
+                    className="rounded-lg px-3.5 py-1.5 text-sm font-medium border border-line hover:bg-paper"
+                  >
+                    {/* Counted, not assumed: QUEUE_TAIL_TOLERANCE means
+                        one press often reveals more than the page size,
+                        and a button that overstates what it will do is
+                        the kind of small lie this product cannot afford. */}
+                    Show {nextStep(rows.length, shownHere, ONE_LIST_PAGE_SIZE)} more
+                  </button>
+                </motion.div>
+              )}
+
+              {group.safeToSend.length > 0 && (
+                <motion.div layout="position" transition={{ layout: MOTION.layout }} className="px-[18px] py-3 flex flex-wrap items-center justify-between gap-3 sm:px-[14px]">
+                  <p className="text-sm text-ink-soft">
+                    {group.safeToSend.length} routine {group.safeToSend.length === 1 ? "draft" : "drafts"}
+                    {group.source === WHOLE_QUEUE ? "" : group.source === UNKNOWN_SOURCE_LABEL ? " added by hand" : ` from ${group.source}`}
+                    {group.safeToSend[0] && <span className="text-ink"> — top is {group.safeToSend[0].leadName}</span>}
+                  </p>
+                  {!sendLocked && <SafePileAction count={group.safeToSend.length} source={group.source === WHOLE_QUEUE ? null : group.source} />}
+                  {/* Full width, so opening it drops the sample below the
+                      row rather than squeezing it between the sentence
+                      and the button. Closed it is just a link at the end
+                      of the row and costs a line of nothing. */}
+                  <SafePilePeek items={group.safeToSend} />
+                </motion.div>
+              )}
+            </div>
+          </motion.section>
+          );
+        })}
+      </div>
+      </LayoutGroup>
 
       {/* Progress only when there is progress (A-080, the goal-gradient
-          rule), desk only, once the day has five or more people in it. */}
-      {total >= 5 && handled > 0 && (
-        <p className="mt-4 hidden text-[13px] text-ink-faint tabular-nums sm:block">
+          rule): "3 of 7 handled" at the foot, desk only, and only once
+          the day has five or more people in it. Below that the list
+          itself is the progress. */}
+      {total >= 5 && (
+        <p className="mt-5 hidden text-[13px] text-ink-faint tabular-nums sm:block">
           {handled} of {total} handled today
           {setAside > 0 && ` · ${setAside} set aside for later`}
         </p>
       )}
       </div>
 
-      {/* Beside them on the desk: a few facts about this customer (A-212). */}
-      {selected && !leaving[selected.leadId] && <AboutPanel item={selected} />}
+      {/* The pane (A-080): the one person the owner is looking at, their
+          words, the reply, Send. Desk only; on a phone the row opens in
+          place (R-015). Keyed by person so Later, We talked and the price
+          blank start fresh each time. */}
+      {/* It stays in view while the list scrolls (founder, 2026-10-05: "it
+          should float, otherwise when I scroll down and click on another
+          lead I need to scroll up"). Below lg the fixed top bar is 80px. */}
+      <div className="hidden min-w-0 sm:sticky sm:top-24 sm:block sm:max-h-[calc(100vh-7rem)] sm:overflow-y-auto lg:top-8 lg:max-h-[calc(100vh-4rem)]">
+        {selected && (leaving[selected.leadId] ? (
+          <p className="flex items-center gap-2 text-sm text-ink-soft" role="status">
+            <Check className="h-4 w-4 shrink-0" aria-hidden="true" />
+            {leaving[selected.leadId]}
+          </p>
+        ) : (
+          <ApprovalCard
+            key={selected.leadId}
+            item={selected}
+            mode="pane"
+            onResolved={resolve}
+            sendLocked={sendLocked}
+            laterToday={laterToday}
+            onSetAside={setAsideFromPane}
+          />
+        ))}
+      </div>
     </div>
-  );
-}
-
-/**
- * "About Ivy" beside the one customer on the desk (A-212): only facts the
- * card doesn't already say (say each fact once), and their page.
- */
-function AboutPanel({ item }: { item: ApprovalItem }) {
-  const first = item.leadName.split(" ")[0] || item.leadName;
-  const a = item.about;
-  const facts: [string, string | null][] = [
-    ["Came from", a?.cameFrom ?? null],
-    ["First wrote", a?.firstWrote ?? null],
-    ["Writes in", a?.language ?? null],
-  ];
-  return (
-    <aside aria-label={`About ${first}`} className="hidden rounded-[16px] bg-card-2 p-5 lg:block">
-      <h2 className="text-[15px] font-semibold">About {first}</h2>
-      <dl className="mt-3 grid gap-3">
-        {facts
-          .filter(([, v]) => v)
-          .map(([k, v]) => (
-            <div key={k}>
-              <dt className="text-[12.5px] text-ink-faint">{k}</dt>
-              <dd className="mt-0.5 break-words text-[14px] leading-snug">{v}</dd>
-            </div>
-          ))}
-      </dl>
-      <Link href={`/leads/${item.leadId}`} className="mt-4 inline-block text-[13.5px] underline underline-offset-[3px] hover:text-ink-soft">
-        Open {first}&apos;s page
-      </Link>
-    </aside>
   );
 }

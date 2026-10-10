@@ -11729,3 +11729,31 @@ numbers. The real check is his laptop. The frosted glass is left as it is: remov
 his call.
 
 **Status:** PR open, waiting for "merge".
+
+## 2026-10-10 — Landing page on a phone, the phone way (drawn)
+
+**Asked:** *"What about the landing page for mobile bro"*, after the app got its own phone layout (A-222).
+
+**Found (390×844, page at rest):** most sections already read as phone pages (Two endings, What it does, Your control,
+Your data, the close, the footer). The hero doesn't:
+- **The first screen breaks R-021** ("on a phone, the first screen has to show FollowUp doing its job"). The live demo
+  starts on the second screen, under the example-week numbers and three ticks.
+- **The second screen is the computer's demo squeezed in:** the dark photo stage, the "From" logos, the river of
+  messages, a mostly empty chat window, the five-step dots, and Example · Pause.
+
+**Drawn on the real page (injected, no code changed):**
+- headline and the one line under it;
+- then FollowUp's chat window live: the customer's question, then the reply writing itself, on the plain page with no
+  dark photo;
+- then "Try it yourself" with two of the three example questions;
+- then the three ticks and the example week, moved below;
+- on a phone only: no photo stage, no river, no step dots, no Pause. The computer is unchanged.
+
+**Weak spots:** the language strip ("Ask in your language") is left out on phones in this drawing. The example-week
+numbers move off the first screen.
+
+**Answer:** *"Yes, build it"* → A-223. Built in `home.html`: a phone-only script moves the chat window and Try it under
+the headline once at load and sets `html.fl-phone-on`; the styles key on that class. The demo's hop from the "From" row
+now skips when that row isn't drawn. Checked at 390×844 and 360×740 (chat in view on the first screen; on 360×740 the
+Try it box sits just under the fold), at 768 and 1440 (unchanged), the demo running on its own, and Try it answering a
+typed question. No errors, nothing scrolls sideways. Added to PR #477.

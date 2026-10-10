@@ -3392,7 +3392,7 @@ html[data-col="f"] .fl-stage .fl-ask { margin-top: 12px }
   function hop(it) {
     if (reduce || !document.body.animate) return 0;
     var src = document.querySelector('.fl-srcs [data-ch="' + it.ch + '"]'), L = lens.getBoundingClientRect();
-    if (!src || L.bottom < 0 || L.top > innerHeight) return 0;
+    if (!src || !src.getClientRects().length || L.bottom < 0 || L.top > innerHeight) return 0;
     src.classList.remove('is-new'); void src.offsetWidth; src.classList.add('is-new');
     setTimeout(function () { src.classList.remove('is-new'); }, 1500);
     setStatus('New message', 'is-busy');
@@ -5180,6 +5180,26 @@ html body .is-offscreen, html body .is-offscreen * { animation-play-state: pause
    the language strip and the two tickers. They cost the most to draw, and measured on a computer, holding them took
    a scroll from about 120 drawn frames to about 190. They carry on the moment scrolling stops. */
 html.is-scrolling body .fl-missed .fm, html.is-scrolling .fu-lt-in, html.is-scrolling body .fu-tk-track, html.is-scrolling body #control #data ul { animation-play-state: paused !important }
+
+/* A-223: the phone's own first screen (R-021: on a phone the first screen shows FollowUp at work). The chat and Try it
+   sit right under the headline on the plain page; the computer's stage (photo, river of messages, step dots, Pause)
+   is not drawn on a phone. Keyed on a class the script below sets once, so a turned phone keeps one layout. */
+html.fl-phone-on #fl-stage { display: none }
+html.fl-phone-on #fl-hero .fl-head { padding-bottom: 0 }
+html.fl-phone-on .fl-phone { margin: 22px auto 0; max-width: 520px; display: grid; gap: 16px }
+html.fl-phone-on body .fl-phone #fl-lens { position: relative; z-index: 1; top: auto; left: auto; width: auto; margin: 0; min-height: 0; box-shadow: 0 0 0 1px var(--line), 0 18px 40px -26px rgba(10,10,10,.3) }
+html.fl-phone-on body .fl-phone #fl-try { position: static; top: auto; margin: 0; padding: 0; transform: none; background: none }
+html.fl-phone-on body .fl-phone #fl-try .fl-try-l, html.fl-phone-on body .fl-phone #fl-try .fl-try-l b { color: var(--ink) !important; text-shadow: none !important }
+html.fl-phone-on body .fl-phone #fl-try .fl-try-l span { color: var(--ink-soft) !important }
+html.fl-phone-on body .fl-phone #fl-ask { margin-top: 10px; background: #fff; box-shadow: 0 0 0 1px var(--line), 0 14px 30px -20px rgba(10,10,10,.35) }
+html.fl-phone-on body .fl-phone #fl-ask:focus-within { box-shadow: 0 0 0 2.5px var(--ink), 0 14px 30px -20px rgba(10,10,10,.35) }
+html.fl-phone-on body .fl-phone #fl-try .fl-chips { margin-top: 10px; background: none !important; box-shadow: none !important; border: 0 !important }
+html.fl-phone-on body .fl-phone #fl-try .fl-chips > span, html.fl-phone-on body .fl-phone #fl-try .fu-langs { display: none }
+html.fl-phone-on body .fl-phone #fl-try .fl-chip { background: #fff !important; color: var(--ink) !important; box-shadow: 0 0 0 1px var(--line) !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important }
+html.fl-phone-on body .fl-phone #fl-try .fl-chip:nth-of-type(n+3) { display: none }
+html.fl-phone-on body .fl-phone #fl-try .fl-chip:focus-visible { outline-color: var(--ink) }
+html.fl-phone-on #fl-hero .fu-trust { margin-top: 26px }
+html.fl-phone-on #fl-hero .fu-strip { margin-top: 18px }
 </style>
 <script>
 (function () { var sh = document.querySelector('#control .cb-sheet'); if (!sh || !('IntersectionObserver' in window)) return;
@@ -5250,6 +5270,23 @@ html.is-scrolling body .fl-missed .fm, html.is-scrolling .fu-lt-in, html.is-scro
     }, { passive: true });
   })();
 })();
+</script>
+<script>
+  (function phoneHero() {
+    // A-223 (R-021): on a phone, FollowUp at work on the first screen: the chat, then Try it, under the headline.
+    // The demo's own scripts keep running; these are the same elements, moved. Once, at load.
+    if (!window.matchMedia || !matchMedia('(max-width: 640px)').matches) return;
+    var head = document.querySelector('#fl-hero .fl-head'), lens = document.getElementById('fl-lens'), tr = document.getElementById('fl-try');
+    if (!head || !lens || !tr || !head.parentNode) return;
+    var trust = head.querySelector('.fu-trust'), strip = head.querySelector('.fu-strip');
+    var box = document.createElement('div'); box.className = 'fl-phone';
+    head.parentNode.insertBefore(box, head.nextSibling);
+    box.appendChild(lens); box.appendChild(tr);
+    // The ticks and the example week follow the demo, outside the headline block (which fades as you scroll).
+    if (trust) box.parentNode.insertBefore(trust, box.nextSibling);
+    if (strip) box.parentNode.insertBefore(strip, (trust || box).nextSibling);
+    document.documentElement.classList.add('fl-phone-on');
+  })();
 </script>
 </body>
 </html>

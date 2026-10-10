@@ -3552,8 +3552,12 @@ him. Three plain lines in chat did. Put decisions to him as a few short lines, o
   - "Turn on alerts" and "Not now".
 - **iPhone in Safari:** the three Home Screen taps.
 - **The test:** "Did your phone buzz?", with "Yes, it buzzed" and "No buzz? Send another test".
-- **On a computer:** hand over to the phone with "Waiting for your phone…", or "Email me the link instead". The QR code
-  waits for his OK on adding a library; asked the same day.
+- **On a computer:** hand over to the phone with "Waiting for your phone…", or "Email me the link instead". **The QR
+  code** was approved the same day: asked "code ok or just email", he answered *"OKAY"*, taken as yes to the
+  recommendation. It uses `uqr` 0.1.3 (MIT, no dependencies, pinned exactly; npm audit shows 0 production
+  vulnerabilities).
+- **"Not now" on Today's card** hides it on that device for 14 days, then it comes back once. This was my default,
+  not his call; change it if he says so.
 - **Owners who signed up before:** one card on Today, with "Turn on alerts" and "Not now".
 - **The alert opens the customer with the reply ready.** The Home Screen start page goes to the app, not the
   website.

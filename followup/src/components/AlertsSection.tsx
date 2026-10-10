@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Switch from "@/components/Switch";
+import { isStandalone, readPushState, turnOffPush, turnOnPush, type PushState } from "@/lib/pushDevice";
 
 /**
  * Settings → Alerts: how FollowUp reaches an owner who is not in the app
@@ -22,43 +23,6 @@ type AlertStatus = {
   email: { available: boolean; enabled: boolean };
   push: { available: boolean; publicKey: string | null };
 };
-
-// What this browser can do, found out after mount (it depends on window).
-type PushState = "checking" | "off" | "on" | "blocked" | "needs-home-screen" | "unsupported";
-
-/** VAPID keys travel as base64url; PushManager wants the raw bytes. */
-function keyBytes(base64url: string): Uint8Array<ArrayBuffer> {
-  const padded = (base64url + "=".repeat((4 - (base64url.length % 4)) % 4)).replace(/-/g, "+").replace(/_/g, "/");
-  const raw = atob(padded);
-  const out = new Uint8Array(new ArrayBuffer(raw.length));
-  for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
-  return out;
-}
-
-function sameKey(a: ArrayBuffer | null | undefined, b: Uint8Array): boolean {
-  if (!a) return false;
-  const x = new Uint8Array(a);
-  return x.length === b.length && x.every((v, i) => v === b[i]);
-}
-
-function isIOS(): boolean {
-  // iPadOS reports itself as a Mac; the touch points give it away.
-  return /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-}
-
-function isStandalone(): boolean {
-  return window.matchMedia?.("(display-mode: standalone)").matches || (navigator as Navigator & { standalone?: boolean }).standalone === true;
-}
-
-async function postSubscription(sub: PushSubscription): Promise<void> {
-  const res = await fetch("/api/alerts/push", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(sub.toJSON()),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok || !data.success) throw new Error(data.message ?? "Couldn't turn notifications on — try again.");
-}
 
 export default function AlertsSection() {
   const [status, setStatus] = useState<AlertStatus | null>(null);
@@ -81,29 +45,11 @@ export default function AlertsSection() {
   // Browser-only facts, read once the page has hydrated.
   useEffect(() => {
     let cancelled = false;
-    (async () => {
-      const standaloneNow = isStandalone();
-      const supported = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
-      let next: PushState;
-      if (!supported) {
-        // Safari on iPhone only offers notifications to a site opened from
-        // the Home Screen; in a normal tab the APIs are simply absent.
-        next = isIOS() && !standaloneNow ? "needs-home-screen" : "unsupported";
-      } else if (Notification.permission === "denied") {
-        next = "blocked";
-      } else {
-        const reg = await navigator.serviceWorker.getRegistration("/").catch(() => undefined);
-        const sub = await reg?.pushManager.getSubscription().catch(() => null);
-        next = sub && Notification.permission === "granted" ? "on" : "off";
-        // Quietly re-send what this browser holds, in case the server
-        // dropped it (the push service said it was gone) or it was last
-        // registered under someone else on a shared computer.
-        if (sub && next === "on") postSubscription(sub).catch(() => {});
-      }
+    readPushState().then((next) => {
       if (cancelled) return;
-      setStandalone(standaloneNow);
+      setStandalone(isStandalone());
       setPushState(next);
-    })();
+    });
     return () => {
       cancelled = true;
     };
@@ -132,32 +78,13 @@ export default function AlertsSection() {
     }
   }
 
-  async function turnOnPush() {
+  async function turnOn() {
     const publicKey = status?.push.publicKey;
     if (!publicKey) return;
     setPushBusy(true);
     setPushError(null);
     try {
-      // First, before any other await: Safari only shows the permission
-      // prompt when it is asked for directly inside the tap.
-      const permission = await Notification.requestPermission();
-      if (permission !== "granted") {
-        setPushState(permission === "denied" ? "blocked" : "off");
-        return;
-      }
-      const reg = await navigator.serviceWorker.register("/sw.js");
-      await navigator.serviceWorker.ready;
-      const key = keyBytes(publicKey);
-      let sub = await reg.pushManager.getSubscription();
-      // A subscription made under an older key can never be delivered to;
-      // replace it rather than send the server something dead.
-      if (sub && !sameKey(sub.options.applicationServerKey, key)) {
-        await sub.unsubscribe();
-        sub = null;
-      }
-      if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key });
-      await postSubscription(sub);
-      setPushState("on");
+      setPushState((await turnOnPush(publicKey)).state);
     } catch (err) {
       setPushError(err instanceof Error && err.message ? err.message : "Couldn't turn notifications on — try again.");
     } finally {
@@ -165,24 +92,11 @@ export default function AlertsSection() {
     }
   }
 
-  async function turnOffPush() {
+  async function turnOff() {
     setPushBusy(true);
     setPushError(null);
     try {
-      const reg = await navigator.serviceWorker.getRegistration("/");
-      const sub = await reg?.pushManager.getSubscription();
-      if (sub) {
-        // Server first: if this fails the device is still subscribed and
-        // still says so, rather than looking off while alerts keep coming.
-        const res = await fetch("/api/alerts/push", {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ endpoint: sub.endpoint }),
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok || !data.success) throw new Error(data.message ?? "Couldn't turn notifications off — try again.");
-        await sub.unsubscribe();
-      }
+      await turnOffPush();
       setPushState("off");
     } catch (err) {
       setPushError(err instanceof Error && err.message ? err.message : "Couldn't turn notifications off — try again.");
@@ -224,7 +138,7 @@ export default function AlertsSection() {
                 <p className="text-sm">FollowUp notifications are on for this device.</p>
                 <button
                   type="button"
-                  onClick={turnOffPush}
+                  onClick={turnOff}
                   disabled={pushBusy}
                   className="shrink-0 rounded-full border px-3.5 py-2 text-sm font-medium disabled:opacity-60"
                   style={{ borderColor: "var(--line)" }}
@@ -243,7 +157,7 @@ export default function AlertsSection() {
               <>
                 <button
                   type="button"
-                  onClick={turnOnPush}
+                  onClick={turnOn}
                   disabled={!canTurnOn || pushBusy}
                   aria-busy={pushBusy}
                   // text-left: at 390px the label wraps, and centred it read

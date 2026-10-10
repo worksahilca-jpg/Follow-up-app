@@ -11757,3 +11757,22 @@ the headline once at load and sets `html.fl-phone-on`; the styles key on that cl
 now skips when that row isn't drawn. Checked at 390×844 and 360×740 (chat in view on the first screen; on 360×740 the
 Try it box sits just under the fold), at 768 and 1440 (unchanged), the demo running on its own, and Try it answering a
 typed question. No errors, nothing scrolls sideways. Added to PR #477.
+
+## 2026-10-10 — The phone's first-screen example: three versions (after R-108)
+
+**Said:** *"the example below never lose a lead one looks odd"* → "The example itself" → "Draw me 2-3 versions". The
+merge of PR #477 is held until he picks.
+**Drawn on the real page (390×844, injected), all in everyday English:**
+- **A · Two notifications:** Marcus on WhatsApp ("Can someone fix a leaking tap today?"), then "FollowUp replied for
+  you" with the reply and "✓ Answered in 1 min". It has the closing section's notification look. In motion, the reply
+  would arrive about a second after the question.
+- **B · Plain chat:** "Lena wrote at 9:15 PM", her question, FollowUp's ink reply, and "Sent by FollowUp · 1 min later".
+  There's no app-window bar.
+- **C · Three at a glance:** a plumber, a salon and a realtor, each with a question and a short reply, in one card.
+**My pick:** A. It reads in one glance, says who did the work and how fast, matches the rest of the page, and leaves
+Try it on the first screen.
+**Answer:** *"i dont know"*. I chose A as the default and am building it, to be shown on a phone before "merge". B or C
+can still replace it.
+Then: *"chose the notification and lets build other stuff"* → A is the pick (A-223 updated). Built and checked at
+390×844 and 360×740: notifications cycle at one height, a tapped or typed question shows in the demo window, and the
+example returns afterwards.

@@ -3710,4 +3710,8 @@ landing now (two screens) against the phone way (one screen), and chose *"Yes, b
 - It keeps R-021 ("on a phone, the first screen shows FollowUp doing its job") and A-186's "try-it box on the first
   screen".
 - The same elements are moved once at load; the demo's own script keeps running them.
+- **The example (after R-108), founder 2026-10-10: *"chose the notification and lets build other stuff"*:** two
+  notifications in everyday English. A customer writes (Marcus, Lena or Priya, in turn), then "FollowUp replied for
+  you" with the reply and "✓ Answered in 1 min". It keeps one fixed height. The demo window shows only for the
+  visitor's own Try it question, then gives way to the notifications again.
 

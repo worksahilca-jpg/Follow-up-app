@@ -11810,3 +11810,4 @@ and the green accents are unchanged. The pictures pair each screen side by side:
 does, Your data / the close, and the footer, on desktop and on a phone. **Weak spots:** the demo and the footer are
 mostly photo, so little changes there. The moonstone ground is close to the "cool grey" grounds of R-004, which were
 not objected to (only the accents were). Waiting for his pick.
+**Answer:** *"Keep now (Recommended)"* → R-110. The current colours stay.

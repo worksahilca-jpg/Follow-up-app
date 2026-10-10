@@ -579,7 +579,9 @@ html[data-col="f"] .fl-fact b { color: #CDEFD9 }
 .t-col::before { box-shadow: 0 0 0 6px #EDE8DE }
 .t-card.w { background: var(--card-lit); box-shadow: 0 0 0 1.5px #145A3E, 0 18px 32px -20px rgba(9,51,34,.35) }
 /* grain: a faint paper texture over the whole page, like a printed letter */
-body::after { content: ""; position: fixed; inset: 0; z-index: 90; pointer-events: none; background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); background-size: 220px 220px; opacity: .09; mix-blend-mode: multiply }
+/* The paper grain (A-115). Black dots on clear, so a plain overlay draws the same pixels as
+   multiply did; multiply made the browser re-blend the whole screen on every scroll frame. */
+body::after { content: ""; position: fixed; inset: 0; z-index: 90; pointer-events: none; background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); background-size: 220px 220px; opacity: .09 }
 @media (prefers-reduced-transparency: reduce) { body::after { display: none } }
 
 /* ---- theme v3: a good green (lighter, fresher, not the heavy dark one), with sky and apricot back as light touches ---- */

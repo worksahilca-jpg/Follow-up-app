@@ -11706,3 +11706,26 @@ The computer is unchanged. Added to PR #476.
 **Weak spots:** a long thread pushes a ready reply below the fold on a phone, the same as before. Swipe-down to close
 the sheet isn't built (× or a tap outside closes it). On a tablet the action bar is centred while the card is aligned
 left.
+
+## 2026-10-10 — Landing page: the real cause of the scroll lag (round 2)
+
+**Reported again after #475 went live:** *"I still feel lag when I am scrolling the landing page… I don't know if it is my
+laptop's issue or it is not able to render it properly."*
+
+**Measured (1440×900, a scripted wheel scroll from top to bottom):**
+- **The page's own code is not the problem.** Even with the processor slowed 4×, scripts, style and layout keep every
+  frame at about 16.7 ms.
+- **The cost is in drawing the frame.** The paper grain (`body::after`, A-115) is a full-screen layer set to
+  `mix-blend-mode: multiply`. That made the browser re-blend every pixel of the screen on every scroll frame. It
+  accounted for about 45% of the drawing work (about 2.1 s down to about 1.15 s over the same scroll). The 48 frosted-
+  glass panels (`backdrop-filter`) are the next biggest cost, about another 28% in this test.
+
+**Changed:** the grain's blend mode only. The grain is black dots on clear, and for black, multiply and a plain overlay
+give the same pixels. Checked pixel by pixel at four scroll positions: the largest difference is 1 level out of 255. So
+the look is unchanged (A-115 stands).
+
+**Honest about the measurement:** this machine draws in software, without a graphics card, so these are relative
+numbers. The real check is his laptop. The frosted glass is left as it is: removing it would change the look, so that's
+his call.
+
+**Status:** PR open, waiting for "merge".

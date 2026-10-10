@@ -205,7 +205,7 @@ export default function ReplyCard({
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1, transition: { duration: MOTION.move, ease: MOTION.easeOut } }}
-        className="rounded-[20px] border border-line bg-card p-5"
+        className="rounded-[18px] border border-line bg-card p-3.5 sm:p-5"
         role="status"
       >
         {done.kind === "skipped" ? (
@@ -227,12 +227,12 @@ export default function ReplyCard({
     );
   }
 
-  // Who wrote it, at a glance (A-089, the Granola lesson): FollowUp's words until the owner changes them.
-  const author = mine ? "Edited by you" : "Written by FollowUp";
-  const label = waiting ? `${author} · waits for your OK` : draft ? author : "Write a reply";
+  // Who wrote it, at a glance (A-089): FollowUp's words until the owner changes them. The same words as Today's card (A-220).
+  const author = mine ? "Edited by you" : "Your reply, ready";
+  const label = draft ? author : "Write a reply";
 
   return (
-    <div className={"relative overflow-hidden rounded-[20px] p-5" + (dense ? " lg:rounded-[16px] lg:px-5 lg:py-[18px]" : "")} style={WARM_CARD}>
+    <div className={"relative overflow-hidden rounded-[18px] p-3.5 sm:p-5" + (dense ? " lg:rounded-[16px] lg:px-5 lg:py-[18px]" : "")} style={WARM_CARD}>
       <Eyebrow>{label}</Eyebrow>
       {textTo && <p className="mt-1.5 text-[13px] text-ink-soft">Text to {textTo}</p>}
 
@@ -293,7 +293,7 @@ export default function ReplyCard({
           </div>
         </motion.div>
       ) : (
-        <p key="read" className={"mt-2.5 whitespace-pre-wrap text-base leading-relaxed" + (dense ? " lg:mt-2 lg:text-[15px] lg:leading-normal" : "")}>
+        <p key="read" className={"mt-2 whitespace-pre-wrap text-[14px] leading-[1.45] sm:text-[15px]" + (dense ? " lg:mt-2 lg:leading-normal" : "")}>
           {needsPrice
             ? splitAtPriceSlot(text).map((part, i) =>
                 i === 0 ? (
@@ -385,14 +385,14 @@ export default function ReplyCard({
       ) : (
       <>
       {undoable.cancelled && <p className="mt-3 text-[13px] text-ink-soft">Stopped. Nothing went to {first}.</p>}
-      <div className={"mt-4 flex gap-2.5" + (dense ? " lg:mt-3.5 lg:items-center lg:gap-2" : "")}>
+      <div className={"mt-3 flex gap-2" + (dense ? " lg:mt-3.5 lg:items-center" : "")}>
         {!sendLocked && (
           <button
             type="button"
             onClick={send}
             disabled={busy !== null || undoable.busy || !canSend}
             className={
-              "h-[52px] flex-1 rounded-full text-base font-semibold disabled:opacity-60 sm:flex-none sm:px-8" +
+              "h-11 flex-1 rounded-full text-[15px] font-semibold disabled:opacity-60 sm:flex-none sm:px-8" +
               (dense ? " lg:h-[38px] lg:px-4 lg:text-[14px]" : "")
             }
             style={{ background: "var(--accent)", color: "var(--on-accent)" }}
@@ -405,7 +405,7 @@ export default function ReplyCard({
             type="button"
             onClick={() => setEditing(true)}
             disabled={busy !== null}
-            className={"h-[52px] w-24 rounded-full border text-base font-medium" + (dense ? " lg:h-[38px] lg:w-auto lg:px-4 lg:text-[14px] lg:font-semibold" : "")}
+            className={"h-11 w-24 rounded-full border text-[14px] font-medium" + (dense ? " lg:h-[38px] lg:w-auto lg:px-4 lg:font-semibold" : "")}
             style={{ borderColor: "var(--line-strong)", background: "var(--glass)" }}
           >
             Edit
@@ -416,7 +416,7 @@ export default function ReplyCard({
             type="button"
             onClick={skip}
             disabled={busy !== null}
-            className={"h-[52px] px-3 text-sm text-ink-soft disabled:opacity-60" + (dense ? " lg:h-[38px] lg:px-2.5 lg:text-[14px]" : "")}
+            className={"h-11 px-3 text-[13.5px] text-ink-soft disabled:opacity-60" + (dense ? " lg:h-[38px] lg:px-2.5" : "")}
           >
             {busy === "skip" ? "…" : "Don't send"}
           </button>

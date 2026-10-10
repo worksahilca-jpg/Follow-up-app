@@ -21,109 +21,109 @@ const I = {
 };
 const F = { soft: "var(--ink-soft)", faint: "var(--ink-faint)", line: "var(--line)", card: "var(--card)", card2: "var(--card-2)", ink: "var(--ink)", sage: "var(--sage)", paper: "var(--paper)" };
 
-const top = (right = true) => `<header style="height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 20px">
-  <span style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:17px;letter-spacing:-0.01em"><img src="/brand/png/followup-symbol-128.png" width="22" height="22" alt="">FollowUp</span>
-  ${right ? `<span style="display:flex;gap:6px;color:${F.ink}"><span style="width:40px;height:40px;display:grid;place-items:center;border-radius:999px">${ic(I.help, 21)}</span><span style="width:40px;height:40px;display:grid;place-items:center;border-radius:999px">${ic(I.bell, 21)}</span></span>` : ""}
+const top = (right = true) => `<header style="height:50px;display:flex;align-items:center;justify-content:space-between;padding:0 16px">
+  <span style="display:flex;align-items:center;gap:7px;font-weight:600;font-size:15.5px;letter-spacing:-0.01em"><img src="/brand/png/followup-symbol-128.png" width="19" height="19" alt="">FollowUp</span>
+  ${right ? `<span style="display:flex;gap:6px;color:${F.ink}"><span style="width:40px;height:40px;display:grid;place-items:center;border-radius:999px">${ic(I.help, 19)}</span><span style="width:40px;height:40px;display:grid;place-items:center;border-radius:999px">${ic(I.bell, 19)}</span></span>` : ""}
 </header>`;
-const tabs = (on) => `<nav style="position:absolute;left:0;right:0;bottom:0;height:78px;padding:8px 8px 22px;background:${F.paper};border-top:1px solid ${F.line};display:grid;grid-template-columns:repeat(4,1fr)">
-  ${[["Today", I.sun], ["Customers", I.users], ["Results", I.chart], ["Settings", I.gear]].map(([t, d]) => `<span style="display:grid;justify-items:center;gap:3px;font-size:11.5px;font-weight:${t === on ? 600 : 500};color:${t === on ? F.ink : F.faint}">${ic(d, 22, t === on ? 2.1 : 1.8)}${t}</span>`).join("")}
+const tabs = (on) => `<nav style="position:absolute;left:0;right:0;bottom:0;height:70px;padding:7px 8px 18px;background:${F.paper};border-top:1px solid ${F.line};display:grid;grid-template-columns:repeat(4,1fr)">
+  ${[["Today", I.sun], ["Customers", I.users], ["Results", I.chart], ["Settings", I.gear]].map(([t, d]) => `<span style="display:grid;justify-items:center;gap:2px;font-size:10.5px;font-weight:${t === on ? 600 : 500};color:${t === on ? F.ink : F.faint}">${ic(d, 20, t === on ? 2.1 : 1.8)}${t}</span>`).join("")}
 </nav>`;
 const frame = (inner) => `<div id="phone" style="position:relative;width:390px;height:844px;overflow:hidden;background:${F.paper};color:${F.ink};font-family:inherit">${inner}</div>`;
 const av = (t, size = 40) => `<span style="flex:none;width:${size}px;height:${size}px;border-radius:999px;background:${F.card2};display:grid;place-items:center;font-size:${size > 36 ? 14 : 12.5}px;font-weight:600;color:${F.soft}">${t}</span>`;
 const mono = (t) => `<p style="font-family:var(--font-mono, ui-monospace, monospace);font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:${F.faint}">${t}</p>`;
-const total = (n, words, extra = "") => `<div style="padding:4px 20px 0"><p style="font-size:13.5px;color:${F.faint}">Saturday, October 10</p>
-  <div style="display:flex;align-items:baseline;gap:10px;margin-top:2px"><span style="font-size:64px;font-weight:600;letter-spacing:-0.045em;line-height:1">${n}</span><span style="font-size:20px;font-weight:500;letter-spacing:-0.01em;line-height:1.2">${words}</span></div>${extra}</div>`;
+const total = (n, words, extra = "") => `<div style="padding:2px 16px 0"><p style="font-size:12.5px;color:${F.faint}">Saturday, October 10</p>
+  <div style="display:flex;align-items:baseline;gap:10px;margin-top:2px"><span style="font-size:34px;font-weight:600;letter-spacing:-0.035em;line-height:1">${n}</span><span style="font-size:17px;font-weight:500;letter-spacing:-0.01em;line-height:1.2">${words}</span></div>${extra}</div>`;
 
-const decisionCard = `<article style="margin:18px 16px 0;background:${F.card};border:1px solid ${F.line};border-radius:22px;padding:18px">
-  <div style="display:flex;gap:12px;align-items:center">${av("IS")}<div style="flex:1;min-width:0"><p style="font-size:16px;font-weight:600">Ivy Sohal</p><p style="display:flex;align-items:center;gap:5px;font-size:13px;color:${F.faint}">${ic(I.mail, 14)} Email · 18 min ago</p></div></div>
-  <p style="margin-top:14px;font-size:19px;line-height:1.38;letter-spacing:-0.01em">“Hi, I saw the 2-bed on King St. Is parking included with the unit?”</p>
-  <div style="margin-top:14px;border-radius:16px;padding:14px 15px;background:var(--wash);border:1px solid var(--wash-edge)">
+const decisionCard = `<article style="margin:12px 12px 0;background:${F.card};border:1px solid ${F.line};border-radius:18px;padding:14px">
+  <div style="display:flex;gap:10px;align-items:center">${av("IS", 32)}<div style="flex:1;min-width:0"><p style="font-size:14.5px;font-weight:600">Ivy Sohal</p><p style="display:flex;align-items:center;gap:5px;font-size:12px;color:${F.faint}">${ic(I.mail, 14)} Email · 18 min ago</p></div></div>
+  <p style="margin-top:10px;font-size:15.5px;line-height:1.4">“Hi, I saw the 2-bed on King St. Is parking included with the unit?”</p>
+  <div style="margin-top:10px;border-radius:14px;padding:11px 12px;background:var(--wash);border:1px solid var(--wash-edge)">
     ${mono("Your reply, ready")}
-    <p style="margin-top:6px;font-size:15.5px;line-height:1.45">Hi Ivy, yes, one underground spot comes with it. Want to see the unit this week? Pick a time that suits you here: <u>followupbase.io/book/ivy</u></p>
+    <p style="margin-top:5px;font-size:14px;line-height:1.45">Hi Ivy, yes, one underground spot comes with it. Want to see the unit this week? Pick a time that suits you here: <u>followupbase.io/book/ivy</u></p>
   </div>
-  <button style="margin-top:14px;width:100%;height:52px;border-radius:999px;border:0;background:${F.ink};color:var(--on-accent);font:inherit;font-size:16.5px;font-weight:600">Send</button>
-  <div style="margin-top:6px;display:grid;grid-template-columns:1fr 1fr;gap:8px"><button style="height:46px;border-radius:999px;border:1px solid ${F.line};background:${F.card};font:inherit;font-size:15px;font-weight:500;color:${F.ink}">Edit</button><button style="height:46px;border-radius:999px;border:0;background:transparent;font:inherit;font-size:15px;color:${F.soft}">Later</button></div>
+  <button style="margin-top:12px;width:100%;height:44px;border-radius:999px;border:0;background:${F.ink};color:var(--on-accent);font:inherit;font-size:15px;font-weight:600">Send</button>
+  <div style="margin-top:6px;display:grid;grid-template-columns:1fr 1fr;gap:8px"><button style="height:44px;border-radius:999px;border:1px solid ${F.line};background:${F.card};font:inherit;font-size:14px;font-weight:500;color:${F.ink}">Edit</button><button style="height:44px;border-radius:999px;border:0;background:transparent;font:inherit;font-size:14px;color:${F.soft}">Later</button></div>
 </article>`;
-const nextRow = `<a style="margin:12px 16px 0;display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;background:${F.card2}">
-  <span style="font-size:13px;color:${F.faint};font-weight:500">Next</span><span style="flex:1;min-width:0;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><b style="font-weight:600">Owen Shah</b> · “Is the house on Elm St still available?”</span><span style="color:${F.faint}">${ic(I.right, 18)}</span></a>`;
+const nextRow = `<a style="margin:10px 12px 0;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:${F.card2}">
+  <span style="font-size:12px;color:${F.faint};font-weight:500">Next</span><span style="flex:1;min-width:0;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><b style="font-weight:600">Owen Shah</b> · “Is the house on Elm St still available?”</span><span style="color:${F.faint}">${ic(I.right, 18)}</span></a>`;
 
 const today = frame(`${top()}${total(3, "customers need you")}${decisionCard}${nextRow}${tabs("Today")}`);
 
 const done = frame(`${top()}${total(0, "customers need you")}
-  <div style="margin:22px 16px 0;padding:22px 20px;border-radius:22px;background:${F.card};border:1px solid ${F.line}">
-    <span style="width:44px;height:44px;border-radius:999px;background:var(--sage-soft);color:${F.sage};display:grid;place-items:center">${ic(I.check, 22, 2.4)}</span>
-    <p style="margin-top:14px;font-size:22px;font-weight:600;letter-spacing:-0.015em">You’re all caught up.</p>
-    <p style="margin-top:4px;font-size:15px;line-height:1.5;color:${F.soft}">Your phone buzzes when someone needs you.</p>
+  <div style="margin:14px 12px 0;padding:16px;border-radius:18px;background:${F.card};border:1px solid ${F.line}">
+    <span style="width:36px;height:36px;border-radius:999px;background:var(--sage-soft);color:${F.sage};display:grid;place-items:center">${ic(I.check, 22, 2.4)}</span>
+    <p style="margin-top:10px;font-size:17px;font-weight:600;letter-spacing:-0.01em">You’re all caught up.</p>
+    <p style="margin-top:2px;font-size:13.5px;line-height:1.5;color:${F.soft}">Your phone buzzes when someone needs you.</p>
   </div>
-  <div style="margin:22px 20px 0">${mono("What FollowUp did today")}
+  <div style="margin:18px 16px 0">${mono("What FollowUp did today")}
     <ul style="margin-top:10px;display:grid">
-      ${[[I.cal, "Ella Das booked a viewing", "Sat 11:00 · from your booking link"], [I.send, "Replied to Mia Gill", "Asked when she wants to move"], [I.clock, "Checked in with Lucas Brar", "Quiet for 3 days"]].map(([d, a, b], i) => `<li style="display:flex;gap:12px;align-items:flex-start;padding:12px 0;${i ? `border-top:1px solid ${F.line};` : ""}"><span style="flex:none;width:34px;height:34px;border-radius:999px;background:${F.card2};display:grid;place-items:center;color:${F.soft}">${ic(d, 17)}</span><span><b style="display:block;font-size:15px;font-weight:600">${a}</b><span style="font-size:13.5px;color:${F.faint}">${b}</span></span></li>`).join("")}
+      ${[[I.cal, "Ella Das booked a viewing", "Sat 11:00 · from your booking link"], [I.send, "Replied to Mia Gill", "Asked when she wants to move"], [I.clock, "Checked in with Lucas Brar", "Quiet for 3 days"]].map(([d, a, b], i) => `<li style="display:flex;gap:12px;align-items:flex-start;padding:10px 0;${i ? `border-top:1px solid ${F.line};` : ""}"><span style="flex:none;width:30px;height:30px;border-radius:999px;background:${F.card2};display:grid;place-items:center;color:${F.soft}">${ic(d, 15)}</span><span><b style="display:block;font-size:14px;font-weight:600">${a}</b><span style="font-size:12.5px;color:${F.faint}">${b}</span></span></li>`).join("")}
     </ul>
-    <p style="margin-top:6px;font-size:14px;color:${F.soft};text-decoration:underline;text-underline-offset:3px">See everything it did</p>
+    <p style="margin-top:4px;font-size:13px;color:${F.soft};text-decoration:underline;text-underline-offset:3px">See everything it did</p>
   </div>${tabs("Today")}`);
 
 const ask = frame(`${top()}${total(3, "customers need you")}
-  <section style="margin:18px 16px 0;padding:18px;border-radius:22px;background:${F.card};border:1px solid ${F.ink}">
-    <p style="font-size:18px;font-weight:600;letter-spacing:-0.01em">Let FollowUp reply for you?</p>
-    <p style="margin-top:6px;font-size:15px;line-height:1.5;color:${F.soft}">It answers new customers right away, and every reply works toward a booking. Prices, dates and anything unsure still wait for you.</p>
-    <p style="margin-top:12px;display:flex;gap:8px;align-items:flex-start;font-size:14.5px;line-height:1.45"><span style="color:${F.sage};margin-top:1px">${ic(I.check, 17, 2.4)}</span><span>You sent 11 of your last 13 replies just as it wrote them.</span></p>
-    <div style="margin-top:16px;display:grid;gap:4px"><button style="height:48px;border-radius:999px;border:1px solid ${F.ink};background:${F.card};font:inherit;font-size:15.5px;font-weight:600;color:${F.ink}">Yes, reply for me</button><button style="height:44px;border:0;background:transparent;font:inherit;font-size:15px;color:${F.soft}">Not now</button></div>
-    <p style="font-size:12.5px;color:${F.faint};text-align:center">You can change this any time in Settings.</p>
+  <section style="margin:12px 12px 0;padding:14px;border-radius:18px;background:${F.card};border:1px solid ${F.ink}">
+    <p style="font-size:15.5px;font-weight:600;letter-spacing:-0.01em">Let FollowUp reply for you?</p>
+    <p style="margin-top:4px;font-size:13.5px;line-height:1.45;color:${F.soft}">It answers new customers right away, and every reply works toward a booking. Prices, dates and anything unsure still wait for you.</p>
+    <p style="margin-top:10px;display:flex;gap:7px;align-items:flex-start;font-size:13px;line-height:1.45"><span style="color:${F.sage};margin-top:1px">${ic(I.check, 17, 2.4)}</span><span>You sent 11 of your last 13 replies just as it wrote them.</span></p>
+    <div style="margin-top:12px;display:grid;gap:2px"><button style="height:44px;border-radius:999px;border:1px solid ${F.ink};background:${F.card};font:inherit;font-size:14.5px;font-weight:600;color:${F.ink}">Yes, reply for me</button><button style="height:44px;border:0;background:transparent;font:inherit;font-size:14px;color:${F.soft}">Not now</button></div>
+    <p style="font-size:11.5px;color:${F.faint};text-align:center">You can change this any time in Settings.</p>
   </section>
-  <div style="margin:14px 16px 0;padding:14px 16px;border-radius:18px;border:1px solid ${F.line};background:${F.card};display:flex;gap:12px;align-items:center">${av("IS", 34)}<span style="flex:1;font-size:14.5px"><b style="font-weight:600">Ivy Sohal</b><br><span style="color:${F.faint}">Is parking included with the unit?</span></span><span style="color:${F.faint}">${ic(I.right, 18)}</span></div>
+  <div style="margin:10px 12px 0;padding:11px 12px;border-radius:16px;border:1px solid ${F.line};background:${F.card};display:flex;gap:10px;align-items:center">${av("IS", 30)}<span style="flex:1;font-size:13.5px"><b style="font-weight:600">Ivy Sohal</b><br><span style="color:${F.faint}">Is parking included with the unit?</span></span><span style="color:${F.faint}">${ic(I.right, 18)}</span></div>
   ${tabs("Today")}`);
 
-const row = (initials, name, line, right, hot = false) => `<li style="display:flex;gap:12px;align-items:center;padding:11px 0;min-width:0">${av(initials, 38)}<span style="flex:1;min-width:0"><b style="display:block;font-size:15.5px;font-weight:600">${name}</b><span style="display:block;font-size:14px;color:${F.soft};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${line}</span></span>${hot ? `<span style="flex:none;height:34px;padding:0 14px;border-radius:999px;border:1px solid ${F.ink};display:grid;place-items:center;font-size:14px;font-weight:600">${right}</span>` : `<span style="flex:none;font-size:13px;color:${F.faint}">${right}</span>`}</li>`;
-const group = (title, count, rows, note = "") => `<section style="margin:0 16px 12px;padding:6px 16px 4px;border-radius:20px;background:${F.card};border:1px solid ${F.line}">
-  <div style="display:flex;justify-content:space-between;align-items:baseline;padding:10px 0 2px"><p style="font-size:14px;font-weight:600">${title}</p><span style="font-size:14px;font-weight:600;font-variant-numeric:tabular-nums">${count}</span></div>${note}
+const row = (initials, name, line, right, hot = false) => `<li style="display:flex;gap:10px;align-items:center;padding:8px 0;min-width:0">${av(initials, 32)}<span style="flex:1;min-width:0"><b style="display:block;font-size:14px;font-weight:600">${name}</b><span style="display:block;font-size:12.5px;color:${F.soft};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${line}</span></span>${hot ? `<span style="flex:none;height:32px;padding:0 12px;border-radius:999px;border:1px solid ${F.ink};display:grid;place-items:center;font-size:12.5px;font-weight:600">${right}</span>` : `<span style="flex:none;font-size:12px;color:${F.faint}">${right}</span>`}</li>`;
+const group = (title, count, rows, note = "") => `<section style="margin:0 12px 10px;padding:4px 12px 2px;border-radius:16px;background:${F.card};border:1px solid ${F.line}">
+  <div style="display:flex;justify-content:space-between;align-items:baseline;padding:8px 0 0"><p style="font-size:12.5px;font-weight:600;color:${F.soft}">${title}</p><span style="font-size:12.5px;color:${F.soft};font-weight:600;font-variant-numeric:tabular-nums">${count}</span></div>${note}
   <ul style="display:grid;grid-template-columns:minmax(0,1fr)">${rows}</ul></section>`;
 const customers = frame(`${top()}
-  <div style="padding:0 20px"><h1 style="font-size:30px;font-weight:600;letter-spacing:-0.03em">Customers</h1>
-  <div style="margin-top:12px;height:46px;border-radius:999px;background:${F.card2};display:flex;align-items:center;gap:10px;padding:0 16px;color:${F.faint};font-size:15.5px">${ic(I.search, 19)}Search a name, email or phone</div></div>
-  <div style="height:16px"></div>
+  <div style="padding:0 16px"><h1 style="font-size:22px;font-weight:600;letter-spacing:-0.02em">Customers</h1>
+  <div style="margin-top:8px;height:40px;border-radius:999px;background:${F.card2};display:flex;align-items:center;gap:8px;padding:0 14px;color:${F.faint};font-size:14px">${ic(I.search, 17)}Search a name, email or phone</div></div>
+  <div style="height:12px"></div>
   ${group("Needs you", 3, row("IS", "Ivy Sohal", "Is parking included with the unit?", "18m") + row("OS", "Owen Shah", "Is the house on Elm St still available?", "2h") + row("ED", "Ella Das", "Can I bring my partner to the viewing?", "5h"))}
   ${group(`<span style="display:inline-flex;gap:6px;align-items:center">${ic(I.flame, 16, 2)}Ready to book</span>`, 1, row("MG", "Mia Gill", "2-bed · $2,400/mo · moving this month", "Call", true))}
-  <section style="margin:0 16px;padding:0 16px;border-radius:20px;background:${F.card};border:1px solid ${F.line}">
-    ${[["Waiting on them", "FollowUp checks in for you", 6], ["Booked", "Viewings and calls coming up", 2], ["Everyone", "", 17]].map(([a, b, n], i) => `<div style="display:flex;align-items:center;gap:10px;padding:14px 0;${i ? `border-top:1px solid ${F.line};` : ""}"><span style="flex:1"><b style="display:block;font-size:15px;font-weight:600">${a}</b>${b ? `<span style="font-size:13.5px;color:${F.faint}">${b}</span>` : ""}</span><span style="font-size:15px;font-weight:600;font-variant-numeric:tabular-nums">${n}</span><span style="color:${F.faint}">${ic(I.right, 18)}</span></div>`).join("")}
+  <section style="margin:0 12px;padding:0 12px;border-radius:16px;background:${F.card};border:1px solid ${F.line}">
+    ${[["Waiting on them", "FollowUp checks in for you", 6], ["Booked", "Viewings and calls coming up", 2], ["Everyone", "", 17]].map(([a, b, n], i) => `<div style="display:flex;align-items:center;gap:10px;padding:11px 0;${i ? `border-top:1px solid ${F.line};` : ""}"><span style="flex:1"><b style="display:block;font-size:14px;font-weight:600">${a}</b>${b ? `<span style="font-size:12.5px;color:${F.faint}">${b}</span>` : ""}</span><span style="font-size:14px;font-weight:600;font-variant-numeric:tabular-nums">${n}</span><span style="color:${F.faint}">${ic(I.right, 18)}</span></div>`).join("")}
   </section>${tabs("Customers")}`);
 
-const bubble = (text, mine, label) => `<div style="display:flex;justify-content:${mine ? "flex-end" : "flex-start"}"><div style="max-width:82%"><p style="padding:11px 14px;border-radius:18px;${mine ? `background:${F.ink};color:var(--on-accent);border-bottom-right-radius:6px` : `background:${F.card};border:1px solid ${F.line};border-bottom-left-radius:6px`};font-size:15px;line-height:1.42">${text}</p>${label ? `<p style="margin-top:4px;font-size:12px;color:${F.faint};text-align:${mine ? "right" : "left"}">${label}</p>` : ""}</div></div>`;
-const customer = frame(`<header style="height:56px;display:flex;align-items:center;gap:6px;padding:0 12px"><span style="display:flex;align-items:center;gap:2px;color:${F.ink};font-size:15.5px">${ic(I.left, 22)}Customers</span></header>
-  <div style="padding:0 20px;display:flex;gap:12px;align-items:center">${av("MG", 48)}<div><h1 style="font-size:24px;font-weight:600;letter-spacing:-0.02em">Mia Gill</h1><p style="display:flex;align-items:center;gap:5px;font-size:13.5px;color:${F.faint}">${ic(I.insta, 14)} Instagram · first wrote Oct 7</p></div></div>
-  <div style="margin:14px 16px 0;padding:12px 14px;border-radius:16px;background:${F.card2};display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:left">
-    ${[["Wants", "2-bed"], ["Budget", "$2,400/mo"], ["When", "This month"]].map(([k, v]) => `<span><span style="display:block;font-size:12px;color:${F.faint}">${k}</span><b style="font-size:14.5px;font-weight:600">${v}</b></span>`).join("")}
+const bubble = (text, mine, label) => `<div style="display:flex;justify-content:${mine ? "flex-end" : "flex-start"}"><div style="max-width:82%"><p style="padding:9px 12px;border-radius:16px;${mine ? `background:${F.ink};color:var(--on-accent);border-bottom-right-radius:6px` : `background:${F.card};border:1px solid ${F.line};border-bottom-left-radius:6px`};font-size:14px;line-height:1.4">${text}</p>${label ? `<p style="margin-top:3px;font-size:11px;color:${F.faint};text-align:${mine ? "right" : "left"}">${label}</p>` : ""}</div></div>`;
+const customer = frame(`<header style="height:50px;display:flex;align-items:center;gap:6px;padding:0 10px"><span style="display:flex;align-items:center;gap:2px;color:${F.ink};font-size:14.5px">${ic(I.left, 20)}Customers</span></header>
+  <div style="padding:0 16px;display:flex;gap:10px;align-items:center">${av("MG", 38)}<div><h1 style="font-size:19px;font-weight:600;letter-spacing:-0.015em">Mia Gill</h1><p style="display:flex;align-items:center;gap:5px;font-size:12.5px;color:${F.faint}">${ic(I.insta, 14)} Instagram · first wrote Oct 7</p></div></div>
+  <div style="margin:10px 12px 0;padding:9px 12px;border-radius:14px;background:${F.card2};display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:left">
+    ${[["Wants", "2-bed"], ["Budget", "$2,400/mo"], ["When", "This month"]].map(([k, v]) => `<span><span style="display:block;font-size:11.5px;color:${F.faint}">${k}</span><b style="font-size:13.5px;font-weight:600">${v}</b></span>`).join("")}
   </div>
-  <div style="margin:16px 16px 0;display:grid;gap:10px">
+  <div style="margin:12px 12px 0;display:grid;gap:8px">
     ${bubble("Hi! Do you have any 2-bed condos downtown under $2,500?", false, "Mia · Oct 7, 9:12")}
     ${bubble("Hi Mia, yes, three right now, all under $2,500. When are you hoping to move? I can line up viewings for you.", true, "Sent by FollowUp · 9:13")}
     ${bubble("This month ideally. Can I see the King St one?", false, "Mia · 9:40")}
   </div>
-  <div style="margin:14px 20px 0">${mono("What FollowUp did")}
-    <p style="margin-top:8px;font-size:14px;line-height:1.6;color:${F.soft}">Replied in 1 min · Asked when she wants to move · Next check-in Tue, if she goes quiet</p></div>
-  <div style="position:absolute;left:12px;right:12px;bottom:92px;padding:6px 6px 6px 16px;border-radius:999px;background:${F.card};border:1px solid ${F.line};box-shadow:0 6px 24px rgba(10,10,10,.06);display:flex;align-items:center;gap:10px"><span style="flex:1;font-size:15.5px;color:${F.faint}">Reply to Mia…</span><span style="width:40px;height:40px;border-radius:999px;background:${F.ink};color:var(--on-accent);display:grid;place-items:center">${ic(I.up, 19, 2.3)}</span></div>
+  <div style="margin:12px 16px 0">${mono("What FollowUp did")}
+    <p style="margin-top:6px;font-size:13px;line-height:1.6;color:${F.soft}">Replied in 1 min · Asked when she wants to move · Next check-in Tue, if she goes quiet</p></div>
+  <div style="position:absolute;left:10px;right:10px;bottom:80px;padding:4px 4px 4px 14px;border-radius:999px;background:${F.card};border:1px solid ${F.line};box-shadow:0 6px 24px rgba(10,10,10,.06);display:flex;align-items:center;gap:10px"><span style="flex:1;font-size:14px;color:${F.faint}">Reply to Mia…</span><span style="width:36px;height:36px;border-radius:999px;background:${F.ink};color:var(--on-accent);display:grid;place-items:center">${ic(I.up, 19, 2.3)}</span></div>
   ${tabs("Customers")}`);
 
-const setRow = (d, a, b, i) => `<div style="display:flex;align-items:center;gap:14px;padding:14px 0;${i ? `border-top:1px solid ${F.line};` : ""}"><span style="flex:none;width:36px;height:36px;border-radius:10px;background:${F.card2};display:grid;place-items:center;color:${F.ink}">${ic(d, 19)}</span><span style="flex:1;min-width:0"><b style="display:block;font-size:15.5px;font-weight:600">${a}</b><span style="font-size:13.5px;color:${F.faint}">${b}</span></span><span style="color:${F.faint}">${ic(I.right, 18)}</span></div>`;
+const setRow = (d, a, b, i) => `<div style="display:flex;align-items:center;gap:12px;padding:11px 0;${i ? `border-top:1px solid ${F.line};` : ""}"><span style="flex:none;width:30px;height:30px;border-radius:8px;background:${F.card2};display:grid;place-items:center;color:${F.ink}">${ic(d, 16)}</span><span style="flex:1;min-width:0"><b style="display:block;font-size:14px;font-weight:600">${a}</b><span style="font-size:12.5px;color:${F.faint}">${b}</span></span><span style="color:${F.faint}">${ic(I.right, 18)}</span></div>`;
 const settings = frame(`${top(false)}
-  <div style="padding:0 20px"><h1 style="font-size:30px;font-weight:600;letter-spacing:-0.03em">Settings</h1></div>
-  <section style="margin:16px 16px 0;padding:0 16px;border-radius:20px;background:${F.card};border:1px solid ${F.line}">
+  <div style="padding:0 16px"><h1 style="font-size:22px;font-weight:600;letter-spacing:-0.02em">Settings</h1></div>
+  <section style="margin:10px 12px 0;padding:0 12px;border-radius:16px;background:${F.card};border:1px solid ${F.line}">
     ${[[I.inbox, "Where customers write", "Gmail and Instagram"], [I.send, "How replies go out", "FollowUp replies for you"], [I.bell, "Alerts", "On for this phone"], [I.store, "Your business", "Maple Realty"]].map(([d, a, b], i) => setRow(d, a, b, i)).join("")}
   </section>
-  <section style="margin:12px 16px 0;padding:0 16px;border-radius:20px;background:${F.card};border:1px solid ${F.line}">
+  <section style="margin:10px 12px 0;padding:0 12px;border-radius:16px;background:${F.card};border:1px solid ${F.line}">
     ${setRow(I.more, "More", "Team, plan, your data, advanced", 0)}
   </section>
-  <div style="margin:22px 20px 0;display:grid;gap:14px;font-size:15px"><span style="display:flex;align-items:center;gap:10px;color:${F.ink}">${ic(I.help, 19)}Help</span><span style="color:${F.soft}">Sign out</span></div>
+  <div style="margin:18px 16px 0;display:grid;gap:12px;font-size:14px"><span style="display:flex;align-items:center;gap:8px;color:${F.ink}">${ic(I.help, 17)}Help</span><span style="color:${F.soft}">Sign out</span></div>
   ${tabs("Settings")}`);
 
-const stat = (n, a, b, i) => `<div style="display:flex;align-items:center;gap:12px;padding:14px 0;${i ? `border-top:1px solid ${F.line};` : ""}"><span style="flex:1"><b style="display:block;font-size:15.5px;font-weight:600">${a}</b><span style="font-size:13.5px;color:${F.faint}">${b}</span></span><span style="font-size:22px;font-weight:600;letter-spacing:-0.02em;font-variant-numeric:tabular-nums">${n}</span></div>`;
+const stat = (n, a, b, i) => `<div style="display:flex;align-items:center;gap:12px;padding:11px 0;${i ? `border-top:1px solid ${F.line};` : ""}"><span style="flex:1"><b style="display:block;font-size:14px;font-weight:600">${a}</b><span style="font-size:12.5px;color:${F.faint}">${b}</span></span><span style="font-size:18px;font-weight:600;letter-spacing:-0.02em;font-variant-numeric:tabular-nums">${n}</span></div>`;
 const results = frame(`${top()}
-  <div style="padding:4px 20px 0"><p style="font-size:13.5px;color:${F.faint}">This week</p>
-  <div style="display:flex;align-items:baseline;gap:10px;margin-top:2px"><span style="font-size:64px;font-weight:600;letter-spacing:-0.045em;line-height:1">14</span><span style="font-size:20px;font-weight:500;line-height:1.2">customers answered</span></div>
-  <p style="margin-top:6px;font-size:14.5px;color:${F.sage};font-weight:500">5 more than last week</p></div>
-  <section style="margin:20px 16px 0;padding:0 16px;border-radius:20px;background:${F.card};border:1px solid ${F.line}">
+  <div style="padding:2px 16px 0"><p style="font-size:12.5px;color:${F.faint}">This week</p>
+  <div style="display:flex;align-items:baseline;gap:10px;margin-top:2px"><span style="font-size:34px;font-weight:600;letter-spacing:-0.035em;line-height:1">14</span><span style="font-size:17px;font-weight:500;line-height:1.2">customers answered</span></div>
+  <p style="margin-top:4px;font-size:13px;color:${F.sage};font-weight:500">5 more than last week</p></div>
+  <section style="margin:14px 12px 0;padding:0 12px;border-radius:16px;background:${F.card};border:1px solid ${F.line}">
     ${stat(3, "Booked", "Viewings and calls", 0)}${stat("4 min", "First reply", "Half were faster", 1)}${stat(1, "Won", "Marked by you", 2)}
   </section>
-  <p style="margin:16px 20px 0;font-size:14px;color:${F.soft};text-decoration:underline;text-underline-offset:3px">See everything FollowUp did</p>
+  <p style="margin:12px 16px 0;font-size:13px;color:${F.soft};text-decoration:underline;text-underline-offset:3px">See everything FollowUp did</p>
   ${tabs("Results")}`);
 
 module.exports = { today, done, ask, customers, customer, settings, results };

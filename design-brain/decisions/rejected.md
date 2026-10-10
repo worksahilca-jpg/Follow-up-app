@@ -1373,3 +1373,26 @@ These framed automatic sending as FollowUp taking care of the unimportant messag
 ones". Describe what a reply does (answers, then asks for the booking), never how easy it is.
 
 **Still open:** whether FollowUp should send on its own at all after the owner's yes. Asked him the same day.
+
+## R-107 — Big type and big boxes on the phone ^R-107
+
+**Rejected:** 2026-10-10, founder, on phone-redesign drawing 1: *"Bro, why are we keeping fonts and stuff so big? Make it
+compatible for mobile."*
+
+**What was rejected:** desktop-sized type and spacing on phone screens:
+- a 64px headline number and 30px page titles;
+- 19px customer messages;
+- 52px buttons;
+- 18–22px padding.
+
+**Principle (his words, plus inferred and marked):** a phone screen uses normal phone sizes:
+- headline number about 34px;
+- page title about 22px;
+- names about 14px, lines about 13px, meta 11–12px;
+- buttons 44px tall, the touch minimum, and no taller;
+- 12–16px gutters.
+
+*Inferred:* big type made it feel like a website, not an app, and it showed less at once. Accessibility stays:
+nothing a decision depends on goes below 13px, and every target stays at least 44px.
+
+**Do not propose again:** marketing-sized type or padding inside the phone app.

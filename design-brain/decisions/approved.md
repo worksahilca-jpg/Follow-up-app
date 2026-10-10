@@ -3537,3 +3537,23 @@ Decisions 7–10 and 12–14 sit under "simpler" and "one card". Each gets drawn
 him. Three plain lines in chat did. Put decisions to him as a few short lines, one question at a time.
 
 **First step:** draw #1, the phone buzz: setup asks how to reach you, sends a test, and the alert opens the one reply.
+
+## A-216 — Step 1, the phone buzz, approved to build ^A-216
+
+**Approved:** 2026-10-10, founder, on the drawing (https://claude.ai/artifact/GDt8BqNmchi8hW7GdPv4EH): *"yes build it"*.
+
+**What specifically:**
+- **Setup's new last step.** "Get a buzz when someone needs you", shown after the customers list:
+  - an example alert;
+  - three true facts;
+  - "Turn on alerts" and "Not now".
+- **iPhone in Safari:** the three Home Screen taps.
+- **The test:** "Did your phone buzz?", with "Yes, it buzzed" and "No buzz? Send another test".
+- **On a computer:** hand over to the phone with "Waiting for your phone…", or "Email me the link instead". The QR code
+  waits for his OK on adding a library; asked the same day.
+- **Owners who signed up before:** one card on Today, with "Turn on alerts" and "Not now".
+- **The alert opens the customer with the reply ready.** The Home Screen start page goes to the app, not the
+  website.
+
+**He asked "what is that QR".** He didn't recognise it. *Inferred:* say what a pictured thing is for in the caption,
+in a few words. The code was explained as "the square you point your phone's camera at, like WhatsApp on a computer".

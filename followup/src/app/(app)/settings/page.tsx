@@ -3,6 +3,8 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import SettingsList from "@/components/app/SettingsList";
+import { SETTINGS_GROUPS, groupOfPage, type SettingsGroup } from "@/lib/settingsGroups";
+import { useInWindow } from "@/components/app/AppWindow";
 import { quietReminderDays, SILENCE_DEFAULT_TRIGGER_DAYS } from "@/lib/reminderCadence";
 import TeamSection from "@/components/TeamSection";
 // A leaf module, not @/lib/automation — that one imports Prisma, and this is a client component.
@@ -86,8 +88,21 @@ function pageFor(id: string): string | null {
   return null;
 }
 
+/** One grey line under each group's title in the side list's pane (A-213). */
+const GROUP_WHY: Record<SettingsGroup, string> = {
+  "Follow-up plan": "What FollowUp does, and when. Change it any time.",
+  "Where customers write": "The places FollowUp reads and answers for you.",
+  "How it writes": "How replies are written, and when they go.",
+  "Your business": "Who you are, who's on your team, and your plan.",
+  Account: "How you sign in, and your data.",
+};
+
 function SettingsPageInner() {
   const searchParams = useSearchParams();
+  // Opened over a page (src/app/(app)/@modal): moving between Settings'
+  // own pages adds no history, so closing returns in one step.
+  const inWindow = useInWindow();
+  const [group, setGroup] = useState<SettingsGroup>("Follow-up plan");
   // A link elsewhere in the app (a Sidebar nag, the dashboard's setup strip)
   // points at a specific section's id, e.g. /settings#billing — honor that
   // by opening straight into the tab that section lives in, so the browser's
@@ -481,9 +496,12 @@ function SettingsPageInner() {
   function openMore(section: string | null) {
     const page = section ? pageFor(section) : null;
     const first = page ? PAGES[page].sections[0] : "";
-    window.history.pushState(null, "", window.location.pathname + (first ? `#${first}` : ""));
+    const url = window.location.pathname + (first ? `#${first}` : "");
+    if (inWindow) window.history.replaceState(window.history.state, "", url);
+    else window.history.pushState(null, "", url);
     setOpenPage(page);
-    window.scrollTo(0, 0);
+    if (inWindow) document.querySelector(".app-win__body")?.scrollTo(0, 0);
+    else window.scrollTo(0, 0);
   }
 
   async function savePause(paused: boolean) {
@@ -785,6 +803,8 @@ function SettingsPageInner() {
   }
 
   const page = openPage ? PAGES[openPage] : null;
+  // The side list follows the page that's open (a link to #billing lands in "Your business").
+  const navGroup: SettingsGroup = (openPage ? groupOfPage(openPage) : null) ?? group;
   const visible = (id: string) => Boolean(page?.sections.includes(id));
   // A page with one section: its title is the h1, so the section's own
   // label would say it twice.
@@ -799,12 +819,50 @@ function SettingsPageInner() {
       : TIER_INFO[billingTier].label;
 
   return (
-    <div>
+    // Desk: a side list of the groups beside the open one (A-212, A-213,
+    // like Wispr's Settings window). Phone: the one list, as before.
+    <div className={"lg:grid lg:grid-cols-[212px_minmax(0,1fr)] " + (inWindow ? "lg:min-h-full" : "lg:gap-10")}>
+      <nav
+        aria-label="Settings sections"
+        className={
+          "hidden lg:flex lg:flex-col lg:gap-0.5 text-[14.5px] " +
+          (inWindow ? "lg:bg-card-2 lg:px-3 lg:py-5" : "lg:sticky lg:top-6 lg:self-start lg:rounded-[14px] lg:bg-card-2 lg:p-3")
+        }
+      >
+        <p className="px-2.5 pb-2 font-mono text-[11px] uppercase tracking-[0.09em] text-ink-faint">Settings</p>
+        {SETTINGS_GROUPS.map((g) => {
+          const on = g === navGroup && openPage !== "feedback";
+          return (
+            <button
+              key={g}
+              type="button"
+              aria-current={on ? "true" : undefined}
+              onClick={() => {
+                setGroup(g);
+                if (openPage) openMore(null);
+              }}
+              className="rounded-[9px] px-2.5 py-2 text-left hover:bg-paper"
+              style={on ? { background: "var(--paper)", color: "var(--ink)", fontWeight: 600, boxShadow: "0 0 0 1px var(--line)" } : { color: "var(--ink-soft)" }}
+            >
+              {g}
+            </button>
+          );
+        })}
+        <button type="button" onClick={() => openMore("feedback")} className="mt-6 px-2.5 py-2 text-left text-[13px] text-ink-faint hover:text-ink">
+          Something broke? Tell us
+        </button>
+      </nav>
+      <div className={"min-w-0 " + (inWindow ? "lg:px-10 lg:pb-10 lg:pt-8" : "")}>
       {!page ? (
         // The list (A-080): one column, the plan on top, five groups of
-        // rows, each opening its own page.
+        // rows, each opening its own page. On the desk, only the group
+        // the side list has open.
         <div>
-          <h1 className="text-[32px] leading-[1.1]">Settings</h1>
+          <h1 className="title-serif text-[32px] leading-[1.1] lg:hidden">Settings</h1>
+          <div className="hidden lg:block">
+            <h1 className="title-serif text-[32px] leading-[1.12]">{navGroup}</h1>
+            <p className="mt-1.5 text-[14.5px] text-ink-faint">{GROUP_WHY[navGroup]}</p>
+          </div>
           <div className="mt-6">
             <SettingsList
               gmail={{ connected: gmailConnected, email: gmailEmail }}
@@ -815,15 +873,17 @@ function SettingsPageInner() {
               paused={sendingPaused}
               planStatus={planStatus}
               onOpen={openMore}
+              selected={navGroup}
             />
           </div>
         </div>
       ) : (
         <div className="max-w-[640px]">
           <button type="button" onClick={() => openMore(null)} className="text-[13px] text-ink-faint hover:text-ink">
-            ← Settings
+            <span className="lg:hidden">← Settings</span>
+            <span className="hidden lg:inline">← {openPage === "feedback" ? "Settings" : navGroup}</span>
           </button>
-          <h1 className="mt-2 text-[30px] leading-[1.12] lg:text-[34px]">{page.title}</h1>
+          <h1 className="title-serif mt-2 text-[30px] leading-[1.12] lg:text-[32px]">{page.title}</h1>
           {page.lede && <p className="mt-2 text-[15px] leading-relaxed text-ink-soft">{page.lede}</p>}
         </div>
       )}
@@ -1839,6 +1899,7 @@ function SettingsPageInner() {
           <DataPrivacySection />
         </div>
       </section>
+      </div>
       </div>
     </div>
   );

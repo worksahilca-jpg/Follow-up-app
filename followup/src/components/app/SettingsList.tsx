@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { ChevronRight } from "lucide-react";
 import { describeBookingHours, describeTimeZone, type BookingHours } from "@/lib/bookingHours";
 import type { StateKey } from "./canvasBits";
+import type { SettingsGroup } from "@/lib/settingsGroups";
 
 /**
  * Settings as the one-decision board draws it (A-080): one column, the
@@ -31,6 +32,7 @@ type Social = {
 
 type Row = { page: string; name: string; status?: string; state?: StateKey };
 
+
 export default function SettingsList({
   gmail,
   outlook,
@@ -40,6 +42,7 @@ export default function SettingsList({
   paused,
   planStatus,
   onOpen,
+  selected,
 }: {
   gmail: { connected: boolean; email?: string };
   outlook: { connected: boolean; email?: string };
@@ -49,7 +52,11 @@ export default function SettingsList({
   paused: boolean;
   planStatus: string;
   onOpen: (page: string) => void;
+  /** Desk only: the group the side list has open. The rest hide from lg up; the phone shows them all. */
+  selected?: SettingsGroup;
 }) {
+  const deskOnly = (g: SettingsGroup) => (selected && selected !== g ? " lg:hidden" : "");
+  const deskLabel = selected ? " lg:sr-only" : "";
   const [social, setSocial] = useState<Social | null>(null);
   const [booking, setBooking] = useState<string | null>(null);
   const [team, setTeam] = useState<number | null>(null);
@@ -161,12 +168,12 @@ export default function SettingsList({
         </button>
       )}
 
-      <section className="grid gap-2">
+      <section className={"grid gap-2" + deskOnly("Follow-up plan")}>
         <div className="flex items-baseline justify-between">
-          <h2 className="text-[13px] text-ink-faint" style={{ fontWeight: 400, letterSpacing: 0 }}>
+          <h2 className={"text-[13px] text-ink-faint" + deskLabel} style={{ fontWeight: 400, letterSpacing: 0 }}>
             Your follow-up plan
           </h2>
-          <Link href="/workflows" className="text-sm underline underline-offset-[3px]">
+          <Link href="/workflows" className="ml-auto text-sm underline underline-offset-[3px]">
             Change
           </Link>
         </div>
@@ -178,8 +185,8 @@ export default function SettingsList({
       </section>
 
       {groups.map((g) => (
-        <section key={g.title} className="grid gap-2">
-          <h2 className="text-[13px] text-ink-faint" style={{ fontWeight: 400, letterSpacing: 0 }}>
+        <section key={g.title} className={"grid gap-2" + deskOnly(g.title as SettingsGroup)}>
+          <h2 className={"text-[13px] text-ink-faint" + deskLabel} style={{ fontWeight: 400, letterSpacing: 0 }}>
             {g.title}
           </h2>
           <div className="overflow-hidden rounded-[14px] border border-line bg-card">
@@ -204,7 +211,7 @@ export default function SettingsList({
 
       {/* In full, under the last group: a row status would cut it short on a phone. */}
       {signedInAs && (
-        <p className="-mt-3 break-all px-1 text-[13.5px] text-ink-faint">
+        <p className={"-mt-3 break-all px-1 text-[13.5px] text-ink-faint" + deskOnly("Account")}>
           Signed in as <span className="text-ink-soft">{signedInAs}</span>
         </p>
       )}

@@ -11161,3 +11161,32 @@ the questions (plus pre-approval and other agent) is marked Soon.
 **Still to draw before its step:** the Alerts list, the empty and All done moments, setup ending on a real customer,
 and the customer page on the phone.
 
+
+## 2026-10-10 — Step 1 built: the frame, the menu, the Settings window, Add a customer
+
+**Founder:** *"build step 1"* (the first step of the version 6 plan).
+
+**Built** (follows A-209, A-211, A-212, A-213 and `components/app-map.md`):
+- **The frame.** On the desk the sidebar sits on a quiet frame and the page is one white sheet beside it.
+- **The menu.** Three places with a word each (Today, Customers, Results); only Today keeps a count. Settings and Help sit
+  at the foot. The business name opens a small menu: your email, Your plan, Team, Sign out. Phone: four tabs (Today,
+  Customers, Results, Settings) and "Alerts" written beside the bell.
+- **Settings as a window** over the page (Next.js parallel and intercepting routes, `src/app/(app)/@modal`). Desk: a
+  centred window with a side list of five groups. Phone: a sheet that rises from the bottom. Esc, ×, Back or a click on
+  the dimmed page closes it in one step: pages inside the window replace history instead of adding to it. A direct link or
+  refresh of `/settings` still shows the full page, so old links and bookmarks keep working.
+- **Add a customer as a small window.** Name first, then email and phone, then notes. Company, deal value and where they
+  came from wait behind "More details". One black button ("Add customer").
+- **Results** loses its "← Settings" link: it is a place in the menu now.
+- The groups live in one file (`src/lib/settingsGroups.ts`) with a test that fails if a new Settings page has no group,
+  so a new section can't be added without a home (app-map rule 1).
+
+**Checked in a real browser** (desk 1440, phone 390, 768, dark): every menu item, the window over Today, sub-pages, Esc and
+Back, "Your plan" landing on billing, Help, a direct `/settings#billing` load, Add a customer, no sideways scroll.
+
+**Weak, said honestly:**
+- On the phone the Settings tab shows as "active" while its sheet is up, though the page underneath is still Today or
+  Customers. Fine for now; revisit with the phone customer page.
+- "Your business" still holds plan and team (the app's current grouping); the map suggests moving them to Account.
+  Left as is so step 1 changes no Settings page.
+- The setup card in the sidebar is drawn but not built yet (it belongs with step 5, when onboarding ends on a customer).

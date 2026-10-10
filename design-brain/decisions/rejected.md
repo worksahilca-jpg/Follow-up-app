@@ -1408,3 +1408,13 @@ Italian, French, German, Spanish), with names like Priya, Harpreet and Giulia.
 **Inferred principle (marked inferred, he hasn't said why):** on a phone's first screen, the example has to be read in
 one glance. A rotating mix of languages and trades is more than a glance can take, so it reads as odd rather than
 "someone is replying". He asked to see 2–3 versions instead of choosing a rule.
+
+## R-109 — A plain (solid) top bar on the landing page instead of frosted glass ^R-109
+
+**Rejected:** 2026-10-10, founder, asked whether to make the landing page's top bar plain to make scrolling smoother:
+*"No, keep it"*.
+**What was rejected:** swapping the bar's frosted glass (86% see-through, blurred, while scrolled) for a solid bar in
+the same colour. It's the only frosted element on screen while scrolling, and it costs about 30% of the drawing work in
+a software-drawn test.
+**Principle (inferred, marked inferred):** the frosted top bar is part of the look he wants. Find scroll speed
+elsewhere before touching it again.

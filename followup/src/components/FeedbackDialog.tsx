@@ -88,7 +88,7 @@ export default function FeedbackDialog({
               </button>
             </div>
             {sent ? (
-              <p className="mt-4 text-sm">Thanks. We read every one of these.</p>
+              <p className="mt-4 text-sm">Sent. We&apos;ll reply to you by email, usually the same day.</p>
             ) : (
               <>
                 <textarea

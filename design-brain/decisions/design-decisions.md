@@ -11899,3 +11899,19 @@ into that list, and "Won" there now says "all time".
 checks.
 Then: *"i mean we wil bedesigning it too but yes these features are good"*. The features are approved, and the look
 is not final; a design pass on Results is still to come.
+
+## 2026-10-10 — Helping testers: Help reaches the founder (A-225)
+
+**Said:** *"what if a tester comes in how we eill be helping them"*.
+**Already there:** guided setup, a practice email, the Help button, error reports to us (Sentry), and the
+watch-a-tester script.
+**The gap:** Help messages were only saved. One had ever been sent, and nobody was told.
+**First answer:** *"means ??"*, to a three-choice question. That's another sign he needs one plain question with
+two answers.
+**Asked again:** one plain question. He chose *"Yes, buzz me"* → A-225.
+**Built:** `src/lib/helpAlert.ts` sends the email, the buzz and the Slack post, and runs after the answer. Changed
+the Help window's thank-you line.
+**Checked:** a local Help message saves and answers at once. The founder email ran after the answer (it failed
+locally only because this machine can't reach the email service). 4 new tests; all 3,557 tests pass.
+**Open, his call:** a daily "who's stuck" note (testers who signed up but never connected anything), and a buzz for
+each new sign-up.

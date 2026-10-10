@@ -11318,3 +11318,40 @@ existing accounts, the remove list, analytics). How to put decisions to him is n
 - setup asks how to reach you;
 - it sends a test;
 - the alert opens the one reply.
+
+## 2026-10-10 — Step 1 drawn: the phone buzz (A-215 #1)
+
+**Founder:** *"yes start"*.
+
+**Drawn on the real app** (local build of main, injected with Playwright; page:
+https://claude.ai/artifact/GDt8BqNmchi8hW7GdPv4EH):
+1. **Setup gets a 4th step, "Get a buzz when someone needs you".** It comes after the customers list, so FollowUp has
+   already shown it is useful (R-027).
+   - Shows an example alert, in the light notification look (A-199).
+   - Three facts, all true of `src/lib/ownerAlerts.ts` today:
+     - one alert per customer;
+     - quiet from 10 pm to 7 am;
+     - an email too.
+   - Buttons: "Turn on alerts", and "Not now".
+2. **iPhone in Safari:** three taps to add FollowUp to the Home Screen (Apple only lets Home Screen web apps send
+   alerts), then "Turn on alerts" from there.
+3. **A real test alert:** "Did your phone buzz?", with "Yes, it buzzed" and "No buzz? Send another test".
+4. **On a computer:** a code to scan with the phone, "Waiting for your phone…", or "Email me the link instead".
+5. **Owners who signed up before:** one card on Today (outlined button, so Send stays the only black one), with
+   "Not now".
+6. **The alert on the lock screen** ("Ivy is waiting" plus her words) opens her page with the reply ready. This is
+   built already.
+
+**Found while drawing:** the manifest's `start_url` is `/`, the static home page. So FollowUp added to an iPhone
+Home Screen opens the website, not the app. The fix (start at `/dashboard`) goes with this step.
+
+**Weak spots, said plainly:**
+- On her page, Send sits below the fold on a phone, so the tap from the alert still needs a scroll. The full fix is
+  step 3's one customer card. A small fix now would scroll to the reply when the page is opened from an alert.
+- The code on the computer screen needs a QR library. That is a new dependency, so ask first. "Email me the link"
+  needs nothing new.
+- The iPhone wording ("Share, or under ⋯ first") must be checked on a real iPhone before shipping.
+- A Home Screen app may ask the owner to sign in again; step 3 of the iPhone screen says so.
+- Setup becomes four steps.
+
+**Status:** drawn, waiting for his yes.

@@ -104,7 +104,12 @@ export default function NotificationBell({ align = "left", label }: { align?: "l
         {label && <span>{label}</span>}
         {unreadCount > 0 && (
           <span
-            className="absolute top-0.5 right-0.5 h-4 min-w-4 px-1 rounded-full text-[10px] font-semibold flex items-center justify-center text-on-accent"
+            // Beside the word on the phone; over the corner of the bare bell on the desk. Drawn over the
+            // word, it covered its last letter ("Alert1s").
+            className={
+              (label ? "" : "absolute top-0.5 right-0.5 ") +
+              "h-4 min-w-4 px-1 rounded-full text-[10px] font-semibold flex items-center justify-center text-on-accent"
+            }
             style={{ backgroundColor: "var(--rust)" }}
           >
             {unreadCount > 9 ? "9+" : unreadCount}

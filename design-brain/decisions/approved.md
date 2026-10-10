@@ -1774,6 +1774,9 @@ phone too, so there are no closed rows left to swipe. "Later" stays as a word un
 **Back in force (2026-10-10, later the same day):** step 2 was never approved, and its code came off the branch before
 the phone-buzz step (A-216). The live app still has the swipe. Decide again when Today is redrawn on the shared card.
 
+**SUPERSEDED again (2026-10-10, build 1 of A-220):** Today shows one card and a "Next" row, never a list, so there are
+no rows to swipe. Later is a button under Send. Whether Customers' rows get the swipe is decided in build 2.
+
 **Approved 2026-10-05**, founder: *"cool lets go"* to both ideas from the Macro study (swipe for Later, a phone speed
 check). Built on the phone's closed Today rows only.
 - **Swipe left past 96px and let go:** the person is set aside until Later today (2 pm) when that's still ahead,
@@ -3564,3 +3567,81 @@ him. Three plain lines in chat did. Put decisions to him as a few short lines, o
 
 **He asked "what is that QR".** He didn't recognise it. *Inferred:* say what a pictured thing is for in the caption,
 in a few words. The code was explained as "the square you point your phone's camera at, like WhatsApp on a computer".
+
+## A-217 — FollowUp sends replies by itself after the owner says yes, and every reply works toward the booking ^A-217
+
+**Approved:** 2026-10-10, founder. Asked: *"Once an owner says yes, should FollowUp send replies by itself, or should
+every reply wait?"* He answered: *"by itself after owner says yes"*.
+
+**What specifically:**
+- **Sending on its own needs the owner's yes.** It is never on by default and never assumed (A-070 stands; R-106
+  context).
+- **Once the owner says yes, FollowUp sends its replies itself.** Each one is written with a strategy: answer, then move
+  the customer toward a booked appointment or a sale (R-106: no reply is "easy").
+- **Unchanged:** prices, dates and tense or unsure moments still wait for the owner. This is the existing risk check and
+  PRODUCT_DIRECTION's "only decisions go to the owner". It wasn't re-asked.
+
+**Order agreed the same day:** *"finalise the feature first or the design?"* Features first, as quick answers. Then the
+whole phone app is redesigned once (simple, Scotiabank and Claude as references). No new screens get built before
+that redesign. The step 2 card drawing (R-106) is not built.
+
+## A-218 — Owners who set up before get asked once ^A-218
+
+**Approved:** 2026-10-10, founder: *"yes ask once"*. The question was: owners who already use FollowUp were never
+asked about sending by itself (A-217), so should the app ask them once?
+
+**What specifically:**
+- Each owner who is still on "ask me first" gets the question **once**, inside the app.
+- Nothing changes unless they say yes. They can change it any time in Settings.
+- The question is part of the phone-app redesign, not a separate screen built now. Its wording follows R-106: no
+  "easy replies"; say that each reply works toward the booking.
+
+## A-219 — Remove the screens that show the same thing twice ^A-219
+
+**Approved:** 2026-10-10, founder. A list of four was too much for him (*"What ???"*), so he was asked one clickable
+question: *"Some screens in the app show the same thing twice. Should I remove the copies, so the app is simpler? Nothing
+is lost."* He chose "Yes, remove the copies".
+
+**What it covers (part 5, decision 15):**
+- the separate Waiting page, since Customers has a Waiting tab;
+- the second feedback box in Settings, since Help does the same;
+- the State column in the customer list, since the tabs already show it;
+- Pipeline as its own page, which becomes a filter in Customers.
+
+**Promised to him:** each one is shown to him before it goes, as part of the phone-app redesign.
+
+## A-220 — The phone app redesign, drawing 1 (compact) ^A-220
+
+**Approved:** 2026-10-10, founder: *"Yes"*, on https://claude.ai/artifact/MuhSgCMAi5KaEJSdBkvkzP (version 2, the compact
+one after R-107). Source: `prototypes/2026-10-10-phone-redesign/`.
+
+**What specifically:**
+- **Today:**
+  - the date, then one number ("3 customers need you", about 34px);
+  - then one decision card: who and the channel, their words, "Your reply, ready" on the wash, Send (the one black
+    button, 44px), Edit, Later;
+  - then a "Next" row. Today never shows a list.
+- **All caught up:** "0 customers need you", a calm check card, and "What FollowUp did today" in three rows.
+- **The one-time question:** "Let FollowUp reply for you?" with the owner's own proof, "Yes, reply for me", "Not now"
+  (A-217, A-218, R-106).
+- **Customers:**
+  - search on top;
+  - groups with counts: Needs you, Ready to book (a Call pill), then Waiting on them, Booked and Everyone as rows;
+  - no State column, no Pipeline page (A-219).
+- **One customer:**
+  - Wants, Budget and When at the top;
+  - the chat as bubbles, with "Sent by FollowUp" under FollowUp's own;
+  - "What FollowUp did" in one line;
+  - one reply box pinned at the bottom.
+- **Settings:** four rows (Where customers write, How replies go out, Alerts, Your business), then More, Help and Sign out.
+- **Results:** one number for the week against last week, then Booked, First reply and Won. Real records only.
+- **Top bar and tabs:** the mark and the name; Help (?) and the bell on the right; four tabs (Today, Customers, Results,
+  Settings).
+- **Sizes:** phone sizes everywhere (R-107).
+
+**Build order (one screen per PR, each shown on phone and computer before "merge"):**
+1. Today
+2. Customers
+3. One customer
+4. Settings
+5. Results

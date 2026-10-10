@@ -65,7 +65,7 @@ export default function HabitQuestion({ suggestion }: { suggestion: HabitSuggest
 
   if (answered) {
     return (
-      <p className="mt-6 text-sm text-ink-soft" role="status">
+      <p className="mt-5 text-sm text-ink-soft" role="status">
         {answered === "on" ? "Done. FollowUp will do this for you from now on." : "Got it. FollowUp won't ask about this again."}{" "}
         You can change it in Settings → Your business.
       </p>
@@ -77,7 +77,7 @@ export default function HabitQuestion({ suggestion }: { suggestion: HabitSuggest
   const copy = COPY[kind];
 
   return (
-    <section className="mt-6 box p-5 max-w-3xl" aria-labelledby="habit-question-title">
+    <section className="mt-5 box p-4 sm:p-5 max-w-[640px]" aria-labelledby="habit-question-title">
       <p id="habit-question-title" className="text-sm font-medium">
         FollowUp noticed something
       </p>

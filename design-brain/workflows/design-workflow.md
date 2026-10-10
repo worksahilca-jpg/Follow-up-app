@@ -138,3 +138,5 @@ lines in chat ending in one question, got a *"YES"* straight away.
 - Three short lines at most, in his words, not ours. Put the numbers behind them in one sentence above.
 - One question at a time, with a recommendation.
 - Pages and buttons are for looking at drawings, not for making decisions.
+- (2026-10-10, later) A clickable question with two options and a recommendation worked when a plain list didn't. Use
+  it for yes/no decisions, one at a time.

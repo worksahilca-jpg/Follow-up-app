@@ -52,19 +52,22 @@ describe("the dashboard on a brand-new account", () => {
     ).toMatch(/leads\.length === 0/);
   });
 
-  it("checks that before it reaches the calm sentence", () => {
-    // Order is the whole fix. Below the "nothing needs your OK" return it
-    // would never run.
+  it("gives a brand-new account a sentence, never a count", () => {
+    // Since the redesign (A-220) a working Today leads with one number,
+    // "0 customers need you" on a clear day. That number is the calm
+    // sentence's successor, so it must stay behind the same check: a brand-new
+    // account reads "No customers yet." instead.
     const fn = source.slice(source.indexOf("function headline()"));
     const body = fn.slice(0, fn.indexOf("\n  }"));
-    expect(body.indexOf("leads.length === 0")).toBeLessThan(body.indexOf('return "Nothing needs your OK right now."'));
+    expect(body).toContain('if (leads.length === 0) return "No customers yet.";');
+    expect(source).toMatch(/\{sentence \? \(/);
   });
 
-  it("still says the calm thing to an account that has actually worked", () => {
-    // The fix must not overcorrect: an owner with leads and an empty queue
-    // has earned "nothing needs your OK", and losing it would make the
+  it("still gives an account that has worked its count", () => {
+    // The fix must not overcorrect: an owner with customers and an empty
+    // queue has earned "0 customers need you", and losing it would make the
     // line useless in the one case it was written for.
-    expect(source).toContain('return "Nothing needs your OK right now.";');
+    expect(source).toContain('"customers need you"');
   });
 });
 

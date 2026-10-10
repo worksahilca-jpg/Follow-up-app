@@ -1349,3 +1349,50 @@ founder answered: *"make it just a little cinematic, not that dark."* **Principl
 made less WhatsApp-like, the answer is lighter and warmer, not darker. The green italic accent stays as the one
 colour in the headline. Confirm with him if a black headline comes up again.
 
+
+## R-106 — "Easy replies": automatic sending framed as handling the simple ones ^R-106
+
+**Rejected:** 2026-10-10, founder, on the step 2 drawing (https://claude.ai/artifact/U1Wn84DQz5LkoEJ69RyhEt): *"No, we
+will be using proper strategy. No lead should be taken lightly. We will try our best to convert the lead, or at least
+book the appointment."*
+
+**What was rejected:**
+- the idea and the words "easy replies";
+- "Let FollowUp send the easy replies?";
+- "Goes out on its own: simple answers".
+
+These framed automatic sending as FollowUp taking care of the unimportant messages.
+
+**Principle (his words, plus inferred and marked):**
+- Every reply, automatic or not, is written with a strategy: move the customer toward a booked appointment, or a sale.
+- No message is "easy" or "simple". Every lead matters.
+- *Inferred:* calling some replies "easy" told the owner that FollowUp handles leads lightly. That is the opposite of
+  the product's promise.
+
+**Do not propose again:** any wording that makes an automatic reply sound casual, low-stakes or "just the simple
+ones". Describe what a reply does (answers, then asks for the booking), never how easy it is.
+
+**Still open:** whether FollowUp should send on its own at all after the owner's yes. Asked him the same day.
+
+## R-107 — Big type and big boxes on the phone ^R-107
+
+**Rejected:** 2026-10-10, founder, on phone-redesign drawing 1: *"Bro, why are we keeping fonts and stuff so big? Make it
+compatible for mobile."*
+
+**What was rejected:** desktop-sized type and spacing on phone screens:
+- a 64px headline number and 30px page titles;
+- 19px customer messages;
+- 52px buttons;
+- 18–22px padding.
+
+**Principle (his words, plus inferred and marked):** a phone screen uses normal phone sizes:
+- headline number about 34px;
+- page title about 22px;
+- names about 14px, lines about 13px, meta 11–12px;
+- buttons 44px tall, the touch minimum, and no taller;
+- 12–16px gutters.
+
+*Inferred:* big type made it feel like a website, not an app, and it showed less at once. Accessibility stays:
+nothing a decision depends on goes below 13px, and every target stays at least 44px.
+
+**Do not propose again:** marketing-sized type or padding inside the phone app.

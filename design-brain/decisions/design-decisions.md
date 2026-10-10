@@ -11404,3 +11404,145 @@ Production, read-only aggregates:
 **Next in the plan (A-215 order):**
 1. The Help window bug (it opens under the page). A small fix, which needs his OK.
 2. "How it sends": decisions 4 and 5.
+
+## 2026-10-10 — Step 2 drawn: FollowUp sends the easy replies, only if the owner says yes
+
+**Founder:**
+- First, the plan was too much: *"What ???"* A three-line version followed.
+- Then he asked: *"easy reply ??? Only if they allow right?"*
+- He was told yes, only with the owner's yes, and that "easy" means no price, no date and nothing tricky. He answered *"Yes bro"* to drawing it.
+- **Principle he confirmed** (it matches A-070 and 2026-09-22): sending on its own is always asked for, never assumed.
+
+**Drawn on the real Today** (https://claude.ai/artifact/U1Wn84DQz5LkoEJ69RyhEt):
+- **One card, in the same slot as the alerts card.** It never shows at the same time as the alerts card; alerts come first.
+- **The card:** "Let FollowUp send the easy replies?" Under it, the owner's own proof: "You sent 11 of your last 13 replies
+  just as FollowUp wrote them" (from `FollowUp.draftEdited` on sent replies).
+- **Two lines:**
+  - goes out on its own: simple answers, with an example;
+  - always waits for you: prices, dates, anything tricky, and the phone buzzes for those.
+- **Buttons:** "Yes, send the easy ones" is outlined (Send stays the only black button), plus "Not now".
+- **Fine print:** "Starts with new messages. Turn it off any time in Settings."
+- **After yes:** "Done. FollowUp sends the easy replies now", with Undo.
+- **When it shows (my default, not his):** after at least 5 replies sent through FollowUp, with most sent unchanged.
+- **Yes uses the same switch** as Automatic in Settings and setup (`autoSendPermission`). Nothing already waiting goes out.
+
+**Status:** drawn, waiting for his yes.
+
+## 2026-10-10 — Feature answers before the redesign (1 to 3)
+
+The founder asked to settle the features first, then redesign the phone app once.
+1. **Sending by itself:** only after the owner says yes, and every reply works toward the booking. See A-217 and R-106.
+2. **Owners who set up before** get asked once (A-218).
+3. **A text message (SMS) to the owner when a customer needs them:** *"Not now then."* Texting stays off. The phone
+   buzz and the email do the job. Ask again only if owners miss alerts. (This was part 5's decision 3.)
+
+## 2026-10-10 — Feature answers before the redesign (4 and 5)
+
+4. **Remove the screens that show the same thing twice:** yes (A-219).
+5. **Count which screens owners use:** *"Yes, after a price check."* Checked the same day:
+   - Vercel Web Analytics on Pro is usage-based, $0.03 per 1,000 events, and counts against Pro's monthly usage credit.
+   - Hobby includes 50,000 events a month and can't buy more. (Vercel docs, updated 2026-06.)
+   - FollowUp's traffic is small, so the cost is cents a month.
+   - The app already loads it (`src/components/SiteAnalytics.tsx`, which removes ids from paths), and the privacy page
+     already mentions "basic product analytics (pages visited, features used)".
+   - Only the project's Analytics switch in Vercel is off. The founder turns it on himself, since it's a billing setting.
+
+**All feature questions are answered.** Next: the phone-app redesign, done once.
+
+## 2026-10-10 — Phone app redesign, drawing 1 (seven screens)
+
+**Asked:** *"we will be redesigning all these mobile UI/UX… making it simple"*, with Scotiabank's clarity and Claude's
+interface as references. After the features were settled, he said *"Do both"* (analytics and the redesign).
+
+**Drawn** with the app's own fonts and colour tokens, inside the running app (local). Page:
+https://claude.ai/artifact/MuhSgCMAi5KaEJSdBkvkzP. Source: `prototypes/2026-10-10-phone-redesign/`.
+
+1. **Today:** one big number ("3 customers need you"), then the one decision card.
+   - The card shows who they are and the channel, their words (the biggest text), and "Your reply, ready" on the warm
+     wash (A-043).
+   - Send is the only black button. Edit and Later sit under it, then a "Next" row.
+   - The sample reply works toward the booking (R-106).
+2. **All caught up:** "0 customers need you", a calm check, "Your phone buzzes when someone needs you", and "What
+   FollowUp did today" in three rows.
+3. **The one-time question** (A-218):
+   - "Let FollowUp reply for you?" and every reply works toward a booking. Prices, dates and anything unsure still wait.
+   - The owner's own proof line, then "Yes, reply for me" (outlined) and "Not now".
+4. **Customers:**
+   - search first;
+   - groups like a bank's accounts, each with a count: Needs you, **Ready to book** (hot leads, with a Call pill),
+     then Waiting on them, Booked and Everyone as rows;
+   - no State column, no Pipeline page (A-219).
+5. **One customer:**
+   - what they want (Wants, Budget, When) at the top;
+   - the chat as bubbles, with "Sent by FollowUp" under FollowUp's own;
+   - "What FollowUp did" in one line;
+   - a single reply box pinned at the bottom (the Claude idea).
+6. **Settings:** four rows (Where customers write, How replies go out, Alerts, Your business), then More (team, plan,
+   data, advanced), Help and Sign out.
+7. **Results:** one number for the week ("14 customers answered", against last week), then Booked, First reply and Won.
+
+**References:**
+- Scotiabank: one total first, things grouped, Help in the same place.
+- Claude: calm, space, one reply box.
+
+No logo, colour, words or screen of theirs.
+
+**Weak spots, said plainly:**
+- The numbers and names are examples. Results may only show real records.
+- "Ready to book" needs a rule. Realtors have one (#466, "is ready"); other trades don't yet.
+- The customer screen doesn't show a waiting reply. When one waits, the Today card sits above the chat.
+- No computer version drawn yet.
+- The Scotiabank screenshots haven't arrived. This drawing uses only public descriptions.
+
+**Status:** drawn, waiting for his yes. **Updated the same day:** text and boxes too big for a phone (R-107), made
+compact, then approved (A-220). See the next two entries.
+
+## 2026-10-10 — Redesign drawing made compact (R-107), then approved (A-220)
+
+**Rejected:** *"Bro why we keeping fonts and stuff to big make it compatible for mobile bro"*. Recorded as R-107 with
+phone sizes: the number about 34px, a title about 22px, names about 14px, lines about 13px, meta 11 to 12px, buttons
+44px, gutters 12 to 16px. Nothing a decision depends on goes below 13px.
+
+**Redrawn** at those sizes (version 2 of the same page). **Approved:** *"Yes"*. Recorded as A-220, with the build order:
+Today, Customers, One customer, Settings, Results, one screen per PR, each shown on phone and computer before "merge".
+
+## 2026-10-10 — Build 1/5: Today, built (A-220)
+
+**Built as drawn:**
+- The date, then one number and the words: "15 customers need you". On a clear day it says 0; a brand-new account still
+  gets "No customers yet." (the #301 rule).
+- One card: who and the channel, their words (the biggest text), "Your reply, ready" on the wash, at most one line on
+  why it waits, Send (the one black button, full width on a phone), Edit and Later under it, then "Don't send ·
+  Already spoke" as quiet links. Edit in place, the answer blank, Later's two times, undo and kept edits all stay.
+- A "Next" row under it: their name and their words; the row opens them in the card. Today shows no list.
+- All caught up: a green check, "You're all caught up.", the honest line about what waits, and "What FollowUp did
+  today" in up to three rows from the activity record, then "See everything it did".
+- The one-time question (A-217, A-218): it takes the card's place, with the first waiting customer as one row under
+  it, as drawn. Either answer brings the card back. It is recorded once and never asked again.
+- Cards run 12px from the phone's edge; text stays at 20px. On a computer, Today is one 640px column.
+
+**Calls made while building (for his eyes in the PR):**
+- **Going quiet** was a list under the queue ("About to be lost", A-046). Today shows no list now, so it became one row:
+  the first name and "and 2 more", opening that customer. The rest are under Going quiet in Customers.
+- **Swipe for Later** (A-095) leaves Today with the rows it lived on. Whether Customers' rows get it is decided in
+  build 2.
+- **The question is asked only when a yes can work:** an admin, on "ask me first", on a plan that allows sending, with
+  sending not paused, and with at least 5 recent replies of which 60% went out unchanged.
+- **One question at a time:** on the visit that asks it, the alerts card waits. The phone link (?alerts=on) never
+  shows the question.
+- **"Your reply, ready"** replaces "Written by FollowUp · waits for your OK", as drawn. "Edited by you" still shows
+  once the owner changes it.
+- The daily question card got the same sizes (title 17px), and the bell's count now sits beside the word "Alerts"
+  instead of over its last letter.
+
+**Self-review (design-review.md), weak spots said plainly:**
+- An email reply with a greeting and sign-off still makes the card long on a phone. The drawing used a short reply.
+- The answer blank leaves an empty gap under it where the draft had a blank line. It was like this before.
+- The rows under "What FollowUp did today" can only say what the record holds: no bookings yet, because bookings
+  aren't in the activity record.
+- The top bar is unchanged (FollowUp and Alerts). The drawing's Help and bell come with a later step.
+
+**Checked:** types, lint, 3,545 tests, a production build, and the running app at 390×844 and 1440×900 (working day,
+Edit, Later, Next, the question and "Not now", all caught up). Nothing scrolls sideways; Send is 44px tall.
+
+**Status:** built, PR open, waiting for his "merge".

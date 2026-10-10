@@ -8,7 +8,9 @@ vi.mock("@/lib/db", () => ({
   prisma: {
     auditEvent: { findMany: vi.fn() },
     lead: { findMany: vi.fn(), updateMany: vi.fn() },
-    message: { findMany: vi.fn() },
+    // findFirst: on a weekend the route looks up the customer's last message
+    // (the weekend_wait habit), so without it this file failed every Saturday and Sunday.
+    message: { findMany: vi.fn(), findFirst: vi.fn(async () => null) },
     business: { findUnique: vi.fn() },
     ownerHabit: { findMany: vi.fn(async () => []) },
   },

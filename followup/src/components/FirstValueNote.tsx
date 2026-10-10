@@ -4,7 +4,7 @@ import { Check } from "lucide-react";
 // A-047). Calm on purpose: no confetti, no points, no streak.
 export default function FirstValueNote({ title, body }: { title: string; body: string }) {
   return (
-    <div className="mt-6 box p-4 sm:p-5 flex items-start gap-3.5 max-w-3xl" role="status">
+    <div className="mt-3.5 box p-4 sm:p-5 flex items-start gap-3.5 max-w-3xl" role="status">
       <span
         className="h-9 w-9 shrink-0 rounded-full border border-line flex items-center justify-center"
         aria-hidden

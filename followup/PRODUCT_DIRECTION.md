@@ -610,6 +610,17 @@ turned alerts on. The replies were written, but nobody came to send them.
 Status: NOT BUILT. Each step is drawn and shown to the founder first. Still needs his word: a text message to the
 owner's phone (cost), and offering Automatic to existing accounts.
 
+## Sending by itself: only after the owner's yes, and always toward the booking (founder, 2026-10-10)
+
+> "No lead should be taken lightly. We will try our best to convert the lead, or at least book the appointment."
+> Then, asked whether FollowUp should send by itself: "by itself after owner says yes".
+
+- FollowUp sends on its own **only after the owner says yes**. Assisted stays the default (A-070).
+- Every reply it sends has one job: move the customer toward a booked appointment or a sale. There are no "easy" or
+  throwaway replies (design-brain R-106, A-217).
+- Prices, dates and tense or unsure moments still wait for the owner.
+- Design comes after the features. The phone app is redesigned once all of these are decided.
+
 ## The goal, restated: close more deals; the owner keeps the end (founder, 2026-10-09)
 
 > "Our goal is to make this product so good that it does not just act like a chat box or something that automatically

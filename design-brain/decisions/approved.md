@@ -3564,3 +3564,20 @@ him. Three plain lines in chat did. Put decisions to him as a few short lines, o
 
 **He asked "what is that QR".** He didn't recognise it. *Inferred:* say what a pictured thing is for in the caption,
 in a few words. The code was explained as "the square you point your phone's camera at, like WhatsApp on a computer".
+
+## A-217 — FollowUp sends replies by itself after the owner says yes, and every reply works toward the booking ^A-217
+
+**Approved:** 2026-10-10, founder. Asked: *"Once an owner says yes, should FollowUp send replies by itself, or should
+every reply wait?"* He answered: *"by itself after owner says yes"*.
+
+**What specifically:**
+- **Sending on its own needs the owner's yes.** It is never on by default and never assumed (A-070 stands; R-106
+  context).
+- **Once the owner says yes, FollowUp sends its replies itself.** Each one is written with a strategy: answer, then move
+  the customer toward a booked appointment or a sale (R-106: no reply is "easy").
+- **Unchanged:** prices, dates and tense or unsure moments still wait for the owner. This is the existing risk check and
+  PRODUCT_DIRECTION's "only decisions go to the owner". It wasn't re-asked.
+
+**Order agreed the same day:** *"finalise the feature first or the design?"* Features first, as quick answers. Then the
+whole phone app is redesigned once (simple, Scotiabank and Claude as references). No new screens get built before
+that redesign. The step 2 card drawing (R-106) is not built.

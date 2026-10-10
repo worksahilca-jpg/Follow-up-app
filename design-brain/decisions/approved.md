@@ -3615,6 +3615,9 @@ Customers PR (Waiting and Pipeline links land in Customers). The second feedback
 
 ## A-220 — The phone app redesign, drawing 1 (compact) ^A-220
 
+**Progress (2026-10-10):** builds 1 and 2 merged (#473, #474). Build 3's screenshots: *"Cool"* (PR #476, waiting for
+"merge").
+
 **Approved:** 2026-10-10, founder: *"Yes"*, on https://claude.ai/artifact/MuhSgCMAi5KaEJSdBkvkzP (version 2, the compact
 one after R-107). Source: `prototypes/2026-10-10-phone-redesign/`.
 
@@ -3648,3 +3651,47 @@ one after R-107). Source: `prototypes/2026-10-10-phone-redesign/`.
 3. One customer
 4. Settings
 5. Results
+
+## A-221 — The app wears the homepage's look: soft-green replies, display-face titles ^A-221
+
+**Approved:** 2026-10-10, founder. He asked *"try to use new theme if possible"* and *"keep everything organised"*, was
+shown Today, Customers and One customer before and after (drawn on the real app), and chose *"Yes, new look"*.
+
+**What specifically:**
+- **The written reply is soft green** everywhere it appears (Today's card, a customer's page, the site reply, setup):
+  `--wash #f3f8f4`, edge `--wash-edge #dcebe1`. This builds A-209's point 3, approved 2026-10-09 and never built. The
+  peach-and-blue wash (A-043) is gone from the app.
+- **Its label is the deep green** (`--green-ink #2a5a47`, 7:1 on the green): "Your reply, ready", "Edited by you".
+- **Every page title in the app uses the homepage's display face** (`.title-serif`): Today, Customers and its lists,
+  a customer's name, Results, What FollowUp did, Coming up, Follow-up plans, Inbox, Teach, setup and alerts setup.
+  Settings already did.
+- **Today's headline carries the one green italic phrase:** "15 customers *need you*" (A-211).
+- **Organised:** it is done once, in the shared colours and the one title class, so Settings and Results (builds 4
+  and 5) and any later screen get it without new code.
+- **Stays:** the white ground (A-090), black as the action colour, Public Sans for everything else.
+- Dark mode has its own green (`#1a231f`, label `#8fc3a8`).
+
+## A-222 — The phone gets its own layout: a chat-app customer page, Today's actions in thumb reach ^A-222
+
+**Approved:** 2026-10-10, founder. He said *"for phone we gotta figure out something, because we cannot just fit the
+desktop in this mobile one. Can you figure out how big companies do that"*. He was shown the research
+(`research/ux-patterns/2026-10-10-phone-vs-computer.md`), then a before/after drawn on the real app, and chose
+*"Yes, build it"*.
+
+**What specifically (below 1024px; the computer is unchanged):**
+- **A customer's page works like a chat app:**
+  - its own top bar: Back, their name (display face) with the channel line, and an info button;
+  - no FollowUp bar and no tabs on this screen;
+  - the newest message and the reply sit at the foot of the screen, by the thumb;
+  - the reply box sits at the very bottom.
+- **The info button opens a sheet, "About Mia":** what FollowUp knows, the facts, Already spoke, Copy booking link,
+  Call or Email, and Details. Before, this was the computer's side column stacked under the chat. It uses the app's
+  own window (A-213): a sheet on the phone, closed with ×, Esc or a tap outside.
+- **A waiting reply says why it waits inside its card** (the orange-dot line, above Send), because the side column
+  isn't on screen.
+- **Today:** the one customer sits on the page with no box around it. Send, Edit and Later sit in a bar just above the
+  tabs. The ten-second undo and Later's two times open in that bar. Don't send · Already spoke stay as quiet links in
+  the card.
+- **The rule going forward:** each phone screen gets its own layout. The look and the words stay the same (A-221).
+  Never the computer's columns stacked into one.
+

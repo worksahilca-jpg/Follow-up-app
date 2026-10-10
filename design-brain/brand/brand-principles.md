@@ -71,6 +71,10 @@ Configuration is progressive: powerful when sought, invisible when not.
 
 *SUPERSEDED IN PART (2026-09-27) by A-063:* on the landing page the phone keeps every **claim**, said once, not every word. A picture that shows the product working (the demo) beats the paragraph that describes it.
 
+**Said again, for the app** (founder, 2026-10-10: *"for phone we gotta figure out something, because we cannot just fit
+the desktop in this mobile one"*). The app's phone screens get their own layout, not the computer's stacked into one
+column. Research: `research/ux-patterns/2026-10-10-phone-vs-computer.md`.
+
 **The phone must be habitable** (founder, 2026-09-26: *"make it more simple so that I can also be habitable with my phone, because users will be mostly using their phone"*). In the app, one screen = one decision: the next person who needs you, their message, your reply, and a big Send. No progress bars, filter chips, section labels, colour dots or stats on the phone. If the owner wouldn't open it between jobs with one thumb, it's too much.
 
 ---

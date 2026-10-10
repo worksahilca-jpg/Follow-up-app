@@ -69,7 +69,7 @@ export default function TeachFlow({ questions, known }: { questions: TeachQuesti
     return (
       <main className={shell}>
         <p className="mt-14 text-[13px] text-ink-soft">Teach FollowUp your business</p>
-        <h1 className="mt-2 text-[28px] leading-[1.15]">
+        <h1 className="title-serif mt-2 text-[28px] leading-[1.15]">
           {total === 0
             ? "FollowUp will learn as you go."
             : `FollowUp knows ${total} ${total === 1 ? "thing" : "things"} about your business.`}
@@ -109,7 +109,7 @@ export default function TeachFlow({ questions, known }: { questions: TeachQuesti
         </button>
       </div>
       <p className="mt-8 text-[13px] text-ink-soft">Teach FollowUp your business</p>
-      <h1 className="mt-2 text-[28px] leading-[1.15]">{q.question}</h1>
+      <h1 className="title-serif mt-2 text-[28px] leading-[1.15]">{q.question}</h1>
       <p className="mt-3 text-[15px] leading-relaxed text-ink-soft">
         Customers ask this a lot. FollowUp will answer with your exact words, and never makes up the rest.
       </p>

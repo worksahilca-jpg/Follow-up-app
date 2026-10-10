@@ -271,12 +271,13 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       </div>
       {/* One number, then the words (A-220), at phone sizes (R-107). */}
       {sentence ? (
-        <h1 className="mt-1 text-[24px] font-semibold leading-[1.15] tracking-[-0.02em] sm:text-[28px]">{sentence}</h1>
+        <h1 className="title-serif mt-1 text-[28px] leading-[1.15] sm:text-[32px]">{sentence}</h1>
       ) : (
-        <h1 className="mt-0.5 flex items-baseline gap-2.5">
-          <span className="text-[34px] font-semibold leading-none tracking-[-0.035em] tabular-nums sm:text-[40px]">{needYou}</span>
-          <span className="text-[17px] font-medium leading-tight tracking-[-0.01em] sm:text-[20px]">
-            {needYou === 1 ? "customer needs you" : "customers need you"}
+        // The homepage's display face, its italic phrase in green (A-221).
+        <h1 className="title-serif mt-0.5 flex items-baseline gap-2.5">
+          <span className="text-[38px] leading-none tabular-nums sm:text-[44px]">{needYou}</span>
+          <span className="text-[19px] leading-tight sm:text-[22px]">
+            {needYou === 1 ? "customer" : "customers"} <em>{needYou === 1 ? "needs you" : "need you"}</em>
           </span>
         </h1>
       )}
@@ -348,6 +349,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       {comingUp && comingUp.total > 0 && approvalItems.length > 0 && (
         <ComingUpLine first={{ day: comingUp.groups[0].day, count: comingUp.groups[0].items.length }} total={comingUp.total} />
       )}
+      {/* Room under the last thing on a phone, so the bar of Send, Edit and Later (A-222) never covers it. */}
+      {leads.length > 0 && approvalItems.length > 0 && <div aria-hidden="true" className="h-16 lg:hidden" />}
 
       {leads.length === 0 ? (
         <div className="mt-10">

@@ -16,7 +16,7 @@ import { AlertsSetupStep } from "@/components/app/AlertsSetup";
 const PRIMARY =
   "flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full px-6 text-base font-medium disabled:opacity-60";
 const PRIMARY_STYLE = { backgroundColor: "var(--ink)", color: "var(--on-accent)" } as const;
-const H1 = "text-[30px] leading-[1.1] tracking-[-0.025em]";
+const H1 = "title-serif text-[30px] leading-[1.1]";
 const LEDE = "mt-2.5 text-[15.5px] leading-relaxed text-ink-soft";
 
 /**

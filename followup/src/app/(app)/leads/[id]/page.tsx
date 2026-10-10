@@ -25,8 +25,11 @@ import Link from "next/link";
 import SiteReplyCard from "@/components/app/SiteReplyCard";
 import { siteReplyFor } from "@/lib/siteReply";
 import ReplyCard from "@/components/app/ReplyCard";
+import ReplyBar from "@/components/app/ReplyBar";
+import CustomerSide from "@/components/app/CustomerSide";
+import { ChannelIcon } from "@/components/app/ChannelIcon";
 import Thread from "@/components/app/Thread";
-import { Initials, waitingFor } from "@/components/app/canvasBits";
+import { Eyebrow, Initials, waitingFor } from "@/components/app/canvasBits";
 import { getSessionContext } from "@/lib/session";
 import { getPendingApprovals, type PendingApproval } from "@/lib/pendingApprovals";
 import { prisma } from "@/lib/db";
@@ -87,8 +90,14 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
     : null;
   const firstName = lead.name.split(" ")[0] ?? lead.name;
   const firstMessage = lead.conversation[0];
-  const channel = channelName(displayChannel(lastInbound(lead.conversation)?.channel ?? firstMessage?.channel, lead.source), lead.source);
+  const channelId = displayChannel(lastInbound(lead.conversation)?.channel ?? firstMessage?.channel, lead.source);
+  const channel = channelName(channelId, lead.source);
   const now = new Date();
+  const firstWrote = firstMessage ? new Date(firstMessage.date).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone }) : null;
+  // "What FollowUp did" in one line (A-220): the newest thing it did, then what's next. The full record is under Details.
+  const didLine = [lastActionSummary(auditTrail, now), lead.nextFollowUp ? `Next check-in ${formatDate(lead.nextFollowUp, timeZone)}` : null]
+    .filter(Boolean)
+    .join(" · ");
 
   // "Nadia is ready" (src/lib/qualification.ts): for a line of work with a
   // checklist. Ready is shown while the deal is open; a closed or decided
@@ -105,6 +114,14 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
       lead.stage !== "won" &&
       lead.stage !== "lost"
   );
+  // Wants, Budget, When at the top (A-220): what FollowUp learned from their own words (#466).
+  const known = (key: string) => checklistShown?.items.find((i) => i.key === key)?.value ?? null;
+  const wants: [string, string | null][] = [
+    ["Wants", known("want")],
+    ["Budget", known("budget")],
+    ["When", known("timing")],
+  ];
+  const showWants = wants.some(([, v]) => v);
   const readyCard =
     template && checklistShown ? (
       <ReadyCard
@@ -116,48 +133,57 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
       />
     ) : null;
 
+  // Why the reply waits, said inside the reply card on a phone (A-222), where the side column isn't.
+  const holdWhy = approval
+    ? (plainHoldReason(approval.reason, { firstName: lead.name.split(" ")[0] || lead.name, topic: approval.riskTopic }) ?? "Every reply waits for your OK.")
+    : null;
+
   return (
     <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-10">
-      <div className="min-w-0">
-        {/* Phone: the ThreadPhone header, back, name, where they wrote. */}
-        <div className="-mx-5 -mt-3 flex items-center gap-1 border-b border-line px-2 pb-2.5 sm:-mx-8 lg:hidden">
-          <Link href="/leads" aria-label="Back to Customers" className="inline-flex h-11 w-11 shrink-0 items-center justify-center text-ink">
-            <ChevronLeft className="h-5 w-5" />
-          </Link>
+      {/* Phone (A-222): the column fills the screen and the chat sits at its foot, by the thumb, as in a chat app. */}
+      <div className="min-w-0 max-lg:flex max-lg:min-h-[calc(100dvh-192px)] max-lg:flex-col">
+        {/* Back, then who and where they wrote (A-220). On a phone the same three things are the top bar (CustomerSide). */}
+        <Link href="/leads" className="-ml-1 hidden min-h-11 items-center gap-0.5 text-[13px] text-ink-soft hover:text-ink lg:inline-flex">
+          <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+          Customers
+        </Link>
+        <div className="mt-0.5 hidden items-center gap-2.5 lg:flex">
+          <Initials name={lead.name} size={38} />
           <div className="min-w-0">
-            {/* Inline weight: the global h1 rule is thin and unlayered. */}
-            <h1 className="truncate text-[17px] leading-tight" style={{ fontWeight: 600, letterSpacing: "-0.01em" }}>
-              {lead.name}
-            </h1>
-            <p className="truncate text-[13px] text-ink-faint">{channel}</p>
+            <h1 className="title-serif truncate text-[23px] leading-tight sm:text-[26px]">{lead.name}</h1>
+            <p className="flex min-w-0 items-center gap-1.5 text-[12.5px] text-ink-faint">
+              <ChannelIcon channel={channelId} className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">{[channel, firstWrote ? `first wrote ${firstWrote}` : null].filter(Boolean).join(" · ")}</span>
+            </p>
           </div>
         </div>
+
+        {showWants && (
+          <dl className="grid grid-cols-3 gap-1.5 rounded-[14px] bg-card-2 px-3 py-2.5 lg:mt-3">
+            {wants.map(([label, value]) => (
+              <div key={label} className="min-w-0">
+                <dt className="text-[11.5px] text-ink-faint">{label}</dt>
+                <dd className={"line-clamp-2 text-[13.5px] leading-snug " + (value ? "font-semibold" : "text-ink-faint")}>{value ?? "Not yet"}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
 
         {/* Phone: a ready customer's card comes first — it is what the alert was about. */}
         {showReady && <div className="mt-4 lg:hidden">{readyCard}</div>}
 
-        <Link href="/leads" className="hidden text-[13px] text-ink-faint hover:text-ink-soft lg:inline">
-          ← Customers
-        </Link>
-        <div className="mt-3 hidden items-center gap-3.5 lg:flex">
-          <Initials name={lead.name} size={44} />
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-[26px] leading-tight">{lead.name}</h1>
-              {approval && (
-                <span className="rounded-full border border-line bg-card px-2.5 py-0.5 text-[12.5px] font-medium">Needs you</span>
-              )}
-            </div>
-            <div className="mt-0.5 text-[13.5px] text-ink-faint">
-              {[channel, firstMessage ? `first message ${timeAgoWords(firstMessage.date, now)}` : null].filter(Boolean).join(" · ")}
-            </div>
-          </div>
-        </div>
-
+        <div aria-hidden="true" className="flex-1 lg:hidden" />
         {/* id: the target of CatchUp's "Show all N messages". */}
-        <div id="conversation" className="mt-5 lg:mt-7">
+        <div id="conversation" className="mt-4 lg:mt-6">
           <Thread messages={lead.conversation} leadName={lead.name} timeZone={timeZone} now={now} />
         </div>
+
+        {didLine && (
+          <div className="mt-4 px-1">
+            <Eyebrow>What FollowUp did</Eyebrow>
+            <p className="mt-1 text-[13px] leading-relaxed text-ink-soft">{didLine}</p>
+          </div>
+        )}
 
         {callable && (
           <div className="mt-6">
@@ -173,9 +199,18 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
         )}
 
         {/* id: the target of the ready card's "Message". */}
-        <div id="reply" className="mt-6 scroll-mt-4">
+        <div id="reply" className="mt-5 scroll-mt-4">
           {siteReply ? (
             <SiteReplyCard key={lead.id} leadId={lead.id} leadName={lead.name} site={siteReply} draft={lead.suggestedMessage} waiting={Boolean(approval)} />
+          ) : !lead.suggestedMessage ? (
+            // Nothing written yet: one box pinned at the bottom (A-220). A written reply keeps its card below.
+            <ReplyBar
+              leadId={lead.id}
+              leadName={lead.name}
+              seenInboundAt={newestInboundAt(lead.conversation)}
+              sendLocked={sendLocked}
+              languageName={replyLanguage}
+            />
           ) : (
             <ReplyCard
               // A new draft (a "No answer" text, A-103) is a new card: its text is held in the card's own state.
@@ -191,6 +226,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
               basis={basis}
               languageName={replyLanguage}
               textTo={approval?.textTo ?? null}
+              why={holdWhy}
             />
           )}
         </div>
@@ -203,7 +239,15 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
           facts, three actions, one "Details" row with the machinery behind
           it. Each fact once: the channel is in the header, the language
           under "Why it may write". */}
-      <aside className="mt-10 grid min-w-0 content-start gap-[18px] lg:mt-0 lg:pt-1.5">
+      <CustomerSide
+        name={lead.name}
+        line={
+          <>
+            <ChannelIcon channel={channelId} className="h-3.5 w-3.5 shrink-0" />
+            <span className="truncate">{[channel, firstWrote ? `first wrote ${firstWrote}` : null].filter(Boolean).join(" · ")}</span>
+          </>
+        }
+      >
         {readyCard && <div className={showReady ? "hidden lg:block" : undefined}>{readyCard}</div>}
         <Facts lead={lead} approval={approval} now={now} />
 
@@ -284,7 +328,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
             <DeleteLeadButton leadId={lead.id} leadName={lead.name} leadEmail={lead.email} />
           </div>
         </DetailsFold>
-      </aside>
+      </CustomerSide>
     </div>
   );
 }

@@ -332,9 +332,7 @@ export default function LeadsPageClient({
           Customers
         </Link>
         <div className="flex items-baseline justify-between gap-3">
-          <h1 className="text-[22px] leading-tight tracking-[-0.02em]">
-            <span className="font-semibold">{TITLE[show]}</span>
-          </h1>
+          <h1 className="title-serif text-[26px] leading-tight">{TITLE[show]}</h1>
           <span className="text-[14px] font-semibold text-ink-soft tabular-nums">{inGroup.length}</span>
         </div>
         {SUB[show] && <p className="mt-0.5 text-[13px] text-ink-faint">{SUB[show]}</p>}
@@ -486,9 +484,7 @@ export default function LeadsPageClient({
     <div className="max-w-[720px]">
       {/* The title and two small round buttons on one row (A-089), then search, then the people. */}
       <div className="flex items-center justify-between gap-3">
-        <h1 className="text-[22px] leading-tight tracking-[-0.02em]">
-          <span className="font-semibold">Customers</span>
-        </h1>
+        <h1 className="title-serif text-[28px] leading-tight">Customers</h1>
         <div className="flex shrink-0 items-center gap-2 sm:whitespace-nowrap">
           <LeadsMoreMenu onLogCall={() => setShowLogCall(true)} onImport={() => setShowImport(true)} />
           <button

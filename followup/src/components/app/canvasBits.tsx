@@ -45,8 +45,13 @@ export function GroupLabel({ children }: { children: React.ReactNode }) {
 }
 
 /** The mono eyebrow the desktop boards use ("NEEDS YOU · 4"). */
-export function Eyebrow({ children }: { children: React.ReactNode }) {
-  return <span className="font-mono text-[11px] font-medium uppercase tracking-[0.1em] text-ink-faint">{children}</span>;
+/** A small mono label. `green` is the written reply's own label, on its soft green (A-221). */
+export function Eyebrow({ children, green = false }: { children: React.ReactNode; green?: boolean }) {
+  return (
+    <span className={"font-mono text-[11px] font-medium uppercase tracking-[0.1em] " + (green ? "text-green-ink" : "text-ink-faint")}>
+      {children}
+    </span>
+  );
 }
 
 export type StateKey = "needs" | "quiet" | "waiting" | "sent" | "checked" | "done";

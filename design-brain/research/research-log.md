@@ -492,3 +492,8 @@ Four places, each with one job and each borrowing an everyday pattern:
 Ten rules come from the Laws of UX. Wispr's lesson is that the work happens where you already are, and the app stays a
 quiet hub. Today was drawn two ways: B, one customer at a time, takes the desk from 239 to 102 words. Mobbin was not
 reachable (it needs a paid plan). → [[ux-patterns/2026-10-09-app-strategy-simple-familiar]]
+
+**2026-10-10: phone vs computer, how big companies do it.** Founder: *"we cannot just fit the desktop in this mobile
+one."* Material (window sizes, list then detail), Linear (the phone is a companion), Slack (redesign the navigation
+for phone jobs), Superhuman (gestures instead of shortcuts). Found four places where FollowUp's phone still looks like
+a squeezed computer; proposed a chat-app customer page and a thumb-first Today. → [[ux-patterns/2026-10-10-phone-vs-computer]]

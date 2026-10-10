@@ -66,7 +66,9 @@ describe("the dashboard on a brand-new account", () => {
     // The fix must not overcorrect: an owner with customers and an empty
     // queue has earned "0 customers need you", and losing it would make the
     // line useless in the one case it was written for.
-    expect(source).toContain('"customers need you"');
+    // The words are split for the green italic phrase (A-221): "customers" <em>"need you"</em>.
+    expect(source).toContain('"customers"');
+    expect(source).toContain('"need you"');
   });
 });
 

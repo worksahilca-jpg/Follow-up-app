@@ -11605,4 +11605,104 @@ the blurred messages rising behind the headline, still moving long after they ha
 the top of the page from about 120 to about 190 drawn frames. Over the whole page, though, the gain was lost in the
 noise of software drawing. The real check is the founder scrolling the preview on his own computer.
 
-**Status:** PR open with a preview link, waiting for his check and "merge".
+**Status:** merged (PR #475), 2026-10-10. Live; waiting for his check on his own computer.
+
+## 2026-10-10 — Build 3/5: One customer, built (A-220)
+
+**Built as drawn:**
+- One header: "‹ Customers" back (44px), initials, the name, and one line for the channel and when they first wrote
+  ("Email · first wrote Oct 10").
+- **Wants · Budget · When** in one quiet strip under the name, from the realtor checklist (#466). Shown only when
+  FollowUp knows at least one of them.
+- **The chat as bubbles.** Theirs on the left (white, hairline); the owner's and FollowUp's on the right (black).
+  Who and when sits under each bubble ("Mia · 9:01 AM", "Sent by FollowUp · …", "You · …").
+- **What FollowUp did** in one line under the chat: the last thing it did, and the next check-in when there is one.
+  Hidden when it has done nothing yet.
+- **One reply box pinned at the bottom** (the Claude idea), above the phone's tabs. Type, press the arrow, and it
+  goes, with the same ten seconds to take it back (A-048). The old box's tools stay, one tap away and only when they
+  apply: "Write one for me" on an empty box; Shorter, Warmer, More formal and the customer's language once there is
+  text.
+
+**Calls made while building (for his eyes):**
+- **A reply FollowUp has ready keeps its own card** ("Your reply, ready", the same warm card as Today), and the
+  pinned box is not shown under it. Two places to send from on one screen would be one too many.
+- **The box shows focus on its own rounded edge** (2px black), not a square outline inside it. On a phone a soft fade
+  of the page colour sits behind it, so the page's words don't show through between the buttons.
+- **The box is 16px text**, so a phone doesn't zoom in when it's tapped.
+- On a computer the box sits at the bottom of the chat column and stays there while scrolling. The side column
+  (what FollowUp knows, the facts, Already spoke, Copy booking link, Details) is unchanged.
+
+**Self-review, weak spots said plainly:**
+- **"Why it's here" sits under the reply card on a phone**, not inside it. The reason should be read before Send.
+  It is the side column's first fact, which a phone stacks after the chat. Worth moving into the card in a later
+  pass; not drawn yet, so not changed here.
+- **"State · Waiting on Mia"** still shows in the facts. It repeats what the Customers group already says (A-219's
+  spirit). Left for his call.
+- **The Wants strip needs the realtor checklist.** Other trades never see it yet.
+- The computer gets the phone's column with the side column beside it. No computer drawing exists; it reads fine.
+
+**Checked:** types, lint, the full test suite, a production build, and the running app at 390×844 and 1440×900
+(a customer waiting on them, one with a ready reply, one ready to book, typing with the tools showing). Nothing
+scrolls sideways.
+
+**Status:** PR open, waiting for his look and "merge".
+
+## 2026-10-10 — "Keep everything organised, and use the new theme if possible"
+
+**Said:** after build 3's screenshots, *"Cool. We have to keep everything organised too bro and try to use new theme if
+possible."* "Cool" is read as liking build 3; it is not a "merge" (PR #476 waits for that word).
+
+**Found:** the app still wears the old peach-and-blue wash on the reply card. A-209 (approved 2026-10-09) already said
+written replies are soft green (`#F3F8F4`, edge `#DCEBE1`, label `#2A5A47`) and the wash leaves the app. It was never
+built. The homepage's display face is in the app but only titles windows.
+
+**Drawn on the real app (injected, no code changed):** Today, Customers and One customer, before and after.
+- the reply card in A-209's soft green, its label in the deep green;
+- the big titles in the homepage's display face, with "need you" in green italics on Today (A-211's "display headline
+  with the green italic phrase");
+- the white ground stays (A-090); nothing else moves.
+
+**Read of "organised":** one look on every screen, built once in the shared tokens, so later screens (Settings,
+Results) pick it up by themselves. Asked him to confirm with the drawing.
+
+**Answer:** *"Yes, new look"* → A-221. Built in the shared tokens (`--wash`, `--wash-edge`, new `--green-ink`) and
+the one title class, then checked at 390×844 and 1440×900 and in dark mode on Today, Customers, a customer, Results
+and What FollowUp did. Added to PR #476 with build 3.
+
+**Weak spots:** the display face is lighter than the old bold titles, so a long customer name reads quieter. Inbox's
+compact desk header keeps the plain face (a list header, not a page title).
+
+## 2026-10-10 — The phone gets its own layout (drawn, after "we cannot just fit the desktop in this mobile one")
+
+**Research:** `research/ux-patterns/2026-10-10-phone-vs-computer.md` (Material's window sizes and list-then-detail,
+Linear's phone as a companion, Slack's phone navigation, Superhuman's gestures). He chose *"Yes, draw it"*.
+
+**Drawn on the real app at 390×844 (injected; no code changed), computer untouched:**
+- **A customer's page works like a chat app:**
+  - top bar: Back, their name (display face) and channel line, and an info button;
+  - no brand bar and no tabs on this screen;
+  - the newest message and the reply sit at the bottom, by the thumb;
+  - the reply box sits at the very bottom.
+- **The info button opens a sheet, "About Mia":** what FollowUp knows, the facts, Already spoke, Copy booking link,
+  Call, and Details. This was the computer's side column, stacked under the chat on the phone.
+- **A ready reply carries its reason inside the card** (the orange-dot line, above Send). This fixes build 3's weak
+  spot.
+- **Today:**
+  - no box around the one customer;
+  - Send, Edit and Later in a bar just above the tabs;
+  - Don't send · Already spoke stay as quiet links.
+
+**Weak spots:**
+- With a short chat there is empty space between the Wants strip and the messages; chat apps accept this.
+- On Today the bar's Send is grey while a blank waits to be filled, as before.
+- Swipe-down to close the sheet isn't drawn.
+
+**Answer:** *"Yes, build it"* → A-222. Built: `CustomerSide` (phone bar + sheet through `AppWindow`), the app's own
+bar and tabs left out on a customer's page (`Sidebar`), the reply box at the very bottom (`ReplyBar`), the reason line
+in `ReplyCard`, and Today's `PHONE_BAR` in `ApprovalQueue`. Checked at 390×844, 768×1024 and 1440×900: the sheet opens,
+takes focus and closes with Esc (focus back on the info button), Later opens in the bar, and nothing scrolls sideways.
+The computer is unchanged. Added to PR #476.
+
+**Weak spots:** a long thread pushes a ready reply below the fold on a phone, the same as before. Swipe-down to close
+the sheet isn't built (× or a tap outside closes it). On a tablet the action bar is centred while the card is aligned
+left.

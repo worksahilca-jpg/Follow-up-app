@@ -11800,3 +11800,13 @@ A scroll effect works only while its part of the page is near the screen.
 
 **Also said, mid-task:** *"moonstone and gun metal colour also looks good no ??"* This is a liking for two cool
 greys, not an approval: nothing has been drawn, and where they would go isn't known yet. Asked where he sees them.
+**Answers (same day):** his laptop is **Windows**. On the colours: *"Draw them first"*. Drawing the landing page in
+moonstone + gunmetal beside the current look. Guardrails for the drawing: no navy or dark-blue ground (R-031), and no
+steel-blue accent (R-004). So moonstone is used as a pale ground and gunmetal as ink and the near-black blocks, and
+the green stays the accent.
+**Drawn (injected on the live page, nothing in code):** the ground `#f4f5f3` becomes moonstone (about `#eaeff1`).
+Near-black text, buttons and the dark green blocks become gunmetal `#2a3439`. The soft greys are cooled a little,
+and the green accents are unchanged. The pictures pair each screen side by side: the first screen, the demo, What it
+does, Your data / the close, and the footer, on desktop and on a phone. **Weak spots:** the demo and the footer are
+mostly photo, so little changes there. The moonstone ground is close to the "cool grey" grounds of R-004, which were
+not objected to (only the accents were). Waiting for his pick.

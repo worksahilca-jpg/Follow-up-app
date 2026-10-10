@@ -3592,3 +3592,17 @@ asked about sending by itself (A-217), so should the app ask them once?
 - Nothing changes unless they say yes. They can change it any time in Settings.
 - The question is part of the phone-app redesign, not a separate screen built now. Its wording follows R-106: no
   "easy replies"; say that each reply works toward the booking.
+
+## A-219 — Remove the screens that show the same thing twice ^A-219
+
+**Approved:** 2026-10-10, founder. A list of four was too much for him (*"What ???"*), so he was asked one clickable
+question: *"Some screens in the app show the same thing twice. Should I remove the copies, so the app is simpler? Nothing
+is lost."* He chose "Yes, remove the copies".
+
+**What it covers (part 5, decision 15):**
+- the separate Waiting page, since Customers has a Waiting tab;
+- the second feedback box in Settings, since Help does the same;
+- the State column in the customer list, since the tabs already show it;
+- Pipeline as its own page, which becomes a filter in Customers.
+
+**Promised to him:** each one is shown to him before it goes, as part of the phone-app redesign.

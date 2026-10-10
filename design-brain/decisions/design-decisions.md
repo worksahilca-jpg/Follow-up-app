@@ -11871,3 +11871,31 @@ switch to turn on.
 - "Your business" shows the name only. "What FollowUp knows" stays inside its page.
 - The Alerts status reads this device's notification state. In a browser that blocks notifications it falls back
   to "By email".
+
+## 2026-10-10 — Build 5/5: Results (A-220)
+
+**Said:** *"merge"* (Settings, #480), then *"Yes, build Results"*.
+**Built as approved:**
+- **The number:** "This week · Oct 3 to Oct 10", then "1 customer answered" in the A-221 title style (the number big),
+  and one line against last week. It's green "N more than last week" only when it went up; otherwise quiet grey ("N
+  fewer…", "The same as last week").
+- **Then Booked, First reply and Won**, each with one line saying what it is. They're rows on a phone and three
+  columns on a computer:
+  - Booked: every call or visit booked through FollowUp this week, not only the ones that came back.
+  - First reply: the middle time, said as "Half of your customers heard back faster".
+  - Won: the customers you marked won this week, from `Deal.wonAt`.
+- **Then the link** "See everything FollowUp did", which goes to /activity.
+**Kept from A-066, below:** the eight-week bars (computer only, R-015) and "Everything else" as a quiet list. It's on
+the phone too: brand principle 4 says keep every word, cut pictures. "Came back after a follow-up this week" moved
+into that list, and "Won" there now says "all time".
+**Replaced:** A-066's top sentence ("Customers heard back in X.") is now the First reply number.
+**Checked:**
+- local build, real browser, 390×844 and 1440×900; the link lands on /activity; no page errors;
+- `tsc`, `eslint` and all 3,553 tests pass.
+**Weak spots:**
+- "Won, all time 1 · $0" shows $0 when no deal value was entered (unchanged, older behaviour).
+- "Booked" counts bookings made this week, not calls happening this week.
+**Answer:** *"cool"* (2026-10-10). Recorded in A-220's progress note; merging waits for his "merge" after green
+checks.
+Then: *"i mean we wil bedesigning it too but yes these features are good"*. The features are approved, and the look
+is not final; a design pass on Results is still to come.

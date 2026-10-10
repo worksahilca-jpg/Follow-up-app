@@ -18,28 +18,28 @@ const DAY = 24 * 60 * 60 * 1000;
 const WEEKS = 8;
 
 /**
- * Numbers, as drawn on the canvas (A-066). It reads like the Monday email
- * (A-038): the week's reply speed in one sentence (A-050), then answered,
- * came back and booked beside last week, then eight weeks of customers
- * answered, then everything else as a quiet list. Customers, never
- * messages. Only our own records; nothing estimated.
- *
- * Out of the menu since A-027; reached from Settings › Everything else.
+ * Results (A-220, the phone redesign, build 5): one number for the week,
+ * customers answered, beside last week; then Booked, First reply and Won;
+ * then a way to see everything FollowUp did. Below, as before (A-066): eight
+ * weeks of customers answered on the desk, and everything else as a quiet
+ * list. Customers, never messages. Only our own records; nothing estimated.
  */
 export default async function NumbersPage() {
   const ctx = await getSessionContext();
   if (!ctx) return null;
   const now = new Date();
   const weekStart = new Date(now.getTime() - 7 * DAY);
-  const lastWeekStart = new Date(now.getTime() - 14 * DAY);
 
-  const [data, leads, business, report, lastReport, written] = await Promise.all([
+  const [data, leads, business, report, written, booked, won] = await Promise.all([
     getAnalytics(),
     getLeads(),
     prisma.business.findUnique({ where: { id: ctx.businessId }, select: { timezone: true } }),
     getRescueReport(ctx.businessId, 7, now),
-    getRescueReport(ctx.businessId, 7, weekStart),
     sentAsWritten(ctx.businessId, weekStart),
+    // Booked: every call or visit booked through FollowUp this week, not only the ones that came back.
+    prisma.booking.count({ where: { businessId: ctx.businessId, status: "confirmed", createdAt: { gte: weekStart, lt: now } } }),
+    // Won: the customers you marked won this week (the stage route stamps Deal.wonAt).
+    prisma.deal.findMany({ where: { wonAt: { gte: weekStart, lt: now }, lead: { businessId: ctx.businessId } }, select: { leadId: true }, distinct: ["leadId"] }),
   ]);
   if (!data) return null;
   const timeZone = business?.timezone ?? "America/New_York";
@@ -56,21 +56,23 @@ export default async function NumbersPage() {
   const answeredLast = weeks[WEEKS - 2].n;
 
   const heardBack = medianReplyMs(leads, weekStart, now);
-  const heardBackLast = medianReplyMs(leads, lastWeekStart, weekStart);
+  const diff = answered - answeredLast;
 
   const fmtDay = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone });
+  // The three under the number (A-220): what it is in your words, and one line that explains it.
   const three = [
-    { label: "Answered", value: answered, last: answeredLast },
-    { label: "Came back", value: report.rescued, last: lastReport.rescued },
-    { label: "Booked", value: report.booked, last: lastReport.booked },
+    { label: "Booked", value: String(booked), note: "Calls and visits booked through FollowUp" },
+    { label: "First reply", value: heardBack != null ? formatSpan(heardBack) : "—", note: heardBack != null ? "Half of your customers heard back faster" : "Nobody has written in yet" },
+    { label: "Won", value: String(won.length), note: "Customers you marked won" },
   ];
   const max = Math.max(1, ...weeks.map((w) => w.n));
   const rest: [string, string][] = [
     ["Customers", String(data.totalLeads)],
+    ["Came back after a follow-up this week", String(report.rescued)],
     ["On a follow-up plan", String(data.sequenceHealth.enrolledCount)],
     ["Sent as written this week", written.total > 0 ? `${written.asWritten} of ${written.total}` : "—"],
     ["Plans finished (30 days)", String(data.sequenceHealth.completedLast30Days)],
-    ["Won", data.wonCount > 0 ? `${data.wonCount} · ${formatCurrency(data.totalRevenue)}` : "0"],
+    ["Won, all time", data.wonCount > 0 ? `${data.wonCount} · ${formatCurrency(data.totalRevenue)}` : "0"],
     ["Replied after a follow-up", data.followUpsSentTotal > 0 ? `${data.repliedCount} of ${data.followUpsSentTotal}` : "—"],
   ];
 
@@ -82,20 +84,13 @@ export default async function NumbersPage() {
           This week · {fmtDay(weekStart)} to {fmtDay(now)}
         </Eyebrow>
       </div>
-      <h1 className="title-serif mt-2 text-[28px] leading-[1.12] lg:text-[34px]">
-        {heardBack != null ? `Customers heard back in ${formatSpan(heardBack)}.` : "Nobody wrote in this week yet."}
+      {/* The one number (A-220): customers answered this week, beside last week. */}
+      <h1 className="title-serif mt-1.5 flex items-baseline gap-2.5">
+        <span className="text-[38px] leading-none tabular-nums sm:text-[44px]">{answered}</span>
+        <span className="text-[19px] leading-tight sm:text-[22px]">{answered === 1 ? "customer" : "customers"} answered</span>
       </h1>
-      <p className="mt-2 max-w-[640px] text-[15px] leading-relaxed text-ink-soft">
-        {heardBack != null ? (
-          <>
-            <span className="hidden lg:inline">
-              The middle time from a customer writing to their first reply, from your own records.{" "}
-            </span>
-            {heardBackLast != null ? `Last week it was ${formatSpan(heardBackLast)}.` : "Nothing to compare with last week."}
-          </>
-        ) : (
-          "Once someone writes and gets an answer, how fast they heard back shows here."
-        )}
+      <p className={"mt-1.5 text-[14px] " + (diff > 0 ? "font-medium text-sage" : "text-ink-faint")}>
+        {diff > 0 ? `${diff} more than last week` : diff < 0 ? `${-diff} fewer than last week` : answered > 0 ? "The same as last week" : "Nobody to answer yet this week"}
       </p>
 
       {data.totalLeads === 0 && (
@@ -108,29 +103,30 @@ export default async function NumbersPage() {
         </p>
       )}
 
-      {/* The week's three numbers, beside last week (A-038). */}
-      <div className="mt-6 overflow-hidden rounded-[18px] border border-line bg-card lg:grid lg:grid-cols-3">
+      {/* Booked, First reply, Won: rows on the phone, three columns on the desk. */}
+      <div className="mt-5 overflow-hidden rounded-[18px] border border-line bg-card lg:grid lg:grid-cols-3">
         {three.map((t, i) => (
           <div
             key={t.label}
             className={
-              "flex items-center justify-between px-[18px] py-4 lg:flex-col lg:items-start lg:justify-start lg:px-6 lg:py-5 " +
+              "flex items-center justify-between gap-4 px-[18px] py-3.5 lg:flex-col lg:items-start lg:justify-start lg:px-6 lg:py-5 " +
               (i ? "border-t border-line-2 lg:border-l lg:border-t-0" : "")
             }
           >
-            <div>
-              <div className="text-base lg:text-sm lg:text-ink-soft">{t.label}</div>
-              <div className="mt-0.5 text-[13px] text-ink-faint lg:hidden">Last week: {t.last}</div>
+            <div className="min-w-0">
+              <div className="text-[15.5px] font-medium lg:text-sm lg:font-normal lg:text-ink-soft">{t.label}</div>
+              <div className="mt-0.5 text-[13px] text-ink-faint lg:hidden">{t.note}</div>
             </div>
-            <div className="text-[34px] font-light leading-none tracking-[-0.03em] tabular-nums lg:mt-1.5 lg:text-[44px]">
-              {t.value}
-            </div>
-            <div className="mt-2 hidden text-[13px] text-ink-faint lg:block">Last week: {t.last}</div>
+            <div className="shrink-0 text-[26px] font-light leading-none tracking-[-0.03em] tabular-nums lg:mt-1.5 lg:text-[44px]">{t.value}</div>
+            <div className="mt-2 hidden text-[13px] text-ink-faint lg:block">{t.note}</div>
           </div>
         ))}
       </div>
+      <Link href="/activity" className="mt-3.5 inline-flex min-h-11 items-center text-[14px] text-ink-soft underline underline-offset-[3px] hover:text-ink">
+        See everything FollowUp did
+      </Link>
 
-      <div className="mt-7 grid gap-10 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:items-start">
+      <div className="mt-5 grid gap-10 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:items-start">
         {/* Eight weeks, as bars. Hidden on the phone (R-015). */}
         <section className="hidden lg:block">
           <h2 className="text-[15px]">Customers answered, by week</h2>

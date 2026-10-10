@@ -1,9 +1,10 @@
-import { getLeads } from "@/lib/leads-data";
-import PipelinePageClient from "./PipelinePageClient";
+import { redirect } from "next/navigation";
 
-export const dynamic = "force-dynamic";
-
-export default async function PipelinePage() {
-  const leads = await getLeads();
-  return <PipelinePageClient leads={leads} />;
+/**
+ * Pipeline was a second copy of the customer list, grouped by stage (A-219).
+ * The stages are a filter on Everyone in Customers now, with each stage's
+ * total; a customer's stage changes on their own page. Old links land there.
+ */
+export default function PipelinePage() {
+  redirect("/leads?show=all");
 }

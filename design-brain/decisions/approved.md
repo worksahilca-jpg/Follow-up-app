@@ -3610,6 +3610,9 @@ is lost."* He chose "Yes, remove the copies".
 
 **Promised to him:** each one is shown to him before it goes, as part of the phone-app redesign.
 
+**Progress (2026-10-10, build 2):** the State column, the Waiting page and the Pipeline page are removed in the
+Customers PR (Waiting and Pipeline links land in Customers). The second feedback box goes with Settings (build 4).
+
 ## A-220 — The phone app redesign, drawing 1 (compact) ^A-220
 
 **Approved:** 2026-10-10, founder: *"Yes"*, on https://claude.ai/artifact/MuhSgCMAi5KaEJSdBkvkzP (version 2, the compact

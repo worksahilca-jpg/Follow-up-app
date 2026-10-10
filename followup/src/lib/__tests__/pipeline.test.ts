@@ -81,10 +81,11 @@ describe("client-bundle safety (regression guard)", () => {
     expect(source).not.toMatch(/^import\b.*from\s+["'](@prisma\/client|@\/lib\/db)["']/m);
   });
 
-  it("PipelinePageClient.tsx (\"use client\") no longer imports from the Prisma-backed leads-data module", () => {
-    const source = readFileSync(join(srcRoot, "app", "(app)", "pipeline", "PipelinePageClient.tsx"), "utf8");
+  // The Pipeline page folded into Customers (A-219), whose list is the
+  // client component that would now pull Prisma into the browser.
+  it("LeadsPageClient.tsx (\"use client\") imports nothing from the Prisma-backed leads-data module", () => {
+    const source = readFileSync(join(srcRoot, "app", "(app)", "leads", "LeadsPageClient.tsx"), "utf8");
     expect(source).toMatch(/"use client"/);
-    expect(source).not.toMatch(/from ["']@\/lib\/leads-data["']/);
-    expect(source).toMatch(/getPipelineData.*from ["']@\/lib\/pipeline["']/);
+    expect(source).not.toMatch(/from ["']@\/lib\/(leads-data|db)["']/);
   });
 });

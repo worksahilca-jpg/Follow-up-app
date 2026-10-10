@@ -10,14 +10,14 @@ import type { DidToday } from "@/lib/didToday";
 
 /**
  * Customers going quiet (A-046's "About to be lost"), as one row: the first
- * by name and the reason, then how many more. The row opens that customer;
- * everyone else is under "Going quiet" in Customers.
+ * by name and the reason, or how many more. One person opens them; more than
+ * one opens the Going quiet group in Customers.
  */
 export function GoingQuietRow({ first, total }: { first: { id: string; name: string; reason: string }; total: number }) {
   const more = total - 1;
   return (
     <Link
-      href={`/leads/${first.id}`}
+      href={more > 0 ? "/leads?show=quiet" : `/leads/${first.id}`}
       className="mt-2.5 flex min-h-11 max-w-[640px] items-center gap-2.5 rounded-[14px] border border-line bg-card px-3 py-2.5"
     >
       <span className="shrink-0 text-[12px] font-medium text-ink-faint">Going quiet</span>

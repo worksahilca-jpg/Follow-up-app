@@ -11137,3 +11137,27 @@ Drawn on the real local app, desk 1280. Board version 4: https://claude.ai/artif
 - **Weak:** the section "Account" holds sign-ins, data and Advanced, while plan and team live under "Your business" (the
   app's current grouping). The map suggests moving plan and team to Account when we build.
 
+## 2026-10-10 — Version 6: "can we add other features here? keep it organised"
+
+**Founder:** *"do you think we can add other features here as well? keep it organised please; looks good but needs a
+lot of work."*
+
+**Answer, drawn** (board version 6):
+- the **Settings window holding every planned setting** under four headings (13 sections), with "What you ask" open;
+- a **customer's page** with the side panel as one column of same-shaped blocks.
+
+**Corrected while drawing:** the realtor qualification card is already built (`src/components/app/ReadyCard.tsx`,
+`src/lib/qualification.ts`). It asks what they want, when, budget and viewing. So it is not "Soon", and only editing
+the questions (plus pre-approval and other agent) is marked Soon.
+
+**The plan, in order** (on the board), one PR each, merged on his word:
+- 1: the base (menu, sheet, Settings window, Add customer window);
+- 2: Today;
+- 3: Customers and a customer's page;
+- 4: Results;
+- 5: fold the old screens in;
+- 6: new features into their slots.
+
+**Still to draw before its step:** the Alerts list, the empty and All done moments, setup ending on a real customer,
+and the customer page on the phone.
+

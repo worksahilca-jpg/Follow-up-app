@@ -98,6 +98,26 @@ From `followup/PRODUCT_DIRECTION.md` and the open work list.
 
 **What this shows:** every planned feature fits the skeleton. None needs a fourth place.
 
+## How the slots look when they're full (drawn 2026-10-10, board version 6)
+
+**The Settings window, with everything planned**, under four headings:
+- **How it works:** Follow-up plan · How it writes · What you ask · Booking and calendar *(Soon)*.
+- **Where customers write:** Email and website form · Instagram, Facebook, WhatsApp · Phone and calls *(Soon)*.
+- **Your business:** What FollowUp knows · Team · Alerts.
+- **Account:** Plan and billing · Sign-ins and security · Your data · Advanced.
+
+**A customer's side panel** is one column of same-shaped blocks, in this order:
+1. About;
+2. Qualification (the realtor card: what they want, when, budget, viewing);
+3. Booking;
+4. What FollowUp did (it includes the follow-up plan);
+5. then one row of quiet actions: Already spoke · Copy booking link · Mark won · Details.
+
+Calls, team ("Assigned to") and language add blocks in the same shape.
+
+**"Soon" tag:** anything drawn but not built carries a small grey "Soon". A drawing never passes off an unbuilt feature
+as real (brand: "every number true", and the same goes for features).
+
 ## Rules that keep it calm as it grows
 
 1. **Name the slot before designing.** The design review fails a feature that has no slot.

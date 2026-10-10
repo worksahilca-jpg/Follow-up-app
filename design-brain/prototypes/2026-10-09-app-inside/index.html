@@ -58,6 +58,12 @@ td.old { color: var(--faint); text-decoration: line-through; text-decoration-col
 .map figcaption { max-width: 80ch }
 .slots { margin: 18px 0 0; padding-left: 22px; display: grid; gap: 8px; max-width: 86ch }
 .slots b { font-weight: 600 }
+.plan { display: grid; gap: 12px; margin-top: 18px }
+.plan > div { display: grid; grid-template-columns: 150px minmax(0, 1fr) 120px; gap: 16px; align-items: start; padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--card) }
+.plan b { font-weight: 600 } .plan span { color: var(--muted); font-size: 14.5px }
+.plan em { font-style: normal; font-size: 12.5px; font-weight: 600; justify-self: end; padding: 3px 10px; border-radius: 99px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap }
+.plan em.done { color: var(--sage); border-color: currentColor } .plan em.next { color: var(--needs); border-color: currentColor }
+@media (max-width: 720px) { .plan > div { grid-template-columns: 1fr } .plan em { justify-self: start } }
 @media (max-width: 720px) {
   .pair, .pair.phone { grid-template-columns: minmax(0, 1fr) }
   .page { padding-block: 28px 60px }
@@ -66,7 +72,7 @@ td.old { color: var(--faint); text-decoration: line-through; text-decoration-col
 
 <div class="page">
   <header>
-    <p class="label">FollowUp · the app, redrawn · version 5 · drawing, nothing built</p>
+    <p class="label">FollowUp · the app, redrawn · version 6 · drawing, nothing built</p>
     <h1>Our look. Wispr's <em>calm.</em></h1>
     <p class="lede">Our colours, type and words, with an interface that leans toward Wispr Flow's calm: a quiet sidebar where every place has a word, the page on one white sheet, plain titles, one black button, and almost nothing moving. Patterns borrowed, not their screens. These are drawn over the real app with the local test account's examples.</p>
     <div class="summary">
@@ -76,6 +82,30 @@ td.old { color: var(--faint); text-decoration: line-through; text-decoration-col
       <div><b>Said once</b><span>Customers groups people under "Needs you · 15", so the "Needs you" pill on every row goes.</span></div>
     </div>
   </header>
+
+  <section id="v6">
+    <div class="head"><p class="label">Version 6 · can more features fit? Yes, here's how</p><h2>Everything planned, <em>in its place.</em></h2>
+      <p>New features don't get new screens. They go into the slots on the map, and look like everything else in that slot. "Soon" marks what isn't built yet, so it's always clear what's real.</p></div>
+    <figure><img src="img/v6-d-win-full.webp" alt="The Settings window holding every planned setting, grouped under How it works, Where customers write, Your business and Account. 'What you ask' is open: What they want, When, Budget and Viewing switched on, with Pre-approved for a mortgage and Working with another agent marked Soon." loading="lazy"><figcaption><b>Settings, full.</b> Thirteen sections under four headings: How it works · Where customers write · Your business · Account. Open here is "What you ask": the four questions the realtor card already asks, plus two marked "Soon".</figcaption></figure>
+    <figure style="margin-top:22px"><img src="img/v6-d-customer.webp" alt="Ivy's page: the conversation and the reply on the left; on the right, the same-shaped blocks: About Ivy, Qualification (what they want ticked; when, budget, viewing to learn), Booking, What FollowUp did, then actions: Already spoke, Copy booking link, Mark won, Details." loading="lazy"><figcaption><b>A customer's page.</b> The conversation on the left; on the right, one column of blocks that all look alike: About, Qualification, Booking, What FollowUp did. Calls, team and closing add blocks here later.</figcaption></figure>
+  </section>
+
+  <section id="plan">
+    <div class="head"><p class="label">The plan, in order</p><h2>One step at a time, <em>each one live before the next.</em></h2>
+      <p>Each step is one pull request. You see it, you say "merge", it goes live. Nothing new is built until its slot on the map is agreed.</p></div>
+    <div class="plan">
+      <div><b>0 · Agreed</b><span>Our look with Wispr's calm, four places, one customer at a time, Settings as a window, and the map with seven slots.</span><em class="done">Done</em></div>
+      <div><b>1 · The base</b><span>The menu with words and the tidy bottom, the business menu, the white sheet, the Settings window (phone: a sheet), and the Add customer window.</span><em class="next">Next</em></div>
+      <div><b>2 · Today</b><span>One customer at a time, the side panel, "Next", and the All done moment.</span><em>After 1</em></div>
+      <div><b>3 · Customers</b><span>Grouped by state, two lines per person, Reply · Later on hover; a customer's page with the blocks.</span><em>After 2</em></div>
+      <div><b>4 · Results</b><span>In the menu, the sunlit numbers, plus the qualified count.</span><em>After 3</em></div>
+      <div><b>5 · Tidy up</b><span>Inbox, Waiting, Coming up and Pipeline become Customers views; Activity becomes each customer's "What FollowUp did".</span><em>After 4</em></div>
+      <div><b>6 · New features</b><span>Into their slots, one at a time: editing "What you ask", booking and calendar, Mark won, calls, team.</span><em>Then</em></div>
+    </div>
+    <ul class="notes">
+      <li><b>Still to draw before its step:</b> the Alerts list from the bell, the empty and All done moments, how setup ends on a real customer, and a customer's page on the phone.</li>
+    </ul>
+  </section>
 
   <section id="map">
     <div class="head"><p class="label">The map · so new features fit</p><h2>Three places, one window, and seven slots <em>for everything else.</em></h2>

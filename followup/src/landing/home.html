@@ -2376,9 +2376,7 @@ html body .fl-missed.is-flow2 .fm.fu-wv { animation: none !important; opacity: 0
 html body .fl-missed.is-flow2 .fm.fu-wv.is-junk { filter: grayscale(1) }
 html body .fl-missed.is-flow2 .fm.fu-wv.fl-lead { background: #fff; box-shadow: 0 0 0 1px rgba(14,30,22,.06), 0 10px 24px -14px rgba(14,30,22,.35) }
 html body .fl-missed.is-flow2 .fm.fl-lead:not(.fu-wv) { transition: filter .6s ease }
-html body .fl-missed.is-flow2.is-wave .fm.fl-lead:not(.fu-wv) { filter: opacity(.15) }
 html body .fl-missed.is-flow2 .fm:not(.fl-lead):not(.fu-wv) { transition: filter .6s ease }
-html body .fl-missed.is-flow2.is-wave .fm:not(.fl-lead):not(.fu-wv) { filter: blur(var(--b, 1px)) opacity(.3) }
 html body .fu-strip-tag { transition: opacity .35s ease }
 html body .fu-strip-tag.is-out { opacity: 0 }
 
@@ -4121,7 +4119,7 @@ window.fuToken = function (from, text, to, done) {
       var r = e.getBoundingClientRect(), x = +e.getAttribute('data-x'); return (x < 30 || x > 70) && seen(r) && clearPath(r); });
     return c[Math.floor(Math.random() * c.length)]; }
   function glide() { if (window.FU_FLOW) return;
-    if (busy || document.hidden || box.classList.contains('is-off') || innerWidth < 760) return; var strip = document.querySelector('.fu-strip');
+    if (busy || document.hidden || box.classList.contains('is-off') || document.documentElement.classList.contains('fu-calm') || innerWidth < 760) return; var strip = document.querySelector('.fu-strip');
     if (!strip || !seen(strip.getBoundingClientRect())) return; var el = pick(); if (!el) return; busy = true; k++;
     var book = false, a = el.getBoundingClientRect(), sr = strip.getBoundingClientRect(), left = a.left + a.width / 2 < sr.left + sr.width / 2;
     var b = { left: left ? sr.left + 6 : sr.right - 6, top: sr.top + sr.height * .42, width: 0, height: 0 };
@@ -4240,7 +4238,7 @@ window.fuToken = function (from, text, to, done) {
     if (b) { roll(nB, booked, booked + b, String); booked += b; bump(nB); }
     if (c && nX) { roll(nX, closed, closed + c, String); closed += c; bump(nX); roll(nS, saved, saved + v, money); saved += v; bump(nS); } };
   setInterval(function () {
-    if (document.hidden || box.classList.contains('is-off')) return; k++;
+    if (document.hidden || box.classList.contains('is-off') || document.documentElement.classList.contains('fu-calm')) return; k++;
     if (false) { var v = VAL[(k / 6) % VAL.length]; roll(nX, closed, closed + 1, String); closed++; bump(nX); roll(nS, saved, saved + v, money); saved += v; bump(nS); }
   }, 3400);
 })();
@@ -4282,7 +4280,7 @@ window.fuToken = function (from, text, to, done) {
     d.style.cssText = 'left:' + x + 'px;top:' + y.toFixed(1) + '%;--o:1;--b:0px;--s:1'; d.innerHTML = html; box.appendChild(d); return d; }
   function done(a, d) { a.onfinish = function () { d.remove(); }; }
   function wave() {
-    if (document.hidden || box.classList.contains('is-off')) return;
+    if (document.hidden || box.classList.contains('is-off') || document.documentElement.classList.contains('fu-calm')) return;
     var W = box.clientWidth, set = [], i, k = w++;
     for (i = 0; i < 5; i++) set.push([LEADS[(k * 5 + i) % LEADS.length], 1]);
     for (i = 0; i < 7; i++) set.push([JUNK[(k * 7 + i) % JUNK.length], 0]);
@@ -4502,7 +4500,7 @@ window.fuToken = function (from, text, to, done) {
     at(9200, function () { if (!room('done', v)) { away(); return; } free(); fly(d, 'done', true, function () { add('done', v, '+' + money(v)); }); at(2200, function () { d.remove(); }); });
   }
   function one() {
-    if (document.hidden || box.classList.contains('is-off')) return;
+    if (document.hidden || box.classList.contains('is-off') || document.documentElement.classList.contains('fu-calm')) return;
     var W = box.clientWidth, i = n++, lead = (i % 5 === 0 || i % 5 === 2 || i % 5 === 4), m = lead ? LEADS[(i * 7) % LEADS.length] : JUNK[(i * 3) % JUNK.length];
     var d = document.createElement('div'); d.className = 'fm fu-wv' + (lead ? '' : ' is-junk'); d.setAttribute('aria-hidden', 'true');
     d.style.cssText = 'left:-260px;top:' + YS[i % YS.length] + '%;--o:1;--b:0px;--s:1';
@@ -5162,7 +5160,6 @@ html body footer.foot5 { padding-bottom: 26px }
 /* 21. smooth frames: nothing blurs or frosts over moving things; the parts that move every scroll frame get their own layer */
 /* the hand-off value stays on the elements that read it: it no longer flows into the ~600 elements inside them */
 @property --fu-p { syntax: '<number>'; inherits: false; initial-value: 0 }
-html body #fl-missed.is-flow2.is-wave .fm:not(.fl-lead):not(.fu-wv) { filter: opacity(.3) }
 html body #fl-missed.is-flow2 .fm.is-junk { filter: grayscale(1) }
 /* 22. landing lag (2026-10-10): the faded messages behind the headline were faded with filter: opacity(), and every
    filter is its own drawing pass, so the first screen drew ~30 passes a frame. The same fade is now part of their
@@ -5387,6 +5384,42 @@ html.fl-phone-on .fl-phone.is-try .pn { display: none }
       var who = m ? ((m.querySelector('b') || m).textContent || '').trim() : '';
       if ((ghost && Date.now() - since > 4000) || (m && who.indexOf('You') !== 0)) box.classList.remove('is-try');
     }).observe(lb, { childList: true });
+  })();
+</script>
+<script>
+  (function calmWhenSlow() {
+    // A-224 (founder 2026-10-10: "i want permanent soloution"): a computer that can't keep up while scrolling gets a
+    // calm page for the rest of the visit. The drifting messages and the other always-moving strips hold still
+    // exactly where they are and stop being separate layers (about a third less drawing on the first screen).
+    // Nothing is hidden or re-coloured, the frosted bar stays (R-109), and a computer that keeps up sees no change.
+    var root = document.documentElement, MOVING = '#fl-missed .fm, .fu-lt-in, .fu-tk-track, #control #data ul';
+    function calm() {
+      if (root.classList.contains('fu-calm')) return;
+      root.classList.add('fu-calm');
+      try { sessionStorage.setItem('fu-calm', '1'); } catch (e) {}
+      [].forEach.call(document.querySelectorAll(MOVING), function (e) {
+        var cs = getComputedStyle(e), t = cs.transform, o = cs.opacity;
+        e.style.animation = 'none'; e.style.transition = 'none'; e.style.willChange = 'auto';
+        e.style.transform = t; e.style.opacity = o;
+      });
+    }
+    try { if (sessionStorage.getItem('fu-calm') === '1') { calm(); return; } } catch (e) {}
+    if (!window.requestAnimationFrame) return;
+    // Watched only while scrolling, in runs of 45 frames (under a second on a computer that keeps up): if more than
+    // a quarter of them come later than 34 ms (two frames missed at 60 Hz), this computer is struggling.
+    var last = 0, n = 0, late = 0, until = 0, pending = false;
+    function tick(t) {
+      pending = false;
+      if (last && t - last < 250) { n++; if (t - last > 34) late++; }
+      last = t;
+      if (n >= 45) { if (late / n > .25) { calm(); return; } n = 0; late = 0; }
+      if (performance.now() < until) { pending = true; requestAnimationFrame(tick); } else last = 0;
+    }
+    addEventListener('scroll', function () {
+      if (root.classList.contains('fu-calm') || document.hidden) return;
+      until = performance.now() + 200;
+      if (!pending) { pending = true; requestAnimationFrame(tick); }
+    }, { passive: true });
   })();
 </script>
 </body>

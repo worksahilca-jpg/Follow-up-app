@@ -11811,3 +11811,30 @@ does, Your data / the close, and the footer, on desktop and on a phone. **Weak s
 mostly photo, so little changes there. The moonstone ground is close to the "cool grey" grounds of R-004, which were
 not objected to (only the accents were). Waiting for his pick.
 **Answer:** *"Keep now (Recommended)"* → R-110. The current colours stay.
+
+## 2026-10-10 — Calm mode and the speed test (A-224)
+
+**Said:** *"do it but what is someone else sees it bro i want permanent soloution"*, then *"how bif software companies
+do it ?"* (answered: a speed limit on every change, pages that adapt to the device, speed measured on real visitors).
+**Built:**
+- **`calmWhenSlow`** (end of `home.html`): watches the frame rate only while scrolling, in runs of 45 frames. If more
+  than a quarter of the frames come later than 34 ms, it adds `html.fu-calm` and remembers it for the visit
+  (sessionStorage).
+- **In calm mode** the drifting messages and the always-moving strips are frozen exactly where they are: their
+  computed transform and opacity are written inline, the animation is set to none, and will-change is set to auto.
+  The message loops stop, as they do off screen.
+- **Measured** (software GPU): frozen messages cut the first screen's drawing from 15.7 to 10.3 ms a frame. Only
+  pausing them gained nothing, because paused animations stay separate layers.
+- **When it triggers:** never at normal speed, or with the CPU slowed 2× or 4×. It does trigger at 12×, and a reload
+  in that tab starts calm. Phones: never triggered (the messages aren't drawn there).
+- **Speed test** `src/lib/__tests__/homePageSpeed.test.ts`, run with the normal checks. It fails on:
+  - a filter fade;
+  - any blend mode;
+  - more than 17 frosted-glass rules;
+  - a scroll listener that measures without `fuNear()`, unless it's one of the named cheap ones;
+  - calm mode removed.
+  It fails 4 of 5 checks on the page from before the fixes.
+- Removed three dead `filter: opacity()` rules (already overridden, so nothing on screen changes).
+**Weak spots:** the frame watcher is a guess at "struggling". It was tuned on a software-drawn test machine, not on
+real laptops. Real-visitor speed data (Vercel Speed Insights) would show whether it's right; that's the founder's
+switch to turn on.

@@ -11895,3 +11895,5 @@ into that list, and "Won" there now says "all time".
 **Weak spots:**
 - "Won, all time 1 · $0" shows $0 when no deal value was entered (unchanged, older behaviour).
 - "Booked" counts bookings made this week, not calls happening this week.
+**Answer:** *"cool"* (2026-10-10). Recorded in A-220's progress note; merging waits for his "merge" after green
+checks.

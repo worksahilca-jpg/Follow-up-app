@@ -105,9 +105,9 @@ export default function ReplyBar({
     : [["fresh", "Write one for me"]];
 
   return (
-    // Above the phone's tabs (64px plus the home bar); in the page's own column on a computer.
+    // At the foot of the phone's screen, as in a chat app (A-222: this page has no tabs); in the page's own column on a computer.
     // A soft fade of the page colour behind it on a phone, so the page's own words don't show through between the buttons.
-    <div className="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom,0px)+64px)] z-20 bg-[linear-gradient(to_top,var(--paper)_75%,transparent)] px-2.5 pb-2.5 pt-5 lg:sticky lg:inset-x-auto lg:bottom-4 lg:mt-6 lg:bg-none lg:p-0">
+    <div className="fixed inset-x-0 bottom-0 z-20 bg-[linear-gradient(to_top,var(--paper)_75%,transparent)] px-2.5 pb-[calc(env(safe-area-inset-bottom,0px)+10px)] pt-5 lg:sticky lg:inset-x-auto lg:bottom-4 lg:mt-6 lg:bg-none lg:p-0">
       {error && (
         <p role="alert" className="mb-1.5 rounded-[12px] bg-card px-3 py-2 text-[13px] shadow-sm" style={{ color: "var(--coral)" }}>
           {error}

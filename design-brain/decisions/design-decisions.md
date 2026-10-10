@@ -11671,3 +11671,38 @@ and What FollowUp did. Added to PR #476 with build 3.
 
 **Weak spots:** the display face is lighter than the old bold titles, so a long customer name reads quieter. Inbox's
 compact desk header keeps the plain face (a list header, not a page title).
+
+## 2026-10-10 — The phone gets its own layout (drawn, after "we cannot just fit the desktop in this mobile one")
+
+**Research:** `research/ux-patterns/2026-10-10-phone-vs-computer.md` (Material's window sizes and list-then-detail,
+Linear's phone as a companion, Slack's phone navigation, Superhuman's gestures). He chose *"Yes, draw it"*.
+
+**Drawn on the real app at 390×844 (injected; no code changed), computer untouched:**
+- **A customer's page works like a chat app:**
+  - top bar: Back, their name (display face) and channel line, and an info button;
+  - no brand bar and no tabs on this screen;
+  - the newest message and the reply sit at the bottom, by the thumb;
+  - the reply box sits at the very bottom.
+- **The info button opens a sheet, "About Mia":** what FollowUp knows, the facts, Already spoke, Copy booking link,
+  Call, and Details. This was the computer's side column, stacked under the chat on the phone.
+- **A ready reply carries its reason inside the card** (the orange-dot line, above Send). This fixes build 3's weak
+  spot.
+- **Today:**
+  - no box around the one customer;
+  - Send, Edit and Later in a bar just above the tabs;
+  - Don't send · Already spoke stay as quiet links.
+
+**Weak spots:**
+- With a short chat there is empty space between the Wants strip and the messages; chat apps accept this.
+- On Today the bar's Send is grey while a blank waits to be filled, as before.
+- Swipe-down to close the sheet isn't drawn.
+
+**Answer:** *"Yes, build it"* → A-222. Built: `CustomerSide` (phone bar + sheet through `AppWindow`), the app's own
+bar and tabs left out on a customer's page (`Sidebar`), the reply box at the very bottom (`ReplyBar`), the reason line
+in `ReplyCard`, and Today's `PHONE_BAR` in `ApprovalQueue`. Checked at 390×844, 768×1024 and 1440×900: the sheet opens,
+takes focus and closes with Esc (focus back on the info button), Later opens in the bar, and nothing scrolls sideways.
+The computer is unchanged. Added to PR #476.
+
+**Weak spots:** a long thread pushes a ready reply below the fold on a phone, the same as before. Swipe-down to close
+the sheet isn't built (× or a tap outside closes it). On a tablet the action bar is centred while the card is aligned
+left.

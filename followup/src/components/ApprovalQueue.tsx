@@ -101,6 +101,11 @@ const CHANNEL_LABEL: Record<string, string> = {
 
 /** The one card on Today (A-220): white, a hairline, 18px corners, phone padding. */
 const CARD = "rounded-[18px] border border-line bg-card p-3.5 sm:p-5";
+/** The one customer on Today: a box on a computer; on a phone it sits on the page itself, as a phone app would (A-222). */
+const ONE = "px-2 sm:px-0 lg:rounded-[18px] lg:border lg:border-line lg:bg-card lg:px-5 lg:py-5";
+/** Today's actions on a phone: a bar just above the tabs (64px plus the home bar). In the card on a computer. */
+const PHONE_BAR =
+  "max-lg:fixed max-lg:inset-x-0 max-lg:bottom-[calc(env(safe-area-inset-bottom,0px)+65px)] max-lg:z-20 max-lg:border-t max-lg:border-line max-lg:bg-paper max-lg:px-4 max-lg:py-2.5";
 
 function ApprovalCard({
   item,
@@ -367,7 +372,7 @@ function ApprovalCard({
   const channelAndWait = [CHANNEL_NAME[item.leadLastMessageChannel ?? ""] ?? item.source, item.wait?.toLowerCase()].filter(Boolean).join(" · ");
 
   return (
-    <article className={CARD} aria-label={`${item.leadName} is waiting for you`}>
+    <article className={ONE} aria-label={`${item.leadName} is waiting for you`}>
       {/* Who, where and how long (A-220): one customer at a time, at phone sizes (R-107). */}
       <div className="flex items-center gap-2.5">
         <Initials name={item.leadName} size={32} />
@@ -566,75 +571,110 @@ function ApprovalCard({
         </p>
       )}
 
-      {/* The grace period replaces the buttons: while the clock runs,
-          the only thing to press is the one that stops it (A-048). */}
-      {send.pending ? (
-        <div className="mt-3 flex flex-wrap items-center gap-3">
-          <p className="text-[15px]">
-            Sending to {firstName} in {send.secs}s
-          </p>
-          <button onClick={send.undo} className="h-11 rounded-full border border-line bg-card px-5 text-[14px] font-medium">
-            Undo
-          </button>
-          {send.endsAt !== null && (
-            <div className="basis-full">
-              <UndoLine endsAt={send.endsAt} />
+      {/* Phone (A-222): Send, Edit and Later sit in a bar just above the
+          tabs, where the thumb is, as a phone app keeps its main actions;
+          on a computer they stay under the reply. The ten seconds to undo
+          (A-048) and Later's two times open in the same place. */}
+      <div className={PHONE_BAR}>
+        <div className="mx-auto max-w-[640px]">
+          {/* The grace period replaces the buttons: while the clock runs,
+              the only thing to press is the one that stops it (A-048). */}
+          {send.pending ? (
+            <div className="flex flex-wrap items-center gap-3 lg:mt-3">
+              <p className="text-[15px]">
+                Sending to {firstName} in {send.secs}s
+              </p>
+              <button onClick={send.undo} className="h-11 rounded-full border border-line bg-card px-5 text-[14px] font-medium">
+                Undo
+              </button>
+              {send.endsAt !== null && (
+                <div className="basis-full">
+                  <UndoLine endsAt={send.endsAt} />
+                </div>
+              )}
             </div>
+          ) : (
+            <>
+              {/* Send is the one black button (A-220), the widest in the row. */}
+              <div className="flex items-center gap-2 lg:mt-3">
+                {/* Only admins send (A-041): a teammate keeps Edit, Later
+                    and Don't send, and is told who sends. */}
+                {!sendLocked && (
+                  <button
+                    onClick={sendNow}
+                    disabled={busy !== null || send.busy || priceMissing || rewriting !== null || !message.trim()}
+                    className="h-11 flex-1 rounded-full text-[15px] font-semibold disabled:opacity-60 lg:flex-none lg:px-9"
+                    style={{ backgroundColor: "var(--accent)", color: "var(--on-accent)" }}
+                  >
+                    {send.busy ? "Sending…" : "Send"}
+                  </button>
+                )}
+                {editing ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditing(false);
+                      setText(saved);
+                      setEdited(saved !== item.draftMessage);
+                      setMine(false);
+                    }}
+                    disabled={rewriting !== null}
+                    className="h-11 rounded-full border border-line bg-card px-6 text-[14px] font-medium disabled:opacity-60"
+                  >
+                    Cancel
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditing(true);
+                      setLaterOpen(false);
+                    }}
+                    disabled={busy !== null || send.busy}
+                    className="h-11 rounded-full border border-line bg-card px-6 text-[14px] font-medium disabled:opacity-60"
+                  >
+                    Edit
+                  </button>
+                )}
+                <button
+                  onClick={() => setLaterOpen((v) => !v)}
+                  disabled={busy !== null || send.busy}
+                  aria-expanded={laterOpen}
+                  className="h-11 rounded-full px-4 text-[14px] text-ink-soft disabled:opacity-60"
+                >
+                  Later
+                </button>
+              </div>
+            </>
           )}
+          <AnimatePresence initial={false}>
+          {laterOpen && !send.pending && (
+            // Opens from the Later it came from, and closes the same way (A-048).
+            <motion.div key="later" {...OPEN_IN_PLACE} className="mt-1 flex flex-wrap items-center gap-2">
+              {laterToday && (
+                <button
+                  onClick={() => setLater("later_today")}
+                  disabled={busy !== null}
+                  className="h-11 rounded-full border border-line bg-card px-4 text-[13.5px] hover:bg-paper disabled:opacity-60"
+                >
+                  Later today · 2 pm
+                </button>
+              )}
+              <button
+                onClick={() => setLater("tomorrow_morning")}
+                disabled={busy !== null}
+                className="h-11 rounded-full border border-line bg-card px-4 text-[13.5px] hover:bg-paper disabled:opacity-60"
+              >
+                Tomorrow morning · 9 am
+              </button>
+              <span className="basis-full text-[12.5px] text-ink-soft">Comes straight back if {firstName} writes again. The reply stays as it is.</span>
+            </motion.div>
+          )}
+          </AnimatePresence>
         </div>
-      ) : (
+      </div>
+      {!send.pending && (
         <>
-          {/* Send is the one black button (A-220): full width under the thumb
-              on a phone. Edit and Later share the row under it. */}
-          <div className="mt-3 grid grid-cols-2 gap-2 sm:flex sm:items-center">
-            {/* Only admins send (A-041): a teammate keeps Edit, Later
-                and Don't send, and is told who sends. */}
-            {!sendLocked && (
-              <button
-                onClick={sendNow}
-                disabled={busy !== null || send.busy || priceMissing || rewriting !== null || !message.trim()}
-                className="col-span-2 h-11 rounded-full text-[15px] font-semibold disabled:opacity-60 sm:px-9"
-                style={{ backgroundColor: "var(--accent)", color: "var(--on-accent)" }}
-              >
-                {send.busy ? "Sending…" : "Send"}
-              </button>
-            )}
-            {editing ? (
-              <button
-                type="button"
-                onClick={() => {
-                  setEditing(false);
-                  setText(saved);
-                  setEdited(saved !== item.draftMessage);
-                  setMine(false);
-                }}
-                disabled={rewriting !== null}
-                className="h-11 rounded-full border border-line bg-card px-6 text-[14px] font-medium disabled:opacity-60"
-              >
-                Cancel
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => {
-                  setEditing(true);
-                  setLaterOpen(false);
-                }}
-                disabled={busy !== null || send.busy}
-                className="h-11 rounded-full border border-line bg-card px-6 text-[14px] font-medium disabled:opacity-60"
-              >
-                Edit
-              </button>
-            )}
-            <button
-              onClick={() => setLaterOpen((v) => !v)}
-              disabled={busy !== null || send.busy}
-              aria-expanded={laterOpen}
-              className="h-11 rounded-full px-4 text-[14px] text-ink-soft disabled:opacity-60"
-            >
-              Later
-            </button>
-          </div>
           {/* The two rarer ways out, kept quiet so nothing is lost (A-039). */}
           <div className="mt-0.5 flex items-center justify-center text-[13px] text-ink-faint sm:justify-start">
             <button onClick={dontSend} disabled={busy !== null || send.busy} className="min-h-11 px-2.5 disabled:opacity-60 sm:pl-0">
@@ -658,30 +698,6 @@ function ApprovalCard({
       )}
       </>
       )}
-      <AnimatePresence initial={false}>
-      {laterOpen && !send.pending && (
-        // Opens from the Later it came from, and closes the same way (A-048).
-        <motion.div key="later" {...OPEN_IN_PLACE} className="mt-1 flex flex-wrap items-center gap-2">
-          {laterToday && (
-            <button
-              onClick={() => setLater("later_today")}
-              disabled={busy !== null}
-              className="h-11 rounded-full border border-line bg-card px-4 text-[13.5px] hover:bg-paper disabled:opacity-60"
-            >
-              Later today · 2 pm
-            </button>
-          )}
-          <button
-            onClick={() => setLater("tomorrow_morning")}
-            disabled={busy !== null}
-            className="h-11 rounded-full border border-line bg-card px-4 text-[13.5px] hover:bg-paper disabled:opacity-60"
-          >
-            Tomorrow morning · 9 am
-          </button>
-          <span className="basis-full text-[12.5px] text-ink-soft">Comes straight back if {firstName} writes again. The reply stays as it is.</span>
-        </motion.div>
-      )}
-      </AnimatePresence>
       {/* Says what IS true (nothing left) rather than "Cancelled", which
           describes the press instead of the outcome. */}
       {send.cancelled && <p className="mt-1.5 text-[12.5px] text-ink-soft">Stopped. Nothing was sent.</p>}

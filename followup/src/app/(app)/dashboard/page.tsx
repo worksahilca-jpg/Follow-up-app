@@ -349,6 +349,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       {comingUp && comingUp.total > 0 && approvalItems.length > 0 && (
         <ComingUpLine first={{ day: comingUp.groups[0].day, count: comingUp.groups[0].items.length }} total={comingUp.total} />
       )}
+      {/* Room under the last thing on a phone, so the bar of Send, Edit and Later (A-222) never covers it. */}
+      {leads.length > 0 && approvalItems.length > 0 && <div aria-hidden="true" className="h-16 lg:hidden" />}
 
       {leads.length === 0 ? (
         <div className="mt-10">

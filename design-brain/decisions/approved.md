@@ -3671,3 +3671,27 @@ shown Today, Customers and One customer before and after (drawn on the real app)
 - **Stays:** the white ground (A-090), black as the action colour, Public Sans for everything else.
 - Dark mode has its own green (`#1a231f`, label `#8fc3a8`).
 
+## A-222 — The phone gets its own layout: a chat-app customer page, Today's actions in thumb reach ^A-222
+
+**Approved:** 2026-10-10, founder. He said *"for phone we gotta figure out something, because we cannot just fit the
+desktop in this mobile one. Can you figure out how big companies do that"*. He was shown the research
+(`research/ux-patterns/2026-10-10-phone-vs-computer.md`), then a before/after drawn on the real app, and chose
+*"Yes, build it"*.
+
+**What specifically (below 1024px; the computer is unchanged):**
+- **A customer's page works like a chat app:**
+  - its own top bar: Back, their name (display face) with the channel line, and an info button;
+  - no FollowUp bar and no tabs on this screen;
+  - the newest message and the reply sit at the foot of the screen, by the thumb;
+  - the reply box sits at the very bottom.
+- **The info button opens a sheet, "About Mia":** what FollowUp knows, the facts, Already spoke, Copy booking link,
+  Call or Email, and Details. Before, this was the computer's side column stacked under the chat. It uses the app's
+  own window (A-213): a sheet on the phone, closed with ×, Esc or a tap outside.
+- **A waiting reply says why it waits inside its card** (the orange-dot line, above Send), because the side column
+  isn't on screen.
+- **Today:** the one customer sits on the page with no box around it. Send, Edit and Later sit in a bar just above the
+  tabs. The ten-second undo and Later's two times open in that bar. Don't send · Already spoke stay as quiet links in
+  the card.
+- **The rule going forward:** each phone screen gets its own layout. The look and the words stay the same (A-221).
+  Never the computer's columns stacked into one.
+

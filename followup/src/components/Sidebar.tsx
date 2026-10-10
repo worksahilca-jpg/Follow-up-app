@@ -54,40 +54,46 @@ export default function Sidebar({ businessName = "", counts = {} }: { businessNa
   const pathname = usePathname();
   const initial = (businessName.trim()[0] ?? "F").toUpperCase();
   const settingsActive = isActive(pathname, "/settings");
+  // A customer's page brings its own phone bar (Back, their name) and no tabs, like a chat app (A-222).
+  const ownPhoneBar = /^\/leads\/[^/]+$/.test(pathname ?? "");
 
   return (
     <>
       {/* Phone: a quiet top bar (brand, and the bell with its word) … */}
-      <header className="lg:hidden fixed top-0 inset-x-0 z-30 flex items-center justify-between border-b border-line bg-paper px-4 py-3">
-        <Link href="/dashboard" className="flex items-center gap-2">
-          <LogoMark height={20} />
-          <span className="text-base font-semibold">FollowUp</span>
-        </Link>
-        <NotificationBell align="right" label="Alerts" />
-      </header>
+      {!ownPhoneBar && (
+        <header className="lg:hidden fixed top-0 inset-x-0 z-30 flex items-center justify-between border-b border-line bg-paper px-4 py-3">
+          <Link href="/dashboard" className="flex items-center gap-2">
+            <LogoMark height={20} />
+            <span className="text-base font-semibold">FollowUp</span>
+          </Link>
+          <NotificationBell align="right" label="Alerts" />
+        </header>
+      )}
 
       {/* … and four tabs at the bottom, in thumb reach. */}
-      <nav
-        aria-label="Main"
-        className="lg:hidden fixed bottom-0 inset-x-0 z-30 grid grid-cols-4 border-t border-line bg-paper px-2 pt-1.5"
-        style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 10px)" }}
-      >
-        {[...places, { href: "/settings", label: "Settings", icon: Settings }].map(({ href, label, icon: Icon }) => {
-          const active = isActive(pathname, href);
-          return (
-            <Link
-              key={href}
-              href={href}
-              aria-current={active ? "page" : undefined}
-              className="flex min-h-12 flex-col items-center justify-center gap-1 text-[11.5px]"
-              style={{ color: active ? "var(--ink)" : "var(--state-checked)", fontWeight: active ? 600 : 500 }}
-            >
-              <Icon className="h-6 w-6" strokeWidth={1.8} />
-              {label}
-            </Link>
-          );
-        })}
-      </nav>
+      {!ownPhoneBar && (
+        <nav
+          aria-label="Main"
+          className="lg:hidden fixed bottom-0 inset-x-0 z-30 grid grid-cols-4 border-t border-line bg-paper px-2 pt-1.5"
+          style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 10px)" }}
+        >
+          {[...places, { href: "/settings", label: "Settings", icon: Settings }].map(({ href, label, icon: Icon }) => {
+            const active = isActive(pathname, href);
+            return (
+              <Link
+                key={href}
+                href={href}
+                aria-current={active ? "page" : undefined}
+                className="flex min-h-12 flex-col items-center justify-center gap-1 text-[11.5px]"
+                style={{ color: active ? "var(--ink)" : "var(--state-checked)", fontWeight: active ? 600 : 500 }}
+              >
+                <Icon className="h-6 w-6" strokeWidth={1.8} />
+                {label}
+              </Link>
+            );
+          })}
+        </nav>
+      )}
 
       {/* Desk column, on the frame. */}
       <aside className="hidden lg:flex w-[224px] shrink-0 flex-col h-screen sticky top-0 px-3 pb-3 pt-2.5">

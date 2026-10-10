@@ -50,6 +50,7 @@ export default function ReplyCard({
   languageName,
   dense = false,
   textTo = null,
+  why = null,
 }: {
   leadId: string;
   leadName: string;
@@ -67,6 +68,8 @@ export default function ReplyCard({
   dense?: boolean;
   /** The number this reply goes to as a text: the one a "No answer" wrote (A-103). */
   textTo?: string | null;
+  /** Why it waits for the owner: shown in the card on a phone, where the side column that says it isn't (A-222). */
+  why?: string | null;
 }) {
   const router = useRouter();
   const first = leadName.split(" ")[0] ?? leadName;
@@ -354,6 +357,12 @@ export default function ReplyCard({
         <RememberPrice id="reply-remember" price={price.trim()} topic={blankTopic} checked={remember} onChange={setRemember} disabled={undoable.pending || undoable.busy} />
       )}
       {basis && !edited && !editing && <p className="mt-2 text-[13px] text-ink-soft">{basis}</p>}
+      {why && !needsPrice && !editing && (
+        <p className="mt-2.5 flex items-baseline gap-2 text-[14px] leading-snug lg:hidden">
+          <span aria-hidden className="inline-block h-[7px] w-[7px] shrink-0 -translate-y-px rounded-full" style={{ background: "var(--state-needs)" }} />
+          {why}
+        </p>
+      )}
       {error && (
         <p className="mt-2 text-[13px]" role="alert" style={{ color: "var(--coral)" }}>
           {error}

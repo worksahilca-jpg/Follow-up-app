@@ -26,6 +26,7 @@ import SiteReplyCard from "@/components/app/SiteReplyCard";
 import { siteReplyFor } from "@/lib/siteReply";
 import ReplyCard from "@/components/app/ReplyCard";
 import ReplyBar from "@/components/app/ReplyBar";
+import CustomerSide from "@/components/app/CustomerSide";
 import { ChannelIcon } from "@/components/app/ChannelIcon";
 import Thread from "@/components/app/Thread";
 import { Eyebrow, Initials, waitingFor } from "@/components/app/canvasBits";
@@ -132,15 +133,21 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
       />
     ) : null;
 
+  // Why the reply waits, said inside the reply card on a phone (A-222), where the side column isn't.
+  const holdWhy = approval
+    ? (plainHoldReason(approval.reason, { firstName: lead.name.split(" ")[0] || lead.name, topic: approval.riskTopic }) ?? "Every reply waits for your OK.")
+    : null;
+
   return (
     <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-10">
-      <div className="min-w-0">
-        {/* Back, then who and where they wrote (A-220), the same on a phone and a computer. */}
-        <Link href="/leads" className="-ml-1 inline-flex min-h-11 items-center gap-0.5 text-[13px] text-ink-soft hover:text-ink">
+      {/* Phone (A-222): the column fills the screen and the chat sits at its foot, by the thumb, as in a chat app. */}
+      <div className="min-w-0 max-lg:flex max-lg:min-h-[calc(100dvh-192px)] max-lg:flex-col">
+        {/* Back, then who and where they wrote (A-220). On a phone the same three things are the top bar (CustomerSide). */}
+        <Link href="/leads" className="-ml-1 hidden min-h-11 items-center gap-0.5 text-[13px] text-ink-soft hover:text-ink lg:inline-flex">
           <ChevronLeft className="h-4 w-4" aria-hidden="true" />
           Customers
         </Link>
-        <div className="mt-0.5 flex items-center gap-2.5">
+        <div className="mt-0.5 hidden items-center gap-2.5 lg:flex">
           <Initials name={lead.name} size={38} />
           <div className="min-w-0">
             <h1 className="title-serif truncate text-[23px] leading-tight sm:text-[26px]">{lead.name}</h1>
@@ -152,7 +159,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
         </div>
 
         {showWants && (
-          <dl className="mt-3 grid grid-cols-3 gap-1.5 rounded-[14px] bg-card-2 px-3 py-2.5">
+          <dl className="grid grid-cols-3 gap-1.5 rounded-[14px] bg-card-2 px-3 py-2.5 lg:mt-3">
             {wants.map(([label, value]) => (
               <div key={label} className="min-w-0">
                 <dt className="text-[11.5px] text-ink-faint">{label}</dt>
@@ -165,6 +172,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
         {/* Phone: a ready customer's card comes first — it is what the alert was about. */}
         {showReady && <div className="mt-4 lg:hidden">{readyCard}</div>}
 
+        <div aria-hidden="true" className="flex-1 lg:hidden" />
         {/* id: the target of CatchUp's "Show all N messages". */}
         <div id="conversation" className="mt-4 lg:mt-6">
           <Thread messages={lead.conversation} leadName={lead.name} timeZone={timeZone} now={now} />
@@ -218,6 +226,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
               basis={basis}
               languageName={replyLanguage}
               textTo={approval?.textTo ?? null}
+              why={holdWhy}
             />
           )}
         </div>
@@ -230,7 +239,15 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
           facts, three actions, one "Details" row with the machinery behind
           it. Each fact once: the channel is in the header, the language
           under "Why it may write". */}
-      <aside className="mt-10 grid min-w-0 content-start gap-[18px] lg:mt-0 lg:pt-1.5">
+      <CustomerSide
+        name={lead.name}
+        line={
+          <>
+            <ChannelIcon channel={channelId} className="h-3.5 w-3.5 shrink-0" />
+            <span className="truncate">{[channel, firstWrote ? `first wrote ${firstWrote}` : null].filter(Boolean).join(" · ")}</span>
+          </>
+        }
+      >
         {readyCard && <div className={showReady ? "hidden lg:block" : undefined}>{readyCard}</div>}
         <Facts lead={lead} approval={approval} now={now} />
 
@@ -311,9 +328,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
             <DeleteLeadButton leadId={lead.id} leadName={lead.name} leadEmail={lead.email} />
           </div>
         </DetailsFold>
-      </aside>
-      {/* Room under the last thing on a phone, so the pinned box never covers it. */}
-      {!siteReply && !lead.suggestedMessage && <div aria-hidden="true" className="h-20 lg:hidden" />}
+      </CustomerSide>
     </div>
   );
 }

@@ -11776,3 +11776,38 @@ can still replace it.
 Then: *"chose the notification and lets build other stuff"* → A is the pick (A-223 updated). Built and checked at
 390×844 and 360×740: notifications cycle at one height, a tapped or typed question shows in the demo window, and the
 example returns afterwards.
+
+## 2026-10-10 — Landing lag, round 3 (look unchanged)
+
+**Said:** *"still laggy bro please fix it go check out whats the problem"* (after the grain fix went live). The frosted
+top bar stays (R-109).
+**Found:**
+- **The first screen was the heaviest part of the page to draw.** It cost about 3× any other part. The ~30 faint
+  messages behind the headline were faded with `filter: opacity()`, and every filter is its own drawing pass, so
+  each frame took about 29 passes. Graphics chips pay for every pass. The same fade is now part of each message's
+  own opacity (the dim folded into the `fu-in`/`fu-out`/`fu-junk` keyframes through `--fu-dim`). That leaves about
+  8 passes a frame. Pixel check with the animations frozen at the same moment: identical (largest difference 7/255
+  on 10 pixels, rounding).
+- **About 20 scroll scripts measured the page on every frame,** including for parts that were off screen. Each part's
+  scroll effect now checks `fuNear()` (one screen of margin) before measuring. It gets one more frame as it leaves,
+  so it rests in its final state. The scripts also skip writes when nothing changed. The bar no longer reads the
+  page's computed style on every frame. Every scroll-driven state was compared at 34 stops (desktop) and 40 stops
+  (390×844), down and back up: the same.
+**Can't be measured here:** this machine has no graphics chip, so the real gain on his laptop is unknown. Asked which
+laptop and browser he uses.
+**Principle (brand principle "every frame is smooth"):** never fade a moving thing with a filter; use opacity.
+A scroll effect works only while its part of the page is near the screen.
+
+**Also said, mid-task:** *"moonstone and gun metal colour also looks good no ??"* This is a liking for two cool
+greys, not an approval: nothing has been drawn, and where they would go isn't known yet. Asked where he sees them.
+**Answers (same day):** his laptop is **Windows**. On the colours: *"Draw them first"*. Drawing the landing page in
+moonstone + gunmetal beside the current look. Guardrails for the drawing: no navy or dark-blue ground (R-031), and no
+steel-blue accent (R-004). So moonstone is used as a pale ground and gunmetal as ink and the near-black blocks, and
+the green stays the accent.
+**Drawn (injected on the live page, nothing in code):** the ground `#f4f5f3` becomes moonstone (about `#eaeff1`).
+Near-black text, buttons and the dark green blocks become gunmetal `#2a3439`. The soft greys are cooled a little,
+and the green accents are unchanged. The pictures pair each screen side by side: the first screen, the demo, What it
+does, Your data / the close, and the footer, on desktop and on a phone. **Weak spots:** the demo and the footer are
+mostly photo, so little changes there. The moonstone ground is close to the "cool grey" grounds of R-004, which were
+not objected to (only the accents were). Waiting for his pick.
+**Answer:** *"Keep now (Recommended)"* → R-110. The current colours stay.

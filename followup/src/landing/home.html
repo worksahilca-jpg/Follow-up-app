@@ -30,6 +30,16 @@ window.va('beforeSend', function (e) { try { var u = new URL(e.url); return Obje
 <script defer src="/_vercel/insights/script.js"></script>
 
 <script>
+/* Scroll work only where it shows (2026-10-10, landing lag): true while el is within one screen of the view. A part
+   of the page's scroll effect checks this before measuring anything, and gets one more frame as it leaves or comes
+   back, so it always rests in the right state. Off screen, nothing is measured or written. */
+window.fuNear = function (el, settle) {
+  if (!el || !('IntersectionObserver' in window)) return function () { return true; };
+  var near = true;
+  new IntersectionObserver(function (es) { var n = es[es.length - 1].isIntersecting;
+    if (n !== near) { near = n; if (settle) requestAnimationFrame(function () { settle(); }); } }, { rootMargin: '100% 0px' }).observe(el);
+  return function () { return near; };
+};
 window.FU_CH_LIST = ['whatsapp', 'ig', 'gmail', 'messenger']; window.FU_CH_I = 0;
 window.FU_CUR_CH = function () { return FU_CH_LIST[FU_CH_I % FU_CH_LIST.length]; };
 window.FU_NEXT_CH = function () { var c = FU_CUR_CH(); FU_CH_I++; return c; };
@@ -3625,11 +3635,14 @@ html[data-col="f"] .fl-stage .fl-ask { margin-top: 12px }
 
 (function () {
   var st = document.getElementById('fl-stage'), html = document.documentElement, hd = document.querySelector('#fl-hero .fl-head'); if (!st) return;
-  var still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches, raf = 0;
+  var still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches, raf = 0, last = '';
   function upd() { raf = 0; var top = st.getBoundingClientRect().top + scrollY, span = Math.max(220, top - 120);
-    var v = Math.min(1, Math.max(0, scrollY / span)); [].forEach.call(hd ? hd.children : [], function (k) { k.style.transform = 'translateY(' + (-40 * v).toFixed(1) + 'px)'; k.style.opacity = (1 - .6 * v).toFixed(3); }); }
+    var v = Math.min(1, Math.max(0, scrollY / span)), tf = 'translateY(' + (-40 * v).toFixed(1) + 'px)', op = (1 - .6 * v).toFixed(3);
+    if (tf + op === last) return; last = tf + op;
+    [].forEach.call(hd ? hd.children : [], function (k) { k.style.transform = tf; k.style.opacity = op; }); }
   if (still) { html.style.setProperty('--tr-p', 1); return; }
-  addEventListener('scroll', function () { if (!raf) raf = requestAnimationFrame(upd); }, { passive: true });
+  var near = fuNear(hd, upd);
+  addEventListener('scroll', function () { if (!raf && near()) raf = requestAnimationFrame(upd); }, { passive: true });
   addEventListener('resize', upd); upd();
 })();
 
@@ -3730,17 +3743,18 @@ html[data-col="f"] .fl-stage .fl-ask { margin-top: 12px }
 /* ---- v40 the bar shows which part of the page you are in ---- */
 (function () {
   var nl = document.querySelector('.nav-links'), hl = nl && nl.querySelector('.nav-hl'); if (!hl) return;
-  var links = [].slice.call(nl.querySelectorAll('a[href^="#"]')), hover = null;
+  var links = [].slice.call(nl.querySelectorAll('a[href^="#"]')), hover = null, last;
   function to(a) { hl.style.width = a.offsetWidth + 'px'; hl.style.transform = 'translateX(' + a.offsetLeft + 'px)'; }
-  function spy() {
+  function spy(force) {
     var mid = innerHeight * .4, found = null;
     links.forEach(function (a) { var s = document.querySelector(a.getAttribute('href')); if (!s) return; var r = s.getBoundingClientRect(); if (r.top <= mid && r.bottom > mid) found = a; });
+    if (found === last && force !== true) return; last = found;
     links.forEach(function (a) { a.classList.toggle('is-here', a === found); if (a === found) a.setAttribute('aria-current', 'location'); else a.removeAttribute('aria-current'); });
     if (!hover) { if (found) { to(found); hl.classList.add('is-on'); } else hl.classList.remove('is-on'); }
   }
   links.forEach(function (a) { a.addEventListener('mouseenter', function () { hover = a; }); });
-  nl.addEventListener('mouseleave', function () { hover = null; spy(); });
-  addEventListener('scroll', function () { if (!spy.q) { spy.q = 1; requestAnimationFrame(function () { spy.q = 0; spy(); }); } }, { passive: true }); addEventListener('resize', spy); spy();
+  nl.addEventListener('mouseleave', function () { hover = null; spy(true); });
+  addEventListener('scroll', function () { if (!spy.q) { spy.q = 1; requestAnimationFrame(function () { spy.q = 0; spy(); }); } }, { passive: true }); addEventListener('resize', function () { spy(true); }); spy(true);
 })();
 
 /* ---- v40 the thread: one line from the first section to the last, filled as far as you've read ---- */
@@ -3748,9 +3762,9 @@ html[data-col="f"] .fl-stage .fl-ask { margin-top: 12px }
   var box = document.getElementById('fu-thread'), main = document.getElementById('top'); if (!box || !main) return;
   var tl = box.querySelector('.tl'), fill = tl.querySelector('i');
   var marks = ['.sp-head', '.today-sec .chap-head', '.statement.st3 > .wrap > p', '#how .chap-head', '#quiet .chap-head', '#control .chap-head', '#new .chap-head', '.cl-card'];
-  var dots = [], ys = [], top0 = 0, len = 0;
+  var dots = [], ys = [], top0 = 0, len = 0, mainY = 0, lastFill = '';
   function place() {
-    var mr = main.getBoundingClientRect(), first = document.querySelector('.sp-head'); if (!first) return;
+    var mr = main.getBoundingClientRect(), first = document.querySelector('.sp-head'); if (!first) return; mainY = mr.top + scrollY;
     var x = first.getBoundingClientRect().left - mr.left - 44;
     box.style.display = x < 20 ? 'none' : '';
     ys = marks.map(function (s) { var el = document.querySelector(s); if (!el) return null; var r = el.getBoundingClientRect(); return (s === '.cl-card' ? r.top + r.height / 2 : r.top + 14) - mr.top; }).filter(function (y) { return y !== null; });
@@ -3761,8 +3775,9 @@ html[data-col="f"] .fl-stage .fl-ask { margin-top: 12px }
     draw();
   }
   function draw() {
-    var mr = main.getBoundingClientRect(), reach = innerHeight * .55 - mr.top;
-    fill.style.setProperty('--fill', Math.max(0, Math.min(len, reach - top0)) + 'px');
+    if (box.style.display === 'none') return;
+    var reach = innerHeight * .55 - (mainY - scrollY), f = Math.max(0, Math.min(len, reach - top0)) + 'px';
+    if (f !== lastFill) { lastFill = f; fill.style.setProperty('--fill', f); }
     dots.forEach(function (d, i) { d.classList.toggle('is-on', ys[i] <= reach); });
   }
   addEventListener('scroll', function () { if (!draw.q) { draw.q = 1; requestAnimationFrame(function () { draw.q = 0; draw(); }); } }, { passive: true }); addEventListener('resize', place); addEventListener('load', place);
@@ -3870,10 +3885,11 @@ html[data-col="f"] .fl-stage .fl-ask { margin-top: 12px }
   var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (head && !reduce) {
     var t = false;
-    var ms = hero.querySelector('#fl-missed'), h1 = hero.querySelector('.fl-h1');
+    var ms = hero.querySelector('#fl-missed'), h1 = hero.querySelector('.fl-h1'), last = '', near = fuNear(head, upd);
     function upd() { t = false; var r = head.getBoundingClientRect(), v = Math.max(0, Math.min(1, -r.top / Math.max(1, r.height * .85))).toFixed(3);
+      if (v === last) return; last = v;
       [ms, h1].concat(ms ? [].slice.call(ms.querySelectorAll('.fm')) : []).forEach(function (e) { if (e) e.style.setProperty('--fu-p', v); }); }
-    addEventListener('scroll', function () { if (!t) { t = true; requestAnimationFrame(upd); } }, { passive: true }); upd();
+    addEventListener('scroll', function () { if (!t && near()) { t = true; requestAnimationFrame(upd); } }, { passive: true }); upd();
   }
 })();
 /* ---- v55 How it works: the index follows the steps ---- */
@@ -3884,7 +3900,7 @@ html[data-col="f"] .fl-stage .fl-ask { margin-top: 12px }
     steps.forEach(function (s, k) { var r = s.getBoundingClientRect(), p = Math.max(0, Math.min(1, (line - r.top) / Math.max(1, r.height)));
       if (lis[k]) lis[k].style.setProperty('--p', p.toFixed(3)); if (r.top <= line) on = k; });
     lis.forEach(function (l, k) { l.classList.toggle('is-on', k === on); }); steps.forEach(function (st, k) { st.classList.toggle('is-cur', k === on); }); }
-  addEventListener('scroll', function () { if (!t) { t = true; requestAnimationFrame(upd); } }, { passive: true }); addEventListener('resize', upd); upd();
+  var near = fuNear(wrap, upd); addEventListener('scroll', function () { if (!t && near()) { t = true; requestAnimationFrame(upd); } }, { passive: true }); addEventListener('resize', upd); upd();
 })();
 
 /* ---- v57 How fast do you reply: the scroll moves the time ---- */
@@ -3905,7 +3921,7 @@ html[data-col="f"] .fl-stage .fl-ask { margin-top: 12px }
     if (bar) bar.style.setProperty('--sp-t', (k === 5 ? 0 : Math.min(100, p / (5 / 6) * 100)).toFixed(1) + '%');
     tr.style.setProperty('--sp-p', p.toFixed(3));
   }
-  addEventListener('scroll', function () { if (!t) { t = true; requestAnimationFrame(upd); } }, { passive: true }); addEventListener('resize', upd);
+  var near = fuNear(tr, upd); addEventListener('scroll', function () { if (!t && near()) { t = true; requestAnimationFrame(upd); } }, { passive: true }); addEventListener('resize', upd);
   setTimeout(upd, 0);
 })();
 
@@ -3937,7 +3953,7 @@ window.fuWin = function () {
       show(s);
     }
   }
-  addEventListener('scroll', function () { if (!t) { t = true; requestAnimationFrame(upd); } }, { passive: true }); addEventListener('resize', upd);
+  var near = fuNear(tr, upd); addEventListener('scroll', function () { if (!t && near()) { t = true; requestAnimationFrame(upd); } }, { passive: true }); addEventListener('resize', upd);
   setTimeout(upd, 0);
 })();
 
@@ -3980,7 +3996,7 @@ window.fuWin = function () {
     race.classList.toggle('is-in', p > .02); race.classList.toggle('is-end', p >= .999); }
   if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) { set(1); return; }
   function upd() { t = false; var r = race.getBoundingClientRect(), vh = innerHeight; set(Math.max(0, Math.min(1, (vh - r.top) / (vh * .72)))); }
-  addEventListener('scroll', function () { if (!t) { t = true; requestAnimationFrame(upd); } }, { passive: true }); addEventListener('resize', upd); upd();
+  var near = fuNear(race, upd); addEventListener('scroll', function () { if (!t && near()) { t = true; requestAnimationFrame(upd); } }, { passive: true }); addEventListener('resize', upd); upd();
 })();
 
 /* ---- v65 one message at a time: at risk, then saved by a follow-up ---- */
@@ -4335,7 +4351,7 @@ window.fuToken = function (from, text, to, done) {
     var r = wrap.getBoundingClientRect(), span = Math.max(1, r.height - pin.offsetHeight), p = Math.max(0, Math.min(.9999, (100 - r.top) / span)), f = p * arts.length, i = Math.floor(f);
     if (i !== cur) { cur = i; arts.forEach(function (a, k) { a.classList.toggle('is-tab', k === i); }); }
     lis.forEach(function (l, k) { l.classList.toggle('is-tab', k === i); l.style.setProperty('--sp', k < i ? 1 : k > i ? 0 : (f - i).toFixed(3)); }); }
-  addEventListener('scroll', function () { if (!t) { t = true; requestAnimationFrame(upd); } }, { passive: true });
+  var near = fuNear(wrap, upd); addEventListener('scroll', function () { if (!t && near()) { t = true; requestAnimationFrame(upd); } }, { passive: true });
   addEventListener('resize', upd);
   var row = document.getElementById('fu-cmp-steps'); if (row) row.addEventListener('click', function () { cur = -1; setTimeout(upd, 0); });
   lis.forEach(function (l, k) { l.addEventListener('click', function () { if (!on()) return; var r = wrap.getBoundingClientRect(), span = r.height - pin.offsetHeight;
@@ -4404,7 +4420,7 @@ window.fuToken = function (from, text, to, done) {
     var r = wrap.getBoundingClientRect(), span = Math.max(1, r.height - pin.offsetHeight), p = Math.max(0, Math.min(.9999, (100 - r.top) / span)), i = Math.floor(p * arts.length);
     arts.forEach(function (a, k) { a.classList.toggle('is-past', k < i); });
     pin.style.setProperty('--prog', (p * 100).toFixed(1) + '%'); pin.setAttribute('data-n', (i + 1) + ' / ' + arts.length); }
-  addEventListener('scroll', function () { if (!t) { t = true; requestAnimationFrame(upd); } }, { passive: true }); addEventListener('resize', upd); upd();
+  var near = fuNear(wrap, upd); addEventListener('scroll', function () { if (!t && near()) { t = true; requestAnimationFrame(upd); } }, { passive: true }); addEventListener('resize', upd); upd();
 })();
 
 /* ---- v106 a steady stream: every step lands on the number with its name ---- */
@@ -4534,7 +4550,7 @@ window.fuToken = function (from, text, to, done) {
     var r = wrap.getBoundingClientRect(), span = Math.max(1, r.height - pin.offsetHeight), p = Math.max(0, Math.min(.9999, (100 - r.top) / span)), f = p * arts.length, i = Math.floor(f), sub = f - i;
     beats.forEach(function (b, k) { var n = b.length, cur = k === i ? Math.min(n - 1, Math.floor(sub * 1.15 * n)) : -1;
       b.forEach(function (e, m) { e.classList.toggle('is-beat', m === cur); e.classList.toggle('is-seen', k < i || (k === i && m < cur)); }); }); }
-  addEventListener('scroll', function () { if (!t) { t = true; requestAnimationFrame(upd); } }, { passive: true }); addEventListener('resize', upd); upd();
+  var near = fuNear(wrap, upd); addEventListener('scroll', function () { if (!t && near()) { t = true; requestAnimationFrame(upd); } }, { passive: true }); addEventListener('resize', upd); upd();
 })();
 
 /* ---- v115 the sending mode, as one segmented control ---- */
@@ -4655,11 +4671,11 @@ window.FU_THINK = (function () {
 (function () {
   var head = document.querySelector('#fl-hero .fl-head'), tr = document.getElementById('fl-try'); if (!head || !tr) return;
   if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  var on = false;
-  function frame() { on = false; var p = Math.max(0, Math.min(1, scrollY / Math.max(320, innerHeight * .5)));
+  var on = false, last = -1, near = fuNear(head, frame);
+  function frame() { on = false; var p = Math.max(0, Math.min(1, scrollY / Math.max(320, innerHeight * .5))); if (p === last) return; last = p;
     head.style.opacity = String(1 - p * .55); head.style.transform = 'translate3d(0,' + (-p * 28) + 'px,0) scale(' + (1 - p * .03) + ')';
     tr.style.transform = 'translate3d(0,' + ((1 - p) * 10) + 'px,0)'; }
-  addEventListener('scroll', function () { if (!on) { on = true; requestAnimationFrame(frame); } }, { passive: true }); frame();
+  addEventListener('scroll', function () { if (!on && near()) { on = true; requestAnimationFrame(frame); } }, { passive: true }); frame();
 })();
 
 /* ---- v117 the try box shows which app the next message comes from, and turns after each send ---- */
@@ -4690,10 +4706,10 @@ window.FU_THINK = (function () {
 /* ---- v118 cold-lead option A: the clock follows your scroll ---- */
 (function () {
   var r = document.getElementById('fa-range'), box = r && r.closest('.v-fg-a'); if (!box) return;
-  var last = -1, on = false;
+  var last = -1, on = false, near = fuNear(box, function () { frame(); });
   function frame() { on = false; if (!box.offsetParent) return; var t = box.getBoundingClientRect().top, vh = innerHeight;
     var k = Math.max(0, Math.min(3, Math.floor((vh * .8 - t) / (vh * .55) * 4))); if (k === last) return; last = k; r.value = k; r.dispatchEvent(new Event('input')); }
-  addEventListener('scroll', function () { if (!on) { on = true; requestAnimationFrame(frame); } }, { passive: true });
+  addEventListener('scroll', function () { if (!on && near()) { on = true; requestAnimationFrame(frame); } }, { passive: true });
   document.addEventListener('fu-pick', function () { last = -1; requestAnimationFrame(frame); });
 })();
 
@@ -4747,10 +4763,10 @@ window.FU_THINK = (function () {
 
   /* ---- scroll-linked moments: the window settles, the statement reads itself, the thread draws, the button grows ---- */
   var scrubs = [];
-  function scrub(el, fn) { if (el) scrubs.push([el, fn]); }
+  function scrub(el, fn) { if (!el) return; var s = [el, fn]; s[2] = window.fuNear ? fuNear(el, function () { fn(el.getBoundingClientRect(), window.innerHeight); }) : null; scrubs.push(s); }
   function tick() {
     var vh = window.innerHeight;
-    scrubs.forEach(function (s) { var r = s[0].getBoundingClientRect(); s[1](r, vh); });
+    scrubs.forEach(function (s) { if (s[2] && !s[2]()) return; var r = s[0].getBoundingClientRect(); s[1](r, vh); });
   }
   var clamp = function (v) { return Math.max(0, Math.min(1, v)); };
   if (!reduce) {
@@ -4806,8 +4822,14 @@ window.FU_THINK = (function () {
   /* ---- the menu takes the colour of the section under it ---- */
   var nav = document.querySelector('.nav');
   var lights = Array.prototype.slice.call(document.querySelectorAll('[data-tone="light"]'));
+  var closeEl = document.querySelector('.close'), closeNear = window.fuNear ? fuNear(closeEl, function () { navTone(); }) : function () { return true; }, darkClose = null;
+  if ('MutationObserver' in window) new MutationObserver(function () { darkClose = null; }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-pal'] });
   function navTone() {
-    var y = 34, cr = document.querySelector('.close').getBoundingClientRect(), darkClose = getComputedStyle(document.documentElement).getPropertyValue('--close-tone').trim() === 'dark', onLight = !(darkClose && cr.top <= y && cr.bottom >= y);
+    var y = 34, onLight = true;
+    if (closeNear()) {
+      if (darkClose === null) darkClose = getComputedStyle(document.documentElement).getPropertyValue('--close-tone').trim() === 'dark';
+      var cr = closeEl.getBoundingClientRect(); onLight = !(darkClose && cr.top <= y && cr.bottom >= y);
+    }
     nav.classList.toggle('light', onLight); nav.classList.toggle('solid', window.scrollY > 40);
   }
   window.addEventListener('scroll', function () { if (!navTone.q) { navTone.q = 1; requestAnimationFrame(function () { navTone.q = 0; navTone(); }); } }, { passive: true }); navTone();
@@ -5142,6 +5164,20 @@ html body footer.foot5 { padding-bottom: 26px }
 @property --fu-p { syntax: '<number>'; inherits: false; initial-value: 0 }
 html body #fl-missed.is-flow2.is-wave .fm:not(.fl-lead):not(.fu-wv) { filter: opacity(.3) }
 html body #fl-missed.is-flow2 .fm.is-junk { filter: grayscale(1) }
+/* 22. landing lag (2026-10-10): the faded messages behind the headline were faded with filter: opacity(), and every
+   filter is its own drawing pass, so the first screen drew ~30 passes a frame. The same fade is now part of their
+   opacity: the look is identical, the passes are gone. */
+@property --fu-dim { syntax: '<number>'; inherits: false; initial-value: 1 }
+html body #fl-missed.is-flow2.is-wave .fm:not(.fl-lead):not(.fu-wv) { filter: none; --fu-dim: .3 }
+html body #fl-missed.is-flow2.is-wave .fm.fl-lead:not(.fu-wv) { filter: none; --fu-dim: .15 }
+@keyframes fu-in { 0% { opacity: 0; transform: translate3d(0, 0, 0) rotate(var(--r0, 0deg)) scale(var(--s, 1)) }
+  12% { opacity: calc(var(--o, .6) * .62 * var(--fu-dim, 1)) } 74% { opacity: calc(var(--o, .6) * .62 * var(--fu-dim, 1)) }
+  100% { opacity: 0; transform: translate3d(var(--run, 300px), var(--dy, 0), 0) rotate(var(--r1, 0deg)) scale(calc(var(--s, 1) * .82)) } }
+@keyframes fu-out { 0% { opacity: 0; transform: translate3d(0, 0, 0) } 14% { opacity: calc(.5 * var(--fu-dim, 1)) } 78% { opacity: calc(.5 * var(--fu-dim, 1)) } 100% { opacity: 0; transform: translate3d(var(--run, 300px), 0, 0) } }
+@keyframes fu-junk { 0% { opacity: 0; transform: translate3d(0, 0, 0) rotate(var(--r0, 0deg)) scale(var(--s, 1)) }
+  14% { opacity: calc(var(--o, .6) * .5 * var(--fu-dim, 1)) } 52% { opacity: calc(var(--o, .6) * .5 * var(--fu-dim, 1)); transform: translate3d(calc(var(--run, 300px) * .55), 0, 0) rotate(var(--r0, 0deg)) scale(var(--s, 1)) }
+  80%, 100% { opacity: 0; transform: translate3d(calc(var(--run, 300px) * .62), 70px, 0) rotate(calc(var(--r0, 0deg) + 6deg)) scale(calc(var(--s, 1) * .9)) } }
+@media (prefers-reduced-motion: reduce) { html body #fl-missed.is-flow2 .fm:not(.fu-wv) { opacity: calc(.45 * var(--fu-dim, 1)) } }
 html body #fl-hero .fu-strip > div, html body #fl-try .fl-chips, html body #fl-river, html body #fl-river .fl-srcs, html body .cl-n {
   -webkit-backdrop-filter: none !important; backdrop-filter: none !important }
 @keyframes fl-word { from { opacity: 0; transform: translateY(.42em) } to { opacity: 1; transform: none } }
@@ -5239,11 +5275,11 @@ html.fl-phone-on .fl-phone.is-try .pn { display: none }
 </script><script>
 (function () { var st = document.getElementById('fl-stage'); if (!st || !('scale' in document.documentElement.style)) return;
   if ((window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
-  var t = false;
+  var t = false, near = fuNear(st, function () { upd(); });
   function upd() { t = false; if (innerWidth <= 700) { st.style.scale = ''; return; }
     var r = st.getBoundingClientRect(), vh = innerHeight, p = Math.max(0, Math.min(1, (vh * .86 - r.top) / (vh * .6)));
-    var e = 1 - Math.pow(1 - p, 3); st.style.scale = (.93 + .07 * e).toFixed(4); }
-  st.style.transformOrigin = '50% 0'; addEventListener('scroll', function () { if (!t) { t = true; requestAnimationFrame(upd); } }, { passive: true });
+    var e = 1 - Math.pow(1 - p, 3), sc = (.93 + .07 * e).toFixed(4); if (st.style.scale !== sc) st.style.scale = sc; }
+  st.style.transformOrigin = '50% 0'; addEventListener('scroll', function () { if (!t && near()) { t = true; requestAnimationFrame(upd); } }, { passive: true });
   addEventListener('resize', upd); upd(); })();
 </script><script>
 (function(){

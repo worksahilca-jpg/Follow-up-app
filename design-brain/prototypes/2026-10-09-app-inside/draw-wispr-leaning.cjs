@@ -2,7 +2,7 @@
 // Drawn on the real local app: the shell, Today, Customers, Results and Settings, desk 1280 and phone 390.
 // usage: node draw2.cjs <scratchpad> <outdir>
 const { chromium } = require("playwright"); const fs = require("fs");
-const H = require("./helpers.cjs") /* the shared helpers from draw-on-the-app.cjs */;
+const H = require("./helpers.cjs");
 const S = process.argv[2], OUT = process.argv[3], BASE = "http://localhost:3000";
 
 const SHELL = `
@@ -76,6 +76,34 @@ main h1.fx-h { font-size: 44px !important }
 .fx-sw { width: 40px; height: 24px; border-radius: 99px; background: #D8D6D0; position: relative; flex: none; display: inline-block }
 .fx-sw::after { content: ""; position: absolute; left: 3px; top: 3px; width: 18px; height: 18px; border-radius: 99px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.2) }
 .fx-change { font-size: 13.5px !important; padding: 5px 13px; border-radius: 99px; text-decoration: none !important; box-shadow: inset 0 0 0 1px rgba(14,14,12,.14); background: #fff }
+
+/* round 4 */
+aside .fx-word { display: none !important }                       /* "Alerts" is the phone's word only (A-209) */
+.fx-acct { display: inline-flex; margin-left: 4px; opacity: .6 }
+.fx-menu { position: absolute; left: 10px; top: 52px; z-index: 50; width: 252px; padding: 6px; border-radius: 14px; background: #fff;
+  box-shadow: 0 0 0 1px rgba(14,14,12,.08), 0 18px 40px -18px rgba(14,14,12,.35); font-size: 14px }
+.fx-menu p { margin: 0; padding: 8px 10px 6px; color: var(--ink-faint); font-size: 12.5px }
+.fx-menu a { display: flex; justify-content: space-between; padding: 8px 10px; border-radius: 9px; color: var(--ink); text-decoration: none }
+.fx-menu a span { color: var(--ink-faint) } .fx-menu a.on { background: var(--fx-soft) }
+.fx-menu hr { border: 0; border-top: 1px solid rgba(14,14,12,.07); margin: 5px 4px }
+/* Today: the customer on the left, what helps on the right */
+.fx-side { border-radius: 16px; background: var(--fx-soft); padding: 18px 18px 16px; font-size: 14px; align-self: start; position: sticky; top: 24px }
+.fx-side h3 { margin: 0 0 12px; font-size: 15px; font-weight: 600 }
+.fx-side dl { margin: 0; display: grid; gap: 10px }
+.fx-side dt { font-size: 12.5px; color: var(--ink-faint) } .fx-side dd { margin: 1px 0 0; color: var(--ink) }
+.fx-gap { margin-top: 14px; padding: 12px; border-radius: 12px; background: #fff; box-shadow: inset 0 0 0 1px rgba(14,14,12,.07) }
+.fx-gap b { display: flex; align-items: center; gap: 7px; font-weight: 600 } .fx-gap b::before { content: ""; width: 7px; height: 7px; border-radius: 9px; background: #c96a1b }
+.fx-gap span { display: block; margin-top: 4px; color: var(--ink-soft); font-size: 13.5px }
+.fx-side a { display: inline-block; margin-top: 14px; font-weight: 500; text-decoration: underline; text-underline-offset: 3px }
+/* Customers: two lines per person, like a chat list */
+.fx-two-line { grid-template-columns: 48px minmax(0, 1fr) 140px !important }
+.fx-two-line .fx-prev { display: block; margin-top: 2px; font-size: 14px; color: var(--ink-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 70ch }
+/* Settings: a short list of sections beside the rows */
+.fx-setgrid { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 40px; align-items: start; max-width: 1040px !important }
+.fx-secs { position: sticky; top: 24px; display: grid; gap: 2px; font-size: 14.5px }
+.fx-secs a { padding: 8px 12px; border-radius: 10px; color: var(--ink-soft); text-decoration: none }
+.fx-secs a.on { background: var(--fx-soft); color: var(--ink); font-weight: 600 }
+.fx-secs p { margin: 14px 12px 4px; font: 500 11px/1 ui-monospace, "IBM Plex Mono", monospace; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-faint) }
 `;
 
 async function shell(p, desk, path) {
@@ -192,6 +220,68 @@ async function settingsPage(p, desk) {
 }
 
 let RES = null;
+
+async function tidySidebar(p, menuOpen) {
+  await p.evaluate((menuOpen) => {
+    const aside = document.querySelector("aside"); if (!aside) return;
+    const name = aside.querySelector("a span.truncate"); if (name && !aside.querySelector(".fx-acct")) { const c = document.createElement("span"); c.className = "fx-acct";
+      c.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>'; name.after(c); }
+    const bottom = aside.querySelector("div.mt-auto"); if (!bottom) return;
+    const set = [...bottom.querySelectorAll("a")].find(a => /Settings/.test(a.textContent));
+    for (const el of [...bottom.children]) if (!el.classList.contains("fx-setup") && !(set && el.contains(set))) el.style.display = "none";
+    if (set && !bottom.querySelector(".fx-help")) { const h = set.cloneNode(true); h.classList.add("fx-help"); h.classList.remove("fx-on"); h.setAttribute("href", "#help");
+      const svg = h.querySelector("svg"); if (svg) svg.outerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.2a2.6 2.6 0 0 1 5 .9c0 1.7-2.5 2.2-2.5 3.6M12 17h.01"/></svg>';
+      const w = document.createTreeWalker(h, NodeFilter.SHOW_TEXT); let n; while ((n = w.nextNode())) if (/Settings/.test(n.textContent)) n.textContent = n.textContent.replace("Settings", "Help");
+      (set.closest("div.mt-auto > *") || set).after(h); }
+    if (menuOpen && !aside.querySelector(".fx-menu")) { aside.style.position = "relative"; const m = document.createElement("div"); m.className = "fx-menu";
+      m.innerHTML = '<p>owner@local.test</p><a class="on" href="#">Maple Realty (local) <span>✓</span></a><hr><a href="#">Your plan <span>Founding tester</span></a><a href="#">Team <span>Just you</span></a><a href="#">Something broke? Tell us</a><hr><a href="#">Sign out</a>';
+      aside.appendChild(m); }
+  }, menuOpen);
+}
+
+async function todaySide(p) {
+  await p.evaluate(() => {
+    const grid = [...document.querySelectorAll("main div")].find(e => /grid-cols-\[minmax\(280px/.test(e.className)); if (!grid) return;
+    const right = grid.children[1]; grid.style.display = "grid"; grid.style.gridTemplateColumns = "minmax(0, 640px) 300px"; grid.style.gap = "32px"; grid.style.alignItems = "start";
+    if (grid.querySelector(".fx-side")) return;
+    const side = document.createElement("aside"); side.className = "fx-side";
+    side.innerHTML = `<h3>About Ivy</h3><dl>
+      <div><dt>Came from</dt><dd>Your website form · x11@example.com</dd></div>
+      <div><dt>First wrote</dt><dd>Monday, Sep 21 · 9:01 AM</dd></div>
+      <div><dt>What FollowUp did</dt><dd>Held a reply, because it needs your answer</dd></div>
+      <div><dt>Follow-up plan</dt><dd>None yet</dd></div></dl>
+      <div class="fx-gap"><b>Parking: not known yet</b><span>Add it to this reply. FollowUp learns it from what you send, for the next person who asks.</span></div>
+      <a href="/leads/lead_x11">Open Ivy's page</a>`;
+    right.after(side);
+  });
+}
+
+async function customersTwoLine(p) {
+  await p.evaluate(() => {
+    const rows = [...document.querySelectorAll("main a[href^='/leads?p=']")];
+    for (const r of rows) { const c = r.children; if (c.length < 6) continue; r.classList.add("fx-two-line");
+      const prev = c[3].textContent.trim(); c[3].style.display = "none";
+      if (!c[1].querySelector(".fx-prev")) { const d = document.createElement("span"); d.className = "fx-prev"; d.textContent = prev; c[1].appendChild(d); }
+      c[5].style.justifySelf = "end"; }
+  });
+}
+
+async function settingsSections(p) {
+  await p.evaluate(() => {
+    const main = document.querySelector("main"), h = main.querySelector("h1"); if (!h || main.querySelector(".fx-setgrid")) return;
+    const secs = [...main.querySelectorAll("section.grid")].filter(x => { const t = x.querySelector("h2"); return t && !t.classList.contains("sr-only"); });
+    if (!secs.length) return;
+    const holder = secs[0].parentElement, top = holder.closest("div.mt-6") || holder;
+    const grid = document.createElement("div"); grid.className = "fx-setgrid";
+    const nav = document.createElement("nav"); nav.className = "fx-secs"; const body = document.createElement("div");
+    const ON = "Where customers write";
+    nav.innerHTML = secs.map(x => { const t = x.querySelector("h2").textContent.trim(); return `<a href="#" class="${t === ON ? "on" : ""}">${t.replace(/^Your follow-up plan$/, "Follow-up plan")}</a>`; }).join("");
+    top.parentElement.insertBefore(grid, top); grid.appendChild(nav); grid.appendChild(body); body.appendChild(top);
+    for (const x of secs) { const t = x.querySelector("h2"); if (t.textContent.trim() !== ON) x.style.display = "none"; else { t.style.cssText = "font-family:'FU Display',Georgia,serif;font-size:28px;color:var(--ink);font-weight:400;letter-spacing:-.01em;margin:0 0 8px"; } }
+    for (const d of main.querySelectorAll("div.mt-7")) d.style.display = "none";   // the long detail area below the groups
+  });
+}
+
 (async () => {
   const b = await chromium.launch({ args: ["--no-sandbox"] }); const log = [];
   for (const [w, hgt, tag] of [[1280, 860, "d"], [390, 844, "m"]]) {
@@ -203,16 +293,17 @@ let RES = null;
     const shot = (name) => p.screenshot({ path: `${OUT}/${tag}-${name}.png` });
     // Today: one customer at a time (A-209), our look (A-208), the calm shell (A-211)
     await go("/dashboard"); await shot("today-before");
-    await H.theme(p); await H.common(p); await H.today(p); await H.todayOne(p, desk); await shell(p, desk, "/dashboard"); await p.waitForTimeout(300); await shot("today");
+    await H.theme(p); await H.common(p); await H.today(p); await H.todayOne(p, desk); await shell(p, desk, "/dashboard"); if (desk) { await tidySidebar(p, false); await todaySide(p); } await p.waitForTimeout(300); await shot("today");
+    if (desk) { await tidySidebar(p, true); await p.waitForTimeout(200); await shot("menu"); }
     // Customers
     await go("/leads"); await shot("customers-before");
-    await H.theme(p); await H.common(p); await H.customers(p); await H.simpler(p, "customers"); await customersPage(p, desk); await shell(p, desk, "/leads"); await p.waitForTimeout(300); await shot("customers");
+    await H.theme(p); await H.common(p); await H.customers(p); await H.simpler(p, "customers"); await customersPage(p, desk); await shell(p, desk, "/leads"); if (desk) { await tidySidebar(p, false); await customersTwoLine(p); } await p.waitForTimeout(300); await shot("customers");
     // Results
     await go("/analytics"); await shot("results-before");
-    await H.theme(p); await H.common(p); RES = await resultsPage(p, desk, desk ? null : RES); await shell(p, desk, "/analytics"); await p.waitForTimeout(500); await shot("results");
+    await H.theme(p); await H.common(p); RES = await resultsPage(p, desk, desk ? null : RES); await shell(p, desk, "/analytics"); if (desk) await tidySidebar(p, false); await p.waitForTimeout(500); await shot("results");
     // Settings
     await go("/settings"); await shot("settings-before");
-    await H.theme(p); await H.common(p); await settingsPage(p, desk); await shell(p, desk, "/settings"); await p.waitForTimeout(300); await shot("settings");
+    await H.theme(p); await H.common(p); await settingsPage(p, desk); await shell(p, desk, "/settings"); if (desk) { await tidySidebar(p, false); await settingsSections(p); } await p.waitForTimeout(300); await shot("settings");
     await ctx.close();
   }
   console.log(log.length ? log.join("\n") : "drawn, no page errors"); await b.close();

@@ -3437,3 +3437,25 @@ leaning towards Wispr, but do not copy everything, take reference."* This follow
 - **Never:** their layout copied screen for screen, their banners, their purple "Pro" badge, their wording. Reference,
   not template (CLAUDE.md).
 
+## A-212 — The app, round 4: side panel, two-line rows, tidy sidebar, Settings sections ^A-212
+
+**Approved (to draw, then build on his yes):** 2026-10-10, founder: *"all 4, do it"*, to the four changes I proposed
+after *"looks good but needs a lot more changes."*
+
+**What specifically (desk; the phone stays as version 3):**
+1. **Today uses the right side.** Beside the one customer sits a soft grey panel, "About Ivy":
+   - where they came from, when they first wrote, what FollowUp did, and their follow-up plan;
+   - the one thing FollowUp is missing, with an orange dot ("Parking: not known yet. FollowUp learns it from what
+     you send.");
+   - "Open Ivy's page".
+   - Only real fields from the customer's page.
+2. **Customers in two lines per person:** name and channel icon, the last message under it in grey, the wait at the
+   end. It reads like a chat list. Grouped by state (A-211); Reply · Later on hover.
+3. **A tidy sidebar:**
+   - only Settings and Help at the bottom;
+   - email, plan, team, "Something broke? Tell us" and Sign out move into a menu under the business name (with a
+     chevron);
+   - no "Alerts" word on the desk (A-209).
+4. **Settings with a side list of sections:** Follow-up plan, Where customers write, How it writes, Your business,
+   Account. Picking one shows only its rows, under a display-font section title.
+

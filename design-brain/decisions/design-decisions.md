@@ -11109,3 +11109,16 @@ everyone under "Earlier". Grouping by state keeps the approved order.
 **Founder (2026-10-09):** *"looks good, but this needs a lot more changes too."* Direction holds; specifics asked.
 **Status:** not approved to build yet; round 4 follows his list.
 
+## 2026-10-10 — The app, version 4 drawn: the four changes (A-212)
+
+Drawn on the real local app, desk 1280. Board version 4: https://claude.ai/artifact/F12ZLs1H4UBdCWRtumdRvg
+(`prototypes/2026-10-09-app-inside/`, script `draw-wispr-leaning.cjs`).
+- Today side panel, Customers two-line rows, sidebar menu under the business name, Settings side list.
+- A drawing bug found and fixed: the first Settings attempt hid every row. The groups are `section` elements, so the
+  side list now reads the page's own sections.
+- **Weak:**
+  - the business name still truncates beside the bell;
+  - the side panel adds about 40 words to Today;
+  - the "qualified" count and longest-wait order are build steps.
+- **Status:** waiting for his yes to build.
+

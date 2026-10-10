@@ -69,8 +69,8 @@ of its own.
 | `/activity` | Customer side panel + Results | "What FollowUp did" per customer; totals on Results |
 | `/leads/[id]` | **A customer** | Conversation + side panel |
 | `/analytics` | **Results** | As drawn |
-| `/settings` | **Settings window** | Sections: Follow-up plan · Where customers write · How it writes · Your business · Account |
-| `/workflows` | Settings › Follow-up plan | "Change" opens it in the window |
+| `/settings` | **Settings window** | Five groups (A-220, build 4, 2026-10-10): Where customers write · How replies go out · Alerts · Your business · More. Phone: four rows + More, then Help and Sign out |
+| `/workflows` | Settings › How replies go out (the follow-up plan) | "Change" opens it in the window |
 | `/teach` | Settings › Your business › What FollowUp knows | Plus "Parking: not known yet" moments on Today |
 | `/onboarding` | Before the app; continued by the setup card | Ends on a real or practice customer |
 | `/book/[leadId]`, `/embed/...` | Outside the app (customer-facing) | Unchanged |
@@ -86,16 +86,16 @@ From `followup/PRODUCT_DIRECTION.md` and the open work list.
 | **Closing** ("Moved: closed, confirmed by you") | — | "Mark won" | "Won" tab | won by you ($) | — | Mark won + deal value | — |
 | **Voice agent** (calls answered) | "Called, needs you" | Call summary + transcript | — | calls answered | Where customers write › Phone and calls | — | "Missed call, answered" |
 | **More channels** (Instagram, Messenger, WhatsApp, Lead Ads, website form; texts later) | — | "Wrote on Instagram" | Channel filter | — | Where customers write | Connect a channel | — |
-| **Team** (Pro: shared customers, who's behind) | Only my customers | "Assigned to" | "Mine / Everyone" filter | who's behind | Account › Team | Invite a teammate | "Assigned to you" |
+| **Team** (Pro: shared customers, who's behind) | Only my customers | "Assigned to" | "Mine / Everyone" filter | who's behind | More › Team | Invite a teammate | "Assigned to you" |
 | **Old customers** ("Send all N") | One card with the count | — | "Old" filter | — | — | Review and send | — |
-| **"We got you" holding message** | Shown on the card ("Sent a holding note") | In "What FollowUp did" | — | — | How it writes | — | — |
-| **Reply timing strategy** | — | "Will reply at 2:40, when they're still looking" | — | heard back in… | How it writes | — | — |
+| **"We got you" holding message** | Shown on the card ("Sent a holding note") | In "What FollowUp did" | — | — | How replies go out | — | — |
+| **Reply timing strategy** | — | "Will reply at 2:40, when they're still looking" | — | heard back in… | How replies go out | — | — |
 | **What FollowUp knows** (facts it learns) | "Not known yet" moments | "Used: Commission 2.5%" | — | — | Your business › What FollowUp knows | Add or fix a fact | — |
 | **One question a day** | A small card after the queue | — | — | — | — | — | — |
-| **Languages** | — | "Writes in Punjabi" | Language filter | — | How it writes | — | — |
-| **Training opt-in** | — | — | — | — | Account › Your data | — | — |
-| **Alerts settings** (quiet at night, bursts) | — | — | — | — | Account › Alerts | — | — |
-| **CRM, Zapier, routing** | — | "In HubSpot" link | — | — | Account › Advanced | — | — |
+| **Languages** | — | "Writes in Punjabi" | Language filter | — | How replies go out | — | — |
+| **Training opt-in** | — | — | — | — | More › Your data | — | — |
+| **Alerts settings** (quiet at night, bursts) | — | — | — | — | Alerts | — | — |
+| **CRM, Zapier, routing** | — | "In HubSpot" link | — | — | More › Advanced | — | — |
 | **Help / Something broke?** | — | — | — | — | — | Tell us (window) | — |
 
 **What this shows:** every planned feature fits the skeleton. None needs a fourth place.
@@ -107,6 +107,8 @@ From `followup/PRODUCT_DIRECTION.md` and the open work list.
 - **Where customers write:** Email and website form · Instagram, Facebook, WhatsApp · Phone and calls *(Soon)*.
 - **Your business:** What FollowUp knows · Team · Alerts.
 - **Account:** Plan and billing · Sign-ins and security · Your data · Advanced.
+
+*SUPERSEDED (2026-10-10) for Settings by A-220 build 4:* the five groups are Where customers write · How replies go out (the plan, replies, booking, pause) · Alerts · Your business · More (team, plan, sign-ins, your data, advanced).
 
 **A customer's side panel** is one column of same-shaped blocks, in this order:
 1. About;

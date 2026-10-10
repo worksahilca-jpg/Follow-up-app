@@ -54,6 +54,16 @@ td.old { color: var(--faint); text-decoration: line-through; text-decoration-col
 .ask { color: var(--needs); font-weight: 600 }
 .qs { display: grid; gap: 12px; margin-top: 16px; max-width: 80ch; padding-left: 22px }
 .qs li { padding-left: 4px }
+.map svg { display: block; width: 100%; height: auto; max-width: 980px; color: var(--fg) }
+.map figcaption { max-width: 80ch }
+.slots { margin: 18px 0 0; padding-left: 22px; display: grid; gap: 8px; max-width: 86ch }
+.slots b { font-weight: 600 }
+.plan { display: grid; gap: 12px; margin-top: 18px }
+.plan > div { display: grid; grid-template-columns: 150px minmax(0, 1fr) 120px; gap: 16px; align-items: start; padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--card) }
+.plan b { font-weight: 600 } .plan span { color: var(--muted); font-size: 14.5px }
+.plan em { font-style: normal; font-size: 12.5px; font-weight: 600; justify-self: end; padding: 3px 10px; border-radius: 99px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap }
+.plan em.done { color: var(--sage); border-color: currentColor } .plan em.next { color: var(--needs); border-color: currentColor }
+@media (max-width: 720px) { .plan > div { grid-template-columns: 1fr } .plan em { justify-self: start } }
 @media (max-width: 720px) {
   .pair, .pair.phone { grid-template-columns: minmax(0, 1fr) }
   .page { padding-block: 28px 60px }
@@ -62,7 +72,7 @@ td.old { color: var(--faint); text-decoration: line-through; text-decoration-col
 
 <div class="page">
   <header>
-    <p class="label">FollowUp · the app, redrawn · version 3 · drawing, nothing built</p>
+    <p class="label">FollowUp · the app, redrawn · version 6 · drawing, nothing built</p>
     <h1>Our look. Wispr's <em>calm.</em></h1>
     <p class="lede">Our colours, type and words, with an interface that leans toward Wispr Flow's calm: a quiet sidebar where every place has a word, the page on one white sheet, plain titles, one black button, and almost nothing moving. Patterns borrowed, not their screens. These are drawn over the real app with the local test account's examples.</p>
     <div class="summary">
@@ -73,8 +83,120 @@ td.old { color: var(--faint); text-decoration: line-through; text-decoration-col
     </div>
   </header>
 
+  <section id="v6">
+    <div class="head"><p class="label">Version 6 · can more features fit? Yes, here's how</p><h2>Everything planned, <em>in its place.</em></h2>
+      <p>New features don't get new screens. They go into the slots on the map, and look like everything else in that slot. "Soon" marks what isn't built yet, so it's always clear what's real.</p></div>
+    <figure><img src="img/v6-d-win-full.webp" alt="The Settings window holding every planned setting, grouped under How it works, Where customers write, Your business and Account. 'What you ask' is open: What they want, When, Budget and Viewing switched on, with Pre-approved for a mortgage and Working with another agent marked Soon." loading="lazy"><figcaption><b>Settings, full.</b> Thirteen sections under four headings: How it works · Where customers write · Your business · Account. Open here is "What you ask": the four questions the realtor card already asks, plus two marked "Soon".</figcaption></figure>
+    <figure style="margin-top:22px"><img src="img/v6-d-customer.webp" alt="Ivy's page: the conversation and the reply on the left; on the right, the same-shaped blocks: About Ivy, Qualification (what they want ticked; when, budget, viewing to learn), Booking, What FollowUp did, then actions: Already spoke, Copy booking link, Mark won, Details." loading="lazy"><figcaption><b>A customer's page.</b> The conversation on the left; on the right, one column of blocks that all look alike: About, Qualification, Booking, What FollowUp did. Calls, team and closing add blocks here later.</figcaption></figure>
+  </section>
+
+  <section id="plan">
+    <div class="head"><p class="label">The plan, in order</p><h2>One step at a time, <em>each one live before the next.</em></h2>
+      <p>Each step is one pull request. You see it, you say "merge", it goes live. Nothing new is built until its slot on the map is agreed.</p></div>
+    <div class="plan">
+      <div><b>0 · Agreed</b><span>Our look with Wispr's calm, four places, one customer at a time, Settings as a window, and the map with seven slots.</span><em class="done">Done</em></div>
+      <div><b>1 · The base</b><span>The menu with words and the tidy bottom, the business menu, the white sheet, the Settings window (phone: a sheet), and the Add customer window.</span><em class="next">Next</em></div>
+      <div><b>2 · Today</b><span>One customer at a time, the side panel, "Next", and the All done moment.</span><em>After 1</em></div>
+      <div><b>3 · Customers</b><span>Grouped by state, two lines per person, Reply · Later on hover; a customer's page with the blocks.</span><em>After 2</em></div>
+      <div><b>4 · Results</b><span>In the menu, the sunlit numbers, plus the qualified count.</span><em>After 3</em></div>
+      <div><b>5 · Tidy up</b><span>Inbox, Waiting, Coming up and Pipeline become Customers views; Activity becomes each customer's "What FollowUp did".</span><em>After 4</em></div>
+      <div><b>6 · New features</b><span>Into their slots, one at a time: editing "What you ask", booking and calendar, Mark won, calls, team.</span><em>Then</em></div>
+    </div>
+    <ul class="notes">
+      <li><b>Still to draw before its step:</b> the Alerts list from the bell, the empty and All done moments, how setup ends on a real customer, and a customer's page on the phone.</li>
+    </ul>
+  </section>
+
+  <section id="map">
+    <div class="head"><p class="label">The map · so new features fit</p><h2>Three places, one window, and seven slots <em>for everything else.</em></h2>
+      <p>You asked for a plan before building, so new features fit. The skeleton stays fixed. Every feature, today's and the ones on the way, goes into one of seven slots. Nothing gets squeezed in, and the app never grows a fifth tab.</p></div>
+    <figure class="map">
+      <svg viewBox="0 0 980 400" role="img" aria-label="The app's skeleton: a sidebar with Today, Customers and Results, and Settings and Help at the bottom; the page as one white sheet showing a customer with a side panel; a Settings window and a small task window that open over the page; and alerts from the bell.">
+        <rect x="1" y="1" width="978" height="398" rx="18" fill="#F2F1ED" stroke="#E2E0DA"/>
+        <g font-family="Public Sans, system-ui, sans-serif" font-size="13" fill="#0E0E0C">
+          <text x="24" y="40" font-weight="600">Maple Realty ⌄</text><path d="M178 42h14M181 42v-6a4 4 0 0 1 8 0v6M183.5 45.5a2 2 0 0 0 3 0" fill="none" stroke="#736e68" stroke-width="1.5" stroke-linecap="round"/>
+          <rect x="16" y="62" width="180" height="30" rx="8" fill="#E7E6E1"/><text x="28" y="82" font-weight="600">Today</text><text x="176" y="82" text-anchor="end" fill="#736e68">15</text>
+          <text x="28" y="116">Customers</text><text x="28" y="146">Results</text>
+          <text x="28" y="186" font-size="11" fill="#736e68" letter-spacing="1">PLACES (FIXED)</text>
+          <rect x="16" y="246" width="180" height="70" rx="12" fill="#fff" stroke="#E2E0DA"/><text x="28" y="268" font-size="12" font-weight="600">Finish setting up</text>
+          <rect x="28" y="278" width="156" height="4" rx="2" fill="#ECEBE7"/><rect x="28" y="278" width="52" height="4" rx="2" fill="#2A5A47"/><text x="28" y="302" font-size="11.5" fill="#736e68">goes away when done</text>
+          <text x="28" y="346">Settings</text><text x="28" y="374">Help</text>
+          <rect x="216" y="12" width="752" height="376" rx="16" fill="#fff" stroke="#E2E0DA"/>
+          <text x="244" y="52" font-family="Fraunces, Georgia, serif" font-size="24">15 customers <tspan fill="#2A5A47" font-style="italic">need you.</tspan></text>
+          <rect x="244" y="74" width="420" height="190" rx="14" fill="#F3F8F4" stroke="#DCEBE1"/><text x="262" y="100" font-size="11" fill="#2A5A47" letter-spacing="1">SLOT 1 · TODAY CARD</text><text x="262" y="124" fill="#57534e">one decision at a time</text>
+          <rect x="262" y="214" width="70" height="30" rx="15" fill="#0E0E0C"/><text x="297" y="234" text-anchor="middle" fill="#fff" font-weight="600">Send</text>
+          <rect x="684" y="74" width="260" height="190" rx="14" fill="#F6F5F2"/><text x="700" y="100" font-size="11" fill="#736e68" letter-spacing="1">SLOT 2 · SIDE PANEL</text><text x="700" y="124" fill="#57534e">all about one customer</text><text x="700" y="146" fill="#57534e">(phone: "Details")</text>
+          <rect x="244" y="284" width="190" height="84" rx="12" fill="#F6F5F2"/><text x="256" y="306" font-size="11" fill="#736e68" letter-spacing="1">SLOT 3 · CUSTOMERS</text><text x="256" y="328" fill="#57534e">a tab or filter</text>
+          <rect x="450" y="284" width="190" height="84" rx="12" fill="#F6F5F2"/><text x="462" y="306" font-size="11" fill="#736e68" letter-spacing="1">SLOT 4 · RESULTS</text><text x="462" y="328" fill="#57534e">a real number</text>
+          <rect x="590" y="190" width="330" height="190" rx="16" fill="#fff" stroke="#0E0E0C" stroke-opacity=".18"/><rect x="590" y="190" width="104" height="190" rx="16" fill="#F6F5F2"/>
+          <text x="602" y="214" font-size="11" fill="#736e68" letter-spacing="1">SETTINGS</text><text x="602" y="238" font-size="12">Plan</text><text x="602" y="258" font-size="12" font-weight="600">Channels</text><text x="602" y="278" font-size="12">Writing</text><text x="602" y="298" font-size="12">Business</text><text x="602" y="318" font-size="12">Account</text>
+          <text x="708" y="216" font-size="11" fill="#736e68" letter-spacing="1">SLOT 5 · SETTINGS WINDOW</text><text x="708" y="240" fill="#57534e">a section or a row</text>
+          <rect x="708" y="300" width="196" height="64" rx="12" fill="#fff" stroke="#0E0E0C" stroke-opacity=".18"/><text x="720" y="322" font-size="11" fill="#736e68" letter-spacing="1">SLOT 6 · SMALL WINDOW</text><text x="720" y="344" fill="#57534e">one task, then gone</text>
+          <text x="182" y="24" font-size="11" fill="#c96a1b" letter-spacing="1" text-anchor="middle">SLOT 7 · ALERT</text>
+        </g>
+      </svg>
+      <figcaption>The skeleton. The three places and Settings never grow. New things go into the numbered slots.</figcaption>
+    </figure>
+    <ol class="slots">
+      <li><b>The owner must decide now</b> → a card in Today, one at a time.</li>
+      <li><b>It's about one customer</b> → a short block in that customer's side panel ("Details" on the phone).</li>
+      <li><b>It's a way to find people</b> → a tab in Customers (only when it has people) or a filter.</li>
+      <li><b>It shows what FollowUp did</b> → a number on Results, real records only, beside last week.</li>
+      <li><b>It's how FollowUp works, or a connection</b> → a section or row in the Settings window.</li>
+      <li><b>It's one task with a start and an end</b> → a small window (a sheet on the phone).</li>
+      <li><b>It happened while you were away</b> → an alert that opens straight to the customer.</li>
+    </ol>
+    <div class="scroll"><table>
+      <thead><tr><th>On the way</th><th>Where it goes</th></tr></thead>
+      <tbody>
+        <tr><td><b>Qualification</b> (realtors first)</td><td>Today: "Qualified, hand off" · Panel: the card, with their own words · Customers: "Qualified" tab · Results: qualified · Settings: "What you ask"</td></tr>
+        <tr><td><b>Booking</b></td><td>Panel: "Booked: Sat 10:30" · Customers: "Booked" · Results: booked · Settings: hours and calendar · Window: pick a time</td></tr>
+        <tr><td><b>Closing</b> ("closed, confirmed by you")</td><td>Panel: "Mark won" · Window: deal value · Customers: "Won" · Results: won by you</td></tr>
+        <tr><td><b>Voice agent</b></td><td>Today: "Called, needs you" · Panel: call summary · Results: calls answered · Settings: phone and calls</td></tr>
+        <tr><td><b>More channels</b></td><td>Settings: where customers write · Window: connect · Panel: "Wrote on Instagram"</td></tr>
+        <tr><td><b>Team</b> (Pro)</td><td>Settings: team · Window: invite · Customers: "Mine / Everyone" · Panel: assigned to · Results: who's behind</td></tr>
+        <tr><td><b>Old customers</b> ("Send all")</td><td>Today: one card with the count · Window: review and send</td></tr>
+        <tr><td><b>What FollowUp knows</b></td><td>Today: "not known yet" moments · Panel: "Used: Commission 2.5%" · Settings: your business</td></tr>
+      </tbody>
+    </table></div>
+    <ul class="notes">
+      <li><b>Today's 15 screens fold into this:</b> Inbox, Waiting, Coming up and Pipeline become views of Customers; Activity becomes each customer's "What FollowUp did" plus Results; Follow-up plan and Teach move into the Settings window.</li>
+      <li><b>Two questions for you:</b> does Pipeline (stages) stay as a Customers view? And does the team view ("who's behind") live on Results?</li>
+      <li>The full map, with every feature on the way: <code>design-brain/components/app-map.md</code>.</li>
+    </ul>
+  </section>
+
+  <section id="v5">
+    <div class="head"><p class="label">Version 5 · windows, like Wispr</p><h2>Settings opens <em>over the page.</em></h2>
+      <p>Settings is a window now, not a page: the page stays behind, dimmed, and closes back to where you were. Single tasks, like adding a customer, get a small window. On the phone they rise as a sheet.</p></div>
+    <figure><img src="img/v5-d-win-channels.webp" alt="The Settings window over Today: a side list of sections and 'Where customers write' with Email, Website form, and Instagram, Facebook, WhatsApp." loading="lazy"><figcaption><b>Settings window, "Where customers write."</b> The side list: Follow-up plan, Where customers write, How it writes, Your business, and Account and data. Close with × or Esc.</figcaption></figure>
+    <div class="pair" style="margin-top:22px">
+      <figure><img src="img/v5-d-win-writes.webp" alt="The Settings window on 'How it writes': Replies and check-ins, Booking hours, and Pause all sending as a switch." loading="lazy"><figcaption><b>How it writes.</b> Pause all sending is a switch.</figcaption></figure>
+      <figure><img src="img/v5-d-win-add.webp" alt="A small window over Customers: Add a customer, with Name, Email, Phone, Notes, More details folded, Cancel and Add customer." loading="lazy"><figcaption><b>Add a customer, as a small window.</b> Same fields as today; company, deal value and source fold under "More details".</figcaption></figure>
+    </div>
+    <div class="pair phone" style="margin-top:22px">
+      <figure><img src="img/v5-m-sheet.webp" alt="On a phone, Settings rises as a sheet over Today: Finish setting up, the sections as rows, Account and data, Something broke? and Sign out." loading="lazy"><figcaption><b>Phone:</b> Settings rises as a sheet; "Done" closes it.</figcaption></figure>
+      <figure><img src="img/v5-m-win-add.webp" alt="On a phone, Add a customer rises as a sheet from the bottom." loading="lazy"><figcaption><b>Phone:</b> Add a customer as a sheet.</figcaption></figure>
+    </div>
+  </section>
+
+  <section id="v4">
+    <div class="head"><p class="label">Version 4 · your "all 4"</p><h2>Four changes, <em>drawn.</em></h2>
+      <p>On a laptop: Today uses the empty right side, Customers reads like a chat list, the sidebar's bottom is tidy, and Settings has a side list. The phone stays as in version 3.</p></div>
+    <figure><img src="img/v4-d-today.webp" alt="Today on a laptop: Ivy's message and the reply on the left; on the right, About Ivy: came from your website form, first wrote Monday Sep 21, FollowUp held a reply, no follow-up plan yet, and 'Parking: not known yet'." loading="lazy"><figcaption><b>1 · Today, with what helps on the right.</b> Where she came from, when she first wrote, and what FollowUp did. The one thing it's missing gets an orange dot: your parking answer. FollowUp learns it from what you send.</figcaption></figure>
+    <figure style="margin-top:22px"><img src="img/v4-d-customers.webp" alt="Customers on a laptop: each person on two lines, the name with the channel icon, the last message under it in grey, and the wait at the right." loading="lazy"><figcaption><b>2 · Customers, two lines per person.</b> Name over their last message, the wait at the end, like a chat list. Reply and Later still show on hover.</figcaption></figure>
+    <div class="pair" style="margin-top:22px">
+      <figure><img src="img/v4-d-menu.webp" alt="The business name opened as a menu: your email, the business, Your plan, Team, Something broke? Tell us, and Sign out." loading="lazy"><figcaption><b>3 · A tidy sidebar.</b> The bottom holds only Settings and Help. Your email, plan, team, "Something broke?" and Sign out move under your business name.</figcaption></figure>
+      <figure><img src="img/v4-d-settings.webp" alt="Settings on a laptop: a side list (Follow-up plan, Where customers write, How it writes, Your business, Account) and the chosen section's rows on the right." loading="lazy"><figcaption><b>4 · Settings with a side list.</b> Pick a section and see only its rows. No long page to scroll.</figcaption></figure>
+    </div>
+    <ul class="notes">
+      <li><b>Weak, honestly:</b> the business name still shortens to "Maple Real…" beside the bell; a shorter name or a smaller bell fixes it. With the menu open, the bottom of the sidebar is pushed down (a drawing quirk). The side panel adds about 40 words to Today; it stays short and can fold away.</li>
+      <li><b>Still to come in the build:</b> the "qualified" count on Results, and sorting "Needs you" by longest wait.</li>
+    </ul>
+  </section>
+
   <section id="v3">
-    <div class="head"><p class="label">Version 3 · the four places</p><h2>Each place, <em>drawn.</em></h2>
+    <div class="head"><p class="label">Version 3 · the four places (the phone and Results stand)</p><h2>Each place, <em>drawn.</em></h2>
       <p>Approved so far: four places, one customer at a time, the soft-green reply, "Alerts" on the phone and "Qualified" (A-209). Your direction: our colour and theme, leaning toward Wispr, reference not copy (A-211).</p></div>
     <figure><img src="img/v3-d-today.webp" alt="Today on a laptop: the sidebar with Today, Customers and Results and a Finish setting up card; one white sheet with '15 customers need you.' and one customer with the reply on soft green." loading="lazy"><figcaption><b>Today.</b> One customer at a time, with the reply waiting for Send. Only Today keeps its count, because that's who needs you.</figcaption></figure>
     <figure style="margin-top:22px"><img src="img/v3-d-customers.webp" alt="Customers on a laptop: plain title, text tabs All and Needs you, the list grouped under 'Needs you · 15' with the wait at the end of each row and Reply and Later shown on the row under the pointer." loading="lazy"><figcaption><b>Customers.</b> The list is grouped by state, in the order it already uses. The wait sits at the end of each row. On a laptop, the row under the pointer shows <b>Reply</b> and <b>Later</b>; the phone keeps its swipe.</figcaption></figure>

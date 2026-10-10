@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { X } from "lucide-react";
+import { ChevronDown } from "lucide-react";
+import AppWindow from "@/components/app/AppWindow";
 
-const inputClass = "w-full rounded-lg border border-line bg-card px-3 py-2 text-sm";
+const inputClass = "w-full rounded-[10px] border border-line bg-card px-3 py-2.5 text-[15px] lg:py-2";
+const labelClass = "mb-1 block text-[13px] text-ink-soft";
 
 export default function AddLeadForm({ onClose }: { onClose: () => void }) {
   const router = useRouter();
@@ -17,14 +19,8 @@ export default function AddLeadForm({ onClose }: { onClose: () => void }) {
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
-    }
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
+  // Company, deal value and where they came from fold away (A-213): most owners only need the first three.
+  const [more, setMore] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -59,83 +55,59 @@ export default function AddLeadForm({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center px-4"
-      style={{ backgroundColor: "var(--scrim)" }}
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-md box-lift p-6 max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-display text-xl">Add a customer</h2>
-          <button onClick={onClose} className="text-ink-soft hover:text-ink" aria-label="Close">
-            <X className="h-5 w-5" />
+    <AppWindow label="Add a customer" onClose={onClose} size="small">
+      {/* A small window, the way Wispr's are: a plain title, one line, the few fields that matter. */}
+      <div className="px-1 pb-1 lg:px-6 lg:pb-6 lg:pt-6">
+        <h2 className="text-[19px] font-semibold leading-tight tracking-[-0.01em] lg:text-[17px]">Add a customer</h2>
+        <p className="mt-1 text-[14px] text-ink-faint">Someone who called or walked in. FollowUp takes it from here.</p>
+
+        <form onSubmit={handleSubmit} className="mt-5 grid gap-3">
+          <div>
+            <label htmlFor="add-name" className={labelClass}>Name</label>
+            <input id="add-name" value={name} onChange={(e) => setName(e.target.value)} className={inputClass} placeholder="Their name" autoFocus />
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label htmlFor="add-email" className={labelClass}>Email</label>
+              <input id="add-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} placeholder="name@example.com" />
+            </div>
+            <div>
+              <label htmlFor="add-phone" className={labelClass}>Phone</label>
+              <input id="add-phone" value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClass} placeholder="Their number" />
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="add-notes" className={labelClass}>Notes</label>
+            <textarea id="add-notes" value={notes} onChange={(e) => setNotes(e.target.value)} className={inputClass} rows={2} placeholder="What they asked about" />
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setMore((v) => !v)}
+            aria-expanded={more}
+            className="flex items-center gap-1.5 justify-self-start text-left text-[13.5px] text-ink-soft hover:text-ink"
+          >
+            More details
+            <ChevronDown className={"h-3.5 w-3.5 transition-transform " + (more ? "rotate-180" : "")} strokeWidth={2} />
           </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <div>
-            <label className="text-sm font-medium block mb-1.5">Name</label>
-            <input value={name} onChange={(e) => setName(e.target.value)} className={inputClass} placeholder="e.g. Jordan Lee" autoFocus />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-sm font-medium block mb-1.5">Company</label>
-              <input value={company} onChange={(e) => setCompany(e.target.value)} className={inputClass} placeholder="Optional" />
+          {more && (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label htmlFor="add-company" className={labelClass}>Company</label>
+                <input id="add-company" value={company} onChange={(e) => setCompany(e.target.value)} className={inputClass} placeholder="Optional" />
+              </div>
+              <div>
+                <label htmlFor="add-deal" className={labelClass}>Deal value</label>
+                <input id="add-deal" type="number" min={0} value={dealValue} onChange={(e) => setDealValue(e.target.value)} className={inputClass} placeholder="$0" />
+              </div>
+              <div className="sm:col-span-2">
+                <label htmlFor="add-source" className={labelClass}>Where they came from</label>
+                <input id="add-source" value={source} onChange={(e) => setSource(e.target.value)} className={inputClass} placeholder="e.g. Referral, a call (blank means you added them)" />
+              </div>
             </div>
-            <div>
-              <label className="text-sm font-medium block mb-1.5">Deal value</label>
-              <input
-                type="number"
-                min={0}
-                value={dealValue}
-                onChange={(e) => setDealValue(e.target.value)}
-                className={inputClass}
-                placeholder="$0"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-sm font-medium block mb-1.5">Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className={inputClass}
-                placeholder="Optional"
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium block mb-1.5">Phone</label>
-              <input value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClass} placeholder="Optional" />
-            </div>
-          </div>
-
-          <div>
-            <label className="text-sm font-medium block mb-1.5">Source</label>
-            <input
-              value={source}
-              onChange={(e) => setSource(e.target.value)}
-              className={inputClass}
-              placeholder="e.g. Referral, Website form (defaults to Manual entry)"
-            />
-          </div>
-
-          <div>
-            <label className="text-sm font-medium block mb-1.5">Notes</label>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className={inputClass}
-              rows={3}
-              placeholder="Optional"
-            />
-          </div>
+          )}
 
           {error && (
             <p className="text-sm" style={{ color: "var(--coral)" }}>
@@ -143,18 +115,14 @@ export default function AddLeadForm({ onClose }: { onClose: () => void }) {
             </p>
           )}
 
-          <div className="flex gap-2 pt-1">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 rounded-full px-4 py-2.5 text-sm font-medium border border-line"
-            >
+          <div className="mt-2 flex items-center justify-end gap-4">
+            <button type="button" onClick={onClose} className="px-1 text-[14px] text-ink-soft hover:text-ink">
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 rounded-full px-4 py-2.5 text-sm font-medium disabled:opacity-60"
+              className="rounded-[10px] px-4 py-2.5 text-[14.5px] font-semibold disabled:opacity-60 lg:py-2"
               style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
             >
               {saving ? "Saving…" : "Add customer"}
@@ -162,6 +130,6 @@ export default function AddLeadForm({ onClose }: { onClose: () => void }) {
           </div>
         </form>
       </div>
-    </div>
+    </AppWindow>
   );
 }

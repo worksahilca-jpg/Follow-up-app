@@ -3434,6 +3434,73 @@ leaning towards Wispr, but do not copy everything, take reference."* This follow
   - Results as a few big numbers;
   - Settings as grouped rows, one line each;
   - almost nothing moves.
+- **PARTLY SUPERSEDED (2026-10-10)** by [[approved#^A-214|A-214]]: the founder now allows following Wispr's app
+  layout closely ("copy Wispr if you want"). Their logo, wording, banners, badge and assets stay off limits.
 - **Never:** their layout copied screen for screen, their banners, their purple "Pro" badge, their wording. Reference,
   not template (CLAUDE.md).
+
+## A-212 — The app, round 4: side panel, two-line rows, tidy sidebar, Settings sections ^A-212
+
+**Approved (to draw, then build on his yes):** 2026-10-10, founder: *"all 4, do it"*, to the four changes I proposed
+after *"looks good but needs a lot more changes."*
+
+**What specifically (desk; the phone stays as version 3):**
+1. **Today uses the right side.** Beside the one customer sits a soft grey panel, "About Ivy":
+   - where they came from, when they first wrote, what FollowUp did, and their follow-up plan;
+   - the one thing FollowUp is missing, with an orange dot ("Parking: not known yet. FollowUp learns it from what
+     you send.");
+   - "Open Ivy's page".
+   - Only real fields from the customer's page.
+2. **Customers in two lines per person:** name and channel icon, the last message under it in grey, the wait at the
+   end. It reads like a chat list. Grouped by state (A-211); Reply · Later on hover.
+3. **A tidy sidebar:**
+   - only Settings and Help at the bottom;
+   - email, plan, team, "Something broke? Tell us" and Sign out move into a menu under the business name (with a
+     chevron);
+   - no "Alerts" word on the desk (A-209).
+4. **Settings with a side list of sections:** Follow-up plan, Where customers write, How it writes, Your business,
+   Account. Picking one shows only its rows, under a display-font section title.
+
+## A-213 — Settings and single tasks open as windows over the page, like Wispr ^A-213
+
+**Approved (direction, to draw):** 2026-10-10, founder: *"make it a bit towards Wispr, see how they pop up a new window
+for settings and stuff."*
+
+**What specifically:**
+- **Settings is a window, not a page.** It opens over the current page, which stays behind, dimmed (a plain see-through
+  layer, no blur: brand principle "Every frame is smooth"). It has a side list of sections on soft grey, a display-font
+  section title with one grey line, and the rows on soft grey. It closes with × or Esc, back to where you were.
+- **Single tasks get a small window.** Add a customer is the first. Its fields stay; company, deal value and source fold
+  under "More details". Cancel is a word, and "Add customer" is the one black button.
+- **Phone:** both rise as a sheet from the bottom (a grab bar, "Done" for Settings).
+- Sidebar: Settings stays at the bottom and shows as open while its window is up.
+
+**Supersedes:** Settings as a page (A-209 kept it as a place, and A-212 gave it a side list on the page). The side list
+moves into the window.
+
+**Also asked (2026-10-10):** *"keep the plan in mind while building, because we have to fit new features too."* The
+plan is `components/app-map.md`: the fixed skeleton, the seven slots, and where every feature on the way goes.
+
+## A-214 — Simplify: the app may follow Wispr's layout closely ^A-214
+
+**Approved (direction):** 2026-10-10, founder, on the step 1 screenshots (menu, Settings window, Add a customer, phone):
+*"simplify. Bro, copy Wispr if you want, or use other references too."*
+
+**What this allows:** the app's **layout and proportions** may follow Wispr Flow's desktop app closely (his recording,
+2026-10-09): the sidebar, the sheet, the Settings window, the small windows. It supersedes A-211's "never their layout
+screen for screen" for the app. Other references (Linear, Notion, the iPhone) are allowed the same way.
+
+**Still never:** their logo, name, wording, banners and illustrations, their purple "Pro" badge, or any of their assets.
+Our colours, type, words and logo stay (A-208, A-211). The landing page is not covered: R-029 still holds there.
+
+**What was built with it (step 1, PR #470):**
+- **Sidebar like Wispr's:** FollowUp's logo and name at the top with the bell; plain rows (Search, then Today, Customers,
+  Results); Settings and Help at the foot; the account (business name) under them, opening email, plan, team and Sign
+  out upward. The search box became a "Search" row that opens a small window (Ctrl+K or ⌘K too).
+- **The sheet:** starts just below the top and runs off the right and bottom edges, one rounded corner by the sidebar.
+- **Settings window, Wispr's proportions:** smaller (860 × 600); the side list has an icon beside each word; on the desk,
+  each row is its name over its status on soft grey, with a "Change" button on the right ("Set up" when it isn't,
+  "Open" for a page with nothing to change in one go). The phone keeps its list with chevrons.
+- **Add a customer, like Wispr's small windows:** a plain title (not the display face), one line, compact fields, notes
+  two lines high, "More details" in two words. On a phone it now fits one screen with the buttons showing.
 

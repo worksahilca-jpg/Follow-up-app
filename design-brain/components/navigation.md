@@ -66,3 +66,5 @@ power-user pattern and is **not** a substitute for visible navigation for this I
 - `[TO DECIDE]` Mobile navigation pattern.
 - `[TO DECIDE]` Global search.
 - `[TO DECIDE]` Whether the sidebar collapses on desktop.
+
+**See also:** `app-map.md`, the whole app's structure and where new features go (2026-10-10).

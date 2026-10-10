@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { ChevronRight } from "lucide-react";
 import { describeBookingHours, describeTimeZone, type BookingHours } from "@/lib/bookingHours";
 import type { StateKey } from "./canvasBits";
+import type { SettingsGroup } from "@/lib/settingsGroups";
 
 /**
  * Settings as the one-decision board draws it (A-080): one column, the
@@ -29,7 +30,15 @@ type Social = {
   whatsapp: boolean;
 };
 
-type Row = { page: string; name: string; status?: string; state?: StateKey };
+type Row = { page: string; name: string; status?: string; state?: StateKey; cta?: string };
+
+/** The word on a row's button on the desk (Wispr's "Change"): "Set up" for what isn't, "Open" for a page with nothing to change in one go. */
+function ctaOf(r: Row): string {
+  if (r.cta) return r.cta;
+  if (r.status === "Not set up") return "Set up";
+  return r.status ? "Change" : "Open";
+}
+
 
 export default function SettingsList({
   gmail,
@@ -40,6 +49,7 @@ export default function SettingsList({
   paused,
   planStatus,
   onOpen,
+  selected,
 }: {
   gmail: { connected: boolean; email?: string };
   outlook: { connected: boolean; email?: string };
@@ -49,7 +59,11 @@ export default function SettingsList({
   paused: boolean;
   planStatus: string;
   onOpen: (page: string) => void;
+  /** Desk only: the group the side list has open. The rest hide from lg up; the phone shows them all. */
+  selected?: SettingsGroup;
 }) {
+  const deskOnly = (g: SettingsGroup) => (selected && selected !== g ? " lg:hidden" : "");
+  const deskLabel = selected ? " lg:sr-only" : "";
   const [social, setSocial] = useState<Social | null>(null);
   const [booking, setBooking] = useState<string | null>(null);
   const [team, setTeam] = useState<number | null>(null);
@@ -114,7 +128,7 @@ export default function SettingsList({
       title: "Where customers write",
       rows: [
         { page: "email", name: "Email", status: inbox, state: gmail.connected || outlook.connected ? "sent" : undefined },
-        { page: "website", name: "Website form", status: "Add it to your site" },
+        { page: "website", name: "Website form", status: "Add it to your site", cta: "Open" },
         { page: "social", name: "Instagram, Facebook, WhatsApp", ...socialRow },
       ],
     },
@@ -138,7 +152,7 @@ export default function SettingsList({
       title: "Account",
       rows: [
         { page: "security", name: "Sign-ins and security" },
-        { page: "data", name: "Your data", status: "Download or delete" },
+        { page: "data", name: "Your data", status: "Download or delete", cta: "Open" },
         { page: "advanced", name: "Advanced: CRM, Zapier, routing" },
       ],
     },
@@ -161,41 +175,63 @@ export default function SettingsList({
         </button>
       )}
 
-      <section className="grid gap-2">
-        <div className="flex items-baseline justify-between">
+      <section className={"grid gap-2" + deskOnly("Follow-up plan")}>
+        {/* Desk: the pane's title names it, and "Change" sits in the box. */}
+        <div className="flex items-baseline justify-between lg:hidden">
           <h2 className="text-[13px] text-ink-faint" style={{ fontWeight: 400, letterSpacing: 0 }}>
             Your follow-up plan
           </h2>
-          <Link href="/workflows" className="text-sm underline underline-offset-[3px]">
+          <Link href="/workflows" className="ml-auto text-sm underline underline-offset-[3px]">
             Change
           </Link>
         </div>
-        <div className="overflow-hidden rounded-[14px] border border-line bg-card">
-          {instantAck && <PlanRow when="Right away" what="A quick “got your message” reply." first />}
-          <PlanRow when={days} what="A check-in, if they go quiet." first={!instantAck} />
-          <PlanRow when="Always" what={holdAll ? "Every reply waits for your OK." : "Prices and dates always come to you."} />
+        <div className={BOX + " lg:flex lg:items-start"}>
+          <div className="min-w-0 lg:flex-1 lg:py-1.5">
+            {instantAck && <PlanRow when="Right away" what="A quick “got your message” reply." first />}
+            <PlanRow when={days} what="A check-in, if they go quiet." first={!instantAck} />
+            <PlanRow when="Always" what={holdAll ? "Every reply waits for your OK." : "Prices and dates always come to you."} />
+          </div>
+          <Link href="/workflows" className={CTA + " hidden lg:mr-4 lg:mt-4 lg:inline-flex"}>
+            Change
+          </Link>
         </div>
       </section>
 
       {groups.map((g) => (
-        <section key={g.title} className="grid gap-2">
-          <h2 className="text-[13px] text-ink-faint" style={{ fontWeight: 400, letterSpacing: 0 }}>
+        <section key={g.title} className={"grid gap-2" + deskOnly(g.title as SettingsGroup)}>
+          <h2 className={"text-[13px] text-ink-faint" + deskLabel} style={{ fontWeight: 400, letterSpacing: 0 }}>
             {g.title}
           </h2>
-          <div className="overflow-hidden rounded-[14px] border border-line bg-card">
+          <div className={BOX + " lg:py-1.5"}>
             {g.rows.map((r, i) => (
               <button
                 key={r.name}
                 type="button"
                 onClick={() => onOpen(r.page)}
-                className={"flex min-h-[50px] w-full items-center gap-3 px-4 text-left hover:bg-card-2 " + (i ? "border-t border-line-2" : "")}
+                className={
+                  "group flex min-h-[50px] w-full items-center gap-3 px-4 text-left hover:bg-card-2 lg:min-h-[60px] lg:hover:bg-transparent " +
+                  (i ? "border-t border-line-2 lg:border-t-0" : "")
+                }
               >
-                <span className="shrink-0 text-[15px]">{r.name}</span>
-                <span className="inline-flex min-w-0 flex-1 items-center justify-end gap-2 text-[14px] text-ink-faint">
+                {/* Phone: the name, then the status on the right and a chevron. Desk (Wispr): the
+                    name over the status, and a "Change" button on the right. */}
+                <span className="min-w-0 shrink-0 lg:flex-1 lg:shrink">
+                  <span className="block text-[15px] lg:text-[14.5px] lg:font-medium">{r.name}</span>
+                  {r.status && (
+                    <span className="mt-0.5 hidden items-center gap-1.5 text-[13.5px] text-ink-faint lg:flex">
+                      {r.state && <span className="h-[7px] w-[7px] shrink-0 rounded-full" style={{ background: `var(--state-${r.state})` }} aria-hidden />}
+                      <span className="truncate">{r.status}</span>
+                    </span>
+                  )}
+                </span>
+                <span className="inline-flex min-w-0 flex-1 items-center justify-end gap-2 text-[14px] text-ink-faint lg:hidden">
                   {r.state && <span className="h-[7px] w-[7px] shrink-0 rounded-full" style={{ background: `var(--state-${r.state})` }} aria-hidden />}
                   {r.status && <span className="truncate">{r.status}</span>}
                 </span>
-                <ChevronRight className="h-4 w-4 shrink-0 text-ink-faint" />
+                <ChevronRight className="h-4 w-4 shrink-0 text-ink-faint lg:hidden" />
+                <span className={CTA + " hidden lg:inline-flex"} aria-hidden>
+                  {ctaOf(r)}
+                </span>
               </button>
             ))}
           </div>
@@ -204,7 +240,7 @@ export default function SettingsList({
 
       {/* In full, under the last group: a row status would cut it short on a phone. */}
       {signedInAs && (
-        <p className="-mt-3 break-all px-1 text-[13.5px] text-ink-faint">
+        <p className={"-mt-3 break-all px-1 text-[13.5px] text-ink-faint" + deskOnly("Account")}>
           Signed in as <span className="text-ink-soft">{signedInAs}</span>
         </p>
       )}
@@ -212,9 +248,15 @@ export default function SettingsList({
   );
 }
 
+/** A group's box: white with a line on the phone; soft grey, no line, on the desk (Wispr). */
+const BOX = "overflow-hidden rounded-[14px] border border-line bg-card lg:rounded-[12px] lg:border-0 lg:bg-card-2";
+/** The desk row's button look ("Change"); the whole row is the button. */
+const CTA =
+  "h-8 shrink-0 items-center rounded-lg bg-paper px-3.5 text-[13px] font-medium text-ink shadow-[0_0_0_1px_var(--line)] group-hover:shadow-[0_0_0_1px_var(--line-strong)] hover:shadow-[0_0_0_1px_var(--line-strong)]";
+
 function PlanRow({ when, what, first = false }: { when: string; what: string; first?: boolean }) {
   return (
-    <div className={"grid grid-cols-[110px_minmax(0,1fr)] gap-4 px-4 py-3 text-[15px] " + (first ? "" : "border-t border-line-2")}>
+    <div className={"grid grid-cols-[110px_minmax(0,1fr)] gap-4 px-4 py-3 text-[15px] lg:py-2.5 lg:text-[14.5px] " + (first ? "" : "border-t border-line-2 lg:border-t-0")}>
       <span className="text-sm text-ink-faint">{when}</span>
       <span className="leading-snug">{what}</span>
     </div>

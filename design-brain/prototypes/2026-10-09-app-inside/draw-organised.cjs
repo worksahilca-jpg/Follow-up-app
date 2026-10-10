@@ -104,6 +104,65 @@ aside .fx-word { display: none !important }                       /* "Alerts" is
 .fx-secs a { padding: 8px 12px; border-radius: 10px; color: var(--ink-soft); text-decoration: none }
 .fx-secs a.on { background: var(--fx-soft); color: var(--ink); font-weight: 600 }
 .fx-secs p { margin: 14px 12px 4px; font: 500 11px/1 ui-monospace, "IBM Plex Mono", monospace; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-faint) }
+/* round 5: windows that open over the page (Settings, Add customer) */
+.fx-dim { position: fixed; inset: 0; z-index: 80; background: rgba(14,14,12,.32) }
+.fx-win { position: fixed; z-index: 81; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(900px, calc(100vw - 48px)); height: min(620px, calc(100vh - 64px));
+  display: grid; grid-template-columns: 224px minmax(0, 1fr); background: #fff; border-radius: 18px; overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(14,14,12,.08), 0 40px 90px -36px rgba(0,0,0,.55) }
+.fx-win nav { background: var(--fx-soft); padding: 18px 12px; display: flex; flex-direction: column; gap: 2px; font-size: 14.5px }
+.fx-win nav p { margin: 14px 10px 6px; font: 500 11px/1 ui-monospace, "IBM Plex Mono", monospace; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-faint) }
+.fx-win nav p:first-child { margin-top: 2px }
+.fx-win nav a { padding: 8px 10px; border-radius: 9px; color: var(--ink-soft); text-decoration: none }
+.fx-win nav a.on { background: #fff; color: var(--ink); font-weight: 600; box-shadow: 0 0 0 1px rgba(14,14,12,.06) }
+.fx-win nav .fx-foot { margin-top: auto; padding: 8px 10px; font-size: 13px; color: var(--ink-faint) }
+.fx-win .fx-pane { padding: 30px 34px; overflow: auto }
+.fx-win .fx-pane h2 { margin: 0 0 4px; font-family: 'FU Display', Georgia, serif; font-weight: 400; font-size: 30px; letter-spacing: -.01em; color: var(--ink) }
+.fx-win .fx-pane .fx-why { margin: 0 0 18px; color: var(--ink-faint); font-size: 14px }
+.fx-win .fx-pane .fx-boxwrap > div { background: var(--fx-soft) !important; border-color: transparent !important; border-radius: 14px !important }
+.fx-win .fx-pane .fx-boxwrap > div > * { border-color: rgba(14,14,12,.06) !important }
+.fx-x { position: absolute; right: 14px; top: 14px; width: 34px; height: 34px; border-radius: 99px; display: grid; place-items: center; color: var(--ink-soft); background: #fff; box-shadow: inset 0 0 0 1px rgba(14,14,12,.1) }
+.fx-small { width: min(520px, calc(100vw - 32px)); height: auto; grid-template-columns: 1fr }
+.fx-small .fx-pane { padding: 28px 30px 24px }
+.fx-form { display: grid; gap: 14px }
+.fx-form label { display: grid; gap: 6px; font-size: 13.5px; color: var(--ink-soft) }
+.fx-form input, .fx-form textarea { font: inherit; font-size: 15px; color: var(--ink); padding: 11px 13px; border-radius: 11px; border: 1px solid rgba(14,14,12,.12); background: #fff }
+.fx-form .fx-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px }
+.fx-more { font-size: 14px; color: var(--ink-soft); display: flex; align-items: center; gap: 6px }
+.fx-acts2 { display: flex; justify-content: flex-end; align-items: center; gap: 18px; margin-top: 6px }
+.fx-acts2 a { color: var(--ink-soft); font-size: 14.5px; text-decoration: none }
+.fx-acts2 b { font-weight: 600; font-size: 15px; padding: 11px 20px; border-radius: 11px; background: #0E0E0C; color: #fff }
+@media (max-width: 700px) { .fx-small { top: auto; bottom: 0; left: 0; transform: none; width: 100%; border-radius: 20px 20px 0 0 } .fx-form .fx-row2 { grid-template-columns: 1fr } }
+/* phone: Settings rises as a sheet */
+.fx-sheet { position: fixed; z-index: 81; left: 0; right: 0; bottom: 0; top: 52px; background: #fff; border-radius: 20px 20px 0 0; padding: 10px 16px 24px; overflow: auto;
+  box-shadow: 0 -20px 50px -30px rgba(0,0,0,.5) }
+.fx-grab { width: 38px; height: 5px; border-radius: 9px; background: #D9D7D1; margin: 0 auto 12px }
+.fx-sheet h2 { margin: 6px 0 14px; font-family: 'FU Display', Georgia, serif; font-weight: 400; font-size: 32px; color: var(--ink) }
+.fx-list2 { border-radius: 14px; background: var(--fx-soft); overflow: hidden; margin-bottom: 16px }
+.fx-list2 a { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; font-size: 16px; color: var(--ink); text-decoration: none; border-top: 1px solid rgba(14,14,12,.06) }
+.fx-list2 a:first-child { border-top: 0 } .fx-list2 a span { color: var(--ink-faint); font-size: 14.5px; margin-left: auto }
+.fx-list2 a::after { content: "›"; color: var(--ink-faint); margin-left: 10px; font-size: 20px; line-height: 1 }
+.fx-done-btn { position: absolute; right: 16px; top: 18px; font-weight: 600; font-size: 15.5px; color: var(--ink) }
+/* round 6: everything planned, organised */
+.fx-win nav { overflow: auto }
+.fx-soon { margin-left: 6px; font: 500 10.5px/1 ui-monospace, "IBM Plex Mono", monospace; letter-spacing: .06em; text-transform: uppercase; color: #8a857e; padding: 2px 6px; border-radius: 99px; box-shadow: inset 0 0 0 1px rgba(14,14,12,.12); vertical-align: 1px }
+.fx-rows { border-radius: 14px; background: var(--fx-soft); overflow: hidden }
+.fx-rows > div { display: flex; align-items: center; gap: 14px; padding: 13px 16px; border-top: 1px solid rgba(14,14,12,.06); font-size: 15px; color: var(--ink) }
+.fx-rows > div:first-child { border-top: 0 }
+.fx-rows > div span.l { flex: 1; min-width: 0 } .fx-rows > div small { display: block; font-size: 13px; color: var(--ink-faint) }
+.fx-sw.on { background: #2A5A47 } .fx-sw.on::after { left: 19px }
+.fx-addq { display: inline-block; margin-top: 14px; font-size: 14px; font-weight: 500; padding: 8px 14px; border-radius: 99px; box-shadow: inset 0 0 0 1px rgba(14,14,12,.14) }
+/* the customer page: one column of blocks on the right, each the same shape */
+.fx-blocks { display: grid; gap: 12px; align-content: start }
+.fx-blk { border-radius: 14px; background: var(--fx-soft); padding: 14px 16px; font-size: 14px }
+.fx-blk h4 { margin: 0 0 8px; font-size: 13px; font-weight: 600; color: var(--ink); display: flex; justify-content: space-between; align-items: center }
+.fx-blk p { margin: 0; color: var(--ink-soft); line-height: 1.5 } .fx-blk p + p { margin-top: 4px }
+.fx-blk q { quotes: "“" "”"; color: var(--ink) }
+.fx-blk .fx-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px }
+.fx-blk .fx-chips span { font-size: 12.5px; padding: 3px 9px; border-radius: 99px; background: #fff; box-shadow: inset 0 0 0 1px rgba(14,14,12,.1); color: var(--ink-soft) }
+.fx-blk .fx-chips span.ok { color: #1F6B45; box-shadow: inset 0 0 0 1px rgba(31,107,69,.3) }
+.fx-blk a { font-weight: 500; text-decoration: underline; text-underline-offset: 3px; color: var(--ink) }
+.fx-acts3 { display: flex; flex-wrap: wrap; gap: 8px }
+.fx-acts3 span { font-size: 13.5px; font-weight: 500; padding: 7px 13px; border-radius: 99px; background: #fff; box-shadow: inset 0 0 0 1px rgba(14,14,12,.14) }
 `;
 
 async function shell(p, desk, path) {
@@ -282,29 +341,106 @@ async function settingsSections(p) {
   });
 }
 
+async function harvest(p) {
+  return p.evaluate(() => [...document.querySelectorAll("main section.grid")].map(x => { const h = x.querySelector("h2"); const box = [...x.children].find(c => c !== h && !c.contains(h)) || x.lastElementChild;
+    return { t: h ? h.textContent.trim() : "", html: box ? box.outerHTML : "" }; }).filter(x => x.t));
+}
+const WHY = { "Where customers write": "The places FollowUp reads and answers for you.", "How it writes": "How replies are written, and when they go.",
+  "Your follow-up plan": "What FollowUp does, and when.", "Your business": "What FollowUp knows about you.", "Account": "How you sign in, and your data." };
+const XSVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>';
+async function settingsWindow(p, secs, on) {
+  await p.evaluate(({ secs, on, WHY, XSVG }) => {
+    document.querySelector(".fx-dim")?.remove(); document.querySelector(".fx-win")?.remove();
+    const name = t => t === "Your follow-up plan" ? "Follow-up plan" : t === "Account" ? "Account and data" : t;
+    const main = secs.filter(x => x.t !== "Account"), cur = secs.find(x => x.t === on) || secs[1];
+    const dim = document.createElement("div"); dim.className = "fx-dim";
+    const w = document.createElement("div"); w.className = "fx-win"; w.setAttribute("role", "dialog"); w.setAttribute("aria-label", "Settings");
+    w.innerHTML = `<nav><p>Settings</p>${main.map(x => `<a href="#" class="${x.t === cur.t ? "on" : ""}">${name(x.t)}</a>`).join("")}
+      <p>Account</p><a href="#" class="${cur.t === "Account" ? "on" : ""}">Account and data</a>
+      <span class="fx-foot">Something broke? Tell us</span></nav>
+      <div class="fx-pane"><h2>${name(cur.t)}</h2><p class="fx-why">${WHY[cur.t] || ""}</p><div class="fx-boxwrap">${cur.html}</div></div>
+      <span class="fx-x" aria-label="Close">${XSVG}</span>`;
+    document.body.appendChild(dim); document.body.appendChild(w);
+    for (const btn of w.querySelectorAll("button")) if (/Pause all sending/.test(btn.textContent)) { const off = [...btn.querySelectorAll("span")].find(s => s.textContent.trim() === "Off");
+      if (off) { off.textContent = ""; off.className = "fx-sw"; off.style.marginLeft = "auto"; } const ch = btn.querySelector("svg:last-of-type"); if (ch) ch.style.display = "none"; }
+    for (const a of document.querySelectorAll("aside a")) a.classList.toggle("fx-on", /Settings/.test(a.textContent) && !a.classList.contains("fx-help"));
+  }, { secs, on, WHY, XSVG });
+}
+async function addWindow(p) {
+  await p.evaluate((XSVG) => {
+    const dim = document.createElement("div"); dim.className = "fx-dim";
+    const w = document.createElement("div"); w.className = "fx-win fx-small"; w.setAttribute("role", "dialog"); w.setAttribute("aria-label", "Add a customer");
+    w.innerHTML = `<div class="fx-pane"><h2>Add a customer</h2><p class="fx-why">Someone who called or walked in. FollowUp takes it from here.</p>
+      <div class="fx-form"><label>Name<input placeholder="Their name"></label>
+      <div class="fx-row2"><label>Email<input placeholder="name@example.com"></label><label>Phone<input placeholder="Their number"></label></div>
+      <label>Notes<textarea rows="3" placeholder="What they asked about"></textarea></label>
+      <span class="fx-more">More details: company, deal value, where they came from <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></span>
+      <div class="fx-acts2"><a href="#">Cancel</a><b>Add customer</b></div></div></div>
+      <span class="fx-x" aria-label="Close">${XSVG}</span>`;
+    document.body.appendChild(dim); document.body.appendChild(w);
+  }, XSVG);
+}
+async function settingsSheet(p, secs) {
+  await p.evaluate((secs) => {
+    const name = t => t === "Your follow-up plan" ? "Follow-up plan" : t;
+    const dim = document.createElement("div"); dim.className = "fx-dim";
+    const sh = document.createElement("div"); sh.className = "fx-sheet"; sh.setAttribute("role", "dialog"); sh.setAttribute("aria-label", "Settings");
+    sh.innerHTML = `<div class="fx-grab"></div><span class="fx-done-btn">Done</span><h2>Settings</h2>
+      <div class="fx-setup" style="margin:0 0 16px"><div class="fx-setup-h"><b>Finish setting up</b><span>1 of 3</span></div><i class="fx-prog"><em style="width:34%"></em></i><ul><li class="ok">Email</li><li>Instagram, Facebook, WhatsApp</li><li>Your website form</li></ul></div>
+      <div class="fx-list2">${secs.filter(x => x.t !== "Account").map(x => `<a href="#">${name(x.t)}</a>`).join("")}</div>
+      <div class="fx-list2"><a href="#">Account and data</a><a href="#">Something broke? Tell us</a></div>
+      <div class="fx-list2"><a href="#" style="color:#b32a44">Sign out</a></div>`;
+    document.body.appendChild(dim); document.body.appendChild(sh);
+  }, secs);
+}
+async function settingsFull(p) {
+  await p.evaluate((XSVG) => {
+    document.querySelector(".fx-dim")?.remove(); document.querySelector(".fx-win")?.remove();
+    const S = (t) => `<span class="fx-soon">Soon</span>`;
+    const G = [
+      ["How it works", [["Follow-up plan"], ["How it writes"], ["What you ask", 0, 1], ["Booking and calendar", 1]]],
+      ["Where customers write", [["Email and website form"], ["Instagram, Facebook, WhatsApp"], ["Phone and calls", 1]]],
+      ["Your business", [["What FollowUp knows"], ["Team"], ["Alerts"]]],
+      ["Account", [["Plan and billing"], ["Sign-ins and security"], ["Your data"], ["Advanced"]]]];
+    const nav = G.map(([g, items]) => `<p>${g}</p>` + items.map(([n, soon, on]) => `<a href="#" class="${on ? "on" : ""}">${n}${soon ? S() : ""}</a>`).join("")).join("");
+    const Q = [["What they want", "The home, the area, the size: from their message, or FollowUp asks", 1], ["When", "When they want to move or see it", 1], ["Budget", "Asked gently, never as the first question", 1],
+               ["Viewing", "The goal: a time on your calendar", 1], ["Pre-approved for a mortgage", "", 0, 1], ["Working with another agent", "If yes, FollowUp steps back", 0, 1]];
+    const dim = document.createElement("div"); dim.className = "fx-dim";
+    const w = document.createElement("div"); w.className = "fx-win"; w.setAttribute("role", "dialog"); w.setAttribute("aria-label", "Settings");
+    w.innerHTML = `<nav>${nav}<span class="fx-foot">Something broke? Tell us</span></nav>
+      <div class="fx-pane"><h2>What you ask</h2><p class="fx-why">The questions FollowUp asks, one at a time, before it hands a customer to you. The realtor card asks the first four today; changing them here is new.</p>
+      <div class="fx-rows">${Q.map(([l, s, on, soon]) => `<div><span class="l">${l}${soon ? '<span class="fx-soon">Soon</span>' : ""}${s ? `<small>${s}</small>` : ""}</span><i class="fx-sw ${on ? "on" : ""}" aria-hidden="true"></i></div>`).join("")}</div>
+      <span class="fx-addq">Add a question</span></div>
+      <span class="fx-x" aria-label="Close">${XSVG}</span>`;
+    document.body.appendChild(dim); document.body.appendChild(w);
+    for (const a of document.querySelectorAll("aside a")) a.classList.toggle("fx-on", /Settings/.test(a.textContent) && !a.classList.contains("fx-help"));
+  }, XSVG);
+}
+async function customerBlocks(p) {
+  await p.evaluate(() => {
+    const aside = document.querySelector("main aside"); if (!aside) return;
+    const h = document.querySelector("main h1, main .min-w-0 h1"); 
+    aside.className = "fx-blocks"; aside.style.marginTop = "0";
+    aside.innerHTML = `
+      <div class="fx-blk"><h4>About Ivy</h4><p>Your website form · x11@example.com</p><p>First wrote Monday, Sep 21 · waiting 18 days</p></div>
+      <div class="fx-blk"><h4>Qualification</h4><p>Wants: <q>the 2-bed on King St</q></p>
+        <div class="fx-chips"><span class="ok">What they want ✓</span><span>When</span><span>Budget</span><span>Viewing</span></div>
+        <p style="margin-top:8px">FollowUp asks the rest one at a time, in her words.</p></div>
+      <div class="fx-blk"><h4>Booking</h4><p>Not booked yet.</p></div>
+      <div class="fx-blk"><h4>What FollowUp did</h4><p>Held a reply on Sep 21: it needs your answer on parking.</p><p>Follow-up plan: none yet.</p></div>
+      <div class="fx-acts3"><span>Already spoke</span><span>Copy booking link</span><span>Mark won</span><span>Details</span></div>`;
+  });
+}
 (async () => {
   const b = await chromium.launch({ args: ["--no-sandbox"] }); const log = [];
-  for (const [w, hgt, tag] of [[1280, 860, "d"], [390, 844, "m"]]) {
-    const desk = w >= 1024;
-    const ctx = await b.newContext({ viewport: { width: w, height: hgt }, deviceScaleFactor: 2, isMobile: !desk, hasTouch: !desk });
-    await ctx.addCookies([{ name: "next-auth.session-token", value: fs.readFileSync(`${S}/session.cookie`, "utf8").trim(), domain: "localhost", path: "/", httpOnly: true, sameSite: "Lax" }]);
-    const p = await ctx.newPage(); p.on("pageerror", e => log.push(tag + " " + e.message));
-    const go = async (path) => { await p.goto(BASE + path, { waitUntil: "networkidle" }); await p.waitForTimeout(600); };
-    const shot = (name) => p.screenshot({ path: `${OUT}/${tag}-${name}.png` });
-    // Today: one customer at a time (A-209), our look (A-208), the calm shell (A-211)
-    await go("/dashboard"); await shot("today-before");
-    await H.theme(p); await H.common(p); await H.today(p); await H.todayOne(p, desk); await shell(p, desk, "/dashboard"); if (desk) { await tidySidebar(p, false); await todaySide(p); } await p.waitForTimeout(300); await shot("today");
-    if (desk) { await tidySidebar(p, true); await p.waitForTimeout(200); await shot("menu"); }
-    // Customers
-    await go("/leads"); await shot("customers-before");
-    await H.theme(p); await H.common(p); await H.customers(p); await H.simpler(p, "customers"); await customersPage(p, desk); await shell(p, desk, "/leads"); if (desk) { await tidySidebar(p, false); await customersTwoLine(p); } await p.waitForTimeout(300); await shot("customers");
-    // Results
-    await go("/analytics"); await shot("results-before");
-    await H.theme(p); await H.common(p); RES = await resultsPage(p, desk, desk ? null : RES); await shell(p, desk, "/analytics"); if (desk) await tidySidebar(p, false); await p.waitForTimeout(500); await shot("results");
-    // Settings
-    await go("/settings"); await shot("settings-before");
-    await H.theme(p); await H.common(p); await settingsPage(p, desk); await shell(p, desk, "/settings"); if (desk) { await tidySidebar(p, false); await settingsSections(p); } await p.waitForTimeout(300); await shot("settings");
-    await ctx.close();
-  }
-  console.log(log.length ? log.join("\n") : "drawn, no page errors"); await b.close();
+  const ctx = await b.newContext({ viewport: { width: 1280, height: 860 }, deviceScaleFactor: 2 });
+  await ctx.addCookies([{ name: "next-auth.session-token", value: fs.readFileSync(`${S}/session.cookie`, "utf8").trim(), domain: "localhost", path: "/", httpOnly: true, sameSite: "Lax" }]);
+  const p = await ctx.newPage(); p.on("pageerror", e => log.push(e.message));
+  const go = async (path) => { await p.goto(BASE + path, { waitUntil: "networkidle" }); await p.waitForTimeout(600); };
+  const shot = (name) => p.screenshot({ path: `${OUT}/d-${name}.png` });
+  await go("/dashboard"); await H.theme(p); await H.common(p); await H.today(p); await H.todayOne(p, true); await shell(p, true, "/dashboard"); await tidySidebar(p, false); await todaySide(p);
+  await settingsFull(p); await p.waitForTimeout(300); await shot("win-full");
+  await go("/leads/lead_x11"); await H.theme(p); await H.common(p); await H.customerPage(p); await H.simpler(p, "customer"); await shell(p, true, "/leads"); await tidySidebar(p, false); await customerBlocks(p);
+  await p.waitForTimeout(300); await shot("customer");
+  await ctx.close(); console.log(log.length ? log.join("\n") : "drawn, no page errors"); await b.close();
 })();

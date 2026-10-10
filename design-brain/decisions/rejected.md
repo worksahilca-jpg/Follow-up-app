@@ -141,7 +141,7 @@ a rejection made in review, and they apply system-wide, permanently.
 | S-13 | AI gimmicks — sparkles, typing dots, bot avatars, "✨AI-powered" | AI is invisible capability, never personality | ^S-13
 | S-14 | Fake complexity | Complexity that signals sophistication rather than serving a need | ^S-14
 | S-15 | "Startup template" aesthetics | The default look of an unconsidered product | ^S-15
-| S-16 | Copying another company's interface | References are principles; the design must be original | ^S-16
+| S-16 | Copying another company's interface | References are principles; the design must be original. Exception (2026-10-10): the app's layout may follow Wispr's app closely; never its logo, words or assets ([[approved#^A-214\|A-214]]) | ^S-16
 
 **[[rejected#^S-13|S-13]] and [[rejected#^S-16|S-16]] are the two most likely to be violated by accident** — the first because
 AI-product visual conventions are pervasive in training data, the second because

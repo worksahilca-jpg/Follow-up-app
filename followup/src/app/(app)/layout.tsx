@@ -5,7 +5,7 @@ import Sidebar from "@/components/Sidebar";
 import SeenPing from "@/components/SeenPing";
 import { getPendingApprovals, onTodayNow } from "@/lib/pendingApprovals";
 
-export default async function AppLayout({ children }: { children: React.ReactNode }) {
+export default async function AppLayout({ children, modal }: { children: React.ReactNode; modal: React.ReactNode }) {
   const ctx = await getSessionContext();
   if (!ctx) redirect("/signin");
 
@@ -28,18 +28,25 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     // theme-auto: dark when the phone or computer is set to dark (research round 2, #8), app screens only.
-    <div className="theme-auto flex min-h-screen bg-paper text-ink">
+    // On the desk the sidebar sits on a quiet frame and the page is one
+    // white sheet beside it, running off the right and bottom edges (A-211;
+    // founder 2026-10-10: "simplify, copy Wispr if you want").
+    <div className="theme-auto flex min-h-screen bg-paper text-ink lg:bg-sidebar">
       {/* One "opened today" record per person per day (src/lib/appOpens.ts). */}
       <SeenPing />
       <Sidebar businessName={business.name ?? ""} counts={{ today, customers }} />
-      <main className="flex-1 min-w-0">
-        {/* Below lg: pt-20 clears the fixed top bar and pb-28 the three
-            bottom tabs (see Sidebar). The canvas pages sit at 36px/56px.
-            A page that is a working surface (an open customer) marks
-            its root .app-bleed and gets the whole width instead; see
-            globals.css. */}
-        <div className="app-frame max-w-[1152px] mx-auto px-5 sm:px-8 lg:px-14 pt-20 lg:pt-9 pb-28 lg:pb-12">{children}</div>
+      <main className="flex-1 min-w-0 lg:pt-2">
+        <div className="app-sheet">
+          {/* Below lg: pt-20 clears the fixed top bar and pb-28 the
+              bottom tabs (see Sidebar). The canvas pages sit at 36px/56px.
+              A page that is a working surface (an open customer) marks
+              its root .app-bleed and gets the whole width instead; see
+              globals.css. */}
+          <div className="app-frame max-w-[1152px] mx-auto px-5 sm:px-8 lg:px-14 pt-20 lg:pt-9 pb-28 lg:pb-12">{children}</div>
+        </div>
       </main>
+      {/* Settings (and later other windows) open here, over the page (A-213). */}
+      {modal}
     </div>
   );
 }

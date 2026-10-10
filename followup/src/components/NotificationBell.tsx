@@ -35,7 +35,7 @@ function timeAgo(iso: string): string {
   return `${Math.round(hours / 24)}d ago`;
 }
 
-export default function NotificationBell({ align = "left" }: { align?: "left" | "right" }) {
+export default function NotificationBell({ align = "left", label }: { align?: "left" | "right"; label?: string }) {
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -93,10 +93,15 @@ export default function NotificationBell({ align = "left" }: { align?: "left" | 
     <div className="relative" ref={containerRef}>
       <button
         onClick={() => setOpen((v) => !v)}
-        aria-label="Notifications"
-        className="relative h-8 w-8 rounded-[10px] flex items-center justify-center text-ink-soft hover:bg-paper transition-colors"
+        aria-label={label ? undefined : "Notifications"}
+        className={
+          "relative h-8 rounded-[10px] flex items-center justify-center text-ink-soft hover:bg-paper transition-colors " +
+          (label ? "gap-1.5 px-2 text-[14px]" : "w-8")
+        }
       >
         <Bell className="h-4 w-4" />
+        {/* The phone writes the word beside the bell (A-209: every icon has a word; the desk keeps the name readable). */}
+        {label && <span>{label}</span>}
         {unreadCount > 0 && (
           <span
             className="absolute top-0.5 right-0.5 h-4 min-w-4 px-1 rounded-full text-[10px] font-semibold flex items-center justify-center text-on-accent"

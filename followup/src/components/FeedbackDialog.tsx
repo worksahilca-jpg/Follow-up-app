@@ -10,7 +10,15 @@ import { MessageSquare, X } from "lucide-react";
  * without hunting for it (founder, 2026-09-19: "users can test and we
  * will improve accordingly").
  */
-export default function FeedbackDialog() {
+export default function FeedbackDialog({
+  label = "Something broke?",
+  icon: Icon = MessageSquare,
+  className = "flex items-center gap-2.5 rounded-[12px] px-3 py-2 mx-3 text-sm text-ink-soft hover:bg-paper transition-colors",
+}: {
+  label?: string;
+  icon?: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+  className?: string;
+} = {}) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
@@ -45,10 +53,10 @@ export default function FeedbackDialog() {
           setOpen(true);
           setSent(false);
         }}
-        className="flex items-center gap-2.5 rounded-[12px] px-3 py-2 mx-3 text-sm text-ink-soft hover:bg-paper transition-colors"
+        className={className}
       >
-        <MessageSquare className="h-4 w-4" />
-        Something broke?
+        <Icon className="h-4 w-4" strokeWidth={1.8} />
+        {label}
       </button>
 
       {open && (

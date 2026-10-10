@@ -76,10 +76,8 @@ export default async function NumbersPage() {
 
   return (
     <div>
-      <Link href="/settings" className="text-[13px] text-ink-faint hover:text-ink">
-        ← Settings
-      </Link>
-      <div className="mt-3.5">
+      {/* Results is a place in the menu now (A-209), not a page under Settings: no way "back" to show. */}
+      <div>
         <Eyebrow>
           This week · {fmtDay(weekStart)} to {fmtDay(now)}
         </Eyebrow>

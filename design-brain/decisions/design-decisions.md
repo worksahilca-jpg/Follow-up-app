@@ -11109,3 +11109,119 @@ everyone under "Earlier". Grouping by state keeps the approved order.
 **Founder (2026-10-09):** *"looks good, but this needs a lot more changes too."* Direction holds; specifics asked.
 **Status:** not approved to build yet; round 4 follows his list.
 
+## 2026-10-10 — The app, version 4 drawn: the four changes (A-212)
+
+Drawn on the real local app, desk 1280. Board version 4: https://claude.ai/artifact/F12ZLs1H4UBdCWRtumdRvg
+(`prototypes/2026-10-09-app-inside/`, script `draw-wispr-leaning.cjs`).
+- Today side panel, Customers two-line rows, sidebar menu under the business name, Settings side list.
+- A drawing bug found and fixed: the first Settings attempt hid every row. The groups are `section` elements, so the
+  side list now reads the page's own sections.
+- **Weak:**
+  - the business name still truncates beside the bell;
+  - the side panel adds about 40 words to Today;
+  - the "qualified" count and longest-wait order are build steps.
+- **Status:** waiting for his yes to build.
+
+## 2026-10-10 — The app map, and version 5: windows (A-213)
+
+- **The map** (`components/app-map.md`):
+  - a fixed skeleton: three places, Settings as a window, small windows, a customer page with a side panel, and
+    alerts;
+  - seven slots where any new feature goes;
+  - each of today's 15 screens mapped (Inbox, Waiting, Coming up and Pipeline fold into Customers views; Activity
+    into the side panel and Results; Workflows and Teach into the Settings window);
+  - every feature in PRODUCT_DIRECTION placed. None needs a new place.
+- **Version 5 drawn on the real app:** the Settings window over Today (three sections shown), Add a customer as a
+  small window, and the phone sheets. Board version 5: https://claude.ai/artifact/F12ZLs1H4UBdCWRtumdRvg.
+- **Open for the founder:** Pipeline as a Customers view, or dropped? Where does the team view live?
+- **Weak:** the section "Account" holds sign-ins, data and Advanced, while plan and team live under "Your business" (the
+  app's current grouping). The map suggests moving plan and team to Account when we build.
+
+## 2026-10-10 — Version 6: "can we add other features here? keep it organised"
+
+**Founder:** *"do you think we can add other features here as well? keep it organised please; looks good but needs a
+lot of work."*
+
+**Answer, drawn** (board version 6):
+- the **Settings window holding every planned setting** under four headings (13 sections), with "What you ask" open;
+- a **customer's page** with the side panel as one column of same-shaped blocks.
+
+**Corrected while drawing:** the realtor qualification card is already built (`src/components/app/ReadyCard.tsx`,
+`src/lib/qualification.ts`). It asks what they want, when, budget and viewing. So it is not "Soon", and only editing
+the questions (plus pre-approval and other agent) is marked Soon.
+
+**The plan, in order** (on the board), one PR each, merged on his word:
+- 1: the base (menu, sheet, Settings window, Add customer window);
+- 2: Today;
+- 3: Customers and a customer's page;
+- 4: Results;
+- 5: fold the old screens in;
+- 6: new features into their slots.
+
+**Still to draw before its step:** the Alerts list, the empty and All done moments, setup ending on a real customer,
+and the customer page on the phone.
+
+
+## 2026-10-10 — Step 1 built: the frame, the menu, the Settings window, Add a customer
+
+**Founder:** *"build step 1"* (the first step of the version 6 plan).
+
+**Built** (follows A-209, A-211, A-212, A-213 and `components/app-map.md`):
+- **The frame.** On the desk the sidebar sits on a quiet frame and the page is one white sheet beside it.
+- **The menu.** Three places with a word each (Today, Customers, Results); only Today keeps a count. Settings and Help sit
+  at the foot. The business name opens a small menu: your email, Your plan, Team, Sign out. Phone: four tabs (Today,
+  Customers, Results, Settings) and "Alerts" written beside the bell.
+- **Settings as a window** over the page (Next.js parallel and intercepting routes, `src/app/(app)/@modal`). Desk: a
+  centred window with a side list of five groups. Phone: a sheet that rises from the bottom. Esc, ×, Back or a click on
+  the dimmed page closes it in one step: pages inside the window replace history instead of adding to it. A direct link or
+  refresh of `/settings` still shows the full page, so old links and bookmarks keep working.
+- **Add a customer as a small window.** Name first, then email and phone, then notes. Company, deal value and where they
+  came from wait behind "More details". One black button ("Add customer").
+- **Results** loses its "← Settings" link: it is a place in the menu now.
+- The groups live in one file (`src/lib/settingsGroups.ts`) with a test that fails if a new Settings page has no group,
+  so a new section can't be added without a home (app-map rule 1).
+
+**Checked in a real browser** (desk 1440, phone 390, 768, dark): every menu item, the window over Today, sub-pages, Esc and
+Back, "Your plan" landing on billing, Help, a direct `/settings#billing` load, Add a customer, no sideways scroll.
+
+**Weak, said honestly:**
+- On the phone the Settings tab shows as "active" while its sheet is up, though the page underneath is still Today or
+  Customers. Fine for now; revisit with the phone customer page.
+- "Your business" still holds plan and team (the app's current grouping); the map suggests moving them to Account.
+  Left as is so step 1 changes no Settings page.
+- The setup card in the sidebar is drawn but not built yet (it belongs with step 5, when onboarding ends on a customer).
+
+## 2026-10-10 — Step 1 simplified, closer to Wispr
+
+**Founder** (on the step 1 screenshots): *"simplify. Bro, copy Wispr if you want, or use other references too."*
+Recorded as A-214; A-211's "never their layout" is marked partly superseded.
+
+**Read first:** his Wispr app recording again (private; principles only). What made it feel simpler than our step 1:
+- the brand at the top of the sidebar, not a business switcher;
+- no search box in the sidebar;
+- the sheet bleeds off the edges;
+- the Settings window is smaller;
+- rows sit on soft grey with a "Change" button, not inside bordered boxes;
+- small windows use a plain title.
+
+**Changed** (all in PR #470, nothing merged yet): the sidebar, sheet, Settings window, Add a customer and Search changes
+listed under A-214.
+
+**Fixed on the way:** a global hover rule (`[tabindex]:hover { filter: brightness(.96) }`) dimmed the whole Settings
+window under the pointer, because the window takes focus with `tabindex="-1"`. Windows also render into `<body>` now:
+the Search window opened from the sticky sidebar was painted under the page.
+
+**Checked in a real browser** (desk 1280, 1024; phone 390; dark):
+- Search finds Ivy, and Enter opens her;
+- Ctrl+K opens Search;
+- the Settings window opens and closes with Esc and Back, and "Your plan" lands on billing;
+- a direct `/settings#billing` load shows the page;
+- Add a customer focuses Name and closes on Esc;
+- no sideways scroll.
+
+**Weak, said honestly:**
+- Today and Customers are still the busy screens behind every window. They are steps 2 and 3, and they get the same
+  Wispr treatment: Today one customer at a time, Customers as plain two-line rows.
+- The side list's icons are generic (lucide), like everyone's.
+- "Search" is one more row than Wispr has.
+

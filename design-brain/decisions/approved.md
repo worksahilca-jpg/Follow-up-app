@@ -3756,3 +3756,20 @@ me"*.
 - It runs after the tester's "Sent", so it can never make their message fail.
 - The Help window now says: *"Sent. We'll reply to you by email, usually the same day."* That is a promise the
   founder keeps by hand.
+
+## A-226 — Results looks like "Your week" ^A-226
+
+**Approved:** 2026-10-10, founder. He was shown three looks for Results on phone and computer (A · Your week, B ·
+Then and now, C · The week in words) and chose *"A · Your week"*.
+
+**What specifically:**
+- The week's number sits on the green wash (A-221) with its date line and "N more than last week".
+- Under it is one dot for each customer answered, on the day they first got an answer, across the last seven days
+  (each column marked with its weekday letter). The dots always add up to the big number.
+- Built (same day): "the last seven days" are the owner's calendar days, today included (midnight to midnight where
+  the business is), so a customer answered Tuesday evening sits under Tuesday. The date line names those days. "N more
+  than last week" compares with last week up to the same moment, so a Monday morning isn't measured against a whole
+  week. Up to six dots a day; a busier day shows its number above them. No dots row when nobody was answered.
+- Then Booked, First reply and Won: rows on the phone, three columns on the computer. Then "See everything FollowUp
+  did".
+- Below, unchanged from build 5: the eight-week bars on the computer, and "Everything else".

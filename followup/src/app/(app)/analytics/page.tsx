@@ -9,8 +9,9 @@ import { formatCurrency } from "@/lib/demo-data";
 import { formatSpan } from "@/lib/activation";
 import { medianReplyMs } from "@/lib/waitingOn";
 import { getRescueReport } from "@/lib/rescued";
-import { countCustomersAnswered } from "@/lib/weeklyDigest";
+import { countCustomersAnswered, customersAnsweredByDay } from "@/lib/weeklyDigest";
 import { sentAsWritten } from "@/lib/showTheWork";
+import { startOfLocalDay } from "@/lib/calmToday";
 
 export const dynamic = "force-dynamic";
 
@@ -28,12 +29,15 @@ export default async function NumbersPage() {
   const ctx = await getSessionContext();
   if (!ctx) return null;
   const now = new Date();
-  const weekStart = new Date(now.getTime() - 7 * DAY);
+  const business = await prisma.business.findUnique({ where: { id: ctx.businessId }, select: { timezone: true } });
+  const timeZone = business?.timezone ?? "America/New_York";
+  // This week is the last seven days on the owner's calendar, today included (A-226): each dot sits under the
+  // day it happened, and the date line names the days the number covers.
+  const weekStart = startOfLocalDay(new Date(now.getTime() - 6 * DAY), timeZone);
 
-  const [data, leads, business, report, written, booked, won] = await Promise.all([
+  const [data, leads, report, written, booked, won] = await Promise.all([
     getAnalytics(),
     getLeads(),
-    prisma.business.findUnique({ where: { id: ctx.businessId }, select: { timezone: true } }),
     getRescueReport(ctx.businessId, 7, now),
     sentAsWritten(ctx.businessId, weekStart),
     // Booked: every call or visit booked through FollowUp this week, not only the ones that came back.
@@ -42,18 +46,22 @@ export default async function NumbersPage() {
     prisma.deal.findMany({ where: { wonAt: { gte: weekStart, lt: now }, lead: { businessId: ctx.businessId } }, select: { leadId: true }, distinct: ["leadId"] }),
   ]);
   if (!data) return null;
-  const timeZone = business?.timezone ?? "America/New_York";
 
-  // Eight weeks of customers answered, oldest first; the last is this week.
+  // Eight weeks of customers answered, oldest first; the last is this week so far.
   const weeks = await Promise.all(
     Array.from({ length: WEEKS }, (_, i) => {
-      const end = new Date(now.getTime() - (WEEKS - 1 - i) * 7 * DAY);
-      const start = new Date(end.getTime() - 7 * DAY);
+      const start = new Date(weekStart.getTime() - (WEEKS - 1 - i) * 7 * DAY);
+      const end = i === WEEKS - 1 ? now : new Date(start.getTime() + 7 * DAY);
       return countCustomersAnswered(ctx.businessId, start, end).then((n) => ({ start, n }));
     })
   );
+  const [byDay, answeredLast] = await Promise.all([
+    // This week's customers, each on the day of their first answer (A-226): the dots under the number.
+    customersAnsweredByDay(ctx.businessId, weekStart, now, timeZone),
+    // Last week up to this same moment, so a Monday morning isn't measured against a whole week.
+    countCustomersAnswered(ctx.businessId, new Date(weekStart.getTime() - 7 * DAY), new Date(now.getTime() - 7 * DAY)),
+  ]);
   const answered = weeks[WEEKS - 1].n;
-  const answeredLast = weeks[WEEKS - 2].n;
 
   const heardBack = medianReplyMs(leads, weekStart, now);
   const diff = answered - answeredLast;
@@ -79,19 +87,23 @@ export default async function NumbersPage() {
   return (
     <div>
       {/* Results is a place in the menu now (A-209), not a page under Settings: no way "back" to show. */}
-      <div>
-        <Eyebrow>
+      {/* Your week (A-226): the one number on the green wash, beside last week, and a dot for each customer on the
+          day they first got an answer. */}
+      <section className="rounded-[22px] border border-[var(--wash-edge)] bg-[var(--wash)] px-[18px] py-5 lg:px-8 lg:py-7">
+        <Eyebrow green>
           This week · {fmtDay(weekStart)} to {fmtDay(now)}
         </Eyebrow>
-      </div>
-      {/* The one number (A-220): customers answered this week, beside last week. */}
-      <h1 className="title-serif mt-1.5 flex items-baseline gap-2.5">
-        <span className="text-[38px] leading-none tabular-nums sm:text-[44px]">{answered}</span>
-        <span className="text-[19px] leading-tight sm:text-[22px]">{answered === 1 ? "customer" : "customers"} answered</span>
-      </h1>
-      <p className={"mt-1.5 text-[14px] " + (diff > 0 ? "font-medium text-sage" : "text-ink-faint")}>
-        {diff > 0 ? `${diff} more than last week` : diff < 0 ? `${-diff} fewer than last week` : answered > 0 ? "The same as last week" : "Nobody to answer yet this week"}
-      </p>
+        <h1 className="title-serif mt-1.5 flex items-baseline gap-2.5">
+          <span className="text-[44px] leading-none tabular-nums lg:text-[56px]">{answered}</span>
+          <span className="text-[22px] leading-tight lg:text-[28px]">
+            {answered === 1 ? "customer" : "customers"} <em>answered</em>
+          </span>
+        </h1>
+        <p className={"mt-1.5 text-[14px] " + (diff > 0 ? "font-medium text-sage" : "text-ink-faint")}>
+          {diff > 0 ? `${diff} more than last week` : diff < 0 ? `${-diff} fewer than last week` : answered > 0 ? "The same as last week" : "Nobody to answer yet this week"}
+        </p>
+        {answered > 0 && <WeekDots days={byDay} />}
+      </section>
 
       {data.totalLeads === 0 && (
         <p className="mt-6 text-[15px] text-ink-soft">
@@ -181,6 +193,35 @@ export default async function NumbersPage() {
           </div>
         </section>
       )}
+    </div>
+  );
+}
+
+/** Up to this many dots in a day; a busier day shows its number above them. */
+const MAX_DOTS = 6;
+
+/** One dot per customer answered, on the day they first heard back (A-226). One column per day, today last. */
+function WeekDots({ days }: { days: { day: string; n: number }[] }) {
+  return (
+    <div
+      role="img"
+      aria-label={`Customers answered each day: ${days.map((d) => `${d.day} ${d.n}`).join(", ")}.`}
+      className="mt-4 grid max-w-[300px] grid-cols-7 items-end gap-x-1.5 gap-y-1.5 lg:mt-5 lg:max-w-[360px]"
+    >
+      {/* The dots stand on one line, as tall as the busiest day; the letters sit in a row under them. */}
+      {days.map((d, i) => (
+        <div key={i} className="flex flex-col-reverse items-center gap-0.5">
+          {Array.from({ length: Math.min(d.n, MAX_DOTS) }, (_, k) => (
+            <span key={k} className="h-[7px] w-[7px] rounded-full bg-[var(--green-ink)]" />
+          ))}
+          {d.n > MAX_DOTS && <span className="text-xs font-medium leading-none text-[var(--green-ink)] tabular-nums">{d.n}</span>}
+        </div>
+      ))}
+      {days.map((d, i) => (
+        <span key={`l${i}`} className="text-center text-xs text-ink-faint">
+          {d.day}
+        </span>
+      ))}
     </div>
   );
 }

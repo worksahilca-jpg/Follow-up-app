@@ -11915,3 +11915,40 @@ the Help window's thank-you line.
 locally only because this machine can't reach the email service). 4 new tests; all 3,557 tests pass.
 **Open, his call:** a daily "who's stuck" note (testers who signed up but never connected anything), and a buzz for
 each new sign-up.
+
+## 2026-10-10 — Results: three looks drawn (task: "lets design the results page now")
+
+The features stay as approved (A-220, build 5). These are drawn on the real /analytics page with the app's shell,
+using example numbers (14 answered, 9 last week, 3 booked, 4 min, 1 won):
+- **A · Your week:**
+  - the number on the green wash (A-221), with "5 more than last week";
+  - a dot for each customer answered, on the day they wrote (M–S), as the one small picture;
+  - then Booked, First reply and Won, as rows (phone) or three columns (computer).
+- **B · Then and now:** every number beside last week's. Phone: rows with "Last week: 1" and a green "+2". Computer:
+  a small table (This week, Last week, the change).
+- **C · The week in words:** four serif lines on the wash, each number in green italics ("14 customers got an
+  answer." … "1 you marked won.").
+**My pick:** A. It reads in one glance, and the dots show when customers write, a picture only this product can draw.
+It also feels designed rather than stripped down (R-001).
+**Weak spots:**
+- A's dots are a picture on the phone (brand principle 4 says cut pictures there). They're small, but it's a call.
+- B is the plainest and the closest to "just a table" (R-001 risk).
+- C wraps "4 min" onto its own line on a phone, and is the slowest to scan.
+**Answer:** *"A · Your week"* → A-226. Building it.
+
+**Built** (A-226), checked on the real app at 390×844 and 1440×900 with example replies in the local database only:
+- The week is the owner's last seven calendar days, today included. The old week was the last 7×24 hours, which
+  spans eight dates, so a dot could sit under the wrong day. The eight-week bars on the computer use the same days, so
+  the last bar always equals the big number.
+- "N more than last week" compares with last week up to this same moment (a whole week would make every morning look
+  worse than it is).
+- Dots: 7px, up to six a day, then the day's number above them (checked with a day of 8). Letters are 12px. The row
+  is as tall as the busiest day. It's hidden when nobody was answered.
+- Tests: 4 new (each customer once; a Tuesday evening in Toronto stays Tuesday; the night the clocks change;
+  rows out of order). All 3,561 pass.
+**Weak spots:**
+- The dots are a small picture on the phone (brand principle 4); they sit inside the green box, not as their own block.
+- On the computer the green box is wide and the dots use only its left third. Calm, but the right side is empty.
+- First reply, Booked and Won still use the same seven days, but "Came back after a follow-up this week" in
+  Everything else is still the last 7×24 hours (it comes from the weekly email's report). A small mismatch, left
+  for now.

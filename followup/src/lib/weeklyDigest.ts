@@ -1,5 +1,6 @@
 import { NOT_AN_ANSWER_TRIGGERS } from "@/lib/notAnAnswer";
 import { prisma } from "@/lib/db";
+import { startOfLocalDay } from "@/lib/calmToday";
 import { getPendingApprovals } from "@/lib/pendingApprovals";
 import { formatMoney, getRescueReport, type RescueReport, type RescuedLead } from "@/lib/rescued";
 import { renderWeeklyEmailHtml, type WeeklyEmailView } from "@/lib/weeklyDigestHtml";
@@ -157,6 +158,68 @@ export async function countCustomersAnswered(businessId: string, from: Date, to:
     distinct: ["conversationId"],
   });
   return new Set(rows.map((r) => r.conversation.leadId)).size;
+}
+
+/**
+ * The same customers as countCustomersAnswered, spread over the days for
+ * Results' dots (A-226): each customer once, on the day of their first
+ * answer in the window. So the dots always add up to the big number. Days
+ * are the business's own calendar days (midnight to midnight where it is),
+ * so a customer answered Tuesday evening sits under Tuesday.
+ */
+export async function customersAnsweredByDay(
+  businessId: string,
+  from: Date,
+  to: Date,
+  timeZone: string
+): Promise<{ day: string; n: number }[]> {
+  const rows = await prisma.message.findMany({
+    where: {
+      direction: "outbound",
+      sentAt: { gte: from, lt: to },
+      OR: [{ trigger: null }, { trigger: { notIn: [...NOT_AN_ANSWER_TRIGGERS] } }],
+      conversation: { lead: { businessId } },
+    },
+    select: { sentAt: true, conversation: { select: { leadId: true } } },
+    // No cap: the same rows countCustomersAnswered counts, so the dots and the number can't disagree.
+    orderBy: { sentAt: "asc" },
+  });
+  return bucketFirstAnswers(
+    rows.map((r) => ({ leadId: r.conversation.leadId, at: r.sentAt })),
+    from,
+    to,
+    timeZone
+  );
+}
+
+/**
+ * The pure half of customersAnsweredByDay: first answer per customer, into
+ * one column per calendar day from `from` (a local midnight) to `to`.
+ */
+export function bucketFirstAnswers(rows: { leadId: string; at: Date }[], from: Date, to: Date, timeZone: string): { day: string; n: number }[] {
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  // Each day's start: the local midnight of the day that is i days on. Noon is the anchor, so a 23- or
+  // 25-hour day (the clocks changing) still lands on the right date.
+  const starts: Date[] = [];
+  for (let i = 0; ; i++) {
+    const start = i === 0 ? from : startOfLocalDay(new Date(from.getTime() + i * DAY_MS + DAY_MS / 2), timeZone);
+    if (start.getTime() >= to.getTime()) break;
+    starts.push(start);
+  }
+  const days = starts.map((s) => ({
+    day: new Date(s.getTime() + DAY_MS / 2).toLocaleDateString("en-US", { weekday: "narrow", timeZone }),
+    n: 0,
+  }));
+  const seen = new Set<string>();
+  for (const r of [...rows].sort((a, b) => a.at.getTime() - b.at.getTime())) {
+    if (seen.has(r.leadId)) continue;
+    if (r.at.getTime() < from.getTime() || r.at.getTime() >= to.getTime()) continue;
+    seen.add(r.leadId);
+    let i = starts.length - 1;
+    while (i > 0 && r.at.getTime() < starts[i].getTime()) i--;
+    days[i].n += 1;
+  }
+  return days;
 }
 
 /**

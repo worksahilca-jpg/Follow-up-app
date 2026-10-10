@@ -11448,3 +11448,50 @@ The founder asked to settle the features first, then redesign the phone app once
    - Only the project's Analytics switch in Vercel is off. The founder turns it on himself, since it's a billing setting.
 
 **All feature questions are answered.** Next: the phone-app redesign, done once.
+
+## 2026-10-10 — Phone app redesign, drawing 1 (seven screens)
+
+**Asked:** *"we will be redesigning all these mobile UI/UX… making it simple"*, with Scotiabank's clarity and Claude's
+interface as references. After the features were settled, he said *"Do both"* (analytics and the redesign).
+
+**Drawn** with the app's own fonts and colour tokens, inside the running app (local). Page:
+https://claude.ai/artifact/MuhSgCMAi5KaEJSdBkvkzP. Source: `prototypes/2026-10-10-phone-redesign/`.
+
+1. **Today:** one big number ("3 customers need you"), then the one decision card.
+   - The card shows who they are and the channel, their words (the biggest text), and "Your reply, ready" on the warm
+     wash (A-043).
+   - Send is the only black button. Edit and Later sit under it, then a "Next" row.
+   - The sample reply works toward the booking (R-106).
+2. **All caught up:** "0 customers need you", a calm check, "Your phone buzzes when someone needs you", and "What
+   FollowUp did today" in three rows.
+3. **The one-time question** (A-218):
+   - "Let FollowUp reply for you?" and every reply works toward a booking. Prices, dates and anything unsure still wait.
+   - The owner's own proof line, then "Yes, reply for me" (outlined) and "Not now".
+4. **Customers:**
+   - search first;
+   - groups like a bank's accounts, each with a count: Needs you, **Ready to book** (hot leads, with a Call pill),
+     then Waiting on them, Booked and Everyone as rows;
+   - no State column, no Pipeline page (A-219).
+5. **One customer:**
+   - what they want (Wants, Budget, When) at the top;
+   - the chat as bubbles, with "Sent by FollowUp" under FollowUp's own;
+   - "What FollowUp did" in one line;
+   - a single reply box pinned at the bottom (the Claude idea).
+6. **Settings:** four rows (Where customers write, How replies go out, Alerts, Your business), then More (team, plan,
+   data, advanced), Help and Sign out.
+7. **Results:** one number for the week ("14 customers answered", against last week), then Booked, First reply and Won.
+
+**References:**
+- Scotiabank: one total first, things grouped, Help in the same place.
+- Claude: calm, space, one reply box.
+
+No logo, colour, words or screen of theirs.
+
+**Weak spots, said plainly:**
+- The numbers and names are examples. Results may only show real records.
+- "Ready to book" needs a rule. Realtors have one (#466, "is ready"); other trades don't yet.
+- The customer screen doesn't show a waiting reply. When one waits, the Today card sits above the chat.
+- No computer version drawn yet.
+- The Scotiabank screenshots haven't arrived. This drawing uses only public descriptions.
+
+**Status:** drawn, waiting for his yes.

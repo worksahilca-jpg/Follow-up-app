@@ -88,7 +88,7 @@ describe("the DM writer (founder's Instagram test, 2026-10-11)", () => {
   });
 
   it("answers every question they asked before asking its own, and never hands their words back as a verdict", async () => {
-    await draftDm("Priya Sharma", dmThread, []);
+    await draftDm("Priya Sharma", dmThread, [], undefined);
     const prompt = systemPrompt();
     expect(prompt).toMatch(/their questions come first/);
     expect(prompt).toMatch(/cover every one, briefly and in the order asked/);

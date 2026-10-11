@@ -428,6 +428,15 @@ describe("which new message the fresh pass answers", () => {
     expect(freshInboundToAnswer(leadWith([early], "instagram"), Date.now(), true)).toBeNull();
   });
 
+  // Founder, 2026-10-11: a Reel or sticker with no words is not a question.
+  it("never treats a Reel with no words as something to answer, but still answers the question before it", () => {
+    const answered = [row("inbound", 10 * M, "how much?"), row("outbound", 8 * M), row("inbound", 3 * M, "[Sent ig_reel with no message text]")];
+    expect(freshInboundToAnswer(leadWith(answered, "instagram", { suggestedDraftedFor: new Date() }), Date.now())).toBeNull();
+    const asked = row("inbound", 4 * M, "is this one still available?");
+    const reel = row("inbound", 3 * M, "[Sent ig_reel with no message text]");
+    expect(freshInboundToAnswer(leadWith([asked, reel], "instagram", { suggestedDraftedFor: new Date() }), Date.now())).toEqual(asked.sentAt);
+  });
+
   it("waits for scoring's draft, but not past two minutes", () => {
     const m = row("inbound", 90_000);
     expect(freshInboundToAnswer(leadWith([m]), Date.now())).toBeNull();

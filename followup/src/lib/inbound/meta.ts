@@ -11,6 +11,8 @@ import { captureDirectReply, createInboundMessageIfNew, findOrCreateLeadByInstag
 import { isOptInMessage, isOptOutMessage } from "@/lib/optOutKeywords";
 import { suppress, unsuppress, type DmSuppressionChannel } from "@/lib/suppression";
 import { decodeQuickReplyPayload, type QuickReplyAnswer } from "@/lib/quickReplies";
+import { isSharedContentType } from "@/lib/sharedContent";
+import { instagramLeadId, messengerLeadId } from "@/lib/instagramId";
 
 /**
  * What to record for one Meta message event, and what (if anything) the
@@ -41,7 +43,7 @@ import { decodeQuickReplyPayload, type QuickReplyAnswer } from "@/lib/quickRepli
  */
 export function messageContent(
   message: unknown
-): { body: string; ownWords: string; quickReplyPayload?: string } | null {
+): { body: string; ownWords: string; quickReplyPayload?: string; sharedOnly?: boolean } | null {
   const m = (message ?? {}) as { text?: unknown; attachments?: unknown; quick_reply?: unknown };
   const ownWords = typeof m.text === "string" ? m.text.trim() : "";
   // A tap on a reply button arrives as an ordinary `messages` event whose
@@ -66,7 +68,14 @@ export function messageContent(
   });
   const unique = [...new Set(kinds)];
   const label = attachments.length > 1 ? `${attachments.length} ${unique.join("/")} attachments` : unique[0];
-  return { body: `[Sent ${label} with no message text]`, ownWords: "" };
+  // A Reel, post, story mention or sticker with no words (src/lib/sharedContent.ts).
+  const sharedOnly = kinds.every(isSharedContentType);
+  return { body: `[Sent ${label} with no message text]`, ownWords: "", ...(sharedOnly ? { sharedOnly } : {}) };
+}
+
+/** Whether this DM sender is already one of the business's customers. */
+async function existingDmLead(businessId: string, phone: string): Promise<boolean> {
+  return !!(await prisma.lead.findFirst({ where: { businessId, phone }, select: { id: true } }));
 }
 
 /**
@@ -300,6 +309,10 @@ export async function processMetaEnvelope(payload: { object?: string; entry?: un
       // username — and it is what stops a lead being filed, listed and
       // greeted as "Instagram DM".
       const senderUsername = typeof event.sender?.username === "string" ? event.sender.username : undefined;
+      // A Reel, post, story mention or sticker with no words from someone
+      // who isn't a customer yet is not picked up at all (founder,
+      // 2026-10-11; src/lib/sharedContent.ts).
+      if (content.sharedOnly && !(await existingDmLead(business.id, instagramLeadId(senderId)))) continue;
       const lead = await findOrCreateLeadByInstagram(business.id, senderId, senderUsername);
       const sentAt = eventSentAt(event);
 
@@ -337,6 +350,9 @@ export async function processMetaEnvelope(payload: { object?: string; entry?: un
       // settled either way, so nothing below (acknowledge, score, engage)
       // should run a second time.
       if (!isNewMessage) continue;
+      // From an existing customer, shared content stays in the thread as
+      // context, and nothing below runs: there is nothing to answer.
+      if (content.sharedOnly) continue;
 
       if (!optedOut) {
         // Parks the acknowledgement for ~2 minutes rather than sending it
@@ -394,6 +410,8 @@ async function handlePageEvents(entries: any[]): Promise<void> {
         continue;
       }
 
+      // Shared content with no words from someone new: not picked up (see the Instagram path).
+      if (content.sharedOnly && !(await existingDmLead(business.id, messengerLeadId(senderId)))) continue;
       const lead = await findOrCreateLeadByMessenger(business.id, senderId);
       const sentAt = eventSentAt(event);
       const conversation = await findOrCreateConversation(lead.id, "messenger");
@@ -411,6 +429,7 @@ async function handlePageEvents(entries: any[]): Promise<void> {
       const optedOut = await applyDmConsentKeyword(business.id, lead.id, "messenger", senderId, content.ownWords);
 
       if (!isNewMessage) continue; // redelivered; consent settled, nothing else re-runs
+      if (content.sharedOnly) continue; // kept in the thread, nothing to answer
 
       if (!optedOut) {
         // Same two-minute grace period as Instagram, and `ownWords` not

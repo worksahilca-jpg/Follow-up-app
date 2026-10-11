@@ -321,3 +321,14 @@ showing or weekend showing?"*
 - **Don't jump ahead of the customer.** No showing before there's a home to show. Ask what they're looking for first.
 - **Sound like the owner on their phone**, warm and plain. Never hand their words back as a verdict ("Etobicoke works.",
   "Noted.").
+
+## FollowUp picks up customers, not every message (2026-10-11)
+
+**Founder,** after a Reel with no words landed on Today as "Instagram DM": *"if someone sends a reel, a post, or a sticker
+with no question, and neither does it say it's interesting nor does it sound like a lead, why should we pick it up?
+... We'll be picking up only those who are actually customers or leads, or who are planning to buy, or who have a query
+about the business."*
+- Every message FollowUp picks up costs the owner attention. One that isn't a customer is noise on Today and a buzz
+  for nothing.
+- When unsure whether a message is a customer, keep it. A photo or file someone sends can be the question itself.
+- Built so far: shared content with no words (A-233). Wider filtering of chit-chat with words is not built yet.

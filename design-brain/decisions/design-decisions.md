@@ -11974,3 +11974,26 @@ Build it?"* → *"Yes, build it"*.
 - A tester stuck 1–14 days is named every day until they move. That's deliberate (it's a to-do list), but it can feel
   repetitive.
 - **Open, his call:** a buzz for each new sign-up.
+
+## 2026-10-11 — Helping testers, part 3: the sign-up buzz (A-228)
+
+*"yes build the sign-up buzz too"*.
+
+**Built:**
+- In the sign-in callback, right after a new account is made, using the same phone-buzz sender the founder tested on
+  his phone (A-216 era, "Yes it buzzed").
+- Scheduled with `after()`, so it never delays the sign-in.
+- The push tag is a hash of the address, so the address isn't in the notification at all.
+- 10 new tests:
+  - what it says;
+  - who it reaches;
+  - never the founder about himself;
+  - never throws into a sign-in;
+  - new sign-up and team join buzz, a return or a refusal doesn't.
+- All 3,576 tests pass. Ran once against the local database (0 devices there, as expected).
+
+**Weak spot:** a buzz only reaches a phone where the founder turned alerts on in FollowUp. With none, nothing tells
+him; the next morning's stuck-testers email (A-227) still names anyone who hasn't moved.
+
+Also seen in the live numbers today: only 2 testers were added through /admin. Anyone let in through the older
+ALLOWED_EMAILS list isn't in the daily stuck email or the funnel on /admin. Told the founder: add testers on /admin.

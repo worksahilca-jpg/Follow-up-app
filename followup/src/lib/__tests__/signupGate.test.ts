@@ -72,6 +72,10 @@ vi.mock("next/headers", () => ({
   cookies: async () => ({ get: (name: string) => (cookieJar.has(name) ? { name, value: cookieJar.get(name)! } : undefined) }),
 }));
 vi.mock("@/lib/stripe", () => ({ appUrl: () => "https://followupbase.io" }));
+// The founder's sign-up buzz (src/lib/signupBuzz.ts, pinned in signupBuzz.test.ts):
+// here only who triggers it.
+const { tellFounderAboutSignup } = vi.hoisted(() => ({ tellFounderAboutSignup: vi.fn(async () => {}) }));
+vi.mock("@/lib/signupBuzz", () => ({ tellFounderAboutSignup }));
 
 import { prisma } from "@/lib/db";
 import { authOptions, inviteAloneIsEnough } from "@/lib/auth";
@@ -322,5 +326,34 @@ describe("an invite someone else created is not a trap", () => {
       expect.objectContaining({ where: expect.objectContaining({ id: "invite-B", email: "teammate@example.com" }) })
     );
     expect(txInviteDeleteMany).toHaveBeenCalledWith({ where: { id: "invite-B" } });
+  });
+});
+
+describe("the founder's sign-up buzz", () => {
+  it("buzzes for a new tester's own business", async () => {
+    p.accessRequest.findUnique.mockResolvedValue({ status: "approved" });
+    await expect(signIn({ user: stranger })).resolves.toBe(true);
+    expect(tellFounderAboutSignup).toHaveBeenCalledWith({
+      userEmail: stranger.email,
+      name: "Harsh Thakur",
+      businessId: "newBiz",
+      joinedTeam: false,
+    });
+  });
+
+  it("buzzes for someone joining a team through the invite link", async () => {
+    openedInviteLink("invite1", "teammate@example.com");
+    gateInviteFindFirst.mockResolvedValue({ id: "invite1" });
+    txInviteFindFirst.mockResolvedValue({ id: "invite1", businessId: "theirBiz", role: "SALES" });
+    await signIn({ user: { email: "teammate@example.com", name: "Teammate" } });
+    expect(tellFounderAboutSignup).toHaveBeenCalledWith(expect.objectContaining({ businessId: "theirBiz", joinedTeam: true }));
+  });
+
+  it("stays quiet for someone coming back, and for a refusal", async () => {
+    p.user.findUnique.mockResolvedValue({ id: "u1", email: "owner@acme.com", businessId: "biz1", name: "Owner" });
+    await signIn({ user: { email: "owner@acme.com", name: "Owner" } });
+    p.user.findUnique.mockResolvedValue(null);
+    await signIn({ user: stranger });
+    expect(tellFounderAboutSignup).not.toHaveBeenCalled();
   });
 });

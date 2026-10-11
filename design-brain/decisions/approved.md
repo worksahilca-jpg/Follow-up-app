@@ -3789,3 +3789,15 @@ anything, so you can reach out. Build it?"*, he chose *"Yes, build it"*.
 - Email only, to PLATFORM_ADMIN_EMAILS. Names and addresses stay out of Slack.
 - It covers every step short of a first sent reply (not signed in, nothing connected, no customers yet, a reply
   waiting for an OK), not only "never connected". Each line says which, so he can write the right note.
+
+## A-228 — The founder's phone buzzes when someone new signs up ^A-228
+
+**Approved:** 2026-10-11, founder: *"yes build the sign-up buzz too"*.
+
+**What specifically:**
+- When a new account is made (a tester's own business, or someone joining a team through an invite link), every
+  device the founders (PLATFORM_ADMIN_EMAILS) turned alerts on for buzzes: "New sign-up · Asha Patel just signed
+  up." / "… joined the team at Maple Realty." Tapping it opens /admin.
+- The name only, never the address: it shows on a locked screen.
+- People coming back never buzz, nor does a refused sign-up, nor the founder's own sign-up.
+- It runs after the sign-in has answered and can't slow or stop anyone signing in.

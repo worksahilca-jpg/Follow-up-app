@@ -728,3 +728,43 @@ So the qualification design must:
 
 Realtors ship first. The other templates follow once the realtor version is measured.
 
+
+## The plan from here: users before features (founder, 2026-10-11)
+
+> "I don't know which direction are we going in? Can you make the whole plan again? … I'm just working, working,
+> working, not following any strategic plan." Shown the plan below → *"Yes, follow this"*.
+
+**The goal is unchanged** (main goal above): no business loses a customer because nobody followed up. FollowUp answers,
+keeps the customer warm and gets them to a booked meeting; the owner closes.
+
+**The one number:** customers answered per week (the Results page's number, A-226), then bookings. On 2026-10-11 it was
+1 a week across every account (12 businesses, 11 people, 49 customers ever, 2 Gmail inboxes connected). In the 30 days
+before 2026-10-10, 306 replies waited for an OK and owners sent 13. The product works; nobody is using it daily.
+
+**Stage 1 — now to 2026-10-31: 5 real testers using it every day.**
+- Founder: invite 5 people he knows (the pitch: Gmail + Instagram + website form only), a 15-minute setup call with
+  each, a weekly check-in.
+- Claude: fix anything that blocks a tester within a day. The Help alert, sign-up buzz and stuck-testers email
+  (A-225, A-227, A-228) say who needs help.
+- Done when 5 testers have Gmail connected and 20+ customers a week are answered.
+- Stopped for now: landing page changes, new designs, new features, new channels.
+
+**Stage 2 — November: prove it gets bookings.**
+- YC application by 2026-11-02.
+- After 2026-10-18: Messenger and Lead Ads to Meta review (Claude writes the scripts, the founder records).
+- Offer sending by itself to testers who are ready (A-217, A-218).
+- 10–20 testers; real quotes for the website.
+- Done when testers get bookings through FollowUp and come back in week 2.
+
+**Stage 3 — December to 2027-01-04: ready to charge.**
+- Google verification and its security check (CASA) by 2027-01-04. That ends the test-user list, the 7-day Gmail
+  reconnect and the 100-user cap.
+- Business name and city on the site, a refund rule, one lawyer read of privacy and terms.
+- First paying customers ($39 / $79), starting with testers who got bookings.
+- Done when the first customer pays.
+
+**After that (2027):** open sign-up, then WhatsApp and the voice agent (the next initiative above).
+
+**Two rules:**
+1. Nothing new is built unless a real tester needs it.
+2. Every Monday, three numbers: customers answered, bookings, active testers. If they didn't go up, fix why first.

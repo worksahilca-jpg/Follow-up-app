@@ -12022,3 +12022,19 @@ licences, deletion…) and asked whether to do them all. Checked against the cod
 - The consent line names the business only, not FollowUp. That is deliberate (A-065), but it means the Privacy link
   leads to FollowUp's policy rather than the business's own.
 - Accessibility has never had a full audit; contrast and keyboard follow our rules only.
+
+## 2026-10-11 — A customer who comes back a day later buzzes again (owner alerts)
+
+The founder's own test (an email from an address that had written once on Sep 25 and was never answered) was caught
+and drafted within two minutes, but brought no buzz. Both messages counted as one wait that had already been told.
+That rule was meant for three messages in a row, not someone coming back 16 days later, who is exactly the customer
+about to be lost. Asked *"Fix it so a customer who writes again a day or more later buzzes your phone again?"* →
+*"Yes, fix it"*.
+
+**Built:**
+- A wait now also starts when the customer writes again 24 hours or more after their previous message, answered or
+  not (`NEW_WAIT_GAP_MS`, `waitStart` in `src/lib/ownerAlerts.ts`).
+- Messages closer together are still one wait and one alert.
+- 5 new tests, one of them the founder's exact case. It fails without the fix.
+
+**Not changed:** quiet hours (22:00–07:00 in the business's time zone) and the daily email cap.

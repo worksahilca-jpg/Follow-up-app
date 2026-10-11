@@ -57,7 +57,9 @@ import { readQualification, readyWhy, templateById, templateFor, viewingOf, type
  * acted — sent something, or dismissed the draft — and it is keyed by that
  * message's time. The customer writing three times in a row is one wait
  * and one alert. The owner answering and the customer writing back is a
- * new wait, and alerts again. The OwnerAlert row's unique index is the
+ * new wait, and alerts again. So is a customer writing again a day or more
+ * after their last message, answered or not (NEW_WAIT_GAP_MS): someone who
+ * comes back after two weeks is news, not the same old wait. The OwnerAlert row's unique index is the
  * claim, so two overlapping ticks cannot both alert it.
  *
  * ## Many at once
@@ -148,6 +150,30 @@ export type WaitingCustomer = {
   /** The customer's first message since the owner last acted. The wait's identity. */
   waitStartedAt: Date;
 };
+
+/**
+ * A customer who writes again this long after their previous message has started a new wait, even if nobody
+ * answered the last one (founder, 2026-10-11, after a test email 16 days on brought no buzz: "Fix it so a customer
+ * who writes again a day or more later buzzes your phone again?" → "Yes, fix it"). Messages closer together than
+ * this are one wait and one alert, as before.
+ */
+export const NEW_WAIT_GAP_MS = 24 * 60 * 60_000;
+/** How many of a customer's unanswered messages are read to find where their wait began. */
+const WAIT_SCAN_LIMIT = 100;
+
+/**
+ * Where the customer's current wait began, given their unanswered messages newest first: the first message of the
+ * latest run, where a run ends at any gap of NEW_WAIT_GAP_MS or more. Null when there are none.
+ */
+export function waitStart(inboundNewestFirst: Date[], gapMs: number = NEW_WAIT_GAP_MS): Date | null {
+  if (inboundNewestFirst.length === 0) return null;
+  let start = inboundNewestFirst[0];
+  for (const earlier of inboundNewestFirst.slice(1)) {
+    if (start.getTime() - earlier.getTime() >= gapMs) break;
+    start = earlier;
+  }
+  return start;
+}
 
 export type WaitVerdict = { waiting: true } | { waiting: false; reason: string };
 
@@ -252,12 +278,16 @@ async function waitingCustomersFor(businessId: string, now: Date): Promise<Waiti
       (max, d) => (d && (!max || d > max) ? d : max),
       null
     );
-    const first = await prisma.message.findFirst({
+    // Their messages since the owner last acted, newest first. The wait starts at the first of the latest run:
+    // a customer who writes again a day or more after their last message has started a new one (see waitStart).
+    const inbound = await prisma.message.findMany({
       where: { conversation: { leadId: lead.id }, direction: "inbound", ...(actedAt ? { sentAt: { gt: actedAt } } : {}) },
-      orderBy: { sentAt: "asc" },
+      orderBy: { sentAt: "desc" },
+      take: WAIT_SCAN_LIMIT,
       select: { sentAt: true },
     });
-    if (!first) continue;
+    const startedAt = waitStart(inbound.map((m) => m.sentAt));
+    if (!startedAt) continue;
 
     out.push({
       leadId: lead.id,
@@ -266,7 +296,7 @@ async function waitingCustomersFor(businessId: string, now: Date): Promise<Waiti
       leadName: approval.leadName,
       lastMessage: approval.leadLastMessage ?? "",
       channel: approval.leadLastMessageChannel,
-      waitStartedAt: first.sentAt,
+      waitStartedAt: startedAt,
     });
   }
   return out;

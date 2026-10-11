@@ -526,6 +526,13 @@ describe("instant acknowledgement", () => {
 
   // Founder, 2026-10-01: some spam-folder finds really are spam or scams,
   // and a "thanks, got it" tells the sender the address is live.
+  it("treats a website form whose spam check was filled the same way (2026-10-11)", async () => {
+    p.lead.findUnique.mockResolvedValue({ ...baseLead, source: "Website form (spam check)" });
+    const r = await acknowledgeNewLead("lead1", { channel: "email", inboundAt: new Date() });
+    expect(r).toEqual({ sent: false, reason: "found in spam" });
+    expect(send).not.toHaveBeenCalled();
+  });
+
   it("never instantly replies to a lead found in the spam folder, and doesn't mark it handled", async () => {
     p.lead.findUnique.mockResolvedValue({ ...baseLead, source: "Gmail (spam)" });
     const r = await acknowledgeNewLead("lead1", { channel: "email", inboundAt: new Date() });

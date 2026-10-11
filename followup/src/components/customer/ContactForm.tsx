@@ -14,8 +14,11 @@ import { Check, PoweredBy } from "./bits";
  *
  * Every field has a visible label. The one rule, an email or a phone
  * number, is said under that pair, where it applies, not at the top.
- * The honeypot is unchanged: hidden with CSS rather than type="hidden",
- * so a bot that fills every visible input fills it too.
+ * The honeypot sits inside a display:none box. It used to be only moved
+ * off screen, and a browser's autofill could fill it for a real person
+ * (founder's test, 2026-10-11). Autofill skips fields that aren't
+ * displayed; a bot that fills every input still fills it. Whatever fills
+ * it, the submission is kept and waits for the owner (the lead route).
  */
 export default function ContactForm({ businessId }: { businessId: string }) {
   const [businessName, setBusinessName] = useState<string | null>(null);
@@ -100,15 +103,9 @@ export default function ContactForm({ businessId }: { businessId: string }) {
               <p className={s.formLede}>We&apos;ll reply by email or text, whichever you give us.</p>
             </div>
             <form onSubmit={handleSubmit} className={s.form} noValidate>
-              <input
-                type="text"
-                value={hp}
-                onChange={(e) => setHp(e.target.value)}
-                tabIndex={-1}
-                autoComplete="off"
-                style={{ position: "absolute", left: "-9999px", width: 1, height: 1, opacity: 0 }}
-                aria-hidden="true"
-              />
+              <div style={{ display: "none" }} aria-hidden="true">
+                <input type="text" value={hp} onChange={(e) => setHp(e.target.value)} tabIndex={-1} autoComplete="off" />
+              </div>
 
               <div>
                 <label htmlFor="cf-name" className={s.label}>

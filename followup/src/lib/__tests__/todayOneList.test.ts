@@ -12,6 +12,8 @@ import {
   BACKLOG_BEFORE_PERMISSION_REASON,
   UNGROUNDED_DRAFT_REASONS,
   UNTOUCHED_LEAD_REASON,
+  FORM_SPAM_CHECK_REASON,
+  isUnconfirmedSpamSource,
   plainHoldReason,
 } from "@/lib/holdReasons";
 import { PRICE_SLOT_REASON } from "@/lib/priceSlot";
@@ -77,6 +79,13 @@ describe("plainHoldReason", () => {
     expect(say(HOLD_ALL_SEQUENCE_REASON)).toBeNull();
     expect(say(HOLD_ALL_FIRST_REPLY_REASON)).toBeNull();
     expect(say("")).toBeNull();
+  });
+
+  it("says a form that filled the spam check might be spam (2026-10-11)", () => {
+    expect(say(FORM_SPAM_CHECK_REASON)).toBe("This might be spam. Make sure it's a real customer before you reply.");
+    expect(isUnconfirmedSpamSource("Website form (spam check)")).toBe(true);
+    expect(isUnconfirmedSpamSource("Gmail (spam)")).toBe(true);
+    expect(isUnconfirmedSpamSource("Website form")).toBe(false);
   });
 
   it("says what to check, in short sentences", () => {

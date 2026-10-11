@@ -336,14 +336,29 @@ describe("embed form durability", () => {
     expect(statusUpdates()[0]).toMatchObject({ status: "failed" });
   });
 
-  it("persists NOTHING for a honeypot submission", async () => {
+  // SUPERSEDED (2026-10-11): this used to pin "persists NOTHING for a
+  // honeypot submission". The founder's own form test said "sent" and was
+  // lost that way, so a filled spam check is now kept and marked instead.
+  it("keeps a submission that filled the spam check, marked so it waits for the owner", async () => {
     const res = await embedPOST(
-      jsonRequest(URL_PATH, { ...submission, hp: "i am a bot" }),
+      jsonRequest(URL_PATH, { ...submission, hp: "filled by autofill" }),
       routeCtx({ businessId: "biz1" })
     );
 
     expect(await res.json()).toEqual({ success: true });
-    expect(eventCreate).not.toHaveBeenCalled();
+    expect(storedRow()).toMatchObject({ channel: "embed_form", payload: { name: "Dana", spamCheck: true } });
+    expect(processLeadFormSubmission).toHaveBeenCalledWith(
+      "biz1",
+      "Website form",
+      expect.objectContaining({ name: "Dana", spamCheck: true }),
+      expect.anything(),
+      expect.anything()
+    );
+  });
+
+  it("does not mark an ordinary submission", async () => {
+    await embedPOST(jsonRequest(URL_PATH, submission), routeCtx({ businessId: "biz1" }));
+    expect(storedRow().payload).not.toHaveProperty("spamCheck");
   });
 
   it("persists NOTHING when the submission is rejected before it counts as a lead", async () => {

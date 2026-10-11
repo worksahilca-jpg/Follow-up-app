@@ -49,9 +49,11 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
  * fully-worked lead the moment someone submits their site's contact form,
  * not a blank record waiting on the next sync.
  *
- * `hp` is a honeypot field the visible form leaves empty and hides from
- * real visitors with CSS — a bot that fills every field trips it. On top
- * of that, tooManyRecentLeads() caps how many "Website form" leads one
+ * `hp` is a honeypot field the visible form leaves empty and keeps out of
+ * sight (display:none) — a bot that fills every field trips it. Tripping
+ * it no longer discards the submission: it is kept and filed so it waits
+ * for the owner (see below). On top of that, tooManyRecentLeads() caps how
+ * many attempts one
  * business can receive in a short window — this businessId isn't a
  * secret (it's meant to sit in a customer's public website HTML), so
  * anyone viewing page source can find this exact URL and hit it directly
@@ -98,10 +100,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (!parsed.ok) return parsed.response;
   const body = parsed.data;
 
-  if (body.hp) {
-    // Honeypot tripped — pretend it worked so whatever filled it doesn't learn anything.
-    return NextResponse.json({ success: true });
-  }
+  // The hidden spam check. This used to end the request here with a
+  // pretend "sent" and keep nothing. The founder's own test on 2026-10-11
+  // saw "sent" and lost the message: a real person's browser can fill the
+  // field. So nothing is thrown away any more. The submission is kept like
+  // any other and filed as "Website form (spam check)", which waits for the
+  // owner to confirm a real customer before anything is sent
+  // (FORM_SPAM_CHECK_REASON).
+  const spamCheck = !!body.hp;
 
   const name = body.name;
   const email = body.email.toLowerCase();
@@ -126,11 +132,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   // tab. The lead-creating work below used to run inline, so a throw
   // anywhere in it (an OpenAI timeout inside scoreAndDraftForLead was the
   // likeliest) took the enquiry down with it. It is written down first now.
+  const submission = { name, email, phone, message, ...(spamCheck ? { spamCheck: true } : {}) };
   const event = await recordInboundWebhookEvent({
     provider: "http",
     channel: "embed_form",
     businessId,
-    payload: { name, email, phone, message },
+    payload: submission,
   });
 
   // Never throws — a processing failure is recorded on the row above. The
@@ -141,7 +148,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     ...event,
     channel: "embed_form",
     businessId,
-    payload: { name, email, phone, message },
+    payload: submission,
   });
 
   // Success either way, and truthfully so: `ok: false` means the enquiry is

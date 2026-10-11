@@ -12115,3 +12115,43 @@ more improvement"*: the reply, the speed, and how it looked.
 - Without the 2-minute wait, three quick DMs on a holding account can make more than one bell notification. The phone
   buzz is still once per wait.
 - "How it looked" is not fixed: I don't yet know what looked wrong.
+
+**Merged and re-tested (PR #489), same night.** He re-sent the same first question from his other account. The draft was
+rewritten for it within seconds of arriving, and he answered *"Yes, it's better"* and sent it. The customer was already on
+Today from an earlier unanswered DM, so this test did not exercise the new-customer speed path; that waits for the next
+brand-new DM.
+
+## 2026-10-11 — The website form said "Sent" and kept nothing (A-232)
+
+The founder tested his own form. The page said "Sent", and production held nothing: no stored submission, no customer.
+- **How the cause was found (by elimination, from the code):**
+  - Every error path shows an error, not "Sent".
+  - A real save always writes the stored submission first, and there was none.
+  - The only path that shows "Sent" and keeps nothing was the hidden spam check (the honeypot). It returned a pretend
+    success on purpose, "so whatever filled it doesn't learn anything".
+- **Why a person could trip it:**
+  - The field was only moved off screen (left -9999px, opacity 0), so it could still be filled.
+  - Browsers' autofill can fill such fields.
+  - He wasn't sure whether he had tapped an autofill suggestion. The cause is inferred, not observed.
+- **Built:**
+  - The trap now sits in a `display:none` box.
+  - A filled trap no longer drops the submission. It is stored with `spamCheck: true` and filed as
+    "Website form (spam check)". It is held like a spam-folder lead (no instant reply, `FORM_SPAM_CHECK_REASON` on
+    Today).
+  - Counts as a website-form lead for the free tier and for the setup check.
+  - The rate limit still counts every attempt (20 per 10 minutes).
+- **Checked locally on the real app** (local database, phone and computer):
+  - a typed submission was saved as "Website form";
+  - a submission with the trap filled was saved as "Website form (spam check)";
+  - its Today card shows the orange-dot note.
+  - There is no AI key or cron secret locally, so the draft and the hold were written by hand (local only) to render
+    the card. The unit tests cover the automation choosing this note.
+- **Tests:** 7 new or rewritten. The old test "persists NOTHING for a honeypot submission" pinned the bug; it is
+  rewritten and marked superseded. All 3,599 pass.
+
+**Weak spots, honestly:**
+- A bot that fills the trap now creates a customer the owner has to dismiss. The rate limit caps it at 20 per 10 minutes
+  per form.
+- Scoring still runs on those customers, inside the existing daily AI caps.
+- The real cause can't be proven without his browser. If autofill wasn't it, something else filled the field. That is
+  harmless now: nothing is lost either way.

@@ -84,7 +84,7 @@ export const UNANSWERED_FIRST_REPLY_HOURS = 3;
 import { META_DM_WINDOW_HOURS, META_HUMAN_AGENT_MAX_HOURS, UNANSWERED_CEILING_CHANNELS, UNANSWERED_META_DM_MAX_HOURS } from "@/lib/metaWindow";
 export { META_DM_WINDOW_HOURS, UNANSWERED_META_DM_MAX_HOURS };
 import { isInstagramLeadId, isMessengerLeadId } from "@/lib/instagramId";
-import { HOLD_ALL_AUTOMATION_REASON, BACKLOG_BEFORE_PERMISSION_REASON, RISK_CHECK_FAILED_REASON, UNTOUCHED_LEAD_REASON, NEVER_WROTE_REASON, FOUND_IN_SPAM_REASON, SPAM_FOLDER_SOURCE, IN_CRM_REASON, UNGROUNDED_DRAFT_REASONS, ASKED_IF_PERSON_REASON } from "@/lib/holdReasons";
+import { HOLD_ALL_AUTOMATION_REASON, BACKLOG_BEFORE_PERMISSION_REASON, RISK_CHECK_FAILED_REASON, UNTOUCHED_LEAD_REASON, NEVER_WROTE_REASON, FOUND_IN_SPAM_REASON, FORM_SPAM_CHECK_REASON, FORM_SPAM_CHECK_SOURCE, isUnconfirmedSpamSource, IN_CRM_REASON, UNGROUNDED_DRAFT_REASONS, ASKED_IF_PERSON_REASON } from "@/lib/holdReasons";
 
 /**
  * How long this particular lead waits before the unanswered rule fires, in
@@ -1283,7 +1283,8 @@ export async function runAutomationForBusiness(
       // Found in the spam folder and never written to: held until the owner
       // confirms it's a real customer by writing to them once (founder,
       // 2026-10-01). An automatic reply would tell a spammer the address is live.
-      const unconfirmedSpam = lead.source === SPAM_FOLDER_SOURCE && !conversation.some((m) => m.direction === "outbound");
+      // A website form whose spam check was filled waits the same way (2026-10-11).
+      const unconfirmedSpam = isUnconfirmedSpamSource(lead.source) && !conversation.some((m) => m.direction === "outbound");
       // Past Meta's 24-hour window nothing automatic may go out on these
       // channels, and sendFollowUpToLead would refuse it anyway — so no
       // draft, no risk check, no OpenAI spend. The owner's own day-2–7
@@ -1801,7 +1802,9 @@ export async function runAutomationForBusiness(
               : phoneNeverWrote
                 ? NEVER_WROTE_REASON
               : unconfirmedSpam
-                ? FOUND_IN_SPAM_REASON
+                ? lead.source === FORM_SPAM_CHECK_SOURCE
+                  ? FORM_SPAM_CHECK_REASON
+                  : FOUND_IN_SPAM_REASON
               : inCrm
                 ? IN_CRM_REASON
               : holdAll

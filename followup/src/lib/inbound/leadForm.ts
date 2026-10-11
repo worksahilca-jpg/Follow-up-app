@@ -7,6 +7,7 @@ import { acknowledgeNewLead } from "@/lib/acknowledge";
 import { findOrCreateConversation } from "@/lib/conversations";
 import { findConflictingLead } from "@/lib/leadConflict";
 import { createInboundMessageIfNew } from "@/lib/instagram";
+import { FORM_SPAM_CHECK_SOURCE } from "@/lib/holdReasons";
 
 export type LeadFormSubmission = {
   name: string;
@@ -14,6 +15,8 @@ export type LeadFormSubmission = {
   email: string;
   phone: string;
   message: string;
+  /** The website form's hidden spam check was filled (src/app/api/embed/[businessId]/lead/route.ts). */
+  spamCheck?: boolean;
 };
 
 /**
@@ -54,7 +57,8 @@ export async function processLeadFormSubmission(
         name,
         email: email || null,
         phone: phone || null,
-        source,
+        // Kept, but filed so it waits for the owner (FORM_SPAM_CHECK_SOURCE).
+        source: source === "Website form" && submission.spamCheck ? FORM_SPAM_CHECK_SOURCE : source,
         stage: "NEW",
         lastContacted: receivedAt,
         assignedToId: await pickAssignee(businessId),

@@ -465,7 +465,9 @@ export function isConsentKeyword(body: string | null | undefined): boolean {
  *   - younger than its channel's wait: the DM grace period on Instagram,
  *     Messenger and WhatsApp (DM_ACK_GRACE_PERIOD_MS — the owner's chance
  *     to answer first, and what batches three quick DMs into one reply),
- *     FRESH_REPLY_SETTLE_MS elsewhere;
+ *     FRESH_REPLY_SETTLE_MS elsewhere; on a holding account, only until
+ *     scoring's draft is written (nothing goes out, so there is no head
+ *     start to give);
  *   - the instant acknowledgement already answered THIS message — that was
  *     the reply within minutes, and a second automatic one straight after
  *     it is the "two slightly different replies" moment the grace period
@@ -483,7 +485,9 @@ export function freshInboundToAnswer(
     holdDismissedAt?: Date | null;
     conversations: { channel: string; messages: { direction: string; sentAt: Date; trigger: string | null; body: string; quickReplyPayload: string | null }[] }[];
   },
-  nowMs: number
+  nowMs: number,
+  // The account holds every reply for the owner (Business.holdAllForApproval).
+  holdsAll = false
 ): Date | null {
   const all = lead.conversations.flatMap((c) => c.messages.map((m) => ({ ...m, channel: c.channel })));
   const judged = all.filter((m) => !isAckMessage(m));
@@ -497,13 +501,21 @@ export function freshInboundToAnswer(
   if (last.channel === "call") return null;
   const age = nowMs - last.sentAt.getTime();
   if (age > FRESH_REPLY_WINDOW_MS) return null;
-  const channelWait =
-    last.channel === "instagram" || last.channel === "messenger" || last.channel === "whatsapp"
+  const draftReady = lead.suggestedDraftedFor != null && lead.suggestedDraftedFor >= last.sentAt;
+  // On a holding account nothing this worker does reaches the customer: it
+  // only puts the draft on Today. The DM head start guards against a double
+  // reply that cannot happen there, and once scoring has written the draft
+  // the capture request has settled too, so the only thing left to wait for
+  // is the draft (founder's Instagram test, 2026-10-11: "too slow").
+  const channelWait = holdsAll
+    ? draftReady
+      ? 0
+      : FRESH_REPLY_SETTLE_MS
+    : last.channel === "instagram" || last.channel === "messenger" || last.channel === "whatsapp"
       ? Math.max(FRESH_REPLY_SETTLE_MS, ackGracePeriodMs(last.channel))
       : FRESH_REPLY_SETTLE_MS;
   if (age < channelWait) return null;
   if (all.some((m) => isAckMessage(m) && m.sentAt >= last.sentAt)) return null;
-  const draftReady = lead.suggestedDraftedFor != null && lead.suggestedDraftedFor >= last.sentAt;
   if (!draftReady && age < FRESH_DRAFT_WAIT_MS) return null;
   if (lead.lastAutomationCheckedAt && lead.lastAutomationCheckedAt >= last.sentAt) return null;
   return last.sentAt;
@@ -738,7 +750,7 @@ async function findUnansweredLeads(businessId: string, hours: number, recheckCut
  * Returns the message time per lead as well, because that is what the
  * claim is keyed on (see the claim in runAutomationForBusiness).
  */
-async function findFreshUnansweredLeads(businessId: string, leadIds: string[], skipThanks = false) {
+async function findFreshUnansweredLeads(businessId: string, leadIds: string[], skipThanks = false, holdsAll = false) {
   if (leadIds.length === 0) return { leads: [], inboundAt: new Map<string, Date>() };
   const nowMs = Date.now();
   const candidates = await prisma.lead.findMany({
@@ -756,7 +768,7 @@ async function findFreshUnansweredLeads(businessId: string, leadIds: string[], s
   });
   const inboundAt = new Map<string, Date>();
   for (const lead of candidates) {
-    const at = freshInboundToAnswer(lead, nowMs);
+    const at = freshInboundToAnswer(lead, nowMs, holdsAll);
     // Scored in-line on capture, so the thanks-only verdict is already here.
     if (at && !(skipThanks && thanksIsNewest(lead.thanksOnlyAt, at))) inboundAt.set(lead.id, at);
   }
@@ -938,7 +950,7 @@ export async function runAutomationForBusiness(
   // the hourly tick and inside the send window.
   // What the owner said yes to on Today (src/lib/habits.ts, A-099).
   const skipThanks = habitOn(await getHabits(businessId), "skip_thanks");
-  const freshFound = fresh ? await findFreshUnansweredLeads(businessId, options.freshLeadIds ?? [], skipThanks) : null;
+  const freshFound = fresh ? await findFreshUnansweredLeads(businessId, options.freshLeadIds ?? [], skipThanks, holdAll) : null;
   if (freshFound && freshFound.leads.length === 0) return EMPTY_RESULT;
 
   const [quietCandidates, deadCandidates, voiceSamples, unanswered] = await Promise.all([
@@ -1366,7 +1378,8 @@ export async function runAutomationForBusiness(
           // The lead's decided language/register, off the row already
           // loaded — so the day-3 follow-up uses the same usted/tú the
           // first reply did (src/lib/leadLanguage.ts).
-          const dm = await draftDm(lead.name, conversation, voiceSamples, messageHint, undefined, leadLanguageOf(lead), await getBusinessFacts(lead.businessId));
+          const { trade, facts } = await draftingContext(lead.businessId);
+          const dm = await draftDm(lead.name, conversation, voiceSamples, messageHint, undefined, leadLanguageOf(lead), facts, null, trade);
           message = dm.body;
           subject = undefined;
           quickReplies = dm.quickReplies;
@@ -2112,7 +2125,8 @@ export async function draftDmHandoffs(businessId: string, voiceSamples: string[]
     if (!(await checkAiEligibility(businessId, lead, tier)).ok) continue;
 
     try {
-      const dm = await draftDm(lead.name, conversation, voiceSamples, undefined, "handoff", undefined, await getBusinessFacts(lead.businessId));
+      const { trade, facts } = await draftingContext(lead.businessId);
+      const dm = await draftDm(lead.name, conversation, voiceSamples, undefined, "handoff", undefined, facts, null, trade);
       await prisma.lead.update({
         where: { id: lead.id },
         data: {

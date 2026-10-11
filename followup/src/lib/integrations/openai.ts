@@ -1405,7 +1405,19 @@ export async function generateFollowUpMessage(
       " The message's one job on this channel is to get a reaction: an easy question a real person answers " +
       "in a word, never a sales pitch and never pressure. What this particular message is for: " +
       dm.hint +
-      " Complete sentences, proper capitalization, no sentence fragments, no trailing off mid-thought. "
+      // 2026-10-11, the founder's Instagram test: "Hi, how much do you
+      // charge and are you free?" got a question back about which listing
+      // he meant, and nothing about either thing he asked. The email had
+      // this rule since 2026-10-05; the DM never did.
+      " Whatever the hint says, their questions come first. If their most recent message asked anything, the " +
+      "first sentence answers it, or says plainly that you'll confirm that specific thing. If it asked more than " +
+      "one thing (what you charge and whether you're free, say), cover every one, briefly and in the order asked, " +
+      "before your own question; skipping one tells them nobody read it. " +
+      // The same test, second reply: "Looking in Etobicoke works." A
+      // person says something back; a form says "accepted".
+      "Sound like the owner typing on their phone to someone they want to help: warm, plain, natural. Never hand " +
+      "their own words back as a one-line verdict (\"Etobicoke works.\", \"Noted.\", \"Got it, 3 bedrooms.\"). " +
+      "Complete sentences, proper capitalization, no sentence fragments, no trailing off mid-thought. "
     : "You draft a follow-up email — a subject line and the body paragraph. You represent the business " +
       "that was CONTACTED — the person in this conversation reached out about the business's services. You " +
       "are not the one requesting anything; never write as if you're the one who needs a vendor, contractor, " +

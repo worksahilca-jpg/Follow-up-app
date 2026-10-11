@@ -7,7 +7,7 @@ import { greetingFirstName } from "@/lib/leadName";
 import { SILENCE_DEFAULT_TRIGGER_DAYS } from "@/lib/reminderCadence";
 import type { LeadLanguage } from "@/lib/leadLanguage";
 import type { Lead, Message } from "@/lib/types";
-import { draftingContext, getBusinessFacts } from "@/lib/businessFacts";
+import { draftingContext } from "@/lib/businessFacts";
 
 /**
  * "See an example" on a follow-up rule (design brain A-044, the Zapier
@@ -78,7 +78,8 @@ export async function writeRuleExample(
   const voiceSamples = await getVoiceSamples(businessId);
   const lastInbound = [...lead.conversation].reverse().find((m) => m.direction === "inbound");
   if (lastInbound && (lastInbound.channel === "instagram" || lastInbound.channel === "messenger")) {
-    const dm = await draftDm(lead.name, lead.conversation, voiceSamples, hint, undefined, language, await getBusinessFacts(businessId));
+    const { trade, facts } = await draftingContext(businessId);
+    const dm = await draftDm(lead.name, lead.conversation, voiceSamples, hint, undefined, language, facts, null, trade);
     return { text: dm.body, what };
   }
   const draft = await generateFollowUpMessage({ name: lead.name, conversation: lead.conversation, ...(await draftingContext(businessId)) }, voiceSamples, hint, undefined, language);

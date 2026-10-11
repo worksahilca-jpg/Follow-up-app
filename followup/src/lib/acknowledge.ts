@@ -129,6 +129,19 @@ export const DM_ACK_GRACE_PERIOD_MS = 2 * 60_000;
  */
 export const ACK_CLAIM_LEASE_MS = 5 * 60_000;
 
+/**
+ * Whether nothing automated leaves this account unread (Business.holdAllForApproval).
+ * A failed read answers no, which only keeps the usual two-minute wait.
+ */
+async function holdsEveryReply(businessId: string): Promise<boolean> {
+  try {
+    const b = await prisma.business.findUnique({ where: { id: businessId }, select: { holdAllForApproval: true } });
+    return b?.holdAllForApproval === true;
+  } catch {
+    return false;
+  }
+}
+
 /** DM channels wait; email and SMS are unchanged (see DM_ACK_GRACE_PERIOD_MS). */
 export function ackGracePeriodMs(channel: AckChannel): number {
   return channel === "instagram" || channel === "messenger" || channel === "whatsapp" ? DM_ACK_GRACE_PERIOD_MS : 0;
@@ -443,8 +456,14 @@ export async function acknowledgeNewLead(
     // switch, the tier cap, the claim — is therefore evaluated when the
     // message is about to GO OUT, not when the DM arrived, which is the
     // entire point: the owner gets those two minutes to win.
+    //
+    // Not on an account that holds every reply (the default): there this
+    // path sends nothing, it only puts the draft on Today, so the head start
+    // guards against a double reply that cannot happen and all it did was
+    // keep the customer off Today for two minutes (founder's Instagram test,
+    // 2026-10-11: "too slow").
     const graceMs = input.skipGracePeriod ? 0 : ackGracePeriodMs(input.channel);
-    if (graceMs > 0) return scheduleDeferredAck(leadId, input, lead.ackDueAt, graceMs);
+    if (graceMs > 0 && !(await holdsEveryReply(lead.businessId))) return scheduleDeferredAck(leadId, input, lead.ackDueAt, graceMs);
 
     if (input.hasHumanReply) return { sent: false, reason: "owner already replied" };
     const priorOutbound = await prisma.message.findFirst({

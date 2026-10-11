@@ -17,6 +17,20 @@ function msg(direction: "inbound" | "outbound", body: string, extra: Partial<Mes
 }
 
 describe("pickDmSituation — chosen from the thread, never guessed", () => {
+  // The founder's Instagram test, 2026-10-11: the price was the only
+  // question the draft heard.
+  it("hears both questions in \"how much do you charge and are you free?\"", () => {
+    const s = pickDmSituation([msg("inbound", "Hi, how much do you charge and are you free?")], "reply");
+    expect(s.id).toBe("price_unanswered");
+    expect(s.hint).toMatch(/Answer the price first/);
+    expect(s.hint).toMatch(/also asked about availability: say you'll confirm that too/);
+  });
+
+  it("reads \"are you free?\" as a question about availability", () => {
+    expect(pickDmSituation([msg("inbound", "Hey, are you free to talk?")], "reply").id).toBe("availability_unanswered");
+    expect(pickDmSituation([msg("inbound", "Is the consultation free?")], "reply").id).not.toBe("availability_unanswered");
+  });
+
   it("asks about timing when the lead asked a price and nobody has replied", () => {
     const s = pickDmSituation([msg("inbound", "How much for a two-bed clean?")], "reply");
     expect(s.id).toBe("price_unanswered");

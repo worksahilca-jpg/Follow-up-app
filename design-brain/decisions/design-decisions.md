@@ -12082,3 +12082,36 @@ A-046: longest waiting first, so a 16-day-old practice customer sat above any fr
 - "Likely to book" rests on the AI's buying score, which can be wrong. Low-score customers stay on the list, just lower.
 - The reason is small text in the meta line. That keeps it calm, but it's easy to miss.
 - In the local example the reason was set by hand; on live data it comes from the risk judge and the score.
+
+## 2026-10-11 — Instagram works end to end; DM replies fixed (A-231)
+
+The founder connected his business Instagram (after #488 fixed the Settings row) and sent two DMs from another account.
+Production, read-only: both were caught, drafted, put on Today, and he sent both replies. His verdict: *"dms works need
+more improvement"*: the reply, the speed, and how it looked.
+- **Why the replies were weak** (from the code, not a guess):
+  - The DM prompt never had the email's rule "answer every question the lead asked" (added for email on 2026-10-05).
+    The situation picker saw a price question and dropped "are you free?".
+  - DMs never got the realtor playbook: `draftDm` did not pass the business's trade, so "how much do you charge" read as
+    a home's price.
+  - The second reply ("weekday or weekend showing?") came from the generic "ask what decides what happens next" hint,
+    with nothing saying a showing needs a home.
+- **Why it was slow:** every DM waited 2 minutes (the owner's head start, so FollowUp never replies on top of him).
+  On a holding account nothing is sent, so the wait only delayed Today.
+- **Built:**
+  - DM prompt: questions first, every one covered; no verdict echoes ("Etobicoke works.").
+  - `draftDm` takes the trade; all five callers pass it via `draftingContext`.
+  - Realtor playbook: fee questions mean the agent's fee; a showing only once a home is named.
+  - Price situation: answer with the saved fee or the price blank; say "I'll confirm" for availability if also asked.
+    "Are you free?" now counts as an availability question.
+  - Speed: a holding account skips the DM wait in `acknowledgeNewLead` (first message: seconds) and in
+    `freshInboundToAnswer` (later messages: as soon as the draft is written, on the next one-minute tick).
+- **Tests:** 7 new (both questions heard, "are you free", fee and showing rules, DM gets the playbook, questions-first
+  prompt, holding-account timing on both paths). All 3,593 pass.
+
+**Weak spots, honestly:**
+- There is no AI key in this workspace, so the new wording has not been run against the real model. The proof is his
+  same three messages after merge.
+- A later DM on a holding account still waits up to a minute (the job runs once a minute). Only the first DM is seconds.
+- Without the 2-minute wait, three quick DMs on a holding account can make more than one bell notification. The phone
+  buzz is still once per wait.
+- "How it looked" is not fixed: I don't yet know what looked wrong.

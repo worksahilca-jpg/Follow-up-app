@@ -48,7 +48,8 @@ export interface DmSituation {
  * assumed. Kept as one exported string so the prompt test can pin it.
  */
 export const DM_SHAPE_RULES =
-  "This goes out as an Instagram or Messenger DM, not an email. 8 to 30 words, one or two sentences, no greeting, " +
+  "This goes out as an Instagram or Messenger DM, not an email. 8 to 30 words, one or two sentences (three only " +
+  "when they asked more than one thing and each needs its answer), no greeting, " +
   "no sign-off, no subject line. Exactly one question, and it is the last sentence. The question must be " +
   "answerable in one word by someone walking, without looking at any buttons. Provide two or three button " +
   `titles, each ${QUICK_REPLY_TITLE_MAX_CHARS} characters or fewer, in the same language as the lead's last message, each one a plain ` +
@@ -59,7 +60,7 @@ export const DM_SHAPE_RULES =
   "any questions\", \"anything else I can help with?\", \"are you interested?\", \"just checking in\".";
 
 const PRICE_RE = /precio|price|pricing|cost|cuánto|cuanto|quanto|combien|kimmat|kimat|keemat|\brate\b|quote|how much/i;
-const AVAILABILITY_RE = /disponib|availab|available|\bbook|appointment|cita|turno|\bslot|schedule|saturday|sunday|monday|tuesday|wednesday|thursday|friday|weekend|tomorrow|this week/i;
+const AVAILABILITY_RE = /disponib|availab|available|\bbook|appointment|cita|turno|\bslot|schedule|saturday|sunday|monday|tuesday|wednesday|thursday|friday|weekend|tomorrow|this week|\b(are|r) (you|u) free\b/i;
 const CURRENCY_RE = /[$€£₹¥]\s?\d|\d\s?(USD|EUR|GBP|INR|CAD|MXN|AUD|Rs\.?|dollars|euros|pounds|rupees)\b/i;
 const SLOT_RE = /\b\d{1,2}[:.]\d{2}\b|\b\d{1,2}\s?(am|pm)\b|\b(mon|tue|wed|thu|fri|sat|sun)[a-z]*\.?\s+\d{1,2}(am|pm|:)/i;
 
@@ -202,7 +203,12 @@ export function pickDmSituation(conversation: Message[], touch: DmTouch): DmSitu
       id: "price_unanswered",
       hint:
         "They asked what something costs and the business hasn't answered yet. Do not apologise (nothing is late " +
-        "yet) and do not guess a price. Add the one fact the business would obviously need to price this, phrased " +
+        "yet) and do not guess a price. Answer the price first: with the figure from WHAT THIS BUSINESS HAS TOLD " +
+        "CUSTOMERS when it is listed there, otherwise with the price placeholder exactly as the rules below say. " +
+        (asksAvailability
+          ? "They also asked about availability: say you'll confirm that too, without confirming or denying anything. "
+          : "") +
+        "Then, only if the business would still need one fact to price this for them, ask it, phrased " +
         "as a question about their situation, not a menu. For a trade job, a photo is often the best ask: if you " +
         "ask for a photo, provide NO buttons — the photo is the reply. Otherwise buttons only if the question has " +
         "two or three natural one-word answers.",

@@ -3846,3 +3846,17 @@ to:
     first");
   - "Going quiet" stays last.
 
+
+## A-231 — DM replies answer every question, and show on Today at once ^A-231
+
+**Approved:** 2026-10-11, founder, after his own Instagram test (two DMs caught, drafted, sent). He said *"dms works need
+more improvement"* and picked: the reply it wrote, too slow, how it looked. I explained each draft from the real
+messages (read with his permission), then he answered *"Yes, fix all 4"* and *"Yes, within seconds"*:
+1. **Answer every question the customer asked** before asking our own. "Are you free?" was ignored.
+2. **"How much do you charge" means the owner's fee.** Use the saved commission; without one, the price blank the owner
+   fills in on Today (A-060). Never read it as a home's price unless they named a home.
+3. **No showing before there's a home to show.** While they describe what they want, ask what they're looking for.
+4. **Sound like a person.** No verdicts like "Etobicoke works."
+5. **Speed:** on an account that holds every reply (the default), a DM is on Today in seconds, not two minutes. Nothing
+   sends without the owner's tap either way. He first read this as "send right away"; it is not.
+- **Still open:** "how it looked". I asked for a screenshot of what looked off; not yet received.

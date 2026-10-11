@@ -119,12 +119,17 @@ export default function SettingsList({
 
   // Instagram, Facebook and WhatsApp as one row: what is connected, or
   // the one that stopped receiving.
-  const socialRow = ((): Pick<Row, "status" | "state"> => {
+  const socialRow = ((): Pick<Row, "status" | "state" | "cta"> => {
     if (!social) return { status: "" };
     const broken = [social.instagram, social.facebook].some((s) => s.connected && !s.receiving);
     if (broken) return { status: "Not receiving messages", state: "needs" };
     const on = [social.instagram.connected && "Instagram", social.facebook.connected && "Facebook", social.whatsapp && "WhatsApp"].filter(Boolean) as string[];
-    return on.length ? { status: on.join(", "), state: "sent" } : { status: "Not set up" };
+    if (!on.length) return { status: "Not set up" };
+    // Instagram is the one any owner can connect today (Meta approved it 2026-10-09), so its absence is said, and
+    // the button says Set up, not Change: "WhatsApp" with "Change" hid that it was never connected (founder,
+    // 2026-10-11: "I don't see the option to connect it").
+    if (!social.instagram.connected) return { status: `${on.join(", ")} · Instagram not set up`, state: "sent", cta: "Set up" };
+    return { status: on.join(", "), state: "sent" };
   })();
 
   // What stopped working, said once at the top (Zapier study). One thing:

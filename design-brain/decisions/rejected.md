@@ -1429,3 +1429,16 @@ gunmetal `#2a3439` for text, buttons and the dark blocks, with the green accent 
 **Principle (inferred, marked inferred; he gave no reason beyond taking the recommendation):** the green reads warmer
 and calmer on the current near-neutral grey. A cooler ground changes little and adds nothing he needs. Don't re-propose
 a cool blue-grey ground or gunmetal ink for the landing page unless he brings it up.
+
+## R-111 — A combined row that names only what's connected, with "Change" ^R-111
+
+**Rejected:** 2026-10-11, founder. Trying to connect Instagram, he saw Settings → Where customers write → "Instagram,
+Facebook, WhatsApp · ● WhatsApp · Change" and said: *"I don't see the option to connect it … find mistake broo, there
+are lots of mistakes."*
+**What failed:** the row listed only the connected channel (WhatsApp) with a "Change" button. Nothing said Instagram was
+never connected, and "Change" doesn't read as "connect something new".
+**Principle (inferred):** a status line names what is missing as well as what works, and the button names the action
+for the missing part ("Set up"). Never make the owner open a page to learn that something isn't there.
+**Fixed:** the row now reads "WhatsApp · Instagram not set up" with "Set up" (SettingsList.tsx). The Instagram page no
+longer says only added testers can connect (true until Meta's approval on 2026-10-09). It says the account must be
+Business or Creator.

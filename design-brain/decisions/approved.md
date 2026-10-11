@@ -3886,3 +3886,18 @@ up?"*
   card, no buzz, no reminder. A question they wrote before it is still answered.
 - **Still picked up:** anything with words, and any photo, video, voice note or file they sent themselves.
 - Instagram and Messenger (including the 3-minute check). WhatsApp stickers are not covered yet.
+
+## A-234 — New DMs get the same "is this a customer?" check as emails ^A-234
+
+**Approved:** 2026-10-11, founder. Asked whether a friend's "hey bro what's up" on Instagram should get the check Gmail
+already has, he chose *"Yes, same check"*.
+- **Who is checked:** only someone new, on Instagram or Messenger. A person who is already a customer is never
+  second-guessed.
+- **Let through without asking:** a bare greeting ("Hi", "Hello there") and a photo, video, voice note or file with no
+  words. Both are too often the start of a real enquiry to guess about.
+- **The bar is the same as WhatsApp's:** a chat is set aside only when two reads agree it isn't customer business. If
+  the check can't run (no AI on the plan, too many new senders in an hour), the message comes in as before.
+- **Set aside, never deleted:** the chat goes to "Filtered out" with the reason. One tap on Restore brings it back as a
+  customer with every message. If they write again with a real question, it's looked at again with the whole chat.
+- **Nothing changes for the owner's own replies:** if the owner answers a set-aside chat from Instagram, that reply is
+  judged with the chat, the same way.

@@ -331,4 +331,5 @@ about the business."*
 - Every message FollowUp picks up costs the owner attention. One that isn't a customer is noise on Today and a buzz
   for nothing.
 - When unsure whether a message is a customer, keep it. A photo or file someone sends can be the question itself.
-- Built so far: shared content with no words (A-233). Wider filtering of chit-chat with words is not built yet.
+- Built so far: shared content with no words (A-233); new Instagram and Messenger chats get the same "is this a
+  customer?" check as emails (A-234). A bare "hi" still gets through on purpose.

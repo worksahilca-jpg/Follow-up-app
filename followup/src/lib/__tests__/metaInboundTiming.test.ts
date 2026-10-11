@@ -14,6 +14,16 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const { businessFindUnique } = vi.hoisted(() => ({ businessFindUnique: vi.fn() }));
+// Everyone in this file is already a customer, so the new-sender
+// "is this a customer?" check (src/lib/inbound/dmContactGate.ts, covered
+// in dmContactGate.test.ts) stays out of the way of what is tested here.
+vi.mock("@/lib/inbound/dmContactGate", () => ({
+  isDmLead: vi.fn(async () => true),
+  judgeNewDmContact: vi.fn(async () => ({ admit: true, prior: [] })),
+  dmContextLoader: () => async () => ({ classifier: undefined, aiAllowed: true }),
+  writeDmThread: vi.fn(async () => {}),
+  takeDmSetAside: vi.fn(async () => {}),
+}));
 vi.mock("@/lib/db", () => ({ prisma: { business: { findUnique: businessFindUnique }, user: { findMany: async () => [] }, notification: { create: async () => ({}) } } }));
 
 type CreateInboundMessageIfNew = (conversationId: string, body: string, sentAt: Date, externalId?: string) => Promise<boolean>;

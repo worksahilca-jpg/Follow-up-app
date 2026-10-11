@@ -12178,3 +12178,28 @@ A Reel shared to the founder's business Instagram became a customer named "Insta
 - WhatsApp stickers still create customers.
 - A friend chatting with words ("hey bro") is still picked up. The founder's principle covers it, but it needs a
   judgment call (like Gmail's "is this a customer" check) and hasn't been asked or built.
+
+## 2026-10-11 — New DMs get the "is this a customer?" check (A-234)
+
+Follows A-233. A friend chatting with words ("hey bro") was still becoming a customer on Today. The founder chose the
+same check emails and WhatsApp already have.
+- **Built:**
+  - `src/lib/inbound/dmContactGate.ts`: the check for Instagram and Messenger. It reuses WhatsApp's judge
+    (`judgeHistoryThread`, two reads, fails open) and its set-aside table (FilteredEmail, provider `instagram` or
+    `messenger`), with the same lock against two deliveries racing.
+  - `src/lib/inbound/meta.ts`: someone new is checked before a customer is created, for their messages and for the
+    owner's replies typed in Instagram. A message delivered twice (the webhook and the 3-minute check) is judged once.
+  - When a set-aside chat turns into a customer (a later message, or Restore), everything set aside is written into
+    their conversation under the same lock, then the row goes.
+  - Restore (`/api/integrations/gmail/filtered/[id]/restore`) now handles Instagram and Messenger rows.
+  - "Filtered out" labels them "· Instagram" / "· Messenger" and never shows the internal id.
+- **Limits:** at most 60 first looks per business an hour, 300 looks of any kind a day, and 6 looks again at one
+  set-aside chat an hour. Past a limit, someone new is let through and a set-aside chat stays aside.
+- **Tests:** 9 new (the check itself and Restore). All 3,616 pass.
+
+**Weak spots:**
+- **Instagram-only businesses can't see "Filtered out" yet.** The list sits under Email settings and only shows when
+  Gmail or Outlook is connected. Needs the founder's call on where it goes.
+- The Instagram name bug from A-233 is still open, so a set-aside chat may read "Instagram user" instead of the handle.
+- WhatsApp stickers are still picked up.
+- A greeting gets through on purpose. A friend who only says "hi" still becomes a customer.

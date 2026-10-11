@@ -34,6 +34,15 @@ vi.mock("@/lib/conversations", () => ({ findOrCreateConversation: vi.fn(async ()
 vi.mock("@/lib/engagement", () => ({ checkRapidEngagement: vi.fn() }));
 vi.mock("@/lib/audit", () => ({ recordAudit: vi.fn() }));
 vi.mock("@/lib/suppression", () => ({ suppress: vi.fn(), unsuppress: vi.fn() }));
+// Whether the sender is a customer comes from the lead lookup below; the
+// "is this a customer?" judge itself is covered in dmContactGate.test.ts.
+vi.mock("@/lib/inbound/dmContactGate", () => ({
+  isDmLead: vi.fn(async () => !!(await leadFindFirst())),
+  judgeNewDmContact: vi.fn(async () => ({ admit: true, prior: [] })),
+  dmContextLoader: () => async () => ({ classifier: undefined, aiAllowed: true }),
+  writeDmThread: vi.fn(async () => {}),
+  takeDmSetAside: vi.fn(async () => {}),
+}));
 
 import { isSharedContentOnly, isSharedContentType } from "@/lib/sharedContent";
 import { messageContent, processMetaEnvelope } from "@/lib/inbound/meta";

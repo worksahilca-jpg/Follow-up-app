@@ -38,6 +38,16 @@ const { businessFindUnique, leadFindFirst, leadUpdate, leadCreate, leadCount, co
     conversationCreate: vi.fn(async () => ({ id: "conv1" })),
     messageCreate: vi.fn(async () => ({ id: "msg1" })),
   }));
+// Everyone in this file is already a customer, so the new-sender
+// "is this a customer?" check (src/lib/inbound/dmContactGate.ts, covered
+// in dmContactGate.test.ts) stays out of the way of what is tested here.
+vi.mock("@/lib/inbound/dmContactGate", () => ({
+  isDmLead: vi.fn(async () => true),
+  judgeNewDmContact: vi.fn(async () => ({ admit: true, prior: [] })),
+  dmContextLoader: () => async () => ({ classifier: undefined, aiAllowed: true }),
+  writeDmThread: vi.fn(async () => {}),
+  takeDmSetAside: vi.fn(async () => {}),
+}));
 vi.mock("@/lib/db", () => ({
   prisma: {
     business: { findUnique: businessFindUnique },

@@ -12,7 +12,8 @@ import { isOptInMessage, isOptOutMessage } from "@/lib/optOutKeywords";
 import { suppress, unsuppress, type DmSuppressionChannel } from "@/lib/suppression";
 import { decodeQuickReplyPayload, type QuickReplyAnswer } from "@/lib/quickReplies";
 import { isSharedContentType } from "@/lib/sharedContent";
-import { instagramLeadId, messengerLeadId } from "@/lib/instagramId";
+import { dmContextLoader, isDmLead, judgeNewDmContact, takeDmSetAside, writeDmThread, type DmChannel } from "@/lib/inbound/dmContactGate";
+import type { Message } from "@/lib/types";
 
 /**
  * What to record for one Meta message event, and what (if anything) the
@@ -73,9 +74,9 @@ export function messageContent(
   return { body: `[Sent ${label} with no message text]`, ownWords: "", ...(sharedOnly ? { sharedOnly } : {}) };
 }
 
-/** Whether this DM sender is already one of the business's customers. */
-async function existingDmLead(businessId: string, phone: string): Promise<boolean> {
-  return !!(await prisma.lead.findFirst({ where: { businessId, phone }, select: { id: true } }));
+/** One DM as the "is this a customer?" check reads it (src/lib/inbound/dmContactGate.ts). */
+function dmMessage(id: string | undefined, direction: "inbound" | "outbound", channel: DmChannel, body: string, sentAt: Date): Message {
+  return { id: id ?? "", direction, channel, body, date: sentAt.toISOString(), opened: false };
 }
 
 /**
@@ -271,6 +272,8 @@ export async function processMetaEnvelope(payload: { object?: string; entry?: un
     // Every id this account is known by. A message FROM one of these is
     // the business talking, never a lead — whatever the producer marked it.
     const ownIds = new Set([recipientId, business.instagramUserId, business.instagramAccountId].filter((id): id is string => !!id));
+    // For the "is this a customer?" check, loaded only if someone new writes.
+    const igContext = dmContextLoader(business.id, "instagram");
 
     for (const event of entry.messaging ?? []) {
       const senderId: string | undefined = event.sender?.id;
@@ -299,7 +302,29 @@ export async function processMetaEnvelope(payload: { object?: string; entry?: un
       if (event.message?.is_echo || ownIds.has(senderId)) {
         const echoRecipientId: string | undefined = event.recipient?.id;
         if (!echoRecipientId || ownIds.has(echoRecipientId)) continue;
+        // The owner writing to someone who isn't a customer: judged like
+        // their messages are (WhatsApp does the same), so a reply to a
+        // friend doesn't make the friend a customer.
+        let echoPrior: Message[] | null = null;
+        if (!(await isDmLead(business.id, "instagram", echoRecipientId))) {
+          const gate = await judgeNewDmContact({
+            businessId: business.id,
+            channel: "instagram",
+            contactId: echoRecipientId,
+            name: undefined,
+            message: dmMessage(event.message?.mid, "outbound", "instagram", content.body, eventSentAt(event)),
+            hasOwnWords: !!content.ownWords,
+            context: igContext,
+          });
+          if (!gate.admit) continue;
+          echoPrior = gate.prior;
+        }
         const lead = await findOrCreateLeadByInstagram(business.id, echoRecipientId);
+        if (echoPrior) {
+          const echoConversation = await findOrCreateConversation(lead.id, "instagram");
+          await writeDmThread(echoConversation.id, "instagram", echoPrior);
+          await takeDmSetAside(business.id, "instagram", echoRecipientId, echoConversation.id, echoPrior, event.message?.mid);
+        }
         await captureDirectReply(lead.id, "instagram", content.body, "instagram_direct", event.message?.mid, eventSentAt(event));
         continue;
       }
@@ -309,14 +334,35 @@ export async function processMetaEnvelope(payload: { object?: string; entry?: un
       // username — and it is what stops a lead being filed, listed and
       // greeted as "Instagram DM".
       const senderUsername = typeof event.sender?.username === "string" ? event.sender.username : undefined;
+      const sentAt = eventSentAt(event);
+      const known = await isDmLead(business.id, "instagram", senderId);
       // A Reel, post, story mention or sticker with no words from someone
       // who isn't a customer yet is not picked up at all (founder,
       // 2026-10-11; src/lib/sharedContent.ts).
-      if (content.sharedOnly && !(await existingDmLead(business.id, instagramLeadId(senderId)))) continue;
+      if (content.sharedOnly && !known) continue;
+      // Someone new: a customer, or someone chatting? (src/lib/inbound/dmContactGate.ts)
+      let admittedPrior: Message[] | null = null;
+      if (!known) {
+        const gate = await judgeNewDmContact({
+          businessId: business.id,
+          channel: "instagram",
+          contactId: senderId,
+          name: senderUsername ? `@${senderUsername}` : undefined,
+          message: dmMessage(event.message?.mid, "inbound", "instagram", content.body, sentAt),
+          hasOwnWords: !!content.ownWords,
+          context: igContext,
+        });
+        if (!gate.admit) continue;
+        admittedPrior = gate.prior;
+      }
       const lead = await findOrCreateLeadByInstagram(business.id, senderId, senderUsername);
-      const sentAt = eventSentAt(event);
 
       const conversation = await findOrCreateConversation(lead.id, "instagram");
+      if (admittedPrior) {
+        // What was set aside before they became a customer comes with them.
+        await writeDmThread(conversation.id, "instagram", admittedPrior);
+        await takeDmSetAside(business.id, "instagram", senderId, conversation.id, admittedPrior, event.message?.mid);
+      }
       const isNewMessage = await createInboundMessageIfNew(conversation.id, content.body, sentAt, event.message?.mid, content.quickReplyPayload);
 
       // A tap on one of FollowUp's own reply buttons is an answer, not a
@@ -388,6 +434,7 @@ async function handlePageEvents(entries: any[]): Promise<void> {
     if (!pageId) continue;
     const business = await prisma.business.findUnique({ where: { facebookPageId: pageId }, select: { id: true } });
     if (!business) continue;
+    const fbContext = dmContextLoader(business.id, "messenger");
     // Same as the Instagram loop above: capture a Messenger DM or a Lead
     // Ad submission whatever the billing state, and let the AI/send half
     // pause itself downstream.
@@ -405,16 +452,56 @@ async function handlePageEvents(entries: any[]): Promise<void> {
       if (event.message?.is_echo || senderId === pageId) {
         const recipientId: string | undefined = event.recipient?.id;
         if (!recipientId || recipientId === pageId) continue;
+        // Judged like the Instagram echo above.
+        let echoPrior: Message[] | null = null;
+        if (!(await isDmLead(business.id, "messenger", recipientId))) {
+          const gate = await judgeNewDmContact({
+            businessId: business.id,
+            channel: "messenger",
+            contactId: recipientId,
+            name: undefined,
+            message: dmMessage(event.message?.mid, "outbound", "messenger", content.body, eventSentAt(event)),
+            hasOwnWords: !!content.ownWords,
+            context: fbContext,
+          });
+          if (!gate.admit) continue;
+          echoPrior = gate.prior;
+        }
         const lead = await findOrCreateLeadByMessenger(business.id, recipientId);
+        if (echoPrior) {
+          const echoConversation = await findOrCreateConversation(lead.id, "messenger");
+          await writeDmThread(echoConversation.id, "messenger", echoPrior);
+          await takeDmSetAside(business.id, "messenger", recipientId, echoConversation.id, echoPrior, event.message?.mid);
+        }
         await captureDirectReply(lead.id, "messenger", content.body, "messenger_direct", event.message?.mid, eventSentAt(event));
         continue;
       }
 
-      // Shared content with no words from someone new: not picked up (see the Instagram path).
-      if (content.sharedOnly && !(await existingDmLead(business.id, messengerLeadId(senderId)))) continue;
-      const lead = await findOrCreateLeadByMessenger(business.id, senderId);
       const sentAt = eventSentAt(event);
+      const known = await isDmLead(business.id, "messenger", senderId);
+      // Shared content with no words from someone new: not picked up (see the Instagram path).
+      if (content.sharedOnly && !known) continue;
+      // Someone new: a customer, or someone chatting? (see the Instagram path)
+      let admittedPrior: Message[] | null = null;
+      if (!known) {
+        const gate = await judgeNewDmContact({
+          businessId: business.id,
+          channel: "messenger",
+          contactId: senderId,
+          name: undefined,
+          message: dmMessage(event.message?.mid, "inbound", "messenger", content.body, sentAt),
+          hasOwnWords: !!content.ownWords,
+          context: fbContext,
+        });
+        if (!gate.admit) continue;
+        admittedPrior = gate.prior;
+      }
+      const lead = await findOrCreateLeadByMessenger(business.id, senderId);
       const conversation = await findOrCreateConversation(lead.id, "messenger");
+      if (admittedPrior) {
+        await writeDmThread(conversation.id, "messenger", admittedPrior);
+        await takeDmSetAside(business.id, "messenger", senderId, conversation.id, admittedPrior, event.message?.mid);
+      }
       const isNewMessage = await createInboundMessageIfNew(conversation.id, content.body, sentAt, event.message?.mid, content.quickReplyPayload);
 
       // A reply-button tap — same handling as the Instagram path above.

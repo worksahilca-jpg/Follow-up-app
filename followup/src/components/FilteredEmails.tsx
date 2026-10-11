@@ -76,9 +76,14 @@ export default function FilteredEmails() {
                       provider. Named rather than left blank so a person
                       reading this list knows which app to go and look in. */}
                   <span className="font-medium">{item.senderName || item.senderEmail || item.senderPhone}</span>
-                  <span className="text-ink-soft"> · {item.senderEmail ?? item.senderPhone}</span>
+                  {/* A DM row's "phone" is an internal id (ig:…), never shown. */}
+                  {item.provider !== "instagram" && item.provider !== "messenger" && (
+                    <span className="text-ink-soft"> · {item.senderEmail ?? item.senderPhone}</span>
+                  )}
                   {item.provider === "outlook" && <span className="text-ink-soft"> · Outlook</span>}
                   {item.provider === "whatsapp" && <span className="text-ink-soft"> · WhatsApp</span>}
+                  {item.provider === "instagram" && <span className="text-ink-soft"> · Instagram</span>}
+                  {item.provider === "messenger" && <span className="text-ink-soft"> · Messenger</span>}
                   {item.subject && <div className="truncate">{item.subject}</div>}
                   <div className="text-ink-soft mt-0.5">{item.reason}</div>
                   <div className="text-ink-soft mt-0.5">{new Date(item.lastMessageAt).toLocaleString()}</div>

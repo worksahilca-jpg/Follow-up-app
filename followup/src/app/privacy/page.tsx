@@ -36,7 +36,7 @@ export default function PrivacyPage() {
 
       <main className="max-w-3xl mx-auto px-6 py-16">
         <h1 className="font-display text-3xl">Privacy Policy</h1>
-        <p className="text-sm text-ink-soft mt-2">Last updated: October 6, 2026</p>
+        <p className="text-sm text-ink-soft mt-2">Last updated: October 11, 2026</p>
 
         <div className="mt-10 space-y-10 text-sm leading-relaxed text-ink-soft">
           <section>
@@ -265,6 +265,40 @@ export default function PrivacyPage() {
               </a>{" "}
               stops future access immediately; it doesn&apos;t delete data already stored — use the account
               deletion request above for that.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="font-display text-xl text-ink">Cookies and your browser</h2>
+            <p className="mt-2">
+              FollowUp uses only the cookies it needs to work. There are no advertising or tracking cookies, and
+              nothing that follows you to other websites.
+            </p>
+            <ul className="mt-2 space-y-1 list-disc pl-5">
+              <li>
+                <strong className="text-ink">Signing in</strong> — keeps you signed in, for up to 7 days, and protects
+                the forms you submit.
+              </li>
+              <li>
+                <strong className="text-ink">Connecting an account</strong> — while you connect Gmail, Outlook,
+                Instagram or Facebook, a short-lived cookie makes sure the connection comes back to you. It ends after
+                10 minutes.
+              </li>
+              <li>
+                <strong className="text-ink">Team invites</strong> — remembers the invite link you opened until you
+                finish signing in, for up to an hour.
+              </li>
+            </ul>
+            <p className="mt-2">
+              Your browser also keeps a few small notes for FollowUp on your own device: a reply you started writing,
+              until you close the tab, so it isn&apos;t lost; the last day you opened the app, so we count it once;
+              whether you said &quot;Not now&quot; to phone alerts; and, on our home page, whether animations should
+              be calmer on a slower computer.
+            </p>
+            <p className="mt-2">
+              We count visits to our pages with Vercel Web Analytics, which uses no cookies and stores no personal
+              data; only the page&apos;s address is sent. If you open the WhatsApp section of Settings, Facebook&apos;s
+              own script loads so you can connect WhatsApp, and Facebook may set its own cookies under its own policy.
             </p>
           </section>
 

@@ -205,8 +205,16 @@ export default function ContactForm({ businessId }: { businessId: string }) {
               <button type="submit" className={s.btn} disabled={submitting}>
                 {submitting ? "Sending…" : "Send"}
               </button>
+              {/* What sending agrees to, said before the tap, in the business's name (A-229). */}
+              <p className={s.consent}>
+                By sending, you agree {businessName} may reply and follow up about your request. You can ask them
+                to stop at any time.
+              </p>
               <div className={s.formFoot}>
                 <PoweredBy />
+                <a href="/privacy" target="_blank" rel="noopener" className={s.footLink}>
+                  Privacy
+                </a>
               </div>
             </form>
           </>

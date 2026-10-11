@@ -3801,3 +3801,25 @@ anything, so you can reach out. Build it?"*, he chose *"Yes, build it"*.
 - The name only, never the address: it shows on a locked screen.
 - People coming back never buzz, nor does a refused sign-up, nor the founder's own sign-up.
 - It runs after the sign-in has answered and can't slow or stop anyone signing in.
+
+## A-229 — The policy pieces: cookies, 18+, and a consent line on the website form ^A-229
+
+**Approved:** 2026-10-11, founder. He listed 20 compliance items and asked "should we do all these things too?". I checked
+each against the code: most were already in place. He answered *"Add policies in addition to if you want to add
+something."*
+
+**What specifically:**
+- **Privacy page:** a new "Cookies and your browser" section that lists exactly what FollowUp keeps:
+  - the three cookie uses (signing in, up to 7 days; connecting an account, 10 minutes; team invites, up to an hour);
+  - the small notes kept on the device;
+  - Vercel Web Analytics (no cookies);
+  - Facebook's own script on the WhatsApp section of Settings.
+  - No advertising or tracking cookies, so no banner.
+- **Terms:** "You must be at least 18 years old to use FollowUp, and you use it for your business."
+- **Website contact form** (the one businesses put on their own sites):
+  - one quiet line under Send: *"By sending, you agree [business] may reply and follow up about your request. You can ask
+    them to stop at any time."*
+  - a "Privacy" link beside "Powered by FollowUp" at the foot.
+  - The business's name leads, as A-065 asks; FollowUp stays at the foot.
+- **Waiting on the founder:** the business's legal name and city on the site; the real refund rule before anyone is
+  charged.

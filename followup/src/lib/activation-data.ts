@@ -29,7 +29,16 @@ function earliest(...dates: (Date | null | undefined)[]): Date | null {
 
 export async function getActivation(now: Date = new Date()): Promise<Activation> {
   await requirePlatformAdmin();
+  return loadActivation(now);
+}
 
+/**
+ * The same, without the sign-in check, for the daily stuck-testers email
+ * (src/lib/stuckTesters.ts), which runs from a cron that has no session and
+ * is guarded by CRON_SECRET instead. Every other caller goes through
+ * getActivation.
+ */
+export async function loadActivation(now: Date = new Date()): Promise<Activation> {
   const testers = await prisma.accessRequest.findMany({
     where: { status: "approved" },
     orderBy: { createdAt: "desc" },

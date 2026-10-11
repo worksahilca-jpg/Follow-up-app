@@ -3773,3 +3773,19 @@ Then and now, C · The week in words) and chose *"A · Your week"*.
 - Then Booked, First reply and Won: rows on the phone, three columns on the computer. Then "See everything FollowUp
   did".
 - Below, unchanged from build 5: the eight-week bars on the computer, and "Everything else".
+
+## A-227 — A daily email names the testers who are stuck ^A-227
+
+**Approved:** 2026-10-10, founder. Asked *"a short daily email that lists testers who signed up but never connected
+anything, so you can reach out. Build it?"*, he chose *"Yes, build it"*.
+
+**What specifically:**
+- Each morning (with the daily setup check, 13:07 UTC), the founder gets one email when any tester is stuck short of
+  their first sent reply. Nobody stuck, no email.
+- It's the stuck list /admin already shows: each tester's name and business, where they stopped in plain words
+  ("Hasn't connected anything yet."), for how long, and the address to write to.
+- Only testers stuck up to two weeks are named; anyone longer is counted in one line, so a tester who left for good
+  doesn't make the email come every day forever.
+- Email only, to PLATFORM_ADMIN_EMAILS. Names and addresses stay out of Slack.
+- It covers every step short of a first sent reply (not signed in, nothing connected, no customers yet, a reply
+  waiting for an OK), not only "never connected". Each line says which, so he can write the right note.

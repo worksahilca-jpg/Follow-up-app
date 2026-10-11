@@ -3,6 +3,7 @@ import { requireCronSecret } from "@/lib/cronAuth";
 import { reportCronFailure } from "@/lib/monitoring";
 import { runSetupHealth } from "@/lib/setupHealth";
 import { refreshAllInstagramTokens } from "@/lib/instagramTokenRefresh";
+import { sendStuckTesters } from "@/lib/stuckTesters";
 
 export const maxDuration = 60;
 
@@ -18,6 +19,10 @@ export const maxDuration = 60;
  * own worth a separate cron entry; run first and on its own, so a failure
  * in either never stops the other.
  *
+ * And emails the founder the testers who are stuck short of their first
+ * sent reply (src/lib/stuckTesters.ts), quiet when there are none. Also on
+ * its own, for the same reason.
+ *
  * Protected by CRON_SECRET like every other /api/cron/* route.
  */
 export async function GET(request: NextRequest) {
@@ -29,9 +34,14 @@ export async function GET(request: NextRequest) {
     return null;
   });
 
+  const stuckTesters = await sendStuckTesters().catch((err) => {
+    reportCronFailure("setup-health", err, "stuck testers email");
+    return null;
+  });
+
   try {
     const result = await runSetupHealth();
-    return NextResponse.json({ success: true, ...result, instagramTokens });
+    return NextResponse.json({ success: true, ...result, instagramTokens, stuckTesters });
   } catch (err) {
     reportCronFailure("setup-health", err);
     const message = err instanceof Error ? err.message : "Setup check failed.";

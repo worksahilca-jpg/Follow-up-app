@@ -11,7 +11,7 @@ import { getRescueReport } from "@/lib/rescued";
 import { countCustomersAnswered } from "@/lib/weeklyDigest";
 import { withBasis } from "@/lib/showTheWork";
 import { countWorkSince, resultsLine, workLine } from "@/lib/workDone";
-import { describeWait, describeWaitClause, startOfLocalDay } from "@/lib/calmToday";
+import { describeWait, describeWaitClause, readyReason, startOfLocalDay, todayTier } from "@/lib/calmToday";
 import { countHandledToday } from "@/lib/handledToday";
 import { laterTodayAvailable } from "@/lib/later";
 import { loadComingUp } from "@/lib/comingUpData";
@@ -160,6 +160,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     ...a,
     wait: describeWait(a, now),
     waitClause: describeWaitClause(a, now),
+    // Today's order and the reason a ready customer is on top (A-230), once, here.
+    tier: todayTier(a, now),
+    why: readyReason(a),
     // "FollowUp told Sarah you're on it · 6:40 pm" (A-060), in the
     // business's own time, worked out here for the same reason as `wait`.
     toldAt: a.customerToldAt

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Check, ChevronRight } from "lucide-react";
 import { WARM_CARD } from "@/components/app/ReplyCard";
 import { oneQueue, summariseGroups, UNKNOWN_SOURCE_LABEL, WHOLE_QUEUE } from "@/lib/approvalGroups";
+import type { TodayTier } from "@/lib/calmToday";
 import { plainHoldReason } from "@/lib/holdReasons";
 import { Eyebrow, Initials } from "@/components/app/canvasBits";
 import { ChannelIcon } from "@/components/app/ChannelIcon";
@@ -74,6 +75,10 @@ export type ApprovalItem = PendingApproval & {
   waitClause?: string | null;
   /** When the customer was told the owner is on it, in the business's time (A-060). */
   toldAt?: string | null;
+  /** Where Today puts them (A-230), worked out on the server so both sides order alike. */
+  tier?: TodayTier;
+  /** Why a ready customer is on top: "Wants to book", "Asked the price", "Likely to book" (A-230). */
+  why?: string | null;
 };
 
 
@@ -370,6 +375,7 @@ function ApprovalCard({
   }
 
   const channelAndWait = [CHANNEL_NAME[item.leadLastMessageChannel ?? ""] ?? item.source, item.wait?.toLowerCase()].filter(Boolean).join(" · ");
+  // Why they are on top, first, so the order can be trusted (A-230): "Wants to book · Email · waiting 4 min".
 
   return (
     <article className={ONE} aria-label={`${item.leadName} is waiting for you`}>
@@ -382,7 +388,10 @@ function ApprovalCard({
           </Link>
           <p className="flex items-center gap-1.5 text-[12px] text-ink-faint">
             <ChannelIcon channel={item.leadLastMessageChannel} className="h-3.5 w-3.5 shrink-0" />
-            <span className="truncate">{channelAndWait}</span>
+            <span className="truncate">
+              {item.why && <span className="font-semibold text-ink">{item.why} · </span>}
+              {channelAndWait}
+            </span>
           </p>
         </div>
       </div>
@@ -850,6 +859,8 @@ export default function ApprovalQueue({
   // Who comes after them: the next in line, or the first when they were picked from further down.
   const at = selected ? queue.findIndex((i) => i.leadId === selected.leadId) : -1;
   const next = queue.slice(at + 1).find((i) => i.leadId !== selected?.leadId) ?? queue.find((i) => i.leadId !== selected?.leadId) ?? null;
+  // Everyone else waiting a day or more, as one row (A-230): the longest wait first, one tap opens them.
+  const older = queue.filter((i) => i.tier === "older" && i.leadId !== selected?.leadId && i.leadId !== next?.leadId);
 
   return (
     <div className="max-w-[640px]">
@@ -899,10 +910,29 @@ export default function ApprovalQueue({
           onClick={() => setSelectedId(next.leadId)}
           className="mt-2.5 flex min-h-11 w-full items-center gap-2.5 rounded-[14px] bg-card-2 px-3 py-2.5 text-left"
         >
-          <span className="shrink-0 text-[12px] font-medium text-ink-faint">Next</span>
+          <span className="shrink-0 text-[12px] font-medium text-ink-faint">
+            {next.why ? `Next · ${next.why}` : next.tier === "new" ? "Next · New" : "Next"}
+          </span>
           <span className="min-w-0 flex-1 truncate text-[13.5px]">
             <span className="font-semibold">{next.leadName}</span>
             {next.leadLastMessage && <span className="text-ink-soft"> · “{next.leadLastMessage.replace(/\s+/g, " ")}”</span>}
+          </span>
+          <ChevronRight className="h-[18px] w-[18px] shrink-0 text-ink-faint" aria-hidden="true" />
+        </button>
+      )}
+
+      {older.length > 0 && (
+        <button
+          type="button"
+          onClick={() => setSelectedId(older[0].leadId)}
+          className="mt-2.5 flex min-h-11 w-full items-center gap-2.5 rounded-[14px] border border-line bg-card px-3 py-2.5 text-left"
+        >
+          <span className="shrink-0 text-[12px] font-medium text-ink-faint">Older</span>
+          <span className="min-w-0 flex-1 truncate text-[13.5px]">
+            <span className="font-semibold">{older[0].leadName}</span>
+            <span className="text-ink-soft">
+              {older.length > 1 ? ` and ${older.length - 1} more · waiting a day or more, longest first` : " · waiting a day or more"}
+            </span>
           </span>
           <ChevronRight className="h-[18px] w-[18px] shrink-0 text-ink-faint" aria-hidden="true" />
         </button>

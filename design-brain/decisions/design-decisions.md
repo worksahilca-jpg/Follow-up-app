@@ -12022,3 +12022,63 @@ licences, deletion…) and asked whether to do them all. Checked against the cod
 - The consent line names the business only, not FollowUp. That is deliberate (A-065), but it means the Privacy link
   leads to FollowUp's policy rather than the business's own.
 - Accessibility has never had a full audit; contrast and keyboard follow our rules only.
+
+## 2026-10-11 — A customer who comes back a day later buzzes again (owner alerts)
+
+The founder's own test (an email from an address that had written once on Sep 25 and was never answered) was caught
+and drafted within two minutes, but brought no buzz. Both messages counted as one wait that had already been told.
+That rule was meant for three messages in a row, not someone coming back 16 days later, who is exactly the customer
+about to be lost. Asked *"Fix it so a customer who writes again a day or more later buzzes your phone again?"* →
+*"Yes, fix it"*.
+
+**Built:**
+- A wait now also starts when the customer writes again 24 hours or more after their previous message, answered or
+  not (`NEW_WAIT_GAP_MS`, `waitStart` in `src/lib/ownerAlerts.ts`).
+- Messages closer together are still one wait and one alert.
+- 5 new tests, one of them the founder's exact case. It fails without the fix.
+
+**Not changed:** quiet hours (22:00–07:00 in the business's time zone) and the daily email cap.
+
+## 2026-10-11 — Today's order, questioned and redecided (A-230)
+
+While testing his own Gmail, the founder asked what Today is for, then how it decides priority. Today was ordered by
+A-046: longest waiting first, so a 16-day-old practice customer sat above any fresh enquiry.
+- **Explained:**
+  - Today is the to-do list of customers who need him now, one at a time.
+  - The order was "longest waiting first, score only breaks ties".
+- **The weakness named:** a fresh, ready-to-book customer can wait behind someone long gone cold. Speed-to-lead
+  evidence (Harvard Business Review, 2011): answering within an hour makes a lead about 7× more likely to qualify.
+- **Compared with other tools:**
+  - support tools: nearest deadline first;
+  - sales tools: hottest score first;
+  - real-estate tools: new leads first;
+  - email: newest on top, which is exactly how old customers get buried.
+- **My first recommendation** was to leave the order until testers complain, per the plan's rule. He answered *"but we
+  need to figure out too"*, then approved the 4-tier order to be drawn (A-230).
+- **Inferred principle (inferred, not his words):** he wants the logic behind a screen settled and explainable before
+  testers see it, not left to chance.
+
+
+**Built (A-230), same day.** Checked on the real Today, phone and computer, with example customers in the local database
+(not production): Liam (asked for a time, 10 minutes ago), Noah (20 hours ago), Emma (3 hours ago), and eleven older ones.
+- **The order:**
+  - `todayTier` and `byTodayOrder` in `src/lib/calmToday.ts`: ready, new (24 h), older, check-ins; the longest wait
+    first inside each.
+  - The tier is worked out on the server and carried on each item, so the server and the browser can't order differently.
+- **"Ready" means:**
+  - the risk judge marked the draft as a date question ("Wants to book") or a price question ("Asked the price");
+  - or the buying score is 70 or more ("Likely to book").
+  - A check-in on someone quiet is never ready.
+- **On screen:**
+  - the reason leads the card's meta line in ink ("Wants to book · Email · waiting 10 min");
+  - "Next · New" or "Next · Wants to book";
+  - one "Older" row ("Ivy Sohal and 10 more · waiting a day or more, longest first") opens the longest wait.
+- **Tests:**
+  - the A-046 test that named the longest wait was rewritten to the new rule and marked superseded;
+  - 5 new tests, including Raj vs Lucía, the full order, the reasons, and just-browsing customers kept but lower.
+  - All tests pass.
+
+**Weak spots:**
+- "Likely to book" rests on the AI's buying score, which can be wrong. Low-score customers stay on the list, just lower.
+- The reason is small text in the meta line. That keeps it calm, but it's easy to miss.
+- In the local example the reason was set by hand; on live data it comes from the risk judge and the score.

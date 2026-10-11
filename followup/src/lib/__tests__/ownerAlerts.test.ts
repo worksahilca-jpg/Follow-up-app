@@ -34,6 +34,7 @@ const h = vi.hoisted(() => ({
   users: [] as { id: string; email: string; businessId: string; role: string; alertEmailEnabled: boolean }[],
   lastReply: new Map<string, Date>(),
   firstInbound: new Map<string, Date>(),
+  inbound: new Map<string, Date[]>(),
   sendPushToUser: vi.fn(),
   pushConfigured: { value: true },
 }));
@@ -71,6 +72,12 @@ vi.mock("@/lib/db", () => {
         }),
       },
       message: {
+        // The customer's unanswered messages, newest first: every one set in `inbound`, else the one in `firstInbound`.
+        findMany: vi.fn(async ({ where }: { where: { conversation: { leadId: string } } }) => {
+          const leadId = where.conversation.leadId;
+          const all = h.inbound.get(leadId) ?? (h.firstInbound.has(leadId) ? [h.firstInbound.get(leadId)!] : []);
+          return [...all].sort((a, b) => b.getTime() - a.getTime()).map((sentAt) => ({ sentAt }));
+        }),
         findFirst: vi.fn(async ({ where }: { where: { direction: string; conversation: { leadId: string } } }) => {
           const leadId = where.conversation.leadId;
           if (where.direction === "outbound") {
@@ -137,7 +144,7 @@ vi.mock("@/lib/webPush", () => ({
   sendPushToUser: h.sendPushToUser,
 }));
 
-import { runOwnerAlerts, judgeWait, quote, ALERT_QUOTE_LIMIT, ALERT_RECENT_MS, BACKFILL_SLACK_MS, DAILY_EMAIL_CAP, inQuietHours, newsSince } from "@/lib/ownerAlerts";
+import { runOwnerAlerts, judgeWait, quote, ALERT_QUOTE_LIMIT, ALERT_RECENT_MS, BACKFILL_SLACK_MS, DAILY_EMAIL_CAP, inQuietHours, newsSince, waitStart, NEW_WAIT_GAP_MS } from "@/lib/ownerAlerts";
 import { __resetAlertEmailLogForTests } from "@/lib/alertEmail";
 
 const NOW = new Date("2026-09-25T15:00:00Z");
@@ -184,6 +191,7 @@ beforeEach(() => {
   h.ready.length = 0;
   h.lastReply.clear();
   h.firstInbound.clear();
+  h.inbound.clear();
   h.users.length = 0;
   h.users.push({ id: "owner1", email: "owner@shop.test", businessId: "biz1", role: "ADMIN", alertEmailEnabled: true });
   h.pushConfigured.value = true;
@@ -303,6 +311,49 @@ describe("once per waiting customer", () => {
     h.leads[0].suggestedDraftedFor = minutesAgo(2);
     await runOwnerAlerts(NOW);
     expect(emails()).toHaveLength(2);
+  });
+
+  // Found live 2026-10-11: a test customer who wrote again 16 days after an unanswered first message brought no
+  // buzz, because both messages counted as one wait that had already been told.
+  it("alerts again when the customer comes back a day or more later, even if nobody answered", async () => {
+    addCustomer(1);
+    const firstWrote = minutesAgo(60 * 24 * 16);
+    h.inbound.set("lead1", [firstWrote, minutesAgo(5)]);
+    // The first message's wait was told sixteen days ago.
+    h.rows.push({
+      id: "old",
+      userId: "owner1",
+      businessId: "biz1",
+      leadId: "lead1",
+      waitStartedAt: firstWrote,
+      kind: "customer",
+      emailedAt: firstWrote,
+      pushedAt: firstWrote,
+      createdAt: firstWrote,
+    });
+    await runOwnerAlerts(NOW);
+    expect(emails()).toHaveLength(1);
+    expect(h.sendPushToUser).toHaveBeenCalledTimes(1);
+  });
+
+  it("stays one alert for messages less than a day apart", async () => {
+    addCustomer(1);
+    const firstWrote = minutesAgo(60 * 20);
+    h.inbound.set("lead1", [firstWrote, minutesAgo(5)]);
+    h.rows.push({
+      id: "old",
+      userId: "owner1",
+      businessId: "biz1",
+      leadId: "lead1",
+      waitStartedAt: firstWrote,
+      kind: "customer",
+      emailedAt: firstWrote,
+      pushedAt: firstWrote,
+      createdAt: firstWrote,
+    });
+    await runOwnerAlerts(NOW);
+    expect(emails()).toHaveLength(0);
+    expect(h.sendPushToUser).not.toHaveBeenCalled();
   });
 
   it("goes to every admin when the lead is unassigned, and only its assignee when it is not", async () => {
@@ -629,5 +680,23 @@ describe("\"Nadia is ready\" — the qualification alert", () => {
     addReady(1, { assignedToId: "agent2" });
     await runOwnerAlerts(NOW);
     expect(h.sendPushToUser.mock.calls.map((c) => c[0])).toEqual(["agent2"]);
+  });
+});
+
+describe("waitStart — where the customer's current wait began", () => {
+  const at = (h: number) => new Date(NOW.getTime() - h * 3_600_000);
+
+  it("is the first of a run of messages, newest first", () => {
+    expect(waitStart([at(1), at(3), at(20)])).toEqual(at(20));
+  });
+
+  it("starts again after a gap of a day or more", () => {
+    expect(waitStart([at(1), at(3), at(3 + 24)])).toEqual(at(3));
+    expect(waitStart([at(0), at(24 * 16)])).toEqual(at(0));
+    expect(NEW_WAIT_GAP_MS).toBe(24 * 3_600_000);
+  });
+
+  it("is nothing when the customer hasn't written", () => {
+    expect(waitStart([])).toBeNull();
   });
 });

@@ -25,7 +25,7 @@ export default function TermsPage() {
 
       <main className="max-w-3xl mx-auto px-6 py-16">
         <h1 className="font-display text-3xl">Terms of Service</h1>
-        <p className="text-sm text-ink-soft mt-2">Last updated: September 25, 2026</p>
+        <p className="text-sm text-ink-soft mt-2">Last updated: October 11, 2026</p>
 
         <div className="mt-10 space-y-10 text-sm leading-relaxed text-ink-soft">
           <section>
@@ -55,8 +55,9 @@ export default function TermsPage() {
           <section>
             <h2 className="font-display text-xl text-ink">3. Your account</h2>
             <p className="mt-2">
-              You&apos;re responsible for keeping your account credentials secure and for all activity under
-              your account. You must provide accurate information and keep it up to date.
+              You must be at least 18 years old to use FollowUp, and you use it for your business. You&apos;re
+              responsible for keeping your account credentials secure and for all activity under your account. You
+              must provide accurate information and keep it up to date.
             </p>
           </section>
 

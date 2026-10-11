@@ -11997,3 +11997,28 @@ him; the next morning's stuck-testers email (A-227) still names anyone who hasn'
 
 Also seen in the live numbers today: only 2 testers were added through /admin. Anyone let in through the older
 ALLOWED_EMAILS list isn't in the daily stuck email or the funnel on /admin. Told the founder: add testers on /admin.
+
+## 2026-10-11 — The founder's 20-item compliance list, checked (A-229)
+
+He pasted a 20-item list (privacy, terms, refunds, cookies, consent, dark patterns, fake reviews, accessibility,
+licences, deletion…) and asked whether to do them all. Checked against the code before answering:
+- **Already done:**
+  - privacy and terms pages (with the Google and Meta sections);
+  - deletion and export in Settings → Your data;
+  - unsubscribe links on emails sent to customers;
+  - no fake reviews, ratings or invented numbers (the dollar amounts are inside the labelled demo);
+  - licensed photos (Adobe Stock, not AI) and open-licence fonts;
+  - no tracking cookies;
+  - plain pricing with cancel-any-time;
+  - sign-ins keep only the browser type and city, never the IP.
+- **Added (A-229):** the cookie section, the 18+ line, and the form's consent line with a Privacy link.
+- **Left to the founder:**
+  - the business name and city on the site;
+  - the refund rule (the terms say non-refundable except where law requires);
+  - a lawyer's read before charging anyone. I said plainly that I can't say what the law requires.
+
+**Weak spots:**
+- The form now has one more line of small print, so the card is ~50px taller.
+- The consent line names the business only, not FollowUp. That is deliberate (A-065), but it means the Privacy link
+  leads to FollowUp's policy rather than the business's own.
+- Accessibility has never had a full audit; contrast and keyboard follow our rules only.

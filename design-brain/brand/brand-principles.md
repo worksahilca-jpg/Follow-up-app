@@ -307,3 +307,17 @@ kept. How we keep it smooth (measured on the home page, see design-decisions 202
 - Things that move on every scroll frame get their own layer (`will-change: transform`).
 - Check with a trace before calling it done: no main-thread task over 16 ms while scrolling, desk and phone.
 
+
+## A reply answers what they asked, the way a person would (2026-10-11)
+
+**Founder,** after testing his own Instagram: *"dms works need more improvement"*, then *"explain why it sent that reply
+of that message"*. The customer asked *"how much do you charge and are you free?"* and the draft asked which listing
+they meant. The next one answered *"looking in Etobicoke"* with *"Looking in Etobicoke works. Is this for a weekday
+showing or weekend showing?"*
+- **Every question they asked gets an answer first**, or a plain "I'll confirm that". Then, at most, one question of
+  ours. A reply that skips a question tells them nobody read it.
+- **Read the question the way the business would.** "How much do you charge" to a realtor is the realtor's fee, not a
+  home's price.
+- **Don't jump ahead of the customer.** No showing before there's a home to show. Ask what they're looking for first.
+- **Sound like the owner on their phone**, warm and plain. Never hand their words back as a verdict ("Etobicoke works.",
+  "Noted.").

@@ -25,7 +25,17 @@ const PLAYBOOKS: Record<string, string> = {
     "at, never give a value, range or opinion: say the agent will look at the home and recent sales nearby and " +
     "come back with numbers. Never give an opinion on where prices or the market are heading, on whether an " +
     "offer will be accepted, or any mortgage, legal or tax advice. Commission and fees are a price like any " +
-    "other. Use the plain words agents use (listing, showing, offer, closing), and never sales pressure. ",
+    "other. " +
+    // 2026-10-11, the founder's Instagram test: "how much do you charge"
+    // was read as a home's price and answered with "which place do you
+    // mean?", and "looking in Etobicoke" got "weekday or weekend showing?"
+    // with no home to show.
+    "\"How much do you charge\", \"what's your fee\" and the like ask about the agent's own fee, not a home's " +
+    "price, unless they named a home: answer with the commission or fee in WHAT THIS BUSINESS HAS TOLD CUSTOMERS " +
+    "when it is listed, otherwise follow the price rule above. Offer a showing only once they have named a " +
+    "specific home or listing. While they are still describing what they want (an area, a type or size of home), " +
+    "ask about what they are looking for instead, the way an agent learns what to send them. " +
+    "Use the plain words agents use (listing, showing, offer, closing), and never sales pressure. ",
 };
 
 /** The playbook for this trade, or "" when there is none. */

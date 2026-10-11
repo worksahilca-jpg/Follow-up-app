@@ -16,6 +16,7 @@ vi.mock("@/lib/db", () => ({ prisma: { business: { findUnique: (...a: unknown[])
 
 import { generateFollowUpMessage } from "@/lib/integrations/openai";
 import { playbookFor, businessTrade } from "@/lib/tradePlaybooks";
+import { draftDm } from "@/lib/dmDrafting";
 
 const conversation = [
   { id: "m1", direction: "inbound", body: "Hi, is the 3-bedroom on Maple St still available? Could I see it Saturday?", date: new Date().toISOString(), channel: "email" },
@@ -40,6 +41,13 @@ describe("the playbook", () => {
     expect(p).toMatch(/those always win/);
   });
 
+  it("reads \"how much do you charge\" as the agent's fee, and saves the showing for a named home (2026-10-11)", () => {
+    const p = playbookFor("Real estate");
+    expect(p).toMatch(/ask about the agent's own fee, not a home's price/);
+    expect(p).toMatch(/answer with the commission or fee in WHAT THIS BUSINESS HAS TOLD CUSTOMERS/);
+    expect(p).toMatch(/Offer a showing only once they have named a specific home or listing/);
+  });
+
   it("is nothing for a trade without one, or no trade at all", () => {
     expect(playbookFor("Legal")).toBe("");
     expect(playbookFor("Other")).toBe("");
@@ -60,6 +68,31 @@ describe("the reply writer", () => {
     await generateFollowUpMessage({ name: "Priya Sharma", conversation });
     expect(withOther).toBe(systemPrompt());
     expect(withOther).not.toContain("REAL ESTATE AGENT");
+  });
+});
+
+describe("the DM writer (founder's Instagram test, 2026-10-11)", () => {
+  const dmThread = [
+    { id: "d1", direction: "inbound", body: "Hi, how much do you charge and are you free?", date: new Date().toISOString(), channel: "instagram" },
+  ] as never;
+
+  beforeEach(() => {
+    create.mockResolvedValue({
+      choices: [{ message: { content: JSON.stringify({ body: "I'll confirm my fee and when I'm free. Which area are you looking in?", buttons: [] }) } }],
+    });
+  });
+
+  it("gets the realtor playbook too, which it never did", async () => {
+    await draftDm("Priya Sharma", dmThread, [], undefined, undefined, undefined, [], null, "Real estate");
+    expect(systemPrompt()).toContain("THIS BUSINESS IS A REAL ESTATE AGENT");
+  });
+
+  it("answers every question they asked before asking its own, and never hands their words back as a verdict", async () => {
+    await draftDm("Priya Sharma", dmThread, [], undefined);
+    const prompt = systemPrompt();
+    expect(prompt).toMatch(/their questions come first/);
+    expect(prompt).toMatch(/cover every one, briefly and in the order asked/);
+    expect(prompt).toMatch(/Never hand their own words back as a one-line verdict/);
   });
 });
 

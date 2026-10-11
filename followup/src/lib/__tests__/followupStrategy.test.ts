@@ -417,6 +417,17 @@ describe("which new message the fresh pass answers", () => {
     expect(freshInboundToAnswer(leadWith([later], "instagram", { suggestedDraftedFor: later.sentAt }), Date.now())).toEqual(later.sentAt);
   });
 
+  // Founder's Instagram test, 2026-10-11: "too slow". On a holding
+  // account nothing goes out, so there is no head start to give the owner.
+  it("on an account that holds every reply, puts a DM on Today as soon as its draft is written", () => {
+    const m = row("inbound", 10_000);
+    expect(freshInboundToAnswer(leadWith([m], "instagram", { suggestedDraftedFor: m.sentAt }), Date.now(), true)).toEqual(m.sentAt);
+    expect(freshInboundToAnswer(leadWith([m], "instagram", { suggestedDraftedFor: m.sentAt }), Date.now(), false)).toBeNull();
+    // No draft yet: the capture request still gets its minute.
+    const early = row("inbound", 30_000);
+    expect(freshInboundToAnswer(leadWith([early], "instagram"), Date.now(), true)).toBeNull();
+  });
+
   it("waits for scoring's draft, but not past two minutes", () => {
     const m = row("inbound", 90_000);
     expect(freshInboundToAnswer(leadWith([m]), Date.now())).toBeNull();

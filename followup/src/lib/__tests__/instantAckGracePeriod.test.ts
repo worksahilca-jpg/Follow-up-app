@@ -95,6 +95,7 @@ vi.mock("@/lib/sender", () => ({
   composeFollowUpEmail: vi.fn(async (first: string, _b: string, body: string) => `Hi ${first},\n\n${body}\n\nBest,\nManoj`),
 }));
 vi.mock("@/lib/sending", () => ({ sendFollowUpToLead: vi.fn(async () => ({ success: true })) }));
+vi.mock("@/lib/audit", () => ({ recordAudit: vi.fn(async () => true) }));
 vi.mock("@/lib/suppression", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/suppression")>();
   return { ...actual, isSuppressed: vi.fn(async () => false) };
@@ -104,6 +105,7 @@ import { prisma } from "@/lib/db";
 import { sendFollowUpToLead } from "@/lib/sending";
 import { isSuppressed } from "@/lib/suppression";
 import { generateInstantReply } from "@/lib/integrations/openai";
+import { recordAudit } from "@/lib/audit";
 import { acknowledgeNewLead, runDueInstantAcks, DM_ACK_GRACE_PERIOD_MS, ACK_CLAIM_LEASE_MS } from "@/lib/acknowledge";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -155,6 +157,19 @@ beforeEach(() => {
   send.mockResolvedValue({ success: true });
   suppressed.mockResolvedValue(false);
   generateReply.mockResolvedValue("Got it — I'll get you the exact price and follow up shortly.");
+});
+
+describe("an account that holds every reply (founder's Instagram test, 2026-10-11)", () => {
+  it("puts the DM on Today at once: nothing parked, nothing sent, the owner told", async () => {
+    businessRow = { ...businessRow, holdAllForApproval: true };
+    const result = await inboundDm();
+    expect(result).toEqual({ sent: false, reason: "held for approval" });
+    expect(lead.ackDueAt).toBeNull();
+    expect(send).not.toHaveBeenCalled();
+    expect(generateReply).not.toHaveBeenCalled();
+    expect(recordAudit).toHaveBeenCalledWith({ businessId: "biz1", userId: null }, "ai.hold", expect.objectContaining({ targetId: "lead1" }));
+    expect(notifications).toHaveLength(1);
+  });
 });
 
 describe("the two-minute wait itself", () => {

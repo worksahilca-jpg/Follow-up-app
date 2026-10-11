@@ -1,4 +1,5 @@
 import type { PendingApproval } from "@/lib/pendingApprovals";
+import { SCORE_HIGH } from "@/lib/scoreThresholds";
 
 /**
  * A calm Today (design brain A-046, the Todoist study): the order is the
@@ -42,6 +43,51 @@ export function byLongestWaiting(a: PendingApproval, b: PendingApproval): number
   }
   if (a.score !== b.score) return b.score - a.score;
   return b.heldAt.getTime() - a.heldAt.getTime();
+}
+
+/**
+ * Today's order (A-230, founder 2026-10-11: "Yes, build it"): the customer you would lose soonest on top.
+ *  1. ready — they asked for a time or a price, or FollowUp rates them likely to buy (score 70+);
+ *  2. new — wrote in the last day;
+ *  3. older — waiting a day or more;
+ *  4. checkin — FollowUp's check-in on someone quiet (nobody is waiting on an answer).
+ * A fresh, ready customer cools within hours; someone who wrote two weeks ago won't cool much more by tomorrow.
+ * Inside each tier the longest wait still goes first, so nobody new waits long either.
+ */
+export type TodayTier = "ready" | "new" | "older" | "checkin";
+const TIER_RANK: Record<TodayTier, number> = { ready: 0, new: 1, older: 2, checkin: 3 };
+/** A customer is "new" for a day after their last message. */
+export const NEW_FOR_MS = 24 * 60 * 60_000;
+
+type Tierable = Pick<PendingApproval, "trigger" | "leadLastMessageAt" | "score" | "riskTopic">;
+
+/** Why a ready customer is on top, in the owner's words, or null for everyone else. */
+export function readyReason(a: Tierable): string | null {
+  if (!isWaitingOnReply(a)) return null;
+  if (a.riskTopic === "date") return "Wants to book";
+  if (a.riskTopic === "price") return "Asked the price";
+  if (a.score >= SCORE_HIGH) return "Likely to book";
+  return null;
+}
+
+export function todayTier(a: Tierable, now: Date): TodayTier {
+  if (!isWaitingOnReply(a)) return "checkin";
+  if (readyReason(a)) return "ready";
+  const wrote = since(a);
+  return wrote !== null && now.getTime() - wrote < NEW_FOR_MS ? "new" : "older";
+}
+
+/**
+ * Today's order (A-230). The tier is worked out on the server and carried on the item (`tier`), so the server's
+ * and the browser's orders can't disagree; without one it is worked out against `now`.
+ */
+export function byTodayOrder(now: Date = new Date()) {
+  return (a: PendingApproval & { tier?: TodayTier }, b: PendingApproval & { tier?: TodayTier }): number => {
+    const ta = TIER_RANK[a.tier ?? todayTier(a, now)];
+    const tb = TIER_RANK[b.tier ?? todayTier(b, now)];
+    if (ta !== tb) return ta - tb;
+    return byLongestWaiting(a, b);
+  };
 }
 
 function span(ms: number, long = false): string {

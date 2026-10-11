@@ -7,7 +7,7 @@ import { describe, it, expect, vi } from "vitest";
 const { findMany } = vi.hoisted(() => ({ findMany: vi.fn() }));
 vi.mock("@/lib/db", () => ({ prisma: { auditEvent: { findMany } } }));
 
-import { byLongestWaiting, describeWait, describeWaitClause, startOfLocalDay } from "@/lib/calmToday";
+import { byLongestWaiting, byTodayOrder, describeWait, describeWaitClause, readyReason, startOfLocalDay, todayTier } from "@/lib/calmToday";
 import { countHandledToday } from "@/lib/handledToday";
 import { groupApprovalsBySource, summariseGroups } from "@/lib/approvalGroups";
 import type { PendingApproval } from "@/lib/pendingApprovals";
@@ -41,12 +41,62 @@ describe("longest waiting first", () => {
     expect(list.sort(byLongestWaiting).map((x) => x.leadName)).toEqual(["High", "Low"]);
   });
 
-  it("names the longest-waiting person in the line above the queue", () => {
+  // SUPERSEDED by A-230 (2026-10-11): this used to name Priya, the longest wait. A customer ready to buy now comes
+  // first; among the rest the longest wait still leads (see "Today's order" below).
+  it("names the ready customer in the line above the queue, ahead of a longer wait", () => {
     const groups = groupApprovalsBySource([
       a({ leadName: "Grace", source: "Messenger", score: 99, leadLastMessageAt: ago(0.3) }),
       a({ leadName: "Priya", source: "Instagram", score: 20, leadLastMessageAt: ago(5) }),
     ]);
-    expect(summariseGroups(groups).focusOn?.leadName).toBe("Priya");
+    expect(summariseGroups(groups).focusOn?.leadName).toBe("Grace");
+  });
+});
+
+describe("Today's order (A-230): the customer you'd lose soonest on top", () => {
+  const order = (list: PendingApproval[]) => [...list].sort(byTodayOrder(NOW)).map((x) => x.leadName);
+
+  it("puts a fresh customer who wants to book above someone who has waited 16 days", () => {
+    expect(
+      order([
+        a({ leadName: "Lucia", score: 30, leadLastMessageAt: ago(16 * 24) }),
+        a({ leadName: "Raj", score: 40, riskTopic: "date", leadLastMessageAt: ago(0.1) }),
+      ])
+    ).toEqual(["Raj", "Lucia"]);
+  });
+
+  it("goes ready, then new (last 24 hours), then older, then check-ins; the longest wait first inside each", () => {
+    expect(
+      order([
+        a({ leadName: "CheckIn", trigger: "silence", leadLastMessageAt: ago(300) }),
+        a({ leadName: "Older2", leadLastMessageAt: ago(30) }),
+        a({ leadName: "New1h", leadLastMessageAt: ago(1) }),
+        a({ leadName: "Older9d", leadLastMessageAt: ago(9 * 24) }),
+        a({ leadName: "Price", riskTopic: "price", leadLastMessageAt: ago(2) }),
+        a({ leadName: "New20h", leadLastMessageAt: ago(20) }),
+        a({ leadName: "Hot", score: 85, leadLastMessageAt: ago(40) }),
+      ])
+    ).toEqual(["Hot", "Price", "New20h", "New1h", "Older9d", "Older2", "CheckIn"]);
+  });
+
+  it("says why a ready customer is on top, and nothing for anyone else", () => {
+    expect(readyReason(a({ riskTopic: "date" }))).toBe("Wants to book");
+    expect(readyReason(a({ riskTopic: "price" }))).toBe("Asked the price");
+    expect(readyReason(a({ score: 70 }))).toBe("Likely to book");
+    expect(readyReason(a({ score: 69 }))).toBeNull();
+    // A check-in on someone quiet is never "ready": nobody is waiting on an answer.
+    expect(readyReason(a({ trigger: "silence", score: 95 }))).toBeNull();
+  });
+
+  it("keeps a just-browsing customer below a real buyer, but on the list", () => {
+    expect(todayTier(a({ score: 15, leadLastMessageAt: ago(0.2) }), NOW)).toBe("new");
+    expect(todayTier(a({ score: 15, leadLastMessageAt: ago(25) }), NOW)).toBe("older");
+    expect(todayTier(a({ score: 15, leadLastMessageAt: null }), NOW)).toBe("older");
+  });
+
+  it("orders by the tier the server worked out when the item carries one", () => {
+    const fresh = { ...a({ leadName: "SaidNew", leadLastMessageAt: ago(30) }), tier: "new" as const };
+    const ready = { ...a({ leadName: "SaidReady", leadLastMessageAt: ago(1) }), tier: "ready" as const };
+    expect([fresh, ready].sort(byTodayOrder(NOW)).map((x) => x.leadName)).toEqual(["SaidReady", "SaidNew"]);
   });
 });
 

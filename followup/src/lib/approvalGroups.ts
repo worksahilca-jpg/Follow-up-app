@@ -39,7 +39,7 @@
  */
 import { isHeldOnlyByApprovalSetting, BACKLOG_BEFORE_PERMISSION_REASON } from "@/lib/holdReasons";
 import type { PendingApproval } from "@/lib/pendingApprovals";
-import { byLongestWaiting } from "@/lib/calmToday";
+import { byTodayOrder } from "@/lib/calmToday";
 import { unconfirmedClaim } from "@/lib/grounding";
 
 /**
@@ -147,7 +147,7 @@ export function groupApprovalsBySource(approvals: PendingApproval[]): ApprovalGr
     // (a daily cap, a closed messaging window) then spends what it has
     // on the leads worth the most rather than on whichever came back
     // from the database first.
-    needsYou.sort(byLongestWaiting);
+    needsYou.sort(byTodayOrder());
     safeToSend.sort(byScoreThenRecency);
 
     groups.push({
@@ -167,10 +167,10 @@ export function groupApprovalsBySource(approvals: PendingApproval[]): ApprovalGr
     const aHas = a.topNeedsYouScore !== null;
     const bHas = b.topNeedsYouScore !== null;
     if (aHas !== bHas) return aHas ? -1 : 1;
-    // The source whose first card has waited longest goes first (A-046),
+    // The source whose first card comes first in Today's order goes first (A-230),
     // so the top of the page and the "Start with" line are the same person.
     if (aHas && bHas) {
-      const byWait = byLongestWaiting(a.needsYou[0], b.needsYou[0]);
+      const byWait = byTodayOrder()(a.needsYou[0], b.needsYou[0]);
       if (byWait !== 0) return byWait;
     }
     if (a.topScore !== b.topScore) return b.topScore - a.topScore;
@@ -184,8 +184,8 @@ export function groupApprovalsBySource(approvals: PendingApproval[]): ApprovalGr
 }
 
 /**
- * The whole queue as one list (founder, 2026-10-05, A-087): everyone who needs the owner, longest
- * waiting first, whatever channel they wrote on, and every routine draft in one pile. The grouping
+ * The whole queue as one list (founder, 2026-10-05, A-087): everyone who needs the owner, in Today's
+ * order (A-230: ready to book, new, older, check-ins; longest wait first within each), whatever channel they wrote on, and every routine draft in one pile. The grouping
  * above asked an owner who lives in Gmail to read eight headings (Gmail, Website form, CSV import…)
  * to find the next person; the channel is now the small icon on each row. One group, or none.
  */
@@ -196,7 +196,7 @@ export function oneQueue(approvals: PendingApproval[]): ApprovalGroup[] {
   const needsYou: PendingApproval[] = [];
   const safeToSend: PendingApproval[] = [];
   for (const a of approvals) (isSafeToSendInBulk(a) ? safeToSend : needsYou).push(a);
-  needsYou.sort(byLongestWaiting);
+  needsYou.sort(byTodayOrder());
   safeToSend.sort(byScoreThenRecency);
   return [
     {

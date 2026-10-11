@@ -856,6 +856,7 @@ asked about explicitly.
 **What specifically:**
 - **Order:** "Needs your OK" puts drafts that need judgement first, then longest waiting first. Each card shows the
   wait as a fact about the customer: "Waiting 5 h" when they wrote, "Quiet 6 days" for a check-in.
+  **SUPERSEDED (2026-10-11) for the order → A-230.** The wait shown as a fact stays.
 - **Start line:** "Start with Priya. She's waited 5 hours and asked about a price." No score.
 - **An end:**
   - Desktop gets A-031's handled line: "1 of 5 handled today · When the list is empty, you're done for today."
@@ -3823,3 +3824,25 @@ something."*
   - The business's name leads, as A-065 asks; FollowUp stays at the foot.
 - **Waiting on the founder:** the business's legal name and city on the site; the real refund rule before anyone is
   charged.
+
+## A-230 — Today's order: the customer you'd lose soonest on top ^A-230
+
+**Approved (to draw first):** 2026-10-11, founder. He asked how Today decides priority ("how we diffrentiating that what is
+the priority", "why should we keep new one first ??", "what other softwares usually do ??"). He was shown an example: Raj
+wrote 2 minutes ago asking for a Saturday viewing, while Lucía has waited 16 days. He then answered *"Yes, draw it first"*
+to:
+1. **Ready to book** — they asked for a time, a viewing or a price. Always on top.
+2. **New** — wrote in the last 24 hours, longest waiting first among them.
+3. **Older** — waiting more than a day, longest waiting first.
+4. **Going quiet** — check-ins, at the bottom as now.
+- **Each card says why it's there** ("Wants to book", "Waiting 3 days"), so the order can be trusted.
+- **The principle:** the customer you would lose soonest goes first. A fresh, ready customer cools within hours. Someone
+  who wrote two weeks ago won't cool much more by tomorrow.
+- **Status:** drawn on the real Today (phone and computer, now beside new), then approved: *"Yes, build it"*
+  (2026-10-11). In the drawing:
+  - the open card's meta line leads with the reason ("**Wants to book** · Email · 4 min ago");
+  - the next row reads "Next · New";
+  - one "Older" row covers everyone waiting a day or more ("Ivy Sohal and 11 more · waiting a day or more, longest
+    first");
+  - "Going quiet" stays last.
+

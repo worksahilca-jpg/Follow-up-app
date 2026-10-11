@@ -3860,3 +3860,5 @@ messages (read with his permission), then he answered *"Yes, fix all 4"* and *"Y
 5. **Speed:** on an account that holds every reply (the default), a DM is on Today in seconds, not two minutes. Nothing
    sends without the owner's tap either way. He first read this as "send right away"; it is not.
 - **Still open:** "how it looked". I asked for a screenshot of what looked off; not yet received.
+- **Confirmed live (2026-10-11, PR #489):** he re-sent *"Hi, how much do you charge and are you free?"* and said
+  *"Yes, it's better"*: the new reply answered both questions. He sent it.

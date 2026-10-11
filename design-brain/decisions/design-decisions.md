@@ -12115,3 +12115,8 @@ more improvement"*: the reply, the speed, and how it looked.
 - Without the 2-minute wait, three quick DMs on a holding account can make more than one bell notification. The phone
   buzz is still once per wait.
 - "How it looked" is not fixed: I don't yet know what looked wrong.
+
+**Merged and re-tested (PR #489), same night.** He re-sent the same first question from his other account. The draft was
+rewritten for it within seconds of arriving, and he answered *"Yes, it's better"* and sent it. The customer was already on
+Today from an earlier unanswered DM, so this test did not exercise the new-customer speed path; that waits for the next
+brand-new DM.

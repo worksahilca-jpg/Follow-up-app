@@ -11981,7 +11981,7 @@ Build it?"* → *"Yes, build it"*.
 
 **Built:**
 - In the sign-in callback, right after a new account is made, using the same phone-buzz sender the founder tested on
-  his phone (A-216 era, "Yes it buzzed").
+  his phone (PR #471; he confirmed "Yes it buzzed").
 - Scheduled with `after()`, so it never delays the sign-in.
 - The push tag is a hash of the address, so the address isn't in the notification at all.
 - 10 new tests:

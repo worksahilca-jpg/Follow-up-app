@@ -236,12 +236,13 @@ export default function InstagramConfig() {
                   >
                     Connect with Instagram
                   </a>
-                  {/* Meta's rule while the app is unreviewed, said before
-                      the click rather than discovered as a refusal after it
-                      (docs/tester-onboarding-checklist.md). */}
+                  {/* Meta approved Instagram messaging on 2026-10-09
+                      (research/integrations/2026-10-10-meta-app-review-approved.md),
+                      so any owner can connect; the one thing that still
+                      refuses is a personal account, said before the click. */}
                   <p className="mt-2 text-[13px] text-ink-soft">
-                    While FollowUp is in beta, Meta only lets accounts Sahil added as testers connect. If Meta refuses,
-                    ask him to add you.
+                    Use your business Instagram. It needs to be a Business or Creator account (in Instagram: Settings,
+                    then Account type and tools).
                   </p>
                 </div>
               ) : (

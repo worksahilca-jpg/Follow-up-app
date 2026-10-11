@@ -37,6 +37,7 @@ import { prisma } from "@/lib/db";
 import { grantBetaPlan } from "@/lib/billing";
 import { inviteTokenMatches, readInviteCookie } from "@/lib/inviteToken";
 import { captureSignIn } from "@/lib/signIns";
+import { tellFounderAboutSignup } from "@/lib/signupBuzz";
 
 /**
  * The founder's tester list, read per call rather than at module load.
@@ -286,7 +287,7 @@ export const authOptions: NextAuthOptions = {
       // already gone), so a losing concurrent request now completes sign-
       // in successfully instead (research/audit/2026-09-09-fifth-pass-
       // audit.md finding #2).
-      const joinedBusinessId = await prisma.$transaction(async (tx) => {
+      const joined = await prisma.$transaction(async (tx) => {
         // An invite is proof that an admin named THIS email, so joining on
         // it is the intended flow — but it had no expiry, and an invite
         // that never expires is a standing key. An admin who typos an
@@ -356,11 +357,14 @@ export const authOptions: NextAuthOptions = {
         if (pendingInvite) {
           await tx.invite.deleteMany({ where: { id: pendingInvite.id } });
         }
-        return businessId;
+        return { businessId, joinedTeam: !!pendingInvite };
       });
-      if (!joinedBusinessId) return false;
+      if (!joined) return false;
 
-      if (isTester) await grantBetaPlan(joinedBusinessId);
+      if (isTester) await grantBetaPlan(joined.businessId);
+      // Someone new is in: the founder's phone buzzes (src/lib/signupBuzz.ts).
+      // After the response; it can't slow or stop this sign-in.
+      await tellFounderAboutSignup({ userEmail: email, name: user.name ?? null, businessId: joined.businessId, joinedTeam: joined.joinedTeam });
       return true;
     },
     async jwt({ token, user }) {

@@ -3862,3 +3862,15 @@ messages (read with his permission), then he answered *"Yes, fix all 4"* and *"Y
 - **Still open:** "how it looked". I asked for a screenshot of what looked off; not yet received.
 - **Confirmed live (2026-10-11, PR #489):** he re-sent *"Hi, how much do you charge and are you free?"* and said
   *"Yes, it's better"*: the new reply answered both questions. He sent it.
+
+## A-232 — A website form is never thrown away; a filled spam check says "might be spam" ^A-232
+
+**Approved:** 2026-10-11, founder, after his own form test showed "Sent" and nothing reached FollowUp. He picked
+*"Both (Recommended)"*:
+1. **Hide the spam-check field so phones can't autofill it.** It was only moved off screen. It is now `display:none`,
+   which browsers' autofill skips; a bot that fills every input still fills it.
+2. **Never throw a form away.** If the spam check is filled, the customer is still saved, filed as
+   "Website form (spam check)", and waits on Today with one orange-dot line:
+   *"This might be spam. Make sure it's a real customer before you reply."* Nothing is sent on its own; the owner decides.
+- **Same pattern as the spam folder (founder, 2026-10-01):** a spam-folder email says *"This came from your spam folder.
+  Make sure it's a real customer."* and waits the same way.

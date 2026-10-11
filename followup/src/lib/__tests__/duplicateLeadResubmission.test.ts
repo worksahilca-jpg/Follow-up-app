@@ -75,6 +75,29 @@ beforeEach(() => {
   messageCreate.mockResolvedValue({});
 });
 
+describe("POST /api/embed/[businessId]/lead — the spam check (2026-10-11)", () => {
+  it("files a new customer who filled the hidden spam check as \"Website form (spam check)\", instead of losing them", async () => {
+    create.mockResolvedValueOnce({ id: "newLead1" });
+    const { POST } = await import("@/app/api/embed/[businessId]/lead/route");
+    const res = await POST(
+      jsonRequest("https://followupbase.io/api/embed/biz1/lead", { hp: "x", name: "Jamie", email: "jamie@example.com", phone: "", message: "hi" }),
+      ctxBusiness("biz1")
+    );
+    expect(await res.json()).toEqual({ success: true });
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ source: "Website form (spam check)" }) }));
+  });
+
+  it("files everyone else as \"Website form\"", async () => {
+    create.mockResolvedValueOnce({ id: "newLead2" });
+    const { POST } = await import("@/app/api/embed/[businessId]/lead/route");
+    await POST(
+      jsonRequest("https://followupbase.io/api/embed/biz1/lead", { hp: "", name: "Jamie", email: "jamie@example.com", phone: "", message: "hi" }),
+      ctxBusiness("biz1")
+    );
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ source: "Website form" }) }));
+  });
+});
+
 describe("POST /api/embed/[businessId]/lead — duplicate-email resubmission", () => {
   it("appends the new message to the existing lead and re-scores, instead of silently discarding it", async () => {
     const { POST } = await import("@/app/api/embed/[businessId]/lead/route");

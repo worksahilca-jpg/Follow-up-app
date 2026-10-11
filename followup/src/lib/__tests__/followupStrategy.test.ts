@@ -687,6 +687,15 @@ describe("a lead found in the spam folder", () => {
     expect(JSON.stringify(vi.mocked(recordAudit).mock.calls)).toContain("spam folder");
   });
 
+  it("holds a website form whose spam check was filled, saying it might be spam (2026-10-11)", async () => {
+    hourly({ unanswered: [aLead([row("inbound", 25 * H)], { source: "Website form (spam check)" })] });
+    const r = await runAutomationForBusiness("biz1");
+    expect(r.sent).toBe(0);
+    expect(send).not.toHaveBeenCalled();
+    expect(r.held).toBe(1);
+    expect(JSON.stringify(vi.mocked(recordAudit).mock.calls)).toContain("hidden spam check on your website form");
+  });
+
   it("is followed up normally once the owner has written to them", async () => {
     hourly({ unanswered: [aLead([row("inbound", 40 * H), row("outbound", 39 * H), row("inbound", 25 * H)], { source: "Gmail (spam)" })] });
     const r = await runAutomationForBusiness("biz1");

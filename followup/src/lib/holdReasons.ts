@@ -104,6 +104,24 @@ export const FOUND_IN_SPAM_REASON =
 export const SPAM_FOLDER_SOURCE = "Gmail (spam)";
 
 /**
+ * A website-form submission that filled the form's hidden spam check
+ * (founder, 2026-10-11). It used to be thrown away while the visitor was
+ * shown "sent". The founder's own test proved a real person can trip it (a
+ * phone's autofill can fill the field), so it is kept now and waits for the
+ * owner the way a spam-folder email does.
+ */
+export const FORM_SPAM_CHECK_REASON =
+  "the hidden spam check on your website form was filled in, so this might be spam and FollowUp waits for you to confirm it's a real customer before anything goes out";
+
+/** The source such a submission is filed under. */
+export const FORM_SPAM_CHECK_SOURCE = "Website form (spam check)";
+
+/** A source whose customers wait for the owner to confirm they're real before anything goes out. */
+export function isUnconfirmedSpamSource(source: string | null | undefined): boolean {
+  return source === SPAM_FOLDER_SOURCE || source === FORM_SPAM_CHECK_SOURCE;
+}
+
+/**
  * A customer who is also in the business's CRM (Follow Up Boss, HubSpot).
  * Those CRMs often run their own follow-ups, which FollowUp can't see, so
  * FollowUp never follows up with them on its own: the customer could get
@@ -241,6 +259,7 @@ const PLAIN_BY_REASON: Record<string, (first: string) => string> = {
   [UNTOUCHED_LEAD_REASON]: (first) => `You added ${first} yourself, so this is written from your notes only.`,
   [NEVER_WROTE_REASON]: () => "They haven't messaged you yet, so the first message is yours to send.",
   [FOUND_IN_SPAM_REASON]: () => "This came from your spam folder. Make sure it's a real customer.",
+  [FORM_SPAM_CHECK_REASON]: () => "This might be spam. Make sure it's a real customer before you reply.",
   [IN_CRM_REASON]: () => "They're also in your CRM, which may send its own follow-up.",
   [RISK_CHECK_FAILED_REASON]: () => "FollowUp couldn't check this one, so it's waiting to be safe.",
   [NO_ANSWER_REASON]: (first) => `No answer when you called. This asks ${first} for a good time to talk.`,

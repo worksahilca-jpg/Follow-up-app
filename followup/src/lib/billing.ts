@@ -252,6 +252,7 @@ const FREE_TIER_ALLOWED_SOURCES = new Set([
   "Gmail (spam)",
   "Outlook",
   "Website form",
+  "Website form (spam check)",
   "Manual entry",
   "CSV import",
   "Test lead",

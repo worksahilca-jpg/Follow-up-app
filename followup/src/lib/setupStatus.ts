@@ -4,6 +4,7 @@ import { getGmailStatus } from "@/lib/integrations/gmail";
 import { getOutlookStatus } from "@/lib/integrations/outlook";
 import { CARRIER_CHANNELS_AVAILABLE } from "@/lib/pricing";
 import { businessDisplayName } from "@/lib/leadName";
+import { FORM_SPAM_CHECK_SOURCE } from "@/lib/holdReasons";
 
 /**
  * research/product/2026-09-10-ux-simplification.md §2 and §7.1: the
@@ -79,7 +80,7 @@ export async function getIncompleteSetupSteps(businessId: string): Promise<Setup
     }),
     getGmailStatus(businessId),
     getOutlookStatus(businessId),
-    prisma.lead.findFirst({ where: { businessId, source: "Website form" }, select: { id: true } }),
+    prisma.lead.findFirst({ where: { businessId, source: { in: ["Website form", FORM_SPAM_CHECK_SOURCE] } }, select: { id: true } }),
   ]);
 
   const steps: SetupStep[] = [];

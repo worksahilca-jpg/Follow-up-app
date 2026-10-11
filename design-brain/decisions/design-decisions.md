@@ -12155,3 +12155,26 @@ The founder tested his own form. The page said "Sent", and production held nothi
 - Scoring still runs on those customers, inside the existing daily AI caps.
 - The real cause can't be proven without his browser. If autofill wasn't it, something else filled the field. That is
   harmless now: nothing is lost either way.
+
+## 2026-10-11 — A Reel with no words is not a customer (A-233)
+
+A Reel shared to the founder's business Instagram became a customer named "Instagram DM", with the body
+"[Sent ig_reel with no message text]", scored 3 out of 100, drafted and put on Today.
+- **Built:**
+  - `src/lib/sharedContent.ts` holds the list (share, ig_reel, reel, ig_post, story_mention, animated_image, sticker,
+    like_heart) and the stored-body check.
+  - `messageContent` flags `sharedOnly`.
+  - Instagram and Messenger skip a new sender's shared-only DM before any customer is created.
+  - For an existing customer, the message is stored and nothing else runs.
+  - The fresh and hourly "unanswered" rules ignore shared-only inbound messages.
+  - The phone-buzz wait ignores them too.
+- **Tests:** 8 new. All 3,607 pass.
+- **The Reel already on Today stays there.** Production is read-only from here; the owner can tap "Don't send".
+
+**Weak spots:**
+- The name problem is separate and not fixed here. Instagram's webhook carries no username. The 3-minute check didn't
+  fill it either (it ran at 11:24, a minute after the Reel arrived). Likely cause: a sender who doesn't follow the
+  account lands in Message Requests, which the check may not read. Not yet confirmed against Meta.
+- WhatsApp stickers still create customers.
+- A friend chatting with words ("hey bro") is still picked up. The founder's principle covers it, but it needs a
+  judgment call (like Gmail's "is this a customer" check) and hasn't been asked or built.

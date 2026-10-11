@@ -3874,3 +3874,15 @@ messages (read with his permission), then he answered *"Yes, fix all 4"* and *"Y
    *"This might be spam. Make sure it's a real customer before you reply."* Nothing is sent on its own; the owner decides.
 - **Same pattern as the spam folder (founder, 2026-10-01):** a spam-folder email says *"This came from your spam folder.
   Make sure it's a real customer."* and waits the same way.
+
+## A-233 — A Reel, post or sticker with no words is not picked up ^A-233
+
+**Approved:** 2026-10-11, founder. A Reel with no words reached Today as "Instagram DM" with
+"[Sent ig_reel with no message text]". He first chose *"Keep it off Today"*, then went further: *"why should we pick it
+up?"*
+- **From someone new:** a Reel, post share, story mention, sticker, GIF or like with no words is not picked up at all.
+  No customer is created, nothing is scored, there's no buzz.
+- **From an existing customer:** it stays in their conversation as context. It never makes them "waiting": no Today
+  card, no buzz, no reminder. A question they wrote before it is still answered.
+- **Still picked up:** anything with words, and any photo, video, voice note or file they sent themselves.
+- Instagram and Messenger (including the 3-minute check). WhatsApp stickers are not covered yet.

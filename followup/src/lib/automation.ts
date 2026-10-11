@@ -85,6 +85,7 @@ import { META_DM_WINDOW_HOURS, META_HUMAN_AGENT_MAX_HOURS, UNANSWERED_CEILING_CH
 export { META_DM_WINDOW_HOURS, UNANSWERED_META_DM_MAX_HOURS };
 import { isInstagramLeadId, isMessengerLeadId } from "@/lib/instagramId";
 import { HOLD_ALL_AUTOMATION_REASON, BACKLOG_BEFORE_PERMISSION_REASON, RISK_CHECK_FAILED_REASON, UNTOUCHED_LEAD_REASON, NEVER_WROTE_REASON, FOUND_IN_SPAM_REASON, FORM_SPAM_CHECK_REASON, FORM_SPAM_CHECK_SOURCE, isUnconfirmedSpamSource, IN_CRM_REASON, UNGROUNDED_DRAFT_REASONS, ASKED_IF_PERSON_REASON } from "@/lib/holdReasons";
+import { isSharedContentOnly } from "@/lib/sharedContent";
 
 /**
  * How long this particular lead waits before the unanswered rule fires, in
@@ -490,7 +491,9 @@ export function freshInboundToAnswer(
   holdsAll = false
 ): Date | null {
   const all = lead.conversations.flatMap((c) => c.messages.map((m) => ({ ...m, channel: c.channel })));
-  const judged = all.filter((m) => !isAckMessage(m));
+  // Shared content with no words (a Reel, a sticker) needs no answer, so
+  // it never makes a customer "waiting" (founder, 2026-10-11).
+  const judged = all.filter((m) => !isAckMessage(m) && !(m.direction === "inbound" && isSharedContentOnly(m.body)));
   if (judged.length === 0) return null;
   const last = judged.reduce((latest, m) => (m.sentAt > latest.sentAt ? m : latest));
   if (last.direction !== "inbound") return null;
@@ -695,7 +698,8 @@ async function findUnansweredLeads(businessId: string, hours: number, recheckCut
     // FollowUp-row exclusion sat below the direction check that had
     // already thrown the lead out, so it never got the chance to help.
     const isAck = (m: { direction: string; trigger: string | null }) => m.direction === "outbound" && isNotAnAnswer(m.trigger);
-    const judged = all.filter((m) => !isAck(m));
+    // A Reel or sticker with no words needs no answer (src/lib/sharedContent.ts).
+    const judged = all.filter((m) => !isAck(m) && !(m.direction === "inbound" && isSharedContentOnly(m.body)));
     if (judged.length === 0) return false;
     const last = judged.reduce((latest, m) => (m.sentAt > latest.sentAt ? m : latest));
     if (last.direction !== "inbound") return false;

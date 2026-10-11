@@ -1,4 +1,5 @@
 import { NOT_AN_ANSWER_TRIGGERS } from "@/lib/notAnAnswer";
+import { isSharedContentOnly } from "@/lib/sharedContent";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { getPendingApprovals } from "@/lib/pendingApprovals";
@@ -284,9 +285,10 @@ async function waitingCustomersFor(businessId: string, now: Date): Promise<Waiti
       where: { conversation: { leadId: lead.id }, direction: "inbound", ...(actedAt ? { sentAt: { gt: actedAt } } : {}) },
       orderBy: { sentAt: "desc" },
       take: WAIT_SCAN_LIMIT,
-      select: { sentAt: true },
+      select: { sentAt: true, body: true },
     });
-    const startedAt = waitStart(inbound.map((m) => m.sentAt));
+    // A Reel or sticker with no words neither starts nor extends a wait (src/lib/sharedContent.ts).
+    const startedAt = waitStart(inbound.filter((m) => !isSharedContentOnly(m.body)).map((m) => m.sentAt));
     if (!startedAt) continue;
 
     out.push({

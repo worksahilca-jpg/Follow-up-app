@@ -12241,3 +12241,16 @@ Agent (free, Instagram/Messenger/WhatsApp) and Gmail's free drafting take two of
 `reports/FollowUp competitor landscape 2026.md` (local to the session; key points also in the founder's chat). The
 founder then raised Appointwise's "we book the appointment end to end" ad. Decision A-236: the middle path in
 Stage 2. Simple steps send by themselves after a one-time yes; tricky ones wait.
+
+## 2026-10-12 — After the competitor study: end to end, CRM rule, Meta's window (A-237)
+
+The founder read the competitor findings and set direction: end to end is the product, approval is for owners who
+don't trust it yet (A-237); with a CRM connected, one boss per customer so nobody is messaged twice.
+- **Already true in code:** FollowUp imports Follow Up Boss and HubSpot contacts and writes a note back after each
+  send (src/lib/crmSync.ts). It sees every message sent from the connected Instagram account, whichever tool sent it.
+- **Meta's 24-hour window**, explained to the founder: automatic sends on Instagram and Messenger stop 24 hours after
+  the person's last message; a person-sent reply can use Meta's human-agent allowance up to 7 days
+  (src/lib/metaWindow.ts). Day-2+ follow-ups to someone who went quiet therefore can't go out automatically on those
+  channels. Proposed fix, not yet decided: ask for an email or phone early so follow-ups can continue by email.
+- **To build later:** the qualification card pushed into the CRM; the one-boss rule (needs a way to know the CRM is
+  following up with a contact).

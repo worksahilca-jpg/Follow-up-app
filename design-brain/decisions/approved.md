@@ -3925,3 +3925,18 @@ appointment with no person involved). Asked whether FollowUp should do the same,
   owner's yes", now spelled out).
 - Built in November with the rest of Stage 2, after testers have used approve-first. Nothing new before then.
 - Not chosen: "fully by itself, now" (every message sends without the owner, like Appointwise).
+
+## A-237 — End to end is the goal; one boss per customer when a CRM is connected ^A-237
+
+**Approved:** 2026-10-12, founder.
+- **Auto is the destination, approval is the on-ramp.** *"Our main product is going end to end. This thing [nothing
+  goes out without your OK] is for those who don't trust it… When they start trusting the product, they will switch to
+  the auto thing… they can't read and just press OK 600 times."* Builds on A-236: approval first, then the owner moves
+  to sending by itself. Design for the switch to auto, not for approving forever.
+- **One boss per customer.** When a customer is also in the owner's CRM (Follow Up Boss, HubSpot, GoHighLevel) and the
+  CRM is already following up with them, FollowUp only watches and tells the owner when they're ready. If the CRM is
+  not following up, FollowUp does. The customer is never messaged twice. (Not chosen: FollowUp always follows up and
+  the owner turns the CRM's off.)
+- **$39 has to make a profit.** The AI cost per business is to be measured from the first testers and the daily cap
+  set from it.
+- Phone answering is coming later, not now. The Gmail 100-user cap and security checks come after the build.

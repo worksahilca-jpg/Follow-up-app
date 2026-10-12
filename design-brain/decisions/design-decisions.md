@@ -12302,3 +12302,16 @@ not deleted.
   **Risk named:** the daily cap is 500 runs per business; a business at that cap every day could cost about as much
   as $39. Revisit the cap once testers' real use is known.
 
+## 2026-10-12 — "Not a lead": an Instagram friend's joke reached Today (founder feedback)
+
+The founder showed a customer page: an emoji, "Isme bee bhi dal", then a story mention, with a drafted viewing reply.
+*"NOT A LEAD BRO"* and *"INSTA IS NOT SORTING IT WELL"*.
+- **Cause (checked in production, timestamps only):** the chat began at 9:01 PM Toronto on Oct 11, about 2.5 hours
+  before the DM "is this a customer?" check (A-234) was merged. The check judges only people who are new, so it never
+  saw this one. Since it went live: 2 chats set aside, 1 let in. 11 Instagram/Messenger customers predate it; 3 of them
+  were never answered.
+- **Founder's choice:** "I'll delete them". He removes the old ones himself; no re-check was built. If they write again
+  they are new to FollowUp, and the check judges them.
+- **Principle (stated, and already A-234's):** a DM from a friend is not a customer, and FollowUp must not draft a
+  sales reply to a joke. Still open: no one-tap "Not a customer" on a DM customer's page (Delete is the only way out).
+

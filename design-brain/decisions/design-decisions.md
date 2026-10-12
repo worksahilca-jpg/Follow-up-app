@@ -12233,3 +12233,11 @@ that redelivery was dropped before the name was read. Now that redelivery fills 
 under the set-aside lock, and never replaces a name already there. The founder said *"Yes, fix it"*.
 - **Limit:** the two chats already set aside stay "Instagram user". The 3-minute check has moved past their messages,
   so they get a name only if that person writes again.
+
+## 2026-10-12 — Competitor research, and booking end to end (A-236)
+
+A five-part competitor study found about 100 tools; no single one does FollowUp's whole job, but Meta's Business
+Agent (free, Instagram/Messenger/WhatsApp) and Gmail's free drafting take two of its slices. Report:
+`reports/FollowUp competitor landscape 2026.md` (local to the session; key points also in the founder's chat). The
+founder then raised Appointwise's "we book the appointment end to end" ad. Decision A-236: the middle path in
+Stage 2. Simple steps send by themselves after a one-time yes; tricky ones wait.

@@ -3915,3 +3915,13 @@ qualifying test: *"DO IT"*.
 - A finished run shows the score first ("184 of 192 answers right"), then the one number that must be 0 in green or
   coral ("0 invented a fact (should be 0)"), then the other counts, then "See what went wrong" folded away.
 - Made-up examples only. No customer's data is used or shown.
+
+## A-236 — Booking end to end: the middle path, in Stage 2 ^A-236
+
+**Approved:** 2026-10-12, founder, after watching a rival's ad (Appointwise: the AI chats with the lead and books the
+appointment with no person involved). Asked whether FollowUp should do the same, he chose *"Middle path, in Stage 2"*.
+- After the owner's one-time yes, the simple steps send by themselves: the first reply, reminders, the booking link.
+- Price, negotiation, complaints and anything unsure still wait for the owner (A-217's "sends by itself after the
+  owner's yes", now spelled out).
+- Built in November with the rest of Stage 2, after testers have used approve-first. Nothing new before then.
+- Not chosen: "fully by itself, now" (every message sends without the owner, like Appointwise).

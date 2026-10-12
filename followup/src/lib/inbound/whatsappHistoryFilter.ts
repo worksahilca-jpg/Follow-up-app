@@ -75,7 +75,10 @@ export interface DeepSignals {
 }
 
 export type HistoryVerdict =
-  | { import: true }
+  // The judge's own sentence when it said yes, for the accuracy test to
+  // show (a "let in" with no reason could not be diagnosed). Never shown
+  // to the owner.
+  | { import: true; reason?: string }
   | { import: false; reason: string };
 
 // Stage 1 reads the opening, exactly as the mailbox does — the
@@ -161,7 +164,7 @@ export async function judgeHistoryThread(
   try {
     if (!options?.alreadySetAside) {
       const stageOne = await classifyAsProspect(messages, counterpart, business);
-      if (stageOne.isProspect) return { import: true };
+      if (stageOne.isProspect) return { import: true, reason: stageOne.reason };
     }
 
     // --- Stage 2: the same judge, more evidence ------------------------
@@ -194,7 +197,7 @@ export async function judgeHistoryThread(
 
     const recent = messages.slice(-STAGE_TWO_MESSAGES);
     const stageTwo = await classifyAsProspect(recent, counterpart, deepContext, { maxMessages: STAGE_TWO_MESSAGES });
-    if (stageTwo.isProspect) return { import: true };
+    if (stageTwo.isProspect) return { import: true, reason: stageTwo.reason };
 
     return { import: false, reason: cleanSetAsideReason(stageTwo.reason) };
   } catch (err) {

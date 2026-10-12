@@ -218,9 +218,14 @@ export function pickDmSituation(conversation: Message[], touch: DmTouch): DmSitu
     return {
       id: "availability_unanswered",
       hint:
+        // This hint used to suggest "weekday or weekend, or morning or
+        // afternoon", the exact question the calendar rule below refuses
+        // (a real lead answered it with "What do you mean", 2026-09-20).
+        // The accuracy test (2026-10-12) still drew it from here, twice.
         "They asked about availability and the business hasn't confirmed yet. Do not confirm or deny anything. " +
-        "Say you're checking the specific thing they named, then ask a fact only they know that narrows it, such " +
-        "as weekday or weekend, or morning or afternoon. Buttons: those two or three answers.",
+        "Say you're checking the specific thing they named, then ask one open question only they can answer, " +
+        "such as when would suit them. Never offer days, times, or weekday versus weekend yourself. No buttons " +
+        "unless the question has two or three natural answers that are not days or times.",
     };
   }
   return {

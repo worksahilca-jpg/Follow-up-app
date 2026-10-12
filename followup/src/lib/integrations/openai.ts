@@ -373,15 +373,23 @@ const PROSPECT_CLASSIFICATION_SCHEMA = {
         // which is the opposite of what it meant.
         enum: ["sender is selling to this business", "sender wants to buy from this business", "neither"],
         description:
+          // Accuracy test 2026-10-12: the salon's own landlord asking for
+          // rent came back "wants to buy" with a reason saying it was not a
+          // customer, and the BUYER rule below then kept it. Someone the
+          // business pays is named here, so the money question has an answer.
           "Decide this FIRST, before the verdict. Which way would money flow? " +
           "\"sender is selling to this business\" — they are offering, pitching, or promoting a service or product " +
-          "of THEIRS, and this business would pay them. \"sender wants to buy from this business\" — the sender is " +
-          "asking about, requesting, pricing, negotiating, or already engaged in work or products that THIS " +
-          "business provides, and would pay this business — an existing client sending paperwork or a deposit, " +
+          "of THEIRS, and this business would pay them; that includes anyone this business already pays to run " +
+          "itself, writing about its own affairs: its landlord about rent or a lease, its accountant, bookkeeper or " +
+          "lawyer about its own records or fees, a supplier's bill. \"sender wants to buy from this business\" — the " +
+          "sender is asking about, requesting, pricing, negotiating, or already engaged in work or products that " +
+          "THIS business provides, and would pay this business — an existing client sending paperwork or a deposit, " +
           "or moving an appointment, counts, and so does a person whose request a lead marketplace passes on " +
-          "('new lead', 'quote request'). \"neither\" — no commercial direction at all (personal " +
-          "mail, an automated notification, a newsletter, a recruiter). Judge by who would send the invoice at the " +
-          "end, not by who sounds keener.",
+          "('new lead', 'quote request'). Never someone this business pays. \"neither\" — no commercial direction " +
+          "at all (personal mail or chat between friends or family, an automated notification, a newsletter, a " +
+          "recruiter, someone asking for a job, or a marketplace notice about a request the inbox OWNER made as a " +
+          "buyer, such as 'your request is live'). Judge by who would send the invoice at the end, not by who " +
+          "sounds keener.",
       },
       // Before the verdict, not after it (found live 2026-09-25): written
       // last, the sentence could say "they are a customer" under a verdict

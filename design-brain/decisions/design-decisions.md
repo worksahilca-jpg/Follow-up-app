@@ -12394,3 +12394,28 @@ The founder ran the 4 accuracy tests on /admin after PR #496 went live. Scores (
   - Each test run varies a little.
   - The chat line could make the judge stricter on real customers who joke around. Two reads must still agree, and
     the "0 customers set aside" number on /admin is the one to watch on the next run.
+
+## 2026-10-12 — Second accuracy run, after PR #497
+
+Same 4 tests, re-run by the founder on the live site:
+- **Qualifying:** 192 of 192, 0 made up, 0 missed (was 189, 2 made up).
+- **Replies:** 13 of 14, 0 invented (was 12, 1 invented). The 1 left was "weekday or weekend showing?", held by the
+  calendar rule and never sent.
+- **Instagram:** 36 of 37 with the 3 new buyer-with-emoji cases, 0 customers set aside. Still let through: the
+  friend's "😍 / Isme bee bhi dal".
+- **Emails:** 120 of 122 (was 118). Still let through: the salon's landlord and the Bark notice about the owner's own
+  request.
+
+**Why, and what changed (PR #498):**
+- **The landlord's own reason said "not a customer", and it still came in.** The judge picks who pays whom first, and
+  a code rule keeps anyone picked as "wants to buy" (found live 2026-09-25: a real customer filtered while its reason
+  said "customer"). The landlord was picked "wants to buy". The money question now names people the business pays
+  (landlord, accountant, lawyer, suppliers) as selling to it, and lists friends' chat, job seekers and the owner's
+  own marketplace request under "neither". The keep-the-buyer rule itself stays: it protects real customers.
+- **"Weekday or weekend?" came from FollowUp's own instructions.** The hint for "is it available?" DMs told the
+  writer to ask "weekday or weekend, or morning or afternoon", and the calendar rule then refused that same question.
+  The hint now asks one open question ("when would suit you") and never offers days.
+- **The Instagram test now shows the judge's reason when it lets a chat in.** Before, a wrong "customer" had no
+  reason on /admin, so the friend case could not be diagnosed. The next run will say why.
+- **Weak, said plainly:** the friend case may keep failing for a reason not yet seen. It fails in the safe direction
+  (let in, never lost), and the re-check (A-239) looks again on their next message.

@@ -222,7 +222,7 @@ export async function runDmJudgeEval(judge: Judge = judgeHistoryThread, cases = 
     }
     if (c.expectCustomer) result.customersSetAside += 1;
     else result.chatsLetThrough += 1;
-    result.failures.push({ name: c.name, expected: word(c.expectCustomer), got: word(verdict.import), reason: verdict.import ? "" : verdict.reason });
+    result.failures.push({ name: c.name, expected: word(c.expectCustomer), got: word(verdict.import), reason: verdict.reason ?? "" });
   });
   return result;
 }

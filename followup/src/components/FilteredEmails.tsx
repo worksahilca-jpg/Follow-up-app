@@ -14,14 +14,28 @@ type FilteredEmail = {
   lastMessageAt: string;
 };
 
+/** Which page the list sits on: Email (Gmail, Outlook) or the chat apps (Instagram, Messenger, WhatsApp). */
+type Channels = "email" | "chats";
+const PROVIDERS: Record<Channels, readonly string[]> = {
+  email: ["gmail", "outlook"],
+  chats: ["instagram", "messenger", "whatsapp"],
+};
+
+/** The rows that belong on this page. */
+export function rowsFor<T extends { provider: string }>(channels: Channels, rows: readonly T[]): T[] {
+  return rows.filter((r) => PROVIDERS[channels].includes(r.provider));
+}
+
 /**
- * "Filtered out as not leads" — what the AI inbox classifier decided NOT
- * to turn into a lead, and why, with a one-click override. Sits under
- * Email in Settings, shared across Gmail and Outlook (whichever mailbox
- * a row came from, see FilteredEmail.provider). The point is trust: an owner can see every judgment
- * call the AI made on their inbox, not just the ones it got right.
+ * "Filtered out": what FollowUp decided NOT to treat as a customer, and
+ * why, with a one-click override. The point is trust: an owner can see
+ * every judgment call made on their messages, not just the right ones.
+ *
+ * One list per page, for the apps on that page. It lived only under Email
+ * until 2026-10-12, so an owner who connected only Instagram or WhatsApp
+ * could never see, or bring back, a chat that was set aside.
  */
-export default function FilteredEmails() {
+export default function FilteredEmails({ channels = "email" }: { channels?: Channels }) {
   const [items, setItems] = useState<FilteredEmail[] | null>(null);
   const [restoring, setRestoring] = useState<string | null>(null);
   const [restored, setRestored] = useState<Record<string, string>>({});
@@ -30,9 +44,11 @@ export default function FilteredEmails() {
   useEffect(() => {
     fetch("/api/integrations/gmail/filtered")
       .then((r) => r.json())
-      .then((data: { success: boolean; filtered?: FilteredEmail[] }) => setItems(data.success ? (data.filtered ?? []) : []))
+      .then((data: { success: boolean; filtered?: FilteredEmail[] }) =>
+        setItems(data.success ? rowsFor(channels, data.filtered ?? []) : [])
+      )
       .catch(() => setItems([]));
-  }, []);
+  }, [channels]);
 
   async function restore(item: FilteredEmail) {
     setRestoring(item.id);
@@ -53,6 +69,9 @@ export default function FilteredEmails() {
   }
 
   if (items === null) return null;
+  // The chat apps' page has no "connected" state to lean on, so an empty
+  // list there says nothing rather than a line about apps that may not be set up.
+  if (channels === "chats" && items.length === 0) return null;
 
   return (
     <div className="mt-3 pt-3 border-t border-line">
@@ -60,8 +79,9 @@ export default function FilteredEmails() {
         <EyeOff className="h-3.5 w-3.5" /> Filtered out
       </p>
       <p className="text-[13px] text-ink-soft mt-1">
-        Emails FollowUp decided weren&apos;t from customers: personal mail, recruiters, suppliers, notifications.
-        Each one is listed with its reason. If it got one wrong, one click makes it a customer.
+        {channels === "chats"
+          ? "Chats FollowUp decided weren’t from customers: friends, family, jokes, people selling to you. Each one says why. If it got one wrong, bring it back and every message comes with it."
+          : "Emails FollowUp decided weren’t from customers: personal mail, recruiters, suppliers, notifications. Each one says why. If it got one wrong, one tap makes it a customer."}
       </p>
       {items.length === 0 ? (
         <p className="text-[13px] text-ink-soft mt-2">Nothing filtered out recently.</p>
@@ -86,11 +106,13 @@ export default function FilteredEmails() {
                   {item.provider === "messenger" && <span className="text-ink-soft"> · Messenger</span>}
                   {item.subject && <div className="truncate">{item.subject}</div>}
                   <div className="text-ink-soft mt-0.5">{item.reason}</div>
-                  <div className="text-ink-soft mt-0.5">{new Date(item.lastMessageAt).toLocaleString()}</div>
+                  <div className="text-ink-soft mt-0.5">
+                    {new Date(item.lastMessageAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                  </div>
                 </div>
                 {restored[item.id] ? (
                   <a href={`/leads/${restored[item.id]}`} className="shrink-0 inline-flex items-center gap-1 text-[13px] font-medium underline" style={{ color: "var(--sage)" }}>
-                    <Check className="h-3 w-3" /> Now a lead
+                    <Check className="h-3 w-3" /> Now a customer
                   </a>
                 ) : (
                   <button
@@ -98,7 +120,7 @@ export default function FilteredEmails() {
                     disabled={restoring === item.id}
                     className="shrink-0 rounded-full px-2.5 py-1 text-[13px] font-medium border border-line disabled:opacity-60"
                   >
-                    {restoring === item.id ? "Importing…" : "This was a lead"}
+                    {restoring === item.id ? "Bringing back…" : "This is a customer"}
                   </button>
                 )}
               </div>

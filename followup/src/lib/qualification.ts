@@ -73,7 +73,10 @@ const REALTOR: Criterion[] = [
   {
     key: "want",
     label: "What they want",
-    find: "the home, listing or area they are asking about, e.g. 'the 2-bed on King Street' or '3 bedrooms near a school'",
+    // Something specific (accuracy test 2026-10-12: "do you have any
+    // listings?" came back as known, which tells the agent nothing to send).
+    find:
+      "the home, listing or area they are asking about, e.g. 'the 2-bed on King Street' or '3 bedrooms near a school'. It needs something specific: a home, an area, a type or a size. 'Do you have any listings?' on its own is not this yet",
     ask: "what kind of home, or which area, they are looking for",
   },
   {

@@ -75,8 +75,10 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
         timeZone,
       })
     : null;
+  // The number to call: theirs, or the mobile an Instagram or Messenger customer typed into the DM (A-238).
+  const phone = isCallablePhone(lead.phone) ? lead.phone : isCallablePhone(lead.dmPhone) ? lead.dmPhone : null;
   // The Call box (A-103): only on a team that calls customers, and only for a number someone can dial.
-  const callable = Boolean(business?.teamCalls) && isCallablePhone(lead.phone) ? (lead.phone as string) : null;
+  const callable = Boolean(business?.teamCalls) && phone ? phone : null;
   const calls = callable && ctx
     ? await prisma.lead.findFirst({
         where: { id: lead.id, businessId: ctx.businessId },
@@ -129,7 +131,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
         template={template}
         qualification={checklistShown}
         ready={showReady}
-        callHref={isCallablePhone(lead.phone) ? telHref(lead.phone) : null}
+        callHref={phone ? telHref(phone) : null}
       />
     ) : null;
 
@@ -261,12 +263,12 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
           )}
           <CopyBookingLinkButton leadId={lead.id} />
           {/* The ready card already carries "Call {name}": one Call button, not two. */}
-          {callable || (showReady && isCallablePhone(lead.phone)) ? null : isCallablePhone(lead.phone) ? (
-            <a href={telHref(lead.phone)} className={PILL}>
+          {callable || (showReady && phone) ? null : phone ? (
+            <a href={telHref(phone)} className={PILL}>
               Call
             </a>
-          ) : lead.email ? (
-            <a href={`mailto:${lead.email}`} className={PILL}>
+          ) : lead.email || lead.dmEmail ? (
+            <a href={`mailto:${lead.email || lead.dmEmail}`} className={PILL}>
               Email
             </a>
           ) : null}
@@ -358,7 +360,12 @@ function Facts({ lead, approval, now }: { lead: Lead; approval: PendingApproval 
         : isWaitingOnCustomer(lead)
           ? `Waiting on ${first}`
           : "Up to date";
-  const contact = lead.email || (lead.phone && !isSocialLeadId(lead.phone) ? lead.phone : null);
+  const contact =
+    lead.email ||
+    (lead.phone && !isSocialLeadId(lead.phone) ? lead.phone : null) ||
+    // What an Instagram or Messenger customer typed into the DM (A-238).
+    [lead.dmEmail, lead.dmPhone].filter(Boolean).join(" · ") ||
+    null;
   return (
     <>
       <Fact label={approval ? "Why it's here" : "State"}>

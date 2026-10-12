@@ -12254,3 +12254,51 @@ don't trust it yet (A-237); with a CRM connected, one boss per customer so nobod
   channels. Proposed fix, not yet decided: ask for an email or phone early so follow-ups can continue by email.
 - **To build later:** the qualification card pushed into the CRM; the one-boss rule (needs a way to know the CRM is
   following up with a contact).
+
+## 2026-10-12 — Instagram and Messenger customers are asked for email and mobile; email after 24 hours (A-238)
+
+Asked plainly before building: *"On Sep 16 you decided Instagram and Messenger customers are answered only in their
+DMs, never by email. The new plan changes that."* The founder chose **"Yes, change it"**. R-003 is marked superseded,
+not deleted.
+- **Why:** Meta stops automatic DMs 24 hours after the customer's last message. Most customers who go quiet do so in
+  that first day, so day-2 and day-7 follow-ups never reached them. An email they gave keeps the follow-up going.
+- **What it is not:** FollowUp never guesses an address and never switches channel on someone who didn't offer one.
+  STOP on the DM also blocks the email. Inside the 24 hours, the DM is always used.
+- **Founder, same day:** *"In Insta or FB it will be chatting continuously with them like an actual business owner
+  does. In those chats we will ask them about mobile and email, or we will try to book a meeting too."* So the one
+  question asks for email **and** mobile.
+
+**What shipped (src/lib/dmContact.ts; PR "Build all"):**
+- The second reply to an Instagram/Messenger customer (never the first) may end with one question asking for the best
+  email and mobile. Asked once (`Lead.dmContactAskedAt`), in place of that reply's qualifying question.
+- What they type back is kept apart from `email`/`phone` (`Lead.dmEmail`, `Lead.dmPhone`), read only from their own
+  words. Past Meta's 24 hours an automatic follow-up goes to the email; inside it, always the DM. Never after STOP in
+  the DM, never to an address another customer of the business already has. The owner's day-2 DM draft is skipped for
+  them (two messages to one person). Their reply to that email lands on the same customer (Gmail and Outlook).
+- **Screen change (reuses existing parts, nothing new drawn):** the customer page's "Came from" line shows the email and
+  mobile they typed; the existing Call button dials that mobile. The "Meta's window has closed" state is not shown for
+  them, because FollowUp can still follow up by email. Checked in a real browser, desktop and phone (local data).
+- **Weak, said plainly:**
+  - The first email to an Instagram customer greets them by handle ("Hi maya.homes,") when FollowUp has no real name.
+  - The owner can't type an email to them from FollowUp yet. The composer still writes DMs (7-day human window), and
+    the Email button opens their own mail app.
+  - Follow Up Boss's `lastActivity` field (one-boss rule below) is from their forum, not their API reference.
+
+## 2026-10-12 — The CRM side of A-237: one boss per customer, the ready card in the CRM, AI cost
+
+- **One boss per customer:** FollowUp now asks Follow Up Boss (`lastActivity`, unconfirmed field) or HubSpot (Last
+  contacted, `notes_last_contacted`) when they last contacted the customer. Contacted in the last 14 days → FollowUp
+  only watches: its draft waits for the owner (the existing "also in your CRM" hold). Not contacted in 14 days, or
+  never → FollowUp follows up like anyone else. Can't find out → waits for the owner, as before. Activity within 15
+  minutes after FollowUp's own send counts as FollowUp's own note. `src/lib/crm/oneBoss.ts`.
+- **Ready card in the CRM:** when a customer becomes ready, the CRM gets one note: "FollowUp: Nadia Khan looks ready to
+  talk." then one line per thing learned with their own words in quotes. Once, by whichever pass stamped it.
+  `src/lib/crm/notes.ts`.
+- **AI cost per business (production, last 7 days, counts only):** 5 businesses ran the AI; 51 counted runs in total;
+  per business 40, 7, 2, 1, 1. The busiest had 22 in one day. The counter covers replies and fact learning only, not
+  the email check, the DM check, risk checks or instant replies, so it is a floor, not the bill. At roughly
+  $0.001–0.002 a counted run (estimate from research/product/2026-09-15-ai-cost-per-lead.md prices; prompts have grown
+  since), the busiest business is well under $1 a month. The real number is OpenAI's usage page ÷ businesses.
+  **Risk named:** the daily cap is 500 runs per business; a business at that cap every day could cost about as much
+  as $39. Revisit the cap once testers' real use is known.
+

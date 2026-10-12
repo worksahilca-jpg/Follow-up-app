@@ -1,4 +1,5 @@
 import type { CrmClient, CrmPerson } from "./types";
+import { readWhen } from "./dates";
 
 /**
  * Follow Up Boss (docs.followupboss.com/reference) — Basic auth with the
@@ -88,6 +89,23 @@ export const followUpBossClient: CrmClient = {
       return { ok: true };
     } catch (err) {
       return { ok: false, message: err instanceof Error ? err.message : "note push failed" };
+    }
+  },
+
+  // The person's `lastActivity`. NOT confirmed from Follow Up Boss's API
+  // reference (it doesn't load here); seen in their developer forum. So it
+  // counts only when the field is actually there: anything else is
+  // "unknown", and unknown keeps FollowUp waiting for the owner, as before.
+  // It may include FollowUp's own notes; oneBoss.ts allows for that.
+  async lastContactedAt(apiKey, externalId) {
+    try {
+      const res = await fetch(`${BASE}/people/${encodeURIComponent(externalId)}`, { headers: { Authorization: authHeader(apiKey) } });
+      if (!res.ok) return { known: false, at: null };
+      const data = (await res.json().catch(() => null)) as Record<string, unknown> | null;
+      if (!data || !("lastActivity" in data)) return { known: false, at: null };
+      return readWhen(data.lastActivity);
+    } catch {
+      return { known: false, at: null };
     }
   },
 };

@@ -106,6 +106,10 @@ export interface Lead {
   // src/lib/siteReply.ts.
   viaSite?: string | null;
   viaSiteUrl?: string | null;
+  // The email and mobile an Instagram or Messenger customer typed into the
+  // DM when asked (src/lib/dmContact.ts, A-238).
+  dmEmail?: string | null;
+  dmPhone?: string | null;
   // What FollowUp is actually doing with this lead right now (see
   // src/lib/automationStatus.ts) — computed server-side in leads-data.ts,
   // not present on demo-data.ts's static leads (no real automation runs

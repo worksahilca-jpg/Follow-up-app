@@ -51,6 +51,7 @@ vi.mock("@/lib/audit", () => ({ recordAudit: vi.fn(async () => {}) }));
 // the dedicated describe block below overrides this to false to exercise
 // the deferral path itself.
 vi.mock("@/lib/sendWindow", () => ({ isWithinSendWindow: vi.fn(() => true) }));
+vi.mock("@/lib/crm/oneBoss", () => ({ crmIsFollowingUp: vi.fn(async () => true) }));
 
 import { prisma } from "@/lib/db";
 import { assessSendRisk, generateFollowUpMessage } from "@/lib/integrations/openai";
@@ -447,6 +448,17 @@ describe("silence automation risk gate", () => {
       "ai.hold",
       expect.objectContaining({ targetId: "lead1", meta: expect.objectContaining({ reason: expect.stringContaining("also in your CRM") }) })
     );
+  });
+
+  // One boss per customer (A-237): the CRM isn't following up, so FollowUp does.
+  it("follows up with a CRM customer the CRM has stopped following up with", async () => {
+    const { crmIsFollowingUp } = await import("@/lib/crm/oneBoss");
+    vi.mocked(crmIsFollowingUp).mockResolvedValueOnce(false);
+    p.lead.findMany.mockResolvedValueOnce([lead({ crmProvider: "followupboss", crmId: "c1" })]).mockResolvedValueOnce([]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+    const r = await runAutomationForBusiness("biz1");
+    expect(crmIsFollowingUp).toHaveBeenCalledWith(expect.objectContaining({ crmProvider: "followupboss", crmId: "c1" }), expect.anything());
+    expect(r.sent).toBe(1);
   });
 
   it("fails closed: a risk check that throws holds the lead", async () => {

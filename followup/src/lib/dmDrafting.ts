@@ -47,8 +47,9 @@ export async function draftDm(
   // the shape check, so "My commission is 2.5%" is grounded, not invented.
   facts: readonly FactLine[] = [],
   // The one thing still to learn from this customer (src/lib/qualification.ts),
-  // which the reply may end by asking about. Null asks nothing new.
-  qualify: Criterion | null = null,
+  // which the reply may end by asking about. Null asks nothing new. Also the
+  // one-time ask for a DM customer's email and mobile (src/lib/dmContact.ts).
+  qualify: Pick<Criterion, "ask"> | null = null,
   // The business's line of work, for its playbook (src/lib/tradePlaybooks.ts).
   // DMs went without it until 2026-10-11: the founder's Instagram test asked
   // "how much do you charge" and got asked for a listing link, because

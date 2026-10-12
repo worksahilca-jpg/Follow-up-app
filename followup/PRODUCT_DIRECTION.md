@@ -288,6 +288,10 @@ default, consent record) after real customers have watched Assisted work.**
 
 ## Instagram and Messenger follow-up is DM-only (CEO decision, 2026-09-16)
 
+> **Changed 2026-10-12 (A-238):** FollowUp asks for the customer's email and mobile once, in the DM. If they type an
+> email, an automatic follow-up after Meta's 24-hour window goes to it; a mobile is shown to the owner to call. If they
+> give neither, everything below still holds. STOP in the DM also stops the email. `src/lib/dmContact.ts`.
+
 A lead who writes on Instagram is answered on Instagram. No automatic switch to email or
 any other channel, ever. Messenger is treated the same (identical Meta rules; CEO has not
 separately ruled on it — assumption, flagged).

@@ -20,7 +20,7 @@ const { threadsGet, threadsList, prismaMock, classifyWithSecondLook, acknowledge
     integration: { findFirst: vi.fn() },
     business: { findUnique: vi.fn() },
     filteredEmail: { deleteMany: vi.fn(), findUnique: vi.fn(), upsert: vi.fn() },
-    lead: { findUnique: vi.fn(), create: vi.fn(), update: vi.fn(), updateMany: vi.fn(), findUniqueOrThrow: vi.fn() },
+    lead: { findUnique: vi.fn(), findFirst: vi.fn(async () => null), create: vi.fn(), update: vi.fn(), updateMany: vi.fn(), findUniqueOrThrow: vi.fn() },
     conversation: { findUnique: vi.fn(), create: vi.fn() },
     message: { upsert: vi.fn(), findFirst: vi.fn(async () => null) },
   },

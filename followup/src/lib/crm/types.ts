@@ -18,4 +18,10 @@ export interface CrmClient {
   fetchPage(apiKey: string, cursor: string | null, since: Date | null): Promise<{ people: CrmPerson[]; nextCursor: string | null; hasMore: boolean }>;
   /** Best-effort: write a note on the CRM's own record after FollowUp sends. Never throws. */
   pushNote(apiKey: string, externalId: string, text: string): Promise<{ ok: boolean; message?: string }>;
+  /**
+   * When the CRM last contacted this person, for the one-boss rule
+   * (src/lib/crm/oneBoss.ts, A-237). `known: false` when the CRM couldn't
+   * be asked or didn't say; `at: null` when it said "never". Never throws.
+   */
+  lastContactedAt(apiKey: string, externalId: string): Promise<{ known: boolean; at: Date | null }>;
 }

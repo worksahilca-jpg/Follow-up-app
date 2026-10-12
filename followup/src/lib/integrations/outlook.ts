@@ -28,6 +28,7 @@
  */
 
 import { prisma } from "@/lib/db";
+import { findLeadByAnyEmail } from "@/lib/dmContact";
 import { Lead, Message } from "@/lib/types";
 import { classifyWithSecondLook } from "@/lib/integrations/openai";
 import { getBusinessAbout } from "@/lib/businessFacts";
@@ -644,10 +645,9 @@ async function processConversations(
     const knownCustomer =
       !alreadyKnown &&
       !counterpart.shared &&
-      !!(await prisma.lead.findUnique({
-        where: { businessId_email: { businessId, email: counterpart.email } },
-        select: { id: true },
-      }));
+      // Or an Instagram/Messenger customer who gave this address in a DM
+      // and is answering FollowUp's email (src/lib/dmContact.ts, A-238).
+      !!(await findLeadByAnyEmail(businessId, counterpart.email));
 
     if (process.env.OPENAI_API_KEY && !alreadyKnown && !knownCustomer && !options.skipClassification) {
       const priorVerdict = await prisma.filteredEmail.findUnique({
@@ -732,10 +732,7 @@ async function processConversations(
       ? known
         ? await prisma.lead.findUnique({ where: { id: known.leadId }, select: { id: true, lastContacted: true } })
         : null
-      : await prisma.lead.findUnique({
-          where: { businessId_email: { businessId, email: counterpart.email } },
-          select: { id: true, lastContacted: true },
-        });
+      : await findLeadByAnyEmail(businessId, counterpart.email);
     const touched = !existingLead || !existingLead.lastContacted || newestMessageAt > existingLead.lastContacted;
 
     // Prisma's own Lead model shape, not the richer app-level `Lead` type

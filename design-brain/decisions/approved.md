@@ -3940,3 +3940,24 @@ appointment with no person involved). Asked whether FollowUp should do the same,
 - **$39 has to make a profit.** The AI cost per business is to be measured from the first testers and the daily cap
   set from it.
 - Phone answering is coming later, not now. The Gmail 100-user cap and security checks come after the build.
+
+## A-238 — Instagram and Messenger: ask for their email and mobile once; after Meta's 24 hours, follow up by email ^A-238
+
+**Approved:** 2026-10-12, founder ("Yes, change it", asked plainly that this changes his Sep 16 rule). Supersedes
+[[rejected#^R-003|R-003]].
+- **The DM is a real conversation.** Founder, same day: *"In Insta or FB it will be chatting continuously with them like
+  an actual business owner does. In those chats we will ask them about mobile and email, or we will try to book a
+  meeting too."*
+- **Asked once, in a reply, never in the first one.** When an Instagram or Messenger customer writes back and FollowUp
+  has already answered them once, the reply may end with one question asking for the best email and mobile number to
+  reach them. Never asked twice, never asked of someone whose email FollowUp already has. Booking a meeting stays the
+  qualifying "would you like to see it" question, and Stage 2's booking path (A-236).
+- **The mobile is for the owner to call.** It shows on the customer's page (Call button, contact line). Texts are not
+  switched on, so nothing is sent to it.
+- **Only an email they typed themselves.** FollowUp keeps an address only from the customer's own words in the DM.
+  Nothing is guessed or looked up. That is what makes this different from R-003: the customer chose email.
+- **The DM stays first.** While Meta's 24-hour window is open, FollowUp keeps answering in the DM. Only an automatic
+  follow-up after the window has closed goes to their email.
+- **STOP on Instagram or Messenger stops the email too.** A person who said stop in the DM is never emailed instead.
+- No email given: nothing changes from the Sep 16 rule (after 24 hours, only the owner can send, until day 7).
+

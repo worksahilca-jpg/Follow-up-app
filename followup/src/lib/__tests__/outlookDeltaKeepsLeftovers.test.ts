@@ -53,6 +53,8 @@ const { prismaMock, classifyWithSecondLook } = vi.hoisted(() => ({
         return store.leads.find((l) => l.email === where.businessId_email?.email) ?? null;
       }),
       findUniqueOrThrow: vi.fn(async ({ where }: { where: { id: string } }) => store.leads.find((l) => l.id === where.id)!),
+      // No Instagram customer here gave an email in a DM (src/lib/dmContact.ts).
+      findFirst: vi.fn(async () => null),
       create: vi.fn(async ({ data }: { data: Omit<LeadRow, "id"> }) => {
         const lead = {
           ...data,

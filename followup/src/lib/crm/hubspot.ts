@@ -1,4 +1,5 @@
 import type { CrmClient, CrmPerson } from "./types";
+import { readWhen } from "./dates";
 
 /**
  * HubSpot — a private app access token (Settings → Integrations → Private
@@ -76,6 +77,23 @@ export const hubspotClient: CrmClient = {
       return { ok: true };
     } catch (err) {
       return { ok: false, message: err instanceof Error ? err.message : "note push failed" };
+    }
+  },
+
+  // "Last contacted" (notes_last_contacted): HubSpot sets it from calls,
+  // one-to-one emails, meetings, chats and logged SMS/WhatsApp messages.
+  // Notes don't count, so FollowUp's own notes never make it look active.
+  async lastContactedAt(token, externalId) {
+    try {
+      const res = await fetch(`${BASE}/crm/v3/objects/contacts/${encodeURIComponent(externalId)}?properties=notes_last_contacted`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return { known: false, at: null };
+      const data = (await res.json().catch(() => null)) as { properties?: Record<string, unknown> } | null;
+      if (!data?.properties) return { known: false, at: null };
+      return readWhen(data.properties.notes_last_contacted ?? null);
+    } catch {
+      return { known: false, at: null };
     }
   },
 };

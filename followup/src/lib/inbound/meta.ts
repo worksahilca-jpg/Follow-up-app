@@ -14,6 +14,7 @@ import { decodeQuickReplyPayload, type QuickReplyAnswer } from "@/lib/quickRepli
 import { isSharedContentType } from "@/lib/sharedContent";
 import { dmContextLoader, isDmLead, judgeNewDmContact, takeDmSetAside, writeDmThread, type DmChannel } from "@/lib/inbound/dmContactGate";
 import type { Message } from "@/lib/types";
+import { rememberDmContact } from "@/lib/dmContact";
 
 /**
  * What to record for one Meta message event, and what (if anything) the
@@ -399,6 +400,10 @@ export async function processMetaEnvelope(payload: { object?: string; entry?: un
       // From an existing customer, shared content stays in the thread as
       // context, and nothing below runs: there is nothing to answer.
       if (content.sharedOnly) continue;
+      // The email or mobile they typed, usually in answer to FollowUp's one
+      // ask (src/lib/dmContact.ts, A-238). Before the draft below, so a
+      // customer who just gave it is never asked for it.
+      if (content.ownWords) await rememberDmContact(business.id, lead.id, content.ownWords);
 
       if (!optedOut) {
         // Parks the acknowledgement for ~2 minutes rather than sending it
@@ -517,6 +522,8 @@ async function handlePageEvents(entries: any[]): Promise<void> {
 
       if (!isNewMessage) continue; // redelivered; consent settled, nothing else re-runs
       if (content.sharedOnly) continue; // kept in the thread, nothing to answer
+      // Their email or mobile, if they typed one — see the Instagram path.
+      if (content.ownWords) await rememberDmContact(business.id, lead.id, content.ownWords);
 
       if (!optedOut) {
         // Same two-minute grace period as Instagram, and `ownWords` not

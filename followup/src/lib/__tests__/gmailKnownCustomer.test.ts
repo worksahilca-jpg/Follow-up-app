@@ -18,7 +18,7 @@ const { threadsGet, threadsList, prismaMock, classifyWithSecondLook } = vi.hoist
     integration: { findFirst: vi.fn() },
     business: { findUnique: vi.fn() },
     filteredEmail: { deleteMany: vi.fn(), findUnique: vi.fn(), upsert: vi.fn() },
-    lead: { findUnique: vi.fn(), create: vi.fn(), update: vi.fn(), updateMany: vi.fn(), findUniqueOrThrow: vi.fn() },
+    lead: { findUnique: vi.fn(), findFirst: vi.fn(async () => null), create: vi.fn(), update: vi.fn(), updateMany: vi.fn(), findUniqueOrThrow: vi.fn() },
     conversation: { findUnique: vi.fn(), create: vi.fn() },
     message: { upsert: vi.fn(), findFirst: vi.fn(async () => null) },
   },
@@ -105,6 +105,7 @@ beforeEach(() => {
   prismaMock.lead.updateMany.mockResolvedValue({ count: 1 });
   prismaMock.lead.create.mockResolvedValue(jane);
   prismaMock.lead.findUniqueOrThrow.mockResolvedValue(jane);
+  prismaMock.lead.findFirst.mockResolvedValue(null);
 });
 
 describe("a new thread from someone who is already a lead", () => {
@@ -116,6 +117,20 @@ describe("a new thread from someone who is already a lead", () => {
     expect(leads.map((l) => l.id)).toEqual(["lead1"]);
     expect(prismaMock.lead.findUnique).toHaveBeenCalledWith(
       expect.objectContaining({ where: { businessId_email: { businessId: "biz1", email: "jane@example.com" } } })
+    );
+  });
+
+  // A-238: an Instagram customer who gave this address in a DM, answering
+  // FollowUp's email, is the same customer, not a new one.
+  it("an Instagram customer answering FollowUp's email lands on their own lead", async () => {
+    prismaMock.lead.findUnique.mockResolvedValue(null);
+    prismaMock.lead.findFirst.mockResolvedValue({ id: "lead1", lastContacted: null } as never);
+    const leads = await fetchSalesConversations("biz1");
+    expect(classifyWithSecondLook).not.toHaveBeenCalled();
+    expect(prismaMock.lead.create).not.toHaveBeenCalled();
+    expect(leads.map((l) => l.id)).toEqual(["lead1"]);
+    expect(prismaMock.lead.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { businessId: "biz1", email: null, dmEmail: "jane@example.com" } })
     );
   });
 

@@ -1298,7 +1298,7 @@ export async function generateFollowUpMessage(
   lead: Pick<Lead, "name" | "conversation"> & {
     trade?: string | null;
     facts?: readonly FactLine[];
-    qualify?: Criterion | null;
+    qualify?: Pick<Criterion, "ask"> | null;
   },
   voiceSamples: string[] = [],
   messageHint?: string,

@@ -209,6 +209,20 @@ describe("sendFollowUpToLead — Instagram and Messenger opt-out", () => {
     expect(instagramSend).not.toHaveBeenCalled();
   });
 
+  // A-238: the email they typed into the DM is never a way round their STOP.
+  it("refuses an email to the address they gave in the DM after a STOP there", async () => {
+    p.lead.findUnique.mockResolvedValue(lead({ email: null, phone: "ig:17841400000000001", dmEmail: "jamie@example.com" }));
+    suppressed.mockImplementation(async (_biz: string, _address: string, channel?: string) => channel === "instagram");
+
+    const result = await sendFollowUpToLead("lead1", "Still interested?", { automated: true, trigger: "silence", channel: "email" });
+
+    expect(suppressed).toHaveBeenCalledWith("biz1", "17841400000000001", "instagram");
+    expect(result.success).toBe(false);
+    expect(result.failure).toBe("refused");
+    expect(result.message).toMatch(/STOP on Instagram, so FollowUp won't email them/);
+    expect(gmailSend).not.toHaveBeenCalled();
+  });
+
   it("sends the DM normally when they never opted out", async () => {
     p.lead.findUnique.mockResolvedValue(lead({ email: null, phone: "ig:17841400000000001" }));
 

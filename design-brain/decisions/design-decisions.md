@@ -12419,3 +12419,16 @@ Same 4 tests, re-run by the founder on the live site:
   reason on /admin, so the friend case could not be diagnosed. The next run will say why.
 - **Weak, said plainly:** the friend case may keep failing for a reason not yet seen. It fails in the safe direction
   (let in, never lost), and the re-check (A-239) looks again on their next message.
+
+## 2026-10-12 — Third accuracy run, after PR #498
+
+- **Emails:** 122 of 122. **Replies:** 14 of 14, 0 invented. Both clean for the first time.
+- **Qualifying:** 191 of 192. The 1 made up: "do you have any listings?" (inside a message that also tried to tell the
+  reader to mark everything known; that part was ignored, the fake $2M budget was not taken) counted as knowing
+  what they want. It was right on the previous run; the rule now says "want" needs a home, area, type or size.
+- **Instagram:** 36 of 37, 0 customers set aside. With the reason now shown, the friend case explained itself: the
+  judge translated "Isme bee bhi dal" word for word as "add a bee to the item" and called it a request about the
+  business's work. The chat line now says a request counts only when it is for something this business sells;
+  adding something to a post, photo, reel or story is about the post (PR #499).
+- **Weak, said plainly:** runs vary by a case or two. One clean run is not proof; the "0 customers set aside" and
+  "0 made up / invented" lines are the ones to keep watching.

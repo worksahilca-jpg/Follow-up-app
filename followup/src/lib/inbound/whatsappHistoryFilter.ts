@@ -94,16 +94,20 @@ const STAGE_TWO_MESSAGES = 20;
 // An emoji is never the verdict either way (founder, 2026-10-12: "emojis
 // can be, but we need to judge right"): a buyer hearts a listing, a friend
 // hearts a selfie. The first draft of this line called emojis on their own
-// personal, which would have set aside the buyer.
+// personal, which would have set aside the buyer. "For something THIS
+// business sells": the third run's judge read "Isme bee bhi dal" as "add a
+// bee to the item" and called that a request about a realtor's work.
 export const CHAT_NOTICE =
   "This thread is a direct-message chat (WhatsApp, Instagram or Messenger), where customers write and so do the " +
   "owner's friends, family and followers. An emoji or a reaction proves nothing either way: a buyer sends one about " +
   "a listing, a friend sends one about a selfie. Never decide from the emoji; decide from the words around it, what " +
   "they ask for, and the background if one is given. A customer asks about or for the business's own service (a " +
   "home, a listing, a price, a viewing, the owner's help with a job), even in a few words, in any language, and even " +
-  "after opening with only an emoji or 'hi'. Someone whose words only joke, tease or chat about something with no " +
-  "link to what the business sells (in any language, including Hindi, Punjabi or Gujarati written in English " +
-  "letters), or who asks for a reel, post or photo back, is personal.";
+  "after opening with only an emoji or 'hi'. A request counts only when it is for something THIS business sells: " +
+  "asking to add something to a post, photo, reel or story, or to change or send one back, is about the post, not " +
+  "the business's work, unless that is the business's trade. Someone whose words only joke, tease or chat about " +
+  "something with no link to what the business sells (in any language, including Hindi, Punjabi or Gujarati " +
+  "written in English letters) is personal.";
 
 /**
  * Is this number already a lead on some other channel for this business?

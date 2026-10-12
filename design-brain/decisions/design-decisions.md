@@ -12339,3 +12339,22 @@ The founder asked for it to be accurate, then chose "Build it" over a one-off re
     Filtered out keeps them one tap away, but the owner has to notice.
   - The judge has not been scored on the new cases yet: that needs the Run button on /admin.
 
+## 2026-10-12 — The DM check reads what Instagram knows about the person (A-239, continued)
+
+The founder asked for "hi" to be judged on the whole situation: whether they talked earlier, since when they follow.
+**What shipped (src/lib/inbound/dmBackground.ts):**
+- **Fetched for someone new, and on each re-check (Instagram only):** whether they follow the business, whether the
+  business follows them back, their follower count, and up to 25 messages of the chat as Instagram has it, including
+  messages from before FollowUp was connected.
+- **What the judge sees:** the earlier messages joined to the chat, and one plain line ("they follow the business; the
+  business follows them back; their chat goes back to Mar 2025"). The line says these are hints and that the
+  decision rests on what they actually say.
+- **"hi", an emoji or a photo from someone new:** judged with the earlier chat if they've talked before. Otherwise let
+  through as before.
+- **Not available, said honestly:** "following since" (Instagram has no such field); Messenger (its profile API has
+  only a name).
+- **Unverified:** the `user_id` filter on the conversations call and the profile fields are from Meta's docs and
+  search snippets, not tried against a live account. If either fails, the check runs exactly as before.
+- Two accuracy cases with background were added (a mutual follow with a long casual chat; a first-time follower
+  asking about condos).
+

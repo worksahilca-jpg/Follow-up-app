@@ -31,6 +31,7 @@ import { tooManyRecentActions } from "@/lib/rateLimit";
 import { hasActiveAccess, isChannelAvailableOnFreeTier } from "@/lib/billing";
 import { instagramLeadId, messengerLeadId } from "@/lib/instagramId";
 import { leadRowDeletes } from "@/lib/leads-admin";
+import { backgroundLine, talkedBefore, withEarlierChat, type DmBackground } from "@/lib/inbound/dmBackground";
 
 export type DmChannel = "instagram" | "messenger";
 
@@ -119,6 +120,12 @@ export async function judgeNewDmContact(args: {
   message: Message;
   hasOwnWords: boolean;
   context: () => Promise<DmJudgeContext>;
+  /**
+   * What Instagram knows about them: who follows whom, their follower count,
+   * and the chat from before FollowUp was connected (dmBackground.ts). Read
+   * only when it can change the answer.
+   */
+  background?: () => Promise<DmBackground | null>;
 }): Promise<DmGateResult> {
   const { businessId, channel, contactId, message, hasOwnWords } = args;
   const threadId = dmThreadId(channel, contactId);
@@ -139,9 +146,18 @@ export async function judgeNewDmContact(args: {
     return { admit: false };
   }
 
-  if (!row) {
-    // Someone new: the two openings that are too often a real customer to guess about.
-    if (message.direction === "inbound" && (!hasOwnWords || isBareGreeting(message.body))) return { admit: true, prior: [] };
+  // Someone new who only said "hi", or sent a photo: too often a real
+  // customer to guess about from that alone. But if they've talked with the
+  // business before (founder, 2026-10-12: "for hi we need to analyse whether
+  // they talked earlier"), that earlier chat is judged with it.
+  let background: DmBackground | null = null;
+  const loadBackground = async () => {
+    if (!args.background) return null;
+    background ??= await args.background().catch(() => null);
+    return background;
+  };
+  if (!row && message.direction === "inbound" && (!hasOwnWords || isBareGreeting(message.body))) {
+    if (!talkedBefore(await loadBackground(), message.id)) return { admit: true, prior: [] };
   }
 
   const context = await args.context();
@@ -156,9 +172,9 @@ export async function judgeNewDmContact(args: {
     return { admit: true, prior: [] };
   }
 
-  const thread = [...prior, message]
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    .slice(-DM_SET_ASIDE_MAX_MESSAGES);
+  const bg = await loadBackground();
+  // The chat as Instagram has it, earlier messages included, each once.
+  const thread = withEarlierChat([...prior, message], bg, DM_SET_ASIDE_MAX_MESSAGES);
   const displayName = args.name ?? stored?.name ?? undefined;
 
   // A photo in a chat already set aside adds nothing to read; kept, judged again when there are words.
@@ -174,7 +190,7 @@ export async function judgeNewDmContact(args: {
         thread,
         { name: displayName ?? (channel === "instagram" ? "Instagram user" : "Messenger user"), phone: dmLeadKey(channel, contactId) },
         context.classifier,
-        { knownOnAnotherChannel: false },
+        { knownOnAnotherChannel: false, background: backgroundLine(bg, message.id) },
         { alreadySetAside: !!row }
       );
 

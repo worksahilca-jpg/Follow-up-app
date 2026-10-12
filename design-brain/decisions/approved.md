@@ -3975,4 +3975,11 @@ other leads too that it captured wrong, you gotta make it accurate"*.
   along in the pipeline, booked, or ready.
 - A reply typed in the Instagram app itself doesn't stop the checking: people reply to friends there too.
 - The Instagram and Messenger chats from before the check are checked once, automatically.
+- **Read the whole situation, for "hi" too** (founder, same day: *"For hi we need to analyse the message, whether they
+  talked earlier, since when they're following, and all the situation, so that we can judge accurately"*). The check
+  now reads what Instagram knows: whether they follow the business, whether the business follows them back, their
+  follower count, and the chat from before FollowUp was connected. A "hi" from someone who has chatted with the
+  business before is judged with that chat. A first-time "hi" still comes through, because there is nothing to read.
+  Instagram has no "following since" date, so FollowUp never claims one. These are hints for the judge, not rules: a
+  realtor follows clients back too.
 

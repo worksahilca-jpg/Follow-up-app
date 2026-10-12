@@ -16,6 +16,7 @@ import { dmContextLoader, isDmLead, judgeNewDmContact, takeDmSetAside, writeDmTh
 import type { Message } from "@/lib/types";
 import { rememberDmContact } from "@/lib/dmContact";
 import { hasWordsToJudge, recheckDmLead } from "@/lib/inbound/dmRecheck";
+import { loadInstagramBackground } from "@/lib/inbound/dmBackground";
 
 /**
  * What to record for one Meta message event, and what (if anything) the
@@ -353,6 +354,8 @@ export async function processMetaEnvelope(payload: { object?: string; entry?: un
           message: dmMessage(event.message?.mid, "inbound", "instagram", content.body, sentAt),
           hasOwnWords: !!content.ownWords,
           context: igContext,
+          // Who follows whom, and whether they've talked before (dmBackground.ts).
+          background: () => loadInstagramBackground(business.id, senderId),
         });
         if (!gate.admit) continue;
         admittedPrior = gate.prior;

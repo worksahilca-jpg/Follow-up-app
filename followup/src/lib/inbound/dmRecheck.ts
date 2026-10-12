@@ -3,6 +3,7 @@ import type { Message } from "@/lib/types";
 import { isNotAnAnswer } from "@/lib/notAnAnswer";
 import { tooManyRecentActions } from "@/lib/rateLimit";
 import { judgeHistoryThread } from "@/lib/inbound/whatsappHistoryFilter";
+import { backgroundLine, loadInstagramBackground, withEarlierChat } from "@/lib/inbound/dmBackground";
 import {
   DM_REJUDGE_MAX_PER_HOUR,
   DM_SET_ASIDE_MAX_MESSAGES,
@@ -12,7 +13,7 @@ import {
   type DmChannel,
   type DmJudgeContext,
 } from "@/lib/inbound/dmContactGate";
-import { isBareGreeting } from "@/lib/inbound/greeting";
+import { hasWordsToJudge } from "@/lib/inbound/greeting";
 import { instagramRecipientId, isInstagramLeadId, isMessengerLeadId, messengerRecipientId } from "@/lib/instagramId";
 
 /**
@@ -60,12 +61,7 @@ export function dmCustomerSettled(lead: LeadForCheck, messages: readonly Message
   return messages.some((m) => m.direction === "outbound" && !(m.source ?? "").endsWith("_direct") && !isNotAnAnswer(m.trigger));
 }
 
-/** Words worth judging: not a placeholder for a photo or Reel, not only emoji, not only "hi". */
-export function hasWordsToJudge(body: string): boolean {
-  if (body.startsWith("[Sent ")) return false;
-  if (!/\p{L}/u.test(body)) return false;
-  return !isBareGreeting(body);
-}
+export { hasWordsToJudge } from "@/lib/inbound/greeting";
 
 export type RecheckOutcome = "kept" | "set_aside" | "settled" | "skipped";
 
@@ -138,7 +134,7 @@ async function recheck(businessId: string, leadId: string, options: { context?: 
     return "skipped";
   }
 
-  const thread: Message[] = messages.slice(-DM_SET_ASIDE_MAX_MESSAGES).map((m) => ({
+  const stored: Message[] = messages.slice(-DM_SET_ASIDE_MAX_MESSAGES).map((m) => ({
     id: m.externalId ?? m.id,
     direction: m.direction === "inbound" ? "inbound" : "outbound",
     channel,
@@ -146,7 +142,14 @@ async function recheck(businessId: string, leadId: string, options: { context?: 
     date: m.sentAt.toISOString(),
     opened: false,
   }));
-  const verdict = await judgeHistoryThread(thread, { name: lead.name, phone: lead.phone }, context.classifier, { knownOnAnotherChannel: false });
+  // What Instagram knows about them, and anything said before FollowUp was
+  // connected (src/lib/inbound/dmBackground.ts). Messenger has neither yet.
+  const background = channel === "instagram" ? await loadInstagramBackground(businessId, contactId).catch(() => null) : null;
+  const thread = withEarlierChat(stored, background, DM_SET_ASIDE_MAX_MESSAGES);
+  const verdict = await judgeHistoryThread(thread, { name: lead.name, phone: lead.phone }, context.classifier, {
+    knownOnAnotherChannel: false,
+    background: backgroundLine(background, stored[stored.length - 1]?.id),
+  });
   if (verdict.import) {
     await stamp();
     return "kept";

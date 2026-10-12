@@ -48,6 +48,19 @@ vi.mock("@/lib/integrations/gmail", () => ({ importGmailThread }));
 vi.mock("@/lib/integrations/outlook", () => ({ importOutlookConversation: vi.fn() }));
 vi.mock("@/lib/scoring", () => ({ scoreAndDraftForLead: vi.fn(async () => {}) }));
 vi.mock("@/lib/audit", () => ({ recordAudit: vi.fn(async () => {}) }));
+const { findOrCreateLeadByInstagram, writeDmThread, takeDmSetAside } = vi.hoisted(() => ({
+  findOrCreateLeadByInstagram: vi.fn(async () => ({ id: "leadIg" })),
+  writeDmThread: vi.fn(async () => {}),
+  takeDmSetAside: vi.fn(async () => {}),
+}));
+vi.mock("@/lib/instagram", () => ({ findOrCreateLeadByInstagram }));
+vi.mock("@/lib/facebook", () => ({ findOrCreateLeadByMessenger: vi.fn(async () => ({ id: "leadFb" })) }));
+vi.mock("@/lib/conversations", () => ({ findOrCreateConversation: vi.fn(async () => ({ id: "convIg" })) }));
+vi.mock("@/lib/inbound/dmContactGate", () => ({
+  writeDmThread,
+  takeDmSetAside,
+  dmContactIdOf: (t: string) => t.slice(t.indexOf(":") + 1),
+}));
 
 /** First argument of the first call to a mock, or a failure that says so. */
 function firstArg<T>(calls: unknown[][]): T {
@@ -86,6 +99,28 @@ describe('restoring a filtered email ("this was a lead")', () => {
     // Stamped, and stamped tenant-scoped.
     expect(write.where).toEqual({ id: "lead9", businessId: "biz1" });
     expect(write.data.classificationOverriddenAt).toBeInstanceOf(Date);
+  });
+
+  // 2026-10-11: a DM the "is this a customer?" check set aside comes back whole.
+  it("brings back an Instagram chat that was set aside, with its messages, and records the override", async () => {
+    prismaMock.filteredEmail.findFirst.mockResolvedValue({
+      id: "f2",
+      businessId: "biz1",
+      threadId: "instagram:123",
+      provider: "instagram",
+      reason: "A friend catching up.",
+      threadPayload: { phone: "ig:123", name: "@friend", messages: [{ id: "m1", direction: "inbound", body: "hey, are you still selling?", date: "2026-10-11T15:00:00Z" }] },
+    });
+
+    const res = await restore(new Request("http://localhost"), { params: Promise.resolve({ id: "f2" }) });
+
+    expect(await res.json()).toMatchObject({ success: true, leadId: "leadIg" });
+    expect(findOrCreateLeadByInstagram).toHaveBeenCalledWith("biz1", "123", "friend");
+    expect(writeDmThread).toHaveBeenCalledWith("convIg", "instagram", [expect.objectContaining({ id: "m1", body: "hey, are you still selling?" })]);
+    // The row goes under the set-aside lock, scoped to this business.
+    expect(takeDmSetAside).toHaveBeenCalledWith("biz1", "instagram", "123", "convIg", [expect.objectContaining({ id: "m1" })], undefined);
+    const write = firstArg<{ where: Record<string, unknown> }>(prismaMock.lead.updateMany.mock.calls);
+    expect(write.where).toEqual({ id: "leadIg", businessId: "biz1" });
   });
 
   it("writes nothing when the thread is gone from the mailbox", async () => {

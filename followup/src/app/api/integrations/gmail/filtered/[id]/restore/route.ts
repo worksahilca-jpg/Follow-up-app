@@ -6,6 +6,10 @@ import { importGmailThread } from "@/lib/integrations/gmail";
 import { importOutlookConversation } from "@/lib/integrations/outlook";
 import { restoreWhatsAppHistoryThread } from "@/lib/inbound/whatsappCloud";
 import { parseStoredThread } from "@/lib/inbound/whatsappHistoryFilter";
+import { dmContactIdOf, takeDmSetAside, writeDmThread } from "@/lib/inbound/dmContactGate";
+import { findOrCreateLeadByInstagram } from "@/lib/instagram";
+import { findOrCreateLeadByMessenger } from "@/lib/facebook";
+import { findOrCreateConversation } from "@/lib/conversations";
 import { scoreAndDraftForLead } from "@/lib/scoring";
 import { recordAudit } from "@/lib/audit";
 import { recordSenderVerdict } from "@/lib/senderVerdicts";
@@ -35,7 +39,26 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     // Meta delivers a number's history exactly once, in one webhook, and
     // will not hand it over again. The mailboxes go back to the provider.
     let lead;
-    if (row.provider === "whatsapp") {
+    if (row.provider === "instagram" || row.provider === "messenger") {
+      // A DM set aside by the "is this a customer?" check
+      // (src/lib/inbound/dmContactGate.ts): rebuilt from what was kept.
+      const channel = row.provider;
+      const thread = parseStoredThread(row.threadPayload);
+      const contactId = dmContactIdOf(row.threadId);
+      if (!thread || !contactId) {
+        return NextResponse.json({ success: false, message: "That chat's messages weren't kept, so it can't be brought back automatically." });
+      }
+      const handle = thread.name?.startsWith("@") ? thread.name.slice(1) : undefined;
+      lead =
+        channel === "instagram"
+          ? await findOrCreateLeadByInstagram(ctx.businessId, contactId, handle)
+          : await findOrCreateLeadByMessenger(ctx.businessId, contactId);
+      const conversation = await findOrCreateConversation(lead.id, channel);
+      await writeDmThread(conversation.id, channel, thread.messages);
+      // Under the set-aside lock: a message that arrived while this ran is
+      // written too, then the row goes.
+      await takeDmSetAside(ctx.businessId, channel, contactId, conversation.id, thread.messages, undefined);
+    } else if (row.provider === "whatsapp") {
       const thread = parseStoredThread(row.threadPayload);
       if (!thread) {
         return NextResponse.json({

@@ -12203,3 +12203,24 @@ same check emails and WhatsApp already have.
 - The Instagram name bug from A-233 is still open, so a set-aside chat may read "Instagram user" instead of the handle.
 - WhatsApp stickers are still picked up.
 - A greeting gets through on purpose. A friend who only says "hi" still becomes a customer.
+
+## 2026-10-12 — Accuracy tests for judging, qualifying and replies (A-235)
+
+The founder asked how to make FollowUp's judgement, qualification and replies more accurate. There was a test only
+for the email "is this a customer?" check; qualifying got one on 2026-10-11 (PR #493).
+- **Built:**
+  - `src/lib/dmJudgeEval.ts`: 29 invented first DMs (14 customers, 15 not) through the live judge
+    (`judgeHistoryThread`). Counts "customers set aside" (must be 0) apart from "chats let through".
+  - `src/lib/replyEval.ts`: 14 invented realtor DMs drafted by the real `draftDm`. Code checks the shape, a "Noted."
+    opening and facts that must appear. A second model call grades "answered every question", "invented nothing" and
+    "same language" against a written checklist.
+  - Routes `/api/admin/dm-judge-eval` and `/api/admin/reply-eval`, with the same locks as the other two.
+  - `src/components/AccuracyTests.tsx` on /admin.
+- **Also confirmed:** A-234's first night set aside 2 Instagram chats, both right (founder checked).
+
+**Weak spots:**
+- The reply grader is the same kind of model it grades. It can be wrong in either direction, so a failure always
+  shows the reply for a person to read.
+- The DM judge swallows errors as "let through" (by design, so a customer is never lost to an outage). A rate limit
+  during a run shows up as chats let through.
+- All cases are invented. Real tester conversations, with permission, will make better tests.

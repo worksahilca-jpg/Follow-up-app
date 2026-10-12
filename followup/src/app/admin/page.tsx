@@ -11,6 +11,7 @@ import { getActivation } from "@/lib/activation-data";
 import TesterHealthSection from "@/components/TesterHealthSection";
 import { getTesterHealth } from "@/lib/testerHealth";
 import { formatCurrency } from "@/lib/demo-data";
+import AccuracyTests from "@/components/AccuracyTests";
 
 export const dynamic = "force-dynamic";
 
@@ -65,6 +66,8 @@ export default async function AdminPage() {
       <TesterHealthSection report={health} />
 
       <ProductUsageSection usage={usage} />
+
+      <AccuracyTests />
 
       <div className="mt-10">
         <AdminCharts

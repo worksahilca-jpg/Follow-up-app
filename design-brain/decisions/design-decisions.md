@@ -12233,3 +12233,128 @@ that redelivery was dropped before the name was read. Now that redelivery fills 
 under the set-aside lock, and never replaces a name already there. The founder said *"Yes, fix it"*.
 - **Limit:** the two chats already set aside stay "Instagram user". The 3-minute check has moved past their messages,
   so they get a name only if that person writes again.
+
+## 2026-10-12 — Competitor research, and booking end to end (A-236)
+
+A five-part competitor study found about 100 tools; no single one does FollowUp's whole job, but Meta's Business
+Agent (free, Instagram/Messenger/WhatsApp) and Gmail's free drafting take two of its slices. Report:
+`reports/FollowUp competitor landscape 2026.md` (local to the session; key points also in the founder's chat). The
+founder then raised Appointwise's "we book the appointment end to end" ad. Decision A-236: the middle path in
+Stage 2. Simple steps send by themselves after a one-time yes; tricky ones wait.
+
+## 2026-10-12 — After the competitor study: end to end, CRM rule, Meta's window (A-237)
+
+The founder read the competitor findings and set direction: end to end is the product, approval is for owners who
+don't trust it yet (A-237); with a CRM connected, one boss per customer so nobody is messaged twice.
+- **Already true in code:** FollowUp imports Follow Up Boss and HubSpot contacts and writes a note back after each
+  send (src/lib/crmSync.ts). It sees every message sent from the connected Instagram account, whichever tool sent it.
+- **Meta's 24-hour window**, explained to the founder: automatic sends on Instagram and Messenger stop 24 hours after
+  the person's last message; a person-sent reply can use Meta's human-agent allowance up to 7 days
+  (src/lib/metaWindow.ts). Day-2+ follow-ups to someone who went quiet therefore can't go out automatically on those
+  channels. Proposed fix, not yet decided: ask for an email or phone early so follow-ups can continue by email.
+- **To build later:** the qualification card pushed into the CRM; the one-boss rule (needs a way to know the CRM is
+  following up with a contact).
+
+## 2026-10-12 — Instagram and Messenger customers are asked for email and mobile; email after 24 hours (A-238)
+
+Asked plainly before building: *"On Sep 16 you decided Instagram and Messenger customers are answered only in their
+DMs, never by email. The new plan changes that."* The founder chose **"Yes, change it"**. R-003 is marked superseded,
+not deleted.
+- **Why:** Meta stops automatic DMs 24 hours after the customer's last message. Most customers who go quiet do so in
+  that first day, so day-2 and day-7 follow-ups never reached them. An email they gave keeps the follow-up going.
+- **What it is not:** FollowUp never guesses an address and never switches channel on someone who didn't offer one.
+  STOP on the DM also blocks the email. Inside the 24 hours, the DM is always used.
+- **Founder, same day:** *"In Insta or FB it will be chatting continuously with them like an actual business owner
+  does. In those chats we will ask them about mobile and email, or we will try to book a meeting too."* So the one
+  question asks for email **and** mobile.
+
+**What shipped (src/lib/dmContact.ts; PR "Build all"):**
+- The second reply to an Instagram/Messenger customer (never the first) may end with one question asking for the best
+  email and mobile. Asked once (`Lead.dmContactAskedAt`), in place of that reply's qualifying question.
+- What they type back is kept apart from `email`/`phone` (`Lead.dmEmail`, `Lead.dmPhone`), read only from their own
+  words. Past Meta's 24 hours an automatic follow-up goes to the email; inside it, always the DM. Never after STOP in
+  the DM, never to an address another customer of the business already has. The owner's day-2 DM draft is skipped for
+  them (two messages to one person). Their reply to that email lands on the same customer (Gmail and Outlook).
+- **Screen change (reuses existing parts, nothing new drawn):** the customer page's "Came from" line shows the email and
+  mobile they typed; the existing Call button dials that mobile. The "Meta's window has closed" state is not shown for
+  them, because FollowUp can still follow up by email. Checked in a real browser, desktop and phone (local data).
+- **Weak, said plainly:**
+  - The first email to an Instagram customer greets them by handle ("Hi maya.homes,") when FollowUp has no real name.
+  - The owner can't type an email to them from FollowUp yet. The composer still writes DMs (7-day human window), and
+    the Email button opens their own mail app.
+  - Follow Up Boss's `lastActivity` field (one-boss rule below) is from their forum, not their API reference.
+
+## 2026-10-12 — The CRM side of A-237: one boss per customer, the ready card in the CRM, AI cost
+
+- **One boss per customer:** FollowUp now asks Follow Up Boss (`lastActivity`, unconfirmed field) or HubSpot (Last
+  contacted, `notes_last_contacted`) when they last contacted the customer. Contacted in the last 14 days → FollowUp
+  only watches: its draft waits for the owner (the existing "also in your CRM" hold). Not contacted in 14 days, or
+  never → FollowUp follows up like anyone else. Can't find out → waits for the owner, as before. Activity within 15
+  minutes after FollowUp's own send counts as FollowUp's own note. `src/lib/crm/oneBoss.ts`.
+- **Ready card in the CRM:** when a customer becomes ready, the CRM gets one note: "FollowUp: Nadia Khan looks ready to
+  talk." then one line per thing learned with their own words in quotes. Once, by whichever pass stamped it.
+  `src/lib/crm/notes.ts`.
+- **AI cost per business (production, last 7 days, counts only):** 5 businesses ran the AI; 51 counted runs in total;
+  per business 40, 7, 2, 1, 1. The busiest had 22 in one day. The counter covers replies and fact learning only, not
+  the email check, the DM check, risk checks or instant replies, so it is a floor, not the bill. At roughly
+  $0.001–0.002 a counted run (estimate from research/product/2026-09-15-ai-cost-per-lead.md prices; prompts have grown
+  since), the busiest business is well under $1 a month. The real number is OpenAI's usage page ÷ businesses.
+  **Risk named:** the daily cap is 500 runs per business; a business at that cap every day could cost about as much
+  as $39. Revisit the cap once testers' real use is known.
+
+## 2026-10-12 — "Not a lead": an Instagram friend's joke reached Today (founder feedback)
+
+The founder showed a customer page: an emoji, "Isme bee bhi dal", then a story mention, with a drafted viewing reply.
+*"NOT A LEAD BRO"* and *"INSTA IS NOT SORTING IT WELL"*.
+- **Cause (checked in production, timestamps only):** the chat began at 9:01 PM Toronto on Oct 11, about 2.5 hours
+  before the DM "is this a customer?" check (A-234) was merged. The check judges only people who are new, so it never
+  saw this one. Since it went live: 2 chats set aside, 1 let in. 11 Instagram/Messenger customers predate it; 3 of them
+  were never answered.
+- **Founder's choice:** "I'll delete them". He removes the old ones himself; no re-check was built. If they write again
+  they are new to FollowUp, and the check judges them.
+- **Principle (stated, and already A-234's):** a DM from a friend is not a customer, and FollowUp must not draft a
+  sales reply to a joke. Still open: no one-tap "Not a customer" on a DM customer's page (Delete is the only way out).
+
+## 2026-10-12 — Instagram and Messenger: checked again until a real reply goes out (A-239)
+
+The founder asked for it to be accurate, then chose "Build it" over a one-off re-check of the old chats.
+**What shipped (src/lib/inbound/dmRecheck.ts):**
+- Each new Instagram/Messenger message with words, from someone not yet settled, is judged again on the whole chat.
+  Same judge, same bar: two reads must agree it's not a customer, and an error or a limit keeps them. When it isn't
+  a customer, the chat moves to Filtered out before any acknowledgement, draft or alert.
+- Settled means FollowUp has sent a real reply, or the owner has decided. Bringing a chat back from Filtered out stamps
+  `Lead.dmConfirmedAt` and brings back the email and mobile they had typed. The instant "got your message" and a reply
+  typed in the Instagram app don't settle anyone.
+- The hourly automation pass checks every chat never looked at again, ten per business per pass. The 11 chats from
+  before the first check are all covered.
+- **"Not a customer"** now shows on an Instagram or Messenger customer's page too. It's the same link and confirm box
+  email customers already had, with a sentence that fits a chat. The chat moves to Filtered out, one tap from coming
+  back. Checked locally end to end: the customer was removed, all 5 messages were kept, and bring-back restored them.
+- Three real-shaped cases joined the Instagram accuracy test: emoji then a Hinglish joke, a friend asking for a Reel,
+  and "hi" then a rental question.
+- **Weak, said plainly:**
+  - A friend's first "hi" can still get the instant acknowledgement before their next message shows it's a friend.
+  - The re-check costs one look (two model reads) per message until a real reply goes out.
+  - More looks also means more chances to set a real customer aside by mistake. Two reads must agree first, and
+    Filtered out keeps them one tap away, but the owner has to notice.
+  - The judge has not been scored on the new cases yet: that needs the Run button on /admin.
+
+## 2026-10-12 — The DM check reads what Instagram knows about the person (A-239, continued)
+
+The founder asked for "hi" to be judged on the whole situation: whether they talked earlier, since when they follow.
+**What shipped (src/lib/inbound/dmBackground.ts):**
+- **Fetched for someone new, and on each re-check (Instagram only):** whether they follow the business, whether the
+  business follows them back, their follower count, and up to 25 messages of the chat as Instagram has it, including
+  messages from before FollowUp was connected.
+- **What the judge sees:** the earlier messages joined to the chat, and one plain line ("they follow the business; the
+  business follows them back; their chat goes back to Mar 2025"). The line says these are hints and that the
+  decision rests on what they actually say.
+- **"hi", an emoji or a photo from someone new:** judged with the earlier chat if they've talked before. Otherwise let
+  through as before.
+- **Not available, said honestly:** "following since" (Instagram has no such field); Messenger (its profile API has
+  only a name).
+- **Unverified:** the `user_id` filter on the conversations call and the profile fields are from Meta's docs and
+  search snippets, not tried against a live account. If either fails, the check runs exactly as before.
+- Two accuracy cases with background were added (a mutual follow with a long casual chat; a first-time follower
+  asking about condos).
+

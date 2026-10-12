@@ -37,6 +37,8 @@ export type DmJudgeCase = {
   /** The chat, oldest first: "in" is the person writing, "out" the business. */
   lines: ["in" | "out", string][];
   expectCustomer: boolean;
+  /** What Instagram says about them, as the live check passes it (src/lib/inbound/dmBackground.ts). */
+  background?: string;
 };
 
 const realtor: ClassifierBusinessContext = { name: "Maple Key Realty", industry: "Real estate" };
@@ -92,6 +94,63 @@ export const DM_JUDGE_CASES: DmJudgeCase[] = [
   ask(realtor, "Hinglish: party plans", "Bhai kal party pe aa raha hai na?", false),
   ask(realtor, "brokerage recruiting the agent", "We're hiring agents at our brokerage, 90/10 split, want to chat?", false),
   ask(salon, "salon: supplier pitch", "Hi! We sell wholesale hair extensions to salons, can I send our price list?", false),
+
+  // ---- from the founder's own inbox, 2026-10-12 (A-239) -----------------------
+  // A friend's emoji, then a joke about something in a story: let in on the
+  // emoji, and before A-239 never looked at again.
+  {
+    name: "real miss: emoji, then a Hinglish joke",
+    business: realtor,
+    lines: [
+      ["in", "😍"],
+      ["in", "Isme bee bhi dal"],
+    ],
+    expectCustomer: false,
+  },
+  {
+    name: "a friend asks for a Reel back",
+    business: realtor,
+    lines: [
+      ["in", "hahaha"],
+      ["in", "bro send me that reel again"],
+    ],
+    expectCustomer: false,
+  },
+  {
+    name: "says hi, then asks about a rental",
+    business: realtor,
+    lines: [
+      ["in", "Hi"],
+      ["in", "Is the basement apartment on Main St still for rent?"],
+    ],
+    expectCustomer: true,
+  },
+  // With what Instagram says about them (founder, 2026-10-12: "whether they talked earlier").
+  {
+    name: "with background: a mutual follow and a long casual chat",
+    business: realtor,
+    lines: [
+      ["in", "bro you watching the match tonight"],
+      ["out", "ya obviously"],
+      ["in", "Isme bee bhi dal"],
+    ],
+    background:
+      "What Instagram says about this person: they follow the business; the business follows them back; they have 640 followers; " +
+      "their chat with the business goes back to Jan 2024.",
+    expectCustomer: false,
+  },
+  {
+    name: "with background: follows the business, first message ever",
+    business: realtor,
+    lines: [
+      ["in", "Hi"],
+      ["in", "Do you have any 2 bed condos under 600k in Mississauga?"],
+    ],
+    background:
+      "What Instagram says about this person: they follow the business; the business doesn't follow them; they have 95 followers; " +
+      "this is the first time they've messaged the business.",
+    expectCustomer: true,
+  },
 ];
 
 export type DmJudgeResult = {
@@ -126,7 +185,7 @@ export async function runDmJudgeEval(judge: Judge = judgeHistoryThread, cases = 
   const word = (customer: boolean) => (customer ? "customer" : "set aside");
   await mapWithConcurrency(cases, DM_JUDGE_CONCURRENCY, async (c) => {
     // The same call the live check makes for someone new (dmContactGate.ts).
-    const verdict = await judge(toThread(c.lines), { name: "Instagram user", phone: "ig:eval" }, c.business, { knownOnAnotherChannel: false }, { alreadySetAside: false });
+    const verdict = await judge(toThread(c.lines), { name: "Instagram user", phone: "ig:eval" }, c.business, { knownOnAnotherChannel: false, background: c.background }, { alreadySetAside: false });
     if (verdict.import === c.expectCustomer) {
       result.right += 1;
       return;

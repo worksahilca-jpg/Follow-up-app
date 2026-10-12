@@ -66,6 +66,12 @@ export interface DeepSignals {
    * the other signal became an instruction.
    */
   knownOnAnotherChannel: boolean;
+  /**
+   * What the platform itself says about this person, as one plain line for
+   * the judge (Instagram: who follows whom, follower count, how far back
+   * their chat goes; src/lib/inbound/dmBackground.ts). Hints, not proof.
+   */
+  background?: string;
 }
 
 export type HistoryVerdict =
@@ -127,6 +133,9 @@ export async function judgeHistoryThread(
   if (signals.knownOnAnotherChannel) return { import: true };
 
   const counterpart = { name: contact.name, email: contact.phone };
+  // What the platform knows about them rides on the business context, the
+  // field the prompt already reads as "what you need to know to judge this".
+  if (signals.background && business) business = { ...business, industry: `${business.industry ?? "small"} business. ${signals.background}` };
 
   try {
     if (!options?.alreadySetAside) {

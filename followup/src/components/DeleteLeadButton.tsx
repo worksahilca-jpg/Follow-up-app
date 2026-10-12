@@ -10,12 +10,25 @@ import { useRouter } from "next/navigation";
  * learn from corrections). It removes the person and remembers the sender
  * for this business, so their next email is set aside without asking the
  * model, and it stays reversible from Settings → Filtered out
- * (POST /api/leads/[id]/not-customer). Shown only when there is an email
- * address to remember.
+ * (POST /api/leads/[id]/not-customer). Shown when there is an email
+ * address to remember, or an Instagram or Messenger chat to set aside
+ * (A-239): that chat moves to Filtered out, and if they write again the
+ * "is this a customer?" check reads them again.
  *
  * "Delete" stays the plain, permanent removal, for a duplicate or a test.
  */
-export default function DeleteLeadButton({ leadId, leadName, leadEmail }: { leadId: string; leadName: string; leadEmail?: string | null }) {
+export default function DeleteLeadButton({
+  leadId,
+  leadName,
+  leadEmail,
+  dmChat = false,
+}: {
+  leadId: string;
+  leadName: string;
+  leadEmail?: string | null;
+  /** An Instagram or Messenger customer with no email: "Not a customer" sets their chat aside. */
+  dmChat?: boolean;
+}) {
   const router = useRouter();
   const [confirming, setConfirming] = useState<null | "not-customer" | "delete">(null);
   const [working, setWorking] = useState(false);
@@ -44,7 +57,9 @@ export default function DeleteLeadButton({ leadId, leadName, leadEmail }: { lead
     return (
       <div className="rounded-[var(--radius-box)] border border-line bg-card p-4">
         <p className="text-sm">
-          Not a customer? FollowUp removes {leadName} and sets aside future emails from {leadEmail}.
+          {leadEmail
+            ? `Not a customer? FollowUp removes ${leadName} and sets aside future emails from ${leadEmail}.`
+            : `Not a customer? FollowUp moves ${leadName}'s chat out of your customers. If they write again, FollowUp checks again.`}
         </p>
         <p className="mt-1 text-[13px] text-ink-soft">You can bring them back any time from Settings, under Filtered out.</p>
         <div className="mt-3 flex gap-2">
@@ -90,7 +105,7 @@ export default function DeleteLeadButton({ leadId, leadName, leadEmail }: { lead
   return (
     <div>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-        {leadEmail && (
+        {(leadEmail || dmChat) && (
           <button
             type="button"
             onClick={() => setConfirming("not-customer")}

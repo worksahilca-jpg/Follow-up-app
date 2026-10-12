@@ -30,6 +30,8 @@ import { judgeHistoryThread, parseStoredThread } from "@/lib/inbound/whatsappHis
 import { tooManyRecentActions } from "@/lib/rateLimit";
 import { hasActiveAccess, isChannelAvailableOnFreeTier } from "@/lib/billing";
 import { instagramLeadId, messengerLeadId } from "@/lib/instagramId";
+import { leadRowDeletes } from "@/lib/leads-admin";
+import { backgroundLine, talkedBefore, withEarlierChat, type DmBackground } from "@/lib/inbound/dmBackground";
 
 export type DmChannel = "instagram" | "messenger";
 
@@ -52,7 +54,7 @@ export const DM_FIRST_LOOKS_PER_HOUR = 60;
  */
 export const DM_LOOKS_PER_DAY = 300;
 
-function pastDailyLooks(businessId: string, channel: DmChannel): Promise<boolean> {
+export function pastDailyLooks(businessId: string, channel: DmChannel): Promise<boolean> {
   return tooManyRecentActions(businessId, `${channel}_looks_day`, { windowMinutes: 24 * 60, max: DM_LOOKS_PER_DAY });
 }
 
@@ -73,14 +75,9 @@ function lockKey(channel: DmChannel, businessId: string, contactId: string): str
   return `${channel}_set_aside:${businessId}:${contactId}`;
 }
 
-const GREETING_RE =
-  /^(?:hi+|hii+|hello+|hey+|heya|hiya|hola|namaste|salam|salaam|assalamu alaikum|sat sri akal|good (?:morning|afternoon|evening))(?:\s+(?:there|team|sir|ma'?am|all|everyone))?[\s!.?,~]*$/iu;
-
-/** "Hi", "Hello there!", "Good morning": a greeting and nothing else. Emoji are ignored. */
-export function isBareGreeting(text: string): boolean {
-  const words = text.replace(/\p{Extended_Pictographic}|‍|️/gu, "").trim();
-  return words.length > 0 && GREETING_RE.test(words);
-}
+// "Hi", "Hello there!": in its own module so the re-check (dmRecheck.ts) reads it too.
+export { isBareGreeting } from "@/lib/inbound/greeting";
+import { isBareGreeting } from "@/lib/inbound/greeting";
 
 /** The business's name, trade and AI eligibility, fetched once per delivery and only if someone new wrote. */
 export function dmContextLoader(businessId: string, channel: DmChannel): () => Promise<DmJudgeContext> {
@@ -123,6 +120,12 @@ export async function judgeNewDmContact(args: {
   message: Message;
   hasOwnWords: boolean;
   context: () => Promise<DmJudgeContext>;
+  /**
+   * What Instagram knows about them: who follows whom, their follower count,
+   * and the chat from before FollowUp was connected (dmBackground.ts). Read
+   * only when it can change the answer.
+   */
+  background?: () => Promise<DmBackground | null>;
 }): Promise<DmGateResult> {
   const { businessId, channel, contactId, message, hasOwnWords } = args;
   const threadId = dmThreadId(channel, contactId);
@@ -143,9 +146,18 @@ export async function judgeNewDmContact(args: {
     return { admit: false };
   }
 
-  if (!row) {
-    // Someone new: the two openings that are too often a real customer to guess about.
-    if (message.direction === "inbound" && (!hasOwnWords || isBareGreeting(message.body))) return { admit: true, prior: [] };
+  // Someone new who only said "hi", or sent a photo: too often a real
+  // customer to guess about from that alone. But if they've talked with the
+  // business before (founder, 2026-10-12: "for hi we need to analyse whether
+  // they talked earlier"), that earlier chat is judged with it.
+  let background: DmBackground | null = null;
+  const loadBackground = async () => {
+    if (!args.background) return null;
+    background ??= await args.background().catch(() => null);
+    return background;
+  };
+  if (!row && message.direction === "inbound" && (!hasOwnWords || isBareGreeting(message.body))) {
+    if (!talkedBefore(await loadBackground(), message.id)) return { admit: true, prior: [] };
   }
 
   const context = await args.context();
@@ -160,9 +172,9 @@ export async function judgeNewDmContact(args: {
     return { admit: true, prior: [] };
   }
 
-  const thread = [...prior, message]
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    .slice(-DM_SET_ASIDE_MAX_MESSAGES);
+  const bg = await loadBackground();
+  // The chat as Instagram has it, earlier messages included, each once.
+  const thread = withEarlierChat([...prior, message], bg, DM_SET_ASIDE_MAX_MESSAGES);
   const displayName = args.name ?? stored?.name ?? undefined;
 
   // A photo in a chat already set aside adds nothing to read; kept, judged again when there are words.
@@ -178,7 +190,7 @@ export async function judgeNewDmContact(args: {
         thread,
         { name: displayName ?? (channel === "instagram" ? "Instagram user" : "Messenger user"), phone: dmLeadKey(channel, contactId) },
         context.classifier,
-        { knownOnAnotherChannel: false },
+        { knownOnAnotherChannel: false, background: backgroundLine(bg, message.id) },
         { alreadySetAside: !!row }
       );
 
@@ -322,4 +334,53 @@ export async function takeDmSetAside(
 export function dmContactIdOf(threadId: string): string | null {
   const i = threadId.indexOf(":");
   return i > 0 ? threadId.slice(i + 1) || null : null;
+}
+
+/**
+ * Moves a DM customer back into a set-aside chat (A-239): their whole
+ * conversation goes into a "Filtered out" row, one tap from coming back
+ * (the restore route rebuilds it), and the customer goes, under the same
+ * lock every set-aside write takes, so a message arriving meanwhile is
+ * never lost between the two. Used when a later message shows it's a
+ * friend or a pitch (src/lib/inbound/dmRecheck.ts), and by the owner's
+ * "Not a customer". Returns false when there was nothing to move.
+ */
+export async function moveDmLeadAside(
+  businessId: string,
+  channel: DmChannel,
+  contactId: string,
+  leadId: string,
+  reason: string
+): Promise<boolean> {
+  const threadId = dmThreadId(channel, contactId);
+  const phone = dmLeadKey(channel, contactId);
+  return prisma.$transaction(
+    async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${lockKey(channel, businessId, contactId)}))`;
+      const lead = await tx.lead.findFirst({
+        where: { id: leadId, businessId, phone },
+        select: { id: true, name: true, conversations: { select: { id: true, messages: { select: { id: true, externalId: true, direction: true, body: true, sentAt: true } } } } },
+      });
+      if (!lead) return false;
+      const messages = lead.conversations
+        .flatMap((c) => c.messages)
+        .sort((a, b) => a.sentAt.getTime() - b.sentAt.getTime())
+        .slice(-DM_SET_ASIDE_MAX_MESSAGES)
+        // Restore writes each message back by its id; one FollowUp stored
+        // without Meta's id still needs one to come back.
+        .map((m) => ({ id: m.externalId ?? `local:${m.id}`, direction: m.direction, body: m.body, date: m.sentAt.toISOString() }));
+      if (messages.length === 0) return false;
+      const name = lead.name.startsWith("@") ? lead.name : null;
+      const payload = { phone, name, messages };
+      const lastMessageAt = new Date(messages[messages.length - 1].date);
+      await tx.filteredEmail.upsert({
+        where: { businessId_threadId: { businessId, threadId } },
+        update: { reason, senderName: lead.name, threadPayload: payload, lastMessageAt },
+        create: { businessId, threadId, provider: channel, senderName: lead.name, senderPhone: phone, reason, threadPayload: payload, lastMessageAt },
+      });
+      for (const op of leadRowDeletes(tx, lead.id, lead.conversations.map((c) => c.id))) await op;
+      return true;
+    },
+    { timeout: 20_000 }
+  );
 }

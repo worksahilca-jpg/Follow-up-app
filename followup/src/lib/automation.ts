@@ -42,6 +42,7 @@ import { isExitPayload, toQuickReplies, type StoredQuickReplies } from "@/lib/qu
 import { Prisma } from "@prisma/client";
 import { composeFollowUpEmail, latestInboundText } from "@/lib/sender";
 import { sendFollowUpToLead, detectAutomatedReplyChannel } from "@/lib/sending";
+import { crmIsFollowingUp } from "@/lib/crm/oneBoss";
 import { requireActiveBilling, checkAiEligibility } from "@/lib/billing";
 import { leadLanguageOf } from "@/lib/leadLanguage";
 import { canSendOn, hasAnySendChannel } from "@/lib/sendChannels";
@@ -1323,7 +1324,10 @@ export async function runAutomationForBusiness(
       // message was an email at the time) must not go out as a DM: the
       // greeting/sign-off frame and the subject would ship inside the
       // bubble. So on a DM channel "current" also requires a DM-shaped draft.
-      const cachedShapeFits = !isDm || lead.suggestedQuickReplies != null;
+      // And the other way round: a DM customer followed up by email after
+      // Meta's window (A-238) has a DM-shaped draft cached, with no subject
+      // and no greeting, which must not go out as an email.
+      const cachedShapeFits = isDm ? lead.suggestedQuickReplies != null : lead.suggestedQuickReplies == null;
 
       let subject = lead.suggestedSubject ?? undefined;
       let message = lead.suggestedMessage;
@@ -1716,10 +1720,17 @@ export async function runAutomationForBusiness(
         // `isCold`, so this only ever holds MORE than before, never less.
         // `isBackfilled` joins `isCold` for the same reason and with the
         // same shape: it only ever holds MORE than before, never less.
-        // A customer who is also in the CRM: the CRM may be following up too,
-        // and FollowUp can't see it, so FollowUp never sends to them on its
-        // own (founder, 2026-09-29). Same queue, same draft.
-        const inCrm = !!lead.crmProvider && !!lead.crmId;
+        // A customer who is also in the CRM: while the CRM is following up
+        // with them, FollowUp only watches and never sends on its own (one
+        // boss per customer, A-237; founder, 2026-09-29 before it). Same
+        // queue, same draft. When the CRM isn't following up, FollowUp does.
+        // Asked only when nothing above already holds the reply, so a held
+        // lead costs no CRM call; an answer it can't get counts as "following up".
+        const inCrm =
+          !!lead.crmProvider &&
+          !!lead.crmId &&
+          !(risk.riskLevel !== "low" || isCold || isBackfilled || isUntouched || phoneNeverWrote || unconfirmedSpam) &&
+          (await crmIsFollowingUp(lead, lastOutboundAt(conversation)));
         if (holdAll || autonomousBacklog || autoSendBacklog || risk.riskLevel !== "low" || isCold || isBackfilled || isUntouched || phoneNeverWrote || unconfirmedSpam || inCrm) {
           // Persist whatever was just written, so the stale draft doesn't
           // linger as what the owner sees waiting for approval — and stamp
@@ -2127,6 +2138,9 @@ export async function draftDmHandoffs(businessId: string, voiceSamples: string[]
     if (isExitPayload(inbound.quickReplyPayload)) continue;
     if (settledByTalk(lead.talkedAt, new Date(inbound.date))) continue;
     if (settledByDecline(lead.holdDismissedAt, new Date(newest.date))) continue;
+    // They gave an email in the chat: FollowUp follows up there now (A-238),
+    // so a DM for the owner to send as well would be two messages to one person.
+    if (lead.dmEmail && !lead.email && (await detectAutomatedReplyChannel(lead)) === "email") continue;
     const already = readStoredQuickReplies(lead.suggestedQuickReplies);
     if (already?.question === DM_HANDOFF_QUESTION && lead.suggestedDraftedFor && lead.suggestedDraftedFor >= new Date(inbound.date)) continue;
     if (!(await checkAiEligibility(businessId, lead, tier)).ok) continue;
@@ -2341,4 +2355,10 @@ export async function runFreshRepliesForAllBusinesses(): Promise<AutomationResul
     totals.heldReasons.push(...result.heldReasons);
   }
   return totals;
+}
+
+/** When the business last wrote to them, for telling FollowUp's own CRM notes from the CRM's follow-ups. */
+function lastOutboundAt(conversation: Message[]): Date | null {
+  const times = conversation.filter((m) => m.direction === "outbound").map((m) => new Date(m.date).getTime());
+  return times.length ? new Date(Math.max(...times)) : null;
 }

@@ -13,6 +13,8 @@ import { scoreLead, generateFollowUpMessage, extractQualificationFacts } from "@
 import { composeFollowUpEmail, latestInboundText } from "@/lib/sender";
 import { dmChannelOf } from "@/lib/dmDrafts";
 import { draftDm } from "@/lib/dmDrafting";
+import { DM_CONTACT_ASK, shouldAskForContact } from "@/lib/dmContact";
+import { pushCrmNote, readyNote } from "@/lib/crm/notes";
 import { getVoiceSamples } from "@/lib/voice";
 import { checkAiEligibility } from "@/lib/billing";
 import { detectLeadLanguage, leadLanguageOf } from "@/lib/leadLanguage";
@@ -194,6 +196,15 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
       : Promise.resolve(null),
   ]);
 
+  // An Instagram or Messenger customer who has been answered once and
+  // writes again is asked, once, for the best email and mobile to reach them
+  // (src/lib/dmContact.ts, A-238): Meta stops automatic DMs 24 hours after
+  // their last message, and the email is where a later follow-up goes. It
+  // takes this reply's one question; the next qualifying question waits for
+  // the reply after.
+  const dmChannel = dmChannelOf(conversation);
+  const askContact = Boolean(dmChannel) && customerJustWrote && shouldAskForContact(lead, conversation);
+
   // What FollowUp now knows, and the one thing this reply may ask about.
   // Each thing is asked about once (Qualification.offered), and only in a
   // reply to something the customer just wrote — never in a message
@@ -208,7 +219,7 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
       customerTexts(conversation),
       booking ? bookingWhen(booking.scheduledAt, lead.business.timezone ?? "America/New_York") : null
     );
-    qualify = customerJustWrote ? nextToAsk(template, qualification) : null;
+    qualify = customerJustWrote && !askContact ? nextToAsk(template, qualification) : null;
     if (qualify) qualification = markOffered(qualification, qualify.key);
   }
   const becameReady = Boolean(template && !lead.qualifiedAt && isReady(template, qualification));
@@ -227,13 +238,12 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
   // wrote. Before this, a DM lead's suggested reply was an email with
   // "Hi <name>," and a sign-off, and that is what the automation pass sent
   // into their Instagram inbox (research 2026-09-16, verified).
-  const dmChannel = dmChannelOf(conversation);
   let suggestedMessage: string;
   let suggestedSubject: string | null;
   let suggestedQuickReplies: Prisma.InputJsonValue | typeof Prisma.JsonNull;
   if (dmChannel) {
     const { trade, facts } = await draftingContext(lead.businessId);
-    const dm = await draftDm(lead.name, conversation, voiceSamples, undefined, undefined, leadLanguage, facts, qualify, trade);
+    const dm = await draftDm(lead.name, conversation, voiceSamples, undefined, undefined, leadLanguage, facts, askContact ? DM_CONTACT_ASK : qualify, trade);
     suggestedMessage = dm.body;
     suggestedSubject = null;
     // Buttons only when the draft passed the shape check — an owner may
@@ -320,6 +330,8 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
           }
         : {}),
       ...(qualification ? { qualification: qualification as unknown as Prisma.InputJsonValue } : {}),
+      // Asked once: this draft carries the question, so no later one will.
+      ...(askContact ? { dmContactAskedAt: new Date() } : {}),
       // Whatever was paused here isn't any more — this write IS the proof.
       // Clearing it anywhere else (a billing webhook, an upgrade handler)
       // would be a second place that has to stay right; clearing it at the
@@ -332,7 +344,12 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
   // Stamped once, and only where nothing stamped it first, so two passes
   // racing on the same lead agree on one moment and the owner hears once.
   if (becameReady) {
-    await prisma.lead.updateMany({ where: { id: lead.id, qualifiedAt: null }, data: { qualifiedAt: new Date() } });
+    const stamped = await prisma.lead.updateMany({ where: { id: lead.id, qualifiedAt: null }, data: { qualifiedAt: new Date() } });
+    // The same card in the owner's CRM, once, by whichever pass stamped it
+    // (src/lib/crm/notes.ts, A-237). Best-effort: never holds up the reply.
+    if (stamped.count === 1 && template && qualification && lead.crmProvider && lead.crmId) {
+      void pushCrmNote(lead.businessId, lead.crmProvider, lead.crmId, readyNote(lead.name, template, qualification));
+    }
   }
 
   // Someone FollowUp is switched off for still shows up in Today when they

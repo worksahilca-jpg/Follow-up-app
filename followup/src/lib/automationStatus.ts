@@ -204,6 +204,9 @@ export interface AutomationStatusLead {
   // Lead.talkedAt, ISO — see the "talked" state above. Optional because
   // most callers build this from rows that predate the column.
   talkedAt?: string | null;
+  // They typed an email into the DM (src/lib/dmContact.ts, A-238): past the
+  // window FollowUp follows up there, so the window is not in the way.
+  hasDmEmail?: boolean;
 }
 
 /**
@@ -212,10 +215,11 @@ export interface AutomationStatusLead {
  * Read off the most recent INBOUND message, which is also what decides
  * whether the window is relevant at all: a lead who wrote on Instagram
  * and then emailed is reachable by email, and the newest inbound being
- * an email is exactly how that shows up here. There is deliberately no
- * email fallback for a shut DM window (R-003), so the reverse case —
- * newest inbound on Instagram, email address on file — really is blocked
- * and really should say so.
+ * an email is exactly how that shows up here. The one email fallback for
+ * a shut DM window is an address the customer typed into the DM (A-238,
+ * which superseded R-003): that lead skips this state (`hasDmEmail`). An
+ * email on file from anywhere else is not used, so newest inbound on
+ * Instagram with only that really is blocked and really should say so.
  */
 function describeMetaWindow(conversation: Message[], now: Date): AutomationStatus | null {
   let newestInbound: Message | null = null;
@@ -305,7 +309,7 @@ export function computeAutomationStatus(
   // "you turned this off" learns something they already knew and can
   // undo whenever they like. An owner reading "three days left to reply
   // at all" learns something that expires.
-  const metaWindow = describeMetaWindow(lead.conversation, now);
+  const metaWindow = lead.hasDmEmail ? null : describeMetaWindow(lead.conversation, now);
   if (metaWindow) return metaWindow;
 
   // Checked before automationTier: enrollLead() (sequences.ts) always sets

@@ -115,6 +115,57 @@ describe("someone new", () => {
   });
 });
 
+// Founder, 2026-10-12: "for hi we need to analyse whether they talked earlier, since when they're following".
+describe("someone new, with what Instagram knows about them", () => {
+  const earlierChat = {
+    followsBusiness: true,
+    businessFollows: true,
+    followerCount: 412,
+    messages: [
+      { ...msg("e1", "bro you coming saturday?"), date: new Date("2025-03-02T20:00:00Z").toISOString() },
+      { ...msg("e2", "yes bro", "outbound"), date: new Date("2025-03-02T20:05:00Z").toISOString() },
+    ],
+  };
+  const askWith = (message: Message, background: unknown, hasOwnWords = true) =>
+    judgeNewDmContact({
+      businessId: "biz1",
+      channel: "instagram",
+      contactId: "123",
+      name: "@friend",
+      message,
+      hasOwnWords,
+      context: dmContextLoader("biz1", "instagram"),
+      background: async () => background as never,
+    });
+
+  it("judges a 'hi' when they've talked with the business before, with that chat and the follow facts", async () => {
+    h.judge.mockResolvedValue({ import: false, reason: "A friend chatting." });
+    expect(await askWith(msg("m1", "hiii"), earlierChat)).toEqual({ admit: false });
+    const [thread, , , signals] = h.judge.mock.calls[0];
+    expect(thread.map((m: Message) => m.body)).toEqual(["bro you coming saturday?", "yes bro", "hiii"]);
+    expect(signals.background).toContain("the business follows them back");
+    expect(signals.background).toContain("their chat with the business goes back to Mar 2025");
+  });
+
+  it("still lets a first-time 'hi' through: nothing earlier to read", async () => {
+    expect(await askWith(msg("m1", "Hi"), { followsBusiness: true, businessFollows: false, followerCount: 80, messages: [] })).toEqual({ admit: true, prior: [] });
+    expect(h.judge).not.toHaveBeenCalled();
+  });
+
+  it("tells the judge it's their first message when there's no earlier chat", async () => {
+    h.judge.mockResolvedValue({ import: true });
+    await askWith(msg("m1", "Do you have any 2 bed condos under 600k?"), { followsBusiness: true, businessFollows: false, followerCount: 80, messages: [] });
+    expect(h.judge.mock.calls[0][3].background).toContain("this is the first time they've messaged the business");
+  });
+
+  it("judges as before when Instagram couldn't be read", async () => {
+    h.judge.mockResolvedValue({ import: true });
+    expect(await askWith(msg("m1", "Hi"), null)).toEqual({ admit: true, prior: [] });
+    await askWith(msg("m2", "how much do you charge?"), null);
+    expect(h.judge.mock.calls[0][3]).toEqual({ knownOnAnotherChannel: false, background: undefined });
+  });
+});
+
 describe("a chat already set aside", () => {
   beforeEach(() => {
     h.row = { id: "row1", threadPayload: { phone: "ig:123", name: "@friend", messages: [{ id: "m1", direction: "inbound", body: "hey bro what's up", date: "2026-10-11T14:00:00Z" }] } };

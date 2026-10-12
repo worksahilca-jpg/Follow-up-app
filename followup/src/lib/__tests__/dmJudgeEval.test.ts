@@ -16,11 +16,14 @@ describe("DM_JUDGE_CASES", () => {
     expect(new Set(DM_JUDGE_CASES.map((c) => c.name)).size).toBe(DM_JUDGE_CASES.length);
   });
 
-  it("holds only what the live check judges: words, and never a bare greeting", () => {
+  // The live check judges a chat once its newest message has words (the
+  // first look, dmContactGate.ts, or a later one, dmRecheck.ts, A-239), so
+  // an earlier emoji or "hi" may sit above it.
+  it("holds only what the live check judges: the newest message has words, never only a greeting", () => {
     for (const c of DM_JUDGE_CASES) {
-      const first = c.lines.find(([who]) => who === "in")?.[1] ?? "";
-      expect(first.trim().length, c.name).toBeGreaterThan(3);
-      expect(/^(hi|hello|hey)[!. ]*$/i.test(first.trim()), c.name).toBe(false);
+      const newest = [...c.lines].reverse().find(([who]) => who === "in")?.[1] ?? "";
+      expect(newest.trim().length, c.name).toBeGreaterThan(3);
+      expect(/^(hi|hello|hey)[!. ]*$/i.test(newest.trim()), c.name).toBe(false);
     }
   });
 });

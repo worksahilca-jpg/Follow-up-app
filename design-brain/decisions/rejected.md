@@ -148,6 +148,9 @@ AI-product visual conventions are pervasive in training data, the second because
 "inspired by" drifts into "reproduced from" without anyone deciding to.
 
 ## R-003 — Email as the fallback channel for an Instagram/Messenger follow-up past Meta's 24-hour window ^R-003
+**SUPERSEDED (2026-10-12)** by [[approved#^A-238|A-238]]: the founder changed this rule. FollowUp now asks for the
+customer's email once, in the DM, and follows up by email after the window only when they gave it themselves. The
+entry below is kept as the record of what was believed on 2026-09-16.
 **Date:** 2026-09-16
 **Scope:** Instagram and Messenger leads, system-wide — workflows, the unanswered rule,
 reactivation, and any future sender.

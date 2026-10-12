@@ -122,10 +122,12 @@ export function isUnconfirmedSpamSource(source: string | null | undefined): bool
 }
 
 /**
- * A customer who is also in the business's CRM (Follow Up Boss, HubSpot).
- * Those CRMs often run their own follow-ups, which FollowUp can't see, so
- * FollowUp never follows up with them on its own: the customer could get
- * two check-ins. Founder, 2026-09-29.
+ * A customer who is also in the business's CRM (Follow Up Boss, HubSpot),
+ * while the CRM is following up with them: FollowUp never follows up on its
+ * own, or the customer could get two check-ins. Founder, 2026-09-29. Since
+ * 2026-10-12 (one boss per customer, A-237) FollowUp asks the CRM first and
+ * holds only when it contacted them in the last two weeks, or can't say
+ * (src/lib/crm/oneBoss.ts).
  */
 export const IN_CRM_REASON =
   "they're also in your CRM, which may send its own follow-ups, so FollowUp waits for you rather than risk a second message";

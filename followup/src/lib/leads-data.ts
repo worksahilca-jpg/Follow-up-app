@@ -114,6 +114,8 @@ export function mapDbLeadToUiLead(dbLead: DbLead, rules: BusinessAutomationRules
     talkedAt: dbLead.talkedAt ? dbLead.talkedAt.toISOString() : null,
     viaSite: dbLead.viaSite,
     viaSiteUrl: dbLead.viaSiteUrl,
+    dmEmail: dbLead.dmEmail,
+    dmPhone: dbLead.dmPhone,
     automationStatus: computeAutomationStatus(
       {
         stage,
@@ -123,6 +125,7 @@ export function mapDbLeadToUiLead(dbLead: DbLead, rules: BusinessAutomationRules
         sequence: dbLead.sequence ? { name: dbLead.sequence.name, active: dbLead.sequence.active, dueAt: dbLead.sequenceStepDueAt?.toISOString() ?? null } : null,
         aiPausedReason: dbLead.aiPausedReason,
         talkedAt: dbLead.talkedAt ? dbLead.talkedAt.toISOString() : null,
+        hasDmEmail: !dbLead.email && !!dbLead.dmEmail,
       },
       rules
     ),

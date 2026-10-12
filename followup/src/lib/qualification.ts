@@ -240,7 +240,7 @@ export function markOffered(q: Qualification, key: CriterionKey): Qualification 
  * after their questions are answered, only when what they're asking about
  * is clear, and never as a second question.
  */
-export function qualifyPromptBlock(next: Criterion | null): string {
+export function qualifyPromptBlock(next: Pick<Criterion, "ask"> | null): string {
   if (!next) return "";
   return (
     "\n\nONE THING TO LEARN NEXT. This business finds out a few things from each customer before handing them to " +

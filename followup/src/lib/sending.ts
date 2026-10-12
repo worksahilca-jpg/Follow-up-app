@@ -29,7 +29,8 @@ import { instagramRecipientId, isInstagramLeadId, isMessengerLeadId, messengerRe
 import { sendMessengerMessage } from "@/lib/facebook";
 import type { QuickReply } from "@/lib/quickReplies";
 import { META_DM_WINDOW_HOURS, META_HUMAN_AGENT_MAX_HOURS } from "@/lib/metaWindow";
-import { CRM_PROVIDERS, isCrmProvider } from "@/lib/crm";
+import { isCrmProvider } from "@/lib/crm";
+import { pushCrmNote } from "@/lib/crm/notes";
 import { isTransientError } from "@/lib/transientError";
 import { requireActiveBilling } from "@/lib/billing";
 import { localDateKey } from "@/lib/sendWindow";
@@ -169,24 +170,59 @@ export async function detectAutomatedReplyChannel(lead: {
   id: string;
   email: string | null;
   phone: string | null;
+  // Only callers that pass both can use a DM customer's email (A-238).
+  businessId?: string;
+  dmEmail?: string | null;
 }): Promise<"email" | "text" | "whatsapp" | "instagram" | "messenger" | null> {
-  const lastInbound = await prisma.message.findFirst({
-    where: { conversation: { leadId: lead.id }, direction: "inbound" },
-    orderBy: { sentAt: "desc" },
-    select: { conversation: { select: { channel: true } } },
-  });
-  const lastChannel = lastInbound?.conversation.channel;
-  if (lastChannel === "email" && lead.email) return "email";
+  const lastChannel = await lastInboundChannel(lead.id);
+  // A DM customer who answered FollowUp's email is answered by email.
+  if (lastChannel === "email" && (lead.email || (await usableDmEmail(lead)))) return "email";
   if (lastChannel === "text" && lead.phone) return "text";
   if (lastChannel === "whatsapp" && lead.phone) return "whatsapp";
-  if (lastChannel === "instagram" && isInstagramLeadId(lead.phone)) return "instagram";
-  if (lastChannel === "messenger" && isMessengerLeadId(lead.phone)) return "messenger";
+  // Past Meta's 24 hours an automatic DM can't go out; the email they gave
+  // in the chat can (src/lib/dmContact.ts, A-238). Inside the 24 hours the
+  // DM is always used.
+  if (lastChannel === "instagram" && isInstagramLeadId(lead.phone)) return (await dmEmailAfterWindow(lead, "instagram")) ? "email" : "instagram";
+  if (lastChannel === "messenger" && isMessengerLeadId(lead.phone)) return (await dmEmailAfterWindow(lead, "messenger")) ? "email" : "messenger";
 
   if (lead.email) return "email";
   if (isInstagramLeadId(lead.phone)) return "instagram";
   if (isMessengerLeadId(lead.phone)) return "messenger";
   if (lead.phone) return detectPhoneChannel(lead.id);
   return null;
+}
+
+async function lastInboundChannel(leadId: string): Promise<string | undefined> {
+  const lastInbound = await prisma.message.findFirst({
+    where: { conversation: { leadId }, direction: "inbound" },
+    orderBy: { sentAt: "desc" },
+    select: { conversation: { select: { channel: true } } },
+  });
+  return lastInbound?.conversation.channel;
+}
+
+/**
+ * The email an Instagram or Messenger customer typed into the DM
+ * (src/lib/dmContact.ts, A-238), when FollowUp may write to it: they have
+ * no `Lead.email`, never sent STOP in the DM, and no other customer of this
+ * business already has that address. That other customer is followed up
+ * there, and two follow-ups to one person is the thing never to do.
+ */
+async function usableDmEmail(lead: { id: string; email: string | null; phone: string | null; businessId?: string; dmEmail?: string | null }): Promise<string | null> {
+  if (lead.email || !lead.dmEmail || !lead.businessId) return null;
+  const dmKey = dmSuppressionKey(lead.phone);
+  if (dmKey && (await isSuppressed(lead.businessId, dmKey.address, dmKey.channel))) return null;
+  const owner = await prisma.lead.findFirst({ where: { businessId: lead.businessId, email: lead.dmEmail, id: { not: lead.id } }, select: { id: true } });
+  return owner ? null : lead.dmEmail;
+}
+
+async function dmEmailAfterWindow(
+  lead: { id: string; email: string | null; phone: string | null; businessId?: string; dmEmail?: string | null },
+  channel: "instagram" | "messenger"
+): Promise<boolean> {
+  if (!(await usableDmEmail(lead))) return false;
+  const { hoursSinceLead } = await metaWindowFor(lead.id, channel);
+  return hoursSinceLead !== null && hoursSinceLead > META_DM_WINDOW_HOURS;
 }
 
 /**
@@ -407,6 +443,9 @@ export async function sendFollowUpToLead(
 
   const channel =
     options.channel ??
+    // A DM customer who answered FollowUp's email (A-238): their reply is
+    // by email, so the owner's answer goes back the same way.
+    (!lead.email && lead.dmEmail && (await lastInboundChannel(lead.id)) === "email" ? "email" : null) ??
     (lead.email
       ? "email"
       : isInstagramLeadId(lead.phone)
@@ -479,6 +518,22 @@ export async function sendFollowUpToLead(
       message: `This lead sent STOP on ${platform} — messages there are blocked until they send START to opt back in.`,
       failure: "refused",
     };
+  }
+
+  // The email a DM customer typed into the chat (A-238). Used only when no
+  // `Lead.email` exists, and never after a STOP in the DM: a person who told
+  // the business to stop on Instagram meant everywhere.
+  const emailTo = lead.email ?? lead.dmEmail;
+  if (channel === "email" && !lead.email && lead.dmEmail) {
+    const stopKey = dmSuppressionKey(lead.phone);
+    if (stopKey && (await isSuppressed(lead.businessId, stopKey.address, stopKey.channel))) {
+      const platform = stopKey.channel === "instagram" ? "Instagram" : "Messenger";
+      return {
+        success: false,
+        message: `${lead.name.split(" ")[0]} sent STOP on ${platform}, so FollowUp won't email them either.`,
+        failure: "refused",
+      };
+    }
   }
 
   // Meta's window, judged here rather than discovered as a Graph 400.
@@ -658,7 +713,7 @@ export async function sendFollowUpToLead(
 
   const isCampaignSend = options.automated && options.trigger === "dead_lead_reactivation";
 
-  const emailSuppressed = channel === "email" && (await isSuppressed(lead.businessId, lead.email));
+  const emailSuppressed = channel === "email" && (await isSuppressed(lead.businessId, emailTo));
   if (emailSuppressed && isCampaignSend) {
     await releaseClaim();
     return {
@@ -725,7 +780,7 @@ export async function sendFollowUpToLead(
     let emailProvider: "gmail" | "outlook" | undefined;
     let sentTemplate: string | undefined;
     if (channel === "email") {
-      if (!lead.email) return { ok: false, message: "This lead has no email address on file.", failure: "refused" };
+      if (!emailTo) return { ok: false, message: "This lead has no email address on file.", failure: "refused" };
 
       // Only AUTOMATED mail carries the unsubscribe footer and headers. A
       // human typing a reply to a customer is not a mailing they should be
@@ -745,7 +800,7 @@ export async function sendFollowUpToLead(
       const target = options.emailThreadId || options.emailInReplyTo ? null : await emailReplyTarget(lead.id, emailProvider);
       if (emailProvider === "outlook") {
         const result = await sendOutlookEmail(lead.businessId, {
-          to: lead.email,
+          to: emailTo,
           subject: fallbackSubject,
           body,
           // Graph's /reply endpoint takes the specific message's own id,
@@ -781,7 +836,7 @@ export async function sendFollowUpToLead(
           }
         }
         const result = await sendEmail(lead.businessId, {
-          to: lead.email,
+          to: emailTo,
           subject,
           body,
           threadId,
@@ -1124,7 +1179,7 @@ export async function sendFollowUpToLead(
   // Push a note to the CRM this lead came from — best-effort, never lets
   // a CRM hiccup fail a send that already succeeded. See src/lib/crmSync.ts.
   if (lead.crmProvider && lead.crmId && isCrmProvider(lead.crmProvider)) {
-    void pushCrmNote(lead.businessId, lead.crmProvider, lead.crmId, body);
+    void pushCrmNote(lead.businessId, lead.crmProvider, lead.crmId, `FollowUp sent:\n\n${body}`);
   }
 
   // AI audit trail (task #67): every message this app sent with nobody
@@ -1153,21 +1208,6 @@ export async function sendFollowUpToLead(
 
   if (sentTemplate) return { success: true, sentTemplate };
   return humanAgent ? { success: true, messagingTag: "HUMAN_AGENT" } : { success: true };
-}
-
-async function pushCrmNote(businessId: string, provider: string, crmId: string, body: string): Promise<void> {
-  try {
-    const conn = await prisma.crmConnection.findUnique({ where: { businessId } });
-    if (!conn?.apiKey || conn.provider !== provider) return;
-    const result = await CRM_PROVIDERS[provider as keyof typeof CRM_PROVIDERS].client.pushNote(
-      conn.apiKey,
-      crmId,
-      `FollowUp sent:\n\n${body}`
-    );
-    if (!result.ok) console.error(`CRM note push failed for business ${businessId}: ${result.message}`);
-  } catch (err) {
-    console.error(`CRM note push errored for business ${businessId}:`, err);
-  }
 }
 
 // ---------------------------------------------------------------------

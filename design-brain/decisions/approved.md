@@ -3915,3 +3915,71 @@ qualifying test: *"DO IT"*.
 - A finished run shows the score first ("184 of 192 answers right"), then the one number that must be 0 in green or
   coral ("0 invented a fact (should be 0)"), then the other counts, then "See what went wrong" folded away.
 - Made-up examples only. No customer's data is used or shown.
+
+## A-236 — Booking end to end: the middle path, in Stage 2 ^A-236
+
+**Approved:** 2026-10-12, founder, after watching a rival's ad (Appointwise: the AI chats with the lead and books the
+appointment with no person involved). Asked whether FollowUp should do the same, he chose *"Middle path, in Stage 2"*.
+- After the owner's one-time yes, the simple steps send by themselves: the first reply, reminders, the booking link.
+- Price, negotiation, complaints and anything unsure still wait for the owner (A-217's "sends by itself after the
+  owner's yes", now spelled out).
+- Built in November with the rest of Stage 2, after testers have used approve-first. Nothing new before then.
+- Not chosen: "fully by itself, now" (every message sends without the owner, like Appointwise).
+
+## A-237 — End to end is the goal; one boss per customer when a CRM is connected ^A-237
+
+**Approved:** 2026-10-12, founder.
+- **Auto is the destination, approval is the on-ramp.** *"Our main product is going end to end. This thing [nothing
+  goes out without your OK] is for those who don't trust it… When they start trusting the product, they will switch to
+  the auto thing… they can't read and just press OK 600 times."* Builds on A-236: approval first, then the owner moves
+  to sending by itself. Design for the switch to auto, not for approving forever.
+- **One boss per customer.** When a customer is also in the owner's CRM (Follow Up Boss, HubSpot, GoHighLevel) and the
+  CRM is already following up with them, FollowUp only watches and tells the owner when they're ready. If the CRM is
+  not following up, FollowUp does. The customer is never messaged twice. (Not chosen: FollowUp always follows up and
+  the owner turns the CRM's off.)
+- **$39 has to make a profit.** The AI cost per business is to be measured from the first testers and the daily cap
+  set from it.
+- Phone answering is coming later, not now. The Gmail 100-user cap and security checks come after the build.
+
+## A-238 — Instagram and Messenger: ask for their email and mobile once; after Meta's 24 hours, follow up by email ^A-238
+
+**Approved:** 2026-10-12, founder ("Yes, change it", asked plainly that this changes his Sep 16 rule). Supersedes
+[[rejected#^R-003|R-003]].
+- **The DM is a real conversation.** Founder, same day: *"In Insta or FB it will be chatting continuously with them like
+  an actual business owner does. In those chats we will ask them about mobile and email, or we will try to book a
+  meeting too."*
+- **Asked once, in a reply, never in the first one.** When an Instagram or Messenger customer writes back and FollowUp
+  has already answered them once, the reply may end with one question asking for the best email and mobile number to
+  reach them. Never asked twice, never asked of someone whose email FollowUp already has. Booking a meeting stays the
+  qualifying "would you like to see it" question, and Stage 2's booking path (A-236).
+- **The mobile is for the owner to call.** It shows on the customer's page (Call button, contact line). Texts are not
+  switched on, so nothing is sent to it.
+- **Only an email they typed themselves.** FollowUp keeps an address only from the customer's own words in the DM.
+  Nothing is guessed or looked up. That is what makes this different from R-003: the customer chose email.
+- **The DM stays first.** While Meta's 24-hour window is open, FollowUp keeps answering in the DM. Only an automatic
+  follow-up after the window has closed goes to their email.
+- **STOP on Instagram or Messenger stops the email too.** A person who said stop in the DM is never emailed instead.
+- No email given: nothing changes from the Sep 16 rule (after 24 hours, only the owner can send, until day 7).
+
+## A-239 — Instagram and Messenger: keep checking "customer or not?" until a real reply goes out ^A-239
+
+**Approved:** 2026-10-12, founder ("Build it"), after *"NOT A LEAD BRO"*, *"INSTA IS NOT SORTING IT WELL"* and *"There are
+other leads too that it captured wrong, you gotta make it accurate"*.
+- **The hole it closes:** A-234 judged a new chat once, on its first message. An emoji, a "hi" or a photo tells too
+  little, so the chat was let in, and nothing after it was ever checked. That is how friends reached Today.
+- **The rule:** every new message with words from an Instagram or Messenger customer is checked again, until a real
+  reply has gone out from FollowUp (the owner's Send, or FollowUp sending by itself). The instant "thanks, we got your
+  message" doesn't count. When two reads agree it's a friend, a joke or a pitch, the chat moves to Filtered out, where
+  one tap brings it back.
+- **Never checked again once the owner has said "customer":** brought back from Filtered out, "Already spoke", moved
+  along in the pipeline, booked, or ready.
+- A reply typed in the Instagram app itself doesn't stop the checking: people reply to friends there too.
+- The Instagram and Messenger chats from before the check are checked once, automatically.
+- **Read the whole situation, for "hi" too** (founder, same day: *"For hi we need to analyse the message, whether they
+  talked earlier, since when they're following, and all the situation, so that we can judge accurately"*). The check
+  now reads what Instagram knows: whether they follow the business, whether the business follows them back, their
+  follower count, and the chat from before FollowUp was connected. A "hi" from someone who has chatted with the
+  business before is judged with that chat. A first-time "hi" still comes through, because there is nothing to read.
+  Instagram has no "following since" date, so FollowUp never claims one. These are hints for the judge, not rules: a
+  realtor follows clients back too.
+

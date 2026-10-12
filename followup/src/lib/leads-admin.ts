@@ -5,6 +5,7 @@
  */
 
 import { prisma } from "@/lib/db";
+import type { Prisma } from "@prisma/client";
 
 /**
  * Deletes one lead and every row that hangs off it, in a single transaction.
@@ -26,23 +27,42 @@ export async function deleteLeadCascade(leadId: string, businessId?: string): Pr
 
   const conversationIds = lead.conversations.map((c) => c.id);
 
-  await prisma.$transaction([
-    prisma.message.deleteMany({ where: { conversationId: { in: conversationIds } } }),
-    prisma.conversation.deleteMany({ where: { leadId } }),
-    prisma.deal.deleteMany({ where: { leadId } }),
-    prisma.followUp.deleteMany({ where: { leadId } }),
-    prisma.task.deleteMany({ where: { leadId } }),
-    prisma.booking.deleteMany({ where: { leadId } }),
-    prisma.aIInsight.deleteMany({ where: { leadId } }),
+  await prisma.$transaction(leadRowDeletes(prisma, leadId, conversationIds));
+}
+
+/**
+ * Every delete that removing one lead takes, in order, for a caller that is
+ * already inside a transaction (src/lib/inbound/dmContactGate.ts moves a DM
+ * customer to Filtered out under its lock). One list, so the two ways of
+ * deleting a lead can't drift apart.
+ */
+type LeadDeleteDb = Pick<
+  typeof prisma,
+  "message" | "conversation" | "deal" | "followUp" | "task" | "booking" | "aIInsight" | "outboundSend" | "sendClaim" | "lead"
+>;
+
+export function leadRowDeletes(
+  db: LeadDeleteDb,
+  leadId: string,
+  conversationIds: string[]
+): Prisma.PrismaPromise<unknown>[] {
+  return [
+    db.message.deleteMany({ where: { conversationId: { in: conversationIds } } }),
+    db.conversation.deleteMany({ where: { leadId } }),
+    db.deal.deleteMany({ where: { leadId } }),
+    db.followUp.deleteMany({ where: { leadId } }),
+    db.task.deleteMany({ where: { leadId } }),
+    db.booking.deleteMany({ where: { leadId } }),
+    db.aIInsight.deleteMany({ where: { leadId } }),
     // Both of these reference Lead with ON DELETE RESTRICT, so the delete
     // below fails outright if either is left behind — which is not a
     // hypothetical for OutboundSend: any lead with a send parked after a
     // provider failure could not be deleted at all until this line existed
     // (found 2026-09-21 while adding SendClaim, which has the same shape).
-    prisma.outboundSend.deleteMany({ where: { leadId } }),
-    prisma.sendClaim.deleteMany({ where: { leadId } }),
-    prisma.lead.delete({ where: { id: leadId } }),
-  ]);
+    db.outboundSend.deleteMany({ where: { leadId } }),
+    db.sendClaim.deleteMany({ where: { leadId } }),
+    db.lead.delete({ where: { id: leadId } }),
+  ];
 }
 
 /** The minimum a lead has to carry for its mailbox threads to be archivable. */

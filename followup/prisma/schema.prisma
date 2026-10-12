@@ -946,6 +946,23 @@ model Lead {
   // alert (src/lib/ownerAlerts.ts) has one stable moment to claim and an
   // owner is told once per customer, not on every later message.
   qualifiedAt           DateTime?
+  // What an Instagram or Messenger customer typed into a DM when asked how
+  // to reach them (founder, 2026-10-12, A-238). Meta stops automatic DMs 24
+  // hours after their last message; a follow-up after that goes to this
+  // email. Kept apart from `email` and `phone` on purpose: those decide which
+  // composer and channel the screens use, and `phone` holds the ig:/fb: id
+  // every DM is sent to (src/lib/dmContact.ts).
+  dmEmail               String?
+  dmPhone               String?
+  // When a reply first asked them for it. Asked once, never again.
+  dmContactAskedAt      DateTime?
+  // An Instagram or Messenger customer is checked again ("customer or
+  // not?") on each new message until a real reply has gone out (A-239,
+  // src/lib/inbound/dmRecheck.ts). dmConfirmedAt: the owner said
+  // "customer" (brought them back from Filtered out). dmCheckedAt: the
+  // last check, so the same messages aren't judged twice.
+  dmConfirmedAt         DateTime?
+  dmCheckedAt           DateTime?
   priority              Priority       @default(NONE)
   lastContacted         DateTime?
   nextFollowUp          DateTime?

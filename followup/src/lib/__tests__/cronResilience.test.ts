@@ -46,6 +46,7 @@ vi.mock("@/lib/rateLimit", () => ({ pruneRateLimitHits: pruneHits }));
 const { pruneDemo } = vi.hoisted(() => ({ pruneDemo: vi.fn(async () => ({ deleted: 0 })) }));
 vi.mock("@/lib/demoReply", () => ({ pruneDemoTries: pruneDemo }));
 vi.mock("@/lib/cronAuth", () => ({ requireCronSecret: cronAuth }));
+vi.mock("@/lib/inbound/dmRecheck", () => ({ recheckDmLeadsForAllBusinesses: vi.fn(async () => ({ checked: 0, setAside: 0 })) }));
 
 import { GET } from "@/app/api/cron/automation/route";
 import type { NextRequest } from "next/server";

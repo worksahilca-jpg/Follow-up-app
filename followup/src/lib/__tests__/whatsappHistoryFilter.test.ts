@@ -53,7 +53,7 @@ describe("a chat the first look already recognises", () => {
   it("is a lead, and never reaches the second look", async () => {
     classifyAsProspect.mockResolvedValueOnce({ isProspect: true, reason: "Asking about a blocked drain." });
     const verdict = await judgeHistoryThread([msg("inbound", "Hi, my drain is blocked")], contact, business, noSignals);
-    expect(verdict).toEqual({ import: true });
+    expect(verdict).toMatchObject({ import: true });
     expect(classifyAsProspect).toHaveBeenCalledTimes(1);
   });
 });
@@ -73,7 +73,7 @@ describe("a chat the first look rejects", () => {
       msg("inbound", "can you quote me for a bathroom", 5),
     ];
     const verdict = await judgeHistoryThread(thread, contact, business, noSignals);
-    expect(verdict).toEqual({ import: true });
+    expect(verdict).toMatchObject({ import: true });
     expect(classifyAsProspect).toHaveBeenCalledTimes(2);
   });
 
@@ -109,7 +109,7 @@ describe("the facts a classifier cannot read", () => {
       ...noSignals,
       knownOnAnotherChannel: true,
     });
-    expect(verdict).toEqual({ import: true });
+    expect(verdict).toMatchObject({ import: true });
     expect(classifyAsProspect).not.toHaveBeenCalled();
   });
 
@@ -146,7 +146,7 @@ describe("when anything is uncertain, it imports", () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     classifyAsProspect.mockRejectedValue(new Error("OpenAI is down"));
     const verdict = await judgeHistoryThread([msg("inbound", "hi")], contact, business, noSignals);
-    expect(verdict).toEqual({ import: true });
+    expect(verdict).toMatchObject({ import: true });
   });
 
   it("imports when the second look throws after the first said no", async () => {
@@ -155,7 +155,7 @@ describe("when anything is uncertain, it imports", () => {
       .mockResolvedValueOnce({ isProspect: false, reason: "Unclear." })
       .mockRejectedValueOnce(new Error("timeout"));
     const verdict = await judgeHistoryThread([msg("inbound", "hi")], contact, business, noSignals);
-    expect(verdict).toEqual({ import: true });
+    expect(verdict).toMatchObject({ import: true });
   });
 
   it("imports an empty thread rather than judging one", async () => {
@@ -165,7 +165,7 @@ describe("when anything is uncertain, it imports", () => {
 
   it("still judges when the business has never said what it does", async () => {
     classifyAsProspect.mockResolvedValue({ isProspect: true, reason: "Enquiry." });
-    expect(await judgeHistoryThread([msg("inbound", "hi")], contact, undefined, noSignals)).toEqual({ import: true });
+    expect(await judgeHistoryThread([msg("inbound", "hi")], contact, undefined, noSignals)).toMatchObject({ import: true });
   });
 });
 

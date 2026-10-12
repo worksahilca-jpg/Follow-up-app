@@ -88,14 +88,19 @@ export type HistoryVerdict =
 // to catch.
 const STAGE_TWO_MESSAGES = 20;
 
+// An emoji is never the verdict either way (founder, 2026-10-12: "emojis
+// can be, but we need to judge right"): a buyer hearts a listing, a friend
+// hearts a selfie. The first draft of this line called emojis on their own
+// personal, which would have set aside the buyer.
 export const CHAT_NOTICE =
-  "This thread is a direct-message chat (WhatsApp, Instagram or Messenger), where the owner's friends, family and " +
-  "followers write too. Messages that only make sense between friends are personal, not customer business: emojis " +
-  "or reactions on their own, jokes, teasing or slang in any language (including Hindi, Punjabi or Gujarati written " +
-  "in English letters), asking for a reel, post or photo, or chat about something with no link to what the business " +
-  "sells. A customer asks about or for the business's own service (a home, a listing, a price, a viewing, the " +
-  "owner's help with a job), even in a few words and even after opening with only an emoji or 'hi'. Judge by what " +
-  "they actually ask for.";
+  "This thread is a direct-message chat (WhatsApp, Instagram or Messenger), where customers write and so do the " +
+  "owner's friends, family and followers. An emoji or a reaction proves nothing either way: a buyer sends one about " +
+  "a listing, a friend sends one about a selfie. Never decide from the emoji; decide from the words around it, what " +
+  "they ask for, and the background if one is given. A customer asks about or for the business's own service (a " +
+  "home, a listing, a price, a viewing, the owner's help with a job), even in a few words, in any language, and even " +
+  "after opening with only an emoji or 'hi'. Someone whose words only joke, tease or chat about something with no " +
+  "link to what the business sells (in any language, including Hindi, Punjabi or Gujarati written in English " +
+  "letters), or who asks for a reel, post or photo back, is personal.";
 
 /**
  * Is this number already a lead on some other channel for this business?

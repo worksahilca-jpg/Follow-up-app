@@ -253,5 +253,8 @@ describe("the judge is told it is reading a chat", () => {
       expect(industry).toContain(CHAT_NOTICE);
     }
     expect(CHAT_NOTICE).toMatch(/even after opening with only an emoji or 'hi'/);
+    // Founder, 2026-10-12: "emojis can be, but we need to judge right". Never the verdict either way.
+    expect(CHAT_NOTICE).toMatch(/proves nothing either way/);
+    expect(CHAT_NOTICE).toMatch(/Never decide from the emoji/);
   });
 });

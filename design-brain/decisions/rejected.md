@@ -1445,3 +1445,17 @@ for the missing part ("Set up"). Never make the owner open a page to learn that 
 **Fixed:** the row now reads "WhatsApp · Instagram not set up" with "Set up" (SettingsList.tsx). The Instagram page no
 longer says only added testers can connect (true until Meta's approval on 2026-10-09). It says the account must be
 Business or Creator.
+
+## R-112 — Calling an emoji on its own a friend's message ^R-112
+
+**Rejected:** 2026-10-12, founder. After the first accuracy run, the chat judge (WhatsApp, Instagram, Messenger) was
+given a line saying "emojis or reactions on their own" are personal. He said: *"Emojis can be, but we need to judge
+right."*
+**What failed:** an emoji is not evidence either way. A buyer sends 😍 about a listing; a friend sends 😍 about a
+selfie. The line would have pushed the judge to set the buyer aside.
+**Principle:** no single signal decides whether someone is a customer: not an emoji, a "hi", a follow, or a language.
+Judge from the words around it, what they ask for, and the background together. When there is nothing but the emoji,
+let them in and judge again when they say more (A-239).
+**Fixed (PR #497):** the line now says an emoji "proves nothing either way" and tells the judge never to decide from
+it. Three buyer cases joined the Instagram accuracy test: 😍 then "Is this one still available?", 🔥🔥 then "how much
+is this one", and 😍 then "Bhai ye ghar kitne ka hai?".

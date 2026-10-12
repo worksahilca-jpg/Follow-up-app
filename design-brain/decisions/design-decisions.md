@@ -12383,8 +12383,11 @@ The founder ran the 4 accuracy tests on /admin after PR #496 went live. Scores (
   contractions. The viewing question is now open ("when suits you"), never "weekday or weekend".
 - **Email judge:** people the business pays (its landlord, accountant, lawyer, bank, suppliers) writing about the
   business's own affairs, and people asking for a job or internship, aren't customers. Both reads are told this.
-- **Chat judge (WhatsApp, Instagram, Messenger):** told it's reading a chat, where friends write too: emoji, jokes
-  and slang on their own are personal. A customer who opens with an emoji or "hi" still counts once they ask.
+- **Chat judge (WhatsApp, Instagram, Messenger):** told it's reading a chat, where friends write too. An emoji proves
+  nothing either way and never decides; the words around it do. Jokes or chat with no link to the business are
+  personal. A customer who opens with an emoji or "hi" still counts once they ask. (The first draft called emojis on
+  their own personal; the founder rejected that the same day: "emojis can be, but we need to judge right", R-112.
+  Three buyer-with-emoji cases joined the Instagram test.)
 - **Weak, said plainly:**
   - These are prompt changes, and a model can still slip. Only the code check is certain, and it only catches the
     phrases it knows.

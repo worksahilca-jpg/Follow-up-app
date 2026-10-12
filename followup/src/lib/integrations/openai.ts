@@ -621,7 +621,11 @@ export async function classifyAsProspect(
       "request, a customer who messaged through the platform) is that person asking: it counts. If you find " +
       "one — or if that earlier reason itself describes the sender as " +
       "a customer or buyer — answer true. Answer false only if the thread is clearly a seller pitching this " +
-      "business, a notification that carries no person's request, a newsletter, a recruiter, or personal."
+      "business, a notification that carries no person's request, a newsletter, a recruiter, or personal — or " +
+      "one of these, which the first read was right about too: someone the business pays writing about the " +
+      "business's own affairs (its landlord about rent or a lease, its accountant about receipts or taxes, a " +
+      "supplier's bill); someone asking for a job or internship; or a marketplace notice about a request the " +
+      "OWNER made as a buyer ('your request', 'boost your request')."
     : "";
 
   const forClassification = conversation
@@ -676,13 +680,17 @@ export async function classifyAsProspect(
           "an active engagement or transaction, even with nothing new to buy (documents, paperwork, deposits, " +
           "signatures, rescheduling or cancelling a visit, a question about an invoice FROM this business, " +
           "'following up on our job', questions — the deal is the business; a supplier's invoice TO this business " +
-          "is still selling); (c) an intermediary acting on a customer's behalf (another agent bringing an offer or " +
+          "is still selling, and so is anyone the business itself pays or answers to writing about the business's " +
+          "OWN affairs: its landlord about its rent or lease, its accountant or bookkeeper about its year-end, " +
+          "taxes or receipts, its lawyer, bank or insurer — paperwork and signatures from them are not a client's " +
+          "deal); (c) an intermediary acting on a customer's behalf (another agent bringing an offer or " +
           "a rental application, a referral partner, a client's representative). Missing any of these means the " +
           "owner loses money, so when a real person is writing about a real piece of this business's work, say true. " +
           "Answer false for: automated platform notifications even when they mention the business's work (showing " +
           "systems, listing alerts, e-signature completions with no human message, calendar/booking systems, " +
           "password resets, receipts); newsletters and marketing; recruiters, job offers, or employment paperwork " +
-          "directed at the OWNER; and purely personal correspondence. Also answer false for any vendor, agency, " +
+          "directed at the OWNER; someone asking this business for a job, an internship, a placement or to shadow " +
+          "the owner (they want to work for it, not buy from it); and purely personal correspondence. Also answer false for any vendor, agency, " +
           "broker, or solicitor selling something TO the business — advertising, software, insurance, financing, " +
           "warranties or service contracts, leads-for-sale, or any other pitch — even when it's phrased as a " +
           "friendly, personalized-sounding question ('when does your policy renew', 'when do you need to replace " +
@@ -1470,6 +1478,12 @@ export async function generateFollowUpMessage(
           "conversation below. If the lead asked a factual question the conversation doesn't answer, acknowledge " +
           "the question and say you'll confirm the specifics for them — do not make up an answer, a number, a " +
           "date, or a detail to sound helpful. When in doubt, leave it out. " +
+          // Accuracy test 2026-10-12: "Do you work in Etobicoke?", nothing
+          // on file about the area, and the reply was "Yes, I can confirm
+          // that." A yes is a fact about the business like any other.
+          "That includes a yes-or-no question about the business itself ('Do you work in Etobicoke?', 'Do you do " +
+          "rentals?'): unless the business's own messages or the facts it has told customers answer it, never " +
+          "answer yes or no and never write 'I can confirm'; say you'll confirm it for them. " +
           // The same live test: "The two-bedroom condo is still available"
           // with nothing in the thread saying so. Only the owner knows.
           "Never say that something is or isn't available, still on the market, in stock, open, free or bookable " +
@@ -2150,7 +2164,9 @@ export async function extractQualificationFacts(
           "value: a short plain-English summary the owner can read at a glance, at most 8 words, e.g. " +
           "\"Pre-approved to $650k\" or \"Moving in March\". quote: the customer's exact words that show it, " +
           "copied character for character from one inbound line, in the language they wrote in, never " +
-          "translated, shortened inside or reworded; a short phrase is enough." +
+          "translated, shortened inside or reworded; a short phrase is enough. Keep their own spelling and " +
+          "contractions exactly: if they wrote 'would like', the quote says 'would like', never 'we'd like'. " +
+          "A quote that is not word for word in their message is thrown away, and the item is lost." +
           UNTRUSTED_CONVERSATION_NOTICE,
       },
       { role: "user", content: formatTranscript(conversation) },

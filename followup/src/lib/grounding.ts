@@ -179,7 +179,7 @@ export function unconfirmedAvailability(draft: string, businessText: string): bo
  * Portuguese, and only as multilingual as that. A false positive costs one
  * redraft and then a draft that waits for the owner.
  */
-export type ClaimKind = "availability" | "booking" | "done" | "policy" | "hours" | "service";
+export type ClaimKind = "availability" | "booking" | "done" | "policy" | "hours" | "service" | "confirm";
 
 export function unconfirmedClaim(
   draft: string,
@@ -257,6 +257,12 @@ const FIND_OUT_HEDGE_RE =
 const BOOKING_HEDGE_RE =
   /\b(hope|hoping|looking forward|love|like|glad|happy|can'?t wait) to see(ing)? you\b|\b(i'?ll|i will|we'?ll|we will|to|let me|going to|can|could|would|once|before|as soon as)\s+(\w+\s+){0,2}?(confirm|book|schedule|reserve|check)|\bif\b|\bwhether\b|\bcheck|\bsee if\b|\bfind out\b|voy a (confirmar|reservar|agendar|revisar)|vamos a|para (confirmar|reservar|agendar)|je vais|pour (confirmer|réserver)|vou (verificar|confirmar|marcar|agendar)|\bsi\b/iu;
 
+// "I'll confirm", "let me confirm once I check", "to confirm whether":
+// finding out, not vouching. "Se" is left out on purpose: the reflexive in
+// "te confirmo que Sahil se pondrá en contacto" is not an "if".
+const CONFIRM_HEDGE_RE =
+  /\b(i'?ll|i will|we'?ll|we will|let me|let us|to|going to|need to|have to|will)\s+(\w+\s+){0,2}?confirm|confirm(ing)? (if|whether|with)|\b(once|if|whether|check|checking|find out|soon|shortly|later|tomorrow)\b|\b(voy|vamos) a confirmar|para confirmar|\b(si|pronto|luego|mañana|cuando|bientôt|demain|logo|depois|amanhã)\b|en cuanto|más tarde|plus tard|em breve|je vais (vous |te )?confirmer|pour (vous |te )?confirmer|vou confirmar/iu;
+
 // A past action the business supposedly took. "Not yet"/"haven't" is the
 // honest version and is allowed.
 const DONE_HEDGE_RE = /\b(if|whether|not yet|haven'?t|hasn'?t|didn'?t)\b|aún no|todavía no|no (he|hemos) |pas encore|ainda não/iu;
@@ -303,10 +309,29 @@ const CLAIMS: Claim[] = [
     // "we offer financing", "we take e-transfer". The first-reply judge
     // lists this ("that the business does or doesn't offer, cover, or
     // serve something"); the follow-up judge never did.
+    //
+    // "I" as well as "we" (accuracy test 2026-10-12): realtors work alone
+    // and write as themselves, and "Yes, I work in Etobicoke" passed this
+    // rule because it only knew the plural.
     kind: "service",
     statement:
-      /\bwe (do |also |definitely )?(cover|serve|service|come out to|travel to|deliver|ship|work in|offer|provide|accept|take (cash|cards?|credit|debit|e-?transfers?|payments?))\b|\b(cubrimos|atendemos|llegamos a|enviamos a|ofrecemos|aceptamos|trabajamos en)\b|\bnous (couvrons|desservons|livrons|offrons|proposons|acceptons|intervenons)\b|\b(atendemos|cobrimos|entregamos|oferecemos|aceitamos)\b/iu,
+      /\b(we|i) (do |also |definitely |only |mostly )?(cover|serve|service|come out to|travel to|deliver|ship|work (in|across|around|throughout)|offer|provide|accept|take (cash|cards?|credit|debit|e-?transfers?|payments?))\b|\b(cubrimos|atendemos|llegamos a|enviamos a|ofrecemos|aceptamos|trabajamos en)\b|\bnous (couvrons|desservons|livrons|offrons|proposons|acceptons|intervenons)\b|\b(atendemos|cobrimos|entregamos|oferecemos|aceitamos)\b/iu,
     hedge: FIND_OUT_HEDGE_RE,
+  },
+  {
+    // Vouching for something on the owner's behalf: "Yes, I can confirm
+    // that." The accuracy test (2026-10-12) asked "Do you work in
+    // Etobicoke?" with nothing on file about the area, and the reply said
+    // exactly that. The drafting rules already forbid it (a photographer's
+    // "your corporate party", 2026-09); this is the same rule in code, so
+    // a reply that vouches without the owner having said so waits for them.
+    kind: "confirm",
+    statement:
+      // Spanish and Portuguese only with "que": a bare "te confirmo el
+      // costo pronto" is "I'll let you know the price soon", a promise to
+      // find out, not a vouching.
+      /\b(i|we) can (definitely |certainly |happily )?confirm\b|\b(i|we) confirm (that|this|it)\b|\bconfirmed:? yes\b|\b(puedo|podemos) confirmar(te|le)? que\b|\bje (vous |te )?confirme que\b|\bje peux (vous |te )?confirmer que\b|\b(posso|podemos) confirmar que\b|\b(te |le |lhe )?confirmo que\b/iu,
+    hedge: CONFIRM_HEDGE_RE,
   },
 ];
 

@@ -88,6 +88,20 @@ export type HistoryVerdict =
 // to catch.
 const STAGE_TWO_MESSAGES = 20;
 
+// An emoji is never the verdict either way (founder, 2026-10-12: "emojis
+// can be, but we need to judge right"): a buyer hearts a listing, a friend
+// hearts a selfie. The first draft of this line called emojis on their own
+// personal, which would have set aside the buyer.
+export const CHAT_NOTICE =
+  "This thread is a direct-message chat (WhatsApp, Instagram or Messenger), where customers write and so do the " +
+  "owner's friends, family and followers. An emoji or a reaction proves nothing either way: a buyer sends one about " +
+  "a listing, a friend sends one about a selfie. Never decide from the emoji; decide from the words around it, what " +
+  "they ask for, and the background if one is given. A customer asks about or for the business's own service (a " +
+  "home, a listing, a price, a viewing, the owner's help with a job), even in a few words, in any language, and even " +
+  "after opening with only an emoji or 'hi'. Someone whose words only joke, tease or chat about something with no " +
+  "link to what the business sells (in any language, including Hindi, Punjabi or Gujarati written in English " +
+  "letters), or who asks for a reel, post or photo back, is personal.";
+
 /**
  * Is this number already a lead on some other channel for this business?
  *
@@ -136,6 +150,13 @@ export async function judgeHistoryThread(
   // What the platform knows about them rides on the business context, the
   // field the prompt already reads as "what you need to know to judge this".
   if (signals.background && business) business = { ...business, industry: `${business.industry ?? "small"} business. ${signals.background}` };
+  // Every caller is a chat (WhatsApp, Instagram, Messenger), and the judge
+  // was written for an inbox. Accuracy test 2026-10-12: "😍" then "Isme bee
+  // bhi dal", a friend's Hinglish joke, still came back a customer for a
+  // realtor. In a chat the owner's friends and followers write too, so it
+  // is told what friends' messages look like there, and that a customer
+  // who opens with only an emoji or "hi" is still a customer once they ask.
+  if (business) business = { ...business, industry: `${business.industry ?? "small"} business. ${CHAT_NOTICE}` };
 
   try {
     if (!options?.alreadySetAside) {

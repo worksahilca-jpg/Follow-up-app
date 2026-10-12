@@ -51,6 +51,10 @@ describe("unconfirmedClaim — what only the owner can say", () => {
     ["policy", "El presupuesto es gratis y sin compromiso."],
     ["hours", "Yes, we're open now until late."],
     ["service", "Yes, we cover Brampton. What kind of job is it?"],
+    // Accuracy test 2026-10-12: a realtor writes as "I", and vouching is a claim too.
+    ["service", "Yes, I work in Etobicoke. Are you buying or selling?"],
+    ["confirm", "Yes, I can confirm that. Are you looking to buy or sell in Etobicoke?"],
+    ["confirm", "Te confirmo que Sahil se pondrá en contacto contigo."],
   ])("%s: %s", (kind, draft) => {
     expect(unconfirmedClaim(draft, "")).toBe(kind);
   });
@@ -70,6 +74,10 @@ describe("unconfirmedClaim — what only the owner can say", () => {
     "Just to check, is it still available for you?",
     "If you're free this week, want to come by?",
     "I'm open to other times too, what suits you?",
+    "Good question, I'll confirm whether I cover Etobicoke and get back to you.",
+    "Let me check and confirm that for you. Are you buying or selling?",
+    "Con gusto te confirmo el costo pronto. ¿Es para ti o para otra persona?",
+    "I'd love to help you find a 3-bed in Brampton. When are you hoping to move?",
   ])("states nothing: %s", (draft) => {
     expect(unconfirmedClaim(draft, "")).toBeNull();
   });
@@ -77,6 +85,8 @@ describe("unconfirmedClaim — what only the owner can say", () => {
   it("is grounded by the owner saying it", () => {
     expect(unconfirmedClaim("Yes, it's still available. Want to see it?", "It's available from October.")).toBeNull();
     expect(unconfirmedClaim("Estimates are free, want one?", "Our estimates are free.")).toBeNull();
+    // A fact the owner taught FollowUp counts as the owner saying it.
+    expect(unconfirmedClaim("Yes, I work across the GTA, mostly Brampton, Mississauga and Toronto.", "Area: I work across the GTA, mostly Brampton, Mississauga and Toronto.")).toBeNull();
   });
 
   it("is NOT grounded by the owner saying they'd check — the word alone used to be enough", () => {

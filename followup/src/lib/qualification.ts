@@ -79,13 +79,19 @@ const REALTOR: Criterion[] = [
   {
     key: "timing",
     label: "When",
-    find: "when they want to move or buy: a month, a season, a date, or a deadline such as a lease ending",
+    // Not a viewing time (accuracy test 2026-10-12: "Can we come see 31 Elm
+    // tomorrow at 5pm?" came back as moving "Tomorrow").
+    find:
+      "when they want to move or buy: a month, a season, a date, or a deadline such as a lease ending. A day or time to SEE a home is a viewing, not this: asking to visit tomorrow says nothing about when they move",
     ask: "when they are hoping to move",
   },
   {
     key: "budget",
     label: "Budget",
-    find: "the price they want to stay under or the range they mentioned, or the amount they are pre-approved for",
+    // A number or it isn't a budget (accuracy test 2026-10-12: "way above
+    // what we can spend" came back as a budget).
+    find:
+      "the price they want to stay under or the range they mentioned, or the amount they are pre-approved for. It needs an amount: 'too expensive' or 'out of our budget' with no number is not a budget",
     ask: "the price range they have in mind, or whether they are already pre-approved, framed as helping you send them the right homes",
   },
   {
@@ -93,7 +99,9 @@ const REALTOR: Criterion[] = [
     label: "Viewing",
     find:
       "a specific day or time they agreed to, or proposed, for seeing a property. Known only when THEY said yes to a time or named one; an offer of times that they have not answered is not a viewing",
-    ask: "whether they would like to see it, asking which days suit them; never pick a day or time yourself",
+    // "Weekday or weekend?" is still picking for them, and it is the exact
+    // question a real lead answered with "What do you mean" (2026-09-20).
+    ask: "whether they would like to see it, and when suits them, as an open question; never suggest a day, a time, or weekday versus weekend yourself",
   },
 ];
 

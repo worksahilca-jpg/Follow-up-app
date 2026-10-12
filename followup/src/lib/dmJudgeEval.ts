@@ -116,6 +116,36 @@ export const DM_JUDGE_CASES: DmJudgeCase[] = [
     ],
     expectCustomer: false,
   },
+  // The emoji decides nothing (founder, 2026-10-12: "emojis can be, but we
+  // need to judge right"). The same 😍 opens a buyer's chat: what comes
+  // after it is what counts.
+  {
+    name: "emoji, then asks if a listing is available",
+    business: realtor,
+    lines: [
+      ["in", "😍"],
+      ["in", "Is this one still available?"],
+    ],
+    expectCustomer: true,
+  },
+  {
+    name: "fire emojis, then asks the price",
+    business: realtor,
+    lines: [
+      ["in", "🔥🔥"],
+      ["in", "how much is this one"],
+    ],
+    expectCustomer: true,
+  },
+  {
+    name: "emoji, then a Hinglish price question",
+    business: realtor,
+    lines: [
+      ["in", "😍"],
+      ["in", "Bhai ye ghar kitne ka hai?"],
+    ],
+    expectCustomer: true,
+  },
   {
     name: "says hi, then asks about a rental",
     business: realtor,

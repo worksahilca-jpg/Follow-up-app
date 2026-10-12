@@ -3901,3 +3901,17 @@ already has, he chose *"Yes, same check"*.
   customer with every message. If they write again with a real question, it's looked at again with the whole chat.
 - **Nothing changes for the owner's own replies:** if the owner answers a set-aside chat from Instagram, that reply is
   judged with the chat, the same way.
+- **Confirmed live (2026-10-12):** in its first night it set aside 2 Instagram chats and let no new one through. The
+  founder looked at both under "Filtered out": *"Yes, not customers."*
+
+## A-235 — Accuracy tests run from a button on /admin ^A-235
+
+**Approved:** 2026-10-12, founder (*"Yes, build all three"*), after being handed a browser-console line to run the
+qualifying test: *"DO IT"*.
+- One "Accuracy tests" box on /admin, one row per test: title, one line on what it checks, a **Run** button (outlined
+  pill, 44px). No console, works from the phone.
+- Four tests: "Is this a customer?" for emails, the same for Instagram and Messenger, qualifying a realtor's customer,
+  and replies on Instagram and Messenger.
+- A finished run shows the score first ("184 of 192 answers right"), then the one number that must be 0 in green or
+  coral ("0 invented a fact (should be 0)"), then the other counts, then "See what went wrong" folded away.
+- Made-up examples only. No customer's data is used or shown.

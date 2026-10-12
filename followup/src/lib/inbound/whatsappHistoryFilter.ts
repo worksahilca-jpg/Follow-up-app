@@ -88,6 +88,15 @@ export type HistoryVerdict =
 // to catch.
 const STAGE_TWO_MESSAGES = 20;
 
+export const CHAT_NOTICE =
+  "This thread is a direct-message chat (WhatsApp, Instagram or Messenger), where the owner's friends, family and " +
+  "followers write too. Messages that only make sense between friends are personal, not customer business: emojis " +
+  "or reactions on their own, jokes, teasing or slang in any language (including Hindi, Punjabi or Gujarati written " +
+  "in English letters), asking for a reel, post or photo, or chat about something with no link to what the business " +
+  "sells. A customer asks about or for the business's own service (a home, a listing, a price, a viewing, the " +
+  "owner's help with a job), even in a few words and even after opening with only an emoji or 'hi'. Judge by what " +
+  "they actually ask for.";
+
 /**
  * Is this number already a lead on some other channel for this business?
  *
@@ -136,6 +145,13 @@ export async function judgeHistoryThread(
   // What the platform knows about them rides on the business context, the
   // field the prompt already reads as "what you need to know to judge this".
   if (signals.background && business) business = { ...business, industry: `${business.industry ?? "small"} business. ${signals.background}` };
+  // Every caller is a chat (WhatsApp, Instagram, Messenger), and the judge
+  // was written for an inbox. Accuracy test 2026-10-12: "😍" then "Isme bee
+  // bhi dal", a friend's Hinglish joke, still came back a customer for a
+  // realtor. In a chat the owner's friends and followers write too, so it
+  // is told what friends' messages look like there, and that a customer
+  // who opens with only an emoji or "hi" is still a customer once they ask.
+  if (business) business = { ...business, industry: `${business.industry ?? "small"} business. ${CHAT_NOTICE}` };
 
   try {
     if (!options?.alreadySetAside) {

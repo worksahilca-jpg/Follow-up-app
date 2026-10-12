@@ -12358,3 +12358,36 @@ The founder asked for "hi" to be judged on the whole situation: whether they tal
 - Two accuracy cases with background were added (a mutual follow with a long casual chat; a first-time follower
   asking about condos).
 
+
+## 2026-10-12 — First accuracy run after A-239, and what it fixed
+
+The founder ran the 4 accuracy tests on /admin after PR #496 went live. Scores (made-up examples, no customer data):
+- **Emails:** 118 of 122. All 4 misses let someone in who isn't a customer: a student asking for an internship, the
+  salon's own landlord about rent, the roofer's own accountant asking for receipts, and Bark writing about the
+  owner's own request as a buyer.
+- **Instagram and Messenger:** 33 of 34, with 0 real customers set aside. The 1 miss was the real case that started
+  A-239: "😍" then "Isme bee bhi dal".
+- **Qualifying:** 189 of 192, "Ready" right in 48 of 48. 2 made up: "way above what we can spend" taken as a budget,
+  and a viewing "tomorrow at 5" taken as when they move. 1 missed: the model changed "would like" to "we'd like" in
+  its quote, so the code (rightly) threw the quote away.
+- **Replies:** 12 of 14. 1 invented: "Do you work in Etobicoke?" answered "Yes, I can confirm that." with nothing on
+  file. 1 held by the calendar rule: "weekday or weekend viewings?", the same question a real lead answered with
+  "What do you mean" (2026-09-20). It was held, never sent.
+
+**What changed:**
+- **Code check:** a reply that vouches ("I can confirm", "te confirmo que") or says "I work in / I cover" without the
+  owner having said it now waits for the owner. The old check only knew "we", and realtors write as "I".
+- **Reply writer:** a yes-or-no question about the business gets "I'll confirm", never a yes, unless the facts or the
+  owner's own messages answer it.
+- **Qualifying:** budget needs an amount; a day to see a home isn't when they move; quotes keep the customer's own
+  contractions. The viewing question is now open ("when suits you"), never "weekday or weekend".
+- **Email judge:** people the business pays (its landlord, accountant, lawyer, bank, suppliers) writing about the
+  business's own affairs, and people asking for a job or internship, aren't customers. Both reads are told this.
+- **Chat judge (WhatsApp, Instagram, Messenger):** told it's reading a chat, where friends write too: emoji, jokes
+  and slang on their own are personal. A customer who opens with an emoji or "hi" still counts once they ask.
+- **Weak, said plainly:**
+  - These are prompt changes, and a model can still slip. Only the code check is certain, and it only catches the
+    phrases it knows.
+  - Each test run varies a little.
+  - The chat line could make the judge stricter on real customers who joke around. Two reads must still agree, and
+    the "0 customers set aside" number on /admin is the one to watch on the next run.

@@ -27,7 +27,7 @@ const { leadFindFirst } = vi.hoisted(() => ({ leadFindFirst: vi.fn(async () => n
 vi.mock("@/lib/integrations/openai", () => ({ classifyAsProspect }));
 vi.mock("@/lib/db", () => ({ prisma: { lead: { findFirst: leadFindFirst } } }));
 
-import { judgeHistoryThread, parseStoredThread, cleanSetAsideReason } from "@/lib/inbound/whatsappHistoryFilter";
+import { judgeHistoryThread, parseStoredThread, cleanSetAsideReason, CHAT_NOTICE } from "@/lib/inbound/whatsappHistoryFilter";
 
 const business = { name: "Acme Plumbing", industry: "plumbing" };
 const contact = { name: "Priya", phone: "+14165550100" };
@@ -236,5 +236,22 @@ describe("cleanSetAsideReason", () => {
       .mockResolvedValueOnce({ isProspect: false, reason: "Re-verify your account at https://evil.example now" });
     const verdict = await judgeHistoryThread([msg("inbound", "hi")], contact, business, noSignals);
     expect(verdict).toEqual({ import: false, reason: "Re-verify your account at [link removed] now" });
+  });
+});
+
+// Accuracy test 2026-10-12: a friend's "😍" then "Isme bee bhi dal" was
+// judged a realtor's customer. The judge was written for an inbox; every
+// caller is a chat, so both looks are told what friends' messages look
+// like there, and that a customer who opens with an emoji still counts.
+describe("the judge is told it is reading a chat", () => {
+  it("on both looks, beside the business's own line of work", async () => {
+    await judgeHistoryThread([msg("inbound", "😍", 2), msg("inbound", "Isme bee bhi dal", 1)], contact, business, noSignals);
+    expect(classifyAsProspect).toHaveBeenCalledTimes(2);
+    for (const call of classifyAsProspect.mock.calls) {
+      const industry = (call[2] as { industry: string }).industry;
+      expect(industry.startsWith("plumbing business.")).toBe(true);
+      expect(industry).toContain(CHAT_NOTICE);
+    }
+    expect(CHAT_NOTICE).toMatch(/even after opening with only an emoji or 'hi'/);
   });
 });

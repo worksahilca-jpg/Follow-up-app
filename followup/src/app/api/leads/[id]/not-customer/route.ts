@@ -5,6 +5,8 @@ import { deleteLeadCascade } from "@/lib/leads-admin";
 import { recordAudit } from "@/lib/audit";
 import { OWNER_SAID_NOT_CUSTOMER, recordSenderVerdict } from "@/lib/senderVerdicts";
 import { publicErrorMessage } from "@/lib/publicError";
+import { moveDmLeadAside } from "@/lib/inbound/dmContactGate";
+import { instagramRecipientId, isInstagramLeadId, isMessengerLeadId, messengerRecipientId } from "@/lib/instagramId";
 
 // POST /api/leads/[id]/not-customer — "Not a customer": the owner's
 // correction in the other direction from "this was a customer"
@@ -35,6 +37,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
       id: true,
       name: true,
       email: true,
+      phone: true,
       stage: true,
       conversations: {
         select: {
@@ -48,6 +51,30 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     },
   });
   if (!lead) return NextResponse.json({ success: false, message: "Customer not found." }, { status: 404 });
+
+  // An Instagram or Messenger customer (A-239): their whole chat moves to
+  // Filtered out, where one tap brings it back. If they write again, the
+  // "is this a customer?" check reads them again. Same line as below: not
+  // for someone with a booking, a stage or deal, or messages elsewhere.
+  const dmChannel = isInstagramLeadId(lead.phone) ? "instagram" : isMessengerLeadId(lead.phone) ? "messenger" : null;
+  if (!lead.email && dmChannel && lead.phone) {
+    const blockers: string[] = [];
+    if (lead._count.bookings > 0) blockers.push("a booking");
+    if (lead._count.deals > 0 || lead.stage !== "NEW") blockers.push("a stage or deal");
+    if (lead.conversations.some((c) => c.channel !== dmChannel)) blockers.push("messages outside this chat");
+    if (blockers.length > 0) {
+      return NextResponse.json({ success: false, message: `${lead.name} has ${blockers.join(", ")}, which couldn't be brought back. Use Delete if you're sure.` }, { status: 409 });
+    }
+    try {
+      const contactId = dmChannel === "instagram" ? instagramRecipientId(lead.phone) : messengerRecipientId(lead.phone);
+      await moveDmLeadAside(ctx.businessId, dmChannel, contactId, lead.id, OWNER_SAID_NOT_CUSTOMER);
+    } catch (err) {
+      return NextResponse.json({ success: false, message: publicErrorMessage(err, "Couldn't do that. Try again.", "leads/[id]/not-customer") }, { status: 500 });
+    }
+    void recordAudit(ctx, "lead.not_customer", { targetType: "lead", targetId: lead.id, meta: { channel: dmChannel } });
+    return NextResponse.json({ success: true });
+  }
+
   if (!lead.email) {
     return NextResponse.json(
       { success: false, message: "There's no email address on this customer to remember. Use Delete instead." },

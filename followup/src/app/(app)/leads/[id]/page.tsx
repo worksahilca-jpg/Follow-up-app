@@ -327,7 +327,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
             </div>
           </CollapsibleSection>
           <div className="border-t border-line-2 px-[18px] py-3 text-[13px]">
-            <DeleteLeadButton leadId={lead.id} leadName={lead.name} leadEmail={lead.email} />
+            <DeleteLeadButton leadId={lead.id} leadName={lead.name} leadEmail={lead.email} dmChat={isSocialLeadId(lead.phone ?? null)} />
           </div>
         </DetailsFold>
       </CustomerSide>

@@ -92,6 +92,37 @@ export const DM_JUDGE_CASES: DmJudgeCase[] = [
   ask(realtor, "Hinglish: party plans", "Bhai kal party pe aa raha hai na?", false),
   ask(realtor, "brokerage recruiting the agent", "We're hiring agents at our brokerage, 90/10 split, want to chat?", false),
   ask(salon, "salon: supplier pitch", "Hi! We sell wholesale hair extensions to salons, can I send our price list?", false),
+
+  // ---- from the founder's own inbox, 2026-10-12 (A-239) -----------------------
+  // A friend's emoji, then a joke about something in a story: let in on the
+  // emoji, and before A-239 never looked at again.
+  {
+    name: "real miss: emoji, then a Hinglish joke",
+    business: realtor,
+    lines: [
+      ["in", "😍"],
+      ["in", "Isme bee bhi dal"],
+    ],
+    expectCustomer: false,
+  },
+  {
+    name: "a friend asks for a Reel back",
+    business: realtor,
+    lines: [
+      ["in", "hahaha"],
+      ["in", "bro send me that reel again"],
+    ],
+    expectCustomer: false,
+  },
+  {
+    name: "says hi, then asks about a rental",
+    business: realtor,
+    lines: [
+      ["in", "Hi"],
+      ["in", "Is the basement apartment on Main St still for rent?"],
+    ],
+    expectCustomer: true,
+  },
 ];
 
 export type DmJudgeResult = {

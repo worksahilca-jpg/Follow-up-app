@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionContext } from "@/lib/session";
 import { prisma } from "@/lib/db";
+import { rememberDmContact } from "@/lib/dmContact";
 import { requireActiveBilling, billingLockedMessage } from "@/lib/billing";
 import { importGmailThread } from "@/lib/integrations/gmail";
 import { importOutlookConversation } from "@/lib/integrations/outlook";
@@ -58,6 +59,10 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
       // Under the set-aside lock: a message that arrived while this ran is
       // written too, then the row goes.
       await takeDmSetAside(ctx.businessId, channel, contactId, conversation.id, thread.messages, undefined);
+      // The owner said "customer": never judged again (A-239, src/lib/inbound/dmRecheck.ts).
+      await prisma.lead.updateMany({ where: { id: lead.id, businessId: ctx.businessId }, data: { dmConfirmedAt: new Date() } });
+      // The email or mobile they had typed comes back with them (A-238), oldest first so the newest wins.
+      for (const m of thread.messages) if (m.direction === "inbound") await rememberDmContact(ctx.businessId, lead.id, m.body);
     } else if (row.provider === "whatsapp") {
       const thread = parseStoredThread(row.threadPayload);
       if (!thread) {

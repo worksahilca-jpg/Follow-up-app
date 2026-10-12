@@ -956,6 +956,13 @@ model Lead {
   dmPhone               String?
   // When a reply first asked them for it. Asked once, never again.
   dmContactAskedAt      DateTime?
+  // An Instagram or Messenger customer is checked again ("customer or
+  // not?") on each new message until a real reply has gone out (A-239,
+  // src/lib/inbound/dmRecheck.ts). dmConfirmedAt: the owner said
+  // "customer" (brought them back from Filtered out). dmCheckedAt: the
+  // last check, so the same messages aren't judged twice.
+  dmConfirmedAt         DateTime?
+  dmCheckedAt           DateTime?
   priority              Priority       @default(NONE)
   lastContacted         DateTime?
   nextFollowUp          DateTime?

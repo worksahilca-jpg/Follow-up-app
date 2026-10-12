@@ -6,7 +6,8 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { prismaMock, deleteLeadCascade, recordAudit, getSessionContext } = vi.hoisted(() => ({
+const { prismaMock, deleteLeadCascade, recordAudit, getSessionContext, moveDmLeadAside } = vi.hoisted(() => ({
+  moveDmLeadAside: vi.fn(async () => true),
   prismaMock: {
     lead: { findFirst: vi.fn() },
     senderVerdict: { upsert: vi.fn(async () => ({})) },
@@ -20,6 +21,7 @@ vi.mock("@/lib/db", () => ({ prisma: prismaMock }));
 vi.mock("@/lib/leads-admin", () => ({ deleteLeadCascade }));
 vi.mock("@/lib/audit", () => ({ recordAudit }));
 vi.mock("@/lib/session", () => ({ getSessionContext }));
+vi.mock("@/lib/inbound/dmContactGate", () => ({ moveDmLeadAside }));
 
 import { POST } from "@/app/api/leads/[id]/not-customer/route";
 import { OWNER_SAID_NOT_CUSTOMER } from "@/lib/senderVerdicts";
@@ -137,3 +139,26 @@ describe("POST /api/leads/[id]/not-customer", () => {
     }
   });
 });
+
+// A-239: an Instagram or Messenger customer's chat goes to Filtered out, one tap from coming back.
+describe("POST /api/leads/[id]/not-customer — an Instagram customer", () => {
+  const dm = (overrides: Record<string, unknown> = {}) =>
+    pitch({ name: "@friend", email: null, phone: "ig:1784100000000001", conversations: [{ channel: "instagram", externalId: null, emailProvider: null, messages: [{ sentAt: last }] }], ...overrides });
+
+  it("moves their chat to Filtered out, for this business", async () => {
+    prismaMock.lead.findFirst.mockResolvedValue(dm());
+    const res = await call();
+    expect(await res.json()).toEqual({ success: true });
+    expect(moveDmLeadAside).toHaveBeenCalledWith("biz1", "instagram", "1784100000000001", "lead1", OWNER_SAID_NOT_CUSTOMER);
+    expect(prismaMock.senderVerdict.upsert).not.toHaveBeenCalled();
+    expect(deleteLeadCascade).not.toHaveBeenCalled();
+  });
+
+  it("refuses when there's a booking that couldn't be brought back", async () => {
+    prismaMock.lead.findFirst.mockResolvedValue(dm({ _count: { deals: 0, bookings: 1, followUps: 0 } }));
+    const res = await call();
+    expect(res.status).toBe(409);
+    expect(moveDmLeadAside).not.toHaveBeenCalled();
+  });
+});
+

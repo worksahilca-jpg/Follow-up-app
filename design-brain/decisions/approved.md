@@ -3961,3 +3961,18 @@ appointment with no person involved). Asked whether FollowUp should do the same,
 - **STOP on Instagram or Messenger stops the email too.** A person who said stop in the DM is never emailed instead.
 - No email given: nothing changes from the Sep 16 rule (after 24 hours, only the owner can send, until day 7).
 
+## A-239 — Instagram and Messenger: keep checking "customer or not?" until a real reply goes out ^A-239
+
+**Approved:** 2026-10-12, founder ("Build it"), after *"NOT A LEAD BRO"*, *"INSTA IS NOT SORTING IT WELL"* and *"There are
+other leads too that it captured wrong, you gotta make it accurate"*.
+- **The hole it closes:** A-234 judged a new chat once, on its first message. An emoji, a "hi" or a photo tells too
+  little, so the chat was let in, and nothing after it was ever checked. That is how friends reached Today.
+- **The rule:** every new message with words from an Instagram or Messenger customer is checked again, until a real
+  reply has gone out from FollowUp (the owner's Send, or FollowUp sending by itself). The instant "thanks, we got your
+  message" doesn't count. When two reads agree it's a friend, a joke or a pitch, the chat moves to Filtered out, where
+  one tap brings it back.
+- **Never checked again once the owner has said "customer":** brought back from Filtered out, "Already spoke", moved
+  along in the pipeline, booked, or ready.
+- A reply typed in the Instagram app itself doesn't stop the checking: people reply to friends there too.
+- The Instagram and Messenger chats from before the check are checked once, automatically.
+

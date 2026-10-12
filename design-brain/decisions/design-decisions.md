@@ -12315,3 +12315,27 @@ The founder showed a customer page: an emoji, "Isme bee bhi dal", then a story m
 - **Principle (stated, and already A-234's):** a DM from a friend is not a customer, and FollowUp must not draft a
   sales reply to a joke. Still open: no one-tap "Not a customer" on a DM customer's page (Delete is the only way out).
 
+## 2026-10-12 — Instagram and Messenger: checked again until a real reply goes out (A-239)
+
+The founder asked for it to be accurate, then chose "Build it" over a one-off re-check of the old chats.
+**What shipped (src/lib/inbound/dmRecheck.ts):**
+- Each new Instagram/Messenger message with words, from someone not yet settled, is judged again on the whole chat.
+  Same judge, same bar: two reads must agree it's not a customer, and an error or a limit keeps them. When it isn't
+  a customer, the chat moves to Filtered out before any acknowledgement, draft or alert.
+- Settled means FollowUp has sent a real reply, or the owner has decided. Bringing a chat back from Filtered out stamps
+  `Lead.dmConfirmedAt` and brings back the email and mobile they had typed. The instant "got your message" and a reply
+  typed in the Instagram app don't settle anyone.
+- The hourly automation pass checks every chat never looked at again, ten per business per pass. The 11 chats from
+  before the first check are all covered.
+- **"Not a customer"** now shows on an Instagram or Messenger customer's page too. It's the same link and confirm box
+  email customers already had, with a sentence that fits a chat. The chat moves to Filtered out, one tap from coming
+  back. Checked locally end to end: the customer was removed, all 5 messages were kept, and bring-back restored them.
+- Three real-shaped cases joined the Instagram accuracy test: emoji then a Hinglish joke, a friend asking for a Reel,
+  and "hi" then a rental question.
+- **Weak, said plainly:**
+  - A friend's first "hi" can still get the instant acknowledgement before their next message shows it's a friend.
+  - The re-check costs one look (two model reads) per message until a real reply goes out.
+  - More looks also means more chances to set a real customer aside by mistake. Two reads must agree first, and
+    Filtered out keeps them one tap away, but the owner has to notice.
+  - The judge has not been scored on the new cases yet: that needs the Run button on /admin.
+

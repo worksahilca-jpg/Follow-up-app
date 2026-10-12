@@ -30,6 +30,7 @@ import { judgeHistoryThread, parseStoredThread } from "@/lib/inbound/whatsappHis
 import { tooManyRecentActions } from "@/lib/rateLimit";
 import { hasActiveAccess, isChannelAvailableOnFreeTier } from "@/lib/billing";
 import { instagramLeadId, messengerLeadId } from "@/lib/instagramId";
+import { leadRowDeletes } from "@/lib/leads-admin";
 
 export type DmChannel = "instagram" | "messenger";
 
@@ -52,7 +53,7 @@ export const DM_FIRST_LOOKS_PER_HOUR = 60;
  */
 export const DM_LOOKS_PER_DAY = 300;
 
-function pastDailyLooks(businessId: string, channel: DmChannel): Promise<boolean> {
+export function pastDailyLooks(businessId: string, channel: DmChannel): Promise<boolean> {
   return tooManyRecentActions(businessId, `${channel}_looks_day`, { windowMinutes: 24 * 60, max: DM_LOOKS_PER_DAY });
 }
 
@@ -73,14 +74,9 @@ function lockKey(channel: DmChannel, businessId: string, contactId: string): str
   return `${channel}_set_aside:${businessId}:${contactId}`;
 }
 
-const GREETING_RE =
-  /^(?:hi+|hii+|hello+|hey+|heya|hiya|hola|namaste|salam|salaam|assalamu alaikum|sat sri akal|good (?:morning|afternoon|evening))(?:\s+(?:there|team|sir|ma'?am|all|everyone))?[\s!.?,~]*$/iu;
-
-/** "Hi", "Hello there!", "Good morning": a greeting and nothing else. Emoji are ignored. */
-export function isBareGreeting(text: string): boolean {
-  const words = text.replace(/\p{Extended_Pictographic}|‍|️/gu, "").trim();
-  return words.length > 0 && GREETING_RE.test(words);
-}
+// "Hi", "Hello there!": in its own module so the re-check (dmRecheck.ts) reads it too.
+export { isBareGreeting } from "@/lib/inbound/greeting";
+import { isBareGreeting } from "@/lib/inbound/greeting";
 
 /** The business's name, trade and AI eligibility, fetched once per delivery and only if someone new wrote. */
 export function dmContextLoader(businessId: string, channel: DmChannel): () => Promise<DmJudgeContext> {
@@ -322,4 +318,53 @@ export async function takeDmSetAside(
 export function dmContactIdOf(threadId: string): string | null {
   const i = threadId.indexOf(":");
   return i > 0 ? threadId.slice(i + 1) || null : null;
+}
+
+/**
+ * Moves a DM customer back into a set-aside chat (A-239): their whole
+ * conversation goes into a "Filtered out" row, one tap from coming back
+ * (the restore route rebuilds it), and the customer goes, under the same
+ * lock every set-aside write takes, so a message arriving meanwhile is
+ * never lost between the two. Used when a later message shows it's a
+ * friend or a pitch (src/lib/inbound/dmRecheck.ts), and by the owner's
+ * "Not a customer". Returns false when there was nothing to move.
+ */
+export async function moveDmLeadAside(
+  businessId: string,
+  channel: DmChannel,
+  contactId: string,
+  leadId: string,
+  reason: string
+): Promise<boolean> {
+  const threadId = dmThreadId(channel, contactId);
+  const phone = dmLeadKey(channel, contactId);
+  return prisma.$transaction(
+    async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${lockKey(channel, businessId, contactId)}))`;
+      const lead = await tx.lead.findFirst({
+        where: { id: leadId, businessId, phone },
+        select: { id: true, name: true, conversations: { select: { id: true, messages: { select: { id: true, externalId: true, direction: true, body: true, sentAt: true } } } } },
+      });
+      if (!lead) return false;
+      const messages = lead.conversations
+        .flatMap((c) => c.messages)
+        .sort((a, b) => a.sentAt.getTime() - b.sentAt.getTime())
+        .slice(-DM_SET_ASIDE_MAX_MESSAGES)
+        // Restore writes each message back by its id; one FollowUp stored
+        // without Meta's id still needs one to come back.
+        .map((m) => ({ id: m.externalId ?? `local:${m.id}`, direction: m.direction, body: m.body, date: m.sentAt.toISOString() }));
+      if (messages.length === 0) return false;
+      const name = lead.name.startsWith("@") ? lead.name : null;
+      const payload = { phone, name, messages };
+      const lastMessageAt = new Date(messages[messages.length - 1].date);
+      await tx.filteredEmail.upsert({
+        where: { businessId_threadId: { businessId, threadId } },
+        update: { reason, senderName: lead.name, threadPayload: payload, lastMessageAt },
+        create: { businessId, threadId, provider: channel, senderName: lead.name, senderPhone: phone, reason, threadPayload: payload, lastMessageAt },
+      });
+      for (const op of leadRowDeletes(tx, lead.id, lead.conversations.map((c) => c.id))) await op;
+      return true;
+    },
+    { timeout: 20_000 }
+  );
 }

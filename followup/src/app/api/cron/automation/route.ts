@@ -5,6 +5,7 @@ import { runAutomationForAllBusinesses } from "@/lib/automation";
 import { runSequencesForAllBusinesses } from "@/lib/sequences";
 import { pruneInboundWebhookEvents, pruneSetAsideThreads } from "@/lib/inboundEvents";
 import { pruneRateLimitHits } from "@/lib/rateLimit";
+import { recheckDmLeadsForAllBusinesses } from "@/lib/inbound/dmRecheck";
 import { pruneDemoTries } from "@/lib/demoReply";
 import { remindStaleApprovalsForAllBusinesses } from "@/lib/staleApprovals";
 
@@ -86,6 +87,13 @@ export async function GET(request: NextRequest) {
       failed("stale-approval reminders")(err);
       return { checked: 0, reminded: 0 };
     });
+    // Instagram and Messenger customers never looked at again since they
+    // came in: checked once, up to ten per business per tick (A-239,
+    // src/lib/inbound/dmRecheck.ts). Its own failure, like the reminders.
+    const dmRechecked = await recheckDmLeadsForAllBusinesses().catch((err) => {
+      failed("DM re-check")(err);
+      return { checked: 0, setAside: 0 };
+    });
     // Retention for the raw inbound-capture log (InboundWebhookEvent):
     // processed rows after 14 days, unreplayed failures after 90. It is
     // written once per inbound message forever, so it needs a policy from
@@ -128,7 +136,7 @@ export async function GET(request: NextRequest) {
      * the failure to Sentry either way. (This used to say console.error
      * did; it never did, as the server config has no console integration.)
      */
-    const body = { success: errors.length === 0, automation, sequences, staleApprovals, pruned, prunedSetAside, prunedRateLimitHits, prunedDemoTries, errors };
+    const body = { success: errors.length === 0, automation, sequences, staleApprovals, dmRechecked, pruned, prunedSetAside, prunedRateLimitHits, prunedDemoTries, errors };
     const nothingRan = automation === null && sequences === null;
     return NextResponse.json(body, { status: nothingRan ? 500 : 200 });
   } catch (err) {

@@ -12224,3 +12224,12 @@ for the email "is this a customer?" check; qualifying got one on 2026-10-11 (PR 
 - The DM judge swallows errors as "let through" (by design, so a customer is never lost to an outage). A rate limit
   during a run shows up as chats let through.
 - All cases are invented. Real tester conversations, with permission, will make better tests.
+
+## 2026-10-12 — Set-aside Instagram chats learn the sender's @name (A-234 follow-up)
+
+Both chats the DM check set aside on its first night read "Instagram user" in "Filtered out". Instagram's webhook
+never carries the sender's handle; the 3-minute check does, but it re-delivers a message the chat already holds, and
+that redelivery was dropped before the name was read. Now that redelivery fills the name when the chat has none,
+under the set-aside lock, and never replaces a name already there. The founder said *"Yes, fix it"*.
+- **Limit:** the two chats already set aside stay "Instagram user". The 3-minute check has moved past their messages,
+  so they get a name only if that person writes again.

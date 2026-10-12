@@ -11,6 +11,7 @@ const h = vi.hoisted(() => ({
   row: null as null | { id: string; threadPayload: unknown },
   lead: null as null | { id: string },
   upserts: [] as unknown[],
+  updates: [] as unknown[],
   judge: vi.fn(),
   tooMany: vi.fn<(businessId: string, action: string, opts: unknown) => Promise<boolean>>(async () => false),
   business: { name: "Maple Realty", industry: "Real estate", subscriptionStatus: "beta", tier: "pro" } as Record<string, unknown> | null,
@@ -24,6 +25,10 @@ vi.mock("@/lib/db", () => {
       return {};
     }),
     deleteMany: vi.fn(async () => ({ count: 1 })),
+    updateMany: vi.fn(async (args: unknown) => {
+      h.updates.push(args);
+      return { count: 1 };
+    }),
   };
   const lead = { findFirst: vi.fn(async () => h.lead) };
   const tx = { $executeRaw: vi.fn(async () => 0), filteredEmail, lead, message: { upsert: vi.fn(async () => ({})) } };
@@ -60,6 +65,7 @@ beforeEach(() => {
   h.row = null;
   h.lead = null;
   h.upserts = [];
+  h.updates = [];
   h.business = { name: "Maple Realty", industry: "Real estate", subscriptionStatus: "beta", tier: "pro" };
   h.tooMany.mockResolvedValue(false);
 });
@@ -125,6 +131,20 @@ describe("a chat already set aside", () => {
       { alreadySetAside: true }
     );
     expect(r).toMatchObject({ admit: true, prior: [expect.objectContaining({ id: "m1", channel: "instagram" })] });
+  });
+
+  it("learns the handle when the 3-minute check brings a message the webhook already set aside nameless", async () => {
+    h.row = { id: "row1", threadPayload: { phone: "ig:123", name: null, messages: [{ id: "m1", direction: "inbound", body: "hey bro what's up", date: "2026-10-11T14:00:00Z" }] } };
+    expect(await ask(msg("m1", "hey bro what's up"))).toEqual({ admit: false });
+    expect(h.judge).not.toHaveBeenCalled();
+    expect(h.updates).toEqual([
+      { where: { id: "row1", businessId: "biz1" }, data: { senderName: "@friend", threadPayload: expect.objectContaining({ name: "@friend", phone: "ig:123" }) } },
+    ]);
+  });
+
+  it("never replaces a name the chat already has", async () => {
+    expect(await ask(msg("m1", "hey bro what's up"))).toEqual({ admit: false });
+    expect(h.updates).toEqual([]);
   });
 
   it("does not judge the same message twice when Meta and the 3-minute check both bring it", async () => {

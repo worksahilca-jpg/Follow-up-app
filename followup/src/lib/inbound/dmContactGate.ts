@@ -23,6 +23,7 @@
  *    src/lib/sharedContent.ts.)
  */
 import { prisma } from "@/lib/db";
+import type { Prisma } from "@prisma/client";
 import type { Message } from "@/lib/types";
 import type { ClassifierBusinessContext } from "@/lib/integrations/openai";
 import { judgeHistoryThread, parseStoredThread } from "@/lib/inbound/whatsappHistoryFilter";
@@ -133,8 +134,14 @@ export async function judgeNewDmContact(args: {
   const prior = stored?.messages ?? [];
 
   // Delivered again (the webhook and the 3-minute check both bring it):
-  // judged already.
-  if (message.id && prior.some((m) => m.id === message.id)) return { admit: false };
+  // judged already. The webhook never carries the sender's handle and the
+  // 3-minute check does, so a chat set aside from the webhook learns its
+  // name here, or it reads "Instagram user" in "Filtered out" for good
+  // (founder, 2026-10-12: "Yes, fix it").
+  if (message.id && prior.some((m) => m.id === message.id)) {
+    if (args.name && !stored?.name) await nameSetAside(businessId, channel, contactId, args.name);
+    return { admit: false };
+  }
 
   if (!row) {
     // Someone new: the two openings that are too often a real customer to guess about.
@@ -230,6 +237,29 @@ async function keepDmSetAside(
       },
     });
     return { admit: false };
+  });
+}
+
+/**
+ * Fills the handle on a set-aside chat that has none, under the same lock
+ * as keepDmSetAside so a message kept at the same moment isn't lost. Never
+ * replaces a name already there.
+ */
+async function nameSetAside(businessId: string, channel: DmChannel, contactId: string, name: string): Promise<void> {
+  const threadId = dmThreadId(channel, contactId);
+  await prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${lockKey(channel, businessId, contactId)}))`;
+    const row = await tx.filteredEmail.findUnique({
+      where: { businessId_threadId: { businessId, threadId } },
+      select: { id: true, threadPayload: true },
+    });
+    if (!row) return;
+    const payload = row.threadPayload && typeof row.threadPayload === "object" ? (row.threadPayload as Record<string, unknown>) : null;
+    if (!payload || payload.name) return;
+    await tx.filteredEmail.updateMany({
+      where: { id: row.id, businessId },
+      data: { senderName: name, threadPayload: { ...payload, name } as Prisma.InputJsonValue },
+    });
   });
 }
 

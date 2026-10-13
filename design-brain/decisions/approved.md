@@ -1559,6 +1559,8 @@ column as drawn (now three facts, three actions, one Details). Everything else i
 
 ## A-081 — Gmail first: the landing hero and a three-step setup ^A-081
 
+*SUPERSEDED (2026-10-13) for setup step 1 by [[#^A-241]]: setup now starts with Instagram or Gmail. The rest stands.*
+
 **Approved:** 2026-10-04, founder: *"yes build it"*, on the boards in `prototypes/2026-10-04-gmail-first.html`
 (#landing, #landing-phone, #setup), after deciding to focus on Gmail only (*"let's just focus on email only… I'm
 going all in"*; research in `followup/research/customers/2026-10-04-gmail-only-why-they-would-use-it.md` and
@@ -3997,3 +3999,19 @@ other leads too that it captured wrong, you gotta make it accurate"*.
 - **Only when there is something:** the chat apps' list appears once a chat has been set aside, so owners who use
   none of those apps see no empty box.
 - **Email keeps its own list,** now for emails only. Both lists say "This is a customer" (was "This was a lead").
+
+## A-241 — Setup starts with Instagram or Gmail ^A-241
+
+**Approved:** 2026-10-13, founder. In a walkthrough as a new realtor tester, step 1 was "Connect your Gmail" with no
+other way in, while the live app's newest customers all came from Instagram and Messenger. Asked, he chose *"Yes,
+Instagram or Gmail"*, then *"Build it"* on the drawing (phone, before and after).
+- **Step 1:** "Where do customers write to you?" Lede: "Start with the one you use most. You can add the other any time
+  in Settings." Two tappable rows, Instagram ("DMs to your business account") and Gmail ("Emails from customers"),
+  each with its icon and a chevron; "I use Outlook" stays a quiet link. Three promises that fit both: reads messages
+  from customers and your replies; keeps friends, family and newsletters out of your customers; never sends without
+  your OK unless you turn that on. No black button: the two rows are the choice.
+- **After Instagram connects,** the owner lands back in setup on step 2, as Gmail does.
+- **Today and Settings** count Instagram as connected: no "Connect your inbox" nudge once it is. With nothing
+  connected they say Instagram or email, not email alone.
+- **Words:** the Instagram, Messenger and WhatsApp setup text says "becomes a customer", not "a lead".
+- Supersedes A-081's Gmail-only step 1.

@@ -4015,3 +4015,25 @@ Instagram or Gmail"*, then *"Build it"* on the drawing (phone, before and after)
   connected they say Instagram or email, not email alone.
 - **Words:** the Instagram, Messenger and WhatsApp setup text says "becomes a customer", not "a lead".
 - Supersedes A-081's Gmail-only step 1.
+
+## A-242 — Booking in the chat: FollowUp offers times, the owner confirms ^A-242
+
+**Approved:** 2026-10-13, founder (*"Yes, this is it"*), on a four-step drawing made inside the real app. Came out of
+studying Appointwise: the one feature worth taking is booking inside the conversation. Their AI books on its own; the
+founder then asked what happens if the realtor is not free and the calendar does not show it. Answer: FollowUp never
+confirms a time on its own.
+- **Step 1, the chat:** the customer asks for a viewing. FollowUp offers two times inside the owner's booking hours and
+  free in their calendar ("I can do Saturday at 11am or Sunday at 2pm. Which works for you?"). When the customer picks
+  one, FollowUp says it will confirm and get right back. It never says "booked" yet.
+- **Step 2, the buzz:** one line: who, when, where ("Raj wants Saturday at 11am · Viewing at 12 Elm St. Your calendar
+  is free. Tap to confirm.").
+- **Step 3, confirm:** "Raj picked a time", a box with what, day, time and "✓ Your calendar is free then", one
+  sentence ("If you can make it, press Confirm. If not, pick another time and FollowUp tells Raj."), one black button
+  "Confirm Saturday 11 AM", an outlined "Another time", a quiet link "I'll call Raj instead".
+- **Step 4, booked:** only after Confirm does the customer get the time and place, and the viewing goes into the
+  owner's Google Calendar.
+- **Who sends step 1:** with "reply for me" on, the time offer goes out by itself (A-236's simple steps). With it off,
+  the owner OKs that message too, so two taps instead of one.
+- **When:** built in November with Stage 2 (A-236), not before.
+- Not chosen: FollowUp booking a time by itself (Appointwise's way). A calendar can be empty while the realtor is
+  busy, so a person confirms every booking.

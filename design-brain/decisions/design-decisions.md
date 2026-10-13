@@ -12502,3 +12502,19 @@ one row had no reply and no Send.
   small lines below, "Held for approval" and "Based on…" removed. His answer: *"this looks complex how do i get to know
   what to do"*. The page still never said what to do.
 - **Next:** drawing 2 leads with a plain instruction and one action.
+
+## 2026-10-13 — Booking in the chat, with the owner confirming (A-242)
+
+The founder asked for every Appointwise feature, then what they do that FollowUp doesn't, then whether one or two are
+worth copying. One: booking inside the chat. He then asked two questions: what if the owner uses another calendar, and
+what if the realtor is not free and the calendar does not show it? That second one decided the design. FollowUp
+offers times, the owner confirms, then it is booked.
+- **Drawn first** on the real app (fonts and tokens of /dashboard), four phones in a row: the chat, the buzz, the
+  confirm screen, booked with the calendar entry. Approved: *"Yes, this is it"*.
+- **Honest weak spots:** the confirm screen has empty space between the sentence and the buttons on a tall phone
+  (fine for the thumb, plain to the eye). Step 1 sends the times by itself only when "reply for me" is on; with it
+  off it costs a second tap. Outlook has no calendar access yet, so Outlook owners get times from booking hours only.
+- **Already in the code:** booking hours, Google Calendar free/busy and calendar event creation (`lib/booking.ts`,
+  `lib/integrations/gmail.ts`). Missing: offering times inside a DM, the "picked a time" buzz and confirm screen, and
+  "Another time".
+- **Next:** build in November with Stage 2.

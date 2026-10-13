@@ -50,7 +50,7 @@ export default function InstagramConfig() {
     // the same promise the block below has to walk back, and the two
     // sitting together is worse than either alone.
     oauthResult === "connected" && receiving
-      ? { kind: "success" as const, text: "Instagram connected — real DMs will become leads automatically." }
+      ? { kind: "success" as const, text: "Instagram connected. DMs from customers now show up here." }
       : oauthResult === "error"
         ? { kind: "error" as const, text: safeBannerText(searchParams.get("message"), "Couldn't connect Instagram.") }
         : null;
@@ -161,8 +161,8 @@ export default function InstagramConfig() {
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium">Catch Instagram DMs</p>
           <p className="text-[13px] text-ink-soft mt-1">
-            Anyone who messages your Instagram Business account becomes a lead in FollowUp. Replies wait for
-            your OK unless you choose Automatic.
+            Customers who message your Instagram Business account show up in FollowUp, and friends and family
+            stay out. Replies wait for your OK unless you choose Automatic.
           </p>
 
           {statusMessage && (
@@ -196,7 +196,7 @@ export default function InstagramConfig() {
                     ) : (
                       <>Connected — Instagram account ID {instagramUserId}.</>
                     )}{" "}
-                    Real DMs will become leads automatically.
+                    DMs from customers show up here.
                   </span>
                 </p>
               ) : (

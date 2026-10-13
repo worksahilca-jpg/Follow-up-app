@@ -52,7 +52,7 @@ export default function FacebookConfig() {
     // same promise the block below has to walk back, and the two sitting
     // together is worse than either alone.
     oauthResult === "connected" && receiving
-      ? { kind: "success" as const, text: "Facebook connected — Messenger DMs and lead-form submissions become leads automatically." }
+      ? { kind: "success" as const, text: "Facebook connected. Messenger DMs from customers and lead-form answers now show up here." }
       : oauthResult === "error"
         ? { kind: "error" as const, text: safeBannerText(searchParams.get("message"), "Couldn't connect Facebook.") }
         : null;
@@ -161,8 +161,8 @@ export default function FacebookConfig() {
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium">Catch Facebook Messenger DMs</p>
           <p className="text-[13px] text-ink-soft mt-1">
-            Anyone who messages your Facebook Page becomes a lead in FollowUp. Replies wait for your OK unless you
-            choose Automatic.
+            Customers who message your Facebook Page show up in FollowUp, and friends and family stay out.
+            Replies wait for your OK unless you choose Automatic.
           </p>
 
           {statusMessage && (
@@ -198,8 +198,8 @@ export default function FacebookConfig() {
             <div className="mt-3">
               {receiving ? (
                 <p className="text-[13px] flex items-center gap-1" style={{ color: "var(--sage)" }}>
-                  <Check className="h-3.5 w-3.5" /> Connected — {pageName ?? "Page"} ({pageId}). Messenger DMs and lead-form
-                  submissions become leads automatically.
+                  <Check className="h-3.5 w-3.5" /> Connected — {pageName ?? "Page"} ({pageId}). Messenger DMs from customers
+                  and lead-form answers show up here.
                 </p>
               ) : (
                 /* The green tick used to show here regardless, on a Page

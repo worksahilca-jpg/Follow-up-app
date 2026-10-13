@@ -178,14 +178,14 @@ export default function WhatsAppConfig() {
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium">Catch WhatsApp messages</p>
           <p className="text-[13px] text-ink-soft mt-1">
-            Your own WhatsApp number — the one already in the WhatsApp Business app on your phone. Anyone who
-            messages it becomes a lead here, and replies go back from the same number. You keep using the app
+            Your own WhatsApp number — the one already in the WhatsApp Business app on your phone. Customers who
+            message it show up here, and replies go back from the same number. You keep using the app
             on your phone as before; what you send from there shows up here too.
           </p>
 
           {(justConnected || signup.justConnected) && (
             <p className="mt-2 text-[13px]" style={{ color: "var(--sage)" }} aria-live="polite">
-              WhatsApp connected — new messages will become leads automatically.
+              WhatsApp connected. New messages from customers now show up here.
             </p>
           )}
           {(connectError ?? signup.error) && (

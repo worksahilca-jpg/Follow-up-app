@@ -2,7 +2,7 @@
 
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowRight, Check, Loader2 } from "lucide-react";
+import { ArrowRight, Check, ChevronRight, Loader2 } from "lucide-react";
 import LogoMark from "@/components/LogoMark";
 import ImproveFollowUpToggle from "@/components/ImproveFollowUpToggle";
 import { WARM_CARD } from "@/components/app/ReplyCard";
@@ -11,6 +11,7 @@ import { useUndoableSend } from "@/components/useUndoableSend";
 import UndoLine from "@/components/UndoLine";
 import { safeBannerText } from "@/lib/bannerText";
 import { AlertsSetupStep } from "@/components/app/AlertsSetup";
+import { ChannelIcon } from "@/components/app/ChannelIcon";
 
 /** The one full-width black button at the foot of each setup step. */
 const PRIMARY =
@@ -20,7 +21,8 @@ const H1 = "title-serif text-[30px] leading-[1.1]";
 const LEDE = "mt-2.5 text-[15.5px] leading-relaxed text-ink-soft";
 
 /**
- * Four steps (A-081, Gmail first, founder 2026-10-04): connect Gmail, choose
+ * Four steps: connect Instagram or Gmail (A-241, 2026-10-13; it was Gmail
+ * alone, A-081, 2026-10-04), choose
  * how FollowUp should work while it reads the inbox, then the customers who
  * were already waiting, then (A-216, 2026-10-10) a buzz on the owner's phone
  * when a customer needs them, with a real test. Setup is marked finished
@@ -42,8 +44,9 @@ const LEDE = "mt-2.5 text-[15.5px] leading-relaxed text-ink-soft";
  * ## Resume is derived, not stored
  *
  * The Connect button leaves the app, and the trip back is a fresh page
- * load with no client state. A connected inbox means step 2; a failed
- * connect (`?gmail=error`) stays on step 1 with the provider's message.
+ * load with no client state. A connected inbox or Instagram account means
+ * step 2; a failed connect (`?gmail=error`, `?instagram=error`) stays on
+ * step 1 with the provider's message.
  */
 
 export interface OnboardingSourceState {
@@ -52,6 +55,10 @@ export interface OnboardingSourceState {
   outlookAvailable: boolean;
   inboxEmail?: string;
   inboxProvider: "gmail" | "outlook" | null;
+  /** A professional Instagram account connected with a token (A-241). */
+  instagramConnected: boolean;
+  /** Instagram sign-in is configured for this deployment. */
+  instagramAvailable: boolean;
 }
 
 interface OnboardingFormProps {
@@ -75,7 +82,11 @@ function OnboardingFormInner({ sources }: OnboardingFormProps) {
   const searchParams = useSearchParams();
 
   const inboxConnected = sources.gmailConnected || sources.outlookConnected;
-  const [step, setStep] = useState<Step>(inboxConnected ? 2 : 1);
+  // Either way in counts as connected (A-241): an owner who runs on
+  // Instagram DMs has no inbox to connect and must not be sent back to step 1.
+  const connected = inboxConnected || sources.instagramConnected;
+  const connectedName = sources.gmailConnected ? "Gmail" : sources.outlookConnected ? "Outlook" : "Instagram";
+  const [step, setStep] = useState<Step>(connected ? 2 : 1);
   const [finishing, setFinishing] = useState(false);
 
   // Fires once, right when a connected inbox first renders — pulls the
@@ -101,7 +112,7 @@ function OnboardingFormInner({ sources }: OnboardingFormProps) {
   /** Whatever the provider said on the way back. */
   const errorFor = (key: string) =>
     searchParams.get(key) === "error" ? safeBannerText(searchParams.get("message"), `Couldn't connect ${key}.`) : null;
-  const inboxError = errorFor("gmail") ?? errorFor("outlook");
+  const connectError = errorFor("gmail") ?? errorFor("outlook") ?? errorFor("instagram");
 
   /**
    * Finish. The website form is not offered here any more (Gmail first),
@@ -160,15 +171,15 @@ function OnboardingFormInner({ sources }: OnboardingFormProps) {
           </span>
           <span className="flex items-center gap-2.5">
             {/* A head start (A-088, Nunes & Drèze): name the step already done, not only the ones left. */}
-            {step >= 2 && inboxConnected && (
+            {step >= 2 && connected && (
               <span className="flex items-center gap-1.5 whitespace-nowrap text-[12.5px] text-ink">
                 <Check className="h-3.5 w-3.5" style={{ color: "var(--sage)" }} aria-hidden="true" />
-                {sources.gmailConnected ? "Gmail" : "Outlook"} connected
+                {connectedName} connected
                 <span className="hidden text-ink-faint sm:inline">·</span>
               </span>
             )}
             {/* On a phone the bars say the step once the head start is shown; the words would wrap. */}
-            <span className={"whitespace-nowrap text-[12.5px] text-ink-faint" + (step >= 2 && inboxConnected ? " hidden sm:inline" : "")}>Step {step} of 4</span>
+            <span className={"whitespace-nowrap text-[12.5px] text-ink-faint" + (step >= 2 && connected ? " hidden sm:inline" : "")}>Step {step} of 4</span>
             {/* Ink, not the accent: the screen's one accent moment is its button (A-006). */}
             <span className="flex gap-1" aria-hidden="true">
               {([1, 2, 3, 4] as const).map((n) => (
@@ -183,9 +194,13 @@ function OnboardingFormInner({ sources }: OnboardingFormProps) {
         </header>
 
         <main className="flex flex-1 flex-col pt-5">
-          {step === 1 && <ConnectGmail outlookAvailable={sources.outlookAvailable} error={inboxError} />}
-          {step === 2 && <HowItShouldWork reading={autoSyncState === "syncing"} onChosen={() => setStep(3)} />}
-          {step === 3 && <WaitingCustomers syncDone={autoSyncState !== "syncing"} onDone={finishOnboarding} finishing={finishing} />}
+          {step === 1 && (
+            <ChooseWhere instagramAvailable={sources.instagramAvailable} outlookAvailable={sources.outlookAvailable} error={connectError} />
+          )}
+          {step === 2 && <HowItShouldWork reading={autoSyncState === "syncing"} sentFrom={connectedName} onChosen={() => setStep(3)} />}
+          {step === 3 && (
+            <WaitingCustomers syncDone={autoSyncState !== "syncing"} readsPast={inboxConnected} onDone={finishOnboarding} finishing={finishing} />
+          )}
           {step === 4 && <AlertsSetupStep onDone={openToday} />}
         </main>
       </div>
@@ -194,24 +209,68 @@ function OnboardingFormInner({ sources }: OnboardingFormProps) {
 }
 
 /**
- * Step 1 — connect Gmail. What it reads and what it never does, in four
- * lines, because this screen asks for the inbox at the moment it has to be
- * exactly true (the old explainer's rule). Outlook is the quiet way in.
+ * Step 1 — where customers write (A-241). Instagram and Gmail are the two
+ * ways in, as rows rather than buttons: the row IS the choice, so there is
+ * no black button on this screen. Outlook stays the quiet link it was.
+ *
+ * The three lines are the promises that hold for both, at the moment the
+ * owner hands over access, so they have to be exactly true: FollowUp reads
+ * customers' messages and the owner's replies, keeps personal chat and
+ * newsletters out of the customer list (the "is this a customer?" check),
+ * and sends nothing on its own unless the owner turns that on.
  * No AI language anywhere on this screen, deliberately (S-13).
  */
-function ConnectGmail({ outlookAvailable, error }: { outlookAvailable: boolean; error: string | null }) {
+function ChooseWhere({ instagramAvailable, outlookAvailable, error }: { instagramAvailable: boolean; outlookAvailable: boolean; error: string | null }) {
   const lines: Array<{ ok: boolean; text: string }> = [
-    { ok: true, text: "Reads emails from customers, and your replies to them" },
-    { ok: true, text: "Puts booked calls on your calendar" },
+    { ok: true, text: "Reads messages from customers, and your replies to them" },
+    { ok: true, text: "Keeps friends, family and newsletters out of your customers" },
     { ok: false, text: "Never sends anything without your OK, unless you turn that on" },
-    { ok: false, text: "Never reads newsletters, receipts or personal mail" },
+  ];
+  const ways = [
+    ...(instagramAvailable
+      ? [{ channel: "instagram", title: "Instagram", line: "DMs to your business account", href: "/api/instagram/oauth/start?next=onboarding" }]
+      : []),
+    { channel: "email", title: "Gmail", line: "Emails from customers", href: "/api/integrations/gmail/connect?next=onboarding" },
   ];
   return (
     <div className="flex flex-1 flex-col">
-      <h1 className={H1}>Connect your Gmail</h1>
-      <p className={LEDE}>FollowUp reads the emails from customers, writes the replies in your words, and sends from your own address.</p>
+      <h1 className={H1}>Where do customers write to you?</h1>
+      <p className={LEDE}>Start with the one you use most. You can add the other any time in Settings.</p>
 
-      <ul className="mt-[18px] overflow-hidden rounded-[14px] border border-line bg-card">
+      <div className="mt-5 flex flex-col gap-3">
+        {ways.map((w) => (
+          <a
+            key={w.title}
+            href={w.href}
+            className="flex min-h-[72px] items-center gap-3.5 rounded-2xl border border-line bg-card px-4 py-3.5 text-ink transition-colors hover:border-ink-faint"
+          >
+            <span aria-hidden="true" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-card-2">
+              <ChannelIcon channel={w.channel} className="h-[22px] w-[22px] shrink-0 text-ink" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[17px] font-semibold">{w.title}</span>
+              <span className="mt-0.5 block text-[14.5px] text-ink-soft">{w.line}</span>
+            </span>
+            <ChevronRight className="h-[18px] w-[18px] shrink-0 text-ink-faint" aria-hidden="true" />
+          </a>
+        ))}
+      </div>
+      {outlookAvailable && (
+        <a
+          href="/api/integrations/outlook/connect?next=onboarding"
+          className="mt-1 inline-flex min-h-11 w-full items-center justify-center text-[15px] text-ink-soft underline underline-offset-[3px] transition-colors hover:text-ink"
+        >
+          I use Outlook
+        </a>
+      )}
+
+      {error && (
+        <p role="alert" className="mt-3 text-sm" style={{ color: "var(--coral)" }}>
+          {error}
+        </p>
+      )}
+
+      <ul className={(outlookAvailable ? "mt-2.5" : "mt-5") + " overflow-hidden rounded-[14px] border border-line bg-card"}>
         {lines.map((l, i) => (
           <li key={l.text} className={"flex gap-3 px-4 py-3 text-[14.5px] leading-snug" + (i ? " border-t border-line-2" : "")}>
             <span aria-hidden="true" className="w-4 shrink-0" style={{ color: l.ok ? "var(--sage)" : "var(--ink-faint)" }}>
@@ -222,30 +281,13 @@ function ConnectGmail({ outlookAvailable, error }: { outlookAvailable: boolean; 
         ))}
       </ul>
 
-      {error && (
-        <p role="alert" className="mt-3 text-sm" style={{ color: "var(--coral)" }}>
-          {error}
-        </p>
-      )}
-
       <div className="mt-auto pb-7 pt-6">
-        <a href="/api/integrations/gmail/connect?next=onboarding" className={PRIMARY} style={PRIMARY_STYLE}>
-          Connect Gmail
-          <ArrowRight className="h-4 w-4" />
-        </a>
-        {outlookAvailable && (
-          <a
-            href="/api/integrations/outlook/connect?next=onboarding"
-            className="mt-1 inline-flex min-h-11 w-full items-center justify-center text-[15px] text-ink-soft underline underline-offset-[3px] transition-colors hover:text-ink"
-          >
-            I use Outlook
-          </a>
-        )}
-        <p className="mt-2 text-center text-[13px] leading-relaxed text-ink-faint">You can disconnect any time in Settings. Access ends the moment you do.</p>
+        <p className="text-center text-[13px] leading-relaxed text-ink-faint">You can disconnect any time in Settings. Access ends the moment you do.</p>
       </div>
     </div>
   );
 }
+
 /**
  * Step 4 — how FollowUp should work (founder, 2026-09-26: "in onboarding,
  * it will be asking the user whether they want the follow-up to follow up
@@ -267,7 +309,7 @@ function ConnectGmail({ outlookAvailable, error }: { outlookAvailable: boolean; 
  * asked for, never assumed (2026-09-22). Pressing the only button on the
  * screen can no longer switch automatic sending on unread.
  */
-function HowItShouldWork({ reading, onChosen }: { reading: boolean; onChosen: () => void }) {
+function HowItShouldWork({ reading, sentFrom, onChosen }: { reading: boolean; sentFrom: string; onChosen: () => void }) {
   const [mode, setMode] = useState<"automatic" | "assisted" | null>("assisted");
   const [trade, setTrade] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -399,7 +441,7 @@ function HowItShouldWork({ reading, onChosen }: { reading: boolean; onChosen: ()
 
       <p className="mt-[18px] flex items-start gap-2 text-sm leading-relaxed text-ink-soft">
         <Check className="mt-0.5 h-[15px] w-[15px] shrink-0 text-ink" strokeWidth={2.2} aria-hidden="true" />
-        <span>Either way, it stops the moment they reply, and every message goes from your own Gmail.</span>
+        <span>Either way, it stops the moment they reply, and every message goes from your own {sentFrom}.</span>
       </p>
 
       {/* Asked once, here, where the owner has just connected an inbox —
@@ -458,7 +500,18 @@ type WaitingSummary = {
  * account, or if writing them fails, the screen says so and moves on:
  * nobody should be stuck at the end of setup.
  */
-function WaitingCustomers({ syncDone, onDone, finishing }: { syncDone: boolean; onDone: () => void; finishing: boolean }) {
+function WaitingCustomers({
+  syncDone,
+  readsPast,
+  onDone,
+  finishing,
+}: {
+  syncDone: boolean;
+  /** An inbox reads back 90 days; Instagram starts from the moment it connects (instagramPoll.ts). */
+  readsPast: boolean;
+  onDone: () => void;
+  finishing: boolean;
+}) {
   const [state, setState] = useState<"loading" | "ready">("loading");
   const [summary, setSummary] = useState<WaitingSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -520,7 +573,7 @@ function WaitingCustomers({ syncDone, onDone, finishing }: { syncDone: boolean; 
         <h1 className={H1}>{syncDone ? "Finding who’s waiting on a reply…" : "Still reading your inbox…"}</h1>
         <p className={LEDE + " flex items-center gap-2"}>
           <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-          {syncDone ? "Reading the last 90 days. Nothing is sent." : "A big inbox takes a minute. Nothing is sent."}
+          {!syncDone ? "A big inbox takes a minute. Nothing is sent." : readsPast ? "Reading the last 90 days. Nothing is sent." : "Nothing is sent."}
         </p>
       </div>
     );
@@ -532,11 +585,15 @@ function WaitingCustomers({ syncDone, onDone, finishing }: { syncDone: boolean; 
   if (safe === 0) {
     return (
       <div className="flex flex-1 flex-col">
-        <h1 className={H1}>{needsYou > 0 ? "A few people need you." : "No one is waiting."}</h1>
+        <h1 className={H1}>{needsYou > 0 ? "A few people need you." : readsPast ? "No one is waiting." : "Ready for new messages."}</h1>
         <p className={LEDE}>
           {needsYou > 0
             ? `${needsYou} ${needsYou === 1 ? "customer asks" : "customers ask"} about a price, a date or something that needs your eye. ${needsYou === 1 ? "It waits" : "They wait"} for you in Today, with the reply written.`
-            : "Anyone who writes from now on gets an answer. You'll see everything in Today."}
+            : readsPast
+              ? "Anyone who writes from now on gets an answer. You'll see everything in Today."
+              : // Instagram reads from the moment it connects, never old DMs
+                // (instagramPoll.ts), so "no one is waiting" would be a guess.
+                "FollowUp reads DMs from now on, not old ones. Anyone who writes gets an answer. You'll see everything in Today."}
         </p>
         <div className="mt-auto pb-7 pt-6">
           <button onClick={onDone} disabled={finishing} className={PRIMARY} style={PRIMARY_STYLE}>

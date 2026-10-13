@@ -23,12 +23,14 @@ export default function CantSendNotice({ reconnectEmail }: { reconnectEmail: str
         </p>
       </div>
       <Link
-        href="/settings#integrations"
+        // Nothing connected opens the Settings list, where Instagram and
+        // email both are (A-241); a lost Gmail goes straight to email.
+        href={reconnectEmail ? "/settings#integrations" : "/settings"}
         // Outline, not black: Send is the one black thing on Today (A-080).
         className="shrink-0 rounded-full border px-3.5 py-1.5 text-sm font-medium"
         style={{ borderColor: "var(--line-strong)", backgroundColor: "var(--card)", color: "var(--ink)" }}
       >
-        {reconnectEmail ? "Reconnect Gmail" : "Connect an inbox"}
+        {reconnectEmail ? "Reconnect Gmail" : "Connect Instagram or email"}
       </Link>
     </div>
   );

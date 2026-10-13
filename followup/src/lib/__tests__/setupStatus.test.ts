@@ -11,7 +11,7 @@ import { join } from "node:path";
 
 vi.mock("@/lib/db", () => ({
   prisma: {
-    business: { findUnique: vi.fn() },
+    business: { findUnique: vi.fn(), count: vi.fn() },
     lead: { findFirst: vi.fn() },
   },
 }));
@@ -35,6 +35,7 @@ beforeEach(() => {
   gmailStatus.mockResolvedValue({ connected: true, email: "owner@example.com" });
   outlookStatus.mockResolvedValue({ connected: false });
   p.lead.findFirst.mockResolvedValue({ id: "lead1" }); // a "Website form" lead exists
+  p.business.count.mockResolvedValue(0); // no Instagram account
 });
 
 describe("getIncompleteSetupSteps", () => {
@@ -53,6 +54,24 @@ describe("getIncompleteSetupSteps", () => {
     gmailStatus.mockResolvedValue({ connected: false });
     const steps = await getIncompleteSetupSteps("biz1");
     expect(steps.map((s) => s.id)).toContain("gmail");
+  });
+
+  // A-241: setup starts with Instagram or Gmail. An owner on Instagram DMs
+  // alone has nothing missing, and an owner with neither is told both ways in.
+  it("counts a connected Instagram account as connected", async () => {
+    gmailStatus.mockResolvedValue({ connected: false });
+    p.business.count.mockResolvedValue(1);
+    const steps = await getIncompleteSetupSteps("biz1");
+    expect(steps.map((s) => s.id)).not.toContain("gmail");
+    // Connected means an id AND a token (sendChannels.ts), asked of the database.
+    expect(p.business.count).toHaveBeenCalledWith({ where: { id: "biz1", instagramUserId: { not: null }, instagramAccessToken: { not: null } } });
+  });
+
+  it("names Instagram and email when nothing is connected", async () => {
+    gmailStatus.mockResolvedValue({ connected: false });
+    const [step] = (await getIncompleteSetupSteps("biz1")).filter((s) => s.id === "gmail");
+    expect(step.title).toBe("Connect Instagram or your email");
+    expect(step.ctaHref).toBe("/settings");
   });
 
   it("flags phone when no Twilio number is on file — only while carrier channels are offered", async () => {

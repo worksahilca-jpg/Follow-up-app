@@ -1146,6 +1146,9 @@ function SettingsPageInner() {
         <div className="mt-4">
           <WhatsAppConfig />
         </div>
+        {/* What the "is this a customer?" check set aside from these three
+            apps, with the way back (A-234). Shows only once there is one. */}
+        {visible("whatsapp") && <FilteredEmails channels="chats" />}
       </section>
 
       {/* Pause all sending (A-041), on its own page since A-080: the list

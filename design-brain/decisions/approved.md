@@ -3983,3 +3983,17 @@ other leads too that it captured wrong, you gotta make it accurate"*.
   Instagram has no "following since" date, so FollowUp never claims one. These are hints for the judge, not rules: a
   realtor follows clients back too.
 
+
+## A-240 — "Filtered out" on the Instagram, Facebook, WhatsApp page ^A-240
+
+**Approved:** 2026-10-12, founder (*"Build it"*), after seeing it drawn on the real app, phone and desktop.
+- **Why:** the list of what FollowUp set aside lived only under Email, shown only when Gmail or Outlook was
+  connected. An owner who connected only Instagram, Messenger or WhatsApp could never see, or bring back, a chat that
+  was set aside by mistake, and the re-check (A-239) now looks at chats more often.
+- **Where:** at the bottom of Settings → Instagram, Facebook, WhatsApp, under its own "Filtered out" line. Each row:
+  who, which app, the reason in one sentence, the date ("Oct 12, 9:20 PM"), and an outlined "This is a customer"
+  button. Tapped, it brings the chat back as a customer with every kept message, and FollowUp never judges them
+  again; the row then says "Now a customer" and links to them.
+- **Only when there is something:** the chat apps' list appears once a chat has been set aside, so owners who use
+  none of those apps see no empty box.
+- **Email keeps its own list,** now for emails only. Both lists say "This is a customer" (was "This was a lead").

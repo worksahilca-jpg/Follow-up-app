@@ -12432,3 +12432,19 @@ Same 4 tests, re-run by the founder on the live site:
   adding something to a post, photo, reel or story is about the post (PR #499).
 - **Weak, said plainly:** runs vary by a case or two. One clean run is not proof; the "0 customers set aside" and
   "0 made up / invented" lines are the ones to keep watching.
+
+## 2026-10-12 — "Filtered out" for owners who only use Instagram, Messenger or WhatsApp (A-240)
+
+Found while checking what testers would meet: the set-aside list was under Email, shown only with Gmail or Outlook
+connected. Drawn on the real app (local build, made-up chats, phone 390 and desktop), approved, built.
+- **Chosen:** one list per page, for that page's apps. **Not chosen:** a separate "Filtered out" page in Settings for
+  every app; Settings is meant to hold about eight pages, and the owner who wonders about an Instagram chat opens the
+  Instagram page.
+- **Checked end to end locally:** "This is a customer" on an Instagram row made the customer, brought back both kept
+  messages, marked them never to be judged again, and removed the row.
+- **Design review, honestly:**
+  - On a phone the list sits below the long WhatsApp box, so the owner has to scroll for it.
+  - The page has no connected-or-not state, so the list hides when empty. An owner can't tell "nothing set aside"
+    from "not looking".
+  - The rows still use the older 12px-radius box and 13px text from the Email list. That is consistent with it, but
+    smaller than the 15–16px body the app uses elsewhere.

@@ -12448,3 +12448,29 @@ connected. Drawn on the real app (local build, made-up chats, phone 390 and desk
     from "not looking".
   - The rows still use the older 12px-radius box and 13px text from the Email list. That is consistent with it, but
     smaller than the 15–16px body the app uses elsewhere.
+
+## 2026-10-13 — Setup starts with Instagram or Gmail (A-241)
+
+Found in a walkthrough as a new realtor tester: step 1 was "Connect your Gmail" with no other way in, while every new
+customer in the last 48 hours came by DM. Drawn on the real app (phone, before and after), approved, built.
+- **Step 1:** "Where do customers write to you?", two rows (Instagram, Gmail) that go straight to each sign-in, the
+  three promises that hold for both, no black button. Outlook stays the quiet link. Without Instagram sign-in set
+  up (local, or a deployment without the Meta app) only the Gmail row shows.
+- **After Instagram connects:** setup resumes on step 2 with "Instagram connected" in the header, and step 2 says
+  messages go from "your own Instagram" (it said Gmail for everyone).
+- **Step 3, Instagram only:** Instagram reads DMs from the moment it connects, not old ones (instagramPoll.ts), so
+  "No one is waiting" would be a guess. It says "Ready for new messages. FollowUp reads DMs from now on, not old
+  ones." The loading line drops "Reading the last 90 days". Not in the drawing; worded to stay true.
+- **Today and Settings:** Instagram counts as connected. Today's empty state says "FollowUp is watching your
+  Instagram DMs" with the handle; with nothing connected it says Instagram or email, and the button and the setup
+  step open the Settings list, where both are. The can't-send notice and the Settings banner say the same.
+- **Words:** "becomes a lead" is gone from the Instagram, Messenger and WhatsApp setup text. The approved line said
+  "becomes a customer"; it is written "Customers who message … show up in FollowUp, and friends and family stay
+  out", because "anyone who messages becomes a customer" is not true since the customer check (A-234, A-240).
+- **Design review, honestly:**
+  - With nothing connected, Today shows two black buttons for the same thing ("Connect Instagram or email" in the
+    empty box and "Connect one" in the setup strip under it). That double was there before ("Connect an inbox"
+    twice); it should become one.
+  - Today's practice button still says "send yourself a practice email" to an owner who only uses Instagram.
+  - The Settings banner says "Connect Instagram or your email" but opens the Email page; Instagram is one row below.
+  - Step 1 on a computer is the phone layout centred, with a large empty band above the footer line. Same as before.

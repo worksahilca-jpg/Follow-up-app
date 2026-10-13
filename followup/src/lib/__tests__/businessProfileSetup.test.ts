@@ -25,7 +25,7 @@ const { businessFindUnique, leadFindFirst } = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/db", () => ({
-  prisma: { business: { findUnique: businessFindUnique }, lead: { findFirst: leadFindFirst } },
+  prisma: { business: { findUnique: businessFindUnique, count: vi.fn(async () => 0) }, lead: { findFirst: leadFindFirst } },
 }));
 vi.mock("@/lib/integrations/gmail", () => ({ getGmailStatus: vi.fn(async () => ({ connected: true })) }));
 vi.mock("@/lib/integrations/outlook", () => ({ getOutlookStatus: vi.fn(async () => ({ connected: false })) }));

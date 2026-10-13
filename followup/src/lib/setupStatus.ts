@@ -65,7 +65,7 @@ export function isDismissibleSetupStep(id: string): id is SetupStepId {
 }
 
 export async function getIncompleteSetupSteps(businessId: string): Promise<SetupStep[]> {
-  const [business, gmail, outlook, hasWidgetLead] = await Promise.all([
+  const [business, gmail, outlook, hasWidgetLead, instagramCount] = await Promise.all([
     prisma.business.findUnique({
       where: { id: businessId },
       // `tier` was missing, which is the whole of the billing bug below.
@@ -81,6 +81,9 @@ export async function getIncompleteSetupSteps(businessId: string): Promise<Setup
     getGmailStatus(businessId),
     getOutlookStatus(businessId),
     prisma.lead.findFirst({ where: { businessId, source: { in: ["Website form", FORM_SPAM_CHECK_SOURCE] } }, select: { id: true } }),
+    // Instagram connected: an id and a token, as sendChannels.ts counts it.
+    // Counted, never selected, so the token never leaves the database.
+    prisma.business.count({ where: { id: businessId, instagramUserId: { not: null }, instagramAccessToken: { not: null } } }),
   ]);
 
   const steps: SetupStep[] = [];
@@ -139,14 +142,20 @@ export async function getIncompleteSetupSteps(businessId: string): Promise<Setup
   // has its own state (needsReconnect) and its own sentence on the dashboard,
   // because "you never connected one" and "the one you connected stopped
   // working" are different problems with different fixes.
+  //
+  // Instagram counts too (A-241, 2026-10-13): setup starts with Instagram or
+  // Gmail, and an owner whose customers write by DM was told "Connect your
+  // inbox" on Today with no inbox to connect. With nothing connected, the
+  // step names both ways in and opens the Settings list, where both are.
   const hasInbox = gmail.connected || outlook.connected;
-  if (!hasInbox && !gmail.needsReconnect) {
+  const hasInstagram = instagramCount > 0;
+  if (!hasInbox && !hasInstagram && !gmail.needsReconnect) {
     steps.push({
       id: "gmail",
-      title: "Connect your inbox",
-      description: "This is where most of your leads already are.",
-      ctaLabel: "Connect an inbox",
-      ctaHref: "/settings#integrations",
+      title: "Connect Instagram or your email",
+      description: "This is where your customers already write to you.",
+      ctaLabel: "Connect one",
+      ctaHref: "/settings",
       dismissible: false,
     });
   }

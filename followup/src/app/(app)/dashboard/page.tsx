@@ -95,7 +95,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     // component, so without it "Good morning" came from the server's
     // clock — UTC on Vercel — and greeted a Toronto owner at 8pm with it.
     ctx
-      ? prisma.business.findUnique({ where: { id: ctx.businessId }, select: { timezone: true, holdAllForApproval: true, sendingPausedAt: true, onlyAdminsSend: true } })
+      ? prisma.business.findUnique({ where: { id: ctx.businessId }, select: { timezone: true, holdAllForApproval: true, sendingPausedAt: true, onlyAdminsSend: true, instagramUsername: true } })
       : null,
     // Pause all sending, and Only admins send (A-041). The role is read here
     // rather than trusted from the session, which doesn't carry it.
@@ -125,7 +125,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const now = new Date();
   // Set aside with "Later" (A-046): off Today until it comes back.
   const setAside = approvals.filter((a) => a.laterUntil).length;
-  const [withBasisItems, handledToday, comingUp, workDone, filteredCount, anySendChannel] = await Promise.all([
+  const [withBasisItems, handledToday, comingUp, workDone, filteredCount, anySendChannel, instagramCount] = await Promise.all([
     withBasis(onTodayNow(approvals), timezone, ctx?.businessId),
     ctx ? countHandledToday(ctx.businessId, startOfLocalDay(now, timezone)) : 0,
     // Who FollowUp writes to next (A-046), leaving out anyone already waiting for your OK.
@@ -137,7 +137,13 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     // Nothing to send from: every rule still reads "on" in Settings, and none
     // of them can do anything (A-044). Only asked once there are people.
     ctx && leads.length > 0 ? hasAnySendChannel(ctx.businessId) : true,
+    // Instagram counts as connected (A-241): an id and a token, as
+    // sendChannels.ts counts it. Only the empty state asks.
+    ctx && leads.length === 0
+      ? prisma.business.count({ where: { id: ctx.businessId, instagramUserId: { not: null }, instagramAccessToken: { not: null } } })
+      : 0,
   ]);
+  const instagramConnected = instagramCount > 0;
   // Calls to make (A-103, the realtor team pilot): empty unless the business
   // has "Your team calls customers" on. Anyone already waiting for an OK is
   // left out: their text goes first (once each, A-046).
@@ -437,14 +443,30 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                   </Link>
                 </div>
               </>
+            ) : instagramConnected ? (
+              /* Instagram alone (A-241): an owner whose customers write by
+                 DM has no inbox, and was told nothing was being watched.
+                 DMs are read every few minutes (instagramPoll.ts, every 3
+                 in vercel.json), faster when Meta's webhook arrives. */
+              <>
+                <p className="text-lg leading-relaxed">
+                  {holdAll
+                    ? "FollowUp is watching your Instagram DMs. When a customer writes, FollowUp writes the reply and puts it in Today for you. Nothing goes out until you send it."
+                    : "FollowUp is watching your Instagram DMs. When a customer writes, it replies within a few minutes and shows you here."}
+                </p>
+                <p className="text-sm text-ink-soft mt-3 flex items-center justify-center gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: "var(--sage)" }} />
+                  Watching {business?.instagramUsername ? `@${business.instagramUsername}` : "your Instagram"}
+                </p>
+              </>
             ) : (
               <>
                 <p className="text-lg leading-relaxed">
-                  {/* No inbox means no pushActive to read, so this cannot
-                      promise the one-minute path — it says what every
-                      connected inbox gets at minimum instead. */}
-                  No inbox is connected yet, so FollowUp isn&apos;t watching for leads. Connect one and it starts
-                  answering the people who write in, within minutes.
+                  {/* Nothing connected means no pushActive to read, so this
+                      cannot promise the one-minute path — it says what every
+                      connection gets at minimum instead. */}
+                  Nothing is connected yet, so FollowUp isn&apos;t watching for customers. Connect Instagram or your
+                  email and it starts answering the people who write in, within minutes.
                 </p>
                 <div className="mt-4">
                   <Link
@@ -452,7 +474,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                     className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium"
                     style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
                   >
-                    Connect an inbox
+                    Connect Instagram or email
                     <ArrowRight className="h-3.5 w-3.5" />
                   </Link>
                 </div>

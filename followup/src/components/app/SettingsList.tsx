@@ -140,7 +140,7 @@ export default function SettingsList({
   if (social?.instagram.connected && !social.instagram.receiving)
     needs.push({ page: "social", title: "Instagram isn’t sending messages here", text: "It’s connected, but no DMs reach FollowUp, so replies and check-ins there are paused. Open it to fix the link." });
   if (social && !gmail.connected && !outlook.connected && !social.instagram.connected && !social.facebook.connected && !social.whatsapp)
-    needs.push({ page: "email", title: "Nothing is connected to send with", text: "FollowUp can take in customers, but it has no way to reply to them yet. Connect your email and it starts." });
+    needs.push({ page: "email", title: "Nothing is connected to send with", text: "FollowUp can take in customers, but it has no way to reply to them yet. Connect Instagram or your email and it starts." });
   if (trade === null)
     needs.push({ page: "business", title: "Tell FollowUp what you do", text: "It uses your line of work to tell real customers from everyone else, and to write replies that fit it. One tap." });
   const need = needs[0];

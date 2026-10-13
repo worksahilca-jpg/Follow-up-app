@@ -107,6 +107,14 @@ describe("checkDmDraftShape — what may go out as a DM", () => {
     expect(checkDmDraftShape(good, thread)).toEqual({ ok: true });
   });
 
+  // The accuracy test, 2026-10-13: the message named no day, the buttons did.
+  it("refuses day buttons the customer never named, and passes the same question with none", () => {
+    const helpThread = "Hi, we're pre-approved for 650k and want a 3 bed in Brampton. Can you help?";
+    const body = "Yes, I can help with a 3 bed in Brampton. What day works best for a showing?";
+    expect(checkDmDraftShape({ body, buttons: [{ title: "Saturday", exit: false }, { title: "Weekday", exit: false }] }, helpThread)).toEqual({ ok: false, rule: "calendar" });
+    expect(checkDmDraftShape({ body, buttons: [] }, helpThread)).toEqual({ ok: true });
+  });
+
   it("refuses two questions", () => {
     expect(checkDmDraftShape({ ...good, body: "Is it a two-bed? And is this week ok?" }, thread)).toEqual({ ok: false, rule: "two_questions" });
   });
@@ -189,6 +197,15 @@ describe("the shared rules the prompt repeats", () => {
     expect(DM_SHAPE_RULES).toMatch(/20 characters or fewer/);
     expect(DM_SHAPE_RULES).toMatch(/Never a deadline/);
     expect(DM_SHAPE_RULES).toMatch(/are you interested/);
+  });
+
+  // The accuracy test, 2026-10-13: a showing question came with day
+  // buttons, which the calendar rule then refused. The prompt has to say
+  // the buttons follow that rule too, and the example button is not a time.
+  it("hold the buttons to the calendar rule, and never suggest a time as the example", () => {
+    expect(DM_SHAPE_RULES).toMatch(/Buttons follow the same rule as the message/);
+    expect(DM_SHAPE_RULES).toMatch(/provide no buttons/);
+    expect(DM_SHAPE_RULES).not.toMatch(/Morning/);
   });
 });
 

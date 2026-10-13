@@ -53,7 +53,14 @@ export const DM_SHAPE_RULES =
   "no sign-off, no subject line. Exactly one question, and it is the last sentence. The question must be " +
   "answerable in one word by someone walking, without looking at any buttons. Provide two or three button " +
   `titles, each ${QUICK_REPLY_TITLE_MAX_CHARS} characters or fewer, in the same language as the lead's last message, each one a plain ` +
-  "answer to that question (\"Morning\", not \"Choose morning\"). If the question is yes/no, the last button is an " +
+  "answer to that question (\"Buying\", not \"Choose buying\"). " +
+  // The accuracy test, 2026-10-13: "What day works best for a showing?"
+  // came with day buttons, which the calendar rule refuses (it reads the
+  // buttons with the message), so the draft was held for the owner. The
+  // body was told this on 2026-10-12; the buttons never were.
+  "Buttons follow the same rule as the message: never a day, date, time or weekday versus weekend the " +
+  "conversation didn't name. If the only natural answers are days or times, ask it as an open question and " +
+  "provide no buttons. If the question is yes/no, the last button is an " +
   "honest no (\"Not now\") and is marked as the exit. Never a button the owner would have to interpret. Never a " +
   "question whose answer would not change what the owner does next. Never a deadline, a \"last chance\", a slot " +
   "count, or any fact not in the conversation. Never \"sound good?\", \"make sense?\", \"let me know if you have " +

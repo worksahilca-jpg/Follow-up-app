@@ -12474,3 +12474,20 @@ customer in the last 48 hours came by DM. Drawn on the real app (phone, before a
   - Today's practice button still says "send yourself a practice email" to an owner who only uses Instagram.
   - The Settings banner says "Connect Instagram or your email" but opens the Email page; Instagram is one row below.
   - Step 1 on a computer is the phone layout centred, with a large empty band above the footer line. Same as before.
+
+## 2026-10-13 — Fourth accuracy run, on the live app after PR #501
+
+- **Emails:** 122 of 122. **Qualifying:** 192 of 192, 0 made up (the "want needs something specific" fix held).
+- **Instagram:** 36 of 37, 0 customers set aside. The same friend's Hinglish joke got through again; this time the
+  judge read it as asking to add something to the listing, which for a realtor can be a real seller's request.
+  **Left as it is, on purpose:** the check is built to let a doubtful chat in rather than lose a customer, a friend
+  let through is noise the owner sets aside in one tap, and the re-check (A-239) looks again at their next message.
+  Tightening the words further for one ambiguous joke risks setting aside real customers.
+- **Replies:** 12 of 14 (it was 14 of 14; runs vary by a case or two).
+  - "What day works best for a showing?" came with day buttons. The calendar rule refuses days the customer never
+    named, in the buttons too, so the draft would have been held for the owner. The DM rules now say the buttons
+    follow the same rule, and to ask an open question with no buttons when the only answers are days or times. The
+    example button is no longer "Morning".
+  - "How long have you been a realtor?" got "I'm with the realtor side here, and I'll confirm that for you." The owner
+    never describes themselves as a side or a role now, and how long the owner has done this work joins the plain
+    questions that get the answer blank (A-100): the owner fills it in once and FollowUp knows it after.

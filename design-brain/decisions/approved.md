@@ -4035,5 +4035,9 @@ confirms a time on its own.
 - **Who sends step 1:** with "reply for me" on, the time offer goes out by itself (A-236's simple steps). With it off,
   the owner OKs that message too, so two taps instead of one.
 - **When:** built in November with Stage 2 (A-236), not before.
+- **Change or cancel in the chat** (added 2026-10-13, founder: *"Yes, add it"*): when the customer asks to move or
+  cancel, FollowUp offers new free times and the owner confirms again on the same screen. Part of the November build.
+  Also considered from Appointwise and left until testers ask: labels in the CRM from what the customer said, and
+  "try it first" (the owner writes as a customer and sees the reply before turning on "reply for me").
 - Not chosen: FollowUp booking a time by itself (Appointwise's way). A calendar can be empty while the realtor is
   busy, so a person confirms every booking.

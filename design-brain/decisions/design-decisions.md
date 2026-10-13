@@ -12517,4 +12517,7 @@ offers times, the owner confirms, then it is booked.
 - **Already in the code:** booking hours, Google Calendar free/busy and calendar event creation (`lib/booking.ts`,
   `lib/integrations/gmail.ts`). Missing: offering times inside a DM, the "picked a time" buzz and confirm screen, and
   "Another time".
+- **Then asked** which other Appointwise features fit. Three did: change or cancel in the chat (added to November,
+  *"Yes, add it"*), CRM labels and "try it first" (both wait for testers). Already in FollowUp: replying in the
+  customer's language, follow-ups, qualifying questions. Not fitting: split tests, money dashboards, agency accounts.
 - **Next:** build in November with Stage 2.

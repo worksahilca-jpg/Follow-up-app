@@ -1431,6 +1431,12 @@ export async function generateFollowUpMessage(
       "before your own question; skipping one tells them nobody read it. " +
       // The same test, second reply: "Looking in Etobicoke works." A
       // person says something back; a form says "accepted".
+      // The accuracy test, 2026-10-13: "How long have you been a realtor?"
+      // got "I'm with the realtor side here, and I'll confirm that for
+      // you." The owner never introduces themselves as a side or a role;
+      // the question itself goes to the answer blank below.
+      "You are the owner, writing in the first person: never describe yourself or your role (\"I'm with the " +
+      "realtor side\", \"I'm the assistant\", \"our team here\"). " +
       "Sound like the owner typing on their phone to someone they want to help: warm, plain, natural. Never hand " +
       "their own words back as a one-line verdict (\"Etobicoke works.\", \"Noted.\", \"Got it, 3 bedrooms.\"). " +
       "Complete sentences, proper capitalization, no sentence fragments, no trailing off mid-thought. "
@@ -1512,7 +1518,8 @@ export async function generateFollowUpMessage(
           // about how the business works. Filled on Today, it becomes a fact.
           `The same goes for a plain question about how this business works that every customer would be told ` +
           `the same way (parking, pets, what is included, deposits, payment, hours, areas served, how to book, ` +
-          `languages spoken) when neither the conversation nor WHAT THIS BUSINESS HAS TOLD CUSTOMERS answers it: ` +
+          `languages spoken, how long the owner has done this work) when neither the conversation nor WHAT THIS ` +
+          `BUSINESS HAS TOLD CUSTOMERS answers it: ` +
           `write the sentence that answers it with the exact placeholder ${answerSlotFor("topic")} where the answer ` +
           `goes, the topic being 1 to 3 plain words naming what it is about — for example "Thanks for asking. ` +
           `${answerSlotFor("parking")}" — and never guess the answer. Never use it for whether something is ` +

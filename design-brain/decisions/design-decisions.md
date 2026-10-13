@@ -12491,3 +12491,14 @@ customer in the last 48 hours came by DM. Drawn on the real app (phone, before a
   - "How long have you been a realtor?" got "I'm with the realtor side here, and I'll confirm that for you." The owner
     never describes themselves as a side or a role now, and how long the owner has done this work joins the plain
     questions that get the answer blank (A-100): the owner fills it in once and FollowUp knows it after.
+
+## 2026-10-13 — Today, "make it very simple" (in progress)
+
+Founder: *"we need to fix today's page too, we need to make it very simple"*, with a screenshot of his own Today: "24
+customers need you", then a big "Let FollowUp reply for you?" box, one customer as a closed row, "Going quiet", and
+"Since yesterday…". Found: the question hid all 24 customers (the card waits behind it, as A-218 was drawn), and the
+one row had no reply and no Send.
+- **Drawing 1 (rejected, R-113):** the customer first with the reply and Send, "Next · 3 more", the two questions as
+  small lines below, "Held for approval" and "Based on…" removed. His answer: *"this looks complex how do i get to know
+  what to do"*. The page still never said what to do.
+- **Next:** drawing 2 leads with a plain instruction and one action.

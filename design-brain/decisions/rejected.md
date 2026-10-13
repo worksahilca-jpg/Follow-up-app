@@ -1459,3 +1459,18 @@ let them in and judge again when they say more (A-239).
 **Fixed (PR #497):** the line now says an emoji "proves nothing either way" and tells the judge never to decide from
 it. Three buyer cases joined the Instagram accuracy test: 😍 then "Is this one still available?", 🔥🔥 then "how much
 is this one", and 😍 then "Bhai ye ghar kitne ka hai?".
+
+## R-113 — Today as a reply card with labels and several quiet actions ^R-113
+
+**Rejected:** 2026-10-13, founder, on the drawing of a "simpler Today" (customer first, the green "YOUR REPLY, READY"
+box, Send · Edit · Later, then "Don't send · Already spoke", a "Next · 3 more" row, and the reply-for-you question as
+one line below). He said: *"this looks complex how do i get to know what to do"*.
+**What failed:** the screen shows parts (a label, a box, five actions, a row) but never says what to do. An owner
+opening it for the first time can't tell that the green box is a reply waiting for them, or which of five words is
+the one to press. Moving things around without saying the task in words still left him guessing.
+**Principle:** Today tells the owner what to do, in a plain sentence, before showing anything to act on ("Omar asked
+about condos. Read the reply FollowUp wrote, then press Send."). One main action, one way to change it, everything
+else out of sight. Labels like "YOUR REPLY, READY", and actions like "Later", "Don't send" and "Already spoke" side by
+side, read as a tool for experts, not a to-do.
+**Do not propose again:** rearranging the same card and its five actions, or a quieter version of it, as the answer to
+"simple". **Would need to change:** nothing; the task sentence and one action come first, whatever the look.

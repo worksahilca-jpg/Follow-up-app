@@ -1,4 +1,4 @@
-import type { CrmClient, CrmPerson } from "./types";
+import { CRM_TIMEOUT_MS, type CrmClient, type CrmPerson } from "./types";
 import { readWhen } from "./dates";
 
 /**
@@ -55,7 +55,7 @@ function mapPerson(p: Record<string, unknown>): CrmPerson | null {
 export const followUpBossClient: CrmClient = {
   async testConnection(apiKey) {
     try {
-      const res = await fetch(`${BASE}/me`, { headers: { Authorization: authHeader(apiKey) } });
+      const res = await fetch(`${BASE}/me`, { headers: { Authorization: authHeader(apiKey) }, signal: AbortSignal.timeout(CRM_TIMEOUT_MS) });
       if (!res.ok) return { ok: false, message: res.status === 401 ? "That API key was rejected." : `Follow Up Boss returned ${res.status}.` };
       const data = await res.json().catch(() => ({}));
       const label = typeof data?.account?.name === "string" ? data.account.name : undefined;
@@ -68,7 +68,7 @@ export const followUpBossClient: CrmClient = {
   async fetchPage(apiKey, cursor) {
     const offset = cursor ? Number(cursor) : 0;
     const url = `${BASE}/people?limit=${PAGE_SIZE}&offset=${offset}&sort=-created`;
-    const res = await fetch(url, { headers: { Authorization: authHeader(apiKey) } });
+    const res = await fetch(url, { headers: { Authorization: authHeader(apiKey) }, signal: AbortSignal.timeout(CRM_TIMEOUT_MS) });
     if (!res.ok) throw new Error(`Follow Up Boss returned ${res.status} fetching people.`);
     const data = await res.json().catch(() => ({}));
     const rows: Array<Record<string, unknown>> = Array.isArray(data?.people) ? data.people : [];
@@ -84,6 +84,7 @@ export const followUpBossClient: CrmClient = {
         method: "POST",
         headers: { Authorization: authHeader(apiKey), "Content-Type": "application/json" },
         body: JSON.stringify({ personId: Number(externalId), subject: "FollowUp", body: text }),
+        signal: AbortSignal.timeout(CRM_TIMEOUT_MS),
       });
       if (!res.ok) return { ok: false, message: `Follow Up Boss returned ${res.status}.` };
       return { ok: true };
@@ -99,7 +100,10 @@ export const followUpBossClient: CrmClient = {
   // It may include FollowUp's own notes; oneBoss.ts allows for that.
   async lastContactedAt(apiKey, externalId) {
     try {
-      const res = await fetch(`${BASE}/people/${encodeURIComponent(externalId)}`, { headers: { Authorization: authHeader(apiKey) } });
+      const res = await fetch(`${BASE}/people/${encodeURIComponent(externalId)}`, {
+        headers: { Authorization: authHeader(apiKey) },
+        signal: AbortSignal.timeout(CRM_TIMEOUT_MS),
+      });
       if (!res.ok) return { known: false, at: null };
       const data = (await res.json().catch(() => null)) as Record<string, unknown> | null;
       if (!data || !("lastActivity" in data)) return { known: false, at: null };

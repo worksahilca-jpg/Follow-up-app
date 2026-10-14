@@ -1,3 +1,6 @@
+/** Every call to a CRM gives up after this long, so a CRM that hangs never holds up a send or the cron. */
+export const CRM_TIMEOUT_MS = 15_000;
+
 /** One person, normalized from whichever CRM sent it. */
 export interface CrmPerson {
   externalId: string;

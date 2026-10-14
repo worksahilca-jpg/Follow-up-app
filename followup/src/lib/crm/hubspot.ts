@@ -1,4 +1,4 @@
-import type { CrmClient, CrmPerson } from "./types";
+import { CRM_TIMEOUT_MS, type CrmClient, type CrmPerson } from "./types";
 import { readWhen } from "./dates";
 
 /**
@@ -29,7 +29,7 @@ function mapContact(c: { id: string; properties: Record<string, string | null> }
 export const hubspotClient: CrmClient = {
   async testConnection(token) {
     try {
-      const res = await fetch(`${BASE}/crm/v3/objects/contacts?limit=1`, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(`${BASE}/crm/v3/objects/contacts?limit=1`, { headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(CRM_TIMEOUT_MS) });
       if (!res.ok) return { ok: false, message: res.status === 401 ? "That access token was rejected." : `HubSpot returned ${res.status}.` };
       return { ok: true };
     } catch (err) {
@@ -53,6 +53,7 @@ export const hubspotClient: CrmClient = {
       method: "POST",
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       body: JSON.stringify(body),
+      signal: AbortSignal.timeout(CRM_TIMEOUT_MS),
     });
     if (!res.ok) throw new Error(`HubSpot returned ${res.status} fetching contacts.`);
     const data = await res.json().catch(() => ({}));
@@ -72,6 +73,7 @@ export const hubspotClient: CrmClient = {
           // 202 is HubSpot's own documented Note→Contact association type id.
           associations: [{ to: { id: externalId }, types: [{ associationCategory: "HUBSPOT_DEFINED", associationTypeId: 202 }] }],
         }),
+        signal: AbortSignal.timeout(CRM_TIMEOUT_MS),
       });
       if (!res.ok) return { ok: false, message: `HubSpot returned ${res.status}.` };
       return { ok: true };
@@ -87,6 +89,7 @@ export const hubspotClient: CrmClient = {
     try {
       const res = await fetch(`${BASE}/crm/v3/objects/contacts/${encodeURIComponent(externalId)}?properties=notes_last_contacted`, {
         headers: { Authorization: `Bearer ${token}` },
+        signal: AbortSignal.timeout(CRM_TIMEOUT_MS),
       });
       if (!res.ok) return { known: false, at: null };
       const data = (await res.json().catch(() => null)) as { properties?: Record<string, unknown> } | null;

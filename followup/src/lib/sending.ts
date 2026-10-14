@@ -1179,7 +1179,7 @@ export async function sendFollowUpToLead(
   // Push a note to the CRM this lead came from — best-effort, never lets
   // a CRM hiccup fail a send that already succeeded. See src/lib/crmSync.ts.
   if (lead.crmProvider && lead.crmId && isCrmProvider(lead.crmProvider)) {
-    void pushCrmNote(lead.businessId, lead.crmProvider, lead.crmId, `FollowUp sent:\n\n${body}`);
+    void pushCrmNote({ id: lead.id, businessId: lead.businessId, crmProvider: lead.crmProvider, crmId: lead.crmId }, `FollowUp sent:\n\n${body}`);
   }
 
   // AI audit trail (task #67): every message this app sent with nobody

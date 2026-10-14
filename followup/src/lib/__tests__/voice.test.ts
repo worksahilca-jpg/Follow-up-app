@@ -42,6 +42,9 @@ type Row = {
   sentAt: Date;
   leadId: string;
   source?: string | null;
+  // The lead's language as last read (Lead.language / languageScript).
+  language?: string;
+  script?: string;
 };
 
 function message(row: Row) {
@@ -49,7 +52,10 @@ function message(row: Row) {
     id: row.id,
     body: row.body,
     sentAt: row.sentAt,
-    conversation: { leadId: row.leadId },
+    conversation: {
+      leadId: row.leadId,
+      ...(row.language ? { lead: { language: row.language, languageScript: row.script ?? null } } : {}),
+    },
   };
 }
 
@@ -326,5 +332,60 @@ describe("getVoiceSamples — Write like me (past Gmail replies)", () => {
     // Two from "same" and one from "other" come first; the third from
     // "same" is only used because nothing else is left.
     expect(samples.slice(0, 3)).toEqual([PAST + " 1", PAST + " 2", PAST + " 4"]);
+  });
+});
+
+// Founder, 2026-10-14: "it should be learning from all those replies too,
+// in every language". An owner writes to a Punjabi customer differently
+// from an English one; the samples for a draft follow the draft's language.
+describe("getVoiceSamples — the owner's replies in the customer's language come first", () => {
+  const day = (d: number) => new Date(2026, 9, d, 12);
+  const EN = (i: number) => `Had a look at the listing you sent, ${i}. Parking is one spot underground and the fees cover heat.`;
+  const PA_LATN = (i: number) => `Haan ji, ghar ${i} hale available hai. Tusi Saturday nu dekhna chaunde ho ya Sunday nu?`;
+  const PA_GURU = (i: number) => `ਹਾਂ ਜੀ, ਘਰ ${i} ਹਾਲੇ ਵੀ ਉਪਲਬਧ ਹੈ। ਤੁਸੀਂ ਇਸ ਹਫ਼ਤੇ ਕਦੋਂ ਦੇਖਣਾ ਚਾਹੋਗੇ, ਦੱਸ ਦਿਓ ਜੀ?`;
+
+  function mixedAccount(): Row[] {
+    const rows: Row[] = [];
+    // Newest first: six English replies, then the owner's older Punjabi ones.
+    for (let i = 0; i < 6; i++) rows.push({ id: `en${i}`, body: EN(i), sentAt: day(20 - i), leadId: `en-lead${i}`, language: "en", script: "Latn" });
+    for (let i = 0; i < 2; i++) rows.push({ id: `pg${i}`, body: PA_GURU(i), sentAt: day(12 - i), leadId: `pg-lead${i}`, language: "pa", script: "Guru" });
+    for (let i = 0; i < 3; i++) rows.push({ id: `pl${i}`, body: PA_LATN(i), sentAt: day(8 - i), leadId: `pl-lead${i}`, language: "pa", script: "Latn" });
+    return rows;
+  }
+
+  it("with no language to prefer, keeps the order it always had: newest first", async () => {
+    servePages(mixedAccount());
+    expect(await getVoiceSamples("biz1")).toEqual([0, 1, 2, 3, 4].map(EN));
+  });
+
+  it("puts the same language and script first, then the same language, then the rest", async () => {
+    servePages(mixedAccount());
+    const samples = await getVoiceSamples("biz1", { language: "pa", script: "Latn" });
+    expect(samples).toEqual([PA_LATN(0), PA_LATN(1), PA_LATN(2), PA_GURU(0), PA_GURU(1)]);
+  });
+
+  it("fills with the owner's other replies rather than return too few", async () => {
+    servePages(mixedAccount());
+    const samples = await getVoiceSamples("biz1", { language: "pa", script: "Guru" });
+    expect(samples).toEqual([PA_GURU(0), PA_GURU(1), PA_LATN(0), PA_LATN(1), PA_LATN(2)]);
+    const spanish = await getVoiceSamples("biz1", { language: "es", script: "Latn" });
+    expect(spanish).toEqual([0, 1, 2, 3, 4].map(EN));
+  });
+
+  it("walks further back for the customer's language than it would for any language", async () => {
+    const rows: Row[] = [];
+    for (let i = 0; i < 250; i++) rows.push({ id: `en${i}`, body: `${EN(i)} Thread ${i}.`, sentAt: new Date(Date.UTC(2026, 9, 20, 0, 0, 0) - i * 60_000), leadId: `en-lead${i}`, language: "en", script: "Latn" });
+    rows.push({ id: "pa-old", body: PA_LATN(9), sentAt: new Date(Date.UTC(2026, 8, 1)), leadId: "pa-lead", language: "pa", script: "Latn" });
+    servePages(rows);
+    expect((await getVoiceSamples("biz1", { language: "pa", script: "Latn" }))[0]).toBe(PA_LATN(9));
+    // The plain call stops at the first page: enough samples, any language.
+    p.message.findMany.mockClear();
+    await getVoiceSamples("biz1");
+    expect(p.message.findMany).toHaveBeenCalledTimes(1);
+  });
+
+  it("reads each sent reply's customer language from the database", async () => {
+    await getVoiceSamples("biz1", { language: "pa", script: "Latn" });
+    expect(p.message.findMany.mock.calls[0][0].select.conversation.select.lead).toEqual({ select: { language: true, languageScript: true } });
   });
 });

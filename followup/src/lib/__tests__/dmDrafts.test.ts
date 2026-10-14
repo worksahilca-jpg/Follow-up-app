@@ -197,6 +197,8 @@ describe("the shared rules the prompt repeats", () => {
     expect(DM_SHAPE_RULES).toMatch(/20 characters or fewer/);
     expect(DM_SHAPE_RULES).toMatch(/Never a deadline/);
     expect(DM_SHAPE_RULES).toMatch(/are you interested/);
+    // A-247 rule 8: after a no, a warm close and no question.
+    expect(DM_SHAPE_RULES).toMatch(/already\s+have someone, write only a short, warm close .* with no question and no buttons/);
   });
 
   // The accuracy test, 2026-10-13: a showing question came with day

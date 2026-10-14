@@ -47,6 +47,26 @@ describe("no-invention drafting", () => {
     expect(system).toMatch(/same language as the lead/);
   });
 
+  // Founder, 2026-10-14 (A-247): "make the replies more humanistic, it
+  // should not sound like AI". The eight rules from the trust research.
+  it("writes like a trusted person: a reader's question, no self-praise, feelings only theirs, no pressure, a warm close after a no", async () => {
+    create.mockResolvedValue({
+      choices: [{ message: { content: JSON.stringify({ subject: "Your roof question", body: "I will confirm the roof details for you." }) } }],
+    });
+    await generateFollowUpMessage({ name: "Young Son", conversation });
+    const system = create.mock.calls[0][0].messages[0].content as string;
+    expect(system).toMatch(/the kind of question only someone who read it could\s+ask/);
+    expect(system).toMatch(/never by praising\s+yourself or the business/);
+    expect(system).toMatch(/acknowledge it once, in plain words/);
+    expect(system).toMatch(/Never name a feeling they did\s+not express/);
+    expect(system).toMatch(/Offer, never push/);
+    expect(system).toMatch(/End with at most one easy next step they can take or ignore/);
+    expect(system).toMatch(/A message whose only point is that you are still there is never acceptable/);
+    expect(system).toMatch(/write only a short,\s+warm close/);
+    expect(system).toContain("great question");
+    expect(system).toMatch(/No emoji, and never more than one exclamation mark/);
+  });
+
   // Task #63 finding: a live test lead whose thread mixed Spanish, Hindi,
   // Punjabi, and a final English message got a well-formed but generic
   // "professional" English reply — correct on language (matches the most
@@ -430,6 +450,18 @@ describe("instant reply (generateInstantReply)", () => {
     expect(system).toContain("at your earliest convenience");
     expect(system).toMatch(/banned outright/);
     expect(system).toMatch(/Use no em dashes/);
+  });
+
+  // A-247: the trust rules hold for the first reply too, except the "one
+  // next step", which the first reply is not allowed to take.
+  it("carries the trust rules, but not the next step a follow-up offers", async () => {
+    create.mockResolvedValue({ choices: [{ message: { content: JSON.stringify({ reply: "Got it, I'll confirm the price for you." }) } }] });
+    await generateInstantReply({ leadFirstName: "Young", ownerFirstName: "Manoj", inboundText: "How old is the roof?" });
+    const system = create.mock.calls[0][0].messages[0].content as string;
+    expect(system).toMatch(/never by praising yourself or the business/);
+    expect(system).toMatch(/Offer, never push/);
+    expect(system).toMatch(/Never name a feeling they did not express/);
+    expect(system).not.toMatch(/End with at most one easy next step/);
   });
 
   it("instructs the model to match the lead's language, tone, and romanized script the same way the follow-up drafter does", async () => {

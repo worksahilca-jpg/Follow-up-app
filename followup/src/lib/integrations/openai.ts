@@ -177,13 +177,55 @@ const HUMAN_VOICE_NOTICE =
   "base\", \"following up on my previous email\", \"as per my last email\", \"at your earliest convenience\", " +
   "\"please don't hesitate to\", \"feel free to reach out\", \"rest assured\", \"we value your business\", \"thank " +
   "you for your inquiry\", \"thank you for reaching out\", \"I appreciate you taking the time\", \"looking forward " +
-  "to hearing from you\". Do not open by thanking them for writing. Do not apologise unless there is a specific " +
+  "to hearing from you\", \"great question\", \"absolutely!\", \"I'd be happy to help\", \"I'd love to help\", " +
+  "\"we're thrilled\", \"your dream home\", \"your journey\". Do not open by thanking them for writing or by " +
+  "praising their question. No emoji, and never more than one exclamation mark. Do not apologise unless there is a specific " +
   "thing to apologise for, and then say it once, plainly, with no grovelling. Use no em dashes (\"—\") anywhere " +
   "in the message you write, however they are used in these instructions: someone typing quickly uses commas and " +
   "full stops. Contractions are normal (\"I'll\", \"we're\", \"it's\"); the " +
   "fully-spelled-out formal register is not. Never write a sentence whose only job is to be polite, and never use " +
   "three clauses where one does the work — a shorter message reads as more human and more respectful of their " +
-  "time, not less considerate.";
+  "time, not less considerate. Let sentence length vary the way a person's does, a short one next to a longer " +
+  "one; a run of evenly built sentences reads as generated.";
+
+// The reply playbook (founder, 2026-10-14, A-247: "make the replies more
+// humanistic, it should not sound like AI"), from the trust research in
+// reports/Realtor replies that win trust.md. Rules 1, 3 and 5 (answer
+// first, write as the owner, never guess) were already in the prompts;
+// these are the rest that hold in every trade. Each is a finding, not a
+// taste: people like those who ask a real follow-up question (Harvard,
+// 2017), self-promotion annoys more than the promoter thinks (APS),
+// acknowledging what someone said reads as receptive, and controlling or
+// scarcity wording causes pushback, more in text than face to face.
+// salesPressure in src/lib/replyTone.ts backs the last rule with a check,
+// because a prompt is a request and a check is a guarantee.
+const TRUST_NOTICE =
+  " Show you read their message: any question you ask connects to something they actually wrote (a detail, a " +
+  "date, a person or a place they mentioned), the kind of question only someone who read it could ask, never a " +
+  "generic one any form could send. A question from WHAT TO LEARN NEXT counts: ask it in a way that ties it to " +
+  "what they said. Show you know the work by being useful, never by praising " +
+  "yourself or the business: no rankings, awards or titles (\"top agent\", \"#1\", \"award-winning\", \"the " +
+  "best\", \"expert\"), no claims about results for other customers and no testimonials, unless WHAT THIS " +
+  "BUSINESS HAS TOLD CUSTOMERS states it word for word. If they named a feeling (tired, worried, stressed, " +
+  "excited, fed up), acknowledge it once, in plain words, before anything else. Never name a feeling they did " +
+  "not express, never tell them how they feel, never flatter them, and never claim something in common with " +
+  "them (\"as a parent myself\"). Offer, never push: no urgency, scarcity or deadline the conversation or the " +
+  "business's facts do not state (\"won't last\", \"act fast\", \"lots of interest\", \"don't miss out\", " +
+  "\"limited time\"), no commands (\"you need to\"), no tests of seriousness or guilt (\"if you're serious\", " +
+  "\"have you given up\"), and no promised outcome (\"you'll win\", \"top dollar\", \"guaranteed\").";
+
+// Rule 8 of the same playbook. A follow-up that carries nothing is the
+// top complaint about business texts (49% in the 2023 SMS survey), and
+// the stock "just checking in" is already banned above; this says what
+// to write instead. Follow-ups only: the instant reply answers a message
+// that just arrived, so it is never "nothing new".
+const FOLLOW_UP_STEP_NOTICE =
+  " End with at most one easy next step they can take or ignore, offered, never demanded. If they have gone " +
+  "quiet since the business last wrote, the message must still carry something for them: one useful thing " +
+  "from the conversation or WHAT THIS BUSINESS HAS TOLD CUSTOMERS, or one easy question about what they told " +
+  "you. A message whose only point is that you are still there is never acceptable. If their most recent " +
+  "message says no, that they're not interested, or that they've gone with someone else, write only a short, " +
+  "warm close instead: thank them and wish them well, with no question, no offer and no attempt to change their mind.";
 
 const SCORE_JSON_SCHEMA = {
   name: "lead_score",
@@ -1614,6 +1656,8 @@ export async function generateFollowUpMessage(
           "answer the question at all: say only that you will make sure someone comes back to them personally, " +
           "and leave it there." +
           HUMAN_VOICE_NOTICE +
+          TRUST_NOTICE +
+          FOLLOW_UP_STEP_NOTICE +
           UNTRUSTED_CONVERSATION_NOTICE +
           VOICE_AGENT_TRUST_NOTICE +
           (playbookFor(lead.trade) ? "\n\n" + playbookFor(lead.trade) : "") +
@@ -1916,6 +1960,7 @@ export async function generateInstantReply(input: {
           "THAT language, not English — e.g. \"Hi, maine tamari jaherat joi hati\" is romanized Gujarati " +
           "despite the English \"Hi\", and the reply to it must be in romanized Gujarati too, never English." +
           HUMAN_VOICE_NOTICE +
+          TRUST_NOTICE +
           UNTRUSTED_CONVERSATION_NOTICE,
       },
       {

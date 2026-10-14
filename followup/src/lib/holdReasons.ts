@@ -179,6 +179,10 @@ export const UNGROUNDED_DRAFT_REASONS: Record<string, string> = {
   // business (inventedSpecific in src/lib/dmDrafts.ts). Usually the lead's
   // own, which is exactly the one that must not go out in the owner's name.
   link: "the draft has a link or email address you didn't write — check it before it goes",
+  // Founder, 2026-10-14 (A-247): never a salesperson, never a bot
+  // (salesPressure in src/lib/replyTone.ts).
+  pressure: "the draft rushes them, and nothing you've written gives a reason to — check it before it goes",
+  brag: "the draft praises you with a ranking or title you haven't told FollowUp — check it before it goes",
 };
 
 /** Exactly what ApprovalQueue.tsx builds, so tests can check the seam. */

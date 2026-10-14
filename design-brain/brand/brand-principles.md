@@ -323,6 +323,10 @@ showing or weekend showing?"*
 - **Don't jump ahead of the customer.** No showing before there's a home to show. Ask what they're looking for first.
 - **Sound like the owner on their phone**, warm and plain. Never hand their words back as a verdict ("Etobicoke works.",
   "Noted.").
+- **Never sound like AI, and learn the owner's own way of writing in every language** (founder, 2026-10-14: *"make the
+  replies more humanistic. It should not sound like AI that is talking ... it should be learning from all those
+  replies too, in every language"*). An owner writes to a Punjabi customer differently from an English one, so the
+  style FollowUp copies comes from their replies in that customer's language first. The eight reply rules are A-247.
 
 ## FollowUp picks up customers, not every message (2026-10-11)
 

@@ -20,8 +20,31 @@ const fee: ReplyCase = {
 };
 const draftOf = (body: string, shapeFailed: string | null = null) =>
   vi.fn(async () => ({ body, quickReplies: { question: "reply", buttons: [] }, shapeFailed })) as never;
-const gradeOf = (g: Partial<{ answered: boolean[]; invented: boolean; inventedWhat: string; sameLanguage: boolean }>) =>
-  vi.fn(async () => ({ answered: [true, true], invented: false, inventedWhat: "", sameLanguage: true, ...g }));
+type G = {
+  answered: boolean[];
+  invented: boolean;
+  inventedWhat: string;
+  sameLanguage: boolean;
+  usedDetail: boolean;
+  robotic: boolean;
+  pushy: boolean;
+  bragged: boolean;
+  acknowledgedFeeling: boolean;
+  inventedFeeling: boolean;
+};
+const GOOD: G = {
+  answered: [true, true],
+  invented: false,
+  inventedWhat: "",
+  sameLanguage: true,
+  usedDetail: true,
+  robotic: false,
+  pushy: false,
+  bragged: false,
+  acknowledgedFeeling: true,
+  inventedFeeling: false,
+};
+const gradeOf = (g: Partial<G>) => vi.fn(async () => ({ ...GOOD, ...g }));
 
 describe("REPLY_CASES", () => {
   it("covers several questions at once, facts given and not, and other languages", () => {
@@ -31,6 +54,12 @@ describe("REPLY_CASES", () => {
     expect(REPLY_CASES.some((c) => !c.facts?.length)).toBe(true);
     expect(REPLY_CASES.some((c) => c.lines.some(([, t]) => /[¿ñá]|bhai|kitna/i.test(t)))).toBe(true);
     expect(new Set(REPLY_CASES.map((c) => c.name)).size).toBe(REPLY_CASES.length);
+  });
+
+  it("has a case for each trust rule a reply can break without inventing a fact (A-247)", () => {
+    expect(REPLY_CASES.some((c) => c.feeling)).toBe(true);
+    expect(REPLY_CASES.some((c) => c.closing)).toBe(true);
+    expect(REPLY_CASES.some((c) => c.asks.length === 0 && !c.closing)).toBe(true);
   });
 
   it("every fact a case insists on is in that case's facts", () => {
@@ -52,10 +81,43 @@ describe("runReplyEval scoring", () => {
       noWait
     );
     expect(r.passed).toBe(0);
-    expect(r.problems).toEqual({ shape: 1, unanswered: 1, invented: 1, language: 1, missing_fact: 1, echo: 1 });
+    expect(r.problems).toEqual({ shape: 1, unanswered: 1, invented: 1, language: 1, missing_fact: 1, echo: 1, pressure: 0, brag: 0, feeling: 0, generic: 0 });
     expect(r.failures[0]).toMatchObject({ name: "fee", reply: "Noted. I'm free Thursday, what area are you in?" });
     expect(r.failures[0].detail).toMatch(/not answered: fee/);
     expect(r.failures[0].detail).toMatch(/invented: free Thursday/);
+  });
+
+  it("counts the trust rules: pushed, bragged, a missed or made-up feeling, generic (A-247)", async () => {
+    const tired: ReplyCase = { name: "tired", lines: [["in", "We've lost 3 offers and we're exhausted. Can you help?"]], asks: ["help"], feeling: true };
+    const r = await runReplyEval(
+      // The code check names the pressure; the reader names the brag.
+      draftOf("I'm a top producer and you need to act fast, so are you free to talk today?"),
+      gradeOf({ answered: [true], acknowledgedFeeling: false, usedDetail: false, bragged: true }),
+      [tired],
+      noWait
+    );
+    expect(r.problems).toMatchObject({ pressure: 1, brag: 1, feeling: 1, generic: 1 });
+    expect(r.failures[0].detail).toMatch(/missed the feeling they named/);
+
+    // The reader's verdicts count even when the code check finds nothing.
+    const quiet = await runReplyEval(draftOf("Sorry to hear it, I'd love to hear how they went. Call or text?"), gradeOf({ answered: [true], pushy: true, inventedFeeling: true, robotic: true }), [tired], noWait);
+    expect(quiet.problems).toMatchObject({ pressure: 1, brag: 0, feeling: 1, generic: 1 });
+    expect(quiet.failures[0].detail).toMatch(/made up a feeling/);
+  });
+
+  it("after a no, any question is asking again", async () => {
+    const no: ReplyCase = { name: "no", lines: [["in", "We already signed with another agent."]], asks: [], closing: true };
+    const asked = await runReplyEval(draftOf("Thanks for letting me know. Would you keep me in mind for next time?"), gradeOf({ answered: [] }), [no], noWait);
+    expect(asked.problems.pressure).toBe(1);
+    expect(asked.failures[0].detail).toMatch(/asked again after a no/);
+    const closed = await runReplyEval(draftOf("Thanks for letting me know. Good luck with the search, I hope it goes smoothly."), gradeOf({ answered: [] }), [no], noWait);
+    expect(closed.passed).toBe(1);
+  });
+
+  it("a ranking the owner stored is theirs to state", async () => {
+    const award: ReplyCase = { ...fee, facts: [{ label: "Award", value: "Award-winning agent, TRREB 2025" }], mustInclude: [] };
+    const r = await runReplyEval(draftOf("I'm an award-winning agent and I'll confirm my fee and my week for you. What area are you selling in?"), gradeOf({}), [award], noWait);
+    expect(r.problems.brag).toBe(0);
   });
 
   it("a missing grade for a question counts as not answered", async () => {

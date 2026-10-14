@@ -72,7 +72,14 @@ const NON_WRITTEN_CHANNELS = ["voice-agent", "call"];
 // This catches that copy.
 const SAME_SEND_WINDOW_MS = 5 * 60 * 1000;
 
-type Candidate = { leadId: string; body: string };
+// `language` and `script` are the lead's, as last read (Lead.language,
+// src/lib/leadLanguage.ts): the language the owner was writing in when
+// they sent this. Absent for a lead never read and for "Write like me"
+// history, which has no lead.
+type Candidate = { leadId: string; body: string; language?: string | null; script?: string | null };
+
+/** The language a draft is about to be written in; only these two fields matter here. */
+export type VoiceLanguage = { language?: string | null; script?: string | null } | null | undefined;
 
 /**
  * Everything this business has sent THROUGH FollowUp, keyed by lead.
@@ -151,6 +158,34 @@ function pickSamples(candidates: Candidate[]): string[] {
   return picked;
 }
 
+const sameLanguage = (c: Candidate, prefer: VoiceLanguage) =>
+  !!prefer?.language && c.language?.toLowerCase() === prefer.language.toLowerCase();
+
+/**
+ * pickSamples, a tier at a time: the draft's language and script, then its
+ * language in another script (romanized Punjabi and Gurmukhi are the same
+ * language written very differently), then the rest. Each tier keeps the
+ * one-person cap and newest-first order within itself.
+ */
+function pickPreferred(candidates: Candidate[], prefer: VoiceLanguage): string[] {
+  if (!prefer?.language) return pickSamples(candidates);
+  const script = prefer.script?.toLowerCase();
+  const tiers: Candidate[][] = [[], [], []];
+  for (const c of candidates) {
+    if (!sameLanguage(c, prefer)) tiers[2].push(c);
+    else if (script && c.script?.toLowerCase() === script) tiers[0].push(c);
+    else tiers[1].push(c);
+  }
+  const picked: string[] = [];
+  for (const tier of tiers) {
+    for (const body of pickSamples(tier)) {
+      if (picked.length >= MAX_SAMPLES) return picked;
+      picked.push(body);
+    }
+  }
+  return picked;
+}
+
 /**
  * Up to MAX_SAMPLES of this business's own recent, human-written outbound
  * messages. An empty array is a real and expected answer — a brand-new
@@ -159,8 +194,17 @@ function pickSamples(candidates: Candidate[]): string[] {
  * generateFollowUpMessage, whose no-samples branch states its own default
  * style. Never return a placeholder or a machine-written sample to avoid
  * returning nothing: no samples beats misleading samples.
+ *
+ * `prefer` is the language the draft will be written in (founder,
+ * 2026-10-14: "it should be learning from all those replies too, in every
+ * language"). An owner who writes to one customer in Punjabi and another
+ * in English writes differently in each, so their replies in the same
+ * language and script come first, then the same language in another
+ * script, then everything else to fill. Never only the same language: a
+ * new Punjabi customer still gets the owner's English habits rather than
+ * none. Absent keeps the order it always had.
  */
-export async function getVoiceSamples(businessId: string): Promise<string[]> {
+export async function getVoiceSamples(businessId: string, prefer?: VoiceLanguage): Promise<string[]> {
   const candidates: Candidate[] = [];
   let cursor: string | undefined;
   let scanned = 0;
@@ -180,7 +224,12 @@ export async function getVoiceSamples(businessId: string): Promise<string[]> {
         },
       },
       orderBy: [{ sentAt: "desc" }, { id: "desc" }],
-      select: { id: true, body: true, sentAt: true, conversation: { select: { leadId: true } } },
+      select: {
+        id: true,
+        body: true,
+        sentAt: true,
+        conversation: { select: { leadId: true, lead: { select: { language: true, languageScript: true } } } },
+      },
       take: SCAN_PAGE_SIZE,
       ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
     });
@@ -196,14 +245,19 @@ export async function getVoiceSamples(businessId: string): Promise<string[]> {
       if (isMachineSent(machineSends, leadId, m.body, m.sentAt)) continue;
       const body = m.body.trim();
       if (body.length < MIN_SAMPLE_LENGTH) continue;
-      candidates.push({ leadId, body: body.slice(0, MAX_SAMPLE_LENGTH) });
+      const lead = m.conversation.lead;
+      candidates.push({ leadId, body: body.slice(0, MAX_SAMPLE_LENGTH), language: lead?.language, script: lead?.languageScript });
     }
 
-    if (pickSamples(candidates).length >= MAX_SAMPLES) break;
+    // With a language to prefer, keep walking back until there are enough
+    // in it, or MAX_SCANNED says stop: a Punjabi customer on a mostly
+    // English account is exactly when the older Punjabi replies matter.
+    if (pickSamples(candidates.filter((c) => sameLanguage(c, prefer))).length >= MAX_SAMPLES) break;
+    if (!prefer?.language && pickSamples(candidates).length >= MAX_SAMPLES) break;
     if (page.length < SCAN_PAGE_SIZE) break;
   }
 
-  if (pickSamples(candidates).length >= MAX_SAMPLES) return pickSamples(candidates);
+  if (pickPreferred(candidates, prefer).length >= MAX_SAMPLES) return pickPreferred(candidates, prefer);
 
   // "Write like me" (src/lib/pastReplies.ts): replies this owner sent from
   // Gmail over the last year, kept de-identified with their yes. Only this
@@ -216,10 +270,10 @@ export async function getVoiceSamples(businessId: string): Promise<string[]> {
     take: 60,
     select: { recipientKey: true, body: true },
   });
-  return pickSamples([
+  return pickPreferred([
     ...candidates,
     // Keyed apart from any lead id, so the one-person cap still spreads
     // the samples across different people.
     ...past.map((p) => ({ leadId: `past:${p.recipientKey}`, body: p.body.slice(0, MAX_SAMPLE_LENGTH) })),
-  ]);
+  ], prefer);
 }

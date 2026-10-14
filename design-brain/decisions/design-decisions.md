@@ -12623,3 +12623,22 @@ stays everyone. The A-243 build (commit 8c31f76, branch only, never merged) is n
   for the booking build.
 - **Trust research done:** `reports/Realtor replies that win trust.md` (repo root, not committed). Eight reply rules and
   a "FollowUp must never" list, all evidence-labelled. Not yet turned into product changes.
+
+## 2026-10-14 — The eight reply rules drawn, approved and built (A-247)
+
+- **Drawn** as five reply cards inside the real customer page (rules 2, 4, 6, 7, 8; rules 1, 3 and 5 were already in
+  the reply writer). Approved with two additions from the founder: more human, and learning from the owner's replies
+  in every language.
+- **Built:** the rules go into every reply the writer drafts (email, Instagram, Messenger) and the first instant reply
+  (without the "next step", which the first reply never takes). The realtor playbook adds: no rankings, no past
+  clients or sold prices, and a warm close for someone who already has an agent. A code check catches pushing and
+  bragging in English before an unreviewed send; the prompt covers every language.
+- **Learning per language:** the owner's style samples now come from their replies in the customer's language and
+  script first. Gap found while checking: before this, a Punjabi customer's reply copied whatever the owner wrote
+  most recently, usually English.
+- **Tested:** the reply accuracy test has six new chats (the research's own examples) and four new checks: pushed,
+  praised the business, missed or made up a feeling, could go to anyone. The founder runs it from /admin; it needs the
+  live AI key, so it has not been run on the real model yet.
+- **Weak spots, honestly:** the pushing/bragging check is English phrases only; in other languages only the prompt
+  stands guard. "Learning per language" uses the language the customer last wrote in, not the language each old reply
+  was written in, which is right almost always but not always.

@@ -35,7 +35,16 @@ const PLAYBOOKS: Record<string, string> = {
     "when it is listed, otherwise follow the price rule above. Offer a showing only once they have named a " +
     "specific home or listing. While they are still describing what they want (an area, a type or size of home), " +
     "ask about what they are looking for instead, the way an agent learns what to send them. " +
-    "Use the plain words agents use (listing, showing, offer, closing), and never sales pressure. ",
+    "Use the plain words agents use (listing, showing, offer, closing), and never sales pressure. " +
+    // 2026-10-14, the trust research (A-247): Ontario's advertising rules
+    // need a verifiable basis for any ranking or award, the Code of Ethics
+    // sends another agent's client through that agent, and a past client's
+    // name or sold price is theirs, not the agent's, to share.
+    "Never call the agent a top, #1, award-winning or best agent, and never name a past client, a sold address " +
+    "or a sale price, unless WHAT THIS BUSINESS HAS TOLD CUSTOMERS states it. Local knowledge shows in something " +
+    "they can use about the area or kind of home they named, never in a claim about the agent. If they say they " +
+    "already have an agent or have chosen someone else, write only a short, warm close: thank them and wish them " +
+    "well, with no question, no offer and no attempt to win them back. ",
 };
 
 /** The playbook for this trade, or "" when there is none. */

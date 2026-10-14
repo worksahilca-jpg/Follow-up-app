@@ -219,6 +219,9 @@ model Business {
   // instead of only receiving them. See src/lib/outboundWebhook.ts and
   // src/app/api/webhooks/outbound/route.ts. Null until they set one.
   outboundWebhookUrl String?
+  // Signs every event sent to outboundWebhookUrl (src/lib/webhookSignature.ts, A-252), so the
+  // receiving app can check it came from FollowUp. Made when a URL is saved; encrypted at rest.
+  outboundWebhookSecret String?
 
   // Twilio SMS/voice capture — a separate secret from webhookSecret above
   // on purpose: regenerating the generic Zapier-facing URL shouldn't

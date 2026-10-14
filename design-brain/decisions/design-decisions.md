@@ -12502,6 +12502,10 @@ one row had no reply and no Send.
   small lines below, "Held for approval" and "Based on…" removed. His answer: *"this looks complex how do i get to know
   what to do"*. The page still never said what to do.
 - **Next:** drawing 2 leads with a plain instruction and one action.
+- **Drawing 2 (approved, A-243, 2026-10-14):** the headline says how many are waiting and who to start with; the card
+  says in words who asked, what FollowUp wrote, and what to press; Send to Omar, Change it, Skip for now; "After Omar:
+  Ivy, Aman and 2 more." His answer: *"Yes, build this"*. Being built; it goes out with the next merge, after the
+  Vercel bill is paid.
 
 ## 2026-10-13 — Booking in the chat, with the owner confirming (A-242)
 

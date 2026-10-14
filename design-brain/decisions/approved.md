@@ -4041,3 +4041,20 @@ confirms a time on its own.
   "try it first" (the owner writes as a customer and sees the reply before turning on "reply for me").
 - Not chosen: FollowUp booking a time by itself (Appointwise's way). A calendar can be empty while the realtor is
   busy, so a person confirms every booking.
+
+## A-243 — Today says what to do: one customer, one sentence, one black button ^A-243
+
+**Approved:** 2026-10-14, founder (*"Yes, build this"*), on drawing 2 of "make Today very simple", made inside the real
+app, phone and computer. Drawing 1 was rejected as R-113 (*"how do i get to know what to do"*).
+- **Headline:** the number, then "customers are waiting for you" (was "need you"), then one plain line: "Reply to them
+  one at a time. Start with Omar."
+- **The customer, in words:** "**Omar Haddad** asked you by email, 2 days ago:" (A-230's reason, when there is one,
+  leads the line: "Wants to book · …"), then their message in a grey bubble, the biggest text on the screen.
+- **The reply, in words:** "FollowUp wrote this reply for you:" over the reply on the green wash. No mono label.
+- **What to do, in words:** "If it looks right, press **Send**. To change a word, press **Change it**."
+- **Actions:** one black "Send to Omar", an outlined "Change it", a quiet "Skip for now". Under the reply, not in a bar
+  at the foot of the phone, so the sentence and the buttons sit together (supersedes A-222 for Today's card).
+- **Who's next:** one plain line, "After Omar: Ivy, Aman and 2 more." No "Next" row, no "Older" row.
+- **Out of sight while anyone waits:** the "Let FollowUp reply for you?" question (asked once, now when nobody is
+  waiting, so it never blocks a customer), the phone-buzz box, the "Since yesterday" line, "Based on…", and the rarer
+  ways out ("Don't send", "Already spoke", "Later"), which stay on the customer's own page.

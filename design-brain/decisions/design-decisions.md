@@ -12760,3 +12760,34 @@ names).
 - **Built (A-249):** the morning email now also names testers who sent replies before and have stalled: replies
   waiting for their OK 2+ days (their own Today queue), or Gmail or Outlook disconnected. Until now a tester who sent
   one reply and stopped never appeared in it. It goes out as its own PR after #510, one merge a day.
+
+## 2026-10-14 — Today, simpler (A-250)
+
+The founder asked for Today to be simple and quick to learn, and for an audit of what is broken. Today was walked in a
+local build with made-up customers, phone and computer. What was in the way:
+- The same number four times: "4 replies to send", "0 of 4 done today", "4 to go", "3 more after Omar".
+- Big zeros ("0 calls to make", "0 booked for today") for owners who use neither.
+- The reply was one tap away: "Do this first" said what the customer wanted, then "Reply to Omar" opened it in place.
+- Not a problem, checked: Omar shown twice was two made-up customers with the same name in the local data.
+
+Drawn with the change injected into the real page and approved the same day (A-250): one box says the day once, and
+the first reply is open on arrival. R-114 still holds (the whole day stays on the page), R-113 too (one plain sentence,
+one black button), and it is not subtraction alone (R-001): the reply itself is the layer added.
+**Weak spots named at approval:** on a phone the open reply pushes the list below the first screen; with replies only,
+"4 things" and "4 replies" still say the same number twice.
+
+**Built and checked the same day**, in a local build with made-up customers:
+- Phone (390×844) and computer (1280): one box, "4 things to do today · 0 done", then "4 replies to send. No calls or
+  bookings today."; the first reply open with "Send to Omar" in the first screen; no count beside "Still to do today".
+  Nothing scrolls sideways at 360, 375, 768, 1024 or 1440.
+- A quiet day has no box (checked on a business with nothing waiting).
+- "Skip for now" fades the next customer's reply in; a row in "Still to do today" brings that customer up and scrolls
+  to them. The box doesn't change, because nothing was done.
+- The first reply doesn't fade in when Today opens (A-048: motion only for a change); the server sends it already
+  visible.
+- Two small departures from the drawing: the box has 16px padding like Tomorrow and the rows (the drawing had 18px),
+  and an empty bar stays empty (the drawing showed a green dot at its start, which reads as something done).
+**Weak, measured:** on a small phone (375×667) "Send to Omar" is one scroll down; from 360×780 up it is in the first
+screen. "All done for today" (something done, nothing left) was not seen in a browser: no local business is in that
+state, so only the code and its tests cover it.
+

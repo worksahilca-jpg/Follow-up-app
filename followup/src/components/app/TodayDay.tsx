@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CalendarDays, Check, ChevronRight, MessageCircle, Phone } from "lucide-react";
+import { dayParts } from "@/lib/todayWords";
 
 /**
  * The parts of Today that make it the owner's whole day (A-244, after R-114:
@@ -70,56 +71,48 @@ export function DayRow({ row, first, onClick }: { row: TodayRow; first?: boolean
   );
 }
 
-/** "5 replies to send · 2 calls to make · 1 booked today", then "3 of 11 done today" with its bar. */
+/**
+ * How big the day is, said once (A-250, 2026-10-14; was three number tiles
+ * and a progress line, A-244): "4 things to do today", how many are done with
+ * the bar, then one line saying what they are (dayParts). Nothing at all on a
+ * day with nothing to do and nothing done: the "all caught up" card says it.
+ */
 export function DayNumbers({
   replies,
   calls,
   booked,
+  nextBookedAt,
   progress,
 }: {
   replies: number;
   calls: number;
   booked: number;
+  /** The next booked call's time today, "3:00 PM", or null when none is still to come. */
+  nextBookedAt: string | null;
   progress: { done: number; total: number; toGo: number; pct: number } | null;
 }) {
-  const cells: [number, string][] = [
-    [replies, replies === 1 ? "reply to send" : "replies to send"],
-    [calls, calls === 1 ? "call to make" : "calls to make"],
-    [booked, "booked for today"],
-  ];
+  if (!progress) return null;
+  const title = progress.toGo === 0 ? "All done for today" : `${progress.toGo} ${progress.toGo === 1 ? "thing" : "things"} to do today`;
+  const parts = progress.toGo > 0 ? dayParts({ replies, calls, booked, nextBookedAt }) : null;
   return (
     <section aria-label="Your day in numbers">
-      <div className={`${DAY_BOX} grid grid-cols-3`}>
-        {cells.map(([n, label], i) => (
-          <div key={label} className={`px-2 pb-3 pt-3.5 text-center ${i > 0 ? "border-l border-line" : ""}`}>
-            <div className="title-serif text-[32px] leading-none tabular-nums">{n}</div>
-            <div className="mt-1.5 text-[13px] leading-tight text-ink-soft">{label}</div>
-          </div>
-        ))}
-      </div>
-      {progress && (
-        <div className="mt-3.5 px-1">
-          <div className="flex justify-between text-[14px] text-ink-soft tabular-nums">
-            <span>
-              <b className="font-semibold text-ink">
-                {progress.done} of {progress.total}
-              </b>{" "}
-              done today
-            </span>
-            <span>{progress.toGo === 0 ? "All done" : `${progress.toGo} to go`}</span>
-          </div>
-          <div
-            className="mt-2 h-[7px] overflow-hidden rounded-full bg-card-2"
-            role="progressbar"
-            aria-valuenow={progress.done}
-            aria-valuemin={0}
-            aria-valuemax={progress.total}
-            aria-label={`${progress.done} of ${progress.total} done today`}
-          >
-            <div className="h-full rounded-full" style={{ width: `${progress.pct}%`, background: "var(--sage)" }} />
-          </div>
+      <div className={`${DAY_BOX} p-4`}>
+        <div className="flex items-baseline justify-between gap-3">
+          <p className="text-[18px] font-semibold leading-snug tracking-[-0.01em]">{title}</p>
+          <p className="shrink-0 text-[14px] text-ink-soft tabular-nums">{progress.done} done</p>
         </div>
-      )}
+        <div
+          className="mt-2.5 h-[7px] overflow-hidden rounded-full bg-card-2"
+          role="progressbar"
+          aria-valuenow={progress.done}
+          aria-valuemin={0}
+          aria-valuemax={progress.total}
+          aria-label={`${progress.done} of ${progress.total} done today`}
+        >
+          <div className="h-full rounded-full" style={{ width: `${progress.pct}%`, background: "var(--sage)" }} />
+        </div>
+        {parts && <p className="mt-2.5 text-[14.5px] leading-snug text-ink-soft">{parts}</p>}
+      </div>
     </section>
   );
 }

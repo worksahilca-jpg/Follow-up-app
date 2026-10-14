@@ -12727,3 +12727,9 @@ themselves"), the /security page ("simple replies go by themselves"), and the pl
 now say what A-217 says: FollowUp sends the replies itself, and a price, a date or anything unsure waits for the
 owner. The launch plan's build item was renamed the same way. **For future sessions:** never "simple", "easy" or
 "routine" replies in anything an owner or a visitor reads.
+- **The next queued build turned out to be built already.** "FollowUp sends replies itself for testers who say yes"
+  was next on the launch plan. Testers are on the beta plan, which counts as active, so they get the one-time "Let
+  FollowUp reply for you?" question on Today (A-217, A-218) once they have sent 5 replies with most as FollowUp wrote
+  them. Production, read-only: 7 testers, 2 qualify (8 and 7.7 in 10 sent as written), 0 have answered, 0 send by
+  themselves. The question shows only when nobody is waiting (A-243), which may be why. Nothing new was drawn; the
+  plan item is ticked.

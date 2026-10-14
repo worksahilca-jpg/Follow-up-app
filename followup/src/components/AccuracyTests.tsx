@@ -86,7 +86,7 @@ const TESTS: Test[] = [
   {
     id: "replies",
     title: "Replies on Instagram and Messenger",
-    what: "14 made-up realtor DMs. Each reply must answer every question, invent nothing, and match their language.",
+    what: "20 made-up realtor DMs. Each reply must answer every question, invent nothing, match their language, and sound like a person who read it: no pushing, no bragging.",
     route: "/api/admin/reply-eval",
     read: (r) => {
       const p = (r.problems ?? {}) as Record<string, unknown>;
@@ -96,6 +96,10 @@ const TESTS: Test[] = [
         [num(p.shape), "broke the DM shape rules"],
         [num(p.missing_fact), "missed a fact you gave"],
         [num(p.echo), "opened with \"Noted\""],
+        [num(p.pressure), "pushed or rushed them"],
+        [num(p.brag), "praised you"],
+        [num(p.feeling), "missed or made up a feeling"],
+        [num(p.generic), "could go to anyone, or read like a bot"],
       ] as const;
       return {
         headline: `${num(r.passed)} of ${num(r.cases)} replies passed every check`,

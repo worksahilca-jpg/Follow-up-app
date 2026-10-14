@@ -48,7 +48,7 @@ import { leadLanguageOf } from "@/lib/leadLanguage";
 import { canSendOn, hasAnySendChannel } from "@/lib/sendChannels";
 import { mapWithConcurrency } from "@/lib/concurrency";
 import { flushHoldNotices, type HoldNotice } from "@/lib/holdNotices";
-import { getVoiceSamples } from "@/lib/voice";
+import { getVoiceSamples, type VoiceLanguage } from "@/lib/voice";
 import { recordAudit } from "@/lib/audit";
 import { isWithinSendWindow } from "@/lib/sendWindow";
 import { isTransientError } from "@/lib/transientError";
@@ -958,6 +958,7 @@ export async function runAutomationForBusiness(
   const freshFound = fresh ? await findFreshUnansweredLeads(businessId, options.freshLeadIds ?? [], skipThanks, holdAll) : null;
   if (freshFound && freshFound.leads.length === 0) return EMPTY_RESULT;
 
+  const voiceFor = voiceByLanguage(businessId);
   const [quietCandidates, deadCandidates, voiceSamples, unanswered] = await Promise.all([
     fresh
       ? Promise.resolve([])
@@ -1002,9 +1003,10 @@ export async function runAutomationForBusiness(
           include: { conversations: { include: { messages: { orderBy: { sentAt: "asc" } } } } },
         })
       : Promise.resolve([]),
-    // Same voice sample set for every lead in this business — fetched once
-    // up front rather than inside the per-lead loop below.
-    getVoiceSamples(businessId),
+    // The business's samples with no language preferred, fetched once up
+    // front; a lead whose language is known gets its own set, once per
+    // language per pass (voiceByLanguage below).
+    voiceFor(null),
     freshFound
       ? Promise.resolve(freshFound.leads)
       : unansweredEnabled
@@ -1388,13 +1390,13 @@ export async function runAutomationForBusiness(
           // loaded — so the day-3 follow-up uses the same usted/tú the
           // first reply did (src/lib/leadLanguage.ts).
           const { trade, facts } = await draftingContext(lead.businessId);
-          const dm = await draftDm(lead.name, conversation, voiceSamples, messageHint, undefined, leadLanguageOf(lead), facts, null, trade);
+          const dm = await draftDm(lead.name, conversation, await voiceFor(leadLanguageOf(lead)), messageHint, undefined, leadLanguageOf(lead), facts, null, trade);
           message = dm.body;
           subject = undefined;
           quickReplies = dm.quickReplies;
           dmShapeFailed = dm.shapeFailed;
         } else {
-          const draft = await generateFollowUpMessage({ name: lead.name, conversation, ...(await draftingContext(lead.businessId)) }, voiceSamples, messageHint, undefined, leadLanguageOf(lead));
+          const draft = await generateFollowUpMessage({ name: lead.name, conversation, ...(await draftingContext(lead.businessId)) }, await voiceFor(leadLanguageOf(lead)), messageHint, undefined, leadLanguageOf(lead));
           subject = draft.subject;
           // The same invariant the ack and the DM have always had, on the
           // one path that never had it: no price, date or figure the
@@ -2033,7 +2035,7 @@ export async function runAutomationForBusiness(
 
   // The day-2–7 handoff is about windows closing over days; the fresh pass
   // runs every minute and has no business re-scanning for it.
-  const handedOff = fresh ? 0 : await draftDmHandoffs(businessId, voiceSamples, tier);
+  const handedOff = fresh ? 0 : await draftDmHandoffs(businessId, voiceSamples, tier, voiceFor);
 
   const sent = outcomes.filter((o) => o.kind === "sent").length;
   const heldOutcomes = outcomes.filter((o): o is { kind: "held"; note: string } => o.kind === "held");
@@ -2064,6 +2066,26 @@ function hoursSinceLastInbound(conversation: Message[], channel: string | undefi
 export const DM_HANDOFF_QUESTION = "day2_7_owner";
 
 /**
+ * getVoiceSamples once per language for one business's pass: every lead in
+ * the same language and script shares one set, so a pass over fifty leads
+ * costs a query per language, not per lead (founder, 2026-10-14: learn
+ * from the owner's replies "in every language"). No language known is its
+ * own set: the order getVoiceSamples always had.
+ */
+function voiceByLanguage(businessId: string): (prefer: VoiceLanguage) => Promise<string[]> {
+  const sets = new Map<string, Promise<string[]>>();
+  return (prefer) => {
+    const key = prefer?.language ? `${prefer.language.toLowerCase()}|${prefer.script?.toLowerCase() ?? ""}` : "";
+    let set = sets.get(key);
+    if (!set) {
+      set = key ? getVoiceSamples(businessId, prefer) : getVoiceSamples(businessId);
+      sets.set(key, set);
+    }
+    return set;
+  };
+}
+
+/**
  * Days 2–7 on Instagram and Messenger: the one message only a person may
  * send (PRODUCT_DIRECTION, "DM-only", 2026-09-16).
  *
@@ -2084,7 +2106,13 @@ export const DM_HANDOFF_QUESTION = "day2_7_owner";
  * workflow (the workflow owns them), and for anyone past 7 days (Meta
  * refuses it, so there is nothing to draft).
  */
-export async function draftDmHandoffs(businessId: string, voiceSamples: string[], tier: "free" | "plus" | "pro"): Promise<number> {
+export async function draftDmHandoffs(
+  businessId: string,
+  voiceSamples: string[],
+  tier: "free" | "plus" | "pro",
+  // The owner's samples in this lead's language, when the caller has them.
+  voiceFor: (prefer: VoiceLanguage) => Promise<string[]> = async () => voiceSamples
+): Promise<number> {
   const H = 3_600_000;
   const now = Date.now();
   // Gathered, then flushed once — see the collector in
@@ -2147,7 +2175,7 @@ export async function draftDmHandoffs(businessId: string, voiceSamples: string[]
 
     try {
       const { trade, facts } = await draftingContext(lead.businessId);
-      const dm = await draftDm(lead.name, conversation, voiceSamples, undefined, "handoff", undefined, facts, null, trade);
+      const dm = await draftDm(lead.name, conversation, await voiceFor(leadLanguageOf(lead)), undefined, "handoff", undefined, facts, null, trade);
       await prisma.lead.update({
         where: { id: lead.id },
         data: {

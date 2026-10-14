@@ -20,6 +20,7 @@
 import { isNotAnAnswer } from "@/lib/notAnAnswer";
 import type { Message } from "@/lib/types";
 import { linkCovered, scanLinks, ungroundedCalendarWords, ungroundedSpecifics, unconfirmedClaim, type LinkToken } from "@/lib/grounding";
+import { salesPressure } from "@/lib/replyTone";
 import { DM_MAX_BUTTONS, QUICK_REPLY_TITLE_MAX_CHARS, type DmButton } from "@/lib/quickReplies";
 
 export const DM_CHANNELS: ReadonlySet<string> = new Set(["instagram", "messenger"]);
@@ -65,7 +66,12 @@ export const DM_SHAPE_RULES =
   "honest no (\"Not now\") and is marked as the exit. Never a button the owner would have to interpret. Never a " +
   "question whose answer would not change what the owner does next. Never a deadline, a \"last chance\", a slot " +
   "count, or any fact not in the conversation. Never \"sound good?\", \"make sense?\", \"let me know if you have " +
-  "any questions\", \"anything else I can help with?\", \"are you interested?\", \"just checking in\".";
+  "any questions\", \"anything else I can help with?\", \"are you interested?\", \"just checking in\". " +
+  // Trust research rule 8 (A-247): a "no" ends it. A question after it is
+  // one more try to change their mind, which is the pushing the founder
+  // ruled out. The shape check already takes a statement with no buttons.
+  "The one exception to the question: if their last message says no, not interested, or that they already " +
+  "have someone, write only a short, warm close (thank them, wish them well) with no question and no buttons.";
 
 const PRICE_RE = /precio|price|pricing|cost|cuánto|cuanto|quanto|combien|kimmat|kimat|keemat|\brate\b|quote|how much/i;
 const AVAILABILITY_RE = /disponib|availab|available|\bbook|appointment|cita|turno|\bslot|schedule|saturday|sunday|monday|tuesday|wednesday|thursday|friday|weekend|tomorrow|this week|\b(are|r) (you|u) free\b/i;
@@ -305,6 +311,11 @@ export function checkDmDraftShape(
   }
 
   if (BANNED_CLOSER_RE.test(body)) return fail("banned_closer");
+  // Pushing or bragging (src/lib/replyTone.ts, A-247). Grounded only by what
+  // the business itself wrote, which here includes its facts when the
+  // drafter passes them (src/lib/dmDrafting.ts).
+  const tone = salesPressure(body, { said: businessText ?? "" });
+  if (tone) return fail(tone);
   if (/https?:\/\//i.test(body) || /www\./i.test(body) || /\S+@\S+\.\S+/.test(body)) return fail("contact");
 
   // The chips are customer-facing words too: "Sat 10am" under a question
@@ -393,7 +404,11 @@ export function inventedSpecific(
   // words, so a booking id or a path doesn't read as an invented number.
   const source = ownerHint ? `${conversationText(conversation)}\n${ownerHint}` : conversationText(conversation);
   const sentBefore = conversation.some((m) => m.direction === "outbound" && !isAck(m));
-  return ungroundedSpecifics(rest, source, locale) ?? unconfirmedClaim(rest, businessText(conversation), { sentBefore });
+  return (
+    ungroundedSpecifics(rest, source, locale) ??
+    unconfirmedClaim(rest, businessText(conversation), { sentBefore }) ??
+    salesPressure(rest, { said: businessText(conversation), facts: ownerHint ?? "" })
+  );
 }
 
 /**

@@ -172,14 +172,19 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
   // the reply: a failure is "learned nothing this time".
   const template = templateFor(lead.business.industry);
   const customerJustWrote = newest.direction === "inbound";
+  // The owner's past replies in the language this one will be written in
+  // come first (src/lib/voice.ts), so the samples wait for the language
+  // read; it runs beside the score, which takes longer, so this costs no
+  // time. A read that finds nothing falls back to the language on file.
+  const detecting = detectLeadLanguage(latestInboundText(conversation) ?? "");
   const [scoreResult, voiceSamples, detected, extracted, booking] = await Promise.all([
     scoreLead({
       conversation,
       dealValue: lead.dealValue,
       lastContacted: (lead.lastContacted ?? lead.createdAt).toISOString(),
     }),
-    getVoiceSamples(lead.businessId),
-    detectLeadLanguage(latestInboundText(conversation) ?? ""),
+    detecting.then((d) => getVoiceSamples(lead.businessId, d ?? leadLanguageOf(lead))),
+    detecting,
     template && customerJustWrote
       ? extractQualificationFacts(conversation, template.criteria).catch((err) => {
           console.error(`Qualification read failed for lead ${lead.id}:`, err);

@@ -12610,3 +12610,35 @@ stays everyone. The A-243 build (commit 8c31f76, branch only, never merged) is n
   reader gets real dates for 3 and 6 months out, and three test answers that were debatable or wrong were corrected
   ("selling to buy" does give a reason; "the condo" / "this unit" may or may not say what kind of home). Next run should
   show 0 made up; it needs the founder to press Run again.
+
+## 2026-10-14 — A ChatGPT follow-up workflow reviewed; trust research done
+
+- **The founder shared a ChatGPT PDF** ("FollowUp Simple Flowcharts", 7 pages) as qualifying research. Read and checked:
+  it is a general software-company follow-up workflow (demos, trials, proposals), not a lead-qualifying funnel, and
+  marks most of itself "proposed rules". Its three sources (CRTC CASL guidance, HubSpot sequence unenrolment, Mailchimp
+  on machine opens) check out. Most of it FollowUp already does. Five ideas taken (see A-245's addition): four for the
+  follow-up plans, one for booking. Not taken: trial steps, open/click rules, its day 0/1/3/6/10 schedule.
+- **Explaining it to him:** a table of "already have / use it / not for us" worked where a list of five ideas didn't
+  (*"Can you simplify it, please, and then we'll decide?"*). When he asked why five became four: the fifth was kept,
+  for the booking build.
+- **Trust research done:** `reports/Realtor replies that win trust.md` (repo root, not committed). Eight reply rules and
+  a "FollowUp must never" list, all evidence-labelled. Not yet turned into product changes.
+
+## 2026-10-14 — The eight reply rules drawn, approved and built (A-247)
+
+- **Drawn** as five reply cards inside the real customer page (rules 2, 4, 6, 7, 8; rules 1, 3 and 5 were already in
+  the reply writer). Approved with two additions from the founder: more human, and learning from the owner's replies
+  in every language.
+- **Built:** the rules go into every reply the writer drafts (email, Instagram, Messenger) and the first instant reply
+  (without the "next step", which the first reply never takes). The realtor playbook adds: no rankings, no past
+  clients or sold prices, and a warm close for someone who already has an agent. A code check catches pushing and
+  bragging in English before an unreviewed send; the prompt covers every language.
+- **Learning per language:** the owner's style samples now come from their replies in the customer's language and
+  script first. Gap found while checking: before this, a Punjabi customer's reply copied whatever the owner wrote
+  most recently, usually English.
+- **Tested:** the reply accuracy test has six new chats (the research's own examples) and four new checks: pushed,
+  praised the business, missed or made up a feeling, could go to anyone. The founder runs it from /admin; it needs the
+  live AI key, so it has not been run on the real model yet.
+- **Weak spots, honestly:** the pushing/bragging check is English phrases only; in other languages only the prompt
+  stands guard. "Learning per language" uses the language the customer last wrote in, not the language each old reply
+  was written in, which is right almost always but not always.

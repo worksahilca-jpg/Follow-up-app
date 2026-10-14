@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { ungroundedCalendarWords, unconfirmedClaim } from "@/lib/grounding";
+import { salesPressure } from "@/lib/replyTone";
 import { generateInstantReply, assessAckRisk, localizeFixedText } from "@/lib/integrations/openai";
 import { composeFollowUpEmail, getSenderFirstName } from "@/lib/sender";
 import { sendFollowUpToLead } from "@/lib/sending";
@@ -226,6 +227,10 @@ export function checkAckShape(
   // from the business exists yet, hence the empty grounding text.
   const claim = unconfirmedClaim(trimmed, "");
   if (claim) return fail(claim);
+  // No pushing and no bragging in the first thing a stranger reads
+  // (src/lib/replyTone.ts, A-247). Nothing from the business grounds it yet.
+  const tone = salesPressure(trimmed);
+  if (tone) return fail(tone);
 
   if (/^\s*(hi|hello|hey|dear|hola|buenos|buenas|namaste|namaskar|bonjour|olá|ola|ciao|hallo|salut)\b/i.test(trimmed)) {
     return fail("greeting");

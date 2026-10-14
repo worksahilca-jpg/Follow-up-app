@@ -48,6 +48,16 @@ describe("the playbook", () => {
     expect(p).toMatch(/Offer a showing only once they have named a specific home or listing/);
   });
 
+  // The trust research (A-247): Ontario needs a verifiable basis for a
+  // ranking, and another agent's client is dealt with through that agent.
+  it("never brags, never names a past client, and lets an agent's client go with a warm close", () => {
+    const p = playbookFor("Real estate");
+    expect(p).toMatch(/Never call the agent a top, #1, award-winning or best agent/);
+    expect(p).toMatch(/never name a past client, a sold address or a sale price/);
+    expect(p).toMatch(/already have an agent .* short, warm close/);
+    expect(p).toMatch(/no attempt to win them back/);
+  });
+
   it("is nothing for a trade without one, or no trade at all", () => {
     expect(playbookFor("Legal")).toBe("");
     expect(playbookFor("Other")).toBe("");

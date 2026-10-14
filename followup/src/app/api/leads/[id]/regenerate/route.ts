@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { generateFollowUpMessage } from "@/lib/integrations/openai";
 import { composeFollowUpEmail, latestInboundText } from "@/lib/sender";
 import { getVoiceSamples } from "@/lib/voice";
+import { leadLanguageOf } from "@/lib/leadLanguage";
 import { tooManyRecentActions } from "@/lib/rateLimit";
 import type { Message } from "@/lib/types";
 import { dmChannelOf } from "@/lib/dmDrafts";
@@ -86,7 +87,8 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
   ).sort(byTranscriptOrder);
 
   try {
-    const voiceSamples = await getVoiceSamples(lead.businessId);
+    // The owner's past replies in this customer's language first (src/lib/voice.ts).
+    const voiceSamples = await getVoiceSamples(lead.businessId, leadLanguageOf(lead));
     // Same shape rule as scoreAndDraftForLead (src/lib/scoring.ts): a lead
     // who last wrote on Instagram or Messenger gets a DM with reply
     // buttons, everyone else the framed email.

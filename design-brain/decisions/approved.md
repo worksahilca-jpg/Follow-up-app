@@ -4100,6 +4100,15 @@ it's dead"*.
 - **Assisted** buzzes the owner for each message. **Automatic** sends it.
 - **Next:** draw the picker before building. Research behind the days:
   `followup/research/product/2026-09-09-followup-cadence-best-practices.md`.
+- **Added 2026-10-14** (founder, after reviewing a ChatGPT workflow PDF: *"Yes, add the 4"*):
+  - **6-month stop:** follow-ups stop 6 months after the customer's last message (Canada's anti-spam rule on implied
+    consent from an inquiry, CRTC guidance); a new message from them starts it again.
+  - **"Try me in March":** a date they give is kept; nothing is sent before it. No date: ask once when to check back.
+  - **One "close the loop" message** before a plan ends ("Should I keep sending you homes in Mississauga, or close
+    your file for now?").
+  - **A limit across everything FollowUp sends by itself:** at most 1 a day and 3 a week per customer.
+  - **The fifth idea, for booking (A-242, November):** a short recap the day after a viewing, and one offer to
+    reschedule a missed one, then pause.
 
 ## A-246 — Qualifying a realtor's customer: three short rounds, then Ready, Warm or Later ^A-246
 
@@ -4132,3 +4141,31 @@ and "two questions a message" are FollowUp's own.
   sentence, three facts, "FollowUp keeps in touch ... Nothing for you to do."); **Has an agent** ("FollowUp stopped
   following up", one quiet link "Keep following up anyway"); still finding out ("What FollowUp knows so far · 3 of 5",
   three facts, "Still to find out: ..."). Only Ready is coloured: it is the only one that needs the owner.
+
+## A-247 — Every reply follows eight trust rules, sounds human, and learns the owner's style per language ^A-247
+
+**Approved:** 2026-10-14, founder, on the drawing of the rules inside the real customer page: *"Yes, build this, but make
+the replies more humanistic. It should not sound like AI that is talking ... We're learning from their own replies
+too. Whatever they are editing, whatever is sent, it should be learning from all those replies too, in every language,
+right?"* The rules come from the trust research (`reports/Realtor replies that win trust.md`, each rule with its
+evidence and its strength).
+- **The eight rules:** (1) answer their question first, in their words; (2) ask one question only someone who read
+  the message could ask; (3) write as the owner, "I", plain words, no template tells; (4) show expertise by being
+  useful, never by praising yourself (no "top agent", "#1", "award-winning" unless the owner stored it); (5) if a
+  fact isn't stored, say you'll check; (6) name a feeling only after they named it; (7) offer one easy next step,
+  no pressure, real deadlines only; (8) follow up only with something new, and after a "no" or "I have an agent"
+  send a short warm close and stop.
+- **What the drawing showed and he approved:** five reply cards in the real app (Mark's August move and school, Aisha
+  asking about the Junction with the area from saved facts, a buyer who'd lost three offers and was "exhausted", a
+  weekend viewing answered with no pressure, a plan's last message that closes the loop), each with one plain note
+  under it saying which rule it follows and what FollowUp never does.
+- **"More humanistic":** more stock phrases banned ("great question", "I'd be happy to help", "your dream home"), no
+  emoji and at most one exclamation mark, sentence length that varies like a person's. The owner's own samples still
+  win on style where they differ (they may use emoji; FollowUp copies them).
+- **Learning:** the owner's typed replies and their edited drafts already teach the next drafts (founder,
+  2026-10-05, "learn from edits"). Now the samples come from the owner's replies **in the customer's language and script first**, then
+  the same language in another script, then the rest. Facts are learned from every reply in any language, as before.
+- **Checked by code, not just asked:** a reply that pushes ("won't last", "act now", "if you're serious") or brags
+  ("top agent", "award-winning") is rewritten once; if it still does, it waits for the owner with "Held because the
+  draft rushes them ..." or "... praises you with a ranking or title you haven't told FollowUp".
+

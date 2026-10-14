@@ -1,4 +1,5 @@
 import { draftDm } from "@/lib/dmDrafting";
+import { salesPressure } from "@/lib/replyTone";
 import { getClient, MODEL } from "@/lib/integrations/openaiClient";
 import { mapWithConcurrency } from "@/lib/concurrency";
 import { withRateLimitRetry, type RateLimitRetryOptions } from "@/lib/rateLimitRetry";
@@ -23,7 +24,11 @@ import type { Message } from "@/lib/types";
  *  - write in the customer's language (founder, 2026-09: "whatever language
  *    the lead will approach, we will reply in the same language");
  *  - never hand their words back as a one-line verdict ("Noted.", A-231);
- *  - pass the DM shape rules (short, one question, last).
+ *  - pass the DM shape rules (short, one question, last);
+ *  - read like a person who read their message, never a salesperson or a
+ *    bot (A-247, the trust research's eight rules): a detail of theirs, no
+ *    pressure, no self-praise, their feeling acknowledged when they named
+ *    one and never invented, and a "no" answered with a warm close.
  *
  * The shape and the verdict are checked by code. "Answered every
  * question", "invented nothing" and "same language" need reading, so a
@@ -44,6 +49,10 @@ export type ReplyCase = {
   facts?: FactLine[];
   /** Words the reply must contain because a fact gives them (e.g. "2.5%"). */
   mustInclude?: string[];
+  /** They named a feeling ("exhausted"): the reply must acknowledge it (rule 6). */
+  feeling?: boolean;
+  /** They said no or have an agent: a warm close, no question (rule 8). */
+  closing?: boolean;
 };
 
 const FACTS: FactLine[] = [
@@ -103,9 +112,52 @@ export const REPLY_CASES: ReplyCase[] = [
     facts: FACTS,
     mustInclude: ["2.5"],
   },
+  // The trust research's own examples (reports/Realtor replies that win
+  // trust.md, A-247), one per rule a model can break without inventing a fact.
+  {
+    name: "family move: picks up their detail",
+    lines: [["in", "We're moving from Ottawa in August. Need 3 beds near a good school for our 8 year old. Budget around 1.3."]],
+    asks: [],
+  },
+  {
+    name: "lost offers: acknowledges the feeling",
+    lines: [["in", "We've lost 3 offers in a row and honestly we're exhausted. Can you help?"]],
+    asks: ["whether the agent can help them"],
+    feeling: true,
+  },
+  { name: "plain search: invents no feeling", lines: [["in", "Looking for a 2 bed condo downtown."]], asks: [] },
+  {
+    name: "knows the area: useful, no bragging",
+    lines: [["in", "Thinking of buying in the Junction. Do you know the area?"]],
+    asks: ["whether the agent knows the Junction"],
+    facts: [{ label: "Area", value: "I work in the Junction and High Park a lot." }],
+    mustInclude: ["Junction"],
+  },
+  { name: "weekend viewing: no pressure", lines: [["in", "Can I see the Danforth semi this weekend?"]], asks: ["whether they can see the Danforth semi this weekend"] },
+  {
+    name: "has an agent: a warm close",
+    lines: [
+      ["out", "Are you still looking for a condo in Liberty Village?"],
+      ["in", "Thanks, but we already signed with another agent."],
+    ],
+    asks: [],
+    closing: true,
+  },
 ];
 
-export type ReplyProblem = "shape" | "unanswered" | "invented" | "language" | "missing_fact" | "echo";
+export type ReplyProblem =
+  | "shape"
+  | "unanswered"
+  | "invented"
+  | "language"
+  | "missing_fact"
+  | "echo"
+  // A-247: pushed or rushed them, praised the business, missed or made up a
+  // feeling, or could have gone to anyone / read like a bot.
+  | "pressure"
+  | "brag"
+  | "feeling"
+  | "generic";
 
 export type ReplyEvalResult = {
   cases: number;
@@ -115,7 +167,18 @@ export type ReplyEvalResult = {
   failures: { name: string; problems: ReplyProblem[]; reply: string; detail: string }[];
 };
 
-type Grade = { answered: boolean[]; invented: boolean; inventedWhat: string; sameLanguage: boolean };
+type Grade = {
+  answered: boolean[];
+  invented: boolean;
+  inventedWhat: string;
+  sameLanguage: boolean;
+  usedDetail: boolean;
+  robotic: boolean;
+  pushy: boolean;
+  bragged: boolean;
+  acknowledgedFeeling: boolean;
+  inventedFeeling: boolean;
+};
 export type Grader = (c: ReplyCase, reply: string) => Promise<Grade>;
 type Drafter = typeof draftDm;
 
@@ -157,13 +220,26 @@ export const gradeReply: Grader = async (c, reply) => {
           "availability, listing detail, experience, policy) that appears neither in the conversation nor in the " +
           "BUSINESS FACTS. A placeholder such as [PRICE] is not invented. inventedWhat: that detail, or empty.\n" +
           "sameLanguage: true when the reply is in the same language as the customer's last message (Hinglish " +
-          "answered in Hinglish or English both count as the same).",
+          "answered in Hinglish or English both count as the same).\n" +
+          "usedDetail: true when the reply picks up something specific the customer wrote (a place, a home, a date, " +
+          "a person, the thing they asked about), so it could not be sent unchanged to a different customer.\n" +
+          "robotic: true when it reads like a template or a bot rather than a person typing: stock phrases " +
+          "('thanks for reaching out', 'I'd be happy to help', 'great question'), 'our team', hype ('dream home', " +
+          "'thrilled', 'amazing'), emoji, or a string of exclamation marks.\n" +
+          "pushy: true when it pressures them: urgency or scarcity nobody in the conversation stated, a deadline, a " +
+          "command ('you need to'), a test of how serious they are, guilt, or a promised outcome.\n" +
+          "bragged: true when it praises the agent or the business (a ranking, award or title such as 'top', '#1', " +
+          "'best', 'expert', 'award-winning', or results for other clients) that the BUSINESS FACTS do not state.\n" +
+          "acknowledgedFeeling: true when the customer named a feeling (tired, exhausted, worried, stressed, " +
+          "excited) and the reply acknowledges it in plain words; also true when the customer named no feeling.\n" +
+          "inventedFeeling: true when the reply names or assumes a feeling the customer never expressed ('I know " +
+          "this is stressful'), flatters them, or claims something in common with them.",
       },
       {
         role: "user",
         content:
           `CONVERSATION:\n${chat}\n\nBUSINESS FACTS:\n${facts}\n\nQUESTIONS THE CUSTOMER ASKED:\n` +
-          c.asks.map((a, i) => `${i + 1}. ${a}`).join("\n") +
+          (c.asks.map((a, i) => `${i + 1}. ${a}`).join("\n") || "(none)") +
           `\n\nREPLY TO CHECK:\n${reply}`,
       },
     ],
@@ -179,8 +255,14 @@ export const gradeReply: Grader = async (c, reply) => {
             invented: { type: "boolean" },
             inventedWhat: { type: "string" },
             sameLanguage: { type: "boolean" },
+            usedDetail: { type: "boolean" },
+            robotic: { type: "boolean" },
+            pushy: { type: "boolean" },
+            bragged: { type: "boolean" },
+            acknowledgedFeeling: { type: "boolean" },
+            inventedFeeling: { type: "boolean" },
           },
-          required: ["answered", "invented", "inventedWhat", "sameLanguage"],
+          required: ["answered", "invented", "inventedWhat", "sameLanguage", "usedDetail", "robotic", "pushy", "bragged", "acknowledgedFeeling", "inventedFeeling"],
           additionalProperties: false,
         },
       },
@@ -189,7 +271,18 @@ export const gradeReply: Grader = async (c, reply) => {
   const raw = completion.choices[0]?.message?.content;
   if (!raw) throw new Error("The grader returned nothing.");
   const g = JSON.parse(raw) as Grade;
-  return { answered: Array.isArray(g.answered) ? g.answered : [], invented: !!g.invented, inventedWhat: String(g.inventedWhat ?? ""), sameLanguage: !!g.sameLanguage };
+  return {
+    answered: Array.isArray(g.answered) ? g.answered : [],
+    invented: !!g.invented,
+    inventedWhat: String(g.inventedWhat ?? ""),
+    sameLanguage: !!g.sameLanguage,
+    usedDetail: !!g.usedDetail,
+    robotic: !!g.robotic,
+    pushy: !!g.pushy,
+    bragged: !!g.bragged,
+    acknowledgedFeeling: !!g.acknowledgedFeeling,
+    inventedFeeling: !!g.inventedFeeling,
+  };
 };
 
 /** Two at a time: each case is up to three model calls (a draft, a retry, a grade). */
@@ -205,7 +298,7 @@ export async function runReplyEval(
     cases: cases.length,
     passed: 0,
     errors: 0,
-    problems: { shape: 0, unanswered: 0, invented: 0, language: 0, missing_fact: 0, echo: 0 },
+    problems: { shape: 0, unanswered: 0, invented: 0, language: 0, missing_fact: 0, echo: 0, pressure: 0, brag: 0, feeling: 0, generic: 0 },
     failures: [],
   };
   await mapWithConcurrency(cases, REPLY_EVAL_CONCURRENCY, async (c) => {
@@ -239,6 +332,26 @@ export async function runReplyEval(
       if (absent.length) {
         problems.push("missing_fact");
         details.push(`missing: ${absent.join(", ")}`);
+      }
+      // A-247. The code check (src/lib/replyTone.ts) and the reader both
+      // count: the check is narrow on purpose, the reader catches the rest.
+      const tone = salesPressure(reply, { said: (c.facts ?? []).map((f) => f.value).join("\n") });
+      const askedAgain = c.closing && /[?？؟]/.test(reply);
+      if (g.pushy || tone === "pressure" || askedAgain) {
+        problems.push("pressure");
+        details.push(askedAgain ? "asked again after a no" : "pushed or rushed them");
+      }
+      if (g.bragged || tone === "brag") {
+        problems.push("brag");
+        details.push("praised the business");
+      }
+      if ((c.feeling && !g.acknowledgedFeeling) || g.inventedFeeling) {
+        problems.push("feeling");
+        details.push(g.inventedFeeling ? "made up a feeling" : "missed the feeling they named");
+      }
+      if (!g.usedDetail || g.robotic) {
+        problems.push("generic");
+        details.push(g.robotic ? "read like a template" : "could go to anyone");
       }
 
       for (const p of problems) result.problems[p] += 1;

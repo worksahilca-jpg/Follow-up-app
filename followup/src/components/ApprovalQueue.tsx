@@ -2,21 +2,22 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Check, ChevronRight } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Check } from "lucide-react";
 import { WARM_CARD } from "@/components/app/ReplyCard";
 import { oneQueue, summariseGroups, UNKNOWN_SOURCE_LABEL, WHOLE_QUEUE } from "@/lib/approvalGroups";
 import type { TodayTier } from "@/lib/calmToday";
 import { plainHoldReason } from "@/lib/holdReasons";
-import { Eyebrow, Initials } from "@/components/app/canvasBits";
-import { ChannelIcon } from "@/components/app/ChannelIcon";
+import { focusSentence } from "@/lib/todayWords";
+import { DAY_BOX, DayHeading, DayRow, type TodayRow } from "@/components/app/TodayDay";
 import { useUndoableSend } from "@/components/useUndoableSend";
 import SiteReplyCard from "@/components/app/SiteReplyCard";
 import type { PendingApproval } from "@/lib/pendingApprovals";
 import SafePileAction from "@/components/SafePileAction";
 import SafePilePeek from "@/components/SafePilePeek";
 import UndoLine from "@/components/UndoLine";
-import { AnimatePresence, motion } from "framer-motion";
-import { MOTION, OPEN_IN_PLACE, RESULT_HOLD_MS } from "@/lib/motion";
+import { motion } from "framer-motion";
+import { MOTION, RESULT_HOLD_MS } from "@/lib/motion";
 import { fillPriceSlot, hasPriceSlot, slotOf, splitAtPriceSlot } from "@/lib/priceSlot";
 import { RememberPrice } from "@/components/app/RememberPrice";
 import MarkedText from "@/components/app/MarkedText";
@@ -79,62 +80,45 @@ export type ApprovalItem = PendingApproval & {
   tier?: TodayTier;
   /** Why a ready customer is on top: "Wants to book", "Asked the price", "Likely to book" (A-230). */
   why?: string | null;
+  /** When they last wrote, "2 days ago", worked out on the server so both sides say the same (A-243). */
+  asked?: string | null;
 };
 
-
-const CHANNEL_NAME: Record<string, string> = {
-  email: "Email",
-  call: "Phone",
-  text: "Text",
-  whatsapp: "WhatsApp",
-  instagram: "Instagram",
-  messenger: "Messenger",
-  web: "Website form",
-  lead_form: "Facebook lead form",
-};
-
-const CHANNEL_LABEL: Record<string, string> = {
-  email: "email",
-  call: "a call",
-  text: "text",
-  whatsapp: "WhatsApp",
-  instagram: "Instagram",
-  messenger: "Messenger",
-  web: "your website form",
-  lead_form: "your Facebook lead form",
+/** How they wrote, said the way a person would: "asked you by email", "on Instagram" (A-243). */
+const CHANNEL_WAY: Record<string, string> = {
+  email: "by email",
+  call: "on a call",
+  text: "by text",
+  whatsapp: "on WhatsApp",
+  instagram: "on Instagram",
+  messenger: "on Messenger",
+  web: "through your website form",
+  lead_form: "through your Facebook lead form",
 };
 
 /** The one card on Today (A-220): white, a hairline, 18px corners, phone padding. */
 const CARD = "rounded-[18px] border border-line bg-card p-3.5 sm:p-5";
 /** The one customer on Today: a box on a computer; on a phone it sits on the page itself, as a phone app would (A-222). */
 const ONE = "px-2 sm:px-0 lg:rounded-[18px] lg:border lg:border-line lg:bg-card lg:px-5 lg:py-5";
-/** Today's actions on a phone: a bar just above the tabs (64px plus the home bar). In the card on a computer. */
-const PHONE_BAR =
-  "max-lg:fixed max-lg:inset-x-0 max-lg:bottom-[calc(env(safe-area-inset-bottom,0px)+65px)] max-lg:z-20 max-lg:border-t max-lg:border-line max-lg:bg-paper max-lg:px-4 max-lg:py-2.5";
 
 function ApprovalCard({
   item,
+  bare = false,
   onResolved,
   sendLocked = false,
-  laterToday = true,
-  onSetAside,
+  onSkip,
 }: {
   item: ApprovalItem;
+  /** Inside "Do this first" (A-244), which is the box: no box of its own. */
+  bare?: boolean;
   /** Done with this card. `result` is what happened, said for a moment before it leaves (A-048). */
   onResolved: (leadId: string, result: string | null, sent?: boolean) => void;
   /** Only admins send, and this person isn't one (A-041). */
   sendLocked?: boolean;
-  /** Whether "Later today" (2pm) is still ahead in the owner's day (A-046). */
-  laterToday?: boolean;
-  /** Set aside with Later (or back with Undo), so the list can drop or restore the row. */
-  onSetAside?: (leadId: string, until: string | null) => void;
+  /** "Skip for now": the next person comes first; this one waits at the back (A-243). Absent when they are the only one. */
+  onSkip?: () => void;
 }) {
-  const [busy, setBusy] = useState<"send" | "dismiss" | "talked" | "later" | null>(null);
   const firstName = item.leadName.split(" ")[0] || item.leadName;
-  // "Later" (A-046): set aside until a time, back by itself or as soon as
-  // the customer writes. Not "handled", so it never counts toward the day.
-  const [laterOpen, setLaterOpen] = useState(false);
-  const [laterUntil, setLaterUntil] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   // The price blank (A-060): a price question's reply is written with a
   // gap for the figure. Send stays off until it is filled, and the server
@@ -185,15 +169,6 @@ function ApprovalCard({
         ? "Check the underlined word. Nobody wrote it in this conversation."
         : "Check the underlined words. Nobody wrote them in this conversation."
       : null;
-  // "We talked" (design brain A-039): the card stays for a few seconds
-  // saying what happened, with Undo, then leaves the queue.
-  const [talked, setTalked] = useState(false);
-  useEffect(() => {
-    if (!talked) return;
-    // It has already said what happened for eight seconds, so it just leaves.
-    const timer = setTimeout(() => onResolved(item.leadId, null), 8000);
-    return () => clearTimeout(timer);
-  }, [talked, item.leadId, onResolved]);
 
   /**
    * Ten seconds to change your mind, same as the routine pile.
@@ -283,128 +258,32 @@ function ApprovalCard({
     }
   }
 
-  async function dontSend() {
-    setBusy("dismiss");
-    setError(null);
-    try {
-      const res = await fetch(`/api/leads/${item.leadId}/dismiss-hold`, { method: "POST" });
-      const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.message ?? "Couldn't dismiss it.");
-      dropKeptEdit(item.leadId);
-      onResolved(item.leadId, `Won't send to ${firstName}.`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't dismiss it.");
-      setBusy(null);
-    }
-  }
-
-  async function weTalked(undo: boolean) {
-    setBusy("talked");
-    setError(null);
-    try {
-      const res = await fetch(`/api/leads/${item.leadId}/talked`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(undo ? { undo: true } : {}),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.success) throw new Error(typeof data.message === "string" ? data.message : "Couldn't save that.");
-      setTalked(!undo);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't save that.");
-    } finally {
-      setBusy(null);
-    }
-  }
-
-  async function setLater(when: "later_today" | "tomorrow_morning" | "clear") {
-    setBusy("later");
-    setError(null);
-    try {
-      const res = await fetch(`/api/leads/${item.leadId}/later`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ when }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.success) throw new Error(typeof data.message === "string" ? data.message : "Couldn't save that.");
-      setLaterUntil(data.until ?? null);
-      setLaterOpen(false);
-      onSetAside?.(item.leadId, data.until ?? null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't save that.");
-    } finally {
-      setBusy(null);
-    }
-  }
-
-  if (laterUntil) {
-    const at = new Date(laterUntil);
-    const tomorrow = at.toDateString() !== new Date().toDateString();
-    const time = at.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-    return (
-      <div className={`${CARD} flex flex-wrap items-center justify-between gap-3`} role="status">
-        <p className="min-w-0 flex-1 text-[14px] leading-snug">
-          {item.leadName} is set aside until {tomorrow ? `tomorrow at ${time}` : time}, or until {firstName} writes again.
-        </p>
-        <button
-          onClick={() => setLater("clear")}
-          disabled={busy !== null}
-          className="h-11 rounded-full border border-line bg-card px-4 text-[14px] font-medium disabled:opacity-60"
-        >
-          {busy === "later" ? "…" : "Undo"}
-        </button>
-      </div>
-    );
-  }
-  if (talked) {
-    return (
-      <div className={`${CARD} flex flex-wrap items-center justify-between gap-3`} role="status">
-        <p className="min-w-0 flex-1 text-[14px] leading-snug">
-          Check-ins stopped for {firstName}. FollowUp won&apos;t write to them until they write again.
-        </p>
-        <button
-          onClick={() => weTalked(true)}
-          disabled={busy !== null}
-          className="h-11 rounded-full border border-line bg-card px-4 text-[14px] font-medium disabled:opacity-60"
-        >
-          {busy === "talked" ? "…" : "Undo"}
-        </button>
-      </div>
-    );
-  }
-
-  const channelAndWait = [CHANNEL_NAME[item.leadLastMessageChannel ?? ""] ?? item.source, item.wait?.toLowerCase()].filter(Boolean).join(" · ");
-  // Why they are on top, first, so the order can be trusted (A-230): "Wants to book · Email · waiting 4 min".
+  // Who, how and when, said as a sentence (A-243): "Omar Haddad asked you by
+  // email, 2 days ago:". A question is "asked you"; anything else "wrote".
+  // Why they are on top leads the line when there is a reason (A-230).
+  const way = CHANNEL_WAY[item.leadLastMessageChannel ?? ""] ?? null;
+  const verb = item.leadLastMessage?.includes("?") ? "asked you" : "wrote";
+  const when = item.asked ?? null;
+  const how = [way, when].filter(Boolean).join(", ");
 
   return (
-    <article className={ONE} aria-label={`${item.leadName} is waiting for you`}>
-      {/* Who, where and how long (A-220): one customer at a time, at phone sizes (R-107). */}
-      <div className="flex items-center gap-2.5">
-        <Initials name={item.leadName} size={32} />
-        <div className="min-w-0 flex-1">
-          <Link href={`/leads/${item.leadId}`} className="block truncate text-[14.5px] font-semibold hover:underline">
-            {item.leadName}
-          </Link>
-          <p className="flex items-center gap-1.5 text-[12px] text-ink-faint">
-            <ChannelIcon channel={item.leadLastMessageChannel} className="h-3.5 w-3.5 shrink-0" />
-            <span className="truncate">
-              {item.why && <span className="font-semibold text-ink">{item.why} · </span>}
-              {channelAndWait}
-            </span>
-          </p>
-        </div>
-      </div>
+    <article className={bare ? undefined : ONE} aria-label={`${item.leadName} is waiting for you`}>
+      <p className="text-[14px] leading-snug text-ink-soft">
+        {item.why && <span className="font-semibold text-ink">{item.why} · </span>}
+        <Link href={`/leads/${item.leadId}`} className="font-semibold text-ink hover:underline">
+          {item.leadName}
+        </Link>{" "}
+        {verb}
+        {how && ` ${how}`}
+        {item.leadLastMessage ? ":" : "."}
+      </p>
 
       {/* What they actually said, before what we're about to reply with:
           judging a reply needs the customer's own words, not FollowUp's
           summary of them. Their words are the biggest text on the card. */}
       {item.leadLastMessage && (
         <div className="mt-2.5">
-          <p className="sr-only">
-            {firstName} wrote, over {CHANNEL_LABEL[item.leadLastMessageChannel ?? ""] ?? "message"}:
-          </p>
-          <p className="whitespace-pre-wrap text-[15.5px] leading-[1.4] text-ink sm:text-[16px]">{item.leadLastMessage}</p>
+          <p className="whitespace-pre-wrap rounded-[16px] bg-card-2 px-4 py-3.5 text-[16.5px] leading-[1.45] text-ink sm:text-[17px]">{item.leadLastMessage}</p>
           {/* The 30-minute holding message went (A-060): the customer is not
               waiting in silence, and the owner should know that before
               deciding how fast this one has to be. */}
@@ -433,14 +312,16 @@ function ApprovalCard({
         </div>
       ) : (
       <>
-      {/* The reply on the wash (A-220): "Your reply, ready" until the owner
-          changes it, then theirs (A-089: who wrote it, at a glance). */}
-      <div className="mt-2.5 rounded-[14px] px-3 py-[11px] sm:px-4 sm:py-3.5" style={WARM_CARD}>
-        <Eyebrow green>{`${mine ? "Edited by you" : "Your reply, ready"}${sendLocked ? " · an admin sends it" : ""}`}</Eyebrow>
-        {item.textTo && <p className="mt-1 text-[12.5px] text-ink-soft">Text to {item.textTo}</p>}
-        {item.draftSubject && <p className="mt-1.5 text-[14px] font-medium">{item.draftSubject}</p>}
+      {/* The reply on the wash (A-220), said in words (A-243): who wrote it,
+          FollowUp or the owner (A-089), with no label to decode. */}
+      <p className="mt-4 text-[14px] leading-snug text-ink-soft">
+        {mine ? "Your reply, as you changed it:" : "FollowUp wrote this reply for you:"}
+      </p>
+      <div className="mt-2 rounded-[16px] px-4 py-3.5" style={WARM_CARD}>
+        {item.textTo && <p className="text-[12.5px] text-ink-soft">Text to {item.textTo}</p>}
+        {item.draftSubject && <p className="text-[14px] font-medium">{item.draftSubject}</p>}
         {editing ? (
-          <div className="mt-2 space-y-2">
+          <div className="mt-1 space-y-2">
             {/* 16px, so a phone doesn't zoom in when the box takes focus. */}
             <textarea
               id={`reply-text-${item.leadId}`}
@@ -485,7 +366,7 @@ function ApprovalCard({
             </div>
           </div>
         ) : needsPrice ? (
-          <p className="mt-[5px] whitespace-pre-wrap text-[14px] leading-[1.45] sm:text-[15px]">
+          <p className="whitespace-pre-wrap text-[16px] leading-[1.45] sm:text-[16.5px]">
             {splitAtPriceSlot(text).map((part, i) =>
               i === 0 ? (
                 <span key={i}>{part}</span>
@@ -527,7 +408,7 @@ function ApprovalCard({
             )}
           </p>
         ) : (
-          <p className="mt-[5px] whitespace-pre-wrap text-[14px] leading-[1.45] sm:text-[15px]">
+          <p className="whitespace-pre-wrap text-[16px] leading-[1.45] sm:text-[16.5px]">
             <MarkedText text={text} words={item.checkWords ?? []} />
           </p>
         )}
@@ -573,137 +454,100 @@ function ApprovalCard({
           {checkHint ?? plainReason}
         </p>
       )}
-      {item.basis && !editing && !edited && <p className="mt-1.5 hidden text-[12.5px] text-ink-soft sm:block">{item.basis}</p>}
       {error && (
         <p className="mt-2 text-[13px]" role="alert" style={{ color: "var(--coral)" }}>
           {error}
         </p>
       )}
 
-      {/* Phone (A-222): Send, Edit and Later sit in a bar just above the
-          tabs, where the thumb is, as a phone app keeps its main actions;
-          on a computer they stay under the reply. The ten seconds to undo
-          (A-048) and Later's two times open in the same place. */}
-      <div className={PHONE_BAR}>
-        <div className="mx-auto max-w-[640px]">
-          {/* The grace period replaces the buttons: while the clock runs,
-              the only thing to press is the one that stops it (A-048). */}
-          {send.pending ? (
-            <div className="flex flex-wrap items-center gap-3 lg:mt-3">
-              <p className="text-[15px]">
-                Sending to {firstName} in {send.secs}s
-              </p>
-              <button onClick={send.undo} className="h-11 rounded-full border border-line bg-card px-5 text-[14px] font-medium">
-                Undo
-              </button>
-              {send.endsAt !== null && (
-                <div className="basis-full">
-                  <UndoLine endsAt={send.endsAt} />
-                </div>
-              )}
-            </div>
+      {/* What to do, in words, right above the buttons it names (A-243, R-113).
+          A blank to fill says its own instruction above, so this stays quiet then. */}
+      {!send.pending && !priceMissing && (
+        <p className="mt-4 text-[15.5px] leading-normal text-ink">
+          {sendLocked ? (
+            <>
+              An admin on your team sends replies. To change a word, press <b>Change it</b>.
+            </>
+          ) : editing ? (
+            <>
+              Change the words, then press <b>Send</b>.
+            </>
           ) : (
             <>
-              {/* Send is the one black button (A-220), the widest in the row. */}
-              <div className="flex items-center gap-2 lg:mt-3">
-                {/* Only admins send (A-041): a teammate keeps Edit, Later
-                    and Don't send, and is told who sends. */}
-                {!sendLocked && (
-                  <button
-                    onClick={sendNow}
-                    disabled={busy !== null || send.busy || priceMissing || rewriting !== null || !message.trim()}
-                    className="h-11 flex-1 rounded-full text-[15px] font-semibold disabled:opacity-60 lg:flex-none lg:px-9"
-                    style={{ backgroundColor: "var(--accent)", color: "var(--on-accent)" }}
-                  >
-                    {send.busy ? "Sending…" : "Send"}
-                  </button>
-                )}
-                {editing ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditing(false);
-                      setText(saved);
-                      setEdited(saved !== item.draftMessage);
-                      setMine(false);
-                    }}
-                    disabled={rewriting !== null}
-                    className="h-11 rounded-full border border-line bg-card px-6 text-[14px] font-medium disabled:opacity-60"
-                  >
-                    Cancel
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditing(true);
-                      setLaterOpen(false);
-                    }}
-                    disabled={busy !== null || send.busy}
-                    className="h-11 rounded-full border border-line bg-card px-6 text-[14px] font-medium disabled:opacity-60"
-                  >
-                    Edit
-                  </button>
-                )}
-                <button
-                  onClick={() => setLaterOpen((v) => !v)}
-                  disabled={busy !== null || send.busy}
-                  aria-expanded={laterOpen}
-                  className="h-11 rounded-full px-4 text-[14px] text-ink-soft disabled:opacity-60"
-                >
-                  Later
-                </button>
-              </div>
+              If it looks right, press <b>Send</b>. To change a word, press <b>Change it</b>.
             </>
           )}
-          <AnimatePresence initial={false}>
-          {laterOpen && !send.pending && (
-            // Opens from the Later it came from, and closes the same way (A-048).
-            <motion.div key="later" {...OPEN_IN_PLACE} className="mt-1 flex flex-wrap items-center gap-2">
-              {laterToday && (
-                <button
-                  onClick={() => setLater("later_today")}
-                  disabled={busy !== null}
-                  className="h-11 rounded-full border border-line bg-card px-4 text-[13.5px] hover:bg-paper disabled:opacity-60"
-                >
-                  Later today · 2 pm
-                </button>
-              )}
-              <button
-                onClick={() => setLater("tomorrow_morning")}
-                disabled={busy !== null}
-                className="h-11 rounded-full border border-line bg-card px-4 text-[13.5px] hover:bg-paper disabled:opacity-60"
-              >
-                Tomorrow morning · 9 am
-              </button>
-              <span className="basis-full text-[12.5px] text-ink-soft">Comes straight back if {firstName} writes again. The reply stays as it is.</span>
-            </motion.div>
+        </p>
+      )}
+
+      {/* Under the reply, on the phone too (A-243): the sentence and the
+          buttons it names sit together. The ten seconds to undo (A-048)
+          take their place while the clock runs. */}
+      {send.pending ? (
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <p className="text-[15px]">
+            Sending to {firstName} in {send.secs}s
+          </p>
+          <button onClick={send.undo} className="h-11 rounded-full border border-line bg-card px-5 text-[14px] font-medium">
+            Undo
+          </button>
+          {send.endsAt !== null && (
+            <div className="basis-full">
+              <UndoLine endsAt={send.endsAt} />
+            </div>
           )}
-          </AnimatePresence>
         </div>
-      </div>
-      {!send.pending && (
-        <>
-          {/* The two rarer ways out, kept quiet so nothing is lost (A-039). */}
-          <div className="mt-0.5 flex items-center justify-center text-[13px] text-ink-faint sm:justify-start">
-            <button onClick={dontSend} disabled={busy !== null || send.busy} className="min-h-11 px-2.5 disabled:opacity-60 sm:pl-0">
-              {busy === "dismiss" ? "…" : "Don't send"}
+      ) : (
+        <div className="mt-3 flex flex-wrap items-center gap-2.5">
+          {/* Send is the one black button (A-220), the widest in the row on a phone.
+              Only admins send (A-041): a teammate keeps Change it. */}
+          {!sendLocked && (
+            <button
+              onClick={sendNow}
+              disabled={send.busy || priceMissing || rewriting !== null || !message.trim()}
+              className="h-12 flex-1 rounded-full px-6 text-[16px] font-semibold disabled:opacity-60 sm:flex-none sm:px-7"
+              style={{ backgroundColor: "var(--accent)", color: "var(--on-accent)" }}
+            >
+              {send.busy ? "Sending…" : `Send to ${firstName}`}
             </button>
-            {!editing && (
-              <>
-                <span aria-hidden>·</span>
-                <button
-                  onClick={() => weTalked(false)}
-                  disabled={busy !== null || send.busy}
-                  title={`You spoke with ${firstName} on a call or in person. FollowUp stops checking in until they write again.`}
-                  className="min-h-11 px-2.5 disabled:opacity-60"
-                >
-                  {busy === "talked" ? "…" : "Already spoke"}
-                </button>
-              </>
-            )}
-          </div>
-        </>
+          )}
+          {editing ? (
+            <button
+              type="button"
+              onClick={() => {
+                setEditing(false);
+                setText(saved);
+                setEdited(saved !== item.draftMessage);
+                setMine(false);
+              }}
+              disabled={rewriting !== null}
+              className="h-12 rounded-full border border-line bg-card px-6 text-[16px] font-medium disabled:opacity-60"
+            >
+              Cancel
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setEditing(true)}
+              disabled={send.busy}
+              className="h-12 rounded-full border border-line bg-card px-6 text-[16px] font-medium disabled:opacity-60"
+            >
+              Change it
+            </button>
+          )}
+          {/* The one quiet way out (A-243). Don't send, Already spoke and
+              Later stay on the customer's own page. */}
+          {onSkip && !editing && (
+            <button
+              type="button"
+              onClick={onSkip}
+              disabled={send.busy}
+              className="min-h-11 basis-full text-center text-[14px] text-ink-faint underline underline-offset-[3px] hover:text-ink disabled:opacity-60 sm:ml-auto sm:basis-auto"
+            >
+              Skip for now
+            </button>
+          )}
+        </div>
       )}
       </>
       )}
@@ -716,26 +560,23 @@ function ApprovalCard({
 
 export default function ApprovalQueue({
   items,
+  rows = [],
   answeredForYou = 0,
   sendLocked = false,
   handledToday = 0,
-  laterToday = true,
-  setAside = 0,
   holdAll = false,
   weekResults = null,
   plan = null,
 }: {
   items: ApprovalItem[];
+  /** The rest of the owner's day (A-244): calls to make and times booked for today, in order. */
+  rows?: TodayRow[];
   /** Only admins send, and this person isn't one (A-041). */
   sendLocked?: boolean;
   /** Replies FollowUp sent on its own this week — what it did instead of asking. */
   answeredForYou?: number;
   /** People the owner dealt with since their midnight (A-031 / A-046). */
   handledToday?: number;
-  /** "Later today" still ahead in the owner's day (A-046). */
-  laterToday?: boolean;
-  /** Cards set aside with Later, hidden until they come back. */
-  setAside?: number;
   /**
    * Business.holdAllForApproval: every reply waits for the owner. The
    * empty state must not then say only unsure ones do (strategy audit
@@ -756,8 +597,14 @@ export default function ApprovalQueue({
     const pending = timers.current;
     return () => pending.forEach(clearTimeout);
   }, []);
-  // Stable, so a card's own timers (We talked) aren't restarted by every re-render.
+  // The day's numbers, progress and "Done today" are worked out on the
+  // server (A-244). After every send they are fetched again, so "5 replies
+  // to send" becomes 4 and the bar moves as the owner works; what is on
+  // screen here (the open card, a half-written reply) stays as it is.
+  const router = useRouter();
+  // Stable, so a card's own timers aren't restarted by every re-render.
   const resolve = useCallback((leadId: string, result: string | null) => {
+    router.refresh();
     if (!result) {
       setResolved((prev) => new Set(prev).add(leadId));
       return;
@@ -773,71 +620,37 @@ export default function ApprovalQueue({
         });
       }, RESULT_HOLD_MS)
     );
-  }, []);
+  }, [router]);
   const visible = items.filter((i) => !resolved.has(i.leadId));
   // What still needs a decision: the counts never include a card that is on its way out.
   const active = visible.filter((i) => !leaving[i.leadId]);
-  // One customer at a time, on the desk as on the phone (A-209, A-220).
-  // Null means "the first one who needs you"; the Next row picks someone else.
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  // Set aside with Later: they stay on screen with the set-aside note and
-  // its Undo until the owner moves on with Next.
-  const [setAsideIds, setSetAsideIds] = useState<Set<string>>(new Set());
-  const setAsideHere = useCallback((leadId: string, until: string | null) => {
-    setSelectedId(leadId);
-    setSetAsideIds((prev) => {
-      const next = new Set(prev);
-      if (until) next.add(leadId);
-      else next.delete(leadId);
-      return next;
-    });
+  // One customer at a time in "Do this first" (A-244). "Skip for now" (A-243)
+  // moves someone to the back of the line for this visit only; a row in
+  // "Still to do today" brings that person up instead. Nothing is saved.
+  const [skipped, setSkipped] = useState<string[]>([]);
+  const [picked, setPicked] = useState<string | null>(null);
+  // Closed until the owner presses "Reply to Raj", as drawn; once they are
+  // replying, the next customer opens straight after a send.
+  const [open, setOpen] = useState(false);
+  const [showAll, setShowAll] = useState(false);
+  const focusRef = useRef<HTMLElement>(null);
+  const skip = useCallback((leadId: string) => {
+    setPicked(null);
+    setSkipped((prev) => [...prev.filter((id) => id !== leadId), leadId]);
   }, []);
+  const pick = (leadId: string) => {
+    setPicked(leadId);
+    setOpen(true);
+    focusRef.current?.scrollIntoView({ block: "start" });
+  };
 
   // An empty queue is the state the owner most wants to be in, so it is
   // said out loud, with what FollowUp did instead of asking. Handled here
   // since the page loaded counts too, so the line moves as the owner works.
   const handled = handledToday + (items.length - active.length);
 
-  if (visible.length === 0) {
-    // A finish line, not a blank (A-046, the Todoist study): said calmly,
-    // with what FollowUp keeps doing. No confetti, points or streaks.
-    const done = handled > 0;
-    return (
-      // Faded in only when the owner emptied the list just now; an empty
-      // Today on load simply is (no motion without a change of state).
-      <motion.div
-        initial={items.length > 0 ? { opacity: 0 } : false}
-        animate={{ opacity: 1, transition: { duration: MOTION.move, ease: MOTION.easeOut } }}
-        className="max-w-[640px]"
-        role="status"
-      >
-        <div className={CARD}>
-          <span aria-hidden="true" className="flex h-9 w-9 items-center justify-center rounded-full" style={{ background: "var(--sage-soft)", color: "var(--sage)" }}>
-            <Check className="h-5 w-5" strokeWidth={2.4} />
-          </span>
-          <p className="mt-2.5 text-[17px] font-semibold tracking-[-0.01em]">{done ? "You're done for today." : "You're all caught up."}</p>
-          <p className="mt-0.5 text-[13.5px] leading-normal text-ink-soft">
-            {done
-              ? `You handled ${handled} ${handled === 1 ? "person" : "people"} today. FollowUp keeps watching, and will tell you when someone writes.`
-              : holdAll
-                ? "Every reply FollowUp writes shows up here first. Nothing goes out until you send it, apart from a short “let me check” when a price or date question has waited 30 minutes."
-                : "Anything FollowUp isn't sure about will show up here before it sends."}
-            {answeredForYou > 0 &&
-              ` It answered ${answeredForYou} ${answeredForYou === 1 ? "customer" : "customers"} on its own this week.`}
-          </p>
-          {/* What happens next, by name (research round 2, #2): a plan for what is left quiets it as much as finishing it does. */}
-          {plan && <p className="mt-2 text-[13.5px] leading-normal text-ink">{plan}</p>}
-          {/* The end of the day is what the owner remembers (peak-end, A-088): real
-              outcomes only, nothing when they are all zero. */}
-          {weekResults && <p className="mt-2 text-[13px] leading-normal text-ink-soft tabular-nums">{weekResults}</p>}
-        </div>
-
-      </motion.div>
-    );
-  }
-
   /*
-   * One list (A-087): everyone who needs the owner, longest waiting first,
+   * One list (A-087): everyone who needs the owner, in Today's order (A-230),
    * whatever channel they wrote on. See @/lib/approvalGroups for what
    * "safe" is allowed to mean.
    */
@@ -848,22 +661,93 @@ export default function ApprovalQueue({
   // counting groups would keep the whole-queue box on screen beside a
   // single routine row and reintroduce the twin buttons.
   const groupsWithRoutine = groups.filter((g) => g.safeToSend.length > 0).length;
-  const total = handled + active.length;
-  // Everyone still waiting on a decision, in order: not leaving, not set aside.
+  // Everyone still waiting on a decision, anyone skipped at the back in the order they were skipped.
   // (The groups keep the items they were given, so these are the page's ApprovalItems.)
-  const queue = (groups.flatMap((g) => g.needsYou) as ApprovalItem[]).filter((i) => !leaving[i.leadId] && !setAsideIds.has(i.leadId));
-  // The one on screen: the owner's pick while it is still here, else the
-  // first who needs them. A set-aside person stays until the owner moves
-  // on, so Undo is still in reach.
-  const selected = (selectedId && visible.find((i) => i.leadId === selectedId)) || queue[0] || null;
-  // Who comes after them: the next in line, or the first when they were picked from further down.
-  const at = selected ? queue.findIndex((i) => i.leadId === selected.leadId) : -1;
-  const next = queue.slice(at + 1).find((i) => i.leadId !== selected?.leadId) ?? queue.find((i) => i.leadId !== selected?.leadId) ?? null;
-  // Everyone else waiting a day or more, as one row (A-230): the longest wait first, one tap opens them.
-  const older = queue.filter((i) => i.tier === "older" && i.leadId !== selected?.leadId && i.leadId !== next?.leadId);
+  const waiting = (groups.flatMap((g) => g.needsYou) as ApprovalItem[]).filter((i) => !leaving[i.leadId]);
+  const queue = [
+    ...waiting.filter((i) => !skipped.includes(i.leadId)),
+    ...skipped.map((id) => waiting.find((i) => i.leadId === id)).filter((i): i is ApprovalItem => Boolean(i)),
+  ];
+  const selected = (picked && queue.find((i) => i.leadId === picked)) || queue[0] || null;
+  const selectedFirst = selected ? selected.leadName.split(" ")[0] || selected.leadName : null;
+  // What the last press did, said for a moment before it goes (A-048).
+  const justDone = Object.values(leaving).at(-1) ?? null;
+  const others = queue.filter((i) => i.leadId !== selected?.leadId);
+  const shown = showAll ? others : others.slice(0, REPLY_ROWS);
+  const hidden = others.length - shown.length;
+  const stillToDo = others.length + rows.length;
+
+  // "Do this first" (A-244): what the first customer wants in a sentence, then
+  // one black button. Pressed, it opens into the reply card (A-243).
+  const focus = selected ? (
+    <section ref={focusRef} aria-label="Do this first" className="scroll-mt-20 rounded-[18px] lg:scroll-mt-6 bg-card p-4 sm:p-5" style={{ border: "1.5px solid var(--ink)" }}>
+      <p className="flex items-center gap-1.5 text-[13.5px] text-ink-soft" role={justDone ? "status" : undefined}>
+        {justDone && <Check className="h-4 w-4 shrink-0" style={{ color: "var(--sage)" }} aria-hidden="true" />}
+        {justDone ? [justDone, selectedFirst && `Now ${selectedFirst}.`].filter(Boolean).join(" ") : "Do this first"}
+      </p>
+      {open ? (
+        <motion.div key={selected.leadId} className="mt-3" initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { duration: MOTION.move, ease: MOTION.easeOut } }}>
+          <ApprovalCard
+            item={selected}
+            bare
+            onResolved={resolve}
+            sendLocked={sendLocked}
+            onSkip={queue.length > 1 ? () => skip(selected.leadId) : undefined}
+          />
+        </motion.div>
+      ) : (
+        <>
+          <p className="mt-1.5 text-[18px] font-semibold leading-snug tracking-[-0.01em]">{focusSentence(selected.leadName, selected.why)}</p>
+          <p className="mt-1.5 text-[14.5px] leading-normal text-ink-soft">{focusDetail(selected)}</p>
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="mt-4 h-[50px] w-full rounded-full px-7 text-[16px] font-semibold sm:w-auto"
+            style={{ backgroundColor: "var(--accent)", color: "var(--on-accent)" }}
+          >
+            Reply to {selectedFirst}
+          </button>
+        </>
+      )}
+    </section>
+  ) : visible.length === 0 || rows.length > 0 ? (
+    // A finish line, not a blank (A-046, the Todoist study): said calmly,
+    // with what FollowUp keeps doing. No confetti, points or streaks.
+    // Faded in only when the owner emptied the list just now; an empty
+    // Today on load simply is (no motion without a change of state).
+    <motion.div
+      initial={items.length > 0 ? { opacity: 0 } : false}
+      animate={{ opacity: 1, transition: { duration: MOTION.move, ease: MOTION.easeOut } }}
+      className={CARD}
+      role="status"
+    >
+      <span aria-hidden="true" className="flex h-9 w-9 items-center justify-center rounded-full" style={{ background: "var(--sage-soft)", color: "var(--sage)" }}>
+        <Check className="h-5 w-5" strokeWidth={2.4} />
+      </span>
+      <p className="mt-2.5 text-[17px] font-semibold tracking-[-0.01em]">
+        {rows.length > 0 ? "No replies waiting." : handled > 0 ? "You're done for today." : "You're all caught up."}
+      </p>
+      <p className="mt-0.5 text-[13.5px] leading-normal text-ink-soft">
+        {rows.length > 0
+          ? "Your calls and booked times for today are below."
+          : handled > 0
+            ? `You handled ${handled} ${handled === 1 ? "person" : "people"} today. FollowUp keeps watching, and will tell you when someone writes.`
+            : holdAll
+              ? "Every reply FollowUp writes shows up here first. Nothing goes out until you send it, apart from a short “let me check” when a price or date question has waited 30 minutes."
+              : "Anything FollowUp isn't sure about will show up here before it sends."}
+        {rows.length === 0 && answeredForYou > 0 &&
+          ` It answered ${answeredForYou} ${answeredForYou === 1 ? "customer" : "customers"} on its own this week.`}
+      </p>
+      {/* What happens next, by name (research round 2, #2): a plan for what is left quiets it as much as finishing it does. */}
+      {rows.length === 0 && plan && <p className="mt-2 text-[13.5px] leading-normal text-ink">{plan}</p>}
+      {/* The end of the day is what the owner remembers (peak-end, A-088): real
+          outcomes only, nothing when they are all zero. */}
+      {rows.length === 0 && weekResults && <p className="mt-2 text-[13px] leading-normal text-ink-soft tabular-nums">{weekResults}</p>}
+    </motion.div>
+  ) : null;
 
   return (
-    <div className="max-w-[640px]">
+    <div>
       {/* Said once, above everything, rather than 48 times on 48 cards. */}
       {summary.fromBeforePermission > 0 && (
         <p className="mb-3 px-1 text-[12.5px] leading-relaxed text-ink-soft">
@@ -888,55 +772,7 @@ export default function ApprovalQueue({
         </div>
       )}
 
-      {/* The one customer (A-220): their words, the reply, Send. Keyed by
-          person so Later, Already spoke and the answer blank start fresh. */}
-      {selected &&
-        (leaving[selected.leadId] ? (
-          <p className={`${CARD} flex items-center gap-2 text-[15px] text-ink-soft`} role="status">
-            <Check className="h-4 w-4 shrink-0" aria-hidden="true" />
-            {leaving[selected.leadId]}
-          </p>
-        ) : (
-          <motion.div key={selected.leadId} initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { duration: MOTION.move, ease: MOTION.easeOut } }}>
-            <ApprovalCard item={selected} onResolved={resolve} sendLocked={sendLocked} laterToday={laterToday} onSetAside={setAsideHere} />
-          </motion.div>
-        ))}
-
-      {/* Then one row: who's next (A-220). Today never shows a list; everyone
-          else is in Customers. The whole row opens them here. */}
-      {next && (
-        <button
-          type="button"
-          onClick={() => setSelectedId(next.leadId)}
-          className="mt-2.5 flex min-h-11 w-full items-center gap-2.5 rounded-[14px] bg-card-2 px-3 py-2.5 text-left"
-        >
-          <span className="shrink-0 text-[12px] font-medium text-ink-faint">
-            {next.why ? `Next · ${next.why}` : next.tier === "new" ? "Next · New" : "Next"}
-          </span>
-          <span className="min-w-0 flex-1 truncate text-[13.5px]">
-            <span className="font-semibold">{next.leadName}</span>
-            {next.leadLastMessage && <span className="text-ink-soft"> · “{next.leadLastMessage.replace(/\s+/g, " ")}”</span>}
-          </span>
-          <ChevronRight className="h-[18px] w-[18px] shrink-0 text-ink-faint" aria-hidden="true" />
-        </button>
-      )}
-
-      {older.length > 0 && (
-        <button
-          type="button"
-          onClick={() => setSelectedId(older[0].leadId)}
-          className="mt-2.5 flex min-h-11 w-full items-center gap-2.5 rounded-[14px] border border-line bg-card px-3 py-2.5 text-left"
-        >
-          <span className="shrink-0 text-[12px] font-medium text-ink-faint">Older</span>
-          <span className="min-w-0 flex-1 truncate text-[13.5px]">
-            <span className="font-semibold">{older[0].leadName}</span>
-            <span className="text-ink-soft">
-              {older.length > 1 ? ` and ${older.length - 1} more · waiting a day or more, longest first` : " · waiting a day or more"}
-            </span>
-          </span>
-          <ChevronRight className="h-[18px] w-[18px] shrink-0 text-ink-faint" aria-hidden="true" />
-        </button>
-      )}
+      {focus}
 
       {/* Routine drafts: one quiet row per source, sent together on one press. */}
       {groups
@@ -953,14 +789,59 @@ export default function ApprovalQueue({
           </div>
         ))}
 
-      {/* Progress only when there is progress (A-080, the goal-gradient
-          rule), desk only, once the day has five or more people in it. */}
-      {total >= 5 && handled > 0 && (
-        <p className="mt-3 hidden px-1 text-[12.5px] text-ink-faint tabular-nums sm:block">
-          {handled} of {total} handled today
-          {setAside > 0 && ` · ${setAside} set aside for later`}
-        </p>
+      {/* Still to do today (A-244): every other reply, call and booked time,
+          one row each. A reply row brings that person up into "Do this first". */}
+      {stillToDo > 0 && (
+        <section aria-label="Still to do today" className="mt-7">
+          <DayHeading
+            title="Still to do today"
+            aside={selectedFirst ? `${stillToDo} more after ${selectedFirst}` : `${stillToDo} ${stillToDo === 1 ? "thing" : "things"}`}
+          />
+          <div className={`${DAY_BOX} overflow-hidden`}>
+            {shown.map((i, n) => (
+              <DayRow key={i.leadId} first={n === 0} row={replyRow(i)} onClick={() => pick(i.leadId)} />
+            ))}
+            {hidden > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowAll(true)}
+                className="flex min-h-[52px] w-full items-center gap-3 border-t border-line px-4 py-3 text-left text-[14.5px] font-medium hover:bg-paper"
+              >
+                <span aria-hidden="true" className="w-9 shrink-0" />
+                Show {hidden} more {hidden === 1 ? "reply" : "replies"}
+              </button>
+            )}
+            {rows.map((r, n) => (
+              <DayRow key={r.key} row={r} first={shown.length === 0 && n === 0} />
+            ))}
+          </div>
+        </section>
       )}
     </div>
   );
+}
+
+/** How many other replies "Still to do today" lists before "Show N more replies". */
+const REPLY_ROWS = 4;
+
+/** "Raj wrote 4 minutes ago by email. FollowUp has a reply ready. Read it, then send." */
+function focusDetail(item: ApprovalItem): string {
+  const first = item.leadName.split(" ")[0] || item.leadName;
+  const way = CHANNEL_WAY[item.leadLastMessageChannel ?? ""] ?? null;
+  const wrote = [first, "wrote", item.asked, way].filter(Boolean).join(" ");
+  // Without a reason on top, their own words say what they want.
+  const said = !item.why && item.leadLastMessage ? `: “${excerpt(item.leadLastMessage, 90)}”` : "";
+  return `${wrote}${said}${said ? "" : "."} FollowUp has a reply ready. Read it, then send.`;
+}
+
+/** One reply in "Still to do today": who, then why or what they said, and how long they have waited. */
+function replyRow(item: ApprovalItem): TodayRow {
+  const what = item.why ?? (item.leadLastMessage ? `“${excerpt(item.leadLastMessage, 48)}”` : null);
+  const wait = item.wait ? item.wait.charAt(0).toLowerCase() + item.wait.slice(1) : null;
+  return { key: item.leadId, kind: "reply", title: `Reply to ${item.leadName}`, sub: [what, wait].filter(Boolean).join(" · ") || null, time: null, href: null };
+}
+
+function excerpt(text: string, max: number): string {
+  const flat = text.replace(/\s+/g, " ").trim();
+  return flat.length > max ? `${flat.slice(0, max).trimEnd()}…` : flat;
 }

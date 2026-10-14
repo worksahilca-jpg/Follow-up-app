@@ -5,24 +5,22 @@ import SendingPausedBanner from "@/components/SendingPausedBanner";
 import CantSendNotice from "@/components/CantSendNotice";
 import { hasAnySendChannel } from "@/lib/sendChannels";
 import TestLeadButton from "@/components/TestLeadButton";
-import { getLeads, getUpcomingBookings } from "@/lib/leads-data";
+import { getLeads } from "@/lib/leads-data";
 import { aboutToBeLost } from "@/lib/rescue";
 import { getRescueReport } from "@/lib/rescued";
 import { countCustomersAnswered } from "@/lib/weeklyDigest";
 import { withBasis } from "@/lib/showTheWork";
-import { countWorkSince, resultsLine, workLine } from "@/lib/workDone";
+import { resultsLine } from "@/lib/workDone";
 import { describeWait, describeWaitClause, readyReason, startOfLocalDay, todayTier } from "@/lib/calmToday";
 import { countHandledToday } from "@/lib/handledToday";
-import { laterTodayAvailable } from "@/lib/later";
 import { loadComingUp } from "@/lib/comingUpData";
 import { medianReplyMs } from "@/lib/waitingOn";
-import { ComingUpLine } from "@/components/ComingUp";
 import { getSessionContext } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { getPendingApprovals, onTodayNow } from "@/lib/pendingApprovals";
 import { getCallsToMake } from "@/lib/calls";
 import { ordinalCall } from "@/lib/callPlan";
-import CallsToMake, { type CallCard } from "@/components/app/CallsToMake";
+import type { CallCard } from "@/components/app/CallsToMake";
 import { getIncompleteSetupSteps } from "@/lib/setupStatus";
 import { getGmailStatus } from "@/lib/integrations/gmail";
 import { getOutlookStatus } from "@/lib/integrations/outlook";
@@ -33,13 +31,13 @@ import HabitQuestion from "@/components/HabitQuestion";
 import DailyQuestion from "@/components/DailyQuestion";
 import { AlertsCard } from "@/components/app/AlertsSetup";
 import ReplyForMeCard from "@/components/app/ReplyForMeCard";
-import { GoingQuietRow, WhatFollowUpDid } from "@/components/app/TodayRows";
+import { GoingQuietRow } from "@/components/app/TodayRows";
+import { DayDone, DayNumbers, DayTomorrow, type TodayRow } from "@/components/app/TodayDay";
+import { clockTime, dayLine, dayOffset, dayProgress, doneLines, greeting, whoIsNext } from "@/lib/todayWords";
+import { oneQueue } from "@/lib/approvalGroups";
 import { replyForMeOffer } from "@/lib/replyForMeOffer";
-import { getActivityFeed } from "@/lib/activity";
-import { didToday } from "@/lib/didToday";
 import { todaysQuestion } from "@/lib/dailyQuestionData";
 import { planLine } from "@/lib/comingUp";
-import { oneQueue } from "@/lib/approvalGroups";
 import { findHabitSuggestion } from "@/lib/habits";
 
 // "last checked 2 minutes ago" — deliberately coarse (minutes/hours/days,
@@ -78,7 +76,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   // Speed (check-up #21, A-089): Today used to make eighteen database trips one after another,
   // each waiting for the last. The independent ones now go together in two rounds: everything
   // that needs only the session, then everything that needs the business's time zone.
-  const [leads, upcomingBookings, ctx] = await Promise.all([getLeads(), getUpcomingBookings(), getSessionContext()]);
+  const [leads, ctx] = await Promise.all([getLeads(), getSessionContext()]);
   // "This week" (design brain A-042, the Ramp study): customers, not
   // messages, the same count the Monday email uses.
   const weekEnd = new Date();
@@ -99,7 +97,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       : null,
     // Pause all sending, and Only admins send (A-041). The role is read here
     // rather than trusted from the session, which doesn't carry it.
-    ctx ? prisma.user.findUnique({ where: { id: ctx.userId }, select: { role: true } }) : null,
+    ctx ? prisma.user.findUnique({ where: { id: ctx.userId }, select: { role: true, name: true } }) : null,
     ctx ? getGmailStatus(ctx.businessId) : ({ connected: false } as Awaited<ReturnType<typeof getGmailStatus>>),
     ctx ? getOutlookStatus(ctx.businessId) : ({ connected: false } as Awaited<ReturnType<typeof getOutlookStatus>>),
     // "Your first reply went out through FollowUp" (A-047): only on the day
@@ -123,15 +121,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   // "Waiting 5 h" on each card and in the "Start with" line (A-046), worked
   // out here so the server and the browser show the same words.
   const now = new Date();
-  // Set aside with "Later" (A-046): off Today until it comes back.
-  const setAside = approvals.filter((a) => a.laterUntil).length;
-  const [withBasisItems, handledToday, comingUp, workDone, filteredCount, anySendChannel, instagramCount] = await Promise.all([
+  const [withBasisItems, handledToday, comingUp, filteredCount, anySendChannel, instagramCount] = await Promise.all([
     withBasis(onTodayNow(approvals), timezone, ctx?.businessId),
     ctx ? countHandledToday(ctx.businessId, startOfLocalDay(now, timezone)) : 0,
     // Who FollowUp writes to next (A-046), leaving out anyone already waiting for your OK.
     ctx && leads.length > 0 ? loadComingUp(ctx.businessId, leads, awaitingOk, timezone, now) : null,
-    // Round 2 (A-088): what FollowUp did since yesterday.
-    ctx ? countWorkSince(ctx.businessId, startOfLocalDay(new Date(now.getTime() - 24 * 60 * 60 * 1000), timezone)) : null,
     // A quiet inbox (A-088): whether FollowUp has read anything yet, so "no customers" can say what it checked.
     ctx && leads.length === 0 ? prisma.filteredEmail.count({ where: { businessId: ctx.businessId } }) : 0,
     // Nothing to send from: every rule still reads "on" in Settings, and none
@@ -169,6 +163,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     // Today's order and the reason a ready customer is on top (A-230), once, here.
     tier: todayTier(a, now),
     why: readyReason(a),
+    // "asked you by email, 2 days ago" (A-243), here for the same reason as `wait`.
+    asked: a.leadLastMessageAt ? timeAgo(a.leadLastMessageAt) : null,
     // "FollowUp told Sarah you're on it · 6:40 pm" (A-060), in the
     // business's own time, worked out here for the same reason as `wait`.
     toldAt: a.customerToldAt
@@ -180,22 +176,14 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     now,
     timezone
   );
-  // A booked call is one line under the list (A-080), only when one exists.
-  const nextCall = upcomingBookings[0]
-    ? {
-        ...upcomingBookings[0],
-        when: new Date(upcomingBookings[0].scheduledAt).toLocaleString("en-US", { weekday: "short", hour: "numeric", minute: "2-digit", timeZone: timezone }),
-      }
-    : null;
   // Round 2 (A-088). What came of the week goes to the end of the day, where the owner finishes
-  // (peak-end); the foot of a working Today says what FollowUp did since yesterday instead.
+  // (peak-end). A working Today says nothing else under the customer (A-243).
   const weekResults = resultsLine({
     heardBackMs: medianReplyMs(leads, weekStart, weekEnd),
     answered: answeredThisWeek,
     cameBack: rescue?.rescued ?? 0,
     booked: rescue?.booked ?? 0,
   });
-  const work = workDone ? workLine(workDone) : null;
   // Everyone waiting on the owner: replies for an OK, and calls to make (A-103).
   const needYou = approvalItems.length + callCards.length;
   const checkedAny = filteredCount > 0;
@@ -205,7 +193,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const holdAll = business?.holdAllForApproval ?? false;
   const isAdmin = me?.role === "ADMIN";
   // "FollowUp learns what you do" (A-099): asked of an admin only, once.
-  const habitSuggestion = ctx && isAdmin && leads.length > 0 ? await findHabitSuggestion(ctx.businessId, now) : null;
+  const habitSuggestion = ctx && isAdmin && leads.length > 0 && needYou === 0 ? await findHabitSuggestion(ctx.businessId, now) : null;
   // One question a day (A-101): only when nobody is waiting on the owner and
   // nothing else is being asked, so it never stands in front of real work.
   const dailyQuestion = ctx && isAdmin && approvalItems.length === 0 && callCards.length === 0 && !habitSuggestion ? await todaysQuestion(ctx.businessId, now) : null;
@@ -257,71 +245,146 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
   // "Let FollowUp reply for you?" (A-217, A-218): an admin, asked once, with
   // their own proof. Never on the visit the phone link opened (that visit
-  // is for alerts), so Today asks one thing at a time.
-  const offer = ctx && isAdmin && leads.length > 0 && !alertsOpen ? await replyForMeOffer(ctx.businessId) : null;
-  // The same first person the card would open on (the queue's own order).
-  const firstWaiting = oneQueue(approvalItems).flatMap((g) => g.needsYou)[0] ?? approvalItems[0] ?? null;
-  // What FollowUp did today, under an all-caught-up Today (A-220). Read only
-  // on a clear day, so a working Today pays nothing for it.
-  const did = ctx && leads.length > 0 && needYou === 0 ? didToday(await getActivityFeed(ctx.businessId), startOfLocalDay(now, timezone)) : [];
+  // is for alerts), so Today asks one thing at a time. Only once nobody is
+  // waiting (A-243): the question never stands in front of a customer.
+  const offer = ctx && isAdmin && leads.length > 0 && needYou === 0 && !alertsOpen ? await replyForMeOffer(ctx.businessId) : null;
+
+  // The owner's whole day (A-244, R-114): calls booked for today and
+  // tomorrow, what got booked today, and how many customers FollowUp wrote
+  // to today. Every time is said on the owner's own clock.
+  const dayStart = startOfLocalDay(now, timezone);
+  const [nearBookings, bookedToday, wroteForToday] = ctx && leads.length > 0
+    ? await Promise.all([
+        prisma.booking.findMany({
+          where: { businessId: ctx.businessId, status: "confirmed", scheduledAt: { gte: now, lt: new Date(dayStart.getTime() + 50 * 60 * 60 * 1000) } },
+          select: { id: true, leadId: true, scheduledAt: true, durationMinutes: true, lead: { select: { name: true } } },
+          orderBy: { scheduledAt: "asc" },
+          take: 20,
+        }),
+        prisma.booking.findMany({
+          where: { businessId: ctx.businessId, status: "confirmed", createdAt: { gte: dayStart } },
+          select: { scheduledAt: true, lead: { select: { name: true } } },
+          orderBy: { createdAt: "desc" },
+          take: 3,
+        }),
+        prisma.followUp.findMany({
+          where: { automated: true, status: "sent", sentAt: { gte: dayStart }, lead: { businessId: ctx.businessId } },
+          select: { leadId: true },
+          distinct: ["leadId"],
+        }),
+      ])
+    : [[], [], []];
+  const bookingRow = (b: (typeof nearBookings)[number]): TodayRow => ({
+    key: `booking-${b.id}`,
+    kind: "booking",
+    title: `Call with ${b.lead.name}`,
+    sub: `Booked through your booking link · ${b.durationMinutes} min`,
+    time: clockTime(b.scheduledAt, timezone),
+    href: `/leads/${b.leadId}`,
+  });
+  const bookingsToday = nearBookings.filter((b) => dayOffset(b.scheduledAt, now, timezone) === 0);
+  const bookingsTomorrow = nearBookings.filter((b) => dayOffset(b.scheduledAt, now, timezone) === 1);
+  // Calls to make (A-103) as rows: the customer's page has the call and its buttons.
+  const callRows: TodayRow[] = callCards.map((c) => ({
+    key: `call-${c.leadId}`,
+    kind: "call",
+    title: `Call ${c.name}`,
+    sub: c.last ?? "Nobody has called yet.",
+    time: null,
+    href: `/leads/${c.leadId}`,
+  }));
+  // FollowUp's own check-ins tomorrow (A-046's coming up), as one row: nothing for the owner to do.
+  const checkInsTomorrow = comingUp?.groups.find((g) => g.day === "Tomorrow")?.items ?? [];
+  const tomorrowRows: TodayRow[] = [
+    ...bookingsTomorrow.map(bookingRow),
+    ...(checkInsTomorrow.length > 0
+      ? [
+          {
+            key: "checkins",
+            kind: "checkin" as const,
+            title: `FollowUp checks in with ${checkInsTomorrow.length} ${checkInsTomorrow.length === 1 ? "customer" : "customers"}`,
+            sub: `${whoIsNext(checkInsTomorrow.map((c) => c.name))}. Nothing for you to do.`,
+            time: null,
+            href: "/coming-up",
+          },
+        ]
+      : []),
+  ];
+  const tomorrowDate = new Intl.DateTimeFormat("en-US", { timeZone: timezone, weekday: "long", month: "short", day: "numeric" }).format(
+    new Date(dayStart.getTime() + 36 * 60 * 60 * 1000)
+  );
+  const bookedWhen = (at: Date) => {
+    const day = dayOffset(at, now, timezone);
+    const time = clockTime(at, timezone);
+    if (day === 0) return `today at ${time}`;
+    if (day === 1) return `tomorrow at ${time}`;
+    return `${new Intl.DateTimeFormat("en-US", { timeZone: timezone, weekday: "short", month: "short", day: "numeric" }).format(at)} at ${time}`;
+  };
+  const done = doneLines({
+    handled: handledToday,
+    wroteFor: wroteForToday.length,
+    booked: bookedToday.map((b) => ({ name: b.lead.name, when: bookedWhen(b.scheduledAt) })),
+  });
+  const progress = dayProgress(handledToday, approvalItems.length + callCards.length + bookingsToday.length);
+  // Who to start with: the first reply in Today's order (A-230), else the first call.
+  const firstUp = oneQueue(approvalItems).flatMap((g) => g.needsYou)[0]?.leadName ?? callCards[0]?.name ?? null;
+  const firstUpName = firstUp ? firstUp.split(" ")[0] || firstUp : null;
+  const numbers = (
+    <DayNumbers replies={approvalItems.length} calls={callCards.length} booked={bookingsToday.length} progress={progress} />
+  );
 
   return (
     <div>
-      {/* The greeting and the one computed sentence under it, in the app's
-          one page-header shape. This used to sit inside a bordered box with
-          an animated colour wash behind it — the last coloured ornament in
-          the app, retired with the move to the monochrome system
-          (2026-09-19). A working tool people open twenty times a day does
-          not need a hero. */}
-      {/* The canvas Today header (TodayCalm): the date, then one sentence
-          that says how many people are waiting on the owner. */}
+      {/* The owner's day (A-244): the date, a greeting on their own clock,
+          and who to start with. A brand-new account gets a sentence instead
+          (#301): "No customers yet." */}
       <div className="text-[12.5px] text-ink-faint">
         {new Intl.DateTimeFormat(undefined, { timeZone: timezone, weekday: "long", month: "long", day: "numeric" }).format(now)}
       </div>
-      {/* One number, then the words (A-220), at phone sizes (R-107). */}
       {sentence ? (
         <h1 className="title-serif mt-1 text-[28px] leading-[1.15] sm:text-[32px]">{sentence}</h1>
       ) : (
-        // The homepage's display face, its italic phrase in green (A-221).
-        <h1 className="title-serif mt-0.5 flex items-baseline gap-2.5">
-          <span className="text-[38px] leading-none tabular-nums sm:text-[44px]">{needYou}</span>
-          <span className="text-[19px] leading-tight sm:text-[22px]">
-            {needYou === 1 ? "customer" : "customers"} <em>{needYou === 1 ? "needs you" : "need you"}</em>
-          </span>
-        </h1>
+        <>
+          <h1 className="title-serif mt-0.5 text-[28px] leading-[1.15] sm:text-[32px]">{greeting(now, timezone, me?.name)}</h1>
+          <p className="mt-1.5 text-[16px] leading-snug text-ink-soft">{dayLine(firstUpName, needYou + bookingsToday.length > 0)}</p>
+        </>
       )}
 
-      {/* Everything under the headline is one column: on a phone the cards run
-          a little wider than the text (12px from the edge, A-220); on a computer
-          it stays one reading width, so Today reads as one decision at a time. */}
-      <div className="-mx-2 sm:mx-0 sm:max-w-[640px]">
-      <div className="min-w-0">
+      {/* On a phone one column, the cards a little wider than the text (12px
+          from the edge, A-220). On a computer two columns (A-244): the work
+          on the left; the day in numbers, tomorrow and what's done on the right. */}
+      <div className={`-mx-2 sm:mx-0 ${leads.length > 0 ? "lg:max-w-[1040px]" : "sm:max-w-[640px]"}`}>
       {sendingPaused && <SendingPausedBanner canResume={isAdmin} />}
       {cantSend && (
         <CantSendNotice reconnectEmail={"needsReconnect" in gmail && gmail.needsReconnect ? (gmail.email ?? "your inbox") : null} />
       )}
       {firstValue && <FirstValueNote title={firstValue.title} body={firstValue.body} />}
+      {leads.length > 0 && <div className="mt-5 lg:hidden">{numbers}</div>}
+      <div className={leads.length > 0 ? "mt-5 lg:grid lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] lg:items-start lg:gap-8" : "mt-3.5 sm:mt-5"}>
+      <div className="min-w-0">
       {/* A buzz on the owner's phone when a customer needs them (A-216): shown
           until this device has alerts on, or "Not now". Not on the visit
-          that asks the one-time question below: one question at a time. */}
-      {!offer && <AlertsCard open={alertsOpen} />}
-      {/* One decision per screen (A-080): the queue is the page. The
-          Coming up card went; automated check-ins live on their own page,
-          and a booked call is the one line below. */}
-      <div className="mt-3.5 sm:mt-5">
-      {/* With no customers at all, the box below says what FollowUp checked; a second
-          "Nothing needs your OK" card above it said the same thing twice (A-088). */}
-      {/* Calls to make first, as drawn (A-103): on a team that calls customers the call is the job. The first Call is black only when no reply below has the black Send. */}
-      {callCards.length > 0 && <CallsToMake items={callCards} firstIsPrimary={approvalItems.length === 0} />}
-      {leads.length > 0 && (approvalItems.length > 0 || callCards.length === 0) && (() => {
+          that asks the one-time question below: one question at a time.
+          Not above a waiting customer either (A-243), except on the visit
+          the phone link opened, which is for alerts. */}
+      {!offer && (needYou === 0 || alertsOpen) && <div className="mb-4"><AlertsCard open={alertsOpen} /></div>}
+      {/* Do this first, then everything still to do today (A-244). With no
+          customers at all, the box below says what FollowUp checked. */}
+      {leads.length > 0 && (() => {
         const queue = (
-          <ApprovalQueue items={approvalItems} plan={approvalItems.length === 0 && comingUp ? planLine(comingUp.groups) : null} weekResults={weekResults} answeredForYou={rescue?.answeredForYou ?? 0} sendLocked={sendLocked} handledToday={handledToday} laterToday={laterTodayAvailable(now, timezone)} setAside={setAside} holdAll={holdAll} />
+          <ApprovalQueue
+            items={approvalItems}
+            rows={[...callRows, ...bookingsToday.map(bookingRow)]}
+            plan={approvalItems.length === 0 && comingUp ? planLine(comingUp.groups) : null}
+            weekResults={weekResults}
+            answeredForYou={rescue?.answeredForYou ?? 0}
+            sendLocked={sendLocked}
+            handledToday={handledToday}
+            holdAll={holdAll}
+          />
         );
         return offer ? (
-          <ReplyForMeCard
-            proof={offer}
-            first={firstWaiting ? { leadId: firstWaiting.leadId, name: firstWaiting.leadName, words: firstWaiting.leadLastMessage?.replace(/\s+/g, " ") ?? null } : null}
-          >
+          <ReplyForMeCard proof={offer} first={null}>
             {queue}
           </ReplyForMeCard>
         ) : (
@@ -329,37 +392,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         );
       })()}
 
-      {/* Going quiet, as one row (A-220: Today never shows a list). Anyone
-          already waiting above is left out (A-046, once each). */}
+      {/* Going quiet, as one row. Anyone already waiting above is left out (A-046, once each). */}
       {atRisk.length > 0 && <GoingQuietRow first={{ id: atRisk[0].id, name: atRisk[0].name, reason: atRisk[0].rescue.reason }} total={lost.total} />}
-      <WhatFollowUpDid items={did} />
 
-      {isAdmin && <HabitQuestion suggestion={habitSuggestion} />}
+      {isAdmin && needYou === 0 && <HabitQuestion suggestion={habitSuggestion} />}
       {isAdmin && <DailyQuestion question={dailyQuestion} />}
-
-      {nextCall && (
-        <p className="mt-6 text-sm text-ink-soft">
-          Booked call ·{" "}
-          <Link href={`/leads/${nextCall.leadId}`} className="font-medium text-ink hover:underline">
-            {nextCall.leadName}
-          </Link>
-          , {nextCall.when}
-          {upcomingBookings.length > 1 && (
-            <>
-              {" · "}
-              <Link href="/coming-up" className="hover:underline">
-                {upcomingBookings.length - 1} more
-              </Link>
-            </>
-          )}
-        </p>
-      )}
-      {/* On a quiet Today the plan is in the card above, by name (#2), so the count line would say it twice. */}
-      {comingUp && comingUp.total > 0 && approvalItems.length > 0 && (
-        <ComingUpLine first={{ day: comingUp.groups[0].day, count: comingUp.groups[0].items.length }} total={comingUp.total} />
-      )}
-      {/* Room under the last thing on a phone, so the bar of Send, Edit and Later (A-222) never covers it. */}
-      {leads.length > 0 && approvalItems.length > 0 && <div aria-hidden="true" className="h-16 lg:hidden" />}
 
       {leads.length === 0 ? (
         <div className="mt-10">
@@ -509,19 +546,16 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               )}
             </>
           )}
-
-          {/* What FollowUp did since yesterday, in one quiet line at the foot
-              of a working Today (A-088, the labour illusion); it opens
-              Numbers. The week's results moved to the end of the day.
-              Desktop only (R-015). */}
-          {work && approvalItems.length > 0 && (
-            <Link href="/analytics" className="mt-6 hidden max-w-[400px] text-sm leading-relaxed text-ink-soft tabular-nums hover:text-ink sm:block">
-              {work}
-            </Link>
-          )}
         </>
       )}
       </div>
+      {leads.length > 0 && (
+        <div className="mt-9 flex flex-col gap-8 lg:mt-0">
+          <div className="hidden lg:block">{numbers}</div>
+          <DayTomorrow date={tomorrowDate} rows={tomorrowRows} />
+          <DayDone lines={done} />
+        </div>
+      )}
       </div>
       </div>
     </div>

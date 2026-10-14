@@ -1459,3 +1459,33 @@ let them in and judge again when they say more (A-239).
 **Fixed (PR #497):** the line now says an emoji "proves nothing either way" and tells the judge never to decide from
 it. Three buyer cases joined the Instagram accuracy test: 😍 then "Is this one still available?", 🔥🔥 then "how much
 is this one", and 😍 then "Bhai ye ghar kitne ka hai?".
+
+## R-113 — Today as a reply card with labels and several quiet actions ^R-113
+
+**Rejected:** 2026-10-13, founder, on the drawing of a "simpler Today" (customer first, the green "YOUR REPLY, READY"
+box, Send · Edit · Later, then "Don't send · Already spoke", a "Next · 3 more" row, and the reply-for-you question as
+one line below). He said: *"this looks complex how do i get to know what to do"*.
+**What failed:** the screen shows parts (a label, a box, five actions, a row) but never says what to do. An owner
+opening it for the first time can't tell that the green box is a reply waiting for them, or which of five words is
+the one to press. Moving things around without saying the task in words still left him guessing.
+**Principle:** Today tells the owner what to do, in a plain sentence, before showing anything to act on ("Omar asked
+about condos. Read the reply FollowUp wrote, then press Send."). One main action, one way to change it, everything
+else out of sight. Labels like "YOUR REPLY, READY", and actions like "Later", "Don't send" and "Already spoke" side by
+side, read as a tool for experts, not a to-do.
+**Do not propose again:** rearranging the same card and its five actions, or a quieter version of it, as the answer to
+"simple". **Would need to change:** nothing; the task sentence and one action come first, whatever the look.
+
+## R-114 — Today as a count and one reply card ^R-114
+
+**Rejected:** 2026-10-14, founder, on the built A-243 Today ("5 customers are waiting for you", "Reply to them one at
+a time. Start with Omar.", one reply card, "After Omar: Ivy, Aman and 2 more."). He had approved its drawing the day
+before. Seeing it as the whole page, he said: *"Why are just 5 customers waiting for you? What the hell is that, and
+what is he going to do with that? ... How many calls do I need to do? How many meetings do I have to do? Everything
+should be on today's page."*
+**What failed:** the page showed one task (replies) and a number, and nothing about the rest of the owner's day: calls
+to make, viewings and meetings booked, progress, tomorrow. An owner can't plan a day from it, so there is no reason to
+open it again and again.
+**Principle:** Today is the owner's whole day on one page (brand-principles, 2026-10-14). The plain card from A-243
+(their words, the reply, Send) can live inside it; it can't be all of it.
+**Do not propose again:** Today as a headline count plus a single queue, in any styling. Hiding calls, meetings or
+tomorrow behind other pages.

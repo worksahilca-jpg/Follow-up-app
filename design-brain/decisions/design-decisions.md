@@ -12491,3 +12491,77 @@ customer in the last 48 hours came by DM. Drawn on the real app (phone, before a
   - "How long have you been a realtor?" got "I'm with the realtor side here, and I'll confirm that for you." The owner
     never describes themselves as a side or a role now, and how long the owner has done this work joins the plain
     questions that get the answer blank (A-100): the owner fills it in once and FollowUp knows it after.
+
+## 2026-10-13 — Today, "make it very simple" (in progress)
+
+Founder: *"we need to fix today's page too, we need to make it very simple"*, with a screenshot of his own Today: "24
+customers need you", then a big "Let FollowUp reply for you?" box, one customer as a closed row, "Going quiet", and
+"Since yesterday…". Found: the question hid all 24 customers (the card waits behind it, as A-218 was drawn), and the
+one row had no reply and no Send.
+- **Drawing 1 (rejected, R-113):** the customer first with the reply and Send, "Next · 3 more", the two questions as
+  small lines below, "Held for approval" and "Based on…" removed. His answer: *"this looks complex how do i get to know
+  what to do"*. The page still never said what to do.
+- **Next:** drawing 2 leads with a plain instruction and one action.
+- **Drawing 2 (approved, A-243, 2026-10-14):** the headline says how many are waiting and who to start with; the card
+  says in words who asked, what FollowUp wrote, and what to press; Send to Omar, Change it, Skip for now; "After Omar:
+  Ivy, Aman and 2 more." His answer: *"Yes, build this"*. Being built; it goes out with the next merge, after the
+  Vercel bill is paid.
+- **Built (2026-10-14),** checked in a real browser at 390x844 and 1280x900 with five made-up customers: the working
+  Today, after "Skip for now", while changing a reply, and with nobody waiting. Choices made while building:
+  - The top line moves with the owner: "Reply to them one at a time. Start with Ivy." after a skip, "Reply to Omar,
+    then you're done." for the last one, and "Sent to Omar. Now Ivy." for a moment after a send.
+  - "asked you" only when their message has a question mark; otherwise "wrote". A-230's reason still leads the line
+    when there is one ("Wants to book · Raj Malhotra asked you on Instagram, 4 minutes ago:").
+  - "Skip for now" is for this visit only: nothing is saved, so they are first again next time. Later (a set time)
+    stays in Customers (swipe) and on the customer's page.
+  - Orange-dot check lines (a price to check, a real-person question) stay: they say what to check, in words.
+- **Weak spots, honestly:** while changing a reply on a phone, Send sits below the fold under the tall text box (one
+  scroll). The "After" line shows an Instagram handle as it is ("@aman.condos"). The headline count is worked out when
+  the page loads, so it does not count down as the owner sends.
+
+## 2026-10-13 — Booking in the chat, with the owner confirming (A-242)
+
+The founder asked for every Appointwise feature, then what they do that FollowUp doesn't, then whether one or two are
+worth copying. One: booking inside the chat. He then asked two questions: what if the owner uses another calendar, and
+what if the realtor is not free and the calendar does not show it? That second one decided the design. FollowUp
+offers times, the owner confirms, then it is booked.
+- **Drawn first** on the real app (fonts and tokens of /dashboard), four phones in a row: the chat, the buzz, the
+  confirm screen, booked with the calendar entry. Approved: *"Yes, this is it"*.
+- **Honest weak spots:** the confirm screen has empty space between the sentence and the buttons on a tall phone
+  (fine for the thumb, plain to the eye). Step 1 sends the times by itself only when "reply for me" is on; with it
+  off it costs a second tap. Outlook has no calendar access yet, so Outlook owners get times from booking hours only.
+- **Already in the code:** booking hours, Google Calendar free/busy and calendar event creation (`lib/booking.ts`,
+  `lib/integrations/gmail.ts`). Missing: offering times inside a DM, the "picked a time" buzz and confirm screen, and
+  "Another time".
+- **Then asked** which other Appointwise features fit. Three did: change or cancel in the chat (added to November,
+  *"Yes, add it"*), CRM labels and "try it first" (both wait for testers). Already in FollowUp: replying in the
+  customer's language, follow-ups, qualifying questions. Not fitting: split tests, money dashboards, agency accounts.
+- **Next:** build in November with Stage 2.
+
+## 2026-10-14 — Today must be the owner's whole day (R-114)
+
+Seeing the built A-243 Today, the founder rejected it as the whole page: a count and one reply card tell an owner
+nothing about calls, viewings, progress or tomorrow. Today has to be the page they reopen all day: what to focus on,
+everything to do today, how far through the day they are, what's next. Results stays what FollowUp did; Customers
+stays everyone. The A-243 build (commit 8c31f76, branch only, never merged) is not going live as it is.
+- **Next:** draw a whole-day Today on the real app, phone and computer, from data the app already has: replies
+  waiting, calls to make (A-103), booked calls and viewings, FollowUp's planned check-ins (coming up), handled today,
+  going quiet.
+- **Drawn and approved (A-244, 2026-10-14):** greeting, the day in numbers, progress, Do this first, Still to do
+  today, Tomorrow, Done today. *"Yes, build this"*. Not known by the app yet: a viewing's address and a time a customer
+  asked to be called; those lines show without them until booking is built (A-242).
+- **Built (A-244, 2026-10-14),** checked in a real browser at 390x844 and 1280x900 with made-up customers and two
+  booked calls (today and tomorrow): the day, "Reply to Omar" opening the reply card inside "Do this first", and a row
+  in "Still to do today" bringing Lucía up. All 3,746 tests pass. Choices made while building:
+  - "Do this first" says only what FollowUp knows: the A-230 reason ("Raj Malhotra wants to book.") or "is waiting for
+    your reply" with their own words quoted. No guessed summary.
+  - The third number is "booked for today" (calls booked through the booking link) until viewings come with A-242.
+  - Calls to make are rows that open the customer's page, where the call buttons are.
+  - "Still to do today" shows four other replies, then "Show N more replies".
+  - Black edge set directly on the box: the `border-ink` class came out grey.
+- **Fixed the same day (founder: *"Yes, fix it now"*):** the numbers, the bar, "Done today" and "Start with" now update
+  after every send, without a reload (Today fetches its server data again; the open card stays). Checked: 5 → 4
+  replies, 0 → 1 of 6 done, the next customer opened.
+- **Weak spots, honestly:** A team that calls customers now needs one more tap to reach No answer / Spoke. The
+  made-up data had every customer "quiet", so the order looked oldest-first; real new customers rank above (A-230).
+

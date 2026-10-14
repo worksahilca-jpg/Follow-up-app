@@ -203,6 +203,10 @@ video don't obviously match up.
 
 ## 3. Meta App Review — Facebook Messenger + Lead Ads
 
+**Superseded (2026-10-13)** by the full pack in
+`research/integrations/2026-10-13-meta-messenger-lead-ads-submission.md` (written answers per permission,
+pre-flight, one video per permission, current screens). The outline below is kept for history.
+
 **Permissions to request:** `pages_show_list`, `pages_messaging`,
 `pages_manage_metadata`, `pages_read_engagement`, `leads_retrieval` (with
 `business_management` as the stated dependency for all of them under Facebook

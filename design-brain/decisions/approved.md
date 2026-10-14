@@ -4015,3 +4015,70 @@ Instagram or Gmail"*, then *"Build it"* on the drawing (phone, before and after)
   connected they say Instagram or email, not email alone.
 - **Words:** the Instagram, Messenger and WhatsApp setup text says "becomes a customer", not "a lead".
 - Supersedes A-081's Gmail-only step 1.
+
+## A-242 — Booking in the chat: FollowUp offers times, the owner confirms ^A-242
+
+**Approved:** 2026-10-13, founder (*"Yes, this is it"*), on a four-step drawing made inside the real app. Came out of
+studying Appointwise: the one feature worth taking is booking inside the conversation. Their AI books on its own; the
+founder then asked what happens if the realtor is not free and the calendar does not show it. Answer: FollowUp never
+confirms a time on its own.
+- **Step 1, the chat:** the customer asks for a viewing. FollowUp offers two times inside the owner's booking hours and
+  free in their calendar ("I can do Saturday at 11am or Sunday at 2pm. Which works for you?"). When the customer picks
+  one, FollowUp says it will confirm and get right back. It never says "booked" yet.
+- **Step 2, the buzz:** one line: who, when, where ("Raj wants Saturday at 11am · Viewing at 12 Elm St. Your calendar
+  is free. Tap to confirm.").
+- **Step 3, confirm:** "Raj picked a time", a box with what, day, time and "✓ Your calendar is free then", one
+  sentence ("If you can make it, press Confirm. If not, pick another time and FollowUp tells Raj."), one black button
+  "Confirm Saturday 11 AM", an outlined "Another time", a quiet link "I'll call Raj instead".
+- **Step 4, booked:** only after Confirm does the customer get the time and place, and the viewing goes into the
+  owner's Google Calendar.
+- **Who sends step 1:** with "reply for me" on, the time offer goes out by itself (A-236's simple steps). With it off,
+  the owner OKs that message too, so two taps instead of one.
+- **When:** built in November with Stage 2 (A-236), not before.
+- **Change or cancel in the chat** (added 2026-10-13, founder: *"Yes, add it"*): when the customer asks to move or
+  cancel, FollowUp offers new free times and the owner confirms again on the same screen. Part of the November build.
+  Also considered from Appointwise and left until testers ask: labels in the CRM from what the customer said, and
+  "try it first" (the owner writes as a customer and sees the reply before turning on "reply for me").
+- Not chosen: FollowUp booking a time by itself (Appointwise's way). A calendar can be empty while the realtor is
+  busy, so a person confirms every booking.
+
+## A-243 — Today says what to do: one customer, one sentence, one black button ^A-243
+
+**PARTLY SUPERSEDED (2026-10-14)** by R-114 and the brand principle "Today is the owner's whole day on one page": the
+count-plus-one-card page is rejected as the whole of Today. What may survive inside a fuller Today: the reply card in
+words (who asked, their words, "FollowUp wrote this reply for you:", Send to Omar / Change it / Skip for now).
+
+**Approved:** 2026-10-14, founder (*"Yes, build this"*), on drawing 2 of "make Today very simple", made inside the real
+app, phone and computer. Drawing 1 was rejected as R-113 (*"how do i get to know what to do"*).
+- **Headline:** the number, then "customers are waiting for you" (was "need you"), then one plain line: "Reply to them
+  one at a time. Start with Omar."
+- **The customer, in words:** "**Omar Haddad** asked you by email, 2 days ago:" (A-230's reason, when there is one,
+  leads the line: "Wants to book · …"), then their message in a grey bubble, the biggest text on the screen.
+- **The reply, in words:** "FollowUp wrote this reply for you:" over the reply on the green wash. No mono label.
+- **What to do, in words:** "If it looks right, press **Send**. To change a word, press **Change it**."
+- **Actions:** one black "Send to Omar", an outlined "Change it", a quiet "Skip for now". Under the reply, not in a bar
+  at the foot of the phone, so the sentence and the buttons sit together (supersedes A-222 for Today's card).
+- **Who's next:** one plain line, "After Omar: Ivy, Aman and 2 more." No "Next" row, no "Older" row.
+- **Out of sight while anyone waits:** the "Let FollowUp reply for you?" question (asked once, now when nobody is
+  waiting, so it never blocks a customer), the phone-buzz box, the "Since yesterday" line, "Based on…", and the rarer
+  ways out ("Don't send", "Already spoke", "Later"), which stay on the customer's own page.
+
+## A-244 — Today is the owner's whole day ^A-244
+
+**Approved:** 2026-10-14, founder (*"Yes, build this"*), on a drawing made inside the real app, phone and computer, after
+R-114 (*"Today is the gist of everything ... How many calls do I need to do? How many meetings?"*).
+- **Greeting:** the date, "Good evening, Priya.", then "Here is your day. Start with Raj."
+- **Your day in numbers:** one box, three columns: replies to send, calls to make, viewings today.
+- **Progress:** "3 of 11 done today · 8 to go", with a thin green bar (done is sage).
+- **Do this first:** one box with a black edge: what the most urgent customer wants, in a sentence ("Raj Malhotra wants
+  to book a viewing this Saturday."), when and how they wrote, and one black button "Reply to Raj".
+- **Still to do today:** one list, every reply, call and viewing, each a row with an icon (message, phone, calendar),
+  what to do ("Reply to Omar Haddad", "Call Mei Chen", "Viewing with the Singh family"), one line of why, and a time on
+  the right when there is one, otherwise a chevron.
+- **Tomorrow:** the next day's viewings and calls with times, and "FollowUp checks in with 3 customers. Nothing for you
+  to do."
+- **Done today:** ticks: what the owner sent, what FollowUp answered for them, what got booked.
+- **Computer:** two columns: Do this first and Still to do on the left; numbers, progress, Tomorrow and Done on the
+  right. **Phone:** one column in the order above.
+- Results stays what FollowUp did; Customers stays everyone. Supersedes A-220's "Today never shows a list" and A-243 as
+  the whole page.

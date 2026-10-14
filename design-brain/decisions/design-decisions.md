@@ -12714,3 +12714,6 @@ screenshot: the scores are certain, the details in brackets are best readings.
   - Not yet explained, waiting for a readable rerun: two drafts broke the "no invented days" rule twice (held, never
     sent alone), one read like a template, and the family-move reply may have placed the search in the city they're
     leaving.
+- **The second try is told what was wrong** (founder, same day: "Yes, add it"). A DM that breaks a rule is written
+  once more, as before, but the retry now hears which rule and how to fix it ("It named a day nobody in this
+  conversation mentioned…"), instead of the same request again. Fewer drafts end up held for the owner to fix.

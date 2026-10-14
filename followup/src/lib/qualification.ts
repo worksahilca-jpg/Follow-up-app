@@ -186,7 +186,7 @@ const REALTOR: Criterion[] = [
   {
     key: "kind",
     label: "Wants",
-    find: "the kind of home they want: a type, a size or a number of bedrooms, e.g. '2-bed condo' or 'detached with a yard'",
+    find: "the kind of home they want to buy or rent: a type, a size or a number of bedrooms, e.g. '2-bed condo' or 'detached with a yard'. Never the home they are selling",
     ask: "what kind of place they are after",
   },
   {
@@ -211,7 +211,7 @@ const REALTOR: Criterion[] = [
   {
     key: "home",
     label: "Home",
-    find: "the address, or the specific property, they want to sell",
+    find: "the address, or the specific property, of a home they OWN and want to sell. A listing they want to buy or see is never this",
     ask: "the address of the home they want to sell",
   },
   {
@@ -236,12 +236,15 @@ const REALTOR: Criterion[] = [
     key: "visit",
     label: "Home visit",
     find:
-      "a specific day or time they agreed to, or proposed, for the business to come and see their home or meet about selling it. Known only when THEY said yes to a time or named one",
+      "a specific day or time a SELLER agreed to, or proposed, for the business to come and see the home they own or meet about selling it. Known only when THEY said yes to a time or named one. A buyer's time to see a listing is a viewing, never this",
     ask: "whether they would like you to come by and give them a real number, as an open question; never suggest a day or time yourself",
   },
 ];
 
 const KEYS: readonly CriterionKey[] = REALTOR.map((c) => c.key);
+/** Items that only make sense for someone selling a home they own, and for someone buying or renting one. */
+const SELLER_ONLY: readonly CriterionKey[] = ["home", "why", "condition", "price", "visit"];
+const BUYER_ONLY: readonly CriterionKey[] = ["kind", "viewing", "financing", "budget"];
 const isKey = (k: unknown): k is CriterionKey => typeof k === "string" && (KEYS as readonly string[]).includes(k);
 
 const TEMPLATES: Record<string, Template> = {
@@ -430,7 +433,20 @@ export function mergeQualification(
   const prev = new Map((same?.items ?? []).map((i) => [i.key, i]));
   const found = new Map((extracted ?? []).map((e) => [e.key, e]));
   const items: QualItem[] = [];
+  // Buying and selling items never mix (accuracy test 2026-10-14: a
+  // buyer's "Is 31 Elm still for sale?" came back as a home to sell). Once
+  // the side is known, an item that only belongs to the other side is
+  // dropped, whatever its quote. "both" keeps everything.
+  const sideItem = found.get("side");
+  const sideBucket =
+    sideItem?.known && sideItem.bucket && sideItem.value.trim() && isCustomerQuote(sideItem.quote, texts)
+      ? sideItem.bucket
+      : prev.get("side")?.bucket;
+  const offSide = new Set<CriterionKey>(
+    sideBucket === "buy" || sideBucket === "rent" ? SELLER_ONLY : sideBucket === "sell" ? BUYER_ONLY : []
+  );
   for (const c of template.criteria) {
+    if (offSide.has(c.key)) continue;
     const e = found.get(c.key);
     const value = e?.value.trim().slice(0, MAX_VALUE) ?? "";
     if (e?.known && value && isCustomerQuote(e.quote, texts)) {

@@ -133,6 +133,26 @@ describe("merging what was read into what was known", () => {
     expect(after.items.find((i) => i.key === "budget")?.value).toBe("Up to $950k");
   });
 
+  it("never mixes buying and selling items once the side is known", () => {
+    const buyer = q([SIDE, AREA, known("home", "3 bed on Elm St", "the 3 bed on Elm St"), known("visit", "Saturday morning", "Saturday morning works")]);
+    expect(buyer.items.map((i) => i.key)).toEqual(["side", "area"]);
+    const st = ["We want to sell our townhouse at 12 Oak Cres, hoping for 1.2M"];
+    const seller = q(
+      [
+        known("side", "Selling", "We want to sell our townhouse", "sell"),
+        known("home", "12 Oak Cres", "12 Oak Cres"),
+        known("kind", "Townhouse", "our townhouse"),
+        known("budget", "About $1.2M", "hoping for 1.2M"),
+        known("price", "About $1.2M", "hoping for 1.2M"),
+      ],
+      {},
+      st
+    );
+    expect(seller.items.map((i) => i.key)).toEqual(["side", "home", "price"]);
+    // A side learned earlier still guards a later read.
+    expect(mergeQualification(realtor, buyer, [known("home", "3 bed on Elm St", "the 3 bed on Elm St")], texts).items.map((i) => i.key)).toEqual(["side", "area"]);
+  });
+
   it("caps a long summary", () => {
     expect(q([{ ...AREA, value: "x".repeat(200) }]).items[0].value).toHaveLength(80);
   });
@@ -359,6 +379,9 @@ describe("the reader", () => {
     expect(call.temperature).toBe(0);
     const system = call.messages[0].content as string;
     expect(system).toContain("Today is Thursday, October 1, 2026");
+    expect(system).toContain('"soon" means on or before January 1, 2027');
+    expect(system).toContain("after April 1, 2027");
+    expect(system).toContain("A listing or address they want to buy, rent or see is area, never home");
     expect(system).toContain('"soon" = within about 3 months');
     expect(system).toContain('"has" = they are already working with');
     expect(system).toContain("in the language they wrote in, never translated");

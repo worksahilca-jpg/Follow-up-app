@@ -35,7 +35,8 @@ import { getPendingApprovals, type PendingApproval } from "@/lib/pendingApproval
 import { prisma } from "@/lib/db";
 import type { Lead, Message } from "@/lib/types";
 import { isWaitingOnCustomer } from "@/lib/waitingOn";
-import { plainHoldReason } from "@/lib/holdReasons";
+import { IN_CRM_REASON, plainHoldReason } from "@/lib/holdReasons";
+import { CRM_PROVIDERS, isCrmProvider } from "@/lib/crm";
 import CallBox from "@/components/app/CallBox";
 import { isCallablePhone, telHref } from "@/lib/callPlan";
 import { displayChannel } from "@/lib/displayChannel";
@@ -63,14 +64,21 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
   // who this is and why it's here, the conversation, then the reply.
   // Everything else about the customer sits below, under "More about".
   const ctx = await getSessionContext();
-  const [approval, business, checklist, rules] = ctx
+  const [approval, business, checklist, rules, crmConn] = ctx
     ? await Promise.all([
         getPendingApprovals(ctx.businessId).then((all) => all.find((a) => a.leadId === lead.id) ?? null),
         prisma.business.findUnique({ where: { id: ctx.businessId }, select: { timezone: true, teamCalls: true, industry: true } }),
-        prisma.lead.findFirst({ where: { id: lead.id, businessId: ctx.businessId }, select: { qualification: true, qualifiedAt: true } }),
+        prisma.lead.findFirst({ where: { id: lead.id, businessId: ctx.businessId }, select: { qualification: true, qualifiedAt: true, crmProvider: true } }),
         getBusinessAutomationRules(ctx.businessId),
+        prisma.crmConnection.findUnique({ where: { businessId: ctx.businessId }, select: { provider: true } }),
       ])
-    : [null, null, null, null];
+    : [null, null, null, null, null];
+  // "In Follow Up Boss" (A-252): only while the business is still connected to the CRM this customer came from.
+  const crmProvider = checklist?.crmProvider ?? null;
+  const crm =
+    crmProvider && isCrmProvider(crmProvider) && crmConn?.provider === crmProvider
+      ? { name: CRM_PROVIDERS[crmProvider].label, watching: approval?.reason === IN_CRM_REASON }
+      : null;
   const timeZone = business?.timezone ?? "America/New_York";
   const basis = lead.suggestedMessage
     ? describeBasis({
@@ -248,7 +256,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
         }
       >
         {standing && <div className="hidden lg:block">{standing}</div>}
-        <Facts lead={lead} approval={approval} now={now} />
+        <Facts lead={lead} approval={approval} now={now} crm={crm} />
 
         {/* Three pills, as drawn. The third is Call when there is a number
             to call, and Email (their own mail app) when there isn't, so
@@ -346,7 +354,7 @@ const TIER_WORDS: Record<string, string> = { off: "You do it", assisted: "Ask if
  * waits), how long, and where they came from. Label above value, as the
  * board draws them; the needs-you reason carries the one coloured dot.
  */
-function Facts({ lead, approval, now }: { lead: Lead; approval: PendingApproval | null; now: Date }) {
+function Facts({ lead, approval, now, crm }: { lead: Lead; approval: PendingApproval | null; now: Date; crm: { name: string; watching: boolean } | null }) {
   const lastIn = lastInbound(lead.conversation);
   const first = lead.name.split(" ")[0] ?? lead.name;
   const kind = lead.automationStatus?.kind;
@@ -382,6 +390,20 @@ function Facts({ lead, approval, now }: { lead: Lead; approval: PendingApproval 
       <Fact label="Came from">
         <span className="block truncate">{[lead.source, contact].filter(Boolean).join(" · ")}</span>
       </Fact>
+      {/* A-252: who follows up, never both (A-237). The CRM is following up while its hold is the reason this waits. */}
+      {crm && (
+        <Fact label={`In ${crm.name}`}>
+          {crm.watching ? (
+            <>
+              {crm.name} is following up
+              <span className="mt-0.5 block text-[13.5px] text-ink-soft">FollowUp is watching, and will tell you when {first} is ready.</span>
+            </>
+          ) : (
+            // Says only what is always true: who follows up depends on states this line doesn't see (closed, paused, We talked).
+            "Each reply FollowUp sends is noted there."
+          )}
+        </Fact>
+      )}
     </>
   );
 }

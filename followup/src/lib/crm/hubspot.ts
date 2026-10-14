@@ -30,10 +30,11 @@ export const hubspotClient: CrmClient = {
   async testConnection(token) {
     try {
       const res = await fetch(`${BASE}/crm/v3/objects/contacts?limit=1`, { headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(CRM_TIMEOUT_MS) });
-      if (!res.ok) return { ok: false, message: res.status === 401 ? "That access token was rejected." : `HubSpot returned ${res.status}.` };
+      if (!res.ok) return { ok: false, message: res.status === 401 ? "HubSpot didn't accept that token. Copy it again from your private app." : `HubSpot returned ${res.status}. Try again in a minute.` };
       return { ok: true };
     } catch (err) {
-      return { ok: false, message: err instanceof Error ? err.message : "Couldn't reach HubSpot." };
+      console.error("HubSpot connect check failed:", err);
+      return { ok: false, message: "Couldn't reach HubSpot. Try again in a minute." };
     }
   },
 

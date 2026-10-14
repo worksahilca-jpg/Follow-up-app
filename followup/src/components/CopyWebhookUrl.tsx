@@ -108,8 +108,8 @@ export default function CopyWebhookUrl() {
                 <button
                   onClick={generate}
                   disabled={generating}
-                  className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium rounded-full px-3.5 py-2 disabled:opacity-60"
-                  style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
+                  // Outlined: the page's one black button is the CRM's Connect (A-252).
+                  className="mt-3 inline-flex min-h-11 items-center gap-1.5 rounded-full border border-line-strong bg-card px-4 text-sm font-medium disabled:opacity-60"
                 >
                   {generating ? "Generating…" : "Generate webhook URL"}
                 </button>

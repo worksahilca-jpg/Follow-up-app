@@ -185,9 +185,7 @@ describe("a realtor's customer who just wrote", () => {
     await scoreAndDraftForLead("lead1");
     expect(h.pushNote).toHaveBeenCalledTimes(1);
     expect(h.pushNote).toHaveBeenCalledWith(
-      "biz1",
-      "followupboss",
-      "fub-42",
+      { id: "lead1", businessId: "biz1", crmProvider: "followupboss", crmId: "fub-42" },
       [
         "FollowUp: Nadia Khan looks ready to talk.",
         'Area: Elm St ("the 3 bed on Elm St")',

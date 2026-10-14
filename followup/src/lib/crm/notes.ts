@@ -1,24 +1,19 @@
-import { prisma } from "@/lib/db";
-import { CRM_PROVIDERS, isCrmProvider } from "@/lib/crm";
 import { shownItems, type Qualification, type Template } from "@/lib/qualification";
+import { writeToCrm } from "@/lib/crm/writes";
 
 /**
  * Writes a note on the person's own record in the CRM they came from
- * (Follow Up Boss, HubSpot; src/lib/crmSync.ts links them). Best-effort:
- * never throws, so a CRM hiccup can never fail the send or the reply step
+ * (Follow Up Boss, HubSpot; src/lib/crmSync.ts links them), on record and
+ * tried again if the CRM doesn't take it (src/lib/crm/writes.ts, A-252).
+ * Never throws, so a CRM hiccup can never fail the send or the reply step
  * that called it. Only when the business is still connected to that same
  * CRM, so a note never lands in a CRM the owner has since left.
  */
-export async function pushCrmNote(businessId: string, provider: string, crmId: string, text: string): Promise<void> {
-  try {
-    if (!isCrmProvider(provider)) return;
-    const conn = await prisma.crmConnection.findUnique({ where: { businessId } });
-    if (!conn?.apiKey || conn.provider !== provider) return;
-    const result = await CRM_PROVIDERS[provider].client.pushNote(conn.apiKey, crmId, text);
-    if (!result.ok) console.error(`CRM note push failed for business ${businessId}: ${result.message}`);
-  } catch (err) {
-    console.error(`CRM note push errored for business ${businessId}:`, err);
-  }
+export async function pushCrmNote(
+  lead: { id: string; businessId: string; crmProvider: string; crmId: string },
+  text: string
+): Promise<void> {
+  await writeToCrm({ businessId: lead.businessId, leadId: lead.id, provider: lead.crmProvider, crmId: lead.crmId, kind: "note", text });
 }
 
 /**

@@ -181,6 +181,7 @@ model Business {
   savedFilters     SavedFilter[]
   filteredEmails   FilteredEmail[]
   crmConnection    CrmConnection?
+  crmWrites        CrmWrite[]
 
   // Billing (Stripe) — Free/Plus/Pro tiers plus an optional Voice add-on
   // (research/market/2026-09-11-tier-pricing-recommendation.md). subscriptionStatus
@@ -1235,6 +1236,7 @@ model Lead {
   callAttempts  CallAttempt[]
   outboundSends OutboundSend[]
   sendClaims    SendClaim[]
+  crmWrites     CrmWrite[]
 
   // Which outside CRM this lead came from, and its id there — set by
   // src/lib/crmSync.ts, used both to avoid re-importing the same contact
@@ -1959,6 +1961,40 @@ model CrmConnection {
   // opaque `after` token for HubSpot) — never parsed here, only round-tripped
   // through CrmClient.fetchPage's own cursor parameter.
   syncCursor String?
+
+  // "Pause writing there" (A-252): set while the owner has paused FollowUp's
+  // writes to the CRM. Nothing is written meanwhile; writes already waiting
+  // keep waiting and land once writing is back on (src/lib/crm/writes.ts).
+  writesPausedAt DateTime?
+}
+
+/**
+ * Every write FollowUp makes in the owner's CRM (A-252): a note after each
+ * reply it sends, the ready card. The owner sees the list in Settings ("What
+ * FollowUp wrote in Follow Up Boss"). A write the CRM didn't take is tried
+ * again by the crm-sync cron until it lands or runs out of tries
+ * (src/lib/crm/writes.ts), so a CRM that was down for an hour loses nothing.
+ * Kept 30 days. Goes with the customer: their words are in `text`.
+ */
+model CrmWrite {
+  id         String    @id @default(cuid())
+  business   Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  businessId String
+  lead       Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  leadId     String
+  provider   String // followupboss | hubspot: the CRM it was written to
+  crmId      String // the person's id in that CRM
+  kind       String // note (for now)
+  text       String // what was written; kept to try again
+  status     String // trying | done | waiting (to try again) | failed (gave up)
+  attempts   Int       @default(0)
+  lastError  String?
+  nextTryAt  DateTime?
+  doneAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([businessId, createdAt])
+  @@index([status, nextTryAt])
 }
 
 model AuditEvent {

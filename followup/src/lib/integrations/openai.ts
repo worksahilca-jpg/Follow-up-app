@@ -202,8 +202,7 @@ const HUMAN_VOICE_NOTICE =
 const TRUST_NOTICE =
   " Show you read their message: any question you ask connects to something they actually wrote (a detail, a " +
   "date, a person or a place they mentioned), the kind of question only someone who read it could ask, never a " +
-  "generic one any form could send. A question from WHAT TO LEARN NEXT counts: ask it in a way that ties it to " +
-  "what they said. Show you know the work by being useful, never by praising " +
+  "generic one any form could send. Show you know the work by being useful, never by praising " +
   "yourself or the business: no rankings, awards or titles (\"top agent\", \"#1\", \"award-winning\", \"the " +
   "best\", \"expert\"), no claims about results for other customers and no testimonials, unless WHAT THIS " +
   "BUSINESS HAS TOLD CUSTOMERS states it word for word. If they named a feeling (tired, worried, stressed, " +

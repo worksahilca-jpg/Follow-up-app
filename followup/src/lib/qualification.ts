@@ -534,7 +534,8 @@ export function qualifyPromptBlock(next: Pick<Criterion, "ask"> | null): string 
     `everything they asked, you may end with one short, friendly sentence asking about ${next.ask}. When that is ` +
     "two things, ask them together in that one sentence with a single question mark (for example \"Which area are " +
     "you looking in, and roughly when are you hoping to move?\"), never as a list and never as two questions. Frame " +
-    "it as helping them, never as screening them, and never say you are qualifying them. Ask it only when the " +
+    "it as helping them, never as screening them, and never say you are qualifying them; tie it to something they " +
+    "said, so it reads as a question from someone who read their message. Ask it only when the " +
     "conversation already makes clear what they are enquiring about; if it does not, ask what they mean instead. If " +
     "your reply already needs a different question to answer them properly, ask that one and leave this for a " +
     "later message. Never more than one question sentence in total. This is the only exception to the rule about " +

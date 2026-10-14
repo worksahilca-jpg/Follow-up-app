@@ -329,8 +329,16 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   // Who to start with: the first reply in Today's order (A-230), else the first call.
   const firstUp = oneQueue(approvalItems).flatMap((g) => g.needsYou)[0]?.leadName ?? callCards[0]?.name ?? null;
   const firstUpName = firstUp ? firstUp.split(" ")[0] || firstUp : null;
+  // The next booked call still to come today, for "1 booked call at 3:00 PM" (A-250).
+  const nextBooked = bookingsToday.filter((b) => b.scheduledAt >= now).sort((a, b) => a.scheduledAt.getTime() - b.scheduledAt.getTime())[0];
   const numbers = (
-    <DayNumbers replies={approvalItems.length} calls={callCards.length} booked={bookingsToday.length} progress={progress} />
+    <DayNumbers
+      replies={approvalItems.length}
+      calls={callCards.length}
+      booked={bookingsToday.length}
+      nextBookedAt={nextBooked ? clockTime(nextBooked.scheduledAt, timezone) : null}
+      progress={progress}
+    />
   );
 
   return (
@@ -359,7 +367,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         <CantSendNotice reconnectEmail={"needsReconnect" in gmail && gmail.needsReconnect ? (gmail.email ?? "your inbox") : null} />
       )}
       {firstValue && <FirstValueNote title={firstValue.title} body={firstValue.body} />}
-      {leads.length > 0 && <div className="mt-5 lg:hidden">{numbers}</div>}
+      {leads.length > 0 && progress && <div className="mt-5 lg:hidden">{numbers}</div>}
       <div className={leads.length > 0 ? "mt-5 lg:grid lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] lg:items-start lg:gap-8" : "mt-3.5 sm:mt-5"}>
       <div className="min-w-0">
       {/* A buzz on the owner's phone when a customer needs them (A-216): shown
@@ -551,7 +559,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       </div>
       {leads.length > 0 && (
         <div className="mt-9 flex flex-col gap-8 lg:mt-0">
-          <div className="hidden lg:block">{numbers}</div>
+          {progress && <div className="hidden lg:block">{numbers}</div>}
           <DayTomorrow date={tomorrowDate} rows={tomorrowRows} />
           <DayDone lines={done} />
         </div>

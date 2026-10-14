@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clockTime, dayLine, dayOffset, dayProgress, doneLines, focusSentence, greeting, todaysInstruction, whoIsNext } from "@/lib/todayWords";
+import { clockTime, dayLine, dayOffset, dayParts, dayProgress, doneLines, greeting, todaysInstruction, whoIsNext } from "@/lib/todayWords";
 
 const TZ = "America/Toronto";
 
@@ -52,10 +52,15 @@ describe("the whole day (A-244, R-114)", () => {
     expect(dayLine(null, false)).toBe("Nothing needs you right now.");
   });
 
-  it("says what the first customer wants from what FollowUp knows, never a guess", () => {
-    expect(focusSentence("Raj Malhotra", "Wants to book")).toBe("Raj Malhotra wants to book.");
-    expect(focusSentence("Ivy Sohal", "Asked the price")).toBe("Ivy Sohal asked about the price.");
-    expect(focusSentence("Omar Haddad", null)).toBe("Omar Haddad is waiting for your reply.");
+  it("says what the day is made of once, leaving out what there is none of (A-250)", () => {
+    expect(dayParts({ replies: 4, calls: 0, booked: 0, nextBookedAt: null })).toBe("4 replies to send. No calls or bookings today.");
+    expect(dayParts({ replies: 1, calls: 0, booked: 0, nextBookedAt: null })).toBe("1 reply to send. No calls or bookings today.");
+    expect(dayParts({ replies: 4, calls: 2, booked: 1, nextBookedAt: "3:00 PM" })).toBe("4 replies to send · 2 calls to make · 1 booked call at 3:00 PM");
+    expect(dayParts({ replies: 0, calls: 1, booked: 0, nextBookedAt: null })).toBe("1 call to make");
+    expect(dayParts({ replies: 0, calls: 0, booked: 3, nextBookedAt: "11:30 AM" })).toBe("3 booked calls, the next at 11:30 AM");
+    // A booked call already over today keeps its count but not a time.
+    expect(dayParts({ replies: 2, calls: 0, booked: 1, nextBookedAt: null })).toBe("2 replies to send · 1 booked call");
+    expect(dayParts({ replies: 0, calls: 0, booked: 0, nextBookedAt: null })).toBeNull();
   });
 
   it("counts the day's progress, and shows none for an empty day", () => {

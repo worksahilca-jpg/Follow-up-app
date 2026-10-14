@@ -59,3 +59,75 @@ describe("the home page stays smooth", () => {
     expect(css + js).toContain("fu-calm");
   });
 });
+
+/**
+ * The first screen a visitor sees is the one that stays (founder, 2026-10-14: "the landing page choks"). A phone used
+ * to paint the page before its scripts ran, then watch it rearrange: the example week swapped for the chat, the bar's
+ * logo appearing, Your control swapping versions. Everything the first paint needs is now in the markup and the head.
+ */
+describe("the home page doesn't jump while it loads", () => {
+  it("has all its styles before the page itself", () => {
+    // A stylesheet after the content arrives after the first paint, and everything it moves jumps.
+    const firstContent = html.indexOf("<header");
+    expect(firstContent).toBeGreaterThan(0);
+    expect(html.indexOf("<style", firstContent)).toBe(-1);
+  });
+
+  it("starts in the state its scripts would put it in at the top of the page", () => {
+    expect(html).toMatch(/<header class="nav light">/);
+    // The try-it box is written inside the green stage, where a script used to move it.
+    expect(html.indexOf('id="fl-try"')).toBeGreaterThan(html.indexOf('id="fl-stage"'));
+    // The founder's two Your control choices (v116), on the page rather than picked by a hidden row at load.
+    expect(html).toMatch(/<html [^>]*data-ctl="b" data-ds="b"/);
+  });
+
+  it("arranges the phone's first screen as soon as the hero is read", () => {
+    // A-223: right after the hero, before the rest of the page, so the first paint is already the phone's.
+    const heroEnd = html.indexOf("</section>", html.indexOf('id="fl-hero"'));
+    const phone = html.indexOf("(function phoneHero()");
+    expect(phone).toBeGreaterThan(heroEnd);
+    expect(phone).toBeLessThan(html.indexOf('<section id="story"'));
+  });
+});
+
+/**
+ * The page is the design rounds' single file, so styles and scripts for parts that were replaced stayed in it: by
+ * 2026-10-14 about half of its styles could never apply. These keep it light.
+ */
+describe("the home page stays light", () => {
+  const markup = html.replace(/<script\b[\s\S]*?<\/script>/g, " ").replace(/<style\b[\s\S]*?<\/style>/g, " ");
+  // Any word in the markup or the scripts could be a class or id; scripts also build "is-" + n and "s" + n.
+  const words = new Set((markup + js).match(/[A-Za-z0-9_-]+/g));
+  const live = (name: string) => words.has(name) || /^(is-\d+|s\d+)$/.test(name);
+  // Every stylesheet, the second one (id="order-preview") included.
+  const allCss = [...html.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style>/g)]
+    .map((m) => m[1])
+    .join("\n")
+    .replace(/\/\*[\s\S]*?\*\//g, "");
+
+  it("keeps no style for something the page no longer has", () => {
+    const selectors = [...allCss.matchAll(/([^{}]+)\{/g)].map((m) => m[1].trim()).filter((s) => s && !s.startsWith("@"));
+    const dead: string[] = [];
+    for (const sel of selectors) {
+      for (const one of sel.split(/,(?![^(]*\))/)) {
+        // What a selector needs outside :not(), :is() and friends, with quoted values set aside.
+        let outside = "", depth = 0;
+        for (const c of one.replace(/"[^"]*"|'[^']*'/g, '""')) {
+          if (c === "(") depth++;
+          else if (c === ")") depth--;
+          else if (depth === 0) outside += c;
+        }
+        const needs = [...outside.matchAll(/[.#](-?[_a-zA-Z][\w-]*)/g)].map((m) => m[1]);
+        if (needs.some((n) => !live(n))) dead.push(one.trim());
+      }
+    }
+    // Only a selector that needs nothing the page has is reported; a list that still matches something stays.
+    const deadRules = selectors.filter((sel) => sel.split(/,(?![^(]*\))/).every((one) => dead.includes(one.trim())));
+    expect(deadRules).toEqual([]);
+  });
+
+  it("stays under 450 KB", () => {
+    // 620 KB before the 2026-10-14 clean-up, 415 KB after it.
+    expect(html.length).toBeLessThan(450_000);
+  });
+});

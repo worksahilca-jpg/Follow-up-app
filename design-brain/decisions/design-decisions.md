@@ -12657,8 +12657,9 @@ stays everyone. The A-243 build (commit 8c31f76, branch only, never merged) is n
   editor has no URL of its own (refresh returns to the plans); the plans area is blank for a moment while it loads,
   and silently empty if the request fails; "Later customers" only exists for realtors (A-246), so on other trades
   Long reads "Used for Later customers · 0 now"; the customer card's date ignores the 8am–8pm window, so a message
-  due at 9pm shows that day though it goes the next morning; 768 and 1024 checked only by the layout rules, not by
-  eye; Today's "check-ins tomorrow" row still says "Nothing for you to do." on accounts that hold (A-244 wording).
+  due at 9pm shows that day though it goes the next morning; Today's "check-ins tomorrow" row still says "Nothing for
+  you to do." on accounts that hold (A-244 wording). Checked by eye at 768 and 1024 too (plans page, Tom's page):
+  they fit, and at 1024 the card's "17 now" wraps as one piece instead of leaving "now" alone on a line.
 - **"Your special plans" heading** on the plans page replaces the old "No plans yet. Pick one above." empty box, and
   only shows when the account has saved special plans (R-026: say what a new label replaces).
 

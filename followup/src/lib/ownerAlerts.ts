@@ -10,7 +10,7 @@ import { isAlertEmailConfigured, sendAlertEmail } from "@/lib/alertEmail";
 import { renderNoticeEmailHtml, noticeDate } from "@/lib/noticeEmailHtml";
 import { isPushConfigured, sendPushToUser, type PushPayload } from "@/lib/webPush";
 import { isUniqueViolation } from "@/lib/uniqueViolation";
-import { readQualification, readyWhy, templateById, templateFor, viewingOf, type Qualification } from "@/lib/qualification";
+import { readQualification, readyWhy, shownItems, templateById, templateFor, viewingOf, type Qualification } from "@/lib/qualification";
 
 /**
  * Telling the owner, outside the app, that a customer is waiting.
@@ -555,8 +555,9 @@ export function readyPush(c: ReadyCustomer): PushPayload {
 export function readyEmail(c: ReadyCustomer, base: string, opts: EmailOptions = {}): EmailContent {
   const { first } = whoIs(c.leadName);
   const template = templateById(c.qualification.template);
-  const labels = new Map(template?.criteria.map((k) => [k.key, k.label]) ?? []);
-  const rows: [string, string][] = c.qualification.items.map((i) => [labels.get(i.key) ?? i.key, i.value]);
+  const rows: [string, string][] = template
+    ? shownItems(template, c.qualification).map(({ criterion, item }) => [criterion.label, item.value])
+    : c.qualification.items.map((i) => [i.key, i.value]);
   const url = `${base}/leads/${c.leadId}`;
   const foot = footer(base);
   const open = first === "A customer" ? "Open the conversation" : `Open ${first}'s conversation`;

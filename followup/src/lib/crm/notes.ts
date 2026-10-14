@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
 import { CRM_PROVIDERS, isCrmProvider } from "@/lib/crm";
-import type { Qualification, Template } from "@/lib/qualification";
+import { shownItems, type Qualification, type Template } from "@/lib/qualification";
 
 /**
  * Writes a note on the person's own record in the CRM they came from
@@ -28,15 +28,13 @@ export async function pushCrmNote(businessId: string, provider: string, crmId: s
  * whoever picks it up in the CRM sees why without opening FollowUp.
  *
  *   FollowUp: Nadia Khan looks ready to talk.
- *   What they want: 3 bedrooms near a school ("We need 3 bedrooms, near a good school.")
- *   Budget: Pre-approved to $650k ("pre-approved up to 650")
+ *   Area: Near a good school in Oakville ("near a good school in Oakville")
+ *   Money: Pre-approved to $650k ("pre-approved up to 650")
  */
 export function readyNote(name: string, template: Template, q: Qualification): string {
-  const lines = template.criteria.flatMap((c) => {
-    const item = q.items.find((i) => i.key === c.key);
-    if (!item) return [];
+  const lines = shownItems(template, q).map(({ criterion, item }) => {
     const words = item.quote.trim() ? ` ("${item.quote.trim()}")` : item.source === "booking" ? " (booked through your booking link)" : "";
-    return [`${c.label}: ${item.value.trim()}${words}`];
+    return `${criterion.label}: ${item.value.trim()}${words}`;
   });
   return [`FollowUp: ${name} looks ready to talk.`, ...lines].join("\n");
 }

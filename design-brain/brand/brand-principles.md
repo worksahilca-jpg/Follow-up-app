@@ -316,6 +316,8 @@ they meant. The next one answered *"looking in Etobicoke"* with *"Looking in Eto
 showing or weekend showing?"*
 - **Every question they asked gets an answer first**, or a plain "I'll confirm that". Then, at most, one question of
   ours. A reply that skips a question tells them nobody read it.
+  *SUPERSEDED IN PART (2026-10-14) by A-246:* while qualifying a realtor's customer, up to two questions of ours,
+  joined into one natural sentence. Their questions are still answered first.
 - **Read the question the way the business would.** "How much do you charge" to a realtor is the realtor's fee, not a
   home's price.
 - **Don't jump ahead of the customer.** No showing before there's a home to show. Ask what they're looking for first.

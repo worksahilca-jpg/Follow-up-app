@@ -1309,8 +1309,9 @@ export interface FollowUpDraft {
 export async function generateFollowUpMessage(
   // `trade`: the business's line of work, for its playbook (tradePlaybooks.ts).
   // `facts`: what the business has told customers (src/lib/businessFacts.ts).
-  // `qualify`: the one thing still to learn from this customer, if any
-  // (src/lib/qualification.ts); the reply may end by asking about it.
+  // `qualify`: what to learn next from this customer, one or two things
+  // (src/lib/qualification.ts, A-246); the reply may end by asking about it
+  // in one sentence.
   lead: Pick<Lead, "name" | "conversation"> & {
     trade?: string | null;
     facts?: readonly FactLine[];
@@ -2158,10 +2159,14 @@ export async function summarizeConversation(conversation: Message[], leadFirstNa
  */
 export async function extractQualificationFacts(
   conversation: Message[],
-  criteria: readonly Criterion[]
+  criteria: readonly Criterion[],
+  // "Within 3 months" is counted from here. The accuracy test pins it so
+  // its answers don't drift with the calendar.
+  today: Date = new Date()
 ): Promise<ExtractedItem[] | null> {
   if (!process.env.OPENAI_API_KEY || conversation.length === 0 || criteria.length === 0) return null;
   const keys = criteria.map((c) => c.key);
+  const day = today.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric", timeZone: "UTC" });
   const client = getClient();
   const completion = await client.chat.completions.create({
     model: MODEL,
@@ -2171,17 +2176,29 @@ export async function extractQualificationFacts(
         content:
           "You read a conversation between a small business and a customer and note what the customer has told " +
           "the business about each item below. Give exactly one entry per item.\n\n" +
-          criteria.map((c) => `- ${c.key}: ${c.find}`).join("\n") +
-          "\n\nAn item is known only when the CUSTOMER said it, in a line marked inbound. Something only the " +
+          criteria
+            .map(
+              (c) =>
+                `- ${c.key}: ${c.find}` +
+                (c.buckets
+                  ? `. bucket, when known: ${Object.entries(c.buckets)
+                      .map(([b, what]) => `"${b}" = ${what}`)
+                      .join("; ")}`
+                  : "")
+            )
+            .join("\n") +
+          `\n\nToday is ${day}. Count "within 3 months" and "6 months" from today.\n\n` +
+          "An item is known only when the CUSTOMER said it, in a line marked inbound. Something only the " +
           "business said, assumed or offered is not known. Never guess and never infer from tone: when the " +
-          "customer has not clearly said it, known is false, and value and quote are empty. If they changed " +
-          "their mind, use what they said last.\n\n" +
+          "customer has not clearly said it, known is false, and value, quote and bucket are empty. If they " +
+          "changed their mind, use what they said last.\n\n" +
           "value: a short plain-English summary the owner can read at a glance, at most 8 words, e.g. " +
           "\"Pre-approved to $650k\" or \"Moving in March\". quote: the customer's exact words that show it, " +
           "copied character for character from one inbound line, in the language they wrote in, never " +
           "translated, shortened inside or reworded; a short phrase is enough. Keep their own spelling and " +
           "contractions exactly: if they wrote 'would like', the quote says 'would like', never 'we'd like'. " +
-          "A quote that is not word for word in their message is thrown away, and the item is lost." +
+          "A quote that is not word for word in their message is thrown away, and the item is lost. bucket: for " +
+          "an item that lists buckets, exactly one of them when known; for every other item, empty." +
           UNTRUSTED_CONVERSATION_NOTICE,
       },
       { role: "user", content: formatTranscript(conversation) },
@@ -2189,7 +2206,7 @@ export async function extractQualificationFacts(
     // The same answer for the same conversation: this is a record, read
     // again on every message, and a sampled reading would flicker.
     temperature: 0,
-    max_tokens: 400,
+    max_tokens: 1100,
     response_format: {
       type: "json_schema",
       json_schema: {
@@ -2207,8 +2224,9 @@ export async function extractQualificationFacts(
                   known: { type: "boolean" },
                   value: { type: "string" },
                   quote: { type: "string" },
+                  bucket: { type: "string" },
                 },
-                required: ["key", "known", "value", "quote"],
+                required: ["key", "known", "value", "quote", "bucket"],
                 additionalProperties: false,
               },
             },
@@ -2229,6 +2247,7 @@ export async function extractQualificationFacts(
     const i = it as Record<string, unknown>;
     if (!keys.includes(i.key as CriterionKey)) return [];
     if (typeof i.known !== "boolean" || typeof i.value !== "string" || typeof i.quote !== "string") return [];
-    return [{ key: i.key as CriterionKey, known: i.known, value: i.value, quote: i.quote }];
+    const bucket = typeof i.bucket === "string" ? i.bucket.trim() : "";
+    return [{ key: i.key as CriterionKey, known: i.known, value: i.value, quote: i.quote, ...(bucket ? { bucket } : {}) }];
   });
 }

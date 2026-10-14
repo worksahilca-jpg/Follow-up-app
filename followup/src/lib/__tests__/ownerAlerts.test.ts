@@ -572,14 +572,17 @@ describe("quiet hours", () => {
 
 describe("\"Nadia is ready\" — the qualification alert", () => {
   const CHECKLIST = {
-    v: 1,
+    v: 2,
     template: "realtor",
     items: [
-      { key: "want", value: "3 bedrooms near a school", quote: "We need 3 bedrooms, near a good school." },
-      { key: "timing", value: "Moving in March", quote: "Our lease ends in March." },
-      { key: "budget", value: "Pre-approved to $650k", quote: "We're pre-approved up to 650." },
+      { key: "side", value: "Buying", quote: "still for sale", bucket: "buy" },
+      { key: "area", value: "Near a good school in Oakville", quote: "near a good school in Oakville" },
+      { key: "timing", value: "Moving in December", quote: "We move in December.", bucket: "soon" },
+      { key: "financing", value: "Pre-approved to $650k", quote: "We're pre-approved up to 650.", bucket: "sorted" },
+      { key: "agent", value: "No agent yet", quote: "No agent", bucket: "none" },
       { key: "viewing", value: "Saturday at 10:30 AM", quote: "Saturday 10:30 works!" },
     ],
+    tier: "ready",
   };
   function addReady(n: number, opts: { industry?: string; stage?: string; minutes?: number; assignedToId?: string | null } = {}) {
     h.ready.push({
@@ -602,13 +605,14 @@ describe("\"Nadia is ready\" — the qualification alert", () => {
     const push = h.sendPushToUser.mock.calls[0][1];
     expect(push).toEqual({
       title: "Nadia is ready",
-      body: "Saturday at 10:30 AM · Pre-approved to $650k · Moving in March · 3 bedrooms near a school",
+      body: "Saturday at 10:30 AM · Pre-approved to $650k · Moving in December · Near a good school in Oakville · No agent yet",
       url: "/leads/lead1",
       tag: "ready-lead1",
     });
     const [mail] = emails();
     expect(mail.subject).toBe("Nadia is ready");
-    expect(mail.text).toContain("Budget: Pre-approved to $650k");
+    expect(mail.text).toContain("Money: Pre-approved to $650k");
+    expect(mail.text).not.toContain("Looking to");
     expect(mail.text).toContain("https://www.followupbase.io/leads/lead1");
     expect(JSON.stringify(mail)).not.toContain("pre-approved up to 650");
     expect(h.rows).toMatchObject([{ kind: "ready", leadId: "lead1", emailedAt: expect.any(Date), pushedAt: expect.any(Date) }]);

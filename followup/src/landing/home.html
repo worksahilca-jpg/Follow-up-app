@@ -1766,6 +1766,15 @@ html[data-col="f"] .fl-stage .fl-ask { margin-top: 12px }
 }
 
 /* v90 the follow-up card on a photo */ html body .fk { background: linear-gradient(180deg, rgba(8,20,16,.62), rgba(8,20,16,.82)), url(/landing/a71044f4ba59.jpg) center / cover no-repeat }
+
+/* Every tap reaches 44px without anything moving (design-review.md, 2026-10-14): an invisible band, centred on
+   the link or button, takes the tap; what you see is unchanged. The footer's link lists sit 32px apart, so their
+   bands stop at 32px rather than reach into the next link. Sign in and Start free (40px) and the question chips
+   (36px) are left alone: a band there changes how their edges and see-through fill are drawn, by a hair.
+   Replay's own rule resets everything (all: unset), so its position is set as specifically as that rule. */
+.blend .brand, .nav-links a, html body #story .s6-replay, .cb-seg button, .cb-sw, .db-l a, .f5-brand a, .f5-top > nav a, .f5-up { position: relative; }
+.blend .brand::before, .nav-links a::before, .s6-replay::before, .cb-seg button::before, .cb-sw::before, .db-l a::before, .f5-brand a::before, .f5-up::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 44px; transform: translateY(-50%); }
+.f5-top > nav a::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 32px; transform: translateY(-50%); }
 </style>
 <style id="order-preview">
 /* PREVIEW of the new order (2026-10-09). Same colours; only what sits behind each section changes. */

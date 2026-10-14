@@ -423,14 +423,14 @@ function HowItShouldWork({ reading, sentFrom, onChosen }: { reading: boolean; se
                 </span>
                 <span className="text-lg" style={{ fontWeight: on ? 600 : 500 }}>{o.title}</span>
                 {o.badge && (
-                  <span className="ml-auto font-mono text-[11px] font-medium uppercase tracking-[0.1em] text-ink-soft">{o.badge}</span>
+                  <span className="ml-auto font-mono text-[12px] font-medium uppercase tracking-[0.1em] text-ink-soft">{o.badge}</span>
                 )}
               </span>
               <span className="mt-2.5 block pl-[34px] text-[15px] leading-relaxed text-ink-soft">{o.body}</span>
               {/* One example of what Automatic sends, marked as an example (OnbChoose). */}
               {o.id === "automatic" && on && (
                 <span className="mt-3.5 ml-[34px] block rounded-[14px] px-3.5 py-3" style={WARM_CARD}>
-                  <span className="block font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-ink-soft">Sent on its own · example</span>
+                  <span className="block font-mono text-[12px] font-medium uppercase tracking-[0.08em] text-ink-soft">Sent on its own · example</span>
                   <span className="mt-1 block text-sm leading-snug">Thanks! Happy to quote that. Could you send a photo of your current tap?</span>
                 </span>
               )}
@@ -621,7 +621,7 @@ function WaitingCustomers({
       <p className={LEDE}>From the last 90 days. A reply is written for each. Nothing has been sent. Open any to read it, or skip it.</p>
 
       <div className="mt-[18px] overflow-hidden rounded-[20px] border border-line bg-card">
-        <p className="px-4 pb-2.5 pt-3.5 font-mono text-[11px] font-medium uppercase tracking-[0.1em] text-ink-faint">
+        <p className="px-4 pb-2.5 pt-3.5 font-mono text-[12px] font-medium uppercase tracking-[0.1em] text-ink-faint">
           Ready to send · {count}
         </p>
         {preview.map((p, i) => {

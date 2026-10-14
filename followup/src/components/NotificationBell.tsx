@@ -95,8 +95,9 @@ export default function NotificationBell({ align = "left", label }: { align?: "l
         onClick={() => setOpen((v) => !v)}
         aria-label={label ? undefined : "Notifications"}
         className={
-          "relative h-8 rounded-[10px] flex items-center justify-center text-ink-soft hover:bg-paper transition-colors " +
-          (label ? "gap-1.5 px-2 text-[14px]" : "w-8")
+          "relative rounded-[10px] flex items-center justify-center text-ink-soft hover:bg-paper transition-colors " +
+          // The phone's Alerts is a 44px target in its 56px bar; the desk's bare bell stays small (a mouse, not a thumb).
+          (label ? "h-11 gap-1.5 px-2 text-[14px]" : "h-8 w-8")
         }
       >
         <Bell className="h-4 w-4" />
@@ -108,7 +109,7 @@ export default function NotificationBell({ align = "left", label }: { align?: "l
             // word, it covered its last letter ("Alert1s").
             className={
               (label ? "" : "absolute top-0.5 right-0.5 ") +
-              "h-4 min-w-4 px-1 rounded-full text-[10px] font-semibold flex items-center justify-center text-on-accent"
+              "h-[18px] min-w-[18px] px-1 rounded-full text-[12px] font-semibold flex items-center justify-center text-on-accent"
             }
             style={{ backgroundColor: "var(--rust)" }}
           >

@@ -12969,3 +12969,42 @@ writes, "Show all", and a customer's page in both states.
 - HubSpot's tile text is about 4.3:1 on its tint. It is decorative, with the name beside it, but under 4.5.
 - The record shows the newest 50 of the week; an older week isn't reachable from here.
 - Turning writing back on doesn't say how many notes were waiting. They go out within 10 minutes.
+## 2026-10-14 — Settings, simple: Connect → Connected (R-115), drawn, waiting for his yes
+
+**Why:** R-115. The founder found Settings "way complex" and asked for "Connect this or that", two or three
+options, and "Connected", "Okay", "Done", with everything technical done in the back.
+**Drawn** on the running local app (test business, example data), phone 390 and computer 1280:
+- **Where customers write:** one page with one row each for Gmail, Instagram, Facebook, WhatsApp and Website form,
+  plus "Already use a CRM?" with Follow Up Boss or HubSpot.
+  - Each row has its glyph, its name, and either "Connect" / "Add" (outlined pill) or "✓ Connected" plus a chevron.
+  - It replaces the Email, Website form and Instagram/Facebook/WhatsApp pages, and the CRM part of Advanced.
+- **A connected row opens a sheet:** "✓ Connected as …", one line ("New emails show up within 10 minutes"),
+  "Not customers: 3", a black Done, and "Disconnect Gmail" in coral.
+- **How replies go out:** "Who sends your replies?" with "FollowUp sends them" ("A price, a date or anything unsure
+  waits for you") or "I check each one first". Then Follow-up plan, Booking hours, and a Pause all sending switch.
+- **More:** Team, Your plan, Sign-ins, Your data. Advanced is gone.
+- **Unchanged:** the Settings home (A-220's five rows) and Alerts (the phone-buzz setup).
+**Off the screen, still working in the back:**
+- access tokens, "Meta console reference", and "One-click connect isn't switched on yet" (a channel that isn't ready
+  says "Soon");
+- Sync now, and the calendar Reconnect note (Reconnect shows only when it's actually needed);
+- the raw embed code (behind Add);
+- webhooks in and out, the signing secret, routing per source, and the Twilio phone;
+- on Replies: "Your rules", the week line, "Let some leads skip the check" (stays off), and the hours/days numbers
+  (defaults);
+- Pause, now shown once.
+- Usage on 2026-10-14 (9 outside businesses): no inbound or outbound webhooks, no Twilio number, no CRM, one routing
+  rule.
+**Deviations from approved entries, to confirm with him:**
+- A-234 / A-240: "Filtered out" moves into each connection's sheet ("Not customers").
+- A-044 / A-094: the numbers leave Settings. The four "FollowUp writes" switches move to the Follow-up plan page,
+  one line each.
+- A-252: the CRM's Reads / Writes lists and its record move into its Connect window and connected sheet.
+- A-069: the "For advanced setups" page goes away.
+**Open (product behaviour, his call):** "Scan spam for missed leads" is manual today and comes off the screen. Should
+FollowUp run it by itself?
+**Weak spots, honestly:**
+- the Connect pills are 40px tall in the drawing (the build makes them 44);
+- the CRM row wraps to two lines on a phone;
+- the Facebook and WhatsApp glyphs are drawn, not the app's ChannelIcon (which uses one bubble for both);
+- not drawn: Add website form, the Follow-up plan page with the four switches, Your business with fewer words.

@@ -515,7 +515,7 @@ function WorkflowEditor({
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-[13px] text-ink-soft">
                 <span
-                  className="h-5 w-5 rounded-full flex items-center justify-center text-[11px] font-semibold"
+                  className="h-5 w-5 rounded-full flex items-center justify-center text-[12px] font-semibold"
                   style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}
                 >
                   {i + 1}

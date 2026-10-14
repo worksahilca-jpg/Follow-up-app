@@ -12837,3 +12837,35 @@ with a 4× slower processor and on a computer.
   headline, which are part of the look.
 - The phone still spends about 0.3 s laying out the long page once.
 - About 150 KB of script remains. Some of it still looks for parts that are gone; that is harmless but not tidy.
+
+
+## 2026-10-14 — Small fixes: every tap 44px, no text under 12px
+
+Two glitches from the 2026-10-14 audit, fixed under the founder's *"LETS IMPROVE EVERYTHING"* (the list he was
+answering named them): the "← Today" link on Coming up was too small to tap, and a few labels were 11px. Every main
+screen was then measured at 390×844, and everything else under the rules was fixed too.
+
+**Changed:**
+- **Taps reach 44px without anything moving:**
+  - "← Today" on Coming up was 15px tall.
+  - The phone bar's logo and Alerts were 24px and 32px. The bar is still 56px tall: 6 + 44 + 6.
+  - The activity tabs were 34px. The row scrolls sideways, which clips anything drawn outside it, so 10px moved from
+    the row's margin into each tab.
+  - The customer search box was 40px.
+  - Call on a customer row was a 41px target; it is now 48px around the same 32px pill.
+  - The booking page's "Powered by FollowUp".
+- **Nothing under 12px in the app:**
+  - The mono eyebrows ("WHAT FOLLOWUP DID", "YESTERDAY") and the initials in the round badges.
+  - The booking page's labels (DAY, AFTERNOON).
+  - The Settings eyebrow, the setup's example labels, "Private beta" on sign-in, the Twilio labels and the Beta tag,
+    and the webhook field names.
+  - The Alerts count, now 12px in an 18px dot.
+- This supersedes the canvas's 11px eyebrow (R-019's principle) for the size only.
+
+**Checked:** each screen measured again at 390×844, with no tap under 44px and no text under 12px. The Call button and
+the tabs were tested by tapping just outside the drawn edge.
+
+**Not changed:**
+- The marketing pages (/, /security, /privacy) keep their own type. The landing page went live as A-251 (#512).
+- The notice email's 11px label.
+- The desk's bare bell stays 32px, because it is clicked with a mouse.

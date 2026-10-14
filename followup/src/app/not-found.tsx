@@ -10,7 +10,7 @@ export default function NotFound() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-paper px-6 text-center">
       <LogoMark height={32} />
-      <p className="mt-8 font-mono text-[11.5px] uppercase tracking-[0.12em] text-ink-faint">Page not found</p>
+      <p className="mt-8 font-mono text-[12px] uppercase tracking-[0.12em] text-ink-faint">Page not found</p>
       <h1 className="mt-3 max-w-[520px] text-[34px] leading-[1.12]">That page isn&apos;t here.</h1>
       <p className="mt-3 max-w-[400px] text-[15.5px] leading-relaxed text-ink-soft">
         The link might be old, or the address was typo&apos;d. Nothing&apos;s wrong on our end.

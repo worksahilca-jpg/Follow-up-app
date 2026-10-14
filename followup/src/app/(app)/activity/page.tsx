@@ -110,7 +110,7 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
         {weekParts.length > 0 && ` This week: ${weekParts.join(" · ")}.`}
       </p>
 
-      <div role="tablist" aria-label="Show" className="mt-5 flex gap-5 overflow-x-auto border-b border-line lg:gap-[22px]">
+      <div role="tablist" aria-label="Show" className="mt-2.5 flex gap-5 overflow-x-auto border-b border-line lg:gap-[22px]">
         {TABS.map((t) => {
           const on = t.id === tab.id;
           return (
@@ -119,7 +119,7 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
               role="tab"
               aria-selected={on}
               href={tabHref(t.id)}
-              className="-mb-px whitespace-nowrap border-b-2 pb-2.5 text-[14.5px] lg:text-sm"
+              className="-mb-px whitespace-nowrap border-b-2 pb-2.5 pt-2.5 text-[14.5px] lg:text-sm"
               style={{ borderColor: on ? "var(--ink)" : "transparent", color: on ? "var(--ink)" : "var(--ink-soft)", fontWeight: on ? 500 : 400 }}
             >
               {t.label} <span className="tabular-nums text-ink-faint">{count(t)}</span>

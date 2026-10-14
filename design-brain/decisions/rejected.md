@@ -469,7 +469,8 @@ All of these were copied from the live `page.tsx` instead of the canvas.
 **The principle:** the sketched canvas (Main.dc.html, Today.dc.html, TodayPhone.dc.html) is the design system for
 every new board. That means:
 - Public Sans headings at weight 300: 48px in sections, 64px in the hero.
-- IBM Plex Mono eyebrows at 11px, spaced 0.1em.
+- IBM Plex Mono eyebrows at 11px, spaced 0.1em. SUPERSEDED (2026-10-14) for the size only: eyebrows are 12px, the
+  floor in S-11 and design-review.md ("Small fixes", design-decisions.md 2026-10-14).
 - Left-aligned sections padded 100px 184px.
 - White cards with a #e7e5e2 border and 22px radius.
 - The peach/rose/slate wash with grain for any written reply. Black only for the one small action.

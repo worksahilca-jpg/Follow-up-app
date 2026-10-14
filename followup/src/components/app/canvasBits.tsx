@@ -14,7 +14,7 @@ export function Initials({ name, size = 44 }: { name: string; size?: number }) {
     <span
       aria-hidden
       className="shrink-0 inline-flex items-center justify-center rounded-full border border-line font-semibold text-ink-soft"
-      style={{ width: size, height: size, background: "var(--accent-soft)", fontSize: size >= 40 ? 14 : 11 }}
+      style={{ width: size, height: size, background: "var(--accent-soft)", fontSize: size >= 40 ? 14 : 12 }}
     >
       {letters || "?"}
     </span>
@@ -48,7 +48,7 @@ export function GroupLabel({ children }: { children: React.ReactNode }) {
 /** A small mono label. `green` is the written reply's own label, on its soft green (A-221). */
 export function Eyebrow({ children, green = false }: { children: React.ReactNode; green?: boolean }) {
   return (
-    <span className={"font-mono text-[11px] font-medium uppercase tracking-[0.1em] " + (green ? "text-green-ink" : "text-ink-faint")}>
+    <span className={"font-mono text-[12px] font-medium uppercase tracking-[0.1em] " + (green ? "text-green-ink" : "text-ink-faint")}>
       {children}
     </span>
   );

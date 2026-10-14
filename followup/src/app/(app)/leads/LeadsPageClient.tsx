@@ -145,12 +145,12 @@ function Row({ lead, href, line, meta, selected, call = false }: { lead: Lead; h
         </span>
         {meta && <span className="shrink-0 text-[12px] text-ink-faint tabular-nums">{meta}</span>}
       </Link>
-      {/* Outlined, never black (one black button per screen); a 44px target around the 32px pill. */}
+      {/* Outlined, never black (one black button per screen); a 48px target around the 32px pill. */}
       {call && lead.phone && (
         <a
           href={`tel:${lead.phone}`}
           aria-label={`Call ${lead.name}`}
-          className="relative inline-flex h-8 shrink-0 items-center rounded-full border border-ink px-3 text-[12.5px] font-semibold before:absolute before:-inset-1.5 before:content-['']"
+          className="relative inline-flex h-8 shrink-0 items-center rounded-full border border-ink px-3 text-[12.5px] font-semibold before:absolute before:-inset-2 before:content-['']"
         >
           Call
         </a>
@@ -295,7 +295,7 @@ export default function LeadsPageClient({
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Search a name, email or phone"
         aria-label="Search customers"
-        className="h-10 w-full rounded-full border-0 bg-card-2 pl-10 pr-4 text-base"
+        className="h-11 w-full rounded-full border-0 bg-card-2 pl-10 pr-4 text-base"
       />
     </div>
   );

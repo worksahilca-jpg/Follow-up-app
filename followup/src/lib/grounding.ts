@@ -68,6 +68,49 @@
 const NUMBER_RE = /\p{Nd}(?:[\p{Nd},.]*\p{Nd})?/gu;
 
 /**
+ * The amount a number token stands for, read with the scale word written
+ * right after it: "650k" and "$650,000" are the same budget, "1.3M" and
+ * "1,300,000" the same price. Accuracy run 6 (2026-10-14): a buyer wrote
+ * "pre-approved for 650k", the reply said "$650,000", and the digits rule
+ * held it as an invented number twice. Only plain ASCII amounts with
+ * commas in thousands groups are read; anything else ("1,5", "1.2.3", a
+ * Devanagari numeral) has no amount and is matched as written, as before.
+ */
+const SCALE_RE = /^(?:\s?(?:million|mil|mn|thousand|grand)\b|[kKmM](?![\p{L}\p{Nd}]))/u;
+function amountOf(token: string, after: string): number | null {
+  if (!/^\d{1,3}(?:,\d{3})+(?:\.\d+)?$|^\d+(?:\.\d+)?$/.test(token)) return null;
+  const n = Number(token.replace(/,/g, ""));
+  const scale = SCALE_RE.exec(after)?.[0].trim().toLowerCase();
+  if (!scale) return n;
+  return scale === "k" || scale === "thousand" || scale === "grand" ? n * 1_000 : n * 1_000_000;
+}
+const amountKey = (n: number) => String(Math.round(n * 1000) / 1000);
+
+/**
+ * The number tokens in `draft` that `source` never wrote, as written in the
+ * draft, in order: the digits rule every drafter shares. A token counts as
+ * written when the same token is in `source`, or the same amount is ("650k"
+ * grounds "650,000"). Whole tokens only, never substrings (see NUMBER_RE).
+ */
+export function ungroundedNumbers(draft: string, source: string): { at: number; word: string }[] {
+  const tokens = new Set<string>();
+  const amounts = new Set<string>();
+  for (const m of source.matchAll(NUMBER_RE)) {
+    tokens.add(m[0]);
+    const n = amountOf(m[0], source.slice((m.index ?? 0) + m[0].length, (m.index ?? 0) + m[0].length + 10));
+    if (n !== null) amounts.add(amountKey(n));
+  }
+  const out: { at: number; word: string }[] = [];
+  for (const m of draft.matchAll(NUMBER_RE)) {
+    if (tokens.has(m[0])) continue;
+    const n = amountOf(m[0], draft.slice((m.index ?? 0) + m[0].length, (m.index ?? 0) + m[0].length + 10));
+    if (n !== null && amounts.has(amountKey(n))) continue;
+    out.push({ at: m.index ?? 0, word: m[0] });
+  }
+  return out;
+}
+
+/**
  * A currency marker with no digits attached — "a price in USD", "our
  * rates in CAD". Worth its own rule precisely because the digits rule
  * above cannot see it.
@@ -111,8 +154,7 @@ const CURRENCY_RE =
  * can be traced to something someone actually wrote.
  */
 export function ungroundedSpecifics(draft: string, source: string, locale?: string | null): string | null {
-  const known = new Set(source.match(NUMBER_RE) ?? []);
-  if ((draft.match(NUMBER_RE) ?? []).some((n) => !known.has(n))) return "digits";
+  if (ungroundedNumbers(draft, source).length > 0) return "digits";
 
   const lowerSource = source.toLowerCase();
 
@@ -638,13 +680,8 @@ function isWordChar(ch: string): boolean {
  */
 export function wordsToCheck(draft: string, source: string, locale?: string | null): string[] {
   const text = draft.replace(/\[[^\]\n]{1,60}\]/g, " ");
-  const known = new Set(source.match(NUMBER_RE) ?? []);
   const lowerSource = source.toLowerCase();
-  const hits: { at: number; word: string }[] = [];
-
-  for (const m of text.matchAll(NUMBER_RE)) {
-    if (!known.has(m[0])) hits.push({ at: m.index ?? 0, word: m[0] });
-  }
+  const hits: { at: number; word: string }[] = ungroundedNumbers(text, source);
   for (const m of text.matchAll(CURRENCY_RE)) {
     if (lowerSource.includes(m[0].toLowerCase())) continue;
     // "$649,000": the figure is already underlined; the sign beside it adds nothing.

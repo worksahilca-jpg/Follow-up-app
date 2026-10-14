@@ -19,7 +19,7 @@
 
 import { isNotAnAnswer } from "@/lib/notAnAnswer";
 import type { Message } from "@/lib/types";
-import { linkCovered, scanLinks, ungroundedCalendarWords, ungroundedSpecifics, unconfirmedClaim, type LinkToken } from "@/lib/grounding";
+import { linkCovered, scanLinks, ungroundedCalendarWords, ungroundedNumbers, ungroundedSpecifics, unconfirmedClaim, type LinkToken } from "@/lib/grounding";
 import { salesPressure } from "@/lib/replyTone";
 import { DM_MAX_BUTTONS, QUICK_REPLY_TITLE_MAX_CHARS, type DmButton } from "@/lib/quickReplies";
 
@@ -242,7 +242,8 @@ export function pickDmSituation(conversation: Message[], touch: DmTouch): DmSitu
         // The accuracy test (2026-10-12) still drew it from here, twice.
         "They asked about availability and the business hasn't confirmed yet. Do not confirm or deny anything. " +
         "Say you're checking the specific thing they named, then ask one open question only they can answer, " +
-        "such as when would suit them. Never offer days, times, or weekday versus weekend yourself. No buttons " +
+        "such as when would suit them. Never offer days, times, or weekday versus weekend yourself, not even the " +
+        "days inside a time they named (\"this weekend\" never becomes \"Saturday or Sunday?\"). No buttons " +
         "unless the question has two or three natural answers that are not days or times.",
     };
   }
@@ -270,7 +271,6 @@ const BANNED_CLOSER_RE =
   /let me know if you have any questions|feel free to reach out|anything else i can help|how can i assist|does that make sense|sound good\??$|fair enough\??$|are you interested|would you like to proceed|just checking|checking in|circling back|touching base/i;
 
 const QUESTION_MARK_RE = /[?？؟]/g;
-const NUMBER_RE = /\p{Nd}(?:[\p{Nd},.]*\p{Nd})?/gu;
 
 /**
  * Deterministic, model-free, language-neutral where it can be — the same
@@ -326,8 +326,8 @@ export function checkDmDraftShape(
   // is an offered slot, however plain the body is (audit 2026-09-28). The
   // grounding rules below read the body and every button title together.
   const spoken = [body, ...draft.buttons.map((b) => b.title)].join("\n");
-  const known = new Set(conversationText.match(NUMBER_RE) ?? []);
-  if ((spoken.match(NUMBER_RE) ?? []).some((n) => !known.has(n))) return fail("digits");
+  // The same digits rule as every drafter (src/lib/grounding.ts): "650k" grounds "$650,000".
+  if (ungroundedNumbers(spoken, conversationText).length > 0) return fail("digits");
 
   // The same invariant as the digits rule above, for a specific with no
   // digits in it. "Will this be for a weekday or weekend?" went out to a

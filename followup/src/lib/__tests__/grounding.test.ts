@@ -274,3 +274,37 @@ describe("an automated draft that claims availability", () => {
     expect(UNGROUNDED_DRAFT_REASONS.availability).toMatch(/only you know/);
   });
 });
+
+// Accuracy run 6 (2026-10-14): two of the three failed replies were good
+// replies the shape check held as invented.
+describe("the same amount, written another way, is not invented", () => {
+  const buyer = "Hi, we're pre-approved for 650k and want a 3 bed in Brampton. Can you help?";
+
+  it("grounds '$650,000' and '$650K' in a thread that said '650k'", async () => {
+    const { ungroundedNumbers, ungroundedSpecifics } = await import("@/lib/grounding");
+    expect(ungroundedNumbers("Happy to help find a 3 bed in Brampton up to $650,000. Which part of Brampton?", buyer)).toEqual([]);
+    expect(ungroundedNumbers("A 3 bed in Brampton around $650K is doable. Which part of Brampton?", buyer)).toEqual([]);
+    expect(ungroundedSpecifics("Up to 650000 works in Brampton. Which part?", buyer)).toBe(null);
+  });
+
+  it("grounds '1,300,000' in a thread that said '1.3M', and not in one that said a bare '1.3'", async () => {
+    const { ungroundedNumbers } = await import("@/lib/grounding");
+    expect(ungroundedNumbers("Homes near 1,300,000 there move quickly.", "Budget is 1.3M")).toEqual([]);
+    expect(ungroundedNumbers("Homes near 1,300,000 there move quickly.", "Budget around 1.3")).toEqual([{ at: 11, word: "1,300,000" }]);
+  });
+
+  it("still catches a number nobody wrote, and an amount that differs", async () => {
+    const { ungroundedNumbers } = await import("@/lib/grounding");
+    expect(ungroundedNumbers("A 4 bed under $700,000 is possible.", buyer).map((h) => h.word)).toEqual(["4", "700,000"]);
+    // Whole tokens, as before: "2" is not inside "$2,000".
+    expect(ungroundedNumbers("I can do it in 2 days.", "My budget is $2,000")).toEqual([{ at: 15, word: "2" }]);
+    // A unit that only looks like a scale is not one: "5 mins" says nothing about 5,000,000.
+    expect(ungroundedNumbers("Around 5,000,000 then?", "I'm 5 mins away")).toEqual([{ at: 7, word: "5,000,000" }]);
+  });
+
+  it("does the same in the DM shape check", async () => {
+    const { checkDmDraftShape } = await import("@/lib/dmDrafts");
+    expect(checkDmDraftShape({ body: "Yes, I can help with a 3 bed in Brampton up to $650,000. Which part of Brampton?", buttons: [] }, buyer)).toEqual({ ok: true });
+    expect(checkDmDraftShape({ body: "Yes, I can help with a 3 bed in Brampton up to $700,000. Which part of Brampton?", buttons: [] }, buyer)).toEqual({ ok: false, rule: "digits" });
+  });
+});

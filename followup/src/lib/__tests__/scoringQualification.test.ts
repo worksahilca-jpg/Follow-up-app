@@ -1,8 +1,9 @@
 /**
- * The checklist inside the reply step (src/lib/scoring.ts): a realtor's
- * customer is read when they write, the reply may ask about one missing
- * thing, the ready moment is stamped once, and nothing about it can hold
- * up or change a reply for any other line of work.
+ * The checklist inside the reply step (src/lib/scoring.ts, A-246): a
+ * realtor's customer is read when they write, the reply may ask about the
+ * next round (one or two things), the ready moment is stamped once, a
+ * customer with an agent stops being followed up, and nothing about it can
+ * hold up or change a reply for any other line of work.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
@@ -96,15 +97,35 @@ function setLead(
     conversations: [
       {
         channel: opts.channel ?? "email",
-        messages: opts.messages ?? [
-          message("inbound", "We need 3 bedrooms, near a good school. Our lease ends in March.", 1),
-        ],
+        messages: opts.messages ?? [message("inbound", "Is the 3 bed on Elm St still for sale? We're hoping to move in about 2 months.", 1)],
       },
     ],
   };
 }
 
 const updateData = () => h.update.mock.calls[0][0].data as Record<string, unknown>;
+const said = (key: string, value: string, quote: string, bucket = "") => ({ key, known: true, value, quote, bucket });
+
+const FIRST = [
+  said("side", "Buying", "still for sale", "buy"),
+  said("area", "Elm St", "the 3 bed on Elm St"),
+  said("timing", "In about 2 months", "move in about 2 months", "soon"),
+];
+// The approved drawing's buyer, after three rounds.
+const READY_THREAD = [
+  message("inbound", "Is the 3 bed on Elm St still for sale? We're hoping to move in about 2 months.", 1),
+  message("outbound", "It is. Have you been pre-approved yet, and what price range should I keep an eye on?", 2),
+  message("inbound", "Yes, pre-approved up to 900k", 3),
+  message("outbound", "Perfect. Are you working with an agent yet? If not, I'd be happy to show it to you.", 4),
+  message("inbound", "No agent. Saturday morning works", 5),
+];
+const READY = [
+  ...FIRST,
+  said("financing", "Pre-approved up to $900k", "pre-approved up to 900k", "sorted"),
+  said("budget", "Up to $900k", "pre-approved up to 900k"),
+  said("agent", "No agent yet", "No agent.", "none"),
+  said("viewing", "Saturday morning", "Saturday morning works"),
+];
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -112,78 +133,55 @@ beforeEach(() => {
   h.updateMany.mockResolvedValue({ count: 1 });
   h.generate.mockResolvedValue({ subject: "The 3 bed", body: "Yes, it's available." });
   h.booking.mockResolvedValue(null);
-  h.extract.mockResolvedValue([
-    { key: "want", known: true, value: "3 bedrooms near a school", quote: "We need 3 bedrooms, near a good school." },
-    { key: "timing", known: true, value: "Moving in March", quote: "Our lease ends in March." },
-    { key: "budget", known: false, value: "", quote: "" },
-    { key: "viewing", known: false, value: "", quote: "" },
-  ]);
+  h.extract.mockResolvedValue(FIRST);
 });
 
 describe("a realtor's customer who just wrote", () => {
-  it("is read, saved with their words, and the reply may ask about the budget next — once", async () => {
+  it("is read, saved with their words, and the reply may ask the next round — money, in one sentence — once", async () => {
     setLead();
     expect(await scoreAndDraftForLead("lead1")).toBe(true);
     expect(h.extract).toHaveBeenCalledTimes(1);
-    expect(h.generate.mock.calls[0][0].qualify.key).toBe("budget");
+    expect(h.generate.mock.calls[0][0].qualify.ask).toBe(
+      "whether they have been pre-approved yet (or are buying with cash), and what price range to keep an eye on"
+    );
     expect(updateData().qualification).toEqual({
-      v: 1,
+      v: 2,
       template: "realtor",
       items: [
-        { key: "want", value: "3 bedrooms near a school", quote: "We need 3 bedrooms, near a good school." },
-        { key: "timing", value: "Moving in March", quote: "Our lease ends in March." },
+        { key: "side", value: "Buying", quote: "still for sale", bucket: "buy" },
+        { key: "area", value: "Elm St", quote: "the 3 bed on Elm St" },
+        { key: "timing", value: "In about 2 months", quote: "move in about 2 months", bucket: "soon" },
       ],
-      offered: ["budget"],
+      offered: ["financing", "budget"],
     });
+    expect(updateData().saidNoAt).toBeNull();
     expect(h.updateMany).not.toHaveBeenCalledWith(expect.objectContaining({ data: { qualifiedAt: expect.any(Date) } }));
   });
 
   it("never stores a quote that isn't really theirs", async () => {
     setLead();
-    h.extract.mockResolvedValue([{ key: "budget", known: true, value: "Up to $900k", quote: "we can do 900" }]);
+    h.extract.mockResolvedValue([said("budget", "Up to $950k", "we can do 950")]);
     await scoreAndDraftForLead("lead1");
     expect((updateData().qualification as { items: unknown[] }).items).toEqual([]);
   });
 
   it("becomes ready once, with one bell — not a second one for going hot", async () => {
-    setLead({
-      messages: [
-        message("inbound", "We need 3 bedrooms, near a good school. Our lease ends in March.", 1),
-        message("outbound", "Great! Which days suit you for a viewing?", 2),
-        message("inbound", "We're pre-approved up to 650. Saturday 10:30 works!", 3),
-      ],
-    });
-    h.extract.mockResolvedValue([
-      { key: "want", known: true, value: "3 bedrooms near a school", quote: "We need 3 bedrooms, near a good school." },
-      { key: "timing", known: true, value: "Moving in March", quote: "Our lease ends in March." },
-      { key: "budget", known: true, value: "Pre-approved to $650k", quote: "pre-approved up to 650" },
-      { key: "viewing", known: true, value: "Saturday at 10:30 AM", quote: "Saturday 10:30 works!" },
-    ]);
+    setLead({ messages: READY_THREAD });
+    h.extract.mockResolvedValue(READY);
     const { scoreLead } = await import("@/lib/integrations/openai");
     vi.mocked(scoreLead).mockResolvedValueOnce({ score: 90, reason: "Ready to view", factors: [], saysNo: false, asksIfAutomated: false, onlyThanks: false } as never);
     await scoreAndDraftForLead("lead1");
     expect(h.generate.mock.calls[0][0].qualify).toBeNull();
+    expect((updateData().qualification as { tier?: string }).tier).toBe("ready");
     expect(h.updateMany).toHaveBeenCalledWith({ where: { id: "lead1", qualifiedAt: null }, data: { qualifiedAt: expect.any(Date) } });
     expect(h.notify).toHaveBeenCalledTimes(1);
-    expect(h.notify.mock.calls[0][0].data.message).toBe(
-      "Nadia Khan is ready — Pre-approved to $650k · Moving in March · 3 bedrooms near a school"
-    );
+    expect(h.notify.mock.calls[0][0].data.message).toBe("Nadia Khan is ready — Pre-approved up to $900k · In about 2 months · Elm St · No agent yet");
   });
 
   // A-237: the ready card goes into the owner's CRM too, once, with the customer's own words.
   it("puts the ready card into the CRM the customer came from, once", async () => {
-    const ready = [
-      message("inbound", "We need 3 bedrooms, near a good school. Our lease ends in March.", 1),
-      message("outbound", "Great! Which days suit you for a viewing?", 2),
-      message("inbound", "We're pre-approved up to 650. Saturday 10:30 works!", 3),
-    ];
-    h.extract.mockResolvedValue([
-      { key: "want", known: true, value: "3 bedrooms near a school", quote: "We need 3 bedrooms, near a good school." },
-      { key: "timing", known: true, value: "Moving in March", quote: "Our lease ends in March." },
-      { key: "budget", known: true, value: "Pre-approved to $650k", quote: "pre-approved up to 650" },
-      { key: "viewing", known: true, value: "Saturday at 10:30 AM", quote: "Saturday 10:30 works!" },
-    ]);
-    setLead({ messages: ready, crm: { provider: "followupboss", id: "fub-42" } });
+    h.extract.mockResolvedValue(READY);
+    setLead({ messages: READY_THREAD, crm: { provider: "followupboss", id: "fub-42" } });
     await scoreAndDraftForLead("lead1");
     expect(h.pushNote).toHaveBeenCalledTimes(1);
     expect(h.pushNote).toHaveBeenCalledWith(
@@ -192,64 +190,64 @@ describe("a realtor's customer who just wrote", () => {
       "fub-42",
       [
         "FollowUp: Nadia Khan looks ready to talk.",
-        'What they want: 3 bedrooms near a school ("We need 3 bedrooms, near a good school.")',
-        'When: Moving in March ("Our lease ends in March.")',
-        'Budget: Pre-approved to $650k ("pre-approved up to 650")',
-        'Viewing: Saturday at 10:30 AM ("Saturday 10:30 works!")',
+        'Area: Elm St ("the 3 bed on Elm St")',
+        'When: In about 2 months ("move in about 2 months")',
+        'Money: Pre-approved up to $900k ("pre-approved up to 900k")',
+        'Price range: Up to $900k ("pre-approved up to 900k")',
+        'Agent: No agent yet ("No agent.")',
+        'Viewing: Saturday morning ("Saturday morning works")',
       ].join("\n")
     );
 
     // A second pass that lost the race to stamp it pushes nothing.
     vi.clearAllMocks();
     h.updateMany.mockResolvedValue({ count: 0 });
-    setLead({ messages: ready, crm: { provider: "followupboss", id: "fub-42" } });
+    setLead({ messages: READY_THREAD, crm: { provider: "followupboss", id: "fub-42" } });
     await scoreAndDraftForLead("lead1");
     expect(h.pushNote).not.toHaveBeenCalled();
   });
 
   it("pushes nothing for a customer who isn't in a CRM", async () => {
-    setLead({
-      messages: [
-        message("inbound", "We need 3 bedrooms, near a good school. Our lease ends in March.", 1),
-        message("outbound", "Great! Which days suit you for a viewing?", 2),
-        message("inbound", "We're pre-approved up to 650. Saturday 10:30 works!", 3),
-      ],
-    });
-    h.extract.mockResolvedValue([
-      { key: "want", known: true, value: "3 bedrooms near a school", quote: "We need 3 bedrooms, near a good school." },
-      { key: "timing", known: true, value: "Moving in March", quote: "Our lease ends in March." },
-      { key: "budget", known: true, value: "Pre-approved to $650k", quote: "pre-approved up to 650" },
-      { key: "viewing", known: true, value: "Saturday at 10:30 AM", quote: "Saturday 10:30 works!" },
-    ]);
+    setLead({ messages: READY_THREAD });
+    h.extract.mockResolvedValue(READY);
     await scoreAndDraftForLead("lead1");
     expect(h.pushNote).not.toHaveBeenCalled();
   });
 
   it("is not stamped ready again once it has been", async () => {
     setLead({
+      messages: READY_THREAD,
       qualifiedAt: new Date(Date.UTC(2026, 9, 9, 9, 30)),
-      qualification: {
-        v: 1,
-        template: "realtor",
-        items: [
-          { key: "want", value: "3 bedrooms near a school", quote: "We need 3 bedrooms, near a good school." },
-          { key: "timing", value: "Moving in March", quote: "Our lease ends in March." },
-          { key: "budget", value: "Pre-approved to $650k", quote: "pre-approved up to 650" },
-          { key: "viewing", value: "Saturday at 10:30 AM", quote: "Saturday 10:30 works!" },
-        ],
-      },
+      qualification: { v: 2, template: "realtor", items: [], tier: "ready" },
     });
+    h.extract.mockResolvedValue(READY);
     await scoreAndDraftForLead("lead1");
     expect(h.updateMany).not.toHaveBeenCalledWith(expect.objectContaining({ data: { qualifiedAt: expect.any(Date) } }));
   });
 
-  it("still gets a reply when the reader fails", async () => {
+  it("stops following up a customer who already has an agent, and asks them nothing more", async () => {
+    setLead({
+      messages: [
+        message("inbound", "Is the 3 bed on Elm St still for sale? We're hoping to move in about 2 months.", 1),
+        message("outbound", "It is. Are you working with an agent yet?", 2),
+        message("inbound", "Thanks, but I'm already working with an agent.", 3),
+      ],
+    });
+    h.extract.mockResolvedValue([...FIRST, said("agent", "Has an agent", "I'm already working with an agent", "has")]);
+    await scoreAndDraftForLead("lead1");
+    expect((updateData().qualification as { tier?: string }).tier).toBe("agent");
+    expect(updateData().saidNoAt).toBeInstanceOf(Date);
+    expect(h.generate.mock.calls[0][0].qualify).toBeNull();
+    expect(h.notify).not.toHaveBeenCalled();
+  });
+
+  it("still gets a reply when the reader fails — and asks buying or selling, knowing nothing", async () => {
     setLead();
     h.extract.mockRejectedValue(new Error("model down"));
     vi.spyOn(console, "error").mockImplementation(() => {});
     expect(await scoreAndDraftForLead("lead1")).toBe(true);
     expect(updateData().suggestedMessage).toBe("Yes, it's available.");
-    expect(h.generate.mock.calls[0][0].qualify.key).toBe("want");
+    expect(h.generate.mock.calls[0][0].qualify.ask).toBe("whether they are looking to buy, sell, or both");
   });
 
   it("counts a booked call as the viewing", async () => {
@@ -274,7 +272,7 @@ describe("everything else stays as it was", () => {
 
   it("a pass where the business spoke last reads nothing and asks nothing", async () => {
     setLead({
-      messages: [message("inbound", "We need 3 bedrooms, near a good school.", 1), message("outbound", "On it!", 2)],
+      messages: [message("inbound", "Is the 3 bed on Elm St still for sale?", 1), message("outbound", "On it!", 2)],
     });
     await scoreAndDraftForLead("lead1");
     expect(h.extract).not.toHaveBeenCalled();
@@ -290,7 +288,8 @@ describe("asking a DM customer how to reach them", () => {
     message("outbound", "Yes, it is! Would you like to see it?", 2),
     message("inbound", "Maybe, we're moving in March", 3),
   ];
-  const dmAsk = () => h.draftDm.mock.calls[0][7] as { ask: string; key?: string } | null;
+  const dmAsk = () => h.draftDm.mock.calls[0][7] as { ask: string } | null;
+  const QUALIFYING = "whether they are looking to buy, sell, or both";
 
   beforeEach(() => {
     h.draftDm.mockResolvedValue({ body: "Great. What's the best email and mobile to reach you?", quickReplies: { question: "reply", buttons: [] }, shapeFailed: null });
@@ -300,7 +299,6 @@ describe("asking a DM customer how to reach them", () => {
     setLead({ channel: "instagram", messages: secondDm });
     await scoreAndDraftForLead("lead1");
     expect(dmAsk()?.ask).toMatch(/email address and mobile number/);
-    expect(dmAsk()?.key).toBeUndefined();
     expect(updateData().dmContactAskedAt).toBeInstanceOf(Date);
     expect((updateData().qualification as { offered?: string[] }).offered ?? []).toEqual([]);
   });
@@ -308,14 +306,14 @@ describe("asking a DM customer how to reach them", () => {
   it("never in the first reply", async () => {
     setLead({ channel: "instagram", messages: [message("inbound", "Is the 3 bed on King St still available?", 1)] });
     await scoreAndDraftForLead("lead1");
-    expect(dmAsk()?.key).toBe("want");
+    expect(dmAsk()?.ask).toBe(QUALIFYING);
     expect(updateData()).not.toHaveProperty("dmContactAskedAt");
   });
 
   it("never twice, and never once they gave an email", async () => {
     setLead({ channel: "instagram", messages: secondDm, dmContactAskedAt: new Date() });
     await scoreAndDraftForLead("lead1");
-    expect(dmAsk()?.key).toBe("want");
+    expect(dmAsk()?.ask).toBe(QUALIFYING);
     vi.clearAllMocks();
     setLead({ channel: "instagram", messages: secondDm, dmEmail: "nadia@x.com" });
     await scoreAndDraftForLead("lead1");

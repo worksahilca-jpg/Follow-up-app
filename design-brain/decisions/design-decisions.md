@@ -12565,3 +12565,40 @@ stays everyone. The A-243 build (commit 8c31f76, branch only, never merged) is n
 - **Weak spots, honestly:** A team that calls customers now needs one more tap to reach No answer / Spoke. The
   made-up data had every customer "quiet", so the order looked oldest-first; real new customers rank above (A-230).
 
+
+## 2026-10-14 — Follow-up plans and real-estate qualifying approved (A-245, A-246)
+
+- **Follow-up plans (A-245):** Fast / Long / My own, approved on a written plan. Draw the picker before building.
+- **Learning from mistakes, safely:** approved (*"Yes, build it"*): count the owner's corrections as numbers only and
+  turn each kind of mistake into a made-up test case, never a real customer's words. Plan first, shown to him before
+  building.
+- **Qualifying (A-246):** the founder pushed back twice. One question a message is too slow (*"We're going to ask
+  three questions or something at a time"*), and he wanted it grounded in what big companies do, not invented. The
+  research found no published scripts, but the same checks everywhere: when first (Zillow sorts on it), money only
+  for people moving soon, already with an agent (Structurely, LPMAMA), and for sellers why / condition / price
+  (REsimpli, Opendoor). An email study backs 1–3 questions a message; texting guides warn against bundling many.
+  The result: three rounds of at most two questions, then Ready / Warm / Later. Approved: *"Yes, use this process"*.
+- **What confused him on the way:** a long research answer and an abstract "upgrade?" question. What worked: one
+  example chat, then the process written as stages with the questions under each. Show an example first.
+- **Parked:** working with Wispr Flow. Its notetaker could later feed call notes into follow-ups, but it is Mac-only
+  and has no public API; revisit after paying customers (*"okay park it"*).
+- **Working preference:** no more demo videos (*"I don't want any videos from now"*). Drawings and screenshots only.
+- **Built (A-246, 2026-10-14).** Checked in a real browser at 390x844 and 1280x900 with six made-up customers, one per
+  state: Raj ready, Priya warm, Tom later, Linda a seller who is ready, Omar with an agent, Nina still being asked.
+  "Keep following up anyway" on Omar turned his reminders back on and wrote it to his history. All 3,764 tests pass.
+  Choices made while building:
+  - **Money is two things:** pre-approved or cash (what sorts the customer) and a price range. "Pre-approved up to
+    $900k" fills both, and the why line doesn't say the range twice.
+  - **Renters** follow the buyer's rounds, but are asked for a budget instead of a pre-approval.
+  - **Ready waits for the agent question,** so nobody is buzzed about a customer who turns out to have an agent. If they
+    skip the question, ready comes on their next message.
+  - **Has an agent** uses the same stop as a "no" (no reminders, no win-backs) until the owner overrules it.
+  - **The two old checklists in production** read as the new kind, without sorting labels; those customers are sorted
+    the next time they write.
+  - **The accuracy test** now has 58 made-up chats, sellers included, and scores the labels and Ready / Warm / Later
+    as well as what was said. It reads every chat as if today were Oct 1, 2026.
+  - **Weak spots, honestly:** Warm and Later say "FollowUp keeps in touch. Next message …" using today's reminder days;
+    the Fast and Long plans (A-245) come next. Sorting depends on the reader turning "next spring" into months from
+    today; the accuracy test checks that, but it needs the founder's login to run on the real model. On a phone a long
+    chat sits under the card, so the newest messages need a scroll. Reading a chat now costs a little more (13 things
+    instead of 4).

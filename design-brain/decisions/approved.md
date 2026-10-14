@@ -3061,6 +3061,9 @@ photo can show inside the app after Google sign-in.
 
 ## A-194 — The Ready card, built for realtors ^A-194
 
+**SUPERSEDED IN PART (2026-10-14) by [A-246](#^A-246):** what FollowUp checks (buyer and seller rounds), two questions a
+message instead of one, and Ready / Warm / Later. The card itself is redrawn with A-246.
+
 **SUPERSEDED IN PART (2026-10-09) by [A-209](#^A-209):** the pill reads "Qualified". The alert and title sentence ("Nadia is ready") stay.
 
 
@@ -3646,7 +3649,7 @@ one after R-107). Source: `prototypes/2026-10-10-phone-redesign/`.
   - groups with counts: Needs you, Ready to book (a Call pill), then Waiting on them, Booked and Everyone as rows;
   - no State column, no Pipeline page (A-219).
 - **One customer:**
-  - Wants, Budget and When at the top;
+  - Wants, Budget and When at the top; *(SUPERSEDED 2026-10-14 by A-246: the card that says where the customer stands, with Area / When / Money, or a seller's Home / When / Why, takes this place.)*
   - the chat as bubbles, with "Sent by FollowUp" under FollowUp's own;
   - "What FollowUp did" in one line;
   - one reply box pinned at the bottom.
@@ -4082,3 +4085,50 @@ R-114 (*"Today is the gist of everything ... How many calls do I need to do? How
   right. **Phone:** one column in the order above.
 - Results stays what FollowUp did; Customers stays everyone. Supersedes A-220's "Today never shows a list" and A-243 as
   the whole page.
+
+## A-245 — Follow-up plans: Fast, Long, or the owner's own ^A-245
+
+**Approved:** 2026-10-14, founder (*"Yes, this is it"*), on a written plan (no drawing yet). He asked for proven
+follow-up systems to choose from, plus one the owner edits, that keep going *"until the customer is booked, or until
+it's dead"*.
+- **Fast:** day 1, 3, 7, 14 and 30.
+- **Long:** the Fast days, then once a month, until they book or say no.
+- **My own:** the owner picks the days.
+- **Every message gives a new reason to reply** (a new listing, an answer to something they said, a next step).
+  Never "just checking in".
+- **Stops** when they book, reply or say no.
+- **Assisted** buzzes the owner for each message. **Automatic** sends it.
+- **Next:** draw the picker before building. Research behind the days:
+  `followup/research/product/2026-09-09-followup-cadence-best-practices.md`.
+
+## A-246 — Qualifying a realtor's customer: three short rounds, then Ready, Warm or Later ^A-246
+
+**Approved:** 2026-10-14, founder (*"Yes, use this process"*), after asking twice whether it was a proven system:
+*"Is this a proven system with the big companies ... I want to know how they qualify the leads, so we're going to make
+a structure based on that."* Every question comes from what Zillow, Structurely, Ylopo, the LPMAMA checklist, REsimpli
+and Opendoor check (research note `followup/research/product/2026-10-14-how-big-players-qualify.md`). The exact words
+and "two questions a message" are FollowUp's own.
+- **Step 0, buyer or seller:** known from the first message (a listing → buyer; "what's my home worth" → seller).
+  When it isn't clear: "Are you looking to buy, sell, or both?"
+- **Buyer:** (1) which area + when they hope to move; (2) only when moving within 6 months: pre-approved or cash +
+  price range; 6+ months: what kind of home instead; (3) working with an agent yet + would they like to see the home.
+- **Seller:** (1) the address + when they hope to sell; (2) why they're moving + what shape the home is in; (3) a price
+  in mind + a visit to give them a real number.
+- **The judgement:** **Ready** = moving within 3 months and pre-approved or cash (a seller: within 3 months, with a
+  reason) → the owner's phone buzzes. **Warm** = 3–6 months, or money not sorted → Fast plan (A-245). **Later** = 6+
+  months or just looking → Long plan. **Has an agent** → FollowUp stops and tells the owner. **No** → stops.
+- **Rules:** at most two questions a message, joined into one natural sentence; their question is answered first;
+  nothing they already said is asked again; when they go quiet the follow-up plan carries on from the next missing
+  thing.
+- **Sound:** like the owner on their phone, never a salesperson or a bot (founder, same day: *"how you will start the
+  conversation that sounds like a human not a salesperson like a bot"*). First sentence answers them; no stock
+  openers; no pitch; questions framed as helping them.
+- Supersedes the one-question-at-a-time rule of A-194 / `qualification.ts` (founder: one question a message is too
+  slow) and, for these rounds, "at most one question of ours" in the brand principle of 2026-10-11.
+- **Drawn and approved (2026-10-14, *"Yes, build this"*):** six phones and the computer view, inside the real
+  customer page. One card at the top of the phone (top of the side column on a computer) says where the customer
+  stands: **Ready** (green pill, "Raj is ready to view" / "Linda wants to sell", the viewing or home on a sand row,
+  "Why:" line, Call / Message, "How FollowUp knows" folded with their words); **Warm** and **Later** (plain pill, one
+  sentence, three facts, "FollowUp keeps in touch ... Nothing for you to do."); **Has an agent** ("FollowUp stopped
+  following up", one quiet link "Keep following up anyway"); still finding out ("What FollowUp knows so far · 3 of 5",
+  three facts, "Still to find out: ..."). Only Ready is coloured: it is the only one that needs the owner.

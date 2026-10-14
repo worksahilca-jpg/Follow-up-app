@@ -39,8 +39,8 @@ import { plainHoldReason } from "@/lib/holdReasons";
 import CallBox from "@/components/app/CallBox";
 import { isCallablePhone, telHref } from "@/lib/callPlan";
 import { displayChannel } from "@/lib/displayChannel";
-import ReadyCard from "@/components/app/ReadyCard";
-import { isReady, readQualification, templateFor } from "@/lib/qualification";
+import CustomerStanding from "@/components/app/CustomerStanding";
+import { readQualification, templateFor } from "@/lib/qualification";
 
 export const dynamic = "force-dynamic";
 
@@ -101,37 +101,28 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
     .filter(Boolean)
     .join(" · ");
 
-  // "Nadia is ready" (src/lib/qualification.ts): for a line of work with a
-  // checklist. Ready is shown while the deal is open; a closed or decided
-  // one keeps only the folded record of what was learned.
+  // Where this customer stands (A-246, src/lib/qualification.ts): for a
+  // line of work with a checklist. Ready, Warm, Later and "has an agent"
+  // are shown while the deal is open; a closed or decided one keeps only
+  // the record of what was learned.
   const template = templateFor(business?.industry);
   const qualification = template ? readQualification(checklist?.qualification) : null;
   const checklistShown = template && qualification && qualification.template === template.id ? qualification : null;
-  const showReady = Boolean(
-    template &&
-      checklistShown &&
-      checklist?.qualifiedAt &&
-      isReady(template, checklistShown) &&
-      lead.automationStatus?.kind !== "closed" &&
-      lead.stage !== "won" &&
-      lead.stage !== "lost"
-  );
-  // Wants, Budget, When at the top (A-220): what FollowUp learned from their own words (#466).
-  const known = (key: string) => checklistShown?.items.find((i) => i.key === key)?.value ?? null;
-  const wants: [string, string | null][] = [
-    ["Wants", known("want")],
-    ["Budget", known("budget")],
-    ["When", known("timing")],
-  ];
-  const showWants = wants.some(([, v]) => v);
-  const readyCard =
+  const dealOpen = lead.automationStatus?.kind !== "closed" && lead.stage !== "won" && lead.stage !== "lost";
+  const showReady = Boolean(checklistShown && dealOpen && checklistShown.tier === "ready" && checklist?.qualifiedAt);
+  const nextMessage = lead.nextFollowUp
+    ? new Date(lead.nextFollowUp).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric", timeZone })
+    : null;
+  const standing =
     template && checklistShown ? (
-      <ReadyCard
+      <CustomerStanding
+        leadId={lead.id}
         leadName={lead.name}
         template={template}
-        qualification={checklistShown}
-        ready={showReady}
+        qualification={showReady || checklistShown.tier !== "ready" ? checklistShown : { ...checklistShown, tier: undefined }}
+        open={dealOpen}
         callHref={phone ? telHref(phone) : null}
+        nextMessage={nextMessage}
       />
     ) : null;
 
@@ -160,19 +151,8 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
           </div>
         </div>
 
-        {showWants && (
-          <dl className="grid grid-cols-3 gap-1.5 rounded-[14px] bg-card-2 px-3 py-2.5 lg:mt-3">
-            {wants.map(([label, value]) => (
-              <div key={label} className="min-w-0">
-                <dt className="text-[11.5px] text-ink-faint">{label}</dt>
-                <dd className={"line-clamp-2 text-[13.5px] leading-snug " + (value ? "font-semibold" : "text-ink-faint")}>{value ?? "Not yet"}</dd>
-              </div>
-            ))}
-          </dl>
-        )}
-
-        {/* Phone: a ready customer's card comes first — it is what the alert was about. */}
-        {showReady && <div className="mt-4 lg:hidden">{readyCard}</div>}
+        {/* Phone: where the customer stands comes first (A-246); a ready card is what the alert was about. */}
+        {standing && <div className="mt-3 lg:hidden">{standing}</div>}
 
         <div aria-hidden="true" className="flex-1 lg:hidden" />
         {/* id: the target of CatchUp's "Show all N messages". */}
@@ -250,7 +230,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
           </>
         }
       >
-        {readyCard && <div className={showReady ? "hidden lg:block" : undefined}>{readyCard}</div>}
+        {standing && <div className="hidden lg:block">{standing}</div>}
         <Facts lead={lead} approval={approval} now={now} />
 
         {/* Three pills, as drawn. The third is Call when there is a number

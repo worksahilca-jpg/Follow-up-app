@@ -29,6 +29,7 @@ import { heldSince } from "@/lib/pendingApprovals";
 import {
   bookingWhen,
   customerTexts,
+  askFor,
   isReady,
   markOffered,
   readyWhy,
@@ -205,12 +206,15 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
   const dmChannel = dmChannelOf(conversation);
   const askContact = Boolean(dmChannel) && customerJustWrote && shouldAskForContact(lead, conversation);
 
-  // What FollowUp now knows, and the one thing this reply may ask about.
-  // Each thing is asked about once (Qualification.offered), and only in a
-  // reply to something the customer just wrote — never in a message
-  // FollowUp starts on its own.
+  // What FollowUp now knows, where the customer stands (A-246), and what
+  // this reply may ask about: one round, at most two things, in one
+  // sentence. Each thing is asked about once (Qualification.offered), and
+  // only in a reply to something the customer just wrote — never in a
+  // message FollowUp starts on its own. Where they stand is judged before
+  // this reply's questions are marked, so a question counts as asked only
+  // once the customer has had the chance to answer it.
   let qualification: Qualification | null = null;
-  let qualify: Criterion | null = null;
+  let qualify: Pick<Criterion, "ask"> | null = null;
   if (template) {
     qualification = mergeQualification(
       template,
@@ -219,10 +223,14 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
       customerTexts(conversation),
       booking ? bookingWhen(booking.scheduledAt, lead.business.timezone ?? "America/New_York") : null
     );
-    qualify = customerJustWrote && !askContact ? nextToAsk(template, qualification) : null;
-    if (qualify) qualification = markOffered(qualification, qualify.key);
+    const next = customerJustWrote && !askContact ? nextToAsk(template, qualification) : [];
+    qualify = askFor(next);
+    if (next.length) qualification = markOffered(qualification, ...next.map((c) => c.key));
   }
   const becameReady = Boolean(template && !lead.qualifiedAt && isReady(template, qualification));
+  // "I'm already working with an agent" (A-246): FollowUp stops following
+  // up, the same way it does after a no, until the owner says otherwise.
+  const hasAgent = qualification?.tier === "agent";
 
   // The newest reading wins. Falling back to the stored one only covers
   // the case where THIS message was too short to judge ("ok", "thanks")
@@ -323,7 +331,7 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
       // fresh every time, so a customer who writes again is read again.
       ...(latestInboundAt
         ? {
-            saidNoAt: scoreResult.saysNo ? latestInboundAt : null,
+            saidNoAt: scoreResult.saysNo || hasAgent ? latestInboundAt : null,
             askedIfPersonAt: scoreResult.asksIfAutomated ? latestInboundAt : null,
             // Only "thanks" / "ok": what the skip_thanks habit keys on (src/lib/habits.ts).
             thanksOnlyAt: scoreResult.onlyThanks ? latestInboundAt : null,

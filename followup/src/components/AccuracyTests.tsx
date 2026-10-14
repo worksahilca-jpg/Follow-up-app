@@ -63,14 +63,19 @@ const TESTS: Test[] = [
   {
     id: "qualifying",
     title: "Qualifying a realtor's customer",
-    what: "48 made-up chats. What they want, when, budget and viewing: known only when the customer said it.",
+    what: "58 made-up chats, buyers and sellers. Where, when, money, agent, viewing: known only when the customer said it, then sorted into Ready, Warm, Later or Has an agent.",
     route: "/api/admin/qualification-eval",
     read: (r) => {
       const items = (r.items ?? {}) as Record<string, unknown>;
       return {
         headline: `${num(items.right)} of ${num(items.total)} answers right`,
         mustBeZero: { label: "made up", count: num(items.madeUp) },
-        lines: [`${num(items.missed)} missed`, `"Ready" right in ${num(r.readyRight)} of ${num(r.cases)} chats`, ...(num(r.errors) ? [`${num(r.errors)} could not be checked`] : [])],
+        lines: [
+          `${num(items.missed)} missed`,
+          `Labels right: ${num((r.sorting as Record<string, unknown> | undefined)?.right)} of ${num((r.sorting as Record<string, unknown> | undefined)?.total)}`,
+          `Ready / Warm / Later right in ${num(r.tierRight)} of ${num(r.tierTotal)} chats`,
+          ...(num(r.errors) ? [`${num(r.errors)} could not be checked`] : []),
+        ],
         failures: list<{ name: string; item: string; expected: string; got: string; detail: string }>(r.failures).map((f) => ({
           name: `${f.name} · ${f.item}`,
           detail: `should be ${f.expected}, got ${f.got}${f.detail ? `: ${f.detail}` : ""}`,

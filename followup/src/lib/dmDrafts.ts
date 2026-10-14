@@ -51,7 +51,8 @@ export const DM_SHAPE_RULES =
   "This goes out as an Instagram or Messenger DM, not an email. 8 to 30 words, one or two sentences (three only " +
   "when they asked more than one thing and each needs its answer), no greeting, " +
   "no sign-off, no subject line. Exactly one question, and it is the last sentence. The question must be " +
-  "answerable in one word by someone walking, without looking at any buttons. Provide two or three button " +
+  "answerable in one word by someone walking, without looking at any buttons, except a question that joins the " +
+  "two things in WHAT TO LEARN NEXT, which may take a few words to answer and then gets no buttons. Otherwise provide two or three button " +
   `titles, each ${QUICK_REPLY_TITLE_MAX_CHARS} characters or fewer, in the same language as the lead's last message, each one a plain ` +
   "answer to that question (\"Buying\", not \"Choose buying\"). " +
   // The accuracy test, 2026-10-13: "What day works best for a showing?"

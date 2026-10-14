@@ -2166,7 +2166,13 @@ export async function extractQualificationFacts(
 ): Promise<ExtractedItem[] | null> {
   if (!process.env.OPENAI_API_KEY || conversation.length === 0 || criteria.length === 0) return null;
   const keys = criteria.map((c) => c.key);
-  const day = today.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric", timeZone: "UTC" });
+  const longDate = (d: Date) => d.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric", timeZone: "UTC" });
+  const monthsOn = (n: number) => {
+    const d = new Date(today);
+    d.setUTCMonth(d.getUTCMonth() + n);
+    return d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" });
+  };
+  const day = longDate(today);
   const client = getClient();
   const completion = await client.chat.completions.create({
     model: MODEL,
@@ -2187,7 +2193,18 @@ export async function extractQualificationFacts(
                   : "")
             )
             .join("\n") +
-          `\n\nToday is ${day}. Count "within 3 months" and "6 months" from today.\n\n` +
+          // The accuracy test, 2026-10-14: "by June" came back as 3-6 months
+          // and "by December" as 3-6 months on October 1. Months counted in
+          // the head go wrong; dates to compare against don't.
+          `\n\nToday is ${day}. For timing: "soon" means on or before ${monthsOn(3)}; "months" means after that and ` +
+          `on or before ${monthsOn(6)}; "later" means after ${monthsOn(6)}, or no plan yet. A month they name is the ` +
+          "next one of that name: work out its date first, then compare.\n\n" +
+          // The same test: a buyer's "Is 31 Elm still for sale?" filed as a
+          // home to sell, a buyer's "Saturday works" as a home visit, the
+          // seller's own townhouse as the kind of home they want.
+          "Buying and selling items never mix. A listing or address they want to buy, rent or see is area, never " +
+          "home. home, why, condition, price and visit are only about a home THEY OWN and want to sell. kind and " +
+          "viewing are only about a home they want to buy or rent.\n\n" +
           "An item is known only when the CUSTOMER said it, in a line marked inbound. Something only the " +
           "business said, assumed or offered is not known. Never guess and never infer from tone: when the " +
           "customer has not clearly said it, known is false, and value, quote and bucket are empty. If they " +

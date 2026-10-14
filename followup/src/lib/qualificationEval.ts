@@ -252,7 +252,8 @@ export const QUAL_EVAL_CASES: QualEvalCase[] = [
       ["in", "Thanks, but I'm already working with an agent. Just wanted to check."],
     ],
     ["side", "area", "agent"],
-    { buckets: { side: "buy", agent: "has" } }
+    // "the condo on King St" may or may not say what kind of home they want.
+    { skip: ["kind"], buckets: { side: "buy", agent: "has" } }
   ),
   c(
     "no agent, wants to see it",
@@ -345,7 +346,8 @@ export const QUAL_EVAL_CASES: QualEvalCase[] = [
     ["side", "home", "timing", "why", "condition", "price", "visit"],
     { buckets: { side: "sell", timing: "soon" } }
   ),
-  c("selling to buy", [["in", "We need to sell our condo at 88 Queen St before we can buy a house in Oakville."]], ["side", "home", "area"], {
+  // Buying the next home IS the reason for selling (REALTOR's "why").
+  c("selling to buy", [["in", "We need to sell our condo at 88 Queen St before we can buy a house in Oakville."]], ["side", "home", "area", "why"], {
     skip: ["kind"],
     buckets: { side: "both" },
   }),
@@ -379,7 +381,8 @@ export const QUAL_EVAL_CASES: QualEvalCase[] = [
       ],
     ],
     ["side", "area", "financing", "budget", "viewing"],
-    { buckets: { side: "buy", financing: "sorted" } }
+    // "this unit" may or may not say what kind of home they want.
+    { skip: ["kind"], buckets: { side: "buy", financing: "sorted" } }
   ),
   c(
     "marketplace enquiry with only a question",

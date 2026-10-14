@@ -12602,3 +12602,11 @@ stays everyone. The A-243 build (commit 8c31f76, branch only, never merged) is n
     today; the accuracy test checks that, but it needs the founder's login to run on the real model. On a phone a long
     chat sits under the card, so the newest messages need a scroll. Reading a chat now costs a little more (13 things
     instead of 4).
+- **First live accuracy run (2026-10-14, founder ran /admin):** qualifying 704 of 722 answers right, but 12 made up.
+  Read off his screenshot: nearly all were answers in the wrong place, not invented facts — a buyer's "Is 31 Elm still
+  for sale?" filed as a home to sell, a buyer's "Saturday works" as a home visit, a seller's own townhouse as the kind
+  of home they want — plus "by June" and "by December" counted as 3–6 months on October 1. Fixed: buying and selling
+  items never mix once FollowUp knows which way the customer is going (checked in code, not left to the model), the
+  reader gets real dates for 3 and 6 months out, and three test answers that were debatable or wrong were corrected
+  ("selling to buy" does give a reason; "the condo" / "this unit" may or may not say what kind of home). Next run should
+  show 0 made up; it needs the founder to press Run again.

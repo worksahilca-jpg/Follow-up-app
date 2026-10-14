@@ -17,6 +17,7 @@ import { Plus, Trash2, ChevronUp, ChevronDown, Mail, ArrowRightLeft } from "luci
 import { CARRIER_CHANNELS_AVAILABLE } from "@/lib/pricing";
 import { READY_PLANS, toStepDelays, type ReadyPlan } from "@/lib/readyPlans";
 import { EveryPlanBox, PlanEditor, PlansOverview, type PlansData } from "@/components/app/FollowUpPlansView";
+import FollowUpSwitches from "@/components/app/FollowUpSwitches";
 import type { PlanId } from "@/lib/followUpPlans";
 
 type SequenceAction = "EMAIL" | "CHANGE_STAGE";
@@ -179,6 +180,8 @@ export default function WorkflowsPage() {
         <div className="mt-5 grid gap-4 lg:mt-6">
           {plansData && <PlansOverview data={plansData} onEdit={setEditingPlan} />}
           {plansData && <EveryPlanBox holdAll={plansData.holdAll} />}
+          {/* The four things FollowUp writes on its own, one line each (A-253: moved here from Settings). */}
+          <FollowUpSwitches />
           {/* The three ready plans of A-044 stay, as one quiet line (A-245):
               each opens its editor, and a blank plan is the last link. */}
           {/* Inline links in a sentence (WCAG 2.5.8's inline exception), with

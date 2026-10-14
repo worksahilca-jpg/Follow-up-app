@@ -26,31 +26,30 @@ import { join } from "node:path";
 // break the test without changing a word the customer reads.
 const settings = () =>
   readFileSync(join(__dirname, "..", "..", "app", "(app)", "settings", "page.tsx"), "utf8").replace(/\s+/g, " ");
+// Since A-253 (2026-10-14) the four things FollowUp writes on its own are one line each on the
+// Follow-up plans page, with no number beside them. Their promises are checked there.
+const switches = () => readFileSync(join(__dirname, "..", "..", "components", "app", "FollowUpSwitches.tsx"), "utf8").replace(/\s+/g, " ");
 
 describe("the instant-reply promise", () => {
   it("does not claim the reply is a fixed sentence", () => {
     // It is generated per message. checkAckShape and assessAckRisk are
     // what make it safe — not it being static.
     expect(settings()).not.toMatch(/fixed sentence, not an AI reply/i);
+    expect(switches()).not.toMatch(/fixed sentence/i);
   });
 
-  // Each of these IS enforced, so each is fair to promise. If one is ever
-  // removed from the code, this test is the reminder that the sentence
-  // promising it has to go too.
-  // Since #16 (founder, 2026-10-05, A-094) the rule says less: its sentence and one "stops
-  // when" line. Fewer promises, but every one left must still be true. The price, fallback,
-  // opt-out and DM-delay sentences went with the cut, not because they stopped being true.
+  // Since A-253 the rule is one line, "Thank new customers right away", and promises nothing
+  // more: no language, no count, no timing a channel can't keep. Every word left must still be
+  // true; the sentences that went ("once per customer, in their language", "never if you've
+  // already replied") went with the cut, not because they stopped being true.
   it("keeps the promises the code actually enforces", () => {
-    const copy = settings();
-    // The atomic claim on Lead.acknowledgedAt.
-    expect(copy).toMatch(/once per customer, in their language/i);
-    // The prior-outbound check.
-    expect(copy).toMatch(/never if you've already replied/i);
+    expect(switches()).toMatch(/Thank new customers right away/);
   });
 
   // The grace period made the old "within a minute" false on DM channels.
   it("never promises a timing the DM grace period breaks", () => {
     expect(settings()).not.toMatch(/within a minute/i);
+    expect(switches()).not.toMatch(/within a minute/i);
   });
 });
 
@@ -67,37 +66,34 @@ describe("the instant-reply promise", () => {
  * above: a true sentence that went stale when the code moved.
  */
 describe("the unanswered-rule promise", () => {
-  it("promises what is now active: a reply within minutes, not after the hours setting", () => {
-    // Since the follow-up strategy (2026-09-25) a new message is answered
-    // or held within minutes on every channel (the fresh-replies cron); the
-    // hours field is only the backstop. The summary sentence used to quote
-    // that field — "if you haven't answered within 24 hours (20 on
-    // Instagram and Messenger)" — which became untrue the day this shipped.
-    expect(settings()).toMatch(/FollowUp writes a reply within minutes\./);
-    expect(settings()).not.toMatch(/if you haven't answered within \$\{unansweredHours\}/);
+  // Since the follow-up strategy (2026-09-25) a new message is answered or held within minutes
+  // on every channel; the hours number was only the backstop, and since A-253 it is off the
+  // screen (the saved value keeps running, capped by the Meta ceiling in the back). The switch
+  // says what it does, with no hours that would mean something else on three channels.
+  it("promises what is active, and no hours setting", () => {
+    expect(switches()).toMatch(/Reply when you haven't/);
+    expect(switches()).not.toMatch(/within \$\{|hours before|\bhours?\b.*waits/i);
+    expect(settings()).not.toMatch(/if you haven't answered within/);
   });
 
   it("does not hardcode the ceiling anywhere in Settings", () => {
     // The number has one home (@/lib/metaWindow). "20 hours" typed into a
     // sentence would be true today and wrong the day the constant moves.
     expect(settings()).not.toMatch(/\b20 hours?\b/);
+    expect(switches()).not.toMatch(/\b20 hours?\b/);
   });
 
-  it("explains WHY, next to the field, in the owner's words", () => {
-    // Brand principle 3: every automated behaviour must let the owner
-    // answer "why did that happen" unaided. "Meta only lets a business
-    // reply within a day" is the reason, with no platform jargon.
-    expect(settings()).toMatch(/Meta only lets a business reply freely within a day/i);
-    expect(settings()).toMatch(/On Instagram, Messenger and WhatsApp/);
-  });
-
-  it("imports the constant from the leaf module, never from automation.ts", () => {
-    // automation.ts imports Prisma. Pulling it into this "use client"
-    // component ships the database client to the browser — the exact bug
-    // fixed for issue #93, and the reason @/lib/metaWindow exists.
-    const raw = readFileSync(join(__dirname, "..", "..", "app", "(app)", "settings", "page.tsx"), "utf8");
-    expect(raw).toMatch(/from "@\/lib\/metaWindow"/);
-    expect(raw).not.toMatch(/from "@\/lib\/automation"/);
+  it("never pulls automation.ts into a screen", () => {
+    // automation.ts imports Prisma. Pulling it into a "use client" component
+    // ships the database client to the browser (issue #93).
+    for (const file of [
+      ["app", "(app)", "settings", "page.tsx"],
+      ["components", "app", "FollowUpSwitches.tsx"],
+      ["components", "settings", "Connections.tsx"],
+    ]) {
+      const raw = readFileSync(join(__dirname, "..", "..", ...file), "utf8");
+      expect(raw, file.join("/")).not.toMatch(/from "@\/lib\/automation"/);
+    }
   });
 });
 
@@ -107,10 +103,13 @@ describe("the unanswered-rule promise", () => {
  * guarantee it carried ("nothing above sends on its own") now lives in "Your rules".
  */
 describe("the guarantee on a holding account", () => {
-  const yourRules = () => readFileSync(join(__dirname, "..", "yourRules.ts"), "utf8");
+  // "Your rules" left Settings with A-253. The guarantee is now the choice itself ("I check
+  // each one first") and the line under every follow-up plan.
+  const plansView = () => readFileSync(join(__dirname, "..", "..", "components", "app", "FollowUpPlansView.tsx"), "utf8");
 
   it("is stated where the owner reads the rules", () => {
-    expect(yourRules()).toMatch(/if \(s\.holdAll\) rules\.push\("Every reply waits for your OK\."\)/);
+    expect(settings()).toMatch(/title="I check each one first"/);
+    expect(plansView()).toMatch(/right now every one waits for your OK/);
   });
 
   it("is not contradicted by a summary that says 'sends'", () => {

@@ -166,7 +166,7 @@ export async function getIncompleteSetupSteps(businessId: string): Promise<Setup
       title: "Reconnect your inbox",
       description: `FollowUp has lost access to ${gmail.email ?? "your inbox"} and isn't catching new leads.`,
       ctaLabel: "Reconnect",
-      ctaHref: "/settings#integrations",
+      ctaHref: "/settings#connections",
       dismissible: false,
     });
   }
@@ -206,7 +206,7 @@ export async function getIncompleteSetupSteps(businessId: string): Promise<Setup
       title: "Add your website widget",
       description: "Paste one line into your site to capture leads straight from a contact form.",
       ctaLabel: "Get the code",
-      ctaHref: "/settings#website-widget",
+      ctaHref: "/settings#connections",
       dismissible: true,
       dismissLabel: "I don’t have a website",
     });

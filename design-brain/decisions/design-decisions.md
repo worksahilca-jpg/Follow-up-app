@@ -12717,3 +12717,13 @@ screenshot: the scores are certain, the details in brackets are best readings.
 - **The second try is told what was wrong** (founder, same day: "Yes, add it"). A DM that breaks a rule is written
   once more, as before, but the retry now hears which rule and how to fix it ("It named a day nobody in this
   conversation mentioned…"), instead of the same request again. Fewer drafts end up held for the owner to fix.
+
+## 2026-10-14 — "Simple replies" taken out of the app (R-106)
+
+Caught while reading the decisions before drawing the next build. R-106 (Oct 10) rejected calling automatic sending
+"easy" or "simple" replies: *"No lead should be taken lightly."* The words had stayed in four places, and one was new
+today: the Settings row ("Simple replies send themselves", from Sep 26), Your rules ("Simple replies send by
+themselves"), the /security page ("simple replies go by themselves"), and the plans page line written for A-245. All
+now say what A-217 says: FollowUp sends the replies itself, and a price, a date or anything unsure waits for the
+owner. The launch plan's build item was renamed the same way. **For future sessions:** never "simple", "easy" or
+"routine" replies in anything an owner or a visitor reads.

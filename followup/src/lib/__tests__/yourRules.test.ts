@@ -17,8 +17,8 @@ describe("yourRules", () => {
     expect(rules).toContain("Anyone on your team can send.");
   });
 
-  it("says simple replies send by themselves once the owner allowed it", () => {
-    expect(yourRules({ ...base, holdAll: false })[0]).toBe("Simple replies send by themselves. Everything else waits for your OK.");
+  it("says FollowUp sends the replies once the owner allowed it, never \"simple\" ones (R-106)", () => {
+    expect(yourRules({ ...base, holdAll: false })[0]).toBe("FollowUp sends your replies itself. A price, a date or anything unsure waits for your OK.");
   });
 
   it("says sending is paused, not just held, during a pause", () => {

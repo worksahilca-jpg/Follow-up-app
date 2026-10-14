@@ -58,8 +58,9 @@ domain. The founder's ceiling is $50/month. Changes made that day on team North 
   Reviewers read the diff on GitHub; the founder's session verifies locally before a merge.
 - `followup-voice-agent` stays paused (spend management paused it; nobody uses it yet).
 - Members dipesh, pransh, vansh → **Viewer**. Founder stays Owner.
-- Spend Management: on-demand budget $140 for the current period (Sep 8 – Oct 8, already
-  $118 spent), Pause Projects on. **Drop the budget to $30 on 2026-10-08.**
+- Spend Management: budget **$30**, pause production deployments on (set 2026-10-14; was $140).
+  At the Oct 8 – Nov 8 pace (mostly build minutes) it could be reached in late October, so batch
+  merges; Vercel emails at 50% and 75% before it pauses.
 
 Standing rule for every session: push less. Batch commits into one PR; every push to
 `main` is a paid build, and a branch push no longer builds at all.

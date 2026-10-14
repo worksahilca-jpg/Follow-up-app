@@ -56,12 +56,13 @@ export const followUpBossClient: CrmClient = {
   async testConnection(apiKey) {
     try {
       const res = await fetch(`${BASE}/me`, { headers: { Authorization: authHeader(apiKey) }, signal: AbortSignal.timeout(CRM_TIMEOUT_MS) });
-      if (!res.ok) return { ok: false, message: res.status === 401 ? "That API key was rejected." : `Follow Up Boss returned ${res.status}.` };
+      if (!res.ok) return { ok: false, message: res.status === 401 ? "Follow Up Boss didn't accept that key. Copy it again from Admin → API." : `Follow Up Boss returned ${res.status}. Try again in a minute.` };
       const data = await res.json().catch(() => ({}));
       const label = typeof data?.account?.name === "string" ? data.account.name : undefined;
       return { ok: true, accountLabel: label };
     } catch (err) {
-      return { ok: false, message: err instanceof Error ? err.message : "Couldn't reach Follow Up Boss." };
+      console.error("Follow Up Boss connect check failed:", err);
+      return { ok: false, message: "Couldn't reach Follow Up Boss. Try again in a minute." };
     }
   },
 

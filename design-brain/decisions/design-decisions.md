@@ -12929,3 +12929,43 @@ The founder answered *"LETS IMPROVE EVERYTHING"*, recorded as A-252.
 - One-click sign-in depends on each CRM's own developer app. Until the founder registers one, Connect opens the window
   with the API key way only.
 - Which CRM field means "Do not contact" has to be checked against each CRM's documentation before it is relied on.
+## 2026-10-14 — "Your CRM", built (A-252, first part)
+
+Built on the approved drawing, for Follow Up Boss and HubSpot. Checked in the local app on phone (390×844) and
+computer (1280×900), with a pretend local connection: not connected, the connect window, connected with a week of
+writes, "Show all", and a customer's page in both states.
+
+**Built as drawn:**
+- Settings › More › Advanced. The section is called "Your CRM". The box "Keep the app you already use" has a row per
+  CRM. Follow Up Boss has the black Connect, HubSpot an outlined one, and GoHighLevel says "Soon". Below the rows:
+  "Something else? Send customers in with Zapier or Make".
+- Reads and Writes back, in two lists, ending with the one-boss line (A-237).
+- Connected: "● Connected · 3 customers brought in · checked 2 min ago", with "Pause writing there" and "Disconnect".
+- "What FollowUp wrote in Follow Up Boss". Each line has the time, the note, and its words.
+  - A note that didn't land the first time: "● Couldn't reach Follow Up Boss at first. Tried again at 6:55 PM: done.
+    Nothing was lost."
+  - One waiting: "● Couldn't reach Follow Up Boss. Trying again at 7:52 PM."
+  - One that gave up: "● Not written after 5 tries. It's still here in FollowUp."
+  - Then "Show all 7 this week".
+- A customer's page has "In Follow Up Boss". While the CRM is following up: "Follow Up Boss is following up" and
+  "FollowUp is watching, and will tell you when Raj is ready."
+- The Advanced page's other two black buttons, "Generate webhook URL" and "Add a webhook URL", are outlined now.
+
+**Different from the drawing, on purpose. The screens say only what FollowUp does today:**
+- The lists show what is built. "Do not contact" and closed, and the stage, carry "Soon". Tasks and bookings are left
+  out until they're built.
+- The connect window takes an API key. One-click sign-in needs each CRM's own developer app, which the founder
+  registers.
+  - It lists two permissions: see your customers and when each was last contacted, and add a note after each reply.
+  - The green line says "It never deletes or changes anything there. It only adds notes." "Never writes to anyone
+    marked Do not contact" comes back when that is built.
+- On a customer's page, when the CRM isn't following up, the line says only "Each reply FollowUp sends is noted
+  there." "FollowUp is following up" would be wrong for a closed customer, a paused one, or one marked "We talked".
+- There is no "Open in Follow Up Boss ↗" yet. Neither CRM's web address for a person could be checked from here
+  (their documentation sites don't load in this sandbox).
+
+**Review, weak spots named:**
+- While Settings loads, the section is blank for a moment (no placeholder). The old one was the same.
+- HubSpot's tile text is about 4.3:1 on its tint. It is decorative, with the name beside it, but under 4.5.
+- The record shows the newest 50 of the week; an older week isn't reachable from here.
+- Turning writing back on doesn't say how many notes were waiting. They go out within 10 minutes.

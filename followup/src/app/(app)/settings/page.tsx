@@ -1086,7 +1086,7 @@ function SettingsPageInner() {
           it's a CRM sync, unrelated to social DMs. Grouped with Connect
           since it's about where leads/contacts come from, not a channel. */}
       <section id="crm" hidden={!visible("crm")} className="scroll-mt-16">
-        <h2 className={sectionLabel} style={SECTION_STYLE}>CRM sync</h2>
+        <h2 className={sectionLabel} style={SECTION_STYLE}>Your CRM</h2>
         <div className="mt-4">
           <CrmConfig />
         </div>

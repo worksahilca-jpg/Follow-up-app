@@ -3,41 +3,30 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import SettingsList from "@/components/app/SettingsList";
-import { SETTINGS_GROUPS, GROUP_PAGE, GROUP_SLUG, groupOfPage, groupOfSlug, type SettingsGroup } from "@/lib/settingsGroups";
-import { useInWindow } from "@/components/app/AppWindow";
-import { SILENCE_DEFAULT_TRIGGER_DAYS } from "@/lib/reminderCadence";
-import { PLAN_NAMES, planDaysText, planFor, type FollowUpPlans } from "@/lib/followUpPlans";
+import { SETTINGS_GROUPS, GROUP_PAGE, GROUP_SLUG, PARENT_PAGE, groupOfPage, groupOfSlug, type SettingsGroup } from "@/lib/settingsGroups";
+import AppWindow, { useInWindow } from "@/components/app/AppWindow";
+import { planFor, planLine, type FollowUpPlans } from "@/lib/followUpPlans";
+import { describeBookingHours, describeTimeZone, type BookingHours } from "@/lib/bookingHours";
 import Link from "next/link";
 import TeamSection from "@/components/TeamSection";
-// A leaf module, not @/lib/automation — that one imports Prisma, and this is a client component.
-import { UNANSWERED_META_DM_MAX_HOURS } from "@/lib/metaWindow";
 import BusinessProfileSection from "@/components/BusinessProfileSection";
 import BusinessFactsSection from "@/components/BusinessFactsSection";
-import TrackRecord from "@/components/TrackRecord";
 import HowYouWorkSection from "@/components/HowYouWorkSection";
 import SourceRoutingSection from "@/components/SourceRoutingSection";
-import CopyEmbedSnippet from "@/components/CopyEmbedSnippet";
-import SetupStepRestore from "@/components/SetupStepRestore";
 import CopyWebhookUrl from "@/components/CopyWebhookUrl";
 import OutboundWebhookConfig from "@/components/OutboundWebhookConfig";
 import TwilioConfig from "@/components/TwilioConfig";
-import WhatsAppConfig from "@/components/WhatsAppConfig";
-import InstagramConfig from "@/components/InstagramConfig";
-import FacebookConfig from "@/components/FacebookConfig";
-import CrmConfig from "@/components/CrmConfig";
+import Connections from "@/components/settings/Connections";
+import Switch from "@/components/Switch";
 import BookingCalendarConfig from "@/components/BookingCalendarConfig";
-import FilteredEmails from "@/components/FilteredEmails";
 import DataPrivacySection from "@/components/DataPrivacySection";
 import AlertsSection from "@/components/AlertsSection";
 import OnlyAdminsSendSetting from "@/components/OnlyAdminsSendSetting";
 import TeamCallsSetting from "@/components/TeamCallsSetting";
 import TeamWeek from "@/components/TeamWeek";
 import SignInsSection from "@/components/SignInsSection";
-import YourRulesCard from "@/components/YourRulesCard";
-import RuleCard, { RuleNumber, type RuleRecordCounts } from "@/components/RuleCard";
 import { TIER_INFO, VOICE_ADDON_INFO, VOICE_ADDON_AVAILABLE, CARRIER_CHANNELS_AVAILABLE, FREE_TIER_LEAD_CAP } from "@/lib/pricing";
-import { Mail, Calendar, Check, RefreshCw, CreditCard, Search, Inbox, Send, Bell, Store, Ellipsis, type LucideIcon } from "lucide-react";
-import { safeBannerText } from "@/lib/bannerText";
+import { ChevronRight, CreditCard, Inbox, Send, Bell, Store, Ellipsis, type LucideIcon } from "lucide-react";
 
 /** Section headings on a setting's page read like the list's group labels
  *  (SettingsList): small and quiet, the card under them carries it.
@@ -67,25 +56,41 @@ export default function SettingsPage() {
  */
 type SettingsPage = { title: string; lede?: string; sections: string[] };
 const PAGES: Record<string, SettingsPage> = {
-  email: { title: "Email", lede: "Connect Gmail or Outlook. FollowUp reads new customers’ emails and replies from your own address.", sections: ["integrations"] },
-  website: { title: "Website form", lede: "A contact form for your own site. What people send lands in Today.", sections: ["website-widget"] },
-  social: { title: "Instagram, Facebook, WhatsApp", lede: "Customers who message your Instagram, your Facebook Page or your WhatsApp Business number show up in Today.", sections: ["social", "whatsapp"] },
-  replies: { title: "Replies and check-ins", lede: "What FollowUp writes on its own, and when. Anything about a price or a date still comes to you.", sections: ["automation"] },
-  alerts: { title: "Alerts", lede: "How FollowUp tells you a customer needs you: on your phone, by email, or both.", sections: ["alerts"] },
+  // One page each since A-253 (R-115: "Connect this or that … Connected, Okay, Done").
+  connections: { title: "Where customers write", sections: ["connections"] },
+  replies: { title: "How replies go out", sections: ["replies-out"] },
   booking: { title: "Booking hours", lede: "When customers can book a call through your link, and which calendar it checks.", sections: ["booking"] },
-  pause: { title: "Pause all sending", sections: ["pause"] },
+  alerts: { title: "Alerts", lede: "How FollowUp tells you a customer needs you: on your phone, by email, or both.", sections: ["alerts"] },
   business: { title: "Your business", sections: ["business"] },
   team: { title: "Team", lede: "Admins can invite teammates, change roles and remove people.", sections: ["team"] },
   billing: { title: "Your plan", sections: ["billing"] },
-  security: { title: "Sign-ins and security", sections: ["security"] },
+  security: { title: "Sign-ins", sections: ["security"] },
   data: { title: "Your data", lede: "Download everything, or permanently delete this business.", sections: ["data"] },
-  // One page for what most businesses never need (A-080): the CRM, other
-  // tools, phone, and routing by source.
-  advanced: { title: "Advanced", lede: "Your CRM, other tools like Zapier or Make, and where new customers go by the place they wrote. Most businesses never need these.", sections: ["crm", "lead-webhook", "outbound-webhook", "phone", "lead-routing"] },
+  // Off owners' Settings (A-253): no row leads here, and nobody outside used any of it (2026-10-14). A direct link
+  // still opens it, so what a business set up keeps working and support can reach it.
+  advanced: { title: "Advanced", sections: ["lead-webhook", "outbound-webhook", "phone", "lead-routing"] },
+};
+/**
+ * Old addresses still land where their setting lives now: the setup steps
+ * (#integrations, #website-widget), the sign-in and alert emails, and the
+ * Meta and Google sign-ins coming back (#social, #email).
+ */
+const ALIASES: Record<string, string> = {
+  email: "connections",
+  integrations: "connections",
+  website: "connections",
+  "website-widget": "connections",
+  social: "connections",
+  whatsapp: "connections",
+  crm: "connections",
+  write: "connections",
+  automation: "replies",
+  pause: "replies",
 };
 /** Old section id (or a page id) → the page that shows it. */
 function pageFor(id: string): string | null {
   if (PAGES[id]) return id;
+  if (ALIASES[id]) return ALIASES[id];
   for (const [page, def] of Object.entries(PAGES)) if (def.sections.includes(id)) return page;
   return null;
 }
@@ -161,7 +166,11 @@ function SettingsPageInner() {
     const read = () => {
       const params = new URLSearchParams(window.location.search);
       const id = window.location.hash.slice(1);
-      return pageFor(id) ?? (params.get("instagram") ? "social" : params.get("gmail") || params.get("outlook") ? "email" : params.get("billing") ? "billing" : null);
+      const back = ["instagram", "facebook", "gmail", "outlook"].some((k) => params.get(k));
+      const page = pageFor(id) ?? (back ? "connections" : params.get("billing") ? "billing" : null);
+      // The desk shows a page beside the side list, never an empty one: with nothing asked for, the first place.
+      if (!page && !groupOfSlug(id) && window.matchMedia("(min-width: 64rem)").matches) return GROUP_PAGE["Where customers write"] ?? null;
+      return page;
     };
     const readGroup = () => {
       const g = groupOfSlug(window.location.hash.slice(1));
@@ -189,37 +198,16 @@ function SettingsPageInner() {
   const [gmailPushActive, setGmailPushActive] = useState(false);
   const [gmailEmail, setGmailEmail] = useState<string | undefined>();
   const [gmailStatusLoaded, setGmailStatusLoaded] = useState(false);
-  const [syncing, setSyncing] = useState(false);
-  const [syncResult, setSyncResult] = useState<string | null>(null);
-  const [scanningSpam, setScanningSpam] = useState(false);
-  const [spamScanResult, setSpamScanResult] = useState<string | null>(null);
+  // Google refused the saved access: the inbox row says so and offers Reconnect (A-253).
+  const [gmailNeedsReconnect, setGmailNeedsReconnect] = useState(false);
 
   const [outlookConnected, setOutlookConnected] = useState(false);
   const [outlookEmail, setOutlookEmail] = useState<string | undefined>();
   const [outlookOauthAvailable, setOutlookOauthAvailable] = useState(false);
   const [outlookStatusLoaded, setOutlookStatusLoaded] = useState(false);
-  const [outlookSyncing, setOutlookSyncing] = useState(false);
-  const [outlookSyncResult, setOutlookSyncResult] = useState<string | null>(null);
-  const [outlookDisconnecting, setOutlookDisconnecting] = useState(false);
 
-  const [autoAfterDays, setAutoAfterDays] = useState(SILENCE_DEFAULT_TRIGGER_DAYS);
   // The follow-up plans (A-245): which days each customer gets. Changed on /workflows.
   const [followUpPlans, setFollowUpPlans] = useState<FollowUpPlans>({});
-  const [automationOn, setAutomationOn] = useState(false);
-  const [automationLoaded, setAutomationLoaded] = useState(false);
-  const [automationSaving, setAutomationSaving] = useState(false);
-  const [automationError, setAutomationError] = useState<string | null>(null);
-  const [instantAckOn, setInstantAckOn] = useState(true);
-  const [instantAckSaving, setInstantAckSaving] = useState(false);
-  const [instantAckError, setInstantAckError] = useState<string | null>(null);
-  const [unansweredOn, setUnansweredOn] = useState(true);
-  const [unansweredHours, setUnansweredHours] = useState(24);
-  const [unansweredSaving, setUnansweredSaving] = useState(false);
-  const [unansweredError, setUnansweredError] = useState<string | null>(null);
-  const [deadLeadOn, setDeadLeadOn] = useState(true);
-  const [deadLeadDays, setDeadLeadDays] = useState(45);
-  const [deadLeadSaving, setDeadLeadSaving] = useState(false);
-  const [deadLeadError, setDeadLeadError] = useState<string | null>(null);
   // Business.holdAllForApproval — true by default for every account since
   // 2026-09-21. All FOUR rules below still run but send nothing; this said
   // "three of the four" while the instant acknowledgement was exempt, and
@@ -246,15 +234,6 @@ function SettingsPageInner() {
 
   // "This week" under each rule (A-044). Null until counted, and stays
   // null if counting failed, so a card shows no record rather than zeros.
-  const [ruleRecords, setRuleRecords] = useState<Record<string, RuleRecordCounts> | null>(null);
-  useEffect(() => {
-    fetch("/api/automation/rule-records")
-      .then((r) => r.json())
-      .then((d) => {
-        if (d?.success && d.records) setRuleRecords(d.records);
-      })
-      .catch(() => {});
-  }, []);
   // Granting permission to send is the one control on this page that
   // causes real messages to reach real customers, so it does not share
   // the automation section's optimistic-flip pattern: nothing moves on
@@ -265,7 +244,6 @@ function SettingsPageInner() {
   // Business.autonomousAllowed — a separate question from the switch
   // above. That one asks whether anything sends by itself; this asks
   // whether anything may send WITHOUT BEING CHECKED.
-  const [autonomousAllowed, setAutonomousAllowed] = useState(false);
   // Pause all sending, and who may send (A-041). Read with the rest of the
   // automation settings; the rules card and the permission card both
   // depend on them.
@@ -275,12 +253,9 @@ function SettingsPageInner() {
   const [teamWeekKey, setTeamWeekKey] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
   const [pauseSaving, setPauseSaving] = useState(false);
-  const [autonomousSaving, setAutonomousSaving] = useState(false);
-  const [autonomousError, setAutonomousError] = useState<string | null>(null);
   // Granting it asks first; revoking does not. The asymmetry is the
   // point — a confirmation on the way out would be a speed bump in front
   // of the safer answer.
-  const [confirmingAutonomous, setConfirmingAutonomous] = useState(false);
   // Channels whose rule already says "Handle it all". This is the fact an
   // owner cannot get anywhere else: a source rule applies at lead
   // CREATION, so granting this does not just affect leads they chose one
@@ -290,7 +265,6 @@ function SettingsPageInner() {
   // the rule looks harmless right up until the moment it isn't.
   // null = not asked yet, or the read failed: the panel then states the
   // rule in general terms rather than an invented "no channels".
-  const [autonomousRuleSources, setAutonomousRuleSources] = useState<string[] | null>(null);
   // What is waiting right now, split by whether the approval setting is
   // the only thing holding it. Fetched when the confirmation opens rather
   // than on page load — it scans the audit trail, and only someone
@@ -308,10 +282,11 @@ function SettingsPageInner() {
   useEffect(() => {
     fetch("/api/integrations/gmail/status")
       .then((r) => r.json())
-      .then((data: { connected: boolean; email?: string; pushActive?: boolean }) => {
+      .then((data: { connected: boolean; email?: string; pushActive?: boolean; needsReconnect?: boolean }) => {
         setGmailConnected(data.connected);
         setGmailEmail(data.email);
         setGmailPushActive(Boolean(data.pushActive));
+        setGmailNeedsReconnect(Boolean(data.needsReconnect));
       })
       .finally(() => setGmailStatusLoaded(true));
   }, []);
@@ -341,138 +316,32 @@ function SettingsPageInner() {
     fetch("/api/automation/settings")
       .then((r) => r.json())
       .then(
-        (data: {
-          enabled: boolean;
-          triggerDays: number;
-          instantAck?: boolean;
-          unansweredReply?: { enabled: boolean; hours: number };
-          deadLeadReactivation?: { enabled: boolean; days: number };
-          holdAllForApproval?: boolean;
-          autonomousAllowed?: boolean;
-          sendingPaused?: boolean;
-          onlyAdminsSend?: boolean;
-          isAdmin?: boolean;
-        }) => {
-          setAutomationOn(data.enabled);
-          setAutoAfterDays(data.triggerDays);
-          setInstantAckOn(data.instantAck ?? true);
-          setUnansweredOn(data.unansweredReply?.enabled ?? true);
-          setUnansweredHours(data.unansweredReply?.hours ?? 24);
-          setDeadLeadOn(data.deadLeadReactivation?.enabled ?? true);
-          setDeadLeadDays(data.deadLeadReactivation?.days ?? 45);
+        (data: { holdAllForApproval?: boolean; sendingPaused?: boolean; onlyAdminsSend?: boolean; isAdmin?: boolean }) => {
           setHoldAllForApproval(data.holdAllForApproval ?? false);
-          setAutonomousAllowed(data.autonomousAllowed ?? false);
           setSendingPaused(data.sendingPaused ?? false);
           setOnlyAdminsSend(data.onlyAdminsSend ?? false);
           setIsAdmin(data.isAdmin ?? false);
         }
       )
-      .finally(() => setAutomationLoaded(true));
+      .catch(() => {});
   }, []);
 
-  /**
-   * The three rule savers below take `revertTo`: what the rule's switch
-   * goes back to if the save fails. A switch press flipped it first, so it
-   * goes back; saving the rule's NUMBER never touched the switch, and used
-   * to flip it anyway — a rejected "3 days" showed the whole rule as off
-   * while the server still had it on. On success the number is taken from
-   * the server's answer, which clamps it: typing 5 into the welcome-back
-   * days saved 30, and the page went on saying 5.
-   */
-  async function saveAutomationSettings(enabled: boolean, triggerDays: number, revertTo: boolean = !enabled) {
-    setAutomationSaving(true);
-    setAutomationError(null);
-    try {
-      const res = await fetch("/api/automation/settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ enabled, triggerDays }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.success) {
-        setAutomationOn(revertTo); // revert the optimistic flip, if there was one
-        setAutomationError(data.message ?? "Couldn't save — try again.");
-      } else if (typeof data.triggerDays === "number") {
-        setAutoAfterDays(data.triggerDays);
-      }
-    } catch {
-      // Offline: nothing was saved, so the switch must not look saved.
-      setAutomationOn(revertTo);
-      setAutomationError("Couldn't reach the server — try again.");
-    } finally {
-      setAutomationSaving(false);
-    }
-  }
+  // "Mon–Sat, 9:00 am–7:00 pm · Toronto" on the Booking hours row (A-253).
+  const [bookingSummary, setBookingSummary] = useState("");
+  useEffect(() => {
+    fetch("/api/business/booking-hours")
+      .then((r) => r.json())
+      .then((data: { success?: boolean; timezone?: string } & Partial<BookingHours>) => {
+        if (!data?.success || !data.days || data.startMinute === undefined || data.endMinute === undefined) return;
+        const city = data.timezone ? describeTimeZone(data.timezone).replace(/\s*\(.*$/, "") : "";
+        setBookingSummary(describeBookingHours({ days: data.days, startMinute: data.startMinute, endMinute: data.endMinute }) + (city ? ` · ${city}` : ""));
+      })
+      .catch(() => {});
+  }, []);
 
-  async function saveUnanswered(enabled: boolean, hours: number, revertTo: boolean = !enabled) {
-    setUnansweredSaving(true);
-    setUnansweredError(null);
-    try {
-      const res = await fetch("/api/automation/settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ unansweredReply: { enabled, hours } }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.success) {
-        setUnansweredOn(revertTo);
-        setUnansweredError(data.message ?? "Couldn't save — try again.");
-      } else if (typeof data.unansweredReply?.hours === "number") {
-        setUnansweredHours(data.unansweredReply.hours);
-      }
-    } catch {
-      setUnansweredOn(revertTo);
-      setUnansweredError("Couldn't reach the server — try again.");
-    } finally {
-      setUnansweredSaving(false);
-    }
-  }
 
-  async function saveDeadLead(enabled: boolean, days: number, revertTo: boolean = !enabled) {
-    setDeadLeadSaving(true);
-    setDeadLeadError(null);
-    try {
-      const res = await fetch("/api/automation/settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ deadLeadReactivation: { enabled, days } }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.success) {
-        setDeadLeadOn(revertTo);
-        setDeadLeadError(data.message ?? "Couldn't save — try again.");
-      } else if (typeof data.deadLeadReactivation?.days === "number") {
-        setDeadLeadDays(data.deadLeadReactivation.days);
-      }
-    } catch {
-      setDeadLeadOn(revertTo);
-      setDeadLeadError("Couldn't reach the server — try again.");
-    } finally {
-      setDeadLeadSaving(false);
-    }
-  }
 
-  async function saveInstantAck(next: boolean) {
-    setInstantAckSaving(true);
-    setInstantAckError(null);
-    try {
-      const res = await fetch("/api/automation/settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ instantAck: next }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.success) {
-        setInstantAckOn(!next);
-        setInstantAckError(data.message ?? "Couldn't save — try again.");
-      }
-    } catch {
-      setInstantAckOn(!next);
-      setInstantAckError("Couldn't reach the server — try again.");
-    } finally {
-      setInstantAckSaving(false);
-    }
-  }
+
 
   // One sentence describing exactly what's active right now, built from the
   // same 4 flags the individual rules already use — never drifts out of
@@ -573,39 +442,6 @@ function SettingsPageInner() {
     }
   }
 
-  /**
-   * Grant or withdraw permission for the Auto mode.
-   *
-   * No optimistic flip, for the same reason as the switch above: the next
-   * cron tick acts on the server's answer, not the screen's, and an owner
-   * who sees "allowed" must be looking at a server that agrees.
-   *
-   * Withdrawing does not need a confirmation. Taking a permission away is
-   * always allowed and always safe; only granting one deserves a pause.
-   */
-  async function saveAutonomousPermission(granted: boolean): Promise<boolean> {
-    setAutonomousSaving(true);
-    setAutonomousError(null);
-    try {
-      const res = await fetch("/api/automation/settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ autonomousAllowed: granted }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.success) {
-        setAutonomousError(data.message ?? "Couldn't save — try again.");
-        return false;
-      }
-      setAutonomousAllowed(granted);
-      return true;
-    } catch {
-      setAutonomousError("Couldn't reach the server — try again.");
-      return false;
-    } finally {
-      setAutonomousSaving(false);
-    }
-  }
 
 
   // Real subscription state, fetched from the DB via the API route.
@@ -701,27 +537,6 @@ function SettingsPageInner() {
     }
   }
 
-  // Surface the outcome of the OAuth redirect (?gmail=connected|error) —
-  // pure derivation from the URL, no state needed.
-  const gmailError =
-    searchParams.get("gmail") === "error" ? safeBannerText(searchParams.get("message"), "Couldn't connect Gmail.") : null;
-  const outlookError =
-    searchParams.get("outlook") === "error" ? safeBannerText(searchParams.get("message"), "Couldn't connect Outlook.") : null;
-  // Instagram was missing from this list entirely.
-  //
-  // Found 2026-09-23, connecting a brand-new demo account: the OAuth
-  // callback redirected to /settings?instagram=error&message=… exactly
-  // as Gmail's and Outlook's do, and nothing on the page read it. The
-  // connect had failed at Meta's long-lived token exchange, the page
-  // rendered as though nothing had happened, and the only trace was the
-  // query string in the address bar.
-  //
-  // A failed connect that says nothing is worse than one that says the
-  // wrong thing: the owner presses Connect, the screen looks unchanged,
-  // and they have no idea whether to wait, retry, or give up. The
-  // channel then silently receives nothing forever.
-  const instagramError =
-    searchParams.get("instagram") === "error" ? safeBannerText(searchParams.get("message"), "Couldn't connect Instagram.") : null;
   const billingRedirect = searchParams.get("billing"); // "success" | "canceled" | null
   // Just paid, but the webhook hasn't landed yet — the poll above is
   // already chasing it. Disable Subscribe during this window specifically
@@ -729,105 +544,38 @@ function SettingsPageInner() {
   // second charge) while the first one is still settling.
   const awaitingActivation = billingRedirect === "success" && billingLoaded && !billingActive;
 
-  const [disconnecting, setDisconnecting] = useState(false);
-  async function handleGmailDisconnect() {
-    if (!window.confirm("Disconnect Gmail? FollowUp will stop reading this inbox and revoke its access at Google. You can reconnect any time.")) return;
-    setDisconnecting(true);
-    try {
-      const res = await fetch("/api/integrations/gmail/disconnect", { method: "POST" });
-      const data = await res.json().catch(() => ({}));
-      if (res.ok && data.success) {
-        setGmailConnected(false);
-        setGmailEmail(undefined);
-        setGmailPushActive(false);
-      } else {
-        setSyncResult(data.message ?? "Couldn't disconnect — try again.");
-      }
-    } finally {
-      setDisconnecting(false);
+  async function handleGmailDisconnect(): Promise<boolean> {
+    if (!window.confirm("Disconnect Gmail? FollowUp will stop reading this inbox and revoke its access at Google. You can reconnect any time.")) return false;
+    const res = await fetch("/api/integrations/gmail/disconnect", { method: "POST" });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok && data.success) {
+      setGmailConnected(false);
+      setGmailEmail(undefined);
+      setGmailPushActive(false);
+      return true;
     }
+    window.alert(data.message ?? "Couldn't disconnect. Try again.");
+    return false;
   }
 
-  async function handleGmailSync() {
-    setSyncing(true);
-    setSyncResult(null);
-    try {
-      const res = await fetch("/api/integrations/gmail/sync", { method: "POST" });
-      const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.message ?? "Sync failed");
-      // A big inbox is read in budgeted passes; the automatic sync picks up
-      // where this one stopped within a couple of minutes.
-      const moreNote = data.truncated ? " Still reading the rest — more will appear on their own." : "";
-      if (data.count === 0) {
-        setSyncResult(`Synced — no new sales conversations found in your recent inbox.${moreNote}`);
-      } else {
-        const scoredNote = data.scored > 0 ? `, ${data.scored} sorted by how likely they are to book` : "";
-        setSyncResult(`Synced ${data.count} lead${data.count === 1 ? "" : "s"} from your inbox${scoredNote}.${moreNote}`);
-      }
-    } catch (err) {
-      setSyncResult(err instanceof Error ? err.message : "Sync failed.");
-    } finally {
-      setSyncing(false);
+
+  async function handleOutlookDisconnect(): Promise<boolean> {
+    if (!window.confirm("Disconnect Outlook? FollowUp will stop reading this inbox. You can reconnect any time.")) return false;
+    const res = await fetch("/api/integrations/outlook/disconnect", { method: "POST" });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok && data.success) {
+      setOutlookConnected(false);
+      setOutlookEmail(undefined);
+      return true;
     }
+    window.alert(data.message ?? "Couldn't disconnect. Try again.");
+    return false;
   }
 
-  async function handleOutlookDisconnect() {
-    if (!window.confirm("Disconnect Outlook? FollowUp will stop reading this inbox. You can reconnect any time.")) return;
-    setOutlookDisconnecting(true);
-    try {
-      const res = await fetch("/api/integrations/outlook/disconnect", { method: "POST" });
-      const data = await res.json().catch(() => ({}));
-      if (res.ok && data.success) {
-        setOutlookConnected(false);
-        setOutlookEmail(undefined);
-      } else {
-        setOutlookSyncResult(data.message ?? "Couldn't disconnect — try again.");
-      }
-    } finally {
-      setOutlookDisconnecting(false);
-    }
-  }
 
-  async function handleOutlookSync() {
-    setOutlookSyncing(true);
-    setOutlookSyncResult(null);
-    try {
-      const res = await fetch("/api/integrations/outlook/sync", { method: "POST" });
-      const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.message ?? "Sync failed");
-      if (data.count === 0) {
-        setOutlookSyncResult("Synced — no new sales conversations found in your recent inbox.");
-      } else {
-        const scoredNote = data.scored > 0 ? `, ${data.scored} sorted by how likely they are to book` : "";
-        setOutlookSyncResult(`Synced ${data.count} lead${data.count === 1 ? "" : "s"} from your inbox${scoredNote}.`);
-      }
-    } catch (err) {
-      setOutlookSyncResult(err instanceof Error ? err.message : "Sync failed.");
-    } finally {
-      setOutlookSyncing(false);
-    }
-  }
-
-  async function handleScanSpam() {
-    setScanningSpam(true);
-    setSpamScanResult(null);
-    try {
-      const res = await fetch("/api/integrations/gmail/scan-spam", { method: "POST" });
-      const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.message ?? "Spam scan failed");
-      setSpamScanResult(
-        data.count === 0
-          ? "Checked your spam folder — nothing back there looked like a real lead."
-          : `Found ${data.count} lead${data.count === 1 ? "" : "s"} sitting in spam — added to your list.`
-      );
-    } catch (err) {
-      setSpamScanResult(err instanceof Error ? err.message : "Spam scan failed.");
-    } finally {
-      setScanningSpam(false);
-    }
-  }
 
   const page = openPage ? PAGES[openPage] : null;
+  const parentPage = openPage ? PARENT_PAGE[openPage] : undefined;
   // The side list follows the page that's open (a link to #billing lands in "Your business").
   const pageGroup = openPage ? groupOfPage(openPage) : null;
   const navGroup: SettingsGroup = pageGroup ?? group;
@@ -893,8 +641,6 @@ function SettingsPageInner() {
             <SettingsList
               gmail={{ connected: gmailConnected, email: gmailEmail }}
               outlook={{ connected: outlookConnected, email: outlookEmail }}
-              plans={followUpPlans}
-              instantAck={instantAckOn}
               holdAll={holdAllForApproval}
               paused={sendingPaused}
               planStatus={planStatus}
@@ -907,15 +653,20 @@ function SettingsPageInner() {
         </div>
       ) : (
         <div className="max-w-[640px]">
-          {/* Back one step: to the page's group, or to Settings for a group that is this one page. */}
+          {/* Back one step: to the page this one opened from (Booking hours → How replies go out), the page's
+              group, or Settings for a group that is this one page. */}
           <button
             type="button"
             onClick={() =>
-              pageGroup && !GROUP_PAGE[pageGroup] ? back(`#${GROUP_SLUG[pageGroup]}`, () => openGroup(pageGroup)) : back("", () => openMore(null))
+              parentPage
+                ? back(`#${PAGES[parentPage].sections[0]}`, () => openMore(parentPage))
+                : pageGroup && !GROUP_PAGE[pageGroup]
+                  ? back(`#${GROUP_SLUG[pageGroup]}`, () => openGroup(pageGroup))
+                  : back("", () => openMore(null))
             }
-            className={"min-h-11 text-[13px] text-ink-faint hover:text-ink lg:min-h-0" + (pageGroup && GROUP_PAGE[pageGroup] ? " lg:hidden" : "")}
+            className={"min-h-11 text-[13px] text-ink-faint hover:text-ink lg:min-h-0" + (!parentPage && pageGroup && GROUP_PAGE[pageGroup] ? " lg:hidden" : "")}
           >
-            ← {pageGroup && !GROUP_PAGE[pageGroup] ? pageGroup : "Settings"}
+            ← {parentPage ? PAGES[parentPage].title : pageGroup && !GROUP_PAGE[pageGroup] ? pageGroup : "Settings"}
           </button>
           <h1 className="title-serif mt-1 text-[30px] leading-[1.12] lg:mt-2 lg:text-[28px]">{page.title}</h1>
           {page.lede && <p className="mt-2 text-[15px] leading-relaxed text-ink-soft">{page.lede}</p>}
@@ -925,151 +676,142 @@ function SettingsPageInner() {
       {/* One setting's own page. Every section stays mounted, so each
           panel keeps its state while the owner moves around. */}
       <div hidden={!page} className="mt-7 max-w-[640px] space-y-8">
-      <section id="integrations" hidden={!visible("integrations")} className="scroll-mt-16">
-        <h2 className={sectionLabel} style={SECTION_STYLE}>Integrations</h2>
-        <div className="mt-4 space-y-3">
-          <IntegrationRow
-            icon={<Mail className="h-4 w-4" />}
-            name="Gmail + Calendar"
-            description={
-              gmailConnected && gmailEmail
-                ? `Connected as ${gmailEmail} — ${gmailPushActive ? "new emails are picked up within seconds" : "new emails are picked up within 10 minutes"}`
-                : "Required — FollowUp reads sales conversations from your inbox to score leads and draft replies, and puts booked calls on your Google Calendar."
-            }
-            connected={gmailConnected}
-            loading={!gmailStatusLoaded}
-            href={gmailConnected ? undefined : "/api/integrations/gmail/connect"}
-          />
-          {gmailConnected && (
-            <div className="sm:ml-[52px] flex flex-wrap sm:flex-nowrap items-center gap-3">
-              <button
-                onClick={handleGmailSync}
-                disabled={syncing}
-                className="text-sm font-medium rounded-full px-3 py-1.5 flex items-center gap-1.5 disabled:opacity-60"
-                style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}
-              >
-                <RefreshCw className={`h-3.5 w-3.5 ${syncing ? "animate-spin" : ""}`} />
-                {syncing ? "Syncing…" : "Sync now"}
-              </button>
-              <button
-                onClick={handleGmailDisconnect}
-                disabled={disconnecting}
-                className="text-sm font-medium rounded-full px-3 py-1.5 disabled:opacity-60"
-                style={{ backgroundColor: "var(--paper)", color: "var(--coral)", border: "1px solid var(--line)" }}
-              >
-                {disconnecting ? "Disconnecting…" : "Disconnect"}
-              </button>
-              <a
-                href="/api/integrations/gmail/connect"
-                className="text-sm font-medium rounded-full px-3 py-1.5 flex items-center gap-1.5"
-                style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}
-              >
-                <Calendar className="h-3.5 w-3.5" />
-                Reconnect
-              </a>
-              {syncResult && <span className="text-[13px] text-ink-soft">{syncResult}</span>}
-            </div>
-          )}
-          {gmailConnected && (
-            <p className="sm:ml-[52px] text-[13px] text-ink-soft">
-              If you connected Gmail before booking links existed, click <strong>Reconnect</strong> once to grant
-              calendar access.
-            </p>
-          )}
-          {gmailConnected && (
-            <div className="sm:ml-[52px] mt-3 border-t border-line pt-3">
-              <div className="flex items-center gap-3 flex-wrap">
-                {/* Neutral, not --gold. A-005 reserves gold for "going cold" —
-                    a lead state — and this is an action the owner takes, not a
-                    status the app is reporting. Scanning the spam folder isn't
-                    urgent either: painting it amber told the owner something
-                    was wrong when nothing is. */}
-                <button
-                  onClick={handleScanSpam}
-                  disabled={scanningSpam}
-                  className="text-sm font-medium rounded-full border border-line px-3 py-1.5 flex items-center gap-1.5 disabled:opacity-60 hover:bg-paper transition-colors"
-                  style={{ color: "var(--ink-soft)" }}
-                >
-                  <Search className={`h-3.5 w-3.5 ${scanningSpam ? "animate-pulse" : ""}`} />
-                  {scanningSpam ? "Checking…" : "Scan spam for missed leads"}
-                </button>
-                {spamScanResult && <span className="text-[13px] text-ink-soft">{spamScanResult}</span>}
-              </div>
-              <p className="text-[13px] text-ink-soft mt-2">
-                A real lead&apos;s first message can land in spam by mistake — this checks that folder specifically
-                and adds anything that looks like a genuine prospect, tagged so you can tell where it came from.
-                Manual only; it never runs on its own.
-              </p>
-            </div>
-          )}
-          {gmailError && (
-            <p className="text-[13px]" style={{ color: "var(--coral)" }}>
-              {gmailError}
-            </p>
-          )}
+      {/* Where customers write (A-253): one row per place, Connect or Connected; the rest happens in the back. */}
+      <section id="connections" hidden={!visible("connections")} className="scroll-mt-16">
+        <h2 className="sr-only">Where customers write</h2>
+        <Connections
+          gmail={{ connected: gmailConnected, email: gmailEmail, loaded: gmailStatusLoaded }}
+          outlook={{ connected: outlookConnected, email: outlookEmail, loaded: outlookStatusLoaded }}
+          gmailPushActive={gmailPushActive}
+          gmailNeedsReconnect={gmailNeedsReconnect}
+          outlookAvailable={outlookOauthAvailable}
+          isAdmin={isAdmin}
+          onGmailDisconnect={handleGmailDisconnect}
+          onOutlookDisconnect={handleOutlookDisconnect}
+        />
+      </section>
 
-          {/* Not every deployment has Outlook OAuth configured — when it
-              isn't, there's nothing a business owner can do about that row,
-              so it's not clutter to show, it's a dead end. Just leave it out. */}
-          {outlookOauthAvailable && (
-            <IntegrationRow
-              icon={<Mail className="h-4 w-4" />}
-              name="Outlook / Microsoft 365"
-              description={
-                outlookConnected && outlookEmail
-                  ? `Connected as ${outlookEmail} — new emails are picked up within 10 minutes`
-                  : "Optional second inbox — for a business that runs sales email through Microsoft 365 instead of (or alongside) Gmail."
-              }
-              connected={outlookConnected}
-              loading={!outlookStatusLoaded}
-              href={outlookConnected ? undefined : "/api/integrations/outlook/connect"}
-            />
-          )}
-          {outlookConnected && (
-            <div className="sm:ml-[52px] flex items-center gap-3">
-              <button
-                onClick={handleOutlookSync}
-                disabled={outlookSyncing}
-                className="text-sm font-medium rounded-full px-3 py-1.5 flex items-center gap-1.5 disabled:opacity-60"
-                style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}
-              >
-                <RefreshCw className={`h-3.5 w-3.5 ${outlookSyncing ? "animate-spin" : ""}`} />
-                {outlookSyncing ? "Syncing…" : "Sync now"}
-              </button>
-              <button
-                onClick={handleOutlookDisconnect}
-                disabled={outlookDisconnecting}
-                className="text-sm font-medium rounded-full px-3 py-1.5 disabled:opacity-60"
-                style={{ backgroundColor: "var(--paper)", color: "var(--coral)", border: "1px solid var(--line)" }}
-              >
-                {outlookDisconnecting ? "Disconnecting…" : "Disconnect"}
-              </button>
-              {outlookSyncResult && <span className="text-[13px] text-ink-soft">{outlookSyncResult}</span>}
-            </div>
-          )}
-          {outlookError && (
-            <p className="text-[13px]" style={{ color: "var(--coral)" }}>
-              {outlookError}
-            </p>
-          )}
-          {(gmailConnected || outlookConnected) && (
-            <div className="sm:ml-[52px] border-t border-line pt-3">
-              <FilteredEmails />
-            </div>
-          )}
+      {/* How replies go out (A-253): who sends, then the plan, booking hours and pause. The four "FollowUp writes"
+          switches live on the Follow-up plan page; the hours and days use their defaults. */}
+      <section id="replies-out" hidden={!visible("replies-out")} className="scroll-mt-16">
+        <h2 className="sr-only">How replies go out</h2>
+        <p id="who-sends" className="text-[14px] text-ink-faint">
+          Who sends your replies?
+        </p>
+        <div role="radiogroup" aria-labelledby="who-sends" className={BOX + " mt-3"}>
+          <ChoiceRow
+            first
+            checked={!holdAllForApproval}
+            title="FollowUp sends them"
+            sub="A price, a date or anything unsure waits for you."
+            disabled={!isAdmin || permissionSaving || sendingPaused}
+            onSelect={() => {
+              if (!holdAllForApproval) return;
+              // Saying yes to sending is read first, then pressed (no "are you sure?"): the four facts and this
+              // business's own queue, in a small window.
+              setConfirmingPermission(true);
+              setPermissionError(null);
+              setSendPreview(null);
+              fetch("/api/automation/send-preview")
+                .then((r) => r.json())
+                .then((d) => {
+                  if (d?.success) setSendPreview(d);
+                })
+                .catch(() => {});
+            }}
+          />
+          <ChoiceRow
+            checked={holdAllForApproval}
+            title="I check each one first"
+            disabled={!isAdmin || permissionSaving || sendingPaused}
+            // Taking the permission back is always one press, never a confirmation.
+            onSelect={() => !holdAllForApproval && saveSendPermission(false)}
+          />
         </div>
-        {!gmailConnected && !outlookConnected && (
-          <p className="text-[13px] text-ink-soft mt-2">
-            {/* Until 2026-09-22 this promised that the dashboard would show
-                nothing at all without an inbox. It sits under the
-                Gmail/Outlook panel, so naming the inbox is right — but the
-                dashboard fills from any of eight sources, and a business
-                capturing through the website widget was told its working
-                setup produced nothing. The sentence now claims only what
-                this panel actually controls. */}
-            Connect Gmail or Outlook to pull leads in from your inbox. The other sources below work on
-            their own.
+        {!isAdmin && <p className="mt-2 text-[14px] text-ink-soft">Only an admin can change who sends.</p>}
+
+        <div className={BOX + " mt-6"}>
+          <Link href="/workflows" className={ROW + " hover:bg-card-2"}>
+            <span className="flex-1">Follow-up plan</span>
+            <span className="truncate text-[15px] text-ink-faint">{planLine(followUpPlans, planFor(followUpPlans, "most"))}</span>
+            <ChevronRight aria-hidden className="h-[18px] w-[18px] shrink-0 text-ink-faint" />
+          </Link>
+          <button type="button" onClick={() => openMore("booking")} className={ROW + " border-t border-line-2 text-left hover:bg-card-2"}>
+            <span className="flex-1">Booking hours</span>
+            <span className="truncate text-[15px] text-ink-faint">{bookingSummary}</span>
+            <ChevronRight aria-hidden className="h-[18px] w-[18px] shrink-0 text-ink-faint" />
+          </button>
+          <div className={ROW + " border-t border-line-2"}>
+            <span className="flex-1">Pause all sending</span>
+            {/* Anyone can pause (it only ever holds messages); an admin turns it back off. */}
+            <Switch checked={sendingPaused} onChange={() => savePause(!sendingPaused)} disabled={pauseSaving || (sendingPaused && !isAdmin)} label="Pause all sending" />
+          </div>
+        </div>
+        {sendingPaused && (
+          <p className="mt-2 text-[14px] text-ink-soft">
+            Paused. Everything waits for your OK until you turn this off.{!isAdmin && " An admin can turn it back on."}
           </p>
+        )}
+        {permissionError && !confirmingPermission && (
+          <p role="alert" className="mt-2 text-[14px]" style={{ color: "var(--coral)" }}>
+            {permissionError}
+          </p>
+        )}
+
+        {confirmingPermission && (
+          <AppWindow
+            label="Let FollowUp send your replies"
+            size="small"
+            onClose={() => {
+              setConfirmingPermission(false);
+              setPermissionError(null);
+            }}
+          >
+            <div className="p-6">
+              <p className="pr-8 text-[20px] font-semibold leading-tight">Let FollowUp send your replies?</p>
+              <ul className="mt-4 grid gap-2 text-[15px] leading-snug">
+                <li>FollowUp sends your replies and follow-ups itself, signed as your business.</li>
+                <li>Anything about a price or a date, or anything it isn&apos;t sure of, still waits for you.</li>
+                <li>Follow-ups stop the moment a customer replies.</li>
+                <li>Every message is written down, with the reason. You can change this any time.</li>
+              </ul>
+              {/* This business's own queue, said exactly: what waits only because of this setting stays waiting
+                  (the backlog rule in automation.ts); only conversations from now on go out by themselves. */}
+              {sendPreview && sendPreview.total > 0 && (
+                <p className="mt-4 text-[14px] text-ink-soft">
+                  {sendPreview.total} {sendPreview.total === 1 ? "reply is" : "replies are"} waiting now.{" "}
+                  {sendPreview.heldOnlyBySetting > 0
+                    ? `Saying yes won't send ${sendPreview.heldOnlyBySetting === 1 ? "the one" : `the ${sendPreview.heldOnlyBySetting}`} waiting only because of this; you can send ${sendPreview.heldOnlyBySetting === 1 ? "it" : "them"} from Today.`
+                    : "None of them waits only because of this."}
+                </p>
+              )}
+              {permissionError && (
+                <p role="alert" className="mt-3 text-[14px]" style={{ color: "var(--coral)" }}>
+                  {permissionError}
+                </p>
+              )}
+              <div className="mt-6 flex flex-col items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => saveSendPermission(true)}
+                  disabled={permissionSaving}
+                  className="min-h-[50px] w-full rounded-full bg-ink text-[16px] font-semibold text-on-accent disabled:opacity-60"
+                >
+                  {permissionSaving ? "Saving…" : "Yes, FollowUp sends them"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setConfirmingPermission(false);
+                    setPermissionError(null);
+                  }}
+                  className="min-h-11 text-[15px] text-ink-soft hover:text-ink"
+                >
+                  Not yet
+                </button>
+              </div>
+            </div>
+          </AppWindow>
         )}
       </section>
 
@@ -1079,28 +821,6 @@ function SettingsPageInner() {
         <h2 className={sectionLabel} style={SECTION_STYLE}>Booking hours</h2>
         <div className="mt-4">
           <BookingCalendarConfig />
-        </div>
-      </section>
-
-      {/* Was buried inside the "Instagram" section under the wrong name —
-          it's a CRM sync, unrelated to social DMs. Grouped with Connect
-          since it's about where leads/contacts come from, not a channel. */}
-      <section id="crm" hidden={!visible("crm")} className="scroll-mt-16">
-        <h2 className={sectionLabel} style={SECTION_STYLE}>Your CRM</h2>
-        <div className="mt-4">
-          <CrmConfig />
-        </div>
-      </section>
-
-      <section id="website-widget" hidden={!visible("website-widget")} className="scroll-mt-16">
-        <h2 className={sectionLabel} style={SECTION_STYLE}>Website widget</h2>
-        <div className="mt-4">
-          <CopyEmbedSnippet />
-          {/* Only appears if the owner told Today they have no website. */}
-          <SetupStepRestore
-            id="widget"
-            note="You told FollowUp you don’t have a website, so it stopped asking."
-          />
         </div>
       </section>
 
@@ -1139,535 +859,6 @@ function SettingsPageInner() {
         </section>
       )}
 
-      {/* The three Meta channels sit together on one page, in the order a
-          business is most likely to already have them. */}
-      <section id="social" hidden={!visible("social")} className="scroll-mt-16">
-        <h2 className={sectionLabel} style={SECTION_STYLE}>Instagram &amp; Facebook</h2>
-        {instagramError && (
-          <p className="text-[13px]" style={{ color: "var(--coral)" }}>
-            {instagramError}
-          </p>
-        )}
-        <div className="mt-4">
-          <InstagramConfig />
-          <FacebookConfig />
-        </div>
-      </section>
-
-      <section id="whatsapp" hidden={!visible("whatsapp")} className="scroll-mt-16">
-        <h2 className={sectionLabel} style={SECTION_STYLE}>WhatsApp</h2>
-        <div className="mt-4">
-          <WhatsAppConfig />
-        </div>
-        {/* What the "is this a customer?" check set aside from these three
-            apps, with the way back (A-234). Shows only once there is one. */}
-        {visible("whatsapp") && <FilteredEmails channels="chats" />}
-      </section>
-
-      {/* Pause all sending (A-041), on its own page since A-080: the list
-          shows Off or Paused; this is where it changes. */}
-      <section id="pause" hidden={!visible("pause")} className="scroll-mt-16">
-        <h2 className={sectionLabel} style={SECTION_STYLE}>Pause all sending</h2>
-        <div className="mt-4 flex items-center gap-3.5 rounded-[14px] border border-line bg-card px-4 py-3.5">
-          <div className="min-w-0 flex-1">
-            <div className="text-base">{sendingPaused ? "Sending is paused" : "Pause all sending"}</div>
-            <div className="mt-0.5 text-[13.5px] leading-snug text-ink-faint">
-              {sendingPaused
-                ? "Everything waits for your OK until you resume. Your settings stayed as they were."
-                : "Everything waits for your OK until you resume. Your settings stay."}
-            </div>
-          </div>
-          {isAdmin && (
-            <button
-              type="button"
-              onClick={() => savePause(!sendingPaused)}
-              disabled={pauseSaving}
-              className="h-11 shrink-0 rounded-full border bg-card px-[18px] text-[15px] font-medium disabled:opacity-60"
-              style={{ borderColor: "var(--line-strong)" }}
-            >
-              {pauseSaving ? "…" : sendingPaused ? "Resume" : "Pause"}
-            </button>
-          )}
-        </div>
-      </section>
-
-      <section id="automation" hidden={!visible("automation")} className="scroll-mt-16">
-        <h2 className={sectionLabel} style={SECTION_STYLE}>Automation</h2>
-        {/* The owner's own record with the drafts (research round 2, #3), above the rules it informs. */}
-        <TrackRecord holdAll={holdAllForApproval} />
-
-        {/* Permission to send, above the rules it governs — because it
-            decides what all of them DO, and reading the timings first
-            without knowing whether anything leaves the building is the
-            wrong order. Founder, 2026-09-22: "followup will be sending
-            automatically followups if they have allowed and given the
-            permission."
-
-            Deliberately not a Switch like everything else in this
-            section. A switch is for a preference; this is a decision
-            whose consequence is that strangers receive messages written
-            by a machine on this business's behalf. It states what will
-            happen, and granting takes a second, explicit press. Turning
-            it back off is one press, no confirmation — stopping should
-            never be harder than starting. */}
-        {/* Above the controls that change them. */}
-        {automationLoaded && (
-          <YourRulesCard holdAll={holdAllForApproval} paused={sendingPaused} autonomousAllowed={autonomousAllowed} onlyAdminsSend={onlyAdminsSend} />
-        )}
-
-        <div className="mt-4 box p-5">
-          {sendingPaused ? (
-            /* Paused: a hold the owner meant to be temporary. Resume puts
-               sending back as it was; anything that waited during the
-               pause keeps waiting (see @/lib/sendingControl). */
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div className="min-w-0">
-                <p className="font-medium text-sm">Sending is paused</p>
-                <p className="text-[13px] text-ink-soft mt-1">
-                  Everything waits for your OK until you resume. What waited during the pause still waits for you.
-                  {!isAdmin && " An admin can resume it."}
-                </p>
-                {isAdmin && (
-                  <button
-                    onClick={() => saveSendPermission(false)}
-                    disabled={permissionSaving || pauseSaving}
-                    className="mt-3 text-[13px] font-medium underline underline-offset-2 text-ink-soft"
-                  >
-                    Stop sending by itself for good
-                  </button>
-                )}
-              </div>
-              {isAdmin && (
-                <button
-                  onClick={() => savePause(false)}
-                  disabled={pauseSaving || permissionSaving}
-                  className="shrink-0 rounded-full px-3 py-1.5 text-[13px] font-medium disabled:opacity-60"
-                  style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
-                >
-                  {pauseSaving ? "Resuming…" : "Resume"}
-                </button>
-              )}
-            </div>
-          ) : (
-          <div className="flex items-start justify-between gap-4">
-            <div className="min-w-0">
-              <p className="font-medium text-sm">
-                {/* Named as in onboarding's "How should FollowUp work?" step, so
-                    the choice an owner made there is recognisable here. */}
-                {holdAllForApproval ? "Assisted: FollowUp asks you before every message" : "Automatic: FollowUp sends on your behalf"}
-              </p>
-              <p className="text-[13px] text-ink-soft mt-1">
-                {holdAllForApproval
-                  ? "Every follow-up it writes waits in Today until you send it. One exception: if a customer asks a price or a date and 30 minutes pass, they get a short “let me check” so they aren’t left waiting. The answer still waits for you."
-                  : "Simple, low-risk follow-ups go out on their own. Anything about price, or anything sensitive, still waits for you — and it stops the moment a customer replies."}
-              </p>
-              {/* Stopping for good stays one press, as it always was; it
-                  just moves under Pause, which is what most owners who
-                  want to stop for now actually mean. */}
-              {!holdAllForApproval && isAdmin && (
-                <button
-                  onClick={() => saveSendPermission(false)}
-                  disabled={permissionSaving || pauseSaving}
-                  className="mt-3 text-[13px] font-medium underline underline-offset-2 text-ink-soft"
-                >
-                  {permissionSaving ? "Saving…" : "Stop sending by itself for good"}
-                </button>
-              )}
-            </div>
-            {!holdAllForApproval && (
-              /* Anyone on the team can pause: it only ever holds messages. */
-              <button
-                onClick={() => savePause(true)}
-                disabled={pauseSaving || permissionSaving}
-                className="shrink-0 rounded-full px-3 py-1.5 text-[13px] font-medium border"
-                style={{ borderColor: "var(--line)" }}
-              >
-                {pauseSaving ? "Pausing…" : "Pause all sending"}
-              </button>
-            )}
-          </div>
-          )}
-
-          {holdAllForApproval && !sendingPaused && !confirmingPermission && (
-            <button
-              onClick={() => {
-                setConfirmingPermission(true);
-                setSendPreview(null);
-                fetch("/api/automation/send-preview")
-                  .then((r) => r.json())
-                  .then((d) => {
-                    // Only on an explicit success. A failed read leaves
-                    // it null so the box shows the rules with no counts,
-                    // rather than "0 waiting" for a queue it couldn't read.
-                    if (d?.success) setSendPreview(d);
-                  })
-                  .catch(() => {});
-              }}
-              className="mt-4 text-[13px] font-medium underline underline-offset-2 text-ink-soft"
-            >
-              Let FollowUp send without asking
-            </button>
-          )}
-
-          {holdAllForApproval && !sendingPaused && confirmingPermission && (
-            <div className="mt-4 rounded-[12px] p-4" style={{ backgroundColor: "var(--card-2)" }}>
-              {/* --card-2, not --ink-soft. The first draft used
-                  --ink-soft for this surface, which is a TEXT token
-                  (#9ca3af / #52525b) — so the four facts below, set in
-                  text-ink-soft, rendered the same colour as the surface
-                  behind them and were invisible. --card-2 is the
-                  documented inset surface: "a second step for an inset
-                  surface (a code block, a quoted message)", which is
-                  exactly what this is. Caught by rendering the panel; no
-                  test would have seen it.
-
-                  What actually changes, in the order an owner would ask
-                  it. No "are you sure?" — that asks for nerve, not for a
-                  decision. This asks them to read four facts. */}
-              <p className="text-sm font-medium">If you allow this, from the next check onwards:</p>
-              <ul className="mt-2 space-y-1.5 text-[13px] text-ink-soft">
-                <li>• FollowUp will send follow-ups to your customers itself, signed as your business.</li>
-                <li>• Only the simple, low-risk ones. Anything about price or anything sensitive still waits for you.</li>
-                <li>• It still stops the moment a customer replies.</li>
-                <li>• Every message it sends is written down, with the reason, and you can turn this off at any time.</li>
-              </ul>
-
-              {/* The abstract rules above, made concrete with this
-                  business's own queue.
-
-                  Carefully worded. It does NOT say these would have been
-                  sent: while the hold is on, both schedulers skip the risk
-                  classifier entirely, so nothing has ever judged these
-                  drafts (see @/lib/sendPreview). What is knowable is which
-                  ones the setting is the ONLY thing stopping — that is what
-                  the number is, and the sentence says exactly that and no
-                  more. Absent when the count could not be read, rather than
-                  showing a zero the queue does not support. */}
-              {sendPreview && sendPreview.total > 0 && (
-                <p className="mt-3 text-[13px]" style={{ color: "var(--ink)" }}>
-                  Right now {sendPreview.total} {sendPreview.total === 1 ? "follow-up is" : "follow-ups are"} waiting.{" "}
-                  {sendPreview.heldOnlyBySetting > 0 ? (
-                    <>
-                      <strong>{sendPreview.heldOnlyBySetting}</strong>{" "}
-                      {sendPreview.heldOnlyBySetting === 1 ? "is" : "are"} waiting only because of this setting.{" "}
-                      {/* Was "FollowUp will check those and send what passes",
-                          which stopped being true on 2026-09-23: granting
-                          stamps autoSendAllowedAt, and everything already
-                          waiting stays waiting (the backlog rule in
-                          automation.ts) until the owner releases it. */}
-                      Turning this on won&apos;t send {sendPreview.heldOnlyBySetting === 1 ? "it" : "them"} — only
-                      conversations from now on go out by themselves. You can send what&apos;s already waiting with one tap
-                      in Today.
-                    </>
-                  ) : (
-                    <>None of them are waiting only because of this setting.</>
-                  )}
-                  {/* "The other N" only makes sense when some were
-                      counted. With none held by the setting it came out as
-                      "None of them are waiting only because of this
-                      setting. The other 4 need you either way." — there is
-                      no "other". Caught by rendering the empty-split case;
-                      the counts were right and the sentence was not. */}
-                  {sendPreview.heldOnlyBySetting > 0 && sendPreview.wouldWaitAnyway > 0 && (
-                    <>
-                      {" "}
-                      The other {sendPreview.wouldWaitAnyway} {sendPreview.wouldWaitAnyway === 1 ? "needs" : "need"} you
-                      either way.
-                    </>
-                  )}{" "}
-                  {/* The queue renders on the dashboard (ApprovalQueue in
-                      (app)/dashboard/page.tsx) — there is no /approvals
-                      route, which the first draft of this line linked to. */}
-                  <a href="/dashboard" className="underline underline-offset-2">
-                    Read them first
-                  </a>
-                  .
-                </p>
-              )}
-              {permissionError && (
-                <p className="mt-3 text-[13px]" style={{ color: "var(--coral)" }}>
-                  {permissionError}
-                </p>
-              )}
-              <div className="mt-4 flex items-center gap-2">
-                <button
-                  onClick={() => saveSendPermission(true)}
-                  disabled={permissionSaving}
-                  className="rounded-full px-3 py-1.5 text-[13px] font-medium"
-                  style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
-                >
-                  {permissionSaving ? "Saving…" : "Yes, send on my behalf"}
-                </button>
-                <button
-                  onClick={() => {
-                    setConfirmingPermission(false);
-                    setPermissionError(null);
-                  }}
-                  disabled={permissionSaving}
-                  className="rounded-full px-3 py-1.5 text-[13px] font-medium text-ink-soft"
-                >
-                  Not yet
-                </button>
-              </div>
-            </div>
-          )}
-
-          {permissionError && !confirmingPermission && (
-            <p className="mt-3 text-[13px]" style={{ color: "var(--coral)" }}>
-              {permissionError}
-            </p>
-          )}
-        </div>
-
-        {/* The second, narrower permission. Deliberately its own box and
-            not a row inside the one above: an owner can say yes to "send
-            on my behalf" and no to "send things nobody checked" forever,
-            and burying the second inside the first would read as one
-            decision with a detail attached. */}
-        <div className="mt-4 box p-5">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="min-w-0">
-              <p className="font-medium text-sm">Let some leads skip the check</p>
-              <p className="mt-1 text-[13px] text-ink-soft leading-relaxed">
-                {autonomousAllowed
-                  ? "A lead set to \u201cHandle it all\u201d sends every reply straight away \u2014 including price, dates and tense conversations \u2014 with nobody reading it first."
-                  : "Off. Every reply is checked before it goes, even on a lead set to \u201cHandle it all\u201d \u2014 anything about price, dates or a tense conversation waits for you."}
-              </p>
-            </div>
-            {/* Turning it OFF is one press. Turning it ON opens the panel
-                below first — the same shape as the send permission above,
-                which asks an owner to read what changes rather than to
-                confirm they meant to click. */}
-            {(autonomousAllowed || !confirmingAutonomous) && (
-              <button
-                onClick={() => {
-                  if (autonomousAllowed) {
-                    saveAutonomousPermission(false);
-                    return;
-                  }
-                  setConfirmingAutonomous(true);
-                  setAutonomousError(null);
-                  setAutonomousRuleSources(null);
-                  fetch("/api/source-rules")
-                    .then((r) => r.json())
-                    .then((d) => {
-                      // Only on an explicit success, so a failed read
-                      // leaves it null and the panel says nothing about
-                      // channels rather than claiming there are none.
-                      if (d?.success && Array.isArray(d.rules)) {
-                        setAutonomousRuleSources(
-                          d.rules
-                            .filter((r: { automationTierDefault?: string | null }) => r.automationTierDefault === "AUTONOMOUS")
-                            .map((r: { source: string }) => r.source)
-                        );
-                      }
-                    })
-                    .catch(() => {});
-                }}
-                disabled={autonomousSaving}
-                className="shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium disabled:opacity-60"
-                style={
-                  autonomousAllowed
-                    ? { backgroundColor: "var(--card-2)", color: "var(--ink)" }
-                    : { backgroundColor: "var(--ink)", color: "var(--paper)" }
-                }
-              >
-                {autonomousSaving ? "Saving\u2026" : autonomousAllowed ? "Turn off" : "Allow it"}
-              </button>
-            )}
-          </div>
-
-          {!autonomousAllowed && confirmingAutonomous && (
-            <div className="mt-4 rounded-[12px] p-4" style={{ backgroundColor: "var(--card-2)" }}>
-              <p className="text-sm font-medium">If you allow this, from the next check onwards:</p>
-              <ul className="mt-2 space-y-1.5 text-[13px] text-ink-soft">
-                <li>• Only leads you set to &ldquo;Handle it all&rdquo; are affected. Every new lead still starts in Assisted.</li>
-                <li>• On those leads, nobody reads the message first — including price, dates and tense conversations.</li>
-                <li>• The check that holds risky drafts back does not run on them.</li>
-                <li>• Every message is still written down, with the reason, and you can turn this off at any time.</li>
-              </ul>
-              {autonomousRuleSources && autonomousRuleSources.length > 0 && (
-                <p className="mt-3 text-[13px]" style={{ color: "var(--ink)" }}>
-                  <strong>
-                    {autonomousRuleSources.length === 1
-                      ? `Your ${autonomousRuleSources[0]} rule`
-                      : `${autonomousRuleSources.length} channel rules (${autonomousRuleSources.join(", ")})`}
-                  </strong>{" "}
-                  {autonomousRuleSources.length === 1 ? "is" : "are"} set to &ldquo;Handle it all&rdquo;, so every new lead from{" "}
-                  {autonomousRuleSources.length === 1 ? "that channel" : "those channels"} will go onto this the moment it
-                  arrives — you won&apos;t be choosing them one at a time.
-                </p>
-              )}
-              {autonomousError && (
-                <p className="mt-3 text-[13px]" style={{ color: "var(--coral)" }}>
-                  {autonomousError}
-                </p>
-              )}
-              <div className="mt-4 flex items-center gap-2">
-                <button
-                  onClick={async () => {
-                    // Closed only on a yes from the server. A failed
-                    // save leaves the panel open with the error inside
-                    // it, rather than collapsing back to a button that
-                    // still says "Allow it" for no visible reason.
-                    if (await saveAutonomousPermission(true)) setConfirmingAutonomous(false);
-                  }}
-                  disabled={autonomousSaving}
-                  className="rounded-full px-3 py-1.5 text-[13px] font-medium"
-                  style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
-                >
-                  {autonomousSaving ? "Saving\u2026" : "Yes, let those leads skip the check"}
-                </button>
-                <button
-                  onClick={() => {
-                    setConfirmingAutonomous(false);
-                    setAutonomousError(null);
-                  }}
-                  disabled={autonomousSaving}
-                  className="rounded-full px-3 py-1.5 text-[13px] font-medium text-ink-soft"
-                >
-                  Not yet
-                </button>
-              </div>
-            </div>
-          )}
-
-          {autonomousError && !confirmingAutonomous && (
-            <p className="mt-3 text-[13px]" style={{ color: "var(--coral)" }}>
-              {autonomousError}
-            </p>
-          )}
-        </div>
-
-        {/* The four rules as sentences (design brain A-044, the Zapier
-            study). Each used to be a switch named after the machinery
-            ("Auto follow-up on silence") with a paragraph under it, behind
-            a "Change the timings" expander. Now each rule says what
-            happens, when it stops, and what it did this week, with its
-            one number inside the sentence. Same settings, same saves. */}
-        {/* #16 (founder, 2026-10-05, A-094): each rule is its sentence, its number and one
-            "stops when" line. What every rule shares (price waits for you) is said once, in
-            the page's lede and "Your rules", not under every switch. */}
-        <div className="mt-6 space-y-3">
-          <RuleCard
-            when="When a new customer writes for the first time,"
-            does={holdAllForApproval ? "FollowUp writes a short thank-you right away." : "FollowUp thanks them right away."}
-            stops="Once per customer, in their language. Never if you've already replied."
-            checked={instantAckOn}
-            onToggle={() => {
-              const next = !instantAckOn;
-              setInstantAckOn(next);
-              saveInstantAck(next);
-            }}
-            disabled={!automationLoaded || instantAckSaving}
-            label="Thank new customers right away"
-            exampleRule={"instant_ack"}
-            record={ruleRecords?.instant_ack ?? null}
-            error={instantAckError}
-          />
-
-          <RuleCard
-            when="When a customer writes and you haven't answered,"
-            does="FollowUp writes a reply within minutes."
-            stops="It stops the moment anyone replies."
-            checked={unansweredOn}
-            onToggle={() => {
-              const next = !unansweredOn;
-              setUnansweredOn(next);
-              saveUnanswered(next, unansweredHours);
-            }}
-            disabled={!automationLoaded || unansweredSaving}
-            label="Reply when you haven't"
-            exampleRule={"unanswered"}
-            record={ruleRecords?.unanswered ?? null}
-            error={unansweredError}
-          >
-            {unansweredOn && (
-              <p className="mt-3 text-sm">
-                If one was missed, it checks again after{" "}
-                <RuleNumber
-                  value={unansweredHours}
-                  min={1}
-                  max={168}
-                  onChange={setUnansweredHours}
-                  onCommit={() => saveUnanswered(unansweredOn, unansweredHours, unansweredOn)}
-                  label="Hours before checking again"
-                  disabled={unansweredSaving}
-                />{" "}
-                hours.
-              </p>
-            )}
-            {/* Kept as one line through the #16 cut (A-094): without it the number above silently
-                means something else on three channels (brand principle 1). Only shown while it
-                changes something. */}
-            {unansweredOn && unansweredHours > UNANSWERED_META_DM_MAX_HOURS && (
-              <p className="text-[13px] text-ink-soft mt-2">
-                On Instagram, Messenger and WhatsApp it&apos;s {UNANSWERED_META_DM_MAX_HOURS} hours at most. Meta only
-                lets a business reply freely within a day of the lead&apos;s last message.
-              </p>
-            )}
-          </RuleCard>
-
-          {/* The days live in the follow-up plans now (A-245): one place to
-              change them, with the same words the plans page uses. */}
-          <RuleCard
-            when="When they go quiet after you wrote,"
-            does={
-              <>
-                FollowUp follows your plans: {PLAN_NAMES[planFor(followUpPlans, "most")]} ({planDaysText(followUpPlans, planFor(followUpPlans, "most"))}) for
-                most customers, {PLAN_NAMES[planFor(followUpPlans, "later")]} for Later customers.{" "}
-                <Link href="/workflows" className="underline underline-offset-[3px]">
-                  Change the plans
-                </Link>
-              </>
-            }
-            stops="Stops when they book, reply or say no. 8am to 8pm, never more than one a day."
-            checked={automationOn}
-            onToggle={() => {
-              const next = !automationOn;
-              setAutomationOn(next);
-              saveAutomationSettings(next, autoAfterDays);
-            }}
-            disabled={!automationLoaded || automationSaving}
-            label="Check in when they go quiet"
-            exampleRule={"silence"}
-            record={ruleRecords?.silence ?? null}
-            error={automationError}
-          />
-
-          <RuleCard
-            when="When nobody has written for"
-            does={
-              <>
-                <RuleNumber
-                  value={deadLeadDays}
-                  min={30}
-                  max={180}
-                  onChange={setDeadLeadDays}
-                  onCommit={() => saveDeadLead(deadLeadOn, deadLeadDays, deadLeadOn)}
-                  label="Days of silence before a welcome-back"
-                  disabled={!deadLeadOn || deadLeadSaving}
-                />{" "}
-                days, FollowUp writes one welcome-back message.
-              </>
-            }
-            stops="Once per customer."
-            checked={deadLeadOn}
-            onToggle={() => {
-              const next = !deadLeadOn;
-              setDeadLeadOn(next);
-              saveDeadLead(next, deadLeadDays);
-            }}
-            disabled={!automationLoaded || deadLeadSaving}
-            label="Welcome back after a long silence"
-            exampleRule={DEAD_LEAD_RULE}
-            record={ruleRecords?.[DEAD_LEAD_RULE] ?? null}
-            error={deadLeadError}
-          />
-        </div>
-
-      </section>
-
       {/* Alerts, its own row since the phone redesign (A-220): how the owner
           hears that a reply is waiting. Renders nothing until the server has
           at least one alert channel set up — see the component. */}
@@ -1675,12 +866,6 @@ function SettingsPageInner() {
         <AlertsSection />
       </div>
 
-      {/* Who this business IS, above who works in it. Until 2026-09-20
-          there was nowhere at all to change the business's own name or
-          trade — they were asked once in the onboarding wizard and then
-          unreachable, which is how four real people received "Thank you
-          for contacting My Business". This tab is the account-identity
-          tab, so it belongs here and it belongs first. */}
       <section id="business" hidden={!visible("business")} className="scroll-mt-16">
         <h2 className={sectionLabel} style={SECTION_STYLE}>Your business</h2>
         <div className="mt-4">
@@ -1894,65 +1079,47 @@ function SettingsPageInner() {
   );
 }
 
-function IntegrationRow({
-  icon,
-  name,
-  description,
-  connected,
-  onToggle,
-  href,
-  loading,
-}: {
-  icon: React.ReactNode;
-  name: string;
-  description: string;
-  connected: boolean;
-  onToggle?: () => void;
-  /** When set, "Connect" is a real navigation (e.g. to kick off OAuth) instead of a local toggle. */
-  href?: string;
-  loading?: boolean;
-}) {
-  const buttonStyle = {
-    backgroundColor: connected ? "var(--sage-soft)" : "var(--ink)",
-    color: connected ? "var(--sage)" : "var(--paper)",
-  };
-  const label = loading ? (
-    "…"
-  ) : connected ? (
-    <span className="flex items-center gap-1">
-      <Check className="h-3.5 w-3.5" /> Connected
-    </span>
-  ) : (
-    "Connect"
-  );
+/** A group of rows (A-253): one white box, rows split by a hairline. */
+const BOX = "overflow-hidden rounded-[16px] border border-line bg-card";
+/** A row in it: the label, what's set in grey, and a chevron or a switch. */
+const ROW = "flex min-h-[56px] w-full items-center gap-3 px-4 py-2.5 text-[16px]";
 
+/** One of "Who sends your replies?": a radio the whole row presses. */
+function ChoiceRow({
+  checked,
+  title,
+  sub,
+  first = false,
+  disabled,
+  onSelect,
+}: {
+  checked: boolean;
+  title: string;
+  sub?: string;
+  first?: boolean;
+  disabled: boolean;
+  onSelect: () => void;
+}) {
   return (
-    <div className="rounded-[12px] border border-line px-4 py-3 flex items-center gap-4">
-      <div className="h-9 w-9 rounded-[10px] flex items-center justify-center shrink-0" style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}>
-        {icon}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium">{name}</p>
-        <p className="text-[13px] text-ink-soft mt-0.5 wrap-break-word">{description}</p>
-      </div>
-      {!connected && href ? (
-        <a href={href} className="text-sm font-medium rounded-full px-3 py-1.5 shrink-0" style={buttonStyle}>
-          {label}
-        </a>
-      ) : (
-        <button onClick={onToggle} disabled={!onToggle} className="text-sm font-medium rounded-full px-3 py-1.5 shrink-0" style={buttonStyle}>
-          {label}
-        </button>
-      )}
-    </div>
+    <button
+      type="button"
+      role="radio"
+      aria-checked={checked}
+      disabled={disabled}
+      onClick={onSelect}
+      className={"flex min-h-[60px] w-full items-start gap-3.5 px-4 py-4 text-left hover:bg-card-2 disabled:cursor-not-allowed disabled:hover:bg-transparent" + (first ? "" : " border-t border-line-2")}
+    >
+      <span
+        aria-hidden
+        className="mt-px h-[22px] w-[22px] shrink-0 rounded-full"
+        style={checked ? { border: "7px solid var(--ink)" } : { border: "1.5px solid var(--ink-faint)" }}
+      />
+      <span className="min-w-0">
+        <span className="block text-[17px] font-semibold">{title}</span>
+        {sub && <span className="mt-0.5 block text-[14px] text-ink-soft">{sub}</span>}
+      </span>
+    </button>
   );
 }
-
-/**
- * The welcome-back rule's key in the records (DEAD_LEAD_ACTION in
- * @/lib/automation). Spelled out here because this client component must
- * not import automation.ts, which pulls in the database client.
- */
-const DEAD_LEAD_RULE = "dead_lead_reactivation";
 
 

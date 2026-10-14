@@ -1,23 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
 import { Bell, ChevronRight, CircleHelp, Ellipsis, Inbox, Send, Store, type LucideIcon } from "lucide-react";
-import { describeBookingHours, describeTimeZone, type BookingHours } from "@/lib/bookingHours";
 import { readPushState } from "@/lib/pushDevice";
 import FeedbackDialog from "@/components/FeedbackDialog";
 import type { StateKey } from "./canvasBits";
 import { GROUP_PAGE, type SettingsGroup } from "@/lib/settingsGroups";
-import { planFor, planLine, type FollowUpPlans } from "@/lib/followUpPlans";
 
 /**
  * Settings (A-220, the phone redesign): on a phone, four rows (where customers
  * write, how replies go out, alerts, your business), then More, then Help and
- * Sign out. A row opens its page, or a short list of pages first. On the desk
- * the side list holds the same five and this draws the open one's rows
- * (A-222: same words, each its own layout). The one broken thing shows first,
- * only when there is one.
+ * Sign out. Since A-253 each of the four opens its own page; only More opens a
+ * short list (Team, Your plan, Sign-ins, Your data). On the desk the side list
+ * holds the same five and this draws More's rows (A-222: same words, each its
+ * own layout). The one broken thing shows first, only when there is one.
  * Built from the research, not taste:
  *
  * - Stripe (three layers): the everyday places first, and what most
@@ -49,8 +46,6 @@ function ctaOf(r: Row): string {
 export default function SettingsList({
   gmail,
   outlook,
-  plans,
-  instantAck,
   holdAll,
   paused,
   planStatus,
@@ -61,9 +56,6 @@ export default function SettingsList({
 }: {
   gmail: { connected: boolean; email?: string };
   outlook: { connected: boolean; email?: string };
-  /** The owner's follow-up plans (A-245), for the "Your follow-up plans" box. */
-  plans: FollowUpPlans;
-  instantAck: boolean;
   holdAll: boolean;
   paused: boolean;
   planStatus: string;
@@ -76,7 +68,6 @@ export default function SettingsList({
   groupOpen: boolean;
 }) {
   const [social, setSocial] = useState<Social | null>(null);
-  const [booking, setBooking] = useState<string | null>(null);
   const [team, setTeam] = useState<number | null>(null);
   // What the business does; null once loaded means never told (setup asks since 2026-10-04).
   const [trade, setTrade] = useState<string | null | undefined>(undefined);
@@ -94,11 +85,6 @@ export default function SettingsList({
         whatsapp: Boolean(wa?.connected),
       })
     );
-    get("/api/business/booking-hours").then((data: { success?: boolean; timezone?: string } & Partial<BookingHours>) => {
-      if (!data?.success || !data.days || data.startMinute === undefined || data.endMinute === undefined) return;
-      const city = data.timezone ? describeTimeZone(data.timezone).replace(/\s*\(.*$/, "") : "";
-      setBooking(describeBookingHours({ days: data.days, startMinute: data.startMinute, endMinute: data.endMinute }) + (city ? ` · ${city}` : ""));
-    });
     get("/api/onboarding").then((data: { success?: boolean; industry?: string | null; name?: string; namePlaceholder?: boolean }) => {
       if (!data?.success) return;
       setTrade(data.industry ?? null);
@@ -117,7 +103,6 @@ export default function SettingsList({
   const { data: session } = useSession();
   const signedInAs = session?.user?.email ?? "";
 
-  const inbox = gmail.connected ? `Gmail${gmail.email ? ` · ${gmail.email}` : ""}` : outlook.connected ? `Outlook${outlook.email ? ` · ${outlook.email}` : ""}` : "Not set up";
 
   // Instagram, Facebook and WhatsApp as one row: what is connected, or
   // the one that stopped receiving.
@@ -138,40 +123,25 @@ export default function SettingsList({
   // the first is the one to fix.
   const needs: { page: string; title: string; text: string }[] = [];
   if (social?.facebook.connected && !social.facebook.receiving)
-    needs.push({ page: "social", title: "Your Facebook Page isn’t sending messages here", text: "It’s connected, but nothing people send the Page reaches FollowUp, so replies and check-ins there are paused. Open it to fix the link." });
+    needs.push({ page: "connections", title: "Your Facebook Page isn’t sending messages here", text: "It’s connected, but nothing people send the Page reaches FollowUp, so replies and check-ins there are paused. Open it to fix the link." });
   if (social?.instagram.connected && !social.instagram.receiving)
-    needs.push({ page: "social", title: "Instagram isn’t sending messages here", text: "It’s connected, but no DMs reach FollowUp, so replies and check-ins there are paused. Open it to fix the link." });
+    needs.push({ page: "connections", title: "Instagram isn’t sending messages here", text: "It’s connected, but no DMs reach FollowUp, so replies and check-ins there are paused. Open it to fix the link." });
   if (social && !gmail.connected && !outlook.connected && !social.instagram.connected && !social.facebook.connected && !social.whatsapp)
-    needs.push({ page: "email", title: "Nothing is connected to send with", text: "FollowUp can take in customers, but it has no way to reply to them yet. Connect Instagram or your email and it starts." });
+    needs.push({ page: "connections", title: "Nothing is connected to send with", text: "FollowUp can take in customers, but it has no way to reply to them yet. Connect Instagram or your email and it starts." });
   if (trade === null)
     needs.push({ page: "business", title: "Tell FollowUp what you do", text: "It uses your line of work to tell real customers from everyone else, and to write replies that fit it. One tap." });
   const need = needs[0];
 
+  // More is the only group that opens a list (A-253); the other four are one page each. The Advanced page is
+  // off owners' Settings: no row leads to it.
   const groups: { title: string; rows: Row[] }[] = [
-    {
-      title: "Where customers write",
-      rows: [
-        { page: "email", name: "Email", status: inbox, state: gmail.connected || outlook.connected ? "sent" : undefined },
-        { page: "website", name: "Website form", status: "Add it to your site", cta: "Open" },
-        { page: "social", name: "Instagram, Facebook, WhatsApp", ...socialRow },
-      ],
-    },
-    {
-      title: "How replies go out",
-      rows: [
-        { page: "replies", name: "Replies and check-ins", status: holdAll ? "Every reply waits for you" : "FollowUp sends them" },
-        { page: "booking", name: "Booking hours", status: booking ?? "" },
-        { page: "pause", name: "Pause all sending", status: paused ? "Paused" : "Off", state: paused ? "needs" : undefined },
-      ],
-    },
     {
       title: "More",
       rows: [
         { page: "team", name: "Team", status: team === null ? "" : team <= 1 ? "Just you" : `${team} people` },
         { page: "billing", name: "Your plan", status: planStatus },
-        { page: "security", name: "Sign-ins and security" },
+        { page: "security", name: "Sign-ins" },
         { page: "data", name: "Your data", status: "Download or delete", cta: "Open" },
-        { page: "advanced", name: "Advanced: CRM, Zapier, routing" },
       ],
     },
   ];
@@ -223,7 +193,7 @@ export default function SettingsList({
           ))}
         </div>
         <div className={BOX}>
-          <HomeRow name="More" icon={Ellipsis} status="Team, plan, your data, advanced" first onClick={() => onGroup("More")} />
+          <HomeRow name="More" icon={Ellipsis} status="Team, plan, your data" first onClick={() => onGroup("More")} />
         </div>
         <div className="mt-2 grid justify-items-start px-1">
           <FeedbackDialog label="Help" icon={CircleHelp} className="flex min-h-11 items-center gap-2.5 text-[15px] text-ink" />
@@ -240,33 +210,6 @@ export default function SettingsList({
 
       {/* One group's rows: the desk's open group, or the one the phone stepped into. */}
       <div className={(groupOpen ? "grid" : "hidden lg:grid") + " gap-[26px]"}>
-        {group === "How replies go out" && (
-          <section className="grid gap-2">
-            {/* Desk: "Change" sits in the box. */}
-            <div className="flex items-baseline justify-between lg:hidden">
-              <h2 className="text-[13px] text-ink-faint" style={{ fontWeight: 400, letterSpacing: 0 }}>
-                Your follow-up plans
-              </h2>
-              <Link href="/workflows" className="ml-auto text-sm underline underline-offset-[3px]">
-                Change
-              </Link>
-            </div>
-            <div className={BOX + " lg:flex lg:items-start"}>
-              <div className="min-w-0 lg:flex-1 lg:py-1.5">
-                {/* The plans (A-245, as drawn): who gets which, and what stops them. */}
-                {instantAck && <PlanRow when="Right away" what="A quick “got your message” reply." first />}
-                <PlanRow when="Most customers" what={planLine(plans, planFor(plans, "most"))} first={!instantAck} />
-                <PlanRow when="Later customers" what={planLine(plans, planFor(plans, "later"))} />
-                <PlanRow when="Always" what={holdAll ? "Every reply waits for your OK." : "Prices and dates always come to you."} />
-                <PlanRow when="It stops" what="When they book, reply or say no." />
-              </div>
-              <Link href="/workflows" className={CTA + " hidden lg:mr-4 lg:mt-4 lg:inline-flex"}>
-                Change
-              </Link>
-            </div>
-          </section>
-        )}
-
         {shown && (
           <div className={BOX + " lg:py-1.5"}>
             {shown.rows.map((r, i) => (
@@ -344,12 +287,3 @@ const BOX = "overflow-hidden rounded-[14px] border border-line bg-card lg:rounde
 /** The desk row's button look ("Change"); the whole row is the button. */
 const CTA =
   "h-8 shrink-0 items-center rounded-lg bg-paper px-3.5 text-[13px] font-medium text-ink shadow-[0_0_0_1px_var(--line)] group-hover:shadow-[0_0_0_1px_var(--line-strong)] hover:shadow-[0_0_0_1px_var(--line-strong)]";
-
-function PlanRow({ when, what, first = false }: { when: string; what: string; first?: boolean }) {
-  return (
-    <div className={"grid grid-cols-[110px_minmax(0,1fr)] gap-4 px-4 py-3 text-[15px] lg:py-2.5 lg:text-[14.5px] " + (first ? "" : "border-t border-line-2 lg:border-t-0")}>
-      <span className="text-sm text-ink-faint">{when}</span>
-      <span className="leading-snug">{what}</span>
-    </div>
-  );
-}

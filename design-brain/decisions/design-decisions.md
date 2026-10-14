@@ -13011,3 +13011,49 @@ FollowUp run it by itself?
 - the CRM row wraps to two lines on a phone;
 - the Facebook and WhatsApp glyphs are drawn, not the app's ChannelIcon (which uses one bubble for both);
 - not drawn: Add website form, the Follow-up plan page with the four switches, Your business with fewer words.
+
+## 2026-10-14 — Settings, simple (A-253), built
+
+**Built from the approved board.** Checked on the local app at phone (390) and computer, clicking every row and
+window.
+- **Where customers write.** One row each, ✓ Connected or Connect.
+  - A place without one-tap connect on this server says "Soon", never a token box. Locally Instagram, Facebook and
+    WhatsApp say Soon because no Meta keys are set there; live has them.
+  - Gmail that Google stopped answering says "Stopped working. Connect it again." with Reconnect. This replaces the
+    old always-on Reconnect note.
+- **The connected window.** "✓ Connected as …", one line, "Not customers" (only when there is at least one), Done,
+  and Disconnect, which asks first.
+- **Your CRM.**
+  - Connect opens "Which one do you use?", then that CRM's key window. The key window now carries what FollowUp reads
+    and writes, plus the one-boss line.
+  - Connected, the window shows how many customers were brought in, when it last checked, an "Add notes in …" switch
+    and the week's record.
+- **How replies go out.**
+  - Two radio rows. "FollowUp sends them" opens a small window with four facts and this business's queue, then "Yes,
+    FollowUp sends them" / "Not yet". "I check each one first" is one press.
+  - Below: Follow-up plan (to /workflows), Booking hours (its own page, ← back to How replies go out), and a Pause
+    all sending switch.
+- **The four "FollowUp writes" switches** sit on /workflows as "What FollowUp writes". Turning one keeps the saved
+  hours or days.
+- **More:** Team, Your plan, Sign-ins, Your data.
+  - Advanced has no row, but a direct link still opens it (support, and what a business already set up).
+- **Old addresses still land:** #integrations, #email, #website-widget, #social, #whatsapp and #crm open Where
+  customers write; #automation and #pause open How replies go out. The setup steps and in-app links now point at
+  #connections.
+- **The desk** opens on Where customers write when no page is asked for.
+- **Fixed in passing:** a window over the Settings window answered Esc together with Settings. Now only the top
+  window does.
+- **Deleted, nothing used them any more:** InstagramConfig, FacebookConfig, WhatsAppConfig, CopyEmbedSnippet,
+  SetupStepRestore, YourRulesCard, RuleCard, TrackRecord, and lib/yourRules.
+  - With them went the WhatsApp token fallback and the 24-hour template fields. No outside business had WhatsApp or
+    a template on 2026-10-14; saved values keep working.
+- **Tests:** channelAvailability, trustCopy and settingsGroups now guard the new screens. New tests cover old links,
+  parent pages, and the switches keeping their saved numbers.
+
+**Weak spots, honestly:**
+- On a phone the Booking hours row wraps to two lines, and its summary is cut with "…".
+- The desk's side list buttons are still 32px tall. They are unchanged, and the desk is used with a mouse.
+- One-tap Connect for Instagram, Facebook and WhatsApp can't run here (no Meta keys). Check it on live after the
+  merge.
+- /api/automation/rule-records and /api/business/track-record have no screen any more. Removing them is left for a
+  later cleanup.

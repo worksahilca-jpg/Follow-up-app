@@ -6,7 +6,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { GROUP_PAGE, GROUP_SLUG, SETTINGS_GROUPS, groupOfPage, groupOfSlug } from "@/lib/settingsGroups";
+import { GROUP_PAGE, GROUP_SLUG, PARENT_PAGE, SETTINGS_GROUPS, groupOfPage, groupOfSlug } from "@/lib/settingsGroups";
 
 const source = readFileSync(join(__dirname, "..", "..", "app", "(app)", "settings", "page.tsx"), "utf8");
 const pagesBlock = source.slice(source.indexOf("const PAGES"), source.indexOf("/** Old section id"));
@@ -14,7 +14,10 @@ const pages = [...pagesBlock.matchAll(/^\s{2}([a-z]+): \{ title:/gm)].map((m) =>
 
 describe("Settings' side list", () => {
   it("reads the pages from the Settings screen", () => {
-    expect(pages.length).toBeGreaterThan(10);
+    // Ten since A-253 (where customers write and how replies go out became one page each).
+    expect(pages.length).toBeGreaterThanOrEqual(8);
+    expect(pages).toContain("connections");
+    expect(pages).toContain("replies");
   });
 
   it("puts every page in a group", () => {
@@ -43,6 +46,26 @@ describe("Settings' side list", () => {
     for (const page of pages) {
       const g = groupOfPage(page);
       if (g) expect(SETTINGS_GROUPS).toContain(g);
+    }
+  });
+
+  // A-253 made two groups one page each. Links already out in the world (setup steps, the
+  // sign-in and alert emails, Meta and Google coming back) still name the old sections.
+  it("lands every old address on a page that exists", () => {
+    const block = source.slice(source.indexOf("const ALIASES"), source.indexOf("/** Old section id"));
+    const aliases = [...block.matchAll(/^\s{2}"?([a-z-]+)"?: "([a-z]+)",$/gm)];
+    expect(aliases.length).toBeGreaterThanOrEqual(8);
+    for (const [, from, to] of aliases) expect(pages, `#${from} → ${to}`).toContain(to);
+    for (const old of ["integrations", "website-widget", "social", "whatsapp", "crm", "email"]) {
+      expect(aliases.map((a) => a[1]), `#${old} no longer opens anything`).toContain(old);
+    }
+  });
+
+  it("steps a page opened from another page back to that page, in the same group", () => {
+    for (const [child, parent] of Object.entries(PARENT_PAGE)) {
+      expect(pages).toContain(child);
+      expect(pages).toContain(parent);
+      expect(groupOfPage(child)).toBe(groupOfPage(parent));
     }
   });
 });

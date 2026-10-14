@@ -35,7 +35,17 @@ export function rowsFor<T extends { provider: string }>(channels: Channels, rows
  * until 2026-10-12, so an owner who connected only Instagram or WhatsApp
  * could never see, or bring back, a chat that was set aside.
  */
-export default function FilteredEmails({ channels = "email" }: { channels?: Channels }) {
+export default function FilteredEmails({
+  channels = "email",
+  provider,
+  bare = false,
+}: {
+  channels?: Channels;
+  /** One app's rows only ("instagram", "gmail"…): the list inside that connection's window (A-253). */
+  provider?: string;
+  /** Just the rows, for a window that already says what they are ("Not customers"). */
+  bare?: boolean;
+}) {
   const [items, setItems] = useState<FilteredEmail[] | null>(null);
   const [restoring, setRestoring] = useState<string | null>(null);
   const [restored, setRestored] = useState<Record<string, string>>({});
@@ -45,10 +55,10 @@ export default function FilteredEmails({ channels = "email" }: { channels?: Chan
     fetch("/api/integrations/gmail/filtered")
       .then((r) => r.json())
       .then((data: { success: boolean; filtered?: FilteredEmail[] }) =>
-        setItems(data.success ? rowsFor(channels, data.filtered ?? []) : [])
+        setItems(data.success ? rowsFor(channels, data.filtered ?? []).filter((r) => !provider || r.provider === provider) : [])
       )
       .catch(() => setItems([]));
-  }, [channels]);
+  }, [channels, provider]);
 
   async function restore(item: FilteredEmail) {
     setRestoring(item.id);
@@ -74,7 +84,9 @@ export default function FilteredEmails({ channels = "email" }: { channels?: Chan
   if (channels === "chats" && items.length === 0) return null;
 
   return (
-    <div className="mt-3 pt-3 border-t border-line">
+    <div className={bare ? "" : "mt-3 pt-3 border-t border-line"}>
+      {!bare && (
+        <>
       <p className="text-[13px] font-medium flex items-center gap-1.5">
         <EyeOff className="h-3.5 w-3.5" /> Filtered out
       </p>
@@ -83,10 +95,12 @@ export default function FilteredEmails({ channels = "email" }: { channels?: Chan
           ? "Chats FollowUp decided weren’t from customers: friends, family, jokes, people selling to you. Each one says why. If it got one wrong, bring it back and every message comes with it."
           : "Emails FollowUp decided weren’t from customers: personal mail, recruiters, suppliers, notifications. Each one says why. If it got one wrong, one tap makes it a customer."}
       </p>
+        </>
+      )}
       {items.length === 0 ? (
-        <p className="text-[13px] text-ink-soft mt-2">Nothing filtered out recently.</p>
+        <p className={"text-[13px] text-ink-soft" + (bare ? "" : " mt-2")}>Nothing filtered out recently.</p>
       ) : (
-        <ul className="mt-2 space-y-1.5">
+        <ul className={(bare ? "" : "mt-2 ") + "space-y-1.5"}>
           {items.map((item) => (
             <li key={item.id} className="text-[13px] rounded-[12px] border border-line bg-paper px-2.5 py-2">
               <div className="flex items-start justify-between gap-2">

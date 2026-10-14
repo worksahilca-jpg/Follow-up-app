@@ -176,12 +176,16 @@ describe("the landing page's components make the same promises as the page", () 
  * from one Twilio panel — so a channel the product offers had no setup UI
  * at all, which is worse than the landing-page version of the bug: the
  * business signed up, was told WhatsApp works, and then could not connect
- * it. Fixed 2026-09-16 by splitting @/components/WhatsAppConfig out of
+ * it. Fixed 2026-09-16 by splitting WhatsApp's setup out of
  * @/components/TwilioConfig.
  *
- * These tests pin the shape of that split, not its wording: WhatsApp's
- * setup stays reachable with the carrier flag off, and the SMS/voice
- * affordances stay behind the flag.
+ * Since A-253 (2026-10-14) WhatsApp is one row on Settings' "Where customers
+ * write" page (@/components/settings/Connections): Connect, or Connected.
+ * The paste-a-token fallback and the 24-hour template left the owner's
+ * screen with every other technical setting (R-115); what was saved keeps
+ * working. These tests pin the shape that still matters: WhatsApp's connect
+ * stays reachable with the carrier flag off, and the SMS/voice affordances
+ * stay behind the flag.
  */
 describe("WhatsApp is set up without the carrier channels", () => {
   const stripComments = (s: string) =>
@@ -208,102 +212,65 @@ describe("WhatsApp is set up without the carrier channels", () => {
     throw new Error("unbalanced parentheses after CARRIER_CHANNELS_AVAILABLE");
   }
 
-  // Read per test, not at collection time: a missing panel should fail as
+  // Read per test, not at collection time: a missing page should fail as
   // the assertion it is, not as a crash that reports "no tests".
   const readSettings = () => stripComments(read("app/(app)/settings/page.tsx"));
-  const readWhatsappPanel = () => {
+  const readConnections = () => {
     let source: string;
     try {
-      source = read("../src/components/WhatsAppConfig.tsx");
+      source = read("../src/components/settings/Connections.tsx");
     } catch {
-      throw new Error("WhatsApp has no setup panel — src/components/WhatsAppConfig.tsx is missing.");
+      throw new Error("Where customers write has no page — src/components/settings/Connections.tsx is missing.");
     }
     return stripComments(source);
   };
 
-  /**
-   * The panel plus the hook it delegates the Meta popup to.
-   *
-   * The Embedded Signup mechanism moved to src/lib/useWhatsAppSignup.ts on
-   * 2026-09-21 so onboarding could offer WhatsApp as well — until then it
-   * was the one lead source with no button on the "where do your leads
-   * come from?" step. The guarantee below is unchanged ("setup can still
-   * reach the values a WhatsApp reply needs"); only the file holding half
-   * of it moved, so the assertion reads both rather than pinning the
-   * mechanism to one component forever.
-   */
-  const readWhatsappSetup = () => {
-    let hook: string;
-    try {
-      hook = read("../src/lib/useWhatsAppSignup.ts");
-    } catch {
-      throw new Error("WhatsApp signup has no mechanism — src/lib/useWhatsAppSignup.ts is missing.");
-    }
-    return `${readWhatsappPanel()}\n${stripComments(hook)}`;
-  };
-
-  it("keeps the WhatsApp panel outside the carrier flag", () => {
+  it("keeps WhatsApp's connect outside the carrier flag", () => {
     const settings = readSettings();
     const gated = carrierGatedRegion(settings);
-    expect(settings).toContain("<WhatsAppConfig />");
+    expect(settings).toContain("<Connections");
     expect(gated).toContain("<TwilioConfig />");
-    expect(gated).not.toContain("WhatsAppConfig");
+    expect(gated).not.toContain("Connections");
     // …and outside it in the literal sense too: removing the gated region
-    // must leave the WhatsApp section still rendered.
-    expect(settings.replace(gated, "")).toContain("<WhatsAppConfig />");
+    // must leave the connections page still rendered.
+    expect(settings.replace(gated, "")).toContain("<Connections");
   });
 
-  it("reaches every value a WhatsApp reply needs", () => {
-    const whatsapp = readWhatsappSetup();
-    // Since 2026-09-19 WhatsApp is the owner's own number through Meta
-    // (src/lib/whatsappCloud.ts): setup must offer the connect flow, the
-    // paste-a-token fallback's three values, and the 24-hour template that
-    // a follow-up past the window depends on. The connect flow itself now
-    // lives in the shared hook; the rest is still panel-only.
-    for (const field of ["/api/whatsapp/connect", "accessToken", "phoneNumberId", "wabaId", "templateName", "templateLanguage", "templateBody"]) {
-      expect(whatsapp, `WhatsApp setup can no longer reach ${field}`).toContain(field);
-    }
+  it("connects WhatsApp in one tap, through Meta's own window", () => {
+    const connections = readConnections();
+    expect(connections, "Where customers write has no WhatsApp row").toContain('name="WhatsApp"');
+    expect(connections, "the WhatsApp row lost its connect flow").toContain("useWhatsAppSignup");
+    expect(connections, "the WhatsApp row doesn't start the signup").toContain("signup.start");
+    expect(stripComments(read("../src/lib/useWhatsAppSignup.ts")), "the signup no longer finishes the connect").toContain("/api/whatsapp/connect");
   });
 
   /**
-   * Where WhatsApp is offered.
-   *
-   * From 2026-09-21 setup's "where do your leads come from?" step offered
-   * WhatsApp in place (Meta's Embedded Signup is a popup, hence the shared
-   * hook). On 2026-10-04 the founder made setup Gmail only (design brain
-   * A-081): one Connect Gmail button, Outlook as a quiet link, nothing
-   * else asked. So setup no longer offers WhatsApp, and the guarantee
-   * moves: the WhatsApp panel must stay reachable in Settings, with its
-   * connect flow intact, so a business that runs on WhatsApp can still
-   * connect it there. The two tests above pin the panel; this one pins
-   * that setup connects Gmail and still sends nobody to a dead end.
+   * Where WhatsApp is offered. Setup is Gmail or Instagram (A-081, A-241),
+   * so WhatsApp must stay reachable in Settings with its connect flow
+   * intact, so a business that runs on WhatsApp can still connect it there.
    */
   it("setup connects Gmail; WhatsApp stays in Settings with its connect flow", () => {
     const onboarding = stripComments(read("../src/components/OnboardingForm.tsx"));
     expect(onboarding, "setup has no Connect Gmail").toContain("/api/integrations/gmail/connect");
     expect(onboarding, "setup still offers WhatsApp (Gmail first, A-081)").not.toMatch(/name:\s*"WhatsApp"/);
-
-    const whatsapp = readWhatsappSetup();
-    expect(whatsapp, "the WhatsApp panel lost its connect flow").toContain("useWhatsAppSignup");
-    expect(readSettings(), "Settings no longer renders the WhatsApp panel").toContain("<WhatsAppConfig />");
+    expect(readConnections(), "the WhatsApp row lost its connect flow").toContain("useWhatsAppSignup");
+    expect(readSettings(), "Settings no longer renders Where customers write").toContain("<Connections");
   });
 
-  it("offers no SMS or voice affordance from the WhatsApp panel", () => {
-    if (CARRIER_CHANNELS_AVAILABLE) return; // both are offered again; this panel may point at them
-    const whatsapp = readWhatsappPanel();
+  it("offers no SMS or voice affordance where customers write", () => {
+    if (CARRIER_CHANNELS_AVAILABLE) return; // both are offered again; this page may point at them
+    const connections = readConnections();
 
     // The carrier-only controls: the SMS and voice webhook URLs, the
     // outbound SMS number, and the voice-agent toggle.
     for (const affordance of ["smsUrl", "voiceUrl", "voiceAgentEnabled", "phoneNumber:"]) {
-      expect(whatsapp, `the WhatsApp panel still offers ${affordance}`).not.toContain(affordance);
+      expect(connections, `Where customers write still offers ${affordance}`).not.toContain(affordance);
     }
 
     // And no copy promising a channel that isn't there. "text-" is a
-    // Tailwind prefix, hence the lookahead rather than the bare word;
-    // "SMS" is case-sensitive because Twilio's own console URLs have a
-    // lowercase /sms/ path segment, which promises a visitor nothing.
+    // Tailwind prefix, hence the lookahead rather than the bare word.
     for (const claim of [/\bSMS\b/, /A2P/i, /voicemail/i, /\btexts?\b(?!-)/i, /texting/i, /\bcalls?\b/i, /voice agent/i]) {
-      expect(whatsapp, `the WhatsApp panel's copy still mentions ${claim}`).not.toMatch(claim);
+      expect(connections, `Where customers write still mentions ${claim}`).not.toMatch(claim);
     }
   });
 });

@@ -479,7 +479,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                 </p>
                 <div className="mt-4">
                   <Link
-                    href="/settings#integrations"
+                    href="/settings#connections"
                     className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium"
                     style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
                   >

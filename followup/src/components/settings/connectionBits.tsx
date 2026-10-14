@@ -1,0 +1,223 @@
+"use client";
+
+import type { ReactNode } from "react";
+import { ChevronRight } from "lucide-react";
+import AppWindow from "@/components/app/AppWindow";
+
+/**
+ * The pieces of "Where customers write" (A-253): one row per place, each
+ * either Connect or ✓ Connected, and a small window when a connected one is
+ * tapped. Shared by the channels (Connections.tsx) and the CRM row
+ * (CrmConfig.tsx) so every row reads the same.
+ */
+
+export type Glyph = "email" | "instagram" | "messenger" | "whatsapp" | "web" | "crm";
+
+/** Monochrome, in the app's ink, as drawn on the approved board (22px). */
+export function ConnectionGlyph({ glyph }: { glyph: Glyph }) {
+  const common = { viewBox: "0 0 24 24", width: 22, height: 22, fill: "none", stroke: "currentColor", strokeWidth: 1.8, "aria-hidden": true } as const;
+  switch (glyph) {
+    case "email":
+      return (
+        <svg {...common} strokeLinejoin="round">
+          <rect x="3" y="5" width="18" height="14" rx="2.5" />
+          <path d="M3.5 6.5 12 13l8.5-6.5" />
+        </svg>
+      );
+    case "instagram":
+      return (
+        <svg {...common}>
+          <rect x="3" y="3" width="18" height="18" rx="5" />
+          <circle cx="12" cy="12" r="4" />
+          <circle cx="17.3" cy="6.7" r="0.6" fill="currentColor" />
+        </svg>
+      );
+    case "messenger":
+      return (
+        <svg {...common} strokeLinejoin="round">
+          <path d="M12 3C7 3 3 6.7 3 11.4c0 2.6 1.2 4.9 3.2 6.4V21l3-1.6c.9.3 1.8.4 2.8.4 5 0 9-3.7 9-8.4S17 3 12 3Z" />
+          <path d="m7.5 13.5 3-3.2 2.2 2.2 3.8-2.2-3 3.2-2.2-2.2z" />
+        </svg>
+      );
+    case "whatsapp":
+      return (
+        <svg {...common} strokeLinejoin="round">
+          <path d="M4 20l1.2-3.6A8.5 8.5 0 1 1 8 19z" />
+          <path d="M9 8.6c0 3.5 2.9 6.4 6.4 6.4l1-1.3-1.9-1-1 .9a5 5 0 0 1-2.6-2.6l.9-1-1-1.9z" />
+        </svg>
+      );
+    case "web":
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="12" r="9" />
+          <path d="M3 12h18M12 3c2.5 2.6 3.7 5.6 3.7 9s-1.2 6.4-3.7 9c-2.5-2.6-3.7-5.6-3.7-9S9.5 5.6 12 3Z" />
+        </svg>
+      );
+    case "crm":
+      return (
+        <svg {...common} strokeLinejoin="round">
+          <rect x="4" y="4" width="16" height="16" rx="3" />
+          <path d="M4 9.5h16M9.5 9.5V20" />
+        </svg>
+      );
+  }
+}
+
+export function GlyphTile({ glyph }: { glyph: Glyph }) {
+  return (
+    <span aria-hidden className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-card-2 text-ink">
+      <ConnectionGlyph glyph={glyph} />
+    </span>
+  );
+}
+
+/** The group of rows: one white box, rows split by a hairline. */
+export const BOX = "overflow-hidden rounded-[16px] border border-line bg-card";
+
+/** Connect / Add / Reconnect: outlined, never black, because a page can hold several (A-253). 44px tall. */
+export const PILL =
+  "inline-flex min-h-11 shrink-0 items-center rounded-full border border-line-strong bg-card px-[18px] text-[15px] font-semibold text-ink hover:bg-card-2 disabled:opacity-60";
+
+/** "✓ Connected", in the green the app uses for done. */
+export function ConnectedMark() {
+  return <span className="inline-flex shrink-0 items-center whitespace-nowrap text-[15px] font-semibold text-sage">✓ Connected</span>;
+}
+
+/** Something stopped and needs the owner: the orange dot and one word, never colour alone (A-253). */
+export function NeedsMark({ word }: { word: string }) {
+  return (
+    <span className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap text-[15px] font-semibold">
+      <span aria-hidden className="h-2 w-2 rounded-full" style={{ background: "var(--state-needs)" }} />
+      {word}
+    </span>
+  );
+}
+
+function RowText({ name, sub }: { name: string; sub?: string | null }) {
+  return (
+    <span className="min-w-0 flex-1">
+      <span className="block text-[17px] font-semibold text-ink">{name}</span>
+      {sub && <span className="mt-0.5 block truncate text-[14px] text-ink-soft">{sub}</span>}
+    </span>
+  );
+}
+
+const ROW = "flex min-h-[72px] w-full items-center gap-3.5 px-4 py-3 text-left";
+
+/**
+ * One place customers write. A row that opens its window is one button
+ * (connected, or broken); a row with an action keeps the action as its own
+ * control, so nothing nests a button inside a button.
+ */
+export function ConnectionRow({
+  glyph,
+  name,
+  sub,
+  first,
+  onOpen,
+  mark,
+  action,
+}: {
+  glyph: Glyph;
+  name: string;
+  sub?: string | null;
+  first?: boolean;
+  /** The whole row opens the place's window (connected or broken). */
+  onOpen?: () => void;
+  /** What the row says on the right when it opens a window: ConnectedMark or NeedsMark. */
+  mark?: ReactNode;
+  /** The row's own action when there is no window yet: a Connect link, an Add button, "Soon". */
+  action?: ReactNode;
+}) {
+  const edge = first ? "" : " border-t border-line-2";
+  if (onOpen) {
+    return (
+      <button type="button" onClick={onOpen} className={ROW + " hover:bg-card-2" + edge}>
+        <GlyphTile glyph={glyph} />
+        <RowText name={name} sub={sub} />
+        {mark}
+        <ChevronRight aria-hidden className="h-[18px] w-[18px] shrink-0 text-ink-faint" />
+      </button>
+    );
+  }
+  return (
+    <div className={ROW + edge}>
+      <GlyphTile glyph={glyph} />
+      <RowText name={name} sub={sub} />
+      {action}
+    </div>
+  );
+}
+
+/** A place that has no one-tap connect yet. Never a token box instead (R-115). */
+export function Soon() {
+  return <span className="shrink-0 text-[15px] text-ink-faint">Soon</span>;
+}
+
+/**
+ * The window a connected place opens (A-253): who it's connected as, one
+ * line of what happens, then Done and Disconnect. On a phone it rises as a
+ * sheet (AppWindow).
+ */
+export function ConnectionSheet({
+  label,
+  glyph,
+  title,
+  status,
+  children,
+  onClose,
+  primary,
+  onDisconnect,
+  disconnectLabel,
+  busy = false,
+}: {
+  label: string;
+  glyph: Glyph;
+  title: string;
+  /** Under the title: "✓ Connected as …", or what's wrong. */
+  status?: ReactNode;
+  children?: ReactNode;
+  onClose: () => void;
+  /** The window's one black button, when it isn't Done (Copy the code). Done becomes a quiet word. */
+  primary?: ReactNode;
+  onDisconnect?: () => void;
+  disconnectLabel?: string;
+  busy?: boolean;
+}) {
+  return (
+    <AppWindow label={label} size="small" onClose={onClose}>
+      <div className="p-6">
+        <div className="flex items-center gap-3.5 pr-8">
+          <GlyphTile glyph={glyph} />
+          <div className="min-w-0">
+            <p className="text-[20px] font-semibold leading-tight">{title}</p>
+            {status}
+          </div>
+        </div>
+        {children}
+        <div className="mt-6 flex flex-col items-center gap-1">
+          {primary ?? (
+            <button type="button" onClick={onClose} className="min-h-[50px] w-full rounded-full bg-ink text-[16px] font-semibold text-on-accent">
+              Done
+            </button>
+          )}
+          {primary && (
+            <button type="button" onClick={onClose} className="min-h-11 text-[15px] text-ink-soft hover:text-ink">
+              Done
+            </button>
+          )}
+          {onDisconnect && (
+            <button type="button" onClick={onDisconnect} disabled={busy} className="min-h-11 text-[15px] disabled:opacity-60" style={{ color: "var(--coral)" }}>
+              {disconnectLabel}
+            </button>
+          )}
+        </div>
+      </div>
+    </AppWindow>
+  );
+}
+
+/** "✓ Connected as priya@example.com", under a window's title. */
+export function ConnectedAs({ who }: { who?: string | null }) {
+  return <p className="mt-0.5 break-words text-[15px] font-semibold text-sage">✓ Connected{who ? ` as ${who}` : ""}</p>;
+}

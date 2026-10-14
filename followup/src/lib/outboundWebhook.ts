@@ -1,6 +1,8 @@
+import { randomUUID } from "node:crypto";
 import { prisma } from "@/lib/db";
 import type { Lead } from "@prisma/client";
 import { postJsonToTenantUrl } from "@/lib/ssrf";
+import { newWebhookSecret, signatureHeader, SIGNATURE_HEADER } from "@/lib/webhookSignature";
 
 /**
  * Outbound lead-event webhook — the reverse direction of the inbound one
@@ -28,6 +30,33 @@ import { postJsonToTenantUrl } from "@/lib/ssrf";
 
 type LeadEventType = "lead.created" | "lead.stage_changed";
 
+/**
+ * The business's signing secret, made the first time it's needed (a URL saved
+ * before events were signed gets one on its next event). Only written where
+ * none exists, so two events racing agree on one secret.
+ */
+export async function ensureWebhookSecret(businessId: string, current: string | null): Promise<string> {
+  if (current) return current;
+  const fresh = newWebhookSecret();
+  const r = await prisma.business.updateMany({ where: { id: businessId, outboundWebhookSecret: null }, data: { outboundWebhookSecret: fresh } });
+  if (r.count === 1) return fresh;
+  const b = await prisma.business.findUnique({ where: { id: businessId }, select: { outboundWebhookSecret: true } });
+  return b?.outboundWebhookSecret ?? fresh;
+}
+
+/**
+ * The headers every event carries (A-252): what it is, a delivery id the
+ * receiver can use to ignore a repeat, and the signature over the exact body
+ * sent (src/lib/webhookSignature.ts).
+ */
+export function signedEventHeaders(secret: string, event: string): (body: string) => Record<string, string> {
+  return (body) => ({
+    "X-FollowUp-Event": event,
+    "X-FollowUp-Delivery": randomUUID(),
+    [SIGNATURE_HEADER]: signatureHeader(secret, body),
+  });
+}
+
 export async function notifyLeadEvent(
   businessId: string,
   event: LeadEventType,
@@ -37,10 +66,11 @@ export async function notifyLeadEvent(
   try {
     const business = await prisma.business.findUnique({
       where: { id: businessId },
-      select: { outboundWebhookUrl: true },
+      select: { outboundWebhookUrl: true, outboundWebhookSecret: true },
     });
     const url = business?.outboundWebhookUrl;
     if (!url) return;
+    const secret = await ensureWebhookSecret(businessId, business.outboundWebhookSecret);
 
     const payload = {
       event,
@@ -65,7 +95,7 @@ export async function notifyLeadEvent(
     // follows a redirect, and times out after 8s — best-effort delivery,
     // not a guaranteed one, so there's no retry queue here. See
     // src/lib/ssrf.ts.
-    await postJsonToTenantUrl(url, payload, { timeoutMs: 8000 });
+    await postJsonToTenantUrl(url, payload, { timeoutMs: 8000, headersFor: signedEventHeaders(secret, event) });
   } catch {
     // Swallow — see file header. The downstream tool being down or the URL
     // being stale is that business's problem to notice, not a reason to

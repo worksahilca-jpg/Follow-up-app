@@ -210,10 +210,18 @@ export function guardedLookup(
 export async function postJsonToTenantUrl(
   raw: string,
   payload: unknown,
-  { timeoutMs = 8000 }: { timeoutMs?: number } = {}
+  {
+    timeoutMs = 8000,
+    headersFor,
+  }: {
+    timeoutMs?: number;
+    /** Headers made from the exact body sent, e.g. its signature (src/lib/webhookSignature.ts). */
+    headersFor?: (body: string) => Record<string, string>;
+  } = {}
 ): Promise<{ status: number }> {
   const url = await assertSafeWebhookUrl(raw);
   const body = JSON.stringify(payload);
+  const extra = headersFor ? headersFor(body) : {};
   const client = url.protocol === "https:" ? https : http;
 
   return new Promise((resolve, reject) => {
@@ -221,7 +229,7 @@ export async function postJsonToTenantUrl(
       url,
       {
         method: "POST",
-        headers: { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(body) },
+        headers: { ...extra, "Content-Type": "application/json", "Content-Length": Buffer.byteLength(body) },
         lookup: guardedLookup as unknown as net.LookupFunction,
         signal: AbortSignal.timeout(timeoutMs),
       },

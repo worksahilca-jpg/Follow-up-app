@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { recordAudit } from "@/lib/audit";
 import { parseJsonBody } from "@/lib/validation";
 import { assertSafeWebhookUrl, postJsonToTenantUrl, UnsafeWebhookUrlError } from "@/lib/ssrf";
+import { ensureWebhookSecret, signedEventHeaders } from "@/lib/outboundWebhook";
 
 const outboundWebhookSchema = z.object({ url: z.string().max(2048).nullable().optional() });
 
@@ -20,7 +21,7 @@ export async function GET() {
 
   const business = await prisma.business.findUnique({
     where: { id: ctx.businessId },
-    select: { outboundWebhookUrl: true },
+    select: { outboundWebhookUrl: true, outboundWebhookSecret: true },
   });
 
   // Admins only (founder, 2026-09-30): the link routinely carries its own
@@ -30,7 +31,10 @@ export async function GET() {
   if (!(await requireAdmin(ctx))) {
     return NextResponse.json({ success: true, url: null, set: !!business?.outboundWebhookUrl, adminOnly: true });
   }
-  return NextResponse.json({ success: true, url: business?.outboundWebhookUrl ?? null });
+  // The signing secret goes with the link (A-252): only admins see either.
+  const url = business?.outboundWebhookUrl ?? null;
+  const secret = url ? await ensureWebhookSecret(ctx.businessId, business?.outboundWebhookSecret ?? null) : null;
+  return NextResponse.json({ success: true, url, secret });
 }
 
 /**
@@ -80,11 +84,14 @@ export async function POST(request: NextRequest) {
   }
 
   await prisma.business.update({ where: { id: ctx.businessId }, data: { outboundWebhookUrl: parsedUrl.toString() } });
+  // The secret stays the same when the link changes, so a receiver already checking signatures keeps working.
+  const current = await prisma.business.findUnique({ where: { id: ctx.businessId }, select: { outboundWebhookSecret: true } });
+  const secret = await ensureWebhookSecret(ctx.businessId, current?.outboundWebhookSecret ?? null);
   // The host, not the full URL — a webhook URL routinely carries a secret in
   // its path or query (Zapier and Make both do this), and the audit log is
   // readable by the whole team.
   void recordAudit(ctx, "integration.outbound_webhook.update", { meta: { host: parsedUrl.host } });
-  return NextResponse.json({ success: true, url: parsedUrl.toString() });
+  return NextResponse.json({ success: true, url: parsedUrl.toString(), secret });
 }
 
 /**
@@ -107,7 +114,7 @@ export async function PUT() {
 
   const business = await prisma.business.findUnique({
     where: { id: ctx.businessId },
-    select: { outboundWebhookUrl: true },
+    select: { outboundWebhookUrl: true, outboundWebhookSecret: true },
   });
   if (!business?.outboundWebhookUrl) {
     return NextResponse.json({ success: false, message: "No webhook URL saved yet." }, { status: 400 });
@@ -136,7 +143,11 @@ export async function PUT() {
         dealValue: 0,
         timestamp: new Date().toISOString(),
       },
-      { timeoutMs: 8000 }
+      {
+        timeoutMs: 8000,
+        // Signed like a real event, so the receiver's signature check can be tried with it.
+        headersFor: signedEventHeaders(await ensureWebhookSecret(ctx.businessId, business.outboundWebhookSecret), "webhook.test"),
+      }
     );
     if (res.status < 200 || res.status > 299) {
       return NextResponse.json(

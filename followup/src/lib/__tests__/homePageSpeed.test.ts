@@ -131,3 +131,23 @@ describe("the home page stays light", () => {
     expect(html.length).toBeLessThan(450_000);
   });
 });
+
+/**
+ * Every tap on the home page reaches 44px on a phone (design-review.md; 2026-10-14). The small links and buttons
+ * keep how they look: an invisible band centred on each one takes the tap. A change that drops one fails here.
+ */
+describe("the home page is easy to tap", () => {
+  const band = allCssOf(html).match(/([^{}]+)\{\s*content: "";\s*position: absolute;\s*left: 0;\s*right: 0;\s*top: 50%;\s*height: 44px;/);
+
+  it("gives every small link and button a 44px band", () => {
+    expect(band).not.toBeNull();
+    const selectors = band![1];
+    for (const small of [".brand", ".nav-links a", ".s6-replay", ".cb-seg button", ".cb-sw", ".db-l a", ".f5-up"]) {
+      expect(selectors).toContain(small);
+    }
+  });
+});
+
+function allCssOf(page: string): string {
+  return [...page.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style>/g)].map((m) => m[1]).join("\n");
+}

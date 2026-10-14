@@ -4278,3 +4278,61 @@ and computer, old on top, new below): *"Yes, it can go live"*. It goes as its ow
   - moves the phone arrangement back to the end of the page;
   - keeps a style for something the page no longer has;
   - grows the page past 450 KB.
+
+
+## A-252 — Your CRM: one sign-in, one boss per customer, every write on record ^A-252
+
+**Approved:** 2026-10-14, founder, on the CRM board drawn inside the real app. The board showed Settings › More ›
+Advanced (now and proposed), the connect window, and a customer's page in both states, on phone and computer. The
+question was *"Does this CRM workflow look right? If yes, I write it down, and it gets built first for the CRM your
+testers name."* He answered *"LETS IMPROVE EVERYTHING"*. That was taken as a yes to the drawing and a go-ahead for the
+improvement list it came with (inferred from the reply, not a "yes" to the option).
+
+**What specifically:**
+- **"Your CRM" in Settings › More › Advanced** replaces "Connect your CRM" and its paste-a-key form.
+  - One box: "Keep the app you already use", then one line: "FollowUp works beside it: it brings your customers in,
+    and writes back everything it does."
+  - One row per CRM. Follow Up Boss and HubSpot each have Connect; GoHighLevel is tagged "Soon".
+  - Below the rows, a quiet link: "Something else? Send customers in with Zapier or Make".
+- **What it reads and writes**, in two short lists in their own box:
+  - Reads: new customers, the moment they arrive; who's working each one, and their stage; "Do not contact" and closed;
+    booked appointments.
+  - Writes back: a note after every reply; the stage (Replied, Ready, Booked); a task for you when someone's ready;
+    bookings, on your calendar.
+  - It ends with A-237's rule: "If your CRM is already following up with someone, FollowUp only watches, and tells you
+    when they're ready. Nobody gets two messages."
+- **Connected:** the CRM's row says "Connected · 214 customers brought in · checked 2 min ago". "Pause writing there"
+  and "Disconnect" are quiet links under it.
+- **"What FollowUp wrote in Follow Up Boss"**, the record of every write, newest first:
+  - Each line has the time and what was written: a note (with its words), a stage move, a task, or a booking.
+  - A write that failed says so, with a coral dot and what happened next: "Couldn't reach Follow Up Boss. Tried again
+    at 1:15 PM: done. Nothing was lost."
+  - The box ends with "Show all 38 this week".
+- **The connect window:** "Connect Follow Up Boss", then "You'll sign in to Follow Up Boss and let FollowUp:" and three
+  plain permissions:
+  - See your customers, their stage and who's working them.
+  - Add notes, stages and tasks.
+  - See and add appointments.
+  - Then a green line: "It never deletes anything there, and never writes to anyone marked 'Do not contact'."
+  - A black "Continue to Follow Up Boss", and "Use an API key instead" as a quiet link.
+- **A customer's page:** under "Came from", a short "In Follow Up Boss" block in one of two states, with "Open in
+  Follow Up Boss ↗" under it:
+  - "FollowUp is following up", with a green dot and "Each reply is noted there · Stage: Ready".
+  - "Follow Up Boss is following up", with "Called Tuesday. FollowUp is watching, and will tell you when Raj is
+    ready."
+- **The workflow is the same for every CRM:**
+  1. Connect, with one sign-in.
+  2. Read.
+  3. Decide who follows up, never both (A-237).
+  4. FollowUp replies, or watches.
+  5. Write back: note, stage, task, booking.
+  6. Keep a record of every write.
+- **Build order:**
+  - First, the parts every CRM shares, for the two already connected (Follow Up Boss, HubSpot): the record, trying
+    again, "Do not contact", the stage, signed events and the screens.
+  - One-click sign-in for a CRM needs that CRM's developer app, which the founder registers.
+  - GoHighLevel stays "Soon" until 3 or more prospects or testers say they use it (research,
+    `research/competitors/2026-10-07-gohighlevel.md`).
+  - Otherwise, a CRM is built first when the testers name it.
+- **Kept from the app's rules:** one black button on the page, so "Generate webhook URL" further down becomes an
+  outlined button. Status says what's missing (R-111). Customer, not lead.

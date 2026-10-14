@@ -12837,3 +12837,39 @@ with a 4× slower processor and on a computer.
   headline, which are part of the look.
 - The phone still spends about 0.3 s laying out the long page once.
 - About 150 KB of script remains. Some of it still looks for parts that are gone; that is harmless but not tidy.
+
+
+## 2026-10-14 — Your CRM: one sign-in, one boss, every write on record (A-252)
+
+The founder asked how FollowUp should work with *"GoHighLevel or any other CRMs or connectors"* and for *"a proper
+workflow"*.
+
+**Where it stood (read from the code, and production counted read-only):**
+- Follow Up Boss and HubSpot connect by pasting a key. FollowUp brings their contacts in every 10 minutes, writes a
+  note after each reply it sends, and writes a "ready to talk" note when a customer is ready.
+- A-237's one boss already works: when the CRM contacted someone in the last 14 days, FollowUp only watches.
+- Zapier and Make can send leads in through a link. "New lead" and "stage changed" events go out, unsigned and never
+  tried again.
+- No business had connected a CRM or a webhook.
+- **Gaps:**
+  - The paste-a-key setup is too technical.
+  - Ten minutes is slow for a new lead.
+  - It writes notes only.
+  - It never reads "Do not contact" or "closed".
+  - There is no record of what it wrote, and nothing is tried again when the CRM is down.
+  - The Settings text still says every reply to a CRM customer waits for an OK, which A-237 replaced.
+
+**Drawn** inside the real app (`crmdraw/crm-board.png`, session scratchpad), phone and computer:
+- the Advanced page now;
+- the new "Your CRM" before and after connecting, with the record of writes;
+- the connect window;
+- a customer's page in both states.
+The founder answered *"LETS IMPROVE EVERYTHING"*, recorded as A-252.
+
+**Weak spots in the drawing, to settle in the build:**
+- The Advanced page had two black buttons (Connect and "Generate webhook URL"); the second becomes outlined.
+- "CRM" is jargon. Realtors know the word, so the section title keeps it, and the lines under it say "the app you
+  already use".
+- One-click sign-in depends on each CRM's own developer app. Until the founder registers one, Connect opens the window
+  with the API key way only.
+- Which CRM field means "Do not contact" has to be checked against each CRM's documentation before it is relied on.

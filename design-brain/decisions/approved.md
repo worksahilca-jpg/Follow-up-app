@@ -4255,3 +4255,26 @@ quickly, it should not be too complicated"*, starting with Today.
 - **Unchanged:** the greeting and "Start with Omar", the list, Tomorrow, Done today, the computer's two columns.
 - **Wording:** the drawing said "viewings"; the build says "booked calls", because the booking link books a call (the
   rows already say "Call with …").
+
+
+## A-251 — The landing page shows its finished first screen at once, and carries only what it shows ^A-251
+
+**Approved:** 2026-10-14, founder (*"Yes, start it"*), on the plan *"make it load fast and stop the jumping, without
+changing how it looks. You'd see the old and new versions side by side, on phone and computer, before anything goes
+live."* He had said *"the landing page choks"*. Signed off the same day on the before/after loading boards (slow phone
+and computer, old on top, new below): *"Yes, it can go live"*. It goes as its own update after A-250's, on his
+"merge".
+- **The first paint is the finished first screen.** What the first screen needs is in the page before its scripts
+  run: both stylesheets in the head, the bar in its top-of-page tone, the try box written inside the stage, the two
+  Your control choices (v116: B and B) written on the page, the phone's first screen (A-223) arranged as soon as the
+  hero is read, and the bar's Start free already quiet while the try box shows (v88).
+- **The page carries only what it shows.** Gone: the Your control versions that weren't chosen and the one before
+  them, the hidden draft rows and pickers, the scripts for sections that were replaced, and every style that can no
+  longer apply. The file went from 620 KB to 415 KB.
+- **How it looks does not change.** Checked frame by frame down the whole page at ten sizes, from 360 to 1920 wide.
+- **Guarded** in `homePageSpeed.test.ts`. A change fails if it does any of these:
+  - puts a stylesheet after the content;
+  - starts the first screen in a state that its scripts then change;
+  - moves the phone arrangement back to the end of the page;
+  - keeps a style for something the page no longer has;
+  - grows the page past 450 KB.

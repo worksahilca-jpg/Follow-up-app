@@ -12791,3 +12791,49 @@ one black button), and it is not subtraction alone (R-001): the reply itself is 
 screen. "All done for today" (something done, nothing left) was not seen in a browser: no local business is in that
 state, so only the code and its tests cover it.
 
+
+## 2026-10-14 — The landing page, lighter and still (A-251)
+
+The founder said the landing page *"choks"*. It was measured locally on the same code the live site runs, on a phone
+with a 4× slower processor and on a computer.
+
+**What was wrong:**
+- On the phone it froze for 0.64 s in all while loading (the longest single freeze 0.45 s). Nothing showed for 0.66 s.
+- What showed first wasn't the first screen. On a phone, the example week appeared, then jumped to the chat once the
+  script ran. The bar's logo and Start free appeared late.
+- On a computer, the try box and Your control swapped in after the first paint (layout shift 0.565; above 0.25 counts
+  as poor).
+
+**Why:**
+- The page still carried every design round:
+  - about half its styles matched nothing;
+  - a quarter of its script looked for sections that had been replaced;
+  - Your control held three versions of two parts, plus hidden draft pickers.
+- One of its two stylesheets came after the content, so the first paint happened without it.
+
+**Changed (A-251):**
+- The first screen is written as it ends up. All styles are in the head, and the phone arrangement runs right after the
+  hero.
+- What the page never shows is removed: 1,384 of 2,874 style rules, 44 KB of script, and the unchosen Your control
+  versions.
+- The phone example's one height is measured again once the fonts arrive. Text in the stand-in font wrapped
+  differently on a 360-wide phone.
+
+**After, same setups, median of 6 runs:**
+- Phone: 0.30 s frozen in all, the longest 0.18 s; first paint at 0.22 s.
+- Computer: no layout shift.
+- File: 620 → 415 KB (146 → 104 KB compressed).
+
+**Checked:**
+- Pixel-identical to the live page at 10 sizes, with motion stilled, frame by frame down the whole page.
+- One intended difference, at 641–900 wide: the demo's side cards now sit where the design puts them from the start.
+  The old page measured them before its second stylesheet arrived, so they sat 34 px too close to the middle until the
+  demo moved on.
+- Before/after loading boards: `landspeed/film/board-phone.png` and `board-desktop.png` (session scratchpad). The
+  founder saw them and said *"Yes, it can go live"* (2026-10-14).
+
+**Weak spots:**
+- On a computer the load work is about the same (0.2 s at full speed). Most of it is the drifting messages behind the
+  headline, which are part of the look.
+- The phone still spends about 0.3 s laying out the long page once.
+- About 150 KB of script remains. Some of it still looks for parts that are gone; that is harmless but not tidy.

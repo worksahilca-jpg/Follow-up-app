@@ -12547,3 +12547,6 @@ stays everyone. The A-243 build (commit 8c31f76, branch only, never merged) is n
 - **Next:** draw a whole-day Today on the real app, phone and computer, from data the app already has: replies
   waiting, calls to make (A-103), booked calls and viewings, FollowUp's planned check-ins (coming up), handled today,
   going quiet.
+- **Drawn and approved (A-244, 2026-10-14):** greeting, the day in numbers, progress, Do this first, Still to do
+  today, Tomorrow, Done today. *"Yes, build this"*. Not known by the app yet: a viewing's address and a time a customer
+  asked to be called; those lines show without them until booking is built (A-242).

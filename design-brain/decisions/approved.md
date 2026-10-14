@@ -4062,3 +4062,23 @@ app, phone and computer. Drawing 1 was rejected as R-113 (*"how do i get to know
 - **Out of sight while anyone waits:** the "Let FollowUp reply for you?" question (asked once, now when nobody is
   waiting, so it never blocks a customer), the phone-buzz box, the "Since yesterday" line, "Based on…", and the rarer
   ways out ("Don't send", "Already spoke", "Later"), which stay on the customer's own page.
+
+## A-244 — Today is the owner's whole day ^A-244
+
+**Approved:** 2026-10-14, founder (*"Yes, build this"*), on a drawing made inside the real app, phone and computer, after
+R-114 (*"Today is the gist of everything ... How many calls do I need to do? How many meetings?"*).
+- **Greeting:** the date, "Good evening, Priya.", then "Here is your day. Start with Raj."
+- **Your day in numbers:** one box, three columns: replies to send, calls to make, viewings today.
+- **Progress:** "3 of 11 done today · 8 to go", with a thin green bar (done is sage).
+- **Do this first:** one box with a black edge: what the most urgent customer wants, in a sentence ("Raj Malhotra wants
+  to book a viewing this Saturday."), when and how they wrote, and one black button "Reply to Raj".
+- **Still to do today:** one list, every reply, call and viewing, each a row with an icon (message, phone, calendar),
+  what to do ("Reply to Omar Haddad", "Call Mei Chen", "Viewing with the Singh family"), one line of why, and a time on
+  the right when there is one, otherwise a chevron.
+- **Tomorrow:** the next day's viewings and calls with times, and "FollowUp checks in with 3 customers. Nothing for you
+  to do."
+- **Done today:** ticks: what the owner sent, what FollowUp answered for them, what got booked.
+- **Computer:** two columns: Do this first and Still to do on the left; numbers, progress, Tomorrow and Done on the
+  right. **Phone:** one column in the order above.
+- Results stays what FollowUp did; Customers stays everyone. Supersedes A-220's "Today never shows a list" and A-243 as
+  the whole page.

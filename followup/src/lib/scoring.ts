@@ -369,7 +369,7 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
     // The same card in the owner's CRM, once, by whichever pass stamped it
     // (src/lib/crm/notes.ts, A-237). Best-effort: never holds up the reply.
     if (stamped.count === 1 && template && qualification && lead.crmProvider && lead.crmId) {
-      void pushCrmNote(lead.businessId, lead.crmProvider, lead.crmId, readyNote(lead.name, template, qualification));
+      void pushCrmNote({ id: lead.id, businessId: lead.businessId, crmProvider: lead.crmProvider, crmId: lead.crmId }, readyNote(lead.name, template, qualification));
     }
   }
 

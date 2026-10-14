@@ -54,6 +54,7 @@ export interface BusinessExport {
   senderVerdicts: Record<string, unknown>[];
   businessFacts: Record<string, unknown>[];
   ownerHabits: Record<string, unknown>[];
+  crmWrites: Record<string, unknown>[];
 }
 
 /**
@@ -97,6 +98,7 @@ export async function exportBusinessData(businessId: string): Promise<BusinessEx
     senderVerdicts,
     businessFacts,
     ownerHabits,
+    crmWrites,
   ] = await Promise.all([
     prisma.user.findMany({
       where: { businessId },
@@ -136,6 +138,11 @@ export async function exportBusinessData(businessId: string): Promise<BusinessEx
     prisma.businessFact.findMany({ where: { businessId }, select: { label: true, value: true, source: true, createdAt: true, updatedAt: true } }),
     // "How you work" (src/lib/habits.ts): what the owner said yes or no to on Today.
     prisma.ownerHabit.findMany({ where: { businessId }, select: { kind: true, status: true, evidence: true, decidedAt: true } }),
+    // What FollowUp wrote in the owner's CRM, and whether it landed (A-252).
+    prisma.crmWrite.findMany({
+      where: { businessId },
+      select: { leadId: true, provider: true, kind: true, text: true, status: true, attempts: true, createdAt: true, doneAt: true },
+    }),
   ]);
 
   // Picked explicitly (rather than destructuring-and-omitting the secret
@@ -199,6 +206,7 @@ export async function exportBusinessData(businessId: string): Promise<BusinessEx
     senderVerdicts,
     businessFacts,
     ownerHabits,
+    crmWrites,
   };
 }
 
@@ -319,6 +327,8 @@ export async function deleteBusinessData(
     // business's own Meta ids, quoted, as they appear in the payload.
     ...unattributedEnvelopeDeletes(business),
     prisma.filteredEmail.deleteMany({ where: { businessId } }),
+    // What FollowUp wrote in the owner's CRM (A-252): carries customers' words. CASCADE too; listed so the erasure reads whole.
+    prisma.crmWrite.deleteMany({ where: { businessId } }),
     prisma.crmConnection.deleteMany({ where: { businessId } }),
     prisma.notification.deleteMany({ where: { user: { businessId } } }),
     // Both cascade from User already; listed so the erasure reads as

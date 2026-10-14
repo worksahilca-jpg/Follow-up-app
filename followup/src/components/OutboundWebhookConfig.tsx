@@ -14,6 +14,10 @@ import { Check, ChevronDown, Send, X } from "lucide-react";
 export default function OutboundWebhookConfig() {
   const [loading, setLoading] = useState(true);
   const [url, setUrl] = useState<string | null>(null);
+  // The secret every event is signed with (A-252): hidden until asked for, like a password.
+  const [secret, setSecret] = useState<string | null>(null);
+  const [showSecret, setShowSecret] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [draft, setDraft] = useState("");
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -27,8 +31,11 @@ export default function OutboundWebhookConfig() {
   useEffect(() => {
     fetch("/api/webhooks/outbound")
       .then((r) => r.json())
-      .then((data: { success: boolean; url?: string | null; adminOnly?: boolean; set?: boolean }) => {
-        if (data.success) setUrl(data.url ?? null);
+      .then((data: { success: boolean; url?: string | null; secret?: string | null; adminOnly?: boolean; set?: boolean }) => {
+        if (data.success) {
+          setUrl(data.url ?? null);
+          setSecret(data.secret ?? null);
+        }
         if (data.adminOnly) setAdminOnly({ set: !!data.set });
       })
       .finally(() => setLoading(false));
@@ -44,9 +51,10 @@ export default function OutboundWebhookConfig() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url: draft }),
       });
-      const data: { success: boolean; url?: string | null; message?: string } = await res.json();
+      const data: { success: boolean; url?: string | null; secret?: string | null; message?: string } = await res.json();
       if (data.success) {
         setUrl(data.url ?? null);
+        setSecret(data.secret ?? null);
         setEditing(false);
       } else {
         setSaveError(data.message ?? "Couldn't save that URL.");
@@ -85,6 +93,17 @@ export default function OutboundWebhookConfig() {
       setTestResult("fail");
     } finally {
       setTesting(false);
+    }
+  }
+
+  async function copySecret() {
+    if (!secret) return;
+    try {
+      await navigator.clipboard.writeText(secret);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setShowSecret(true);
     }
   }
 
@@ -137,8 +156,8 @@ export default function OutboundWebhookConfig() {
                     setDraft("");
                     setSaveError(null);
                   }}
-                  className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium rounded-full px-3.5 py-2"
-                  style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
+                  // Outlined: the page's one black button is the CRM's Connect (A-252).
+                  className="mt-3 inline-flex min-h-11 items-center gap-1.5 rounded-full border border-line-strong bg-card px-4 text-sm font-medium"
                 >
                   Add a webhook URL
                 </button>
@@ -209,6 +228,24 @@ export default function OutboundWebhookConfig() {
                       Remove
                     </button>
                   </div>
+                  {secret && (
+                    <div className="mt-4 border-t border-line pt-3">
+                      <p className="text-[13px] font-medium">Signing secret</p>
+                      <p className="mt-0.5 text-[13px] text-ink-soft">
+                        Every event carries an X-FollowUp-Signature header made with this secret, so your app can check it
+                        came from FollowUp.
+                      </p>
+                      <div className="mt-1.5 flex flex-wrap items-center gap-x-4">
+                        <code className="min-w-0 break-all text-[13px]">{showSecret ? secret : "whsec_••••••••••••"}</code>
+                        <button type="button" onClick={() => setShowSecret((v) => !v)} className="min-h-11 text-[13px] text-ink-soft underline underline-offset-[3px] hover:text-ink">
+                          {showSecret ? "Hide" : "Show"}
+                        </button>
+                        <button type="button" onClick={copySecret} className="min-h-11 text-[13px] text-ink-soft underline underline-offset-[3px] hover:text-ink">
+                          {copied ? "Copied" : "Copy"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                   {testResult === "ok" && (
                     <p className="mt-2 text-[13px] flex items-center gap-1" style={{ color: "var(--sage)" }}>
                       <Check className="h-3.5 w-3.5" /> Delivered — check the other end for a test event.

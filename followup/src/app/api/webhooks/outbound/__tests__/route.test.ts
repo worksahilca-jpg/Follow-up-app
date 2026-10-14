@@ -14,11 +14,12 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { businessFindUnique, businessUpdate } = vi.hoisted(() => ({
+const { businessFindUnique, businessUpdate, businessUpdateMany } = vi.hoisted(() => ({
   businessFindUnique: vi.fn(),
   businessUpdate: vi.fn(async () => ({})),
+  businessUpdateMany: vi.fn(async () => ({ count: 1 })),
 }));
-vi.mock("@/lib/db", () => ({ prisma: { business: { findUnique: businessFindUnique, update: businessUpdate } } }));
+vi.mock("@/lib/db", () => ({ prisma: { business: { findUnique: businessFindUnique, update: businessUpdate, updateMany: businessUpdateMany } } }));
 
 const { getSessionContext, requireAdmin } = vi.hoisted(() => ({
   getSessionContext: vi.fn(async () => ({ businessId: "biz1", userId: "user1", email: "owner@acme.com" })),
@@ -50,7 +51,8 @@ beforeEach(() => {
   vi.clearAllMocks();
   getSessionContext.mockResolvedValue({ businessId: "biz1", userId: "user1", email: "owner@acme.com" });
   requireAdmin.mockResolvedValue(true);
-  businessFindUnique.mockResolvedValue({ outboundWebhookUrl: "https://hooks.zapier.com/abc" });
+  businessFindUnique.mockResolvedValue({ outboundWebhookUrl: "https://hooks.zapier.com/abc", outboundWebhookSecret: "whsec_existing" });
+  businessUpdateMany.mockResolvedValue({ count: 1 });
   assertSafeWebhookUrl.mockImplementation(async (u: string) => new URL(u));
 });
 
@@ -122,9 +124,15 @@ describe("PUT /api/webhooks/outbound — test-fire is gated the same way", () =>
 // Founder, 2026-09-30: the link is for admins only. A solo owner is their
 // account's admin, so it stays theirs; a teammate only learns it's set.
 describe("GET /api/webhooks/outbound — admins only", () => {
-  it("shows an admin the saved link", async () => {
+  it("shows an admin the saved link, with the secret its events are signed with (A-252)", async () => {
     const body = await (await GET()).json();
-    expect(body).toEqual({ success: true, url: "https://hooks.zapier.com/abc" });
+    expect(body).toEqual({ success: true, url: "https://hooks.zapier.com/abc", secret: "whsec_existing" });
+  });
+
+  it("never shows a teammate the signing secret", async () => {
+    requireAdmin.mockResolvedValue(false);
+    const body = await (await GET()).json();
+    expect(JSON.stringify(body)).not.toContain("whsec_");
   });
 
   it("never shows a teammate the link, only that one is set", async () => {
@@ -138,5 +146,24 @@ describe("GET /api/webhooks/outbound — admins only", () => {
     requireAdmin.mockResolvedValue(false);
     businessFindUnique.mockResolvedValue({ outboundWebhookUrl: null });
     expect(await (await GET()).json()).toEqual({ success: true, url: null, set: false, adminOnly: true });
+  });
+});
+
+// A-252: every event is signed. The secret is made with the first saved link and kept when the link changes,
+// so a receiver already checking signatures keeps working.
+describe("the signing secret", () => {
+  it("is made once, when a link is first saved", async () => {
+    businessFindUnique.mockResolvedValue({ outboundWebhookSecret: null });
+    const body = await (await POST(postRequest({ url: "https://hooks.zapier.com/abc" }))).json();
+    expect(body.secret).toMatch(/^whsec_[A-Za-z0-9_-]{40,}$/);
+    expect(businessUpdateMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: "biz1", outboundWebhookSecret: null }, data: { outboundWebhookSecret: body.secret } })
+    );
+  });
+
+  it("stays the same when the link changes", async () => {
+    const body = await (await POST(postRequest({ url: "https://hook.eu1.make.com/xyz" }))).json();
+    expect(body.secret).toBe("whsec_existing");
+    expect(businessUpdateMany).not.toHaveBeenCalled();
   });
 });

@@ -1474,3 +1474,18 @@ else out of sight. Labels like "YOUR REPLY, READY", and actions like "Later", "D
 side, read as a tool for experts, not a to-do.
 **Do not propose again:** rearranging the same card and its five actions, or a quieter version of it, as the answer to
 "simple". **Would need to change:** nothing; the task sentence and one action come first, whatever the look.
+
+## R-114 — Today as a count and one reply card ^R-114
+
+**Rejected:** 2026-10-14, founder, on the built A-243 Today ("5 customers are waiting for you", "Reply to them one at
+a time. Start with Omar.", one reply card, "After Omar: Ivy, Aman and 2 more."). He had approved its drawing the day
+before. Seeing it as the whole page, he said: *"Why are just 5 customers waiting for you? What the hell is that, and
+what is he going to do with that? ... How many calls do I need to do? How many meetings do I have to do? Everything
+should be on today's page."*
+**What failed:** the page showed one task (replies) and a number, and nothing about the rest of the owner's day: calls
+to make, viewings and meetings booked, progress, tomorrow. An owner can't plan a day from it, so there is no reason to
+open it again and again.
+**Principle:** Today is the owner's whole day on one page (brand-principles, 2026-10-14). The plain card from A-243
+(their words, the reply, Send) can live inside it; it can't be all of it.
+**Do not propose again:** Today as a headline count plus a single queue, in any styling. Hiding calls, meetings or
+tomorrow behind other pages.

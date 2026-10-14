@@ -4044,6 +4044,10 @@ confirms a time on its own.
 
 ## A-243 — Today says what to do: one customer, one sentence, one black button ^A-243
 
+**PARTLY SUPERSEDED (2026-10-14)** by R-114 and the brand principle "Today is the owner's whole day on one page": the
+count-plus-one-card page is rejected as the whole of Today. What may survive inside a fuller Today: the reply card in
+words (who asked, their words, "FollowUp wrote this reply for you:", Send to Omar / Change it / Skip for now).
+
 **Approved:** 2026-10-14, founder (*"Yes, build this"*), on drawing 2 of "make Today very simple", made inside the real
 app, phone and computer. Drawing 1 was rejected as R-113 (*"how do i get to know what to do"*).
 - **Headline:** the number, then "customers are waiting for you" (was "need you"), then one plain line: "Reply to them

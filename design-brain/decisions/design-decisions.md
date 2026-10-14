@@ -12537,3 +12537,13 @@ offers times, the owner confirms, then it is booked.
   *"Yes, add it"*), CRM labels and "try it first" (both wait for testers). Already in FollowUp: replying in the
   customer's language, follow-ups, qualifying questions. Not fitting: split tests, money dashboards, agency accounts.
 - **Next:** build in November with Stage 2.
+
+## 2026-10-14 — Today must be the owner's whole day (R-114)
+
+Seeing the built A-243 Today, the founder rejected it as the whole page: a count and one reply card tell an owner
+nothing about calls, viewings, progress or tomorrow. Today has to be the page they reopen all day: what to focus on,
+everything to do today, how far through the day they are, what's next. Results stays what FollowUp did; Customers
+stays everyone. The A-243 build (commit 8c31f76, branch only, never merged) is not going live as it is.
+- **Next:** draw a whole-day Today on the real app, phone and computer, from data the app already has: replies
+  waiting, calls to make (A-103), booked calls and viewings, FollowUp's planned check-ins (coming up), handled today,
+  going quiet.

@@ -333,3 +333,17 @@ about the business."*
 - When unsure whether a message is a customer, keep it. A photo or file someone sends can be the question itself.
 - Built so far: shared content with no words (A-233); new Instagram and Messenger chats get the same "is this a
   customer?" check as emails (A-234). A bare "hi" still gets through on purpose.
+
+## Today is the owner's whole day on one page (2026-10-14)
+
+**Founder,** on the built A-243 Today (a count, one sentence, one reply card): *"Today is the gist of everything: all
+that the user ... needs to do, what he needs to plan, and what he needs to focus on. Why are just 5 customers waiting
+for you? What the hell is that, and what is he going to do with that? ... This is my progress, this is what I'm going
+on with, and this is everything that I need to do today. Okay, what's next? Tomorrow is this. How many calls do I need
+to do? How many meetings do I have to do? Everything should be on today's page. That's why they're going to open it
+again and again."*
+- Today answers, on one page: what to focus on now, everything to do today (replies, calls, viewings and meetings),
+  how far through the day the owner is, and what is coming tomorrow.
+- A bare count ("5 customers are waiting for you") is not information: say what the five are and what to do about them.
+- Results shows what FollowUp did; Customers keeps everyone. Today is the owner's own day.
+- Still true (R-113): plain words, one main action at a time. Whole day ≠ cluttered: every line says what it is.

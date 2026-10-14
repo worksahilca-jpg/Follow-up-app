@@ -37,7 +37,7 @@ export async function POST(request: Request) {
   }
   try {
     const rules = await getBusinessAutomationRules(ctx.businessId);
-    const ex = await writeRuleExample(ctx.businessId, lead, parsed.data.rule, { silenceTriggerDays: rules.silenceTriggerDays, deadLeadDays: rules.deadLeadDays });
+    const ex = await writeRuleExample(ctx.businessId, lead, parsed.data.rule, { followUpPlans: rules.followUpPlans, deadLeadDays: rules.deadLeadDays });
     return NextResponse.json({ success: true, example: { leadId: lead.id, leadName: lead.name, what: ex.what, text: ex.text } });
   } catch {
     return NextResponse.json({ success: false, message: "Couldn't write an example just now. Try again in a minute." }, { status: 502 });

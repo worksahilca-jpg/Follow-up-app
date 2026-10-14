@@ -46,6 +46,7 @@ import { HOLD_ALL_SEQUENCE_REASON, RISK_CHECK_FAILED_REASON, UNGROUNDED_DRAFT_RE
 import { emailGreetingOf } from "@/lib/dmDrafts";
 import { checkUnreviewedDraft } from "@/lib/unreviewedDraftCheck";
 import { draftingContext, getBusinessFacts } from "@/lib/businessFacts";
+import { sixMonthsAfter, withinSendLimits } from "@/lib/followUpPlans";
 
 export interface SequenceStepInput {
   /** Hours after the previous step (or enrollment). Preferred. */
@@ -460,6 +461,8 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
     include: {
       sequence: { include: { steps: { orderBy: { order: "asc" } } } },
       conversations: { include: { messages: { orderBy: { sentAt: "asc" } } } },
+      // A booking stops a plan (A-245, rule 1 on every plan).
+      bookings: { where: { status: "confirmed" }, select: { createdAt: true, scheduledAt: true } },
     },
   });
 
@@ -828,6 +831,31 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
             note: `${lead.name}: nothing connected can send on ${channel} — step paused until it is reconnected`,
           };
         }
+        // The rules on every plan (A-245, src/lib/followUpPlans.ts), once
+        // the step could otherwise go: it stops when they book, nothing goes
+        // before the day they asked for, never more than 1 a day or 3 a
+        // week, and nothing more than six months after they last wrote.
+        const nowMs = Date.now();
+        const scheduledAt = lead.sequenceStepScheduledAt?.getTime() ?? 0;
+        const booked = (lead.bookings ?? []).some((b) => b.scheduledAt.getTime() >= nowMs || b.createdAt.getTime() > scheduledAt);
+        const lastIn = lastInboundTime(allMessages);
+        const capAt = sixMonthsAfter(lastIn ?? (lead.createdAt as Date | undefined)?.getTime() ?? nowMs);
+        const theirDay = lead.followUpNotBefore && lead.followUpNotBefore.getTime() > nowMs ? lead.followUpNotBefore.getTime() : nowMs;
+        const allowedAt = withinSendLimits(theirDay, allMessages.filter((m) => m.direction === "outbound").map((m) => m.sentAt.getTime()));
+        if (booked || allowedAt > capAt) {
+          try {
+            await prisma.lead.update({ where: { id: lead.id }, data: leaveSequence(lead) });
+            if (!booked) await notifySequenceIssue(lead, `"${sequence.name}" stopped for ${lead.name}: it has been six months since they last wrote.`);
+          } catch (err) {
+            return { kind: "skipped" as const, note: `${lead.name}: ${err instanceof Error ? err.message : "unknown error"}` };
+          }
+          return { kind: "paused" as const, note: `${lead.name}: ${booked ? "booked" : "six months since they last wrote"} — sequence stopped` };
+        }
+        if (allowedAt > nowMs + 60_000) {
+          await prisma.lead.updateMany({ where: { id: lead.id }, data: { sequenceStepDueAt: new Date(allowedAt) } });
+          return { kind: "deferred" as const };
+        }
+
         const draft = await generateFollowUpMessage(
           { name: lead.name, conversation, ...(await draftingContext(lead.businessId)) },
           voiceSamples,

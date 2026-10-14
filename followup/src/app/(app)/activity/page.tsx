@@ -40,10 +40,21 @@ function detailFor(item: ActivityItem): string | null {
   return null;
 }
 
-export default async function ActivityPage({ searchParams }: { searchParams: Promise<{ show?: string }> }) {
+export default async function ActivityPage({ searchParams }: { searchParams: Promise<{ show?: string; from?: string }> }) {
   const ctx = await getSessionContext();
   if (!ctx) return null;
-  const { show } = await searchParams;
+  const { show, from } = await searchParams;
+  // Back to where they came from (app analysis, 2026-10-14): this page is
+  // opened from Today and from Results, and "← Settings" sent both of them
+  // somewhere they had never been.
+  const back = from === "results" ? { href: "/analytics", label: "Results" } : { href: "/dashboard", label: "Today" };
+  // The tabs keep where they came from, so Back still goes there.
+  const tabHref = (id: string) => {
+    const q = new URLSearchParams();
+    if (id !== "all") q.set("show", id);
+    if (from === "results") q.set("from", "results");
+    return q.size ? `/activity?${q}` : "/activity";
+  };
   const tab = TABS.find((t) => t.id === show) ?? TABS[0];
 
   const [items, business] = await Promise.all([
@@ -90,8 +101,8 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
 
   return (
     <div>
-      <Link href="/settings" className="text-[13px] text-ink-faint hover:text-ink">
-        ← Settings
+      <Link href={back.href} className="inline-flex min-h-11 items-center text-[13px] text-ink-faint hover:text-ink">
+        ← {back.label}
       </Link>
       <h1 className="title-serif mt-2 text-[30px] leading-[1.12] lg:text-[34px]">What FollowUp did</h1>
       <p className="mt-2 hidden max-w-[640px] text-[15px] leading-relaxed text-ink-soft lg:block">
@@ -107,7 +118,7 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
               key={t.id}
               role="tab"
               aria-selected={on}
-              href={t.id === "all" ? "/activity" : `/activity?show=${t.id}`}
+              href={tabHref(t.id)}
               className="-mb-px whitespace-nowrap border-b-2 pb-2.5 text-[14.5px] lg:text-sm"
               style={{ borderColor: on ? "var(--ink)" : "transparent", color: on ? "var(--ink)" : "var(--ink-soft)", fontWeight: on ? 500 : 400 }}
             >

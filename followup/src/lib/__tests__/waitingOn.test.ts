@@ -14,7 +14,7 @@ const TZ = "America/Toronto";
 const DAY = 86_400_000;
 const MIN = 60_000;
 const rules: BusinessAutomationRules = {
-  canSend: true, holdAllForApproval: true, masterEnabled: true, silenceTriggerDays: 3,
+  canSend: true, holdAllForApproval: true, masterEnabled: true, followUpPlans: {},
   unansweredEnabled: true, unansweredHours: 24, deadLeadEnabled: true, deadLeadDays: 45,
 };
 function lead(name: string, over: Partial<Lead>): Lead {
@@ -43,9 +43,10 @@ describe("who is waiting on the customer", () => {
 
 describe("what happens next, by name", () => {
   it("says the check-in and its condition", () => {
+    // We wrote this morning; Fast's first check-in is a day later (A-245).
     const l = lead("Omar Haddad", {
-      conversation: [msg("outbound", 2 * DAY)] as Lead["conversation"],
-      lastContacted: new Date(NOW.getTime() - 2 * DAY).toISOString(),
+      conversation: [msg("outbound", 6 * 3_600_000)] as Lead["conversation"],
+      lastContacted: new Date(NOW.getTime() - 6 * 3_600_000).toISOString(),
     });
     expect(describeNext(l, rules, NOW, TZ)).toBe("First check-in tomorrow, unless Omar writes first.");
   });
@@ -56,9 +57,20 @@ describe("what happens next, by name", () => {
   });
 
   it("says when nothing more is planned", () => {
-    const l = lead("Mike", { automationStatus: { kind: "sent" } });
-    expect(describeNext(l, { ...rules, masterEnabled: false, deadLeadEnabled: false }, NOW, TZ)).toBe("FollowUp won’t write again unless Mike does.");
+    // The plan has run its course: five check-ins after the message they went quiet on.
+    const done = lead("Mike", {
+      automationStatus: { kind: "sent" },
+      conversation: [msg("outbound", 40 * DAY), ...[39, 37, 33, 26, 10].map((d) => msg("outbound", d * DAY))] as Lead["conversation"],
+      lastContacted: new Date(NOW.getTime() - 10 * DAY).toISOString(),
+    });
+    expect(describeNext(done, { ...rules, deadLeadEnabled: false }, NOW, TZ)).toBe("FollowUp won’t write again unless Mike does.");
     expect(describeNext(lead("Off", { automationStatus: { kind: "off" } }), rules, NOW, TZ)).toBe("Follow-ups are off for Off.");
+  });
+
+  it("says why nothing goes out, instead of 'won’t write again', when it can't (app analysis 2026-10-14)", () => {
+    const l = lead("Mike", { automationStatus: { kind: "sent" } });
+    expect(describeNext(l, { ...rules, canSend: false }, NOW, TZ)).toBe("Nothing can go out until you reconnect your email or Instagram.");
+    expect(describeNext(l, { ...rules, masterEnabled: false }, NOW, TZ)).toBe("Check-ins are off in Settings, so FollowUp won’t write first.");
   });
 
   it("dates the last message looking back", () => {

@@ -1,5 +1,6 @@
-import { quietReminderPlan, reactivationAlreadySent, type TimelineMessage } from "@/lib/automation";
+import { reactivationAlreadySent, type TimelineMessage } from "@/lib/automation";
 import type { BusinessAutomationRules } from "@/lib/automationStatus";
+import { checkInName, followUpState } from "@/lib/followUpPlans";
 import type { Lead } from "@/lib/types";
 
 /**
@@ -9,8 +10,8 @@ import type { Lead } from "@/lib/types";
  * Read from each lead's automation status (the same rules the engine
  * uses), plus the one thing that status leaves out: a quiet lead's next
  * check-in reads "sent" there, with no date. That date comes from the
- * engine's own quietReminderPlan, so this list and what actually goes out
- * cannot disagree.
+ * engine's own followUpState (src/lib/followUpPlans.ts), so this list and
+ * what actually goes out cannot disagree.
  *
  * Days only, never a time: the engine runs hourly and only between 8am and
  * 8pm, so an hour would be a promise it doesn't make.
@@ -26,7 +27,6 @@ export type ComingUpItem = {
 };
 
 const DAY = 86_400_000;
-const ORDINAL = ["First", "Second", "Third", "Last"];
 
 function timeline(lead: Lead): TimelineMessage[] {
   return lead.conversation.map((m) => ({
@@ -54,10 +54,13 @@ export function nextFor(lead: Lead, rules: BusinessAutomationRules, now: Date): 
       if (!rules.masterEnabled) return null;
       const t = timeline(lead);
       const lastContacted = new Date(lead.lastContacted).getTime();
-      const plan = quietReminderPlan(t, lastContacted, rules.silenceTriggerDays, rules.deadLeadDays);
-      if (plan?.dueAt) return { at: plan.dueAt, what: `${ORDINAL[Math.min(plan.step, ORDINAL.length - 1)]} check-in`, unless: true };
-      if (rules.deadLeadEnabled && !reactivationAlreadySent(t, rules.deadLeadDays)) {
-        return { at: new Date(lastContacted + rules.deadLeadDays * DAY), what: `Welcome back, after ${rules.deadLeadDays} quiet days`, unless: true };
+      const plan = followUpState(t, lastContacted, rules.followUpPlans, lead.followUp ?? {}, now.getTime(), rules.deadLeadDays);
+      if (plan?.dueAt != null) return { at: new Date(plan.dueAt), what: checkInName(plan), unless: true };
+      // After the plan, one welcome back, but never past the six months
+      // (rule 2 on every plan) and never after they booked.
+      const welcomeAt = lastContacted + rules.deadLeadDays * DAY;
+      if (rules.deadLeadEnabled && plan?.stopped === "finished" && welcomeAt <= plan.capAt && !reactivationAlreadySent(t, rules.deadLeadDays)) {
+        return { at: new Date(welcomeAt), what: `Welcome back, after ${rules.deadLeadDays} quiet days`, unless: true };
       }
       return null;
     }

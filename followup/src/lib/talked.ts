@@ -4,7 +4,7 @@
  *
  * FollowUp cannot see a phone call or a conversation at the counter. Until
  * this existed, a customer the owner had just spoken to kept getting
- * check-ins on day 3, 7, 14 and 30, and a reply drafted to a question the
+ * check-ins on every day of its plan, and a reply drafted to a question the
  * owner had already answered in person sat in Needs you. One tap tells
  * FollowUp the customer has been answered.
  *

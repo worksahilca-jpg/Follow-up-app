@@ -88,7 +88,8 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
 
   try {
     // The owner's past replies in this customer's language first (src/lib/voice.ts).
-    const voiceSamples = await getVoiceSamples(lead.businessId, leadLanguageOf(lead));
+    const language = leadLanguageOf(lead);
+    const voiceSamples = await getVoiceSamples(lead.businessId, language);
     // Same shape rule as scoreAndDraftForLead (src/lib/scoring.ts): a lead
     // who last wrote on Instagram or Messenger gets a DM with reply
     // buttons, everyone else the framed email.
@@ -98,14 +99,19 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
     let newQuickReplies: Prisma.InputJsonValue | typeof Prisma.JsonNull;
     if (dmChannel) {
       const { trade, facts } = await draftingContext(lead.businessId);
-      const dm = await draftDm(lead.name, conversation, voiceSamples, undefined, undefined, undefined, facts, null, trade);
+      // In the language and register already decided for this customer
+      // (src/lib/leadLanguage.ts), the same as every automatic draft: a new
+      // draft asked for by hand used to come back in whatever the model
+      // guessed (app analysis, 2026-10-14).
+      const dm = await draftDm(lead.name, conversation, voiceSamples, undefined, undefined, language, facts, null, trade);
       newMessage = dm.body;
       newSubject = null;
       newQuickReplies = (dm.shapeFailed ? { question: dm.quickReplies.question, buttons: [] } : dm.quickReplies) as unknown as Prisma.InputJsonValue;
     } else {
-      const draft = await generateFollowUpMessage({ name: lead.name, conversation, ...(await draftingContext(lead.businessId)) }, voiceSamples);
+      const draft = await generateFollowUpMessage({ name: lead.name, conversation, ...(await draftingContext(lead.businessId)) }, voiceSamples, undefined, undefined, language);
       newMessage = await composeFollowUpEmail(lead.name.split(" ")[0], lead.businessId, draft.body, {
         languageSample: latestInboundText(conversation),
+        leadLanguage: language,
       });
       newSubject = draft.subject;
       newQuickReplies = Prisma.JsonNull;

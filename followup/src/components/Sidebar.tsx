@@ -84,7 +84,7 @@ export default function Sidebar({ businessName = "", counts = {} }: { businessNa
                 key={href}
                 href={href}
                 aria-current={active ? "page" : undefined}
-                className="flex min-h-12 flex-col items-center justify-center gap-1 text-[11.5px]"
+                className="flex min-h-12 flex-col items-center justify-center gap-1 text-[12px]"
                 style={{ color: active ? "var(--ink)" : "var(--state-checked)", fontWeight: active ? 600 : 500 }}
               >
                 <Icon className="h-6 w-6" strokeWidth={1.8} />

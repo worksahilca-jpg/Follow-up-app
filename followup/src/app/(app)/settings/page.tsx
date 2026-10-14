@@ -5,7 +5,9 @@ import { useSearchParams } from "next/navigation";
 import SettingsList from "@/components/app/SettingsList";
 import { SETTINGS_GROUPS, GROUP_PAGE, GROUP_SLUG, groupOfPage, groupOfSlug, type SettingsGroup } from "@/lib/settingsGroups";
 import { useInWindow } from "@/components/app/AppWindow";
-import { quietReminderDays, SILENCE_DEFAULT_TRIGGER_DAYS } from "@/lib/reminderCadence";
+import { SILENCE_DEFAULT_TRIGGER_DAYS } from "@/lib/reminderCadence";
+import { PLAN_NAMES, planDaysText, planFor, type FollowUpPlans } from "@/lib/followUpPlans";
+import Link from "next/link";
 import TeamSection from "@/components/TeamSection";
 // A leaf module, not @/lib/automation — that one imports Prisma, and this is a client component.
 import { UNANSWERED_META_DM_MAX_HOURS } from "@/lib/metaWindow";
@@ -201,6 +203,8 @@ function SettingsPageInner() {
   const [outlookDisconnecting, setOutlookDisconnecting] = useState(false);
 
   const [autoAfterDays, setAutoAfterDays] = useState(SILENCE_DEFAULT_TRIGGER_DAYS);
+  // The follow-up plans (A-245): which days each customer gets. Changed on /workflows.
+  const [followUpPlans, setFollowUpPlans] = useState<FollowUpPlans>({});
   const [automationOn, setAutomationOn] = useState(false);
   const [automationLoaded, setAutomationLoaded] = useState(false);
   const [automationSaving, setAutomationSaving] = useState(false);
@@ -321,6 +325,15 @@ function SettingsPageInner() {
         setOutlookOauthAvailable(Boolean(data.oauthAvailable));
       })
       .finally(() => setOutlookStatusLoaded(true));
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/follow-up-plans")
+      .then((r) => r.json())
+      .then((data: { success?: boolean; plans?: FollowUpPlans }) => {
+        if (data?.success && data.plans) setFollowUpPlans(data.plans);
+      })
+      .catch(() => {});
   }, []);
 
   // Real automation settings (business-level master switch + delay).
@@ -880,7 +893,7 @@ function SettingsPageInner() {
             <SettingsList
               gmail={{ connected: gmailConnected, email: gmailEmail }}
               outlook={{ connected: outlookConnected, email: outlookEmail }}
-              checkInDays={quietReminderDays(autoAfterDays)}
+              plans={followUpPlans}
               instantAck={instantAckOn}
               holdAll={holdAllForApproval}
               paused={sendingPaused}
@@ -1595,24 +1608,20 @@ function SettingsPageInner() {
             )}
           </RuleCard>
 
+          {/* The days live in the follow-up plans now (A-245): one place to
+              change them, with the same words the plans page uses. */}
           <RuleCard
             when="When they go quiet after you wrote,"
             does={
               <>
-                FollowUp checks in on day{" "}
-                <RuleNumber
-                  value={autoAfterDays}
-                  min={1}
-                  max={30}
-                  onChange={setAutoAfterDays}
-                  onCommit={() => saveAutomationSettings(automationOn, autoAfterDays, automationOn)}
-                  label="Day of the first check-in"
-                  disabled={!automationOn || automationSaving}
-                />
-                , then {listDays(quietReminderDays(autoAfterDays).slice(1))}.
+                FollowUp follows your plans: {PLAN_NAMES[planFor(followUpPlans, "most")]} ({planDaysText(followUpPlans, planFor(followUpPlans, "most"))}) for
+                most customers, {PLAN_NAMES[planFor(followUpPlans, "later")]} for Later customers.{" "}
+                <Link href="/workflows" className="underline underline-offset-[3px]">
+                  Change the plans
+                </Link>
               </>
             }
-            stops="Stops when they answer. 8am to 8pm, never more than one a day."
+            stops="Stops when they book, reply or say no. 8am to 8pm, never more than one a day."
             checked={automationOn}
             onToggle={() => {
               const next = !automationOn;
@@ -1946,7 +1955,4 @@ function IntegrationRow({
  */
 const DEAD_LEAD_RULE = "dead_lead_reactivation";
 
-/** "3, 7, 14 and 30" — the reminder days as an owner reads them. */
-function listDays(days: number[]): string {
-  return days.length < 2 ? days.join("") : `${days.slice(0, -1).join(", ")} and ${days[days.length - 1]}`;
-}
+

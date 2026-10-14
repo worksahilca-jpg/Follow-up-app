@@ -1,10 +1,10 @@
-import { deadLeadMessageHint, quietReminderHint, quietReminderPlan, DEAD_LEAD_ACTION, type TimelineMessage } from "@/lib/automation";
+import { deadLeadMessageHint, DEAD_LEAD_ACTION, DEAD_LEAD_DEFAULT_DAYS, type TimelineMessage } from "@/lib/automation";
+import { checkInName, followUpState, stepHint, type FollowUpPlans } from "@/lib/followUpPlans";
 import { generateFollowUpMessage, generateInstantReply } from "@/lib/integrations/openai";
 import { draftDm } from "@/lib/dmDrafting";
 import { getVoiceSamples } from "@/lib/voice";
 import { getSenderFirstName } from "@/lib/sender";
 import { greetingFirstName } from "@/lib/leadName";
-import { SILENCE_DEFAULT_TRIGGER_DAYS } from "@/lib/reminderCadence";
 import type { LeadLanguage } from "@/lib/leadLanguage";
 import type { Lead, Message } from "@/lib/types";
 import { draftingContext } from "@/lib/businessFacts";
@@ -48,7 +48,7 @@ export async function writeRuleExample(
   businessId: string,
   lead: Lead,
   rule: ExampleRule,
-  opts: { silenceTriggerDays?: number; deadLeadDays?: number } = {},
+  opts: { followUpPlans?: FollowUpPlans; deadLeadDays?: number } = {},
   now: Date = new Date()
 ): Promise<{ text: string; what: string }> {
   const language = (lead.languageRead ?? null) as Partial<LeadLanguage> | null;
@@ -66,10 +66,14 @@ export async function writeRuleExample(
   let hint: string | undefined;
   let what = "the reply";
   if (rule === "silence") {
-    const plan = quietReminderPlan(timeline(lead), Date.parse(lead.lastContacted), opts.silenceTriggerDays ?? SILENCE_DEFAULT_TRIGGER_DAYS);
-    const step = plan?.step ?? 0;
-    hint = quietReminderHint(step, daysQuiet);
-    what = ["the first check-in", "the second check-in", "the third check-in", "the last check-in"][Math.min(step, 3)];
+    // The customer's own plan and where they are in it (A-245); a plan that
+    // has finished or stopped shows its first message.
+    const state = followUpState(timeline(lead), Date.parse(lead.lastContacted), opts.followUpPlans ?? {}, lead.followUp ?? {}, now.getTime(), opts.deadLeadDays ?? DEAD_LEAD_DEFAULT_DAYS);
+    const shown = state && state.kind !== null ? state : { step: 0, total: Math.max(1, state?.total ?? 5), kind: "open" as const, final: false };
+    hint = stepHint(shown, daysQuiet);
+    // "the first check-in", "check-in 3 of 10", "the last check-in".
+    const name = checkInName(shown);
+    what = /^Check-in \d/.test(name) ? name.toLowerCase() : `the ${name[0].toLowerCase()}${name.slice(1)}`;
   } else if (rule === DEAD_LEAD_ACTION) {
     hint = deadLeadMessageHint(daysQuiet);
     what = "the welcome-back message";

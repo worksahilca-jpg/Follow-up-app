@@ -9,6 +9,7 @@ import { readPushState } from "@/lib/pushDevice";
 import FeedbackDialog from "@/components/FeedbackDialog";
 import type { StateKey } from "./canvasBits";
 import { GROUP_PAGE, type SettingsGroup } from "@/lib/settingsGroups";
+import { planFor, planLine, type FollowUpPlans } from "@/lib/followUpPlans";
 
 /**
  * Settings (A-220, the phone redesign): on a phone, four rows (where customers
@@ -48,7 +49,7 @@ function ctaOf(r: Row): string {
 export default function SettingsList({
   gmail,
   outlook,
-  checkInDays,
+  plans,
   instantAck,
   holdAll,
   paused,
@@ -60,7 +61,8 @@ export default function SettingsList({
 }: {
   gmail: { connected: boolean; email?: string };
   outlook: { connected: boolean; email?: string };
-  checkInDays: number[];
+  /** The owner's follow-up plans (A-245), for the "Your follow-up plans" box. */
+  plans: FollowUpPlans;
   instantAck: boolean;
   holdAll: boolean;
   paused: boolean;
@@ -144,8 +146,6 @@ export default function SettingsList({
   if (trade === null)
     needs.push({ page: "business", title: "Tell FollowUp what you do", text: "It uses your line of work to tell real customers from everyone else, and to write replies that fit it. One tap." });
   const need = needs[0];
-
-  const days = checkInDays.length > 1 ? `Day ${checkInDays.slice(0, -1).join(", ")}, ${checkInDays[checkInDays.length - 1]}` : `Day ${checkInDays[0] ?? 3}`;
 
   const groups: { title: string; rows: Row[] }[] = [
     {
@@ -245,7 +245,7 @@ export default function SettingsList({
             {/* Desk: "Change" sits in the box. */}
             <div className="flex items-baseline justify-between lg:hidden">
               <h2 className="text-[13px] text-ink-faint" style={{ fontWeight: 400, letterSpacing: 0 }}>
-                Your follow-up plan
+                Your follow-up plans
               </h2>
               <Link href="/workflows" className="ml-auto text-sm underline underline-offset-[3px]">
                 Change
@@ -253,9 +253,12 @@ export default function SettingsList({
             </div>
             <div className={BOX + " lg:flex lg:items-start"}>
               <div className="min-w-0 lg:flex-1 lg:py-1.5">
+                {/* The plans (A-245, as drawn): who gets which, and what stops them. */}
                 {instantAck && <PlanRow when="Right away" what="A quick “got your message” reply." first />}
-                <PlanRow when={days} what="A check-in, if they go quiet." first={!instantAck} />
+                <PlanRow when="Most customers" what={planLine(plans, planFor(plans, "most"))} first={!instantAck} />
+                <PlanRow when="Later customers" what={planLine(plans, planFor(plans, "later"))} />
                 <PlanRow when="Always" what={holdAll ? "Every reply waits for your OK." : "Prices and dates always come to you."} />
+                <PlanRow when="It stops" what="When they book, reply or say no." />
               </div>
               <Link href="/workflows" className={CTA + " hidden lg:mr-4 lg:mt-4 lg:inline-flex"}>
                 Change

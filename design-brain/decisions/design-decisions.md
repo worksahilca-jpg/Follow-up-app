@@ -12624,6 +12624,55 @@ stays everyone. The A-243 build (commit 8c31f76, branch only, never merged) is n
 - **Trust research done:** `reports/Realtor replies that win trust.md` (repo root, not committed). Eight reply rules and
   a "FollowUp must never" list, all evidence-labelled. Not yet turned into product changes.
 
+## 2026-10-14 — Follow-up plans drawn and approved (A-245)
+
+- **Drawn** in the real app on five phones and the computer (Settings, the plans window, My own, a Warm customer on
+  Fast, a Later customer who asked for March). Approved in one tap: *"Build it, merge when green"*.
+- **Choices made in the drawing:** the plans reuse the existing ready-plan pattern (day | what) rather than a new
+  timeline graphic, so nothing new to learn; the three old plans stay as a quiet line; My own lets the owner choose
+  whom it is for, instead of FollowUp deciding.
+- **Weak spots, honestly:** the plans window is long on a phone (one plan open helps); the My own card on a computer
+  has empty space; per-message labels ("something new that fits what they want") steer the writer but the words of
+  each message still come from the conversation, so two customers on day 3 get different messages.
+
+## 2026-10-14 — Follow-up plans built (A-245), with the six app fixes
+
+- **What shipped:** Fast (day 1, 3, 7, 14, 30), Long (the same, then once a month, the last one closing the loop
+  before six months), My own (the owner's days, after-the-last-day, whom it is for), the four rules on every plan,
+  the Settings box, the plans window, the editors, and the plan line on the customer card. One module
+  (`src/lib/followUpPlans.ts`) decides who is on which plan and when the next message is due; the engine, the badge,
+  Coming up, the rule example and the card all read it, so none of them can promise a message the engine won't send.
+- **Behaviour the drawing implied, said here so nobody re-derives it:** a booking since they last wrote (or one still
+  to come) stops a plan; the welcome back after 45 quiet days now also respects the six months and a booking; "try
+  me in March" is read from the customer's own words (English only, deterministic, never a model's guess) and holds
+  everything until that day, then the plan's first message is a "you asked me to check back" one; a plain "thanks"
+  keeps the hold, anything else they write clears it; the 1-a-day / 3-a-week limit counts messages 12 hours apart as
+  one; special plans (After a quote ...) follow the same four rules.
+- **The six fixes from the app analysis:** "won't write again" now says why when nothing can send; the card says
+  "Paused" and why instead of a date; a reused Instagram reply quoting a stored fact is no longer held as invented;
+  "What FollowUp did" goes back to Today or Results (wherever it was opened from); "write a new draft" keeps the
+  customer's language; chat times, booking-page day labels, the card's fact labels and the phone nav are 12px.
+- **Design review (honest):** ✅ matches the drawing at 390 and 1440, no sideways scroll, every tap target 44px
+  except the "More plans" links, which are inline in a sentence (WCAG 2.5.8 exception, tall line). ⚠️ Weak: the
+  editor has no URL of its own (refresh returns to the plans); the plans area is blank for a moment while it loads,
+  and silently empty if the request fails; "Later customers" only exists for realtors (A-246), so on other trades
+  Long reads "Used for Later customers · 0 now"; the customer card's date ignores the 8am–8pm window, so a message
+  due at 9pm shows that day though it goes the next morning; Today's "check-ins tomorrow" row still says "Nothing for
+  you to do." on accounts that hold (A-244 wording). Checked by eye at 768 and 1024 too (plans page, Tom's page):
+  they fit, and at 1024 the card's "17 now" wraps as one piece instead of leaving "now" alone on a line.
+- **"Your special plans" heading** on the plans page replaces the old "No plans yet. Pick one above." empty box, and
+  only shows when the account has saved special plans (R-026: say what a new label replaces).
+
+## 2026-10-14 — How we work (agreed)
+
+The founder asked for "the actual plan for the product ... how we're going to be working on the project to get more
+productive output". Added to the launch plan page (build queue + "How we work"), agreed in one tap: *"Yes, work this
+way"*. Every day: 10 minutes for him in the morning (testers, Today), the build in the day, 10 minutes in the evening
+(one drawing or result). Every week: Monday numbers, Friday tester check-ins. Rules: users first; one build at a time;
+at most one merge a day (paid builds, $30 cap); "merge when green" given with a yes; he runs /admin tests after reply
+or qualifying changes; one question at a time, with buttons. Honest note given with it: the biggest lever is testers
+(last week 2 customers answered; goal 20).
+
 ## 2026-10-14 — The eight reply rules drawn, approved and built (A-247)
 
 - **Drawn** as five reply cards inside the real customer page (rules 2, 4, 6, 7, 8; rules 1, 3 and 5 were already in

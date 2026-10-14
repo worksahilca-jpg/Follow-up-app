@@ -71,7 +71,11 @@ export const DM_SHAPE_RULES =
   // one more try to change their mind, which is the pushing the founder
   // ruled out. The shape check already takes a statement with no buttons.
   "The one exception to the question: if their last message says no, not interested, or that they already " +
-  "have someone, write only a short, warm close (thank them, wish them well) with no question and no buttons.";
+  "have someone, write only a short, warm close (thank them, wish them well) with no question and no buttons. " +
+  // A-245: "not yet" is not a no. A day they give holds every follow-up
+  // until then (src/lib/followUpPlans.ts), so it is confirmed, not argued with.
+  "If they say it isn't the right time yet without saying when, your one question is when would be a good " +
+  "time to check back, unless that was already asked here; if they said when, confirm it plainly.";
 
 const PRICE_RE = /precio|price|pricing|cost|cuánto|cuanto|quanto|combien|kimmat|kimat|keemat|\brate\b|quote|how much/i;
 const AVAILABILITY_RE = /disponib|availab|available|\bbook|appointment|cita|turno|\bslot|schedule|saturday|sunday|monday|tuesday|wednesday|thursday|friday|weekend|tomorrow|this week|\b(are|r) (you|u) free\b/i;

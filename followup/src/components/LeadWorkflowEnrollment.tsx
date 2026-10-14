@@ -82,7 +82,7 @@ export default function LeadWorkflowEnrollment({ leadId }: { leadId: string }) {
   return (
     <div className="rounded-[var(--radius-box)] p-4" style={{ backgroundColor: "var(--slate-soft)" }}>
       <h3 className="text-sm font-semibold flex items-center gap-1.5" style={{ color: "var(--slate)" }}>
-        <Workflow className="h-3.5 w-3.5" /> Follow-up plan
+        <Workflow className="h-3.5 w-3.5" /> Special plan
       </h3>
 
       {enrollment?.enrolled ? (
@@ -103,11 +103,11 @@ export default function LeadWorkflowEnrollment({ leadId }: { leadId: string }) {
         </div>
       ) : sequences.length === 0 ? (
         <p className="text-[13px] text-ink-soft mt-2">
-          No active follow-up plans yet —{" "}
+          No special plans yet.{" "}
           <Link href="/workflows" className="underline">
-            build one
-          </Link>
-          .
+            Set one up
+          </Link>{" "}
+          on the plans page.
         </p>
       ) : (
         <div className="mt-2 flex items-center gap-2">

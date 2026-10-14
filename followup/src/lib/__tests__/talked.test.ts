@@ -115,7 +115,7 @@ describe("what the lead's page says", () => {
     canSend: true,
     holdAllForApproval: true,
     masterEnabled: true,
-    silenceTriggerDays: 3,
+    followUpPlans: {},
     unansweredEnabled: true,
     unansweredHours: 24,
     deadLeadEnabled: true,

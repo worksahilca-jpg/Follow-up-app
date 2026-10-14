@@ -21,7 +21,7 @@ const RULES: BusinessAutomationRules = {
   // default since 2026-09-21 — is exercised explicitly at the bottom.
   holdAllForApproval: false,
   masterEnabled: true,
-  silenceTriggerDays: 5,
+  followUpPlans: {},
   unansweredEnabled: true,
   unansweredHours: 24,
   deadLeadEnabled: true,
@@ -370,7 +370,8 @@ describe("the instant ack does not make a lead read as answered", () => {
   });
 
   it("reads an owner's synced Gmail reply (no trigger) as answered", () => {
-    const l = lead({ conversation: [msg("inbound", 30), msg("outbound", 29)] });
+    // Inside the first day after it, so no plan message is due yet either.
+    const l = lead({ conversation: [msg("inbound", 20), msg("outbound", 19)] });
     expect(computeAutomationStatus(l, RULES, NOW).kind).toBe("sent");
   });
 });

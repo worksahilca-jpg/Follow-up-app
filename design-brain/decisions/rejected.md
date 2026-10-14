@@ -1490,3 +1490,37 @@ open it again and again.
 (their words, the reply, Send) can live inside it; it can't be all of it.
 **Do not propose again:** Today as a headline count plus a single queue, in any styling. Hiding calls, meetings or
 tomorrow behind other pages.
+
+## R-115 — Settings as it ships on 2026-10-14: way too complex ^R-115
+
+**Rejected:** 2026-10-14, founder, just after opening Settings → "Instagram, Facebook, WhatsApp" on the live app for
+the security check: *"BRO WE NEED TO SIMLIPFY THE SETTINGS TOO I JUST SAW IT IS WAY COMPLEX"*, then *"ORGANISE IT AND
+WHATEVER WE WANT USER SHOULNT SEE or if there is anything that the user doesn't mean to see or that doesn't make sense,
+you have to remove all of that part. You have to do it in the back. We just have to show "Connect this" or "that,"
+like two or three options. Say "Connected," "Okay," "Done." We have to rearrange it properly, and you have to simplify
+it."*
+**What was rejected:** the pages under Settings, as built from A-069, A-080, A-094 and A-220 (build 4). Measured on the
+local app with a test business: 13 pages and about 2,300 words.
+- Instagram, Facebook, WhatsApp: 243 words and 15 controls. It shows access-token boxes, "Meta console reference" and
+  "One-click connect isn't switched on yet…".
+- Replies and check-ins: 322 words. "Your rules" repeats the switches, and there are numbers to type (hours, days).
+- Booking hours: 358 words. Advanced: 452 words and 18 controls (webhooks in and out, routing per source as 9 rows
+  with 2 choices each).
+- Also: "Sync now", "Scan spam for missed leads", the raw embed code, and Pause in three places.
+- *Inferred:* the not-yet-live "Your CRM" box (A-252, first part) falls under this too: its Reads / Writes lists on the
+  page and the webhook signing-secret row.
+**Principle (his words):** the owner sees "Connect" or "Connected", two or three choices, "Done". Anything the owner
+doesn't need, or that wouldn't make sense to them, comes off the screen and FollowUp does it in the back.
+**Inferred (marked):**
+- A setting earns its place only if an owner would miss it. A paragraph under a control is a sign the control shouldn't
+  be there.
+- Defaults decide the numbers.
+- Technical paths (tokens, webhooks, signing secrets, routing tables) are tools for support, not owner settings.
+- Usage backs this: on 2026-10-14, of 9 outside businesses, none had made a webhook, sent events out, added a Twilio
+  number or connected a CRM, and one had a routing rule.
+**Do not propose again:**
+- explaining a technical setting better;
+- folding it under an expander (A-094: an expander is still stuff);
+- moving it to another Settings page.
+**Would need to change:** nothing for owners. A developer path can live outside the owner's Settings if a real
+customer ever asks for one.

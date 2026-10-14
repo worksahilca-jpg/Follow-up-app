@@ -1360,6 +1360,8 @@ settings before/after, and followed *"keep going until we changed the whole app 
 drawing first.
 
 ## A-069 — Settings as one list, and the customer's side column ^A-069
+
+*SUPERSEDED IN PART (2026-10-14) by [[approved#^A-253|A-253]]:* the "For advanced setups" page leaves owners' Settings; the CRM moves to Where customers write.
 **Approved:** 2026-09-27, founder: *"yes build them"*. This came after the drawings were checked against the research
 (canvas v81: SettingsAll, SettingsAllPhone, SettingsChannel, PersonSide).
 **What specifically:**
@@ -1755,6 +1757,8 @@ owner typed in looks exactly like a real one, so it is never guessed at.
   the business id. Tests in `api/leads/practice/__tests__`.
 
 ## A-094 — Settings switches: say less (check-up #16) ^A-094
+
+*SUPERSEDED IN PART (2026-10-14) by [[approved#^A-253|A-253]]:* the hours/days numbers leave Settings (defaults), and the four switches move to the Follow-up plan page, one line each.
 
 **Approved 2026-10-05**, founder: *"yes"* to the drawing (the real phone screens, words cut). Principle: if a switch
 needs explaining, change the words, not add a "More" (R-026: an expander is still stuff).
@@ -3894,6 +3898,8 @@ up?"*
 
 ## A-234 — New DMs get the same "is this a customer?" check as emails ^A-234
 
+*SUPERSEDED IN PART (2026-10-14) by [[approved#^A-253|A-253]]:* the list moves into each connection's sheet, as "Not customers".
+
 **Approved:** 2026-10-11, founder. Asked whether a friend's "hey bro what's up" on Instagram should get the check Gmail
 already has, he chose *"Yes, same check"*.
 - **Who is checked:** only someone new, on Instagram or Messenger. A person who is already a customer is never
@@ -3990,6 +3996,8 @@ other leads too that it captured wrong, you gotta make it accurate"*.
 
 
 ## A-240 — "Filtered out" on the Instagram, Facebook, WhatsApp page ^A-240
+
+*SUPERSEDED IN PART (2026-10-14) by [[approved#^A-253|A-253]]:* "Filtered out" moves into each connection's sheet, as "Not customers".
 
 **Approved:** 2026-10-12, founder (*"Build it"*), after seeing it drawn on the real app, phone and desktop.
 - **Why:** the list of what FollowUp set aside lived only under Email, shown only when Gmail or Outlook was
@@ -4282,6 +4290,8 @@ and computer, old on top, new below): *"Yes, it can go live"*. It goes as its ow
 
 ## A-252 — Your CRM: one sign-in, one boss per customer, every write on record ^A-252
 
+*SUPERSEDED IN PART (2026-10-14) by [[approved#^A-253|A-253]]:* the Reads / Writes lists move into the Connect window, and the CRM is one row under Where customers write.
+
 **Approved:** 2026-10-14, founder, on the CRM board drawn inside the real app. The board showed Settings › More ›
 Advanced (now and proposed), the connect window, and a customer's page in both states, on phone and computer. The
 question was *"Does this CRM workflow look right? If yes, I write it down, and it gets built first for the CRM your
@@ -4336,3 +4346,34 @@ improvement list it came with (inferred from the reply, not a "yes" to the optio
   - Otherwise, a CRM is built first when the testers name it.
 - **Kept from the app's rules:** one black button on the page, so "Generate webhook URL" further down becomes an
   outlined button. Status says what's missing (R-111). Customer, not lead.
+
+## A-253 — Settings, simple: Connect → Connected, the technical part in the back ^A-253
+
+**Approved:** 2026-10-14, founder: *"Yes, build it (Recommended)"*, to the board drawn on the real app (phone 390 and
+computer). The board answers R-115 (*"we just have to show 'Connect this' or 'that,' like two or three options. Say
+'Connected,' 'Okay,' 'Done.'"*).
+**What specifically:**
+- **Where customers write** is one page, with one row per place:
+  - Gmail (or Outlook), Instagram, Facebook, WhatsApp and Website form;
+  - under "Already use a CRM?", one row for Follow Up Boss or HubSpot.
+  - Each row shows its glyph and name, then either an outlined "Connect" / "Add", or "✓ Connected" in green with a
+    chevron. A place that has no one-tap connect yet says "Soon". It never shows a token box.
+- **A connected row opens a sheet:** "✓ Connected as …", one line of what happens, "Not customers" with its count,
+  one black "Done", and "Disconnect …" in coral.
+- **How replies go out:**
+  - "Who sends your replies?", with two choices: "FollowUp sends them" ("A price, a date or anything unsure waits for
+    you") or "I check each one first";
+  - then Follow-up plan, Booking hours, and a Pause all sending switch.
+- **More:** Team, Your plan, Sign-ins, Your data. The Advanced page is gone from owners' Settings.
+- **Unchanged:** the Settings home (A-220's five rows) and Alerts.
+- **Accepted with this yes (each was listed beside the question):**
+  - "Not customers" moves into each connection's sheet (supersedes where A-234 / A-240 put it);
+  - the four "FollowUp writes" switches move to the Follow-up plan page, one line each, and the hours/days numbers
+    become defaults (supersedes that part of A-044 / A-094);
+  - the CRM's Reads / Writes lists move into its Connect window (supersedes that part of A-252);
+  - the "For advanced setups" page leaves owners' Settings (supersedes that part of A-069).
+- **Off the screen, still working in the back:**
+  - tokens, "Meta console reference", Sync now, Scan spam, the raw embed code;
+  - webhooks in and out, the signing secret, routing per source, the Twilio phone;
+  - "Your rules", the week line, "Let some leads skip the check" (stays off), Pause shown more than once.
+**Still open (his call):** should FollowUp run "Scan spam for missed leads" by itself?

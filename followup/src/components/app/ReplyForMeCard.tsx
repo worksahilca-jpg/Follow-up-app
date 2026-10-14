@@ -17,9 +17,10 @@ import { Initials } from "@/components/app/canvasBits";
  * conversations go out by themselves. Either answer is recorded once
  * (/api/automation/offer), so it is never asked again.
  *
- * One decision at a time (A-080): while it asks, the reply card waits
- * behind it and the first customer shows as one row under it, as drawn.
- * Either answer brings Today back (`children`).
+ * One decision at a time (A-080): since A-243 it is asked only once
+ * nobody is waiting, so it never stands in front of a customer. `first`
+ * stays for a caller that shows it with someone waiting. Either answer
+ * brings Today back (`children`).
  */
 export default function ReplyForMeCard({
   proof,

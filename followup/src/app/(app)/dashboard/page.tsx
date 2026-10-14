@@ -10,10 +10,9 @@ import { aboutToBeLost } from "@/lib/rescue";
 import { getRescueReport } from "@/lib/rescued";
 import { countCustomersAnswered } from "@/lib/weeklyDigest";
 import { withBasis } from "@/lib/showTheWork";
-import { countWorkSince, resultsLine, workLine } from "@/lib/workDone";
+import { resultsLine } from "@/lib/workDone";
 import { describeWait, describeWaitClause, readyReason, startOfLocalDay, todayTier } from "@/lib/calmToday";
 import { countHandledToday } from "@/lib/handledToday";
-import { laterTodayAvailable } from "@/lib/later";
 import { loadComingUp } from "@/lib/comingUpData";
 import { medianReplyMs } from "@/lib/waitingOn";
 import { ComingUpLine } from "@/components/ComingUp";
@@ -39,7 +38,6 @@ import { getActivityFeed } from "@/lib/activity";
 import { didToday } from "@/lib/didToday";
 import { todaysQuestion } from "@/lib/dailyQuestionData";
 import { planLine } from "@/lib/comingUp";
-import { oneQueue } from "@/lib/approvalGroups";
 import { findHabitSuggestion } from "@/lib/habits";
 
 // "last checked 2 minutes ago" — deliberately coarse (minutes/hours/days,
@@ -125,13 +123,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const now = new Date();
   // Set aside with "Later" (A-046): off Today until it comes back.
   const setAside = approvals.filter((a) => a.laterUntil).length;
-  const [withBasisItems, handledToday, comingUp, workDone, filteredCount, anySendChannel, instagramCount] = await Promise.all([
+  const [withBasisItems, handledToday, comingUp, filteredCount, anySendChannel, instagramCount] = await Promise.all([
     withBasis(onTodayNow(approvals), timezone, ctx?.businessId),
     ctx ? countHandledToday(ctx.businessId, startOfLocalDay(now, timezone)) : 0,
     // Who FollowUp writes to next (A-046), leaving out anyone already waiting for your OK.
     ctx && leads.length > 0 ? loadComingUp(ctx.businessId, leads, awaitingOk, timezone, now) : null,
-    // Round 2 (A-088): what FollowUp did since yesterday.
-    ctx ? countWorkSince(ctx.businessId, startOfLocalDay(new Date(now.getTime() - 24 * 60 * 60 * 1000), timezone)) : null,
     // A quiet inbox (A-088): whether FollowUp has read anything yet, so "no customers" can say what it checked.
     ctx && leads.length === 0 ? prisma.filteredEmail.count({ where: { businessId: ctx.businessId } }) : 0,
     // Nothing to send from: every rule still reads "on" in Settings, and none
@@ -169,6 +165,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     // Today's order and the reason a ready customer is on top (A-230), once, here.
     tier: todayTier(a, now),
     why: readyReason(a),
+    // "asked you by email, 2 days ago" (A-243), here for the same reason as `wait`.
+    asked: a.leadLastMessageAt ? timeAgo(a.leadLastMessageAt) : null,
     // "FollowUp told Sarah you're on it · 6:40 pm" (A-060), in the
     // business's own time, worked out here for the same reason as `wait`.
     toldAt: a.customerToldAt
@@ -188,14 +186,13 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       }
     : null;
   // Round 2 (A-088). What came of the week goes to the end of the day, where the owner finishes
-  // (peak-end); the foot of a working Today says what FollowUp did since yesterday instead.
+  // (peak-end). A working Today says nothing else under the customer (A-243).
   const weekResults = resultsLine({
     heardBackMs: medianReplyMs(leads, weekStart, weekEnd),
     answered: answeredThisWeek,
     cameBack: rescue?.rescued ?? 0,
     booked: rescue?.booked ?? 0,
   });
-  const work = workDone ? workLine(workDone) : null;
   // Everyone waiting on the owner: replies for an OK, and calls to make (A-103).
   const needYou = approvalItems.length + callCards.length;
   const checkedAny = filteredCount > 0;
@@ -205,7 +202,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const holdAll = business?.holdAllForApproval ?? false;
   const isAdmin = me?.role === "ADMIN";
   // "FollowUp learns what you do" (A-099): asked of an admin only, once.
-  const habitSuggestion = ctx && isAdmin && leads.length > 0 ? await findHabitSuggestion(ctx.businessId, now) : null;
+  const habitSuggestion = ctx && isAdmin && leads.length > 0 && needYou === 0 ? await findHabitSuggestion(ctx.businessId, now) : null;
   // One question a day (A-101): only when nobody is waiting on the owner and
   // nothing else is being asked, so it never stands in front of real work.
   const dailyQuestion = ctx && isAdmin && approvalItems.length === 0 && callCards.length === 0 && !habitSuggestion ? await todaysQuestion(ctx.businessId, now) : null;
@@ -257,10 +254,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
   // "Let FollowUp reply for you?" (A-217, A-218): an admin, asked once, with
   // their own proof. Never on the visit the phone link opened (that visit
-  // is for alerts), so Today asks one thing at a time.
-  const offer = ctx && isAdmin && leads.length > 0 && !alertsOpen ? await replyForMeOffer(ctx.businessId) : null;
-  // The same first person the card would open on (the queue's own order).
-  const firstWaiting = oneQueue(approvalItems).flatMap((g) => g.needsYou)[0] ?? approvalItems[0] ?? null;
+  // is for alerts), so Today asks one thing at a time. Only once nobody is
+  // waiting (A-243): the question never stands in front of a customer.
+  const offer = ctx && isAdmin && leads.length > 0 && needYou === 0 && !alertsOpen ? await replyForMeOffer(ctx.businessId) : null;
   // What FollowUp did today, under an all-caught-up Today (A-220). Read only
   // on a clear day, so a working Today pays nothing for it.
   const did = ctx && leads.length > 0 && needYou === 0 ? didToday(await getActivityFeed(ctx.businessId), startOfLocalDay(now, timezone)) : [];
@@ -283,10 +279,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         <h1 className="title-serif mt-1 text-[28px] leading-[1.15] sm:text-[32px]">{sentence}</h1>
       ) : (
         // The homepage's display face, its italic phrase in green (A-221).
+        // "waiting for you" (A-243): says what is happening, not a demand.
         <h1 className="title-serif mt-0.5 flex items-baseline gap-2.5">
           <span className="text-[38px] leading-none tabular-nums sm:text-[44px]">{needYou}</span>
           <span className="text-[19px] leading-tight sm:text-[22px]">
-            {needYou === 1 ? "customer" : "customers"} <em>{needYou === 1 ? "needs you" : "need you"}</em>
+            {needYou === 1 ? "customer is" : "customers are"} <em>waiting for you</em>
           </span>
         </h1>
       )}
@@ -303,8 +300,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       {firstValue && <FirstValueNote title={firstValue.title} body={firstValue.body} />}
       {/* A buzz on the owner's phone when a customer needs them (A-216): shown
           until this device has alerts on, or "Not now". Not on the visit
-          that asks the one-time question below: one question at a time. */}
-      {!offer && <AlertsCard open={alertsOpen} />}
+          that asks the one-time question below: one question at a time.
+          Not above a waiting customer either (A-243), except on the visit
+          the phone link opened, which is for alerts. */}
+      {!offer && (needYou === 0 || alertsOpen) && <AlertsCard open={alertsOpen} />}
       {/* One decision per screen (A-080): the queue is the page. The
           Coming up card went; automated check-ins live on their own page,
           and a booked call is the one line below. */}
@@ -315,12 +314,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       {callCards.length > 0 && <CallsToMake items={callCards} firstIsPrimary={approvalItems.length === 0} />}
       {leads.length > 0 && (approvalItems.length > 0 || callCards.length === 0) && (() => {
         const queue = (
-          <ApprovalQueue items={approvalItems} plan={approvalItems.length === 0 && comingUp ? planLine(comingUp.groups) : null} weekResults={weekResults} answeredForYou={rescue?.answeredForYou ?? 0} sendLocked={sendLocked} handledToday={handledToday} laterToday={laterTodayAvailable(now, timezone)} setAside={setAside} holdAll={holdAll} />
+          <ApprovalQueue items={approvalItems} plan={approvalItems.length === 0 && comingUp ? planLine(comingUp.groups) : null} weekResults={weekResults} answeredForYou={rescue?.answeredForYou ?? 0} sendLocked={sendLocked} handledToday={handledToday} setAside={setAside} holdAll={holdAll} />
         );
         return offer ? (
           <ReplyForMeCard
             proof={offer}
-            first={firstWaiting ? { leadId: firstWaiting.leadId, name: firstWaiting.leadName, words: firstWaiting.leadLastMessage?.replace(/\s+/g, " ") ?? null } : null}
+            first={null}
           >
             {queue}
           </ReplyForMeCard>
@@ -334,7 +333,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       {atRisk.length > 0 && <GoingQuietRow first={{ id: atRisk[0].id, name: atRisk[0].name, reason: atRisk[0].rescue.reason }} total={lost.total} />}
       <WhatFollowUpDid items={did} />
 
-      {isAdmin && <HabitQuestion suggestion={habitSuggestion} />}
+      {isAdmin && needYou === 0 && <HabitQuestion suggestion={habitSuggestion} />}
       {isAdmin && <DailyQuestion question={dailyQuestion} />}
 
       {nextCall && (
@@ -358,8 +357,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       {comingUp && comingUp.total > 0 && approvalItems.length > 0 && (
         <ComingUpLine first={{ day: comingUp.groups[0].day, count: comingUp.groups[0].items.length }} total={comingUp.total} />
       )}
-      {/* Room under the last thing on a phone, so the bar of Send, Edit and Later (A-222) never covers it. */}
-      {leads.length > 0 && approvalItems.length > 0 && <div aria-hidden="true" className="h-16 lg:hidden" />}
 
       {leads.length === 0 ? (
         <div className="mt-10">
@@ -508,16 +505,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                 </div>
               )}
             </>
-          )}
-
-          {/* What FollowUp did since yesterday, in one quiet line at the foot
-              of a working Today (A-088, the labour illusion); it opens
-              Numbers. The week's results moved to the end of the day.
-              Desktop only (R-015). */}
-          {work && approvalItems.length > 0 && (
-            <Link href="/analytics" className="mt-6 hidden max-w-[400px] text-sm leading-relaxed text-ink-soft tabular-nums hover:text-ink sm:block">
-              {work}
-            </Link>
           )}
         </>
       )}

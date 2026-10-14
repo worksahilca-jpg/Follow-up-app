@@ -12506,6 +12506,18 @@ one row had no reply and no Send.
   says in words who asked, what FollowUp wrote, and what to press; Send to Omar, Change it, Skip for now; "After Omar:
   Ivy, Aman and 2 more." His answer: *"Yes, build this"*. Being built; it goes out with the next merge, after the
   Vercel bill is paid.
+- **Built (2026-10-14),** checked in a real browser at 390x844 and 1280x900 with five made-up customers: the working
+  Today, after "Skip for now", while changing a reply, and with nobody waiting. Choices made while building:
+  - The top line moves with the owner: "Reply to them one at a time. Start with Ivy." after a skip, "Reply to Omar,
+    then you're done." for the last one, and "Sent to Omar. Now Ivy." for a moment after a send.
+  - "asked you" only when their message has a question mark; otherwise "wrote". A-230's reason still leads the line
+    when there is one ("Wants to book · Raj Malhotra asked you on Instagram, 4 minutes ago:").
+  - "Skip for now" is for this visit only: nothing is saved, so they are first again next time. Later (a set time)
+    stays in Customers (swipe) and on the customer's page.
+  - Orange-dot check lines (a price to check, a real-person question) stay: they say what to check, in words.
+- **Weak spots, honestly:** while changing a reply on a phone, Send sits below the fold under the tall text box (one
+  scroll). The "After" line shows an Instagram handle as it is ("@aman.condos"). The headline count is worked out when
+  the page loads, so it does not count down as the owner sends.
 
 ## 2026-10-13 — Booking in the chat, with the owner confirming (A-242)
 

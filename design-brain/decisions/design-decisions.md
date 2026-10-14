@@ -12969,3 +12969,129 @@ writes, "Show all", and a customer's page in both states.
 - HubSpot's tile text is about 4.3:1 on its tint. It is decorative, with the name beside it, but under 4.5.
 - The record shows the newest 50 of the week; an older week isn't reachable from here.
 - Turning writing back on doesn't say how many notes were waiting. They go out within 10 minutes.
+## 2026-10-14 — Settings, simple: Connect → Connected (R-115), drawn, waiting for his yes
+
+**Why:** R-115. The founder found Settings "way complex" and asked for "Connect this or that", two or three
+options, and "Connected", "Okay", "Done", with everything technical done in the back.
+**Drawn** on the running local app (test business, example data), phone 390 and computer 1280:
+- **Where customers write:** one page with one row each for Gmail, Instagram, Facebook, WhatsApp and Website form,
+  plus "Already use a CRM?" with Follow Up Boss or HubSpot.
+  - Each row has its glyph, its name, and either "Connect" / "Add" (outlined pill) or "✓ Connected" plus a chevron.
+  - It replaces the Email, Website form and Instagram/Facebook/WhatsApp pages, and the CRM part of Advanced.
+- **A connected row opens a sheet:** "✓ Connected as …", one line ("New emails show up within 10 minutes"),
+  "Not customers: 3", a black Done, and "Disconnect Gmail" in coral.
+- **How replies go out:** "Who sends your replies?" with "FollowUp sends them" ("A price, a date or anything unsure
+  waits for you") or "I check each one first". Then Follow-up plan, Booking hours, and a Pause all sending switch.
+- **More:** Team, Your plan, Sign-ins, Your data. Advanced is gone.
+- **Unchanged:** the Settings home (A-220's five rows) and Alerts (the phone-buzz setup).
+**Off the screen, still working in the back:**
+- access tokens, "Meta console reference", and "One-click connect isn't switched on yet" (a channel that isn't ready
+  says "Soon");
+- Sync now, and the calendar Reconnect note (Reconnect shows only when it's actually needed);
+- the raw embed code (behind Add);
+- webhooks in and out, the signing secret, routing per source, and the Twilio phone;
+- on Replies: "Your rules", the week line, "Let some leads skip the check" (stays off), and the hours/days numbers
+  (defaults);
+- Pause, now shown once.
+- Usage on 2026-10-14 (9 outside businesses): no inbound or outbound webhooks, no Twilio number, no CRM, one routing
+  rule.
+**Deviations from approved entries, to confirm with him:**
+- A-234 / A-240: "Filtered out" moves into each connection's sheet ("Not customers").
+- A-044 / A-094: the numbers leave Settings. The four "FollowUp writes" switches move to the Follow-up plan page,
+  one line each.
+- A-252: the CRM's Reads / Writes lists and its record move into its Connect window and connected sheet.
+- A-069: the "For advanced setups" page goes away.
+**Open (product behaviour, his call):** "Scan spam for missed leads" is manual today and comes off the screen. Should
+FollowUp run it by itself?
+**Weak spots, honestly:**
+- the Connect pills are 40px tall in the drawing (the build makes them 44);
+- the CRM row wraps to two lines on a phone;
+- the Facebook and WhatsApp glyphs are drawn, not the app's ChannelIcon (which uses one bubble for both);
+- not drawn: Add website form, the Follow-up plan page with the four switches, Your business with fewer words.
+
+## 2026-10-14 — Settings, simple (A-253), built
+
+**Built from the approved board.** Checked on the local app at phone (390) and computer, clicking every row and
+window.
+- **Where customers write.** One row each, ✓ Connected or Connect.
+  - A place without one-tap connect on this server says "Soon", never a token box. Locally Instagram, Facebook and
+    WhatsApp say Soon because no Meta keys are set there; live has them.
+  - Gmail that Google stopped answering says "Stopped working. Connect it again." with Reconnect. This replaces the
+    old always-on Reconnect note.
+- **The connected window.** "✓ Connected as …", one line, "Not customers" (only when there is at least one), Done,
+  and Disconnect, which asks first.
+- **Your CRM.**
+  - Connect opens "Which one do you use?", then that CRM's key window. The key window now carries what FollowUp reads
+    and writes, plus the one-boss line.
+  - Connected, the window shows how many customers were brought in, when it last checked, an "Add notes in …" switch
+    and the week's record.
+- **How replies go out.**
+  - Two radio rows. "FollowUp sends them" opens a small window with four facts and this business's queue, then "Yes,
+    FollowUp sends them" / "Not yet". "I check each one first" is one press.
+  - Below: Follow-up plan (to /workflows), Booking hours (its own page, ← back to How replies go out), and a Pause
+    all sending switch.
+- **The four "FollowUp writes" switches** sit on /workflows as "What FollowUp writes". Turning one keeps the saved
+  hours or days.
+- **More:** Team, Your plan, Sign-ins, Your data.
+  - Advanced has no row, but a direct link still opens it (support, and what a business already set up).
+- **Old addresses still land:** #integrations, #email, #website-widget, #social, #whatsapp and #crm open Where
+  customers write; #automation and #pause open How replies go out. The setup steps and in-app links now point at
+  #connections.
+- **The desk** opens on Where customers write when no page is asked for.
+- **Fixed in passing:** a window over the Settings window answered Esc together with Settings. Now only the top
+  window does.
+- **Deleted, nothing used them any more:** InstagramConfig, FacebookConfig, WhatsAppConfig, CopyEmbedSnippet,
+  SetupStepRestore, YourRulesCard, RuleCard, TrackRecord, and lib/yourRules.
+  - With them went the WhatsApp token fallback and the 24-hour template fields. No outside business had WhatsApp or
+    a template on 2026-10-14; saved values keep working.
+- **Tests:** channelAvailability, trustCopy and settingsGroups now guard the new screens. New tests cover old links,
+  parent pages, and the switches keeping their saved numbers.
+
+**Weak spots, honestly:**
+- On a phone the Booking hours row wraps to two lines, and its summary is cut with "…".
+- The desk's side list buttons are still 32px tall. They are unchanged, and the desk is used with a mouse.
+- One-tap Connect for Instagram, Facebook and WhatsApp can't run here (no Meta keys). Check it on live after the
+  merge.
+- /api/automation/rule-records and /api/business/track-record have no screen any more. Removing them is left for a
+  later cleanup.
+
+## 2026-10-14 — Sixth accuracy run (after PR #510), read from the founder's screenshot
+
+- Read from a small whole-page screenshot, so the counts are clear but the exact wording of the misses is not.
+- **Replies on Instagram and Messenger:** 17 of 20 passed every check (the fifth run had 10 of 20). None invented
+  a fact. Two broke the DM shape rules; one could go to anyone.
+- **The three misses, as far as they can be read:**
+  - "buyer gives details, asks for help": a shape rule about digits.
+  - "lost offers acknowledges the feeling": generic ("That's tough. I can help with offers and the next one…").
+  - "weekend viewing, no pressure": a calendar shape rule ("…Which day would suit you…").
+  - A broken shape rule is redrafted once, then waits for the owner. Nothing was sent alone.
+- **Qualifying:** 718 of 720 answers right, none made up.
+- **Next:** a readable close-up of the three misses, then decide whether the digits one is a false alarm (the
+  customer's own "3 bed"?) before changing any rule.
+
+
+## 2026-10-14 — The three reply misses, fixed at their likely cause
+
+Founder: *"whatever 3 is left, can you please check and fix that?"* The close-up screenshot hadn't arrived, so each
+fix targets the most likely cause, and a check covers it either way.
+
+- **"buyer gives details" (digits):**
+  - The buyer wrote "650k". A reply that says "$650,000" or "1,300,000" for "1.3M" is the same amount, and the
+    digits rule held it as an invented number.
+  - Now one shared rule reads the scale word written right after a number (k, M, thousand, million). The DM check,
+    the instant reply's check, email drafts and the underlines on the reply card all use it.
+  - Whole tokens only, as before. A different amount ("$700,000") or a new number ("4 bed") is still caught.
+- **"weekend viewing" (calendar):**
+  - The screenshot shows "…Which day would suit you…", so the reply most likely named a day the customer
+    didn't, such as Saturday or Sunday after "this weekend". That stays a held draft on purpose: only the owner
+    knows which days they are free, and the existing checks say so. A first version of this fix loosened the
+    rule; the tests caught it and it was taken back out.
+  - The drafter and its one retry are now told exactly that: "this weekend" never becomes "Saturday or Sunday?".
+    They should say they're checking and ask when would suit the customer.
+- **"lost offers" (could go to anyone):**
+  - The reply opened "That's tough." The reply writer is now told to tie a feeling to what they said caused it
+    ("losing 3 offers in a row is exhausting"), because a bare "sorry to hear that" could go to anyone.
+  - This one is a prompt change. Only the next run on /admin can show whether it worked.
+
+**Weak spot:** these fixes were made without seeing the exact replies. The digits one is a rule change; the other two
+are instructions to the writer, and only the next run on /admin shows whether they worked.

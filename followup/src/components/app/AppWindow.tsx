@@ -58,6 +58,10 @@ function Window({ label, onClose, size = "large", children }: Props) {
     // A field asked for focus first (autoFocus) keeps it; otherwise the window takes it.
     if (win && !win.contains(document.activeElement)) win.focus();
     const onKey = (e: KeyboardEvent) => {
+      // A window opened from inside another (a connection's window over the Settings window, A-253): only the top
+      // one answers, so Esc closes it and not Settings too. Windows render into <body> in the order they open.
+      const open = document.querySelectorAll(".app-win");
+      if (win && open[open.length - 1] !== win) return;
       if (e.key === "Escape") {
         e.stopPropagation();
         close.current();

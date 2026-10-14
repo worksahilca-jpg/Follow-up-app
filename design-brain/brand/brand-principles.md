@@ -353,3 +353,16 @@ again and again."*
 - A bare count ("5 customers are waiting for you") is not information: say what the five are and what to do about them.
 - Results shows what FollowUp did; Customers keeps everyone. Today is the owner's own day.
 - Still true (R-113): plain words, one main action at a time. Whole day ≠ cluttered: every line says what it is.
+
+## Settings says Connect, Connected, Done; the technical part happens in the back (2026-10-14)
+
+**Founder** (R-115): *"whatever we want user shouldn't see or if there is anything that the user doesn't mean to see or
+that doesn't make sense, you have to remove all of that part. You have to do it in the back. We just have to show
+"Connect this" or "that," like two or three options. Say "Connected," "Okay," "Done."*
+- **Each place customers write is one row:** its logo, its name, and either "Connect" (one tap) or "Connected ✓".
+  A connected row opens to who it's connected as, and Disconnect.
+- **Two or three choices per screen,** each one line. No paragraph under a control.
+- **FollowUp picks the numbers, schedules and wiring** (hours before a check-in, routing, webhooks, tokens). They run
+  in the back with good defaults.
+- **Only something broken asks for attention,** in one line with the fix ("Gmail stopped. Reconnect").
+- **Test:** could an owner go through Settings without reading a sentence?

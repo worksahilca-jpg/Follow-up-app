@@ -256,7 +256,7 @@ export default function AutomationStatusBadge({
         {status.kind === "no_send_channel" ? (
           <span>
             Replies can&rsquo;t go out yet: nothing is connected to send with.{" "}
-            <Link href="/settings#email" className="text-ink underline underline-offset-2">
+            <Link href="/settings#connections" className="text-ink underline underline-offset-2">
               Connect in Settings
             </Link>
           </span>

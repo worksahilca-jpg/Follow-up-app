@@ -63,6 +63,11 @@ describe("retryNote", () => {
     expect(retryNote(rule)).not.toMatch(/broke one of the message rules above/);
   });
 
+  // Accuracy run 6: after "this weekend" the retry still offered "Saturday or Sunday?".
+  it("a weekend they named is not a licence to name its days", () => {
+    expect(retryNote("calendar")).toMatch(/"this weekend" does not let you name Saturday or Sunday/);
+  });
+
   it("a fee is to be confirmed, never stated", () => {
     expect(retryNote("fee")).toMatch(/what the business charges or who pays it.*confirmed instead/);
   });

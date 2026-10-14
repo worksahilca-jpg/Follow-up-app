@@ -58,6 +58,8 @@ describe("no-invention drafting", () => {
     expect(system).toMatch(/the kind of question only someone who read it could\s+ask/);
     expect(system).toMatch(/never by praising\s+yourself or the business/);
     expect(system).toMatch(/acknowledge it once, in plain words/);
+    // Accuracy run 6: "sorry to hear that" acknowledged the feeling and read like a template.
+    expect(system).toMatch(/tie it to what they said\s+caused it/);
     expect(system).toMatch(/Never name a feeling they did\s+not express/);
     expect(system).toMatch(/Offer, never push/);
     expect(system).toMatch(/End with at most one easy next step they can take or ignore/);

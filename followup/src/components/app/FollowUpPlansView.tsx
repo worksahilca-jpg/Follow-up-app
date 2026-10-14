@@ -174,8 +174,8 @@ export function EveryPlanBox({ holdAll }: { holdAll: boolean }) {
       </ul>
       <p className="mt-1.5 text-[13px] leading-relaxed text-ink-faint">
         {holdAll
-          ? "Each message follows your “Replies and check-ins” setting: right now every one waits for your OK."
-          : "Each message follows your “Replies and check-ins” setting: FollowUp sends them itself, and a price, a date or anything unsure waits for your OK."}
+          ? "Each message follows “Who sends your replies” in Settings: right now every one waits for your OK."
+          : "Each message follows “Who sends your replies” in Settings: FollowUp sends them itself, and a price, a date or anything unsure waits for your OK."}
       </p>
     </div>
   );

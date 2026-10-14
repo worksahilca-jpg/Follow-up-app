@@ -36,8 +36,9 @@ export function readStoredQuickReplies(value: unknown): StoredQuickReplies | nul
 const RETRY_NOTES: Record<string, string> = {
   calendar:
     "It named a day, date or time of day that nobody in this conversation mentioned, in the text or a button. Name no " +
-    "day or time the customer didn't; if timing matters, ask an open question such as when would suit them, with no " +
-    "day or time buttons.",
+    "day or time the customer didn't write word for word: \"this weekend\" does not let you name Saturday or Sunday, " +
+    "because only the business knows when it is free. If timing matters, ask an open question such as when would " +
+    "suit them, with no day or time buttons.",
   digits: "It used a number nobody in this conversation or the business facts wrote. Use no such number.",
   fee: "It said what the business charges or who pays it, which the business has not said. Say it will be confirmed instead.",
   availability: "It said whether something is available. Only the business knows that: say you're checking.",

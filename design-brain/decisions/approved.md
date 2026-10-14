@@ -4068,6 +4068,10 @@ app, phone and computer. Drawing 1 was rejected as R-113 (*"how do i get to know
 
 ## A-244 — Today is the owner's whole day ^A-244
 
+**PARTLY SUPERSEDED (2026-10-14)** by [[#^A-250|A-250]]: "Your day in numbers" and "Progress" are now one box that
+says the day once, and "Do this first" opens with the reply already showing (no "Reply to Raj" tap). Everything else
+below still holds.
+
 **Approved:** 2026-10-14, founder (*"Yes, build this"*), on a drawing made inside the real app, phone and computer, after
 R-114 (*"Today is the gist of everything ... How many calls do I need to do? How many meetings?"*).
 - **Greeting:** the date, "Good evening, Priya.", then "Here is your day. Start with Raj."
@@ -4217,3 +4221,37 @@ evidence and its strength).
   replies a week through FollowUp. At the time: 5 replies in two weeks, 1 changed.
 - Whenever it is built: no customer's words are kept for it. Checks use made-up examples, and Gmail messages are never
   used to improve FollowUp for everyone (Google's Limited Use rules, already in the privacy policy).
+
+
+## A-249 — The morning email also names testers who stalled after a first reply ^A-249
+
+**Approved:** 2026-10-14, founder, to "Should your morning 'stuck testers' email also name testers who stopped after
+their first reply?": *"Yes, add it"*.
+
+**What specifically:**
+- Below the testers who haven't sent a first reply, a second group: testers who sent replies before and now have
+  replies waiting for their OK for 2 days or more, or Gmail or Outlook disconnected.
+- Each line says how many replies are waiting and how long the oldest has waited, whether the inbox is disconnected,
+  and when they last opened FollowUp, then the address to write to.
+- "Waiting" is exactly that tester's own Today queue: what they set aside with Later doesn't count, practice customers
+  don't count.
+- Named while they've opened FollowUp in the last two weeks; after that, counted in one line, like the stuck list.
+- Founder only, email only (never Slack). Counts and dates, never a customer's name or words.
+
+
+## A-250 — Today says the day once, and the first reply is already open ^A-250
+
+**Approved:** 2026-10-14, founder (*"Yes, build it"*), on a drawing made inside the real app (phone now vs proposed, a
+busy day, and the computer). He had asked to make the product *"as simple as we can ... user can learn easily and
+quickly, it should not be too complicated"*, starting with Today.
+- **One box for the day**, in place of A-244's three number tiles and the progress line under them: "4 things to do
+  today", "0 done" on the right, the green bar, then one line saying what they are. With replies only: "4 replies to
+  send. No calls or bookings today." With more: "4 replies to send · 2 calls to make · 1 booked call at 3:00 PM". A kind
+  with none is left out of the line, never shown as a big zero. With nothing to do and nothing done, there is no box:
+  the "all caught up" card already says it.
+- **The first reply is open when Today opens:** their words, FollowUp's reply, Send and Change it (A-243's card), inside
+  "Do this first". No "Reply to Omar" tap before it.
+- **"Still to do today" has no count beside it** ("3 more after Omar" said the box's number again).
+- **Unchanged:** the greeting and "Start with Omar", the list, Tomorrow, Done today, the computer's two columns.
+- **Wording:** the drawing said "viewings"; the build says "booked calls", because the booking link books a call (the
+  rows already say "Call with …").

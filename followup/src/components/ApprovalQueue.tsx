@@ -8,7 +8,6 @@ import { WARM_CARD } from "@/components/app/ReplyCard";
 import { oneQueue, summariseGroups, UNKNOWN_SOURCE_LABEL, WHOLE_QUEUE } from "@/lib/approvalGroups";
 import type { TodayTier } from "@/lib/calmToday";
 import { plainHoldReason } from "@/lib/holdReasons";
-import { focusSentence } from "@/lib/todayWords";
 import { DAY_BOX, DayHeading, DayRow, type TodayRow } from "@/components/app/TodayDay";
 import { useUndoableSend } from "@/components/useUndoableSend";
 import SiteReplyCard from "@/components/app/SiteReplyCard";
@@ -629,9 +628,6 @@ export default function ApprovalQueue({
   // "Still to do today" brings that person up instead. Nothing is saved.
   const [skipped, setSkipped] = useState<string[]>([]);
   const [picked, setPicked] = useState<string | null>(null);
-  // Closed until the owner presses "Reply to Raj", as drawn; once they are
-  // replying, the next customer opens straight after a send.
-  const [open, setOpen] = useState(false);
   const [showAll, setShowAll] = useState(false);
   const focusRef = useRef<HTMLElement>(null);
   const skip = useCallback((leadId: string) => {
@@ -640,7 +636,6 @@ export default function ApprovalQueue({
   }, []);
   const pick = (leadId: string) => {
     setPicked(leadId);
-    setOpen(true);
     focusRef.current?.scrollIntoView({ block: "start" });
   };
 
@@ -670,6 +665,8 @@ export default function ApprovalQueue({
   ];
   const selected = (picked && queue.find((i) => i.leadId === picked)) || queue[0] || null;
   const selectedFirst = selected ? selected.leadName.split(" ")[0] || selected.leadName : null;
+  // The card Today opens with simply is; the next one fades in after a send or skip (A-048).
+  const [firstCard] = useState(selected?.leadId ?? null);
   // What the last press did, said for a moment before it goes (A-048).
   const justDone = Object.values(leaving).at(-1) ?? null;
   const others = queue.filter((i) => i.leadId !== selected?.leadId);
@@ -677,38 +674,28 @@ export default function ApprovalQueue({
   const hidden = others.length - shown.length;
   const stillToDo = others.length + rows.length;
 
-  // "Do this first" (A-244): what the first customer wants in a sentence, then
-  // one black button. Pressed, it opens into the reply card (A-243).
+  // "Do this first" (A-244), open from the start (A-250, 2026-10-14): their
+  // words, FollowUp's reply and Send (A-243's card), with no tap before it.
   const focus = selected ? (
     <section ref={focusRef} aria-label="Do this first" className="scroll-mt-20 rounded-[18px] lg:scroll-mt-6 bg-card p-4 sm:p-5" style={{ border: "1.5px solid var(--ink)" }}>
       <p className="flex items-center gap-1.5 text-[13.5px] text-ink-soft" role={justDone ? "status" : undefined}>
         {justDone && <Check className="h-4 w-4 shrink-0" style={{ color: "var(--sage)" }} aria-hidden="true" />}
         {justDone ? [justDone, selectedFirst && `Now ${selectedFirst}.`].filter(Boolean).join(" ") : "Do this first"}
       </p>
-      {open ? (
-        <motion.div key={selected.leadId} className="mt-3" initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { duration: MOTION.move, ease: MOTION.easeOut } }}>
-          <ApprovalCard
-            item={selected}
-            bare
-            onResolved={resolve}
-            sendLocked={sendLocked}
-            onSkip={queue.length > 1 ? () => skip(selected.leadId) : undefined}
-          />
-        </motion.div>
-      ) : (
-        <>
-          <p className="mt-1.5 text-[18px] font-semibold leading-snug tracking-[-0.01em]">{focusSentence(selected.leadName, selected.why)}</p>
-          <p className="mt-1.5 text-[14.5px] leading-normal text-ink-soft">{focusDetail(selected)}</p>
-          <button
-            type="button"
-            onClick={() => setOpen(true)}
-            className="mt-4 h-[50px] w-full rounded-full px-7 text-[16px] font-semibold sm:w-auto"
-            style={{ backgroundColor: "var(--accent)", color: "var(--on-accent)" }}
-          >
-            Reply to {selectedFirst}
-          </button>
-        </>
-      )}
+      <motion.div
+        key={selected.leadId}
+        className="mt-3"
+        initial={selected.leadId === firstCard ? false : { opacity: 0 }}
+        animate={{ opacity: 1, transition: { duration: MOTION.move, ease: MOTION.easeOut } }}
+      >
+        <ApprovalCard
+          item={selected}
+          bare
+          onResolved={resolve}
+          sendLocked={sendLocked}
+          onSkip={queue.length > 1 ? () => skip(selected.leadId) : undefined}
+        />
+      </motion.div>
     </section>
   ) : visible.length === 0 || rows.length > 0 ? (
     // A finish line, not a blank (A-046, the Todoist study): said calmly,
@@ -793,10 +780,8 @@ export default function ApprovalQueue({
           one row each. A reply row brings that person up into "Do this first". */}
       {stillToDo > 0 && (
         <section aria-label="Still to do today" className="mt-7">
-          <DayHeading
-            title="Still to do today"
-            aside={selectedFirst ? `${stillToDo} more after ${selectedFirst}` : `${stillToDo} ${stillToDo === 1 ? "thing" : "things"}`}
-          />
+          {/* No count beside it (A-250): the day's box already says how many. */}
+          <DayHeading title="Still to do today" />
           <div className={`${DAY_BOX} overflow-hidden`}>
             {shown.map((i, n) => (
               <DayRow key={i.leadId} first={n === 0} row={replyRow(i)} onClick={() => pick(i.leadId)} />
@@ -823,16 +808,6 @@ export default function ApprovalQueue({
 
 /** How many other replies "Still to do today" lists before "Show N more replies". */
 const REPLY_ROWS = 4;
-
-/** "Raj wrote 4 minutes ago by email. FollowUp has a reply ready. Read it, then send." */
-function focusDetail(item: ApprovalItem): string {
-  const first = item.leadName.split(" ")[0] || item.leadName;
-  const way = CHANNEL_WAY[item.leadLastMessageChannel ?? ""] ?? null;
-  const wrote = [first, "wrote", item.asked, way].filter(Boolean).join(" ");
-  // Without a reason on top, their own words say what they want.
-  const said = !item.why && item.leadLastMessage ? `: “${excerpt(item.leadLastMessage, 90)}”` : "";
-  return `${wrote}${said}${said ? "" : "."} FollowUp has a reply ready. Read it, then send.`;
-}
 
 /** One reply in "Still to do today": who, then why or what they said, and how long they have waited. */
 function replyRow(item: ApprovalItem): TodayRow {

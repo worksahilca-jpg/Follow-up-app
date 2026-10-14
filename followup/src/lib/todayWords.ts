@@ -42,20 +42,22 @@ export function dayLine(startWith: string | null, anythingToDo: boolean): string
 }
 
 /**
- * "Do this first", said as a sentence from what FollowUp knows for sure:
- * the reason they are on top (A-230), never a guess at what they meant.
+ * What the day is made of, in one line under its count (A-250): "4 replies to
+ * send · 2 calls to make · 1 booked call at 3:00 PM". A kind with none is left
+ * out rather than said as a zero; with replies only, the line still says there
+ * are no calls or bookings, so the owner knows without looking (R-114: "How
+ * many calls do I need to do?"). `nextBookedAt` is the next booked call's time
+ * today on the owner's clock, or null when none is still to come.
  */
-export function focusSentence(name: string, why: string | null | undefined): string {
-  switch (why) {
-    case "Wants to book":
-      return `${name} wants to book.`;
-    case "Asked the price":
-      return `${name} asked about the price.`;
-    case "Likely to book":
-      return `${name} looks ready to book.`;
-    default:
-      return `${name} is waiting for your reply.`;
-  }
+export function dayParts(n: { replies: number; calls: number; booked: number; nextBookedAt: string | null }): string | null {
+  const parts: string[] = [];
+  if (n.replies > 0) parts.push(`${n.replies} ${n.replies === 1 ? "reply" : "replies"} to send`);
+  if (n.calls > 0) parts.push(`${n.calls} ${n.calls === 1 ? "call" : "calls"} to make`);
+  if (n.booked === 1) parts.push(`1 booked call${n.nextBookedAt ? ` at ${n.nextBookedAt}` : ""}`);
+  if (n.booked > 1) parts.push(`${n.booked} booked calls${n.nextBookedAt ? `, the next at ${n.nextBookedAt}` : ""}`);
+  if (parts.length === 0) return null;
+  if (n.calls === 0 && n.booked === 0) return `${parts[0]}. No calls or bookings today.`;
+  return parts.join(" · ");
 }
 
 /** "3 of 11 done today": nothing to show when there is nothing at all in the day. */

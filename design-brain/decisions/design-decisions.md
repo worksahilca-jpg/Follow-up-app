@@ -12739,3 +12739,55 @@ owner. The launch plan's build item was renamed the same way. **For future sessi
 Planned, not built. Production, read-only: in two weeks testers sent 5 replies through FollowUp and changed 1; 2 of 7
 testers have "Improve FollowUp" on. An automatic loop would have almost nothing to learn from, so the founder chose the
 manual loop that already works (run the test, fix, add a made-up check) until testers send 20+ replies a week.
+
+## 2026-10-14 — Who actually uses FollowUp, and the morning email (A-249)
+
+Asked "what's next", the founder approved a read-only check of where this week's customers went (counts only, no
+names).
+- **Two of the 7 "testers" were the founder's own accounts** (the personal login and the followupbase.io login). There
+  are 5 outside testers. Every reply sent through FollowUp this week, and 7 of the 8 new customers, were on the
+  founder's own account. Outside testers: 0 customers answered this week, 2 in 30 days, 4 ever; 0 bookings.
+- Where the 5 stand: Gmail needs reconnecting with 17 replies waiting (last send 37 days ago); Instagram only with 4
+  waiting (last send 14 days ago); joined a week ago, 1 waiting, none sent; joined 3 weeks ago, nothing connected;
+  added 2 weeks ago, never signed in. None has phone alerts on.
+- The replies are written; nobody opens them. The next step is people, not product: the founder writes to each one.
+- **Corrections:** the YC draft's Progress table and the plan page now count outside businesses only, and so will the
+  Oct 31 refresh. The "7 testers" in the two entries above, and the reply counts in A-248, included the founder's own
+  accounts.
+- **For future sessions:** count outside testers only. The founder's businesses are those with a login at
+  followupbase.io or the founder's personal login (match it without printing it). "Answered" means a sent FollowUp
+  that isn't the instant acknowledgement or a holding message; leave out "Test lead" customers.
+- **Built (A-249):** the morning email now also names testers who sent replies before and have stalled: replies
+  waiting for their OK 2+ days (their own Today queue), or Gmail or Outlook disconnected. Until now a tester who sent
+  one reply and stopped never appeared in it. It goes out as its own PR after #510, one merge a day.
+
+## 2026-10-14 — Today, simpler (A-250)
+
+The founder asked for Today to be simple and quick to learn, and for an audit of what is broken. Today was walked in a
+local build with made-up customers, phone and computer. What was in the way:
+- The same number four times: "4 replies to send", "0 of 4 done today", "4 to go", "3 more after Omar".
+- Big zeros ("0 calls to make", "0 booked for today") for owners who use neither.
+- The reply was one tap away: "Do this first" said what the customer wanted, then "Reply to Omar" opened it in place.
+- Not a problem, checked: Omar shown twice was two made-up customers with the same name in the local data.
+
+Drawn with the change injected into the real page and approved the same day (A-250): one box says the day once, and
+the first reply is open on arrival. R-114 still holds (the whole day stays on the page), R-113 too (one plain sentence,
+one black button), and it is not subtraction alone (R-001): the reply itself is the layer added.
+**Weak spots named at approval:** on a phone the open reply pushes the list below the first screen; with replies only,
+"4 things" and "4 replies" still say the same number twice.
+
+**Built and checked the same day**, in a local build with made-up customers:
+- Phone (390×844) and computer (1280): one box, "4 things to do today · 0 done", then "4 replies to send. No calls or
+  bookings today."; the first reply open with "Send to Omar" in the first screen; no count beside "Still to do today".
+  Nothing scrolls sideways at 360, 375, 768, 1024 or 1440.
+- A quiet day has no box (checked on a business with nothing waiting).
+- "Skip for now" fades the next customer's reply in; a row in "Still to do today" brings that customer up and scrolls
+  to them. The box doesn't change, because nothing was done.
+- The first reply doesn't fade in when Today opens (A-048: motion only for a change); the server sends it already
+  visible.
+- Two small departures from the drawing: the box has 16px padding like Tomorrow and the rows (the drawing had 18px),
+  and an empty bar stays empty (the drawing showed a green dot at its start, which reads as something done).
+**Weak, measured:** on a small phone (375×667) "Send to Omar" is one scroll down; from 360×780 up it is in the first
+screen. "All done for today" (something done, nothing left) was not seen in a browser: no local business is in that
+state, so only the code and its tests cover it.
+

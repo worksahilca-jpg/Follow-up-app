@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { ungroundedCalendarWords, unconfirmedClaim } from "@/lib/grounding";
+import { ungroundedCalendarWords, ungroundedNumbers, unconfirmedClaim } from "@/lib/grounding";
 import { salesPressure } from "@/lib/replyTone";
 import { generateInstantReply, assessAckRisk, localizeFixedText } from "@/lib/integrations/openai";
 import { composeFollowUpEmail, getSenderFirstName } from "@/lib/sender";
@@ -195,10 +195,9 @@ export function checkAckShape(
   // adjacent digits doesn't help, because the comma already splits
   // "2,000" into separate digit-runs. Comparing whole number tokens (so
   // "$2,000" is one token, "2,000", not two) is what actually fixes it.
-  const NUMBER_RE = /\p{Nd}(?:[\p{Nd},.]*\p{Nd})?/gu;
-  const replyNumbers = trimmed.match(NUMBER_RE) ?? [];
-  const inboundNumbers = new Set(inboundText.match(NUMBER_RE) ?? []);
-  if (replyNumbers.some((n) => !inboundNumbers.has(n))) return fail("digits");
+  // The shared rule (src/lib/grounding.ts) compares whole tokens, and reads
+  // "650k" and "$650,000" as the same amount.
+  if (ungroundedNumbers(trimmed, inboundText).length > 0) return fail("digits");
 
   const currencyTokens = trimmed.match(/[$€£₹¥]|%|\b(USD|EUR|GBP|INR|CAD|MXN|AUD|Rs\.?)\b/gi) ?? [];
   if (currencyTokens.some((token) => !inboundText.toLowerCase().includes(token.toLowerCase()))) return fail("currency");

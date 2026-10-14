@@ -13071,3 +13071,30 @@ window.
 - **Qualifying:** 718 of 720 answers right, none made up.
 - **Next:** a readable close-up of the three misses, then decide whether the digits one is a false alarm (the
   customer's own "3 bed"?) before changing any rule.
+
+
+## 2026-10-14 — The three reply misses, fixed at their likely cause
+
+Founder: *"whatever 3 is left, can you please check and fix that?"* The close-up screenshot hadn't arrived, so each
+fix targets the most likely cause, and a check covers it either way.
+
+- **"buyer gives details" (digits):**
+  - The buyer wrote "650k". A reply that says "$650,000" or "1,300,000" for "1.3M" is the same amount, and the
+    digits rule held it as an invented number.
+  - Now one shared rule reads the scale word written right after a number (k, M, thousand, million). The DM check,
+    the instant reply's check, email drafts and the underlines on the reply card all use it.
+  - Whole tokens only, as before. A different amount ("$700,000") or a new number ("4 bed") is still caught.
+- **"weekend viewing" (calendar):**
+  - The screenshot shows "…Which day would suit you…", so the reply most likely named a day the customer
+    didn't, such as Saturday or Sunday after "this weekend". That stays a held draft on purpose: only the owner
+    knows which days they are free, and the existing checks say so. A first version of this fix loosened the
+    rule; the tests caught it and it was taken back out.
+  - The drafter and its one retry are now told exactly that: "this weekend" never becomes "Saturday or Sunday?".
+    They should say they're checking and ask when would suit the customer.
+- **"lost offers" (could go to anyone):**
+  - The reply opened "That's tough." The reply writer is now told to tie a feeling to what they said caused it
+    ("losing 3 offers in a row is exhausting"), because a bare "sorry to hear that" could go to anyone.
+  - This one is a prompt change. Only the next run on /admin can show whether it worked.
+
+**Weak spot:** these fixes were made without seeing the exact replies. The digits one is a rule change; the other two
+are instructions to the writer, and only the next run on /admin shows whether they worked.

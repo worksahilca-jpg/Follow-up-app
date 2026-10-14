@@ -408,9 +408,13 @@ export function inventedSpecific(
   // words, so a booking id or a path doesn't read as an invented number.
   const source = ownerHint ? `${conversationText(conversation)}\n${ownerHint}` : conversationText(conversation);
   const sentBefore = conversation.some((m) => m.direction === "outbound" && !isAck(m));
+  // The owner's note and facts are the owner's own words, so they ground a
+  // claim as well as a figure: an email quoting "My commission is 2.5%"
+  // from Settings states a fee the owner did state.
+  const said = ownerHint ? `${businessText(conversation)}\n${ownerHint}` : businessText(conversation);
   return (
     ungroundedSpecifics(rest, source, locale) ??
-    unconfirmedClaim(rest, businessText(conversation), { sentBefore }) ??
+    unconfirmedClaim(rest, said, { sentBefore }) ??
     salesPressure(rest, { said: businessText(conversation), facts: ownerHint ?? "" })
   );
 }

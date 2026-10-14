@@ -19,7 +19,7 @@ vi.mock("@/lib/sending", () => ({ sendFollowUpToLead: vi.fn(), detectAutomatedRe
 vi.mock("@/lib/audit", () => ({ recordAudit: vi.fn() }));
 
 import { unconfirmedClaim, ungroundedCalendarWords, ungroundedSpecifics } from "@/lib/grounding";
-import { checkDmDraftShape, businessText } from "@/lib/dmDrafts";
+import { checkDmDraftShape, businessText, inventedSpecific } from "@/lib/dmDrafts";
 import { checkAckShape } from "@/lib/acknowledge";
 import { isSafeToSendInBulk } from "@/lib/approvalGroups";
 import { HOLD_ALL_AUTOMATION_REASON } from "@/lib/holdReasons";
@@ -96,6 +96,46 @@ describe("unconfirmedClaim — what only the owner can say", () => {
   it("is NOT grounded by the owner saying the opposite", () => {
     expect(unconfirmedClaim("Yes, the condo is still available.", "Sorry, the condo is no longer available.")).toBe("availability");
     expect(unconfirmedClaim("Sorry, it's no longer available.", "Sorry, the condo is no longer available.")).toBeNull();
+  });
+});
+
+describe("a fee said in words (accuracy test, 2026-10-14)", () => {
+  const COMMISSION = "Commission: My commission is 2.5% when I sell your home.";
+
+  it.each([
+    "I charge buyers nothing. Are you looking to buy soon?",
+    "Buyers usually don't pay anything, the seller covers it.",
+    "My fee is paid by the seller, so it costs you nothing.",
+    "No te cobro nada por buscar contigo.",
+  ])("is the owner's to state: %s", (draft) => {
+    expect(unconfirmedClaim(draft, "")).toBe("fee");
+  });
+
+  it.each([
+    "You asked what I charge, and I'll confirm that today.",
+    "I'll check what I charge for that and get back to you.",
+    "Te confirmo lo que cobro hoy mismo.",
+    "Happy to help you find a 2 bed downtown. What matters most to you?",
+  ])("names the question, states nothing: %s", (draft) => {
+    expect(unconfirmedClaim(draft, "")).toBeNull();
+  });
+
+  it("is grounded by the owner's own fee, word for word", () => {
+    expect(unconfirmedClaim("My commission is 2.5% when I sell your home. What are you selling?", COMMISSION)).toBeNull();
+    // A fact saved as a label and a figure states the fee as well.
+    expect(unconfirmedClaim("My commission is 2.5%.", "Commission: 2.5%")).toBeNull();
+    expect(unconfirmedClaim("I charge buyers nothing.", "Buyer fee: none, I charge buyers nothing")).toBeNull();
+  });
+
+  it("is not grounded by a fee for someone else: a seller's commission says nothing about buyers", () => {
+    expect(unconfirmedClaim("I charge buyers nothing. Are you looking to buy soon?", COMMISSION)).toBe("fee");
+    expect(unconfirmedClaim("I charge buyers nothing.", "Buyers: I charge buyers nothing, the seller pays my commission.")).toBeNull();
+  });
+
+  it("an email quoting the owner's fact is the owner's words, not an invented fee", () => {
+    const conversation: Message[] = [{ id: "m1", direction: "inbound", channel: "email", body: "How much do you charge to sell?", date: "2026-10-01T16:00:00.000Z", opened: false }];
+    expect(inventedSpecific("My commission is 2.5% when I sell your home. When are you hoping to list?", conversation, null, COMMISSION)).toBeNull();
+    expect(inventedSpecific("I charge buyers nothing. When are you hoping to buy?", conversation, null, COMMISSION)).toBe("fee");
   });
 });
 

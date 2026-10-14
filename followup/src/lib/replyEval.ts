@@ -53,7 +53,17 @@ export type ReplyCase = {
   feeling?: boolean;
   /** They said no or have an agent: a warm close, no question (rule 8). */
   closing?: boolean;
+  /**
+   * Their message holds nothing of their own to pick up ("How long have you
+   * been a realtor?"), so "could go to anyone" would fail every reply,
+   * however good. The template check still runs (2026-10-14: four of the
+   * ten failures in the first run were this).
+   */
+  noDetail?: boolean;
 };
+
+/** The customer's profile name, which the drafter is given as a live DM's would be. */
+const LEAD_NAME = "Sam";
 
 const FACTS: FactLine[] = [
   { label: "Commission", value: "My commission is 2.5% when I sell your home." },
@@ -65,6 +75,7 @@ export const REPLY_CASES: ReplyCase[] = [
     name: "fee and availability, nothing known",
     lines: [["in", "how much do you charge and are you free this week?"]],
     asks: ["how much the agent charges", "whether the agent is free this week"],
+    noDetail: true,
   },
   {
     name: "fee and availability, fee known",
@@ -72,6 +83,7 @@ export const REPLY_CASES: ReplyCase[] = [
     asks: ["how much the agent charges", "whether the agent is free this week"],
     facts: FACTS,
     mustInclude: ["2.5%"],
+    noDetail: true,
   },
   { name: "is a listing available", lines: [["in", "Is the condo on King St still available?"]], asks: ["whether the King St condo is still available"] },
   { name: "area, known", lines: [["in", "Do you work in Mississauga?"]], asks: ["whether the agent works in Mississauga"], facts: FACTS },
@@ -94,8 +106,8 @@ export const REPLY_CASES: ReplyCase[] = [
     mustInclude: ["2.5%"],
   },
   { name: "asks for a viewing time", lines: [["in", "Can I see the townhouse on Saturday at 11?"]], asks: ["whether they can see the townhouse on Saturday at 11"] },
-  { name: "buyer's fee", lines: [["in", "Do you charge buyers anything?"]], asks: ["whether buyers pay the agent anything"] },
-  { name: "experience", lines: [["in", "How long have you been a realtor?"]], asks: ["how long the agent has been a realtor"] },
+  { name: "buyer's fee", lines: [["in", "Do you charge buyers anything?"]], asks: ["whether buyers pay the agent anything"], noDetail: true },
+  { name: "experience", lines: [["in", "How long have you been a realtor?"]], asks: ["how long the agent has been a realtor"], noDetail: true },
   {
     name: "follow-up questions after the business wrote first",
     lines: [
@@ -104,7 +116,7 @@ export const REPLY_CASES: ReplyCase[] = [
     ],
     asks: ["the lot size", "whether the basement is finished"],
   },
-  { name: "wants to talk today", lines: [["in", "Are you available to talk today?"]], asks: ["whether the agent can talk today"] },
+  { name: "wants to talk today", lines: [["in", "Are you available to talk today?"]], asks: ["whether the agent can talk today"], noDetail: true },
   {
     name: "Spanish: price and area",
     lines: [["in", "Hola, ¿cuánto cobras por vender una casa? ¿Trabajas en Brampton?"]],
@@ -218,7 +230,11 @@ export const gradeReply: Grader = async (c, reply) => {
           "business will check or confirm it. false when the reply ignores it or changes the subject.\n" +
           "invented: true when the reply states as fact any specific detail (a price, fee, number, date, time, " +
           "availability, listing detail, experience, policy) that appears neither in the conversation nor in the " +
-          "BUSINESS FACTS. A placeholder such as [PRICE] is not invented. inventedWhat: that detail, or empty.\n" +
+          "BUSINESS FACTS. A placeholder such as [PRICE] is not invented. The customer's name is known, and so is " +
+          "everything either side wrote in the conversation. Offering to help, to look for something, or to check " +
+          "or confirm something is a promise to act, not a fact: never invented. Repeating the customer's own " +
+          "details is not invented, but getting one wrong (another place, number or date than they wrote) is. " +
+          "inventedWhat: that detail, or empty.\n" +
           "sameLanguage: true when the reply is in the same language as the customer's last message (Hinglish " +
           "answered in Hinglish or English both count as the same).\n" +
           "usedDetail: true when the reply picks up something specific the customer wrote (a place, a home, a date, " +
@@ -238,7 +254,7 @@ export const gradeReply: Grader = async (c, reply) => {
       {
         role: "user",
         content:
-          `CONVERSATION:\n${chat}\n\nBUSINESS FACTS:\n${facts}\n\nQUESTIONS THE CUSTOMER ASKED:\n` +
+          `CUSTOMER'S NAME (from their profile): ${LEAD_NAME}\n\nCONVERSATION:\n${chat}\n\nBUSINESS FACTS:\n${facts}\n\nQUESTIONS THE CUSTOMER ASKED:\n` +
           (c.asks.map((a, i) => `${i + 1}. ${a}`).join("\n") || "(none)") +
           `\n\nREPLY TO CHECK:\n${reply}`,
       },
@@ -305,7 +321,7 @@ export async function runReplyEval(
     try {
       // The same call a live DM reply makes (automation.ts, scoring.ts), for a realtor.
       const drafted = await withRateLimitRetry(
-        () => draft("Sam", toConversation(c.lines), [], undefined, "reply", null, c.facts ?? [], null, "Real estate"),
+        () => draft(LEAD_NAME, toConversation(c.lines), [], undefined, "reply", null, c.facts ?? [], null, "Real estate"),
         options.retry
       );
       const reply = drafted.body.trim();
@@ -349,7 +365,7 @@ export async function runReplyEval(
         problems.push("feeling");
         details.push(g.inventedFeeling ? "made up a feeling" : "missed the feeling they named");
       }
-      if (!g.usedDetail || g.robotic) {
+      if ((!g.usedDetail && !c.noDetail) || g.robotic) {
         problems.push("generic");
         details.push(g.robotic ? "read like a template" : "could go to anyone");
       }

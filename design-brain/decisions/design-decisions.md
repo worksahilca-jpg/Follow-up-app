@@ -12610,3 +12610,16 @@ stays everyone. The A-243 build (commit 8c31f76, branch only, never merged) is n
   reader gets real dates for 3 and 6 months out, and three test answers that were debatable or wrong were corrected
   ("selling to buy" does give a reason; "the condo" / "this unit" may or may not say what kind of home). Next run should
   show 0 made up; it needs the founder to press Run again.
+
+## 2026-10-14 — A ChatGPT follow-up workflow reviewed; trust research done
+
+- **The founder shared a ChatGPT PDF** ("FollowUp Simple Flowcharts", 7 pages) as qualifying research. Read and checked:
+  it is a general software-company follow-up workflow (demos, trials, proposals), not a lead-qualifying funnel, and
+  marks most of itself "proposed rules". Its three sources (CRTC CASL guidance, HubSpot sequence unenrolment, Mailchimp
+  on machine opens) check out. Most of it FollowUp already does. Five ideas taken (see A-245's addition): four for the
+  follow-up plans, one for booking. Not taken: trial steps, open/click rules, its day 0/1/3/6/10 schedule.
+- **Explaining it to him:** a table of "already have / use it / not for us" worked where a list of five ideas didn't
+  (*"Can you simplify it, please, and then we'll decide?"*). When he asked why five became four: the fifth was kept,
+  for the booking build.
+- **Trust research done:** `reports/Realtor replies that win trust.md` (repo root, not committed). Eight reply rules and
+  a "FollowUp must never" list, all evidence-labelled. Not yet turned into product changes.

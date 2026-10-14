@@ -4100,6 +4100,15 @@ it's dead"*.
 - **Assisted** buzzes the owner for each message. **Automatic** sends it.
 - **Next:** draw the picker before building. Research behind the days:
   `followup/research/product/2026-09-09-followup-cadence-best-practices.md`.
+- **Added 2026-10-14** (founder, after reviewing a ChatGPT workflow PDF: *"Yes, add the 4"*):
+  - **6-month stop:** follow-ups stop 6 months after the customer's last message (Canada's anti-spam rule on implied
+    consent from an inquiry, CRTC guidance); a new message from them starts it again.
+  - **"Try me in March":** a date they give is kept; nothing is sent before it. No date: ask once when to check back.
+  - **One "close the loop" message** before a plan ends ("Should I keep sending you homes in Mississauga, or close
+    your file for now?").
+  - **A limit across everything FollowUp sends by itself:** at most 1 a day and 3 a week per customer.
+  - **The fifth idea, for booking (A-242, November):** a short recap the day after a viewing, and one offer to
+    reschedule a missed one, then pause.
 
 ## A-246 — Qualifying a realtor's customer: three short rounds, then Ready, Warm or Later ^A-246
 

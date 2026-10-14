@@ -4217,3 +4217,19 @@ evidence and its strength).
   replies a week through FollowUp. At the time: 5 replies in two weeks, 1 changed.
 - Whenever it is built: no customer's words are kept for it. Checks use made-up examples, and Gmail messages are never
   used to improve FollowUp for everyone (Google's Limited Use rules, already in the privacy policy).
+
+
+## A-249 — The morning email also names testers who stalled after a first reply ^A-249
+
+**Approved:** 2026-10-14, founder, to "Should your morning 'stuck testers' email also name testers who stopped after
+their first reply?": *"Yes, add it"*.
+
+**What specifically:**
+- Below the testers who haven't sent a first reply, a second group: testers who sent replies before and now have
+  replies waiting for their OK for 2 days or more, or Gmail or Outlook disconnected.
+- Each line says how many replies are waiting and how long the oldest has waited, whether the inbox is disconnected,
+  and when they last opened FollowUp, then the address to write to.
+- "Waiting" is exactly that tester's own Today queue: what they set aside with Later doesn't count, practice customers
+  don't count.
+- Named while they've opened FollowUp in the last two weeks; after that, counted in one line, like the stuck list.
+- Founder only, email only (never Slack). Counts and dates, never a customer's name or words.

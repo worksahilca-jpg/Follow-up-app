@@ -233,3 +233,61 @@ export function findStuck(journeys: TesterJourney[], now: Date): StuckTester[] {
   }
   return out.sort((a, b) => b.days - a.days);
 }
+
+/**
+ * Testers who got going and then stalled (founder, 2026-10-14: "Yes, add
+ * it" to the morning email naming them, A-249). The stuck list above ends
+ * at first value, so a tester who sent one reply and then left 17
+ * customers waiting showed up nowhere. Two signs, both from rows FollowUp
+ * already writes: replies waiting for their OK for two days or more (the
+ * queue their Today shows, minus what they set aside with Later), or Gmail
+ * or Outlook disconnected.
+ */
+export const STOPPED_WAIT_DAYS = 2;
+
+export interface StoppedFacts {
+  id: string;
+  name: string;
+  email: string;
+  business: string | null;
+  /** Replies waiting for their OK for STOPPED_WAIT_DAYS or more. */
+  waiting: number;
+  /** How many days the oldest of those has waited. */
+  oldestWaitDays: number | null;
+  inboxDisconnected: boolean;
+  /** Days since they last opened FollowUp or signed in; null when neither is on record. */
+  quietDays: number | null;
+}
+
+export interface StoppedTester {
+  id: string;
+  name: string;
+  email: string;
+  business: string | null;
+  reason: string;
+  quietDays: number | null;
+}
+
+const dayCount = (n: number) => (n === 1 ? "1 day" : `${n} days`);
+
+/** "17 replies are waiting for an OK, the oldest for 9 days. Gmail or Outlook is disconnected. Last opened FollowUp 9 days ago." */
+export function stoppedReason(f: StoppedFacts): string {
+  const parts: string[] = [];
+  if (f.waiting > 0) {
+    const oldest = f.oldestWaitDays !== null ? `, the oldest for ${dayCount(f.oldestWaitDays)}` : "";
+    parts.push(`${f.waiting} ${f.waiting === 1 ? "reply is" : "replies are"} waiting for an OK${oldest}.`);
+  }
+  if (f.inboxDisconnected) parts.push("Gmail or Outlook is disconnected.");
+  if (f.quietDays !== null) {
+    parts.push(f.quietDays === 0 ? "Opened FollowUp in the last day." : `Last opened FollowUp ${dayCount(f.quietDays)} ago.`);
+  }
+  return parts.join(" ");
+}
+
+/** Only testers with something to nudge them about, most replies waiting first. */
+export function findStopped(facts: StoppedFacts[]): StoppedTester[] {
+  return facts
+    .filter((f) => f.waiting > 0 || f.inboxDisconnected)
+    .sort((a, b) => b.waiting - a.waiting || (b.quietDays ?? 0) - (a.quietDays ?? 0))
+    .map((f) => ({ id: f.id, name: f.name, email: f.email, business: f.business, reason: stoppedReason(f), quietDays: f.quietDays }));
+}

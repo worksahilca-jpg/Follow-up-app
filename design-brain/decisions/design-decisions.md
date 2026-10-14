@@ -12739,3 +12739,24 @@ owner. The launch plan's build item was renamed the same way. **For future sessi
 Planned, not built. Production, read-only: in two weeks testers sent 5 replies through FollowUp and changed 1; 2 of 7
 testers have "Improve FollowUp" on. An automatic loop would have almost nothing to learn from, so the founder chose the
 manual loop that already works (run the test, fix, add a made-up check) until testers send 20+ replies a week.
+
+## 2026-10-14 — Who actually uses FollowUp, and the morning email (A-249)
+
+Asked "what's next", the founder approved a read-only check of where this week's customers went (counts only, no
+names).
+- **Two of the 7 "testers" were the founder's own accounts** (the personal login and the followupbase.io login). There
+  are 5 outside testers. Every reply sent through FollowUp this week, and 7 of the 8 new customers, were on the
+  founder's own account. Outside testers: 0 customers answered this week, 2 in 30 days, 4 ever; 0 bookings.
+- Where the 5 stand: Gmail needs reconnecting with 17 replies waiting (last send 37 days ago); Instagram only with 4
+  waiting (last send 14 days ago); joined a week ago, 1 waiting, none sent; joined 3 weeks ago, nothing connected;
+  added 2 weeks ago, never signed in. None has phone alerts on.
+- The replies are written; nobody opens them. The next step is people, not product: the founder writes to each one.
+- **Corrections:** the YC draft's Progress table and the plan page now count outside businesses only, and so will the
+  Oct 31 refresh. The "7 testers" in the two entries above, and the reply counts in A-248, included the founder's own
+  accounts.
+- **For future sessions:** count outside testers only. The founder's businesses are those with a login at
+  followupbase.io or the founder's personal login (match it without printing it). "Answered" means a sent FollowUp
+  that isn't the instant acknowledgement or a holding message; leave out "Test lead" customers.
+- **Built (A-249):** the morning email now also names testers who sent replies before and have stalled: replies
+  waiting for their OK 2+ days (their own Today queue), or Gmail or Outlook disconnected. Until now a tester who sent
+  one reply and stopped never appeared in it. It goes out as its own PR after #510, one merge a day.

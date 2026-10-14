@@ -9,7 +9,19 @@ import { NOT_AN_ANSWER_TRIGGERS } from "@/lib/notAnAnswer";
 import { prisma } from "@/lib/db";
 import { requirePlatformAdmin } from "@/lib/platformAdmin";
 import { FIRST_VALUE_SEND, ACTIVATION_WINDOW_MS } from "@/lib/firstValue";
-import { buildActivation, isActivated, type Activation, type StepAt, type TesterJourney } from "@/lib/activation";
+import {
+  buildActivation,
+  findStopped,
+  isActivated,
+  STOPPED_WAIT_DAYS,
+  type Activation,
+  type StepAt,
+  type StoppedFacts,
+  type StoppedTester,
+  type TesterJourney,
+} from "@/lib/activation";
+import { getPendingApprovals, onTodayNow } from "@/lib/pendingApprovals";
+import { APP_OPEN } from "@/lib/appOpens";
 
 // Any source, not only an inbox: the audit actions each connect route writes.
 const CONNECT_ACTIONS = [
@@ -20,11 +32,32 @@ const CONNECT_ACTIONS = [
   "integration.whatsapp.connect",
 ];
 const WEEK = ACTIVATION_WINDOW_MS;
+const DAY = 24 * 60 * 60 * 1000;
+// Practice customers (the setup's "Send a test lead" and practice list) are not people waiting.
+const TEST_LEAD_SOURCE = "Test lead";
 
 function earliest(...dates: (Date | null | undefined)[]): Date | null {
   let out: Date | null = null;
   for (const d of dates) if (d && (!out || d < out)) out = d;
   return out;
+}
+
+/** The approved testers, and the login each signed up with (if any). */
+async function loadTesterUsers() {
+  const testers = await prisma.accessRequest.findMany({
+    where: { status: "approved" },
+    orderBy: { createdAt: "desc" },
+    take: 100,
+    select: { id: true, name: true, email: true, business: true, decidedAt: true, createdAt: true },
+  });
+  const users = testers.length
+    ? await prisma.user.findMany({
+        where: { email: { in: testers.map((t) => t.email) } },
+        select: { email: true, businessId: true, createdAt: true },
+      })
+    : [];
+  const userByEmail = new Map(users.filter((u) => u.email).map((u) => [u.email as string, u]));
+  return { testers, users, userByEmail };
 }
 
 export async function getActivation(now: Date = new Date()): Promise<Activation> {
@@ -39,19 +72,7 @@ export async function getActivation(now: Date = new Date()): Promise<Activation>
  * getActivation.
  */
 export async function loadActivation(now: Date = new Date()): Promise<Activation> {
-  const testers = await prisma.accessRequest.findMany({
-    where: { status: "approved" },
-    orderBy: { createdAt: "desc" },
-    take: 100,
-    select: { id: true, name: true, email: true, business: true, decidedAt: true, createdAt: true },
-  });
-  const users = testers.length
-    ? await prisma.user.findMany({
-        where: { email: { in: testers.map((t) => t.email) } },
-        select: { email: true, businessId: true, createdAt: true },
-      })
-    : [];
-  const userByEmail = new Map(users.filter((u) => u.email).map((u) => [u.email as string, u]));
+  const { testers, users, userByEmail } = await loadTesterUsers();
   const bizIds = [...new Set(users.map((u) => u.businessId).filter((id): id is string => !!id))];
 
   const [connectAudits, inboxes, metaBiz, firstLeads, firstHolds, perBusiness] = await Promise.all([
@@ -167,4 +188,52 @@ export async function loadActivation(now: Date = new Date()): Promise<Activation
   );
 
   return buildActivation(journeys, now);
+}
+
+/**
+ * Testers past their first reply who have stalled since (findStopped in
+ * src/lib/activation.ts), for the daily stuck-testers email only. Like
+ * loadActivation it reads every tester without a sign-in check, so it runs
+ * only from that email, behind the cron secret. "Waiting" is the queue the
+ * tester's own Today shows (getPendingApprovals, Later set aside), so the
+ * email can never count a reply their screen doesn't show them.
+ */
+export async function loadStopped(now: Date = new Date()): Promise<StoppedTester[]> {
+  const { testers, userByEmail } = await loadTesterUsers();
+  const cutoff = now.getTime() - STOPPED_WAIT_DAYS * DAY;
+  const read = async (t: (typeof testers)[number]): Promise<StoppedFacts | null> => {
+    const businessId = userByEmail.get(t.email)?.businessId;
+    if (!businessId) return null;
+    // Short of a first reply: the stuck list already names them.
+    const sentOnce = await prisma.followUp.findFirst({ where: { ...FIRST_VALUE_SEND, lead: { businessId } }, select: { id: true } });
+    if (!sentOnce) return null;
+    const [approvals, inboxes, opened, signedIn] = await Promise.all([
+      getPendingApprovals(businessId, now),
+      prisma.integration.findMany({
+        where: { provider: { in: ["gmail", "outlook"] }, user: { businessId } },
+        select: { status: true },
+      }),
+      prisma.auditEvent.findFirst({ where: { businessId, action: APP_OPEN }, orderBy: { createdAt: "desc" }, select: { createdAt: true } }),
+      prisma.signIn.findFirst({ where: { user: { businessId } }, orderBy: { createdAt: "desc" }, select: { createdAt: true } }),
+    ]);
+    const waiting = onTodayNow(approvals).filter((a) => a.source !== TEST_LEAD_SOURCE && a.heldAt.getTime() <= cutoff);
+    const oldest = waiting.length ? Math.min(...waiting.map((a) => a.heldAt.getTime())) : null;
+    const seen = [opened?.createdAt, signedIn?.createdAt].filter((d): d is Date => !!d);
+    const lastSeen = seen.length ? Math.max(...seen.map((d) => d.getTime())) : null;
+    return {
+      id: t.id,
+      name: t.name,
+      email: t.email,
+      business: t.business,
+      waiting: waiting.length,
+      oldestWaitDays: oldest === null ? null : Math.floor((now.getTime() - oldest) / DAY),
+      inboxDisconnected: inboxes.length > 0 && !inboxes.some((i) => i.status === "connected"),
+      quietDays: lastSeen === null ? null : Math.floor((now.getTime() - lastSeen) / DAY),
+    };
+  };
+  // A few testers at a time: each reads its whole Today queue, and the
+  // daily job that sends this has other work inside the same minute.
+  const facts: (StoppedFacts | null)[] = [];
+  for (let i = 0; i < testers.length; i += 5) facts.push(...(await Promise.all(testers.slice(i, i + 5).map(read))));
+  return findStopped(facts.filter((f): f is StoppedFacts => f !== null));
 }

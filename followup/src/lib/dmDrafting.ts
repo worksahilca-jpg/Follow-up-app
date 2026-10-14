@@ -26,9 +26,55 @@ export function readStoredQuickReplies(value: unknown): StoredQuickReplies | nul
 }
 
 /**
+ * What the second attempt is told when the first broke a rule (founder,
+ * 2026-10-14: "the second try is told exactly what was wrong"). The retry
+ * used to be the same request again, so a model that wrote "I charge
+ * buyers nothing" or offered a Saturday nobody named tended to write it
+ * again, and the owner got a held draft to fix by hand. Keyed by the rule
+ * ids of checkDmDraftShape (src/lib/dmDrafts.ts).
+ */
+const RETRY_NOTES: Record<string, string> = {
+  calendar:
+    "It named a day, date or time of day that nobody in this conversation mentioned, in the text or a button. Name no " +
+    "day or time the customer didn't; if timing matters, ask an open question such as when would suit them, with no " +
+    "day or time buttons.",
+  digits: "It used a number nobody in this conversation or the business facts wrote. Use no such number.",
+  fee: "It said what the business charges or who pays it, which the business has not said. Say it will be confirmed instead.",
+  availability: "It said whether something is available. Only the business knows that: say you're checking.",
+  booking: "It said a time is booked or confirmed. Only the business confirms a booking: say you'll confirm it.",
+  done: "It said the business already sent, called or arranged something this conversation doesn't show. Don't.",
+  policy: "It said what's free, included, refundable or guaranteed, which the business has not said. Say it will be confirmed instead.",
+  hours: "It said when the business is open, which the business has not said. Say it will be confirmed instead.",
+  service: "It said what the business covers, offers or accepts, which the business has not said. Say it will be confirmed instead.",
+  confirm: "It vouched for something on the business's behalf. Say the business will confirm it instead.",
+  pressure: "It rushed or pushed them. Leave out any urgency, deadline or push.",
+  brag: "It praised the business with a ranking or title the business never stated. Leave it out.",
+  too_long: "It was too long. Keep it under 30 words.",
+  too_short: "It was too short. Write a full reply of at least 8 words.",
+  two_questions: "It asked more than one question. Ask exactly one, as the last thing.",
+  question_not_last: "Its question was not the last thing in it. End with the one question.",
+  buttons_without_question: "It had buttons but asked nothing. Ask one question or give no buttons.",
+  banned_closer: "It used a stock closing line such as \"let me know if you have any questions\". Leave it out.",
+  contact: "It included a link or an email address. Include none.",
+  empty: "It was empty. Write the message.",
+};
+const BUTTONS_NOTE =
+  "Its reply buttons broke the rules: at most three, each a few words, none a question, no two the same, at most one way out.";
+for (const rule of ["too_many_buttons", "empty_button", "button_too_long", "button_is_question", "duplicate_button", "two_exits", "single_yes_button"]) {
+  RETRY_NOTES[rule] = BUTTONS_NOTE;
+}
+
+/** The retry's correction, for any rule the shape check can fail. */
+export function retryNote(rule: string): string {
+  const what = RETRY_NOTES[rule] ?? "It broke one of the message rules above.";
+  return `Your previous draft of this message was refused. ${what} Write it again with that fixed and every other rule kept.`;
+}
+
+/**
  * Drafts an Instagram/Messenger DM: the situation is picked from the
  * thread (src/lib/dmDrafts.ts), the model writes to it, and the result is
- * shape-checked. One retry on a shape failure, then the caller holds it —
+ * shape-checked. One retry on a shape failure, told what failed, then the
+ * caller holds it —
  * a draft with two questions or a chip nobody asked for never goes out
  * unreviewed. Returns the draft either way so the owner sees what was
  * attempted rather than nothing.
@@ -61,8 +107,9 @@ export async function draftDm(
   const text = known ? `${conversationText(conversation)}\n${known}` : conversationText(conversation);
   const saidByBusiness = known ? `${businessText(conversation)}\n${known}` : businessText(conversation);
   let lastRule: string | null = null;
+  let ask = situation;
   for (let attempt = 0; attempt < 2; attempt++) {
-    const draft = await generateFollowUpMessage({ name: leadName, conversation, facts, qualify, trade }, voiceSamples, messageHint, situation, leadLanguage);
+    const draft = await generateFollowUpMessage({ name: leadName, conversation, facts, qualify, trade }, voiceSamples, messageHint, ask, leadLanguage);
     const buttons = draft.buttons ?? [];
     // The draft is written in the lead's language, so the calendar rule
     // has to read it in that language — an English-only day list would be
@@ -71,6 +118,7 @@ export async function draftDm(
     if (shape.ok) return { body: draft.body, quickReplies: { question: situation.id, buttons }, shapeFailed: null };
     lastRule = shape.rule;
     if (attempt === 1) return { body: draft.body, quickReplies: { question: situation.id, buttons: [] }, shapeFailed: lastRule };
+    ask = { ...situation, hint: `${situation.hint}\n\n${retryNote(shape.rule)}` };
   }
   /* istanbul ignore next -- unreachable, the loop always returns */
   throw new Error("draftDm: unreachable");

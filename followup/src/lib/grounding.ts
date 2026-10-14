@@ -162,6 +162,7 @@ export function unconfirmedAvailability(draft: string, businessText: string): bo
  *   booking       "Perfect, you're booked for Saturday. See you then!"
  *   done          "I've sent you the details by email."
  *   policy        "Estimates are free, no obligation."
+ *   fee           "I charge buyers nothing."
  *   hours         "Yes, we're open now until late."
  *
  * None contains a digit, and the day in the first one is the LEAD's own
@@ -179,7 +180,7 @@ export function unconfirmedAvailability(draft: string, businessText: string): bo
  * Portuguese, and only as multilingual as that. A false positive costs one
  * redraft and then a draft that waits for the owner.
  */
-export type ClaimKind = "availability" | "booking" | "done" | "policy" | "hours" | "service" | "confirm";
+export type ClaimKind = "availability" | "booking" | "done" | "fee" | "policy" | "hours" | "service" | "confirm";
 
 export function unconfirmedClaim(
   draft: string,
@@ -203,8 +204,13 @@ export function unconfirmedClaim(
 const MESSAGE_SENT_RE =
   /\b(i'?ve|i have|we'?ve|we have|i|we) (just |already )?(sent|emailed|e-mailed|texted|messaged|mailed|wrote|written|reached out)\b|\bte (envié|mandé|escribí)\b|\bhe (enviado|mandado|escrito)\b|\bj['’]ai (envoy\p{L}*|écrit)|\bje (vous |t['’])\s?ai (envoy\p{L}*|écrit)|\b(te |lhe )?(enviei|mandei|escrevi)\b/giu;
 
-/** `polar`: yes and no are different facts ("still available" vs "no longer available"). */
-type Claim = { kind: ClaimKind; statement: RegExp; hedge: RegExp; polar?: boolean };
+/**
+ * `polar`: yes and no are different facts ("still available" vs "no longer available").
+ * `partyOf`: whom the statement is about ("buyer", "seller"), when that
+ * changes the fact: "My commission is 2.5% when I sell your home" says
+ * nothing about what buyers pay.
+ */
+type Claim = { kind: ClaimKind; statement: RegExp; hedge: RegExp; polar?: boolean; partyOf?: (sentence: string) => string };
 
 function unconfirmedClaimOf(claim: Claim, draft: string, businessText: string): boolean {
   // Grounded only by a business sentence that STATES it, unhedged. The
@@ -212,10 +218,13 @@ function unconfirmedClaimOf(claim: Claim, draft: string, businessText: string): 
   // available" in an earlier send grounded "It's available" forever after.
   // For a polar kind the business must have said it the same way round:
   // "Sorry, it's no longer available" does not ground "It's available".
+  // For a kind with parties, about the same party.
   const said = claimStatements(claim, businessText);
-  return claimStatements(claim, draft).some((s) =>
-    claim.polar ? !said.some((b) => NEGATED_RE.test(b) === NEGATED_RE.test(s)) : said.length === 0
-  );
+  return claimStatements(claim, draft).some((s) => {
+    if (claim.polar) return !said.some((b) => NEGATED_RE.test(b) === NEGATED_RE.test(s));
+    const party = claim.partyOf?.(s) ?? "";
+    return !said.some((b) => !party || claim.partyOf?.(b) === party);
+  });
 }
 
 function claimStatements(claim: Claim, text: string): string[] {
@@ -290,6 +299,28 @@ const CLAIMS: Claim[] = [
     statement:
       /\b(i'?ve|i have|we'?ve|we have|i|we) (just |already )?(sent|emailed|e-mailed|texted|messaged|attached|forwarded|shared|booked|scheduled|reserved|called|phoned|rang|spoke|talked|arranged|mailed|passed (this|it|your)|left you)\b|\b(i'?ve|we'?ve) (spoken|talked|been in touch)\b|\b(attached|enclosed) (is|are|you'?ll find)\b|\bplease find (attached|enclosed)\b|\bas (we )?(discussed|agreed|promised)\b|\bfollowing (our|your) (call|conversation|chat|visit)\b|\bya te (\p{L}+ )?(envi|mand|pas|compart|reserv|agend|llam)|\bte (envié|mandé|compartí|llamé|reservé|agendé|escribí)\b|\bhe (enviado|mandado|reservado|agendado|confirmado|llamado|hablado|compartido)\b|\bte adjunto\b|\bcomo (lo )?(hablamos|acordamos|conversamos|prometí)\b|\bje (vous |t['’])?\s?ai (envoy|transmis|réserv|confirm|appel|partag)|\bj['’]ai (envoy|transmis|réserv|confirm|appel|partag|parlé)|\bnous avons (envoy|réserv|confirm|appel)|\bci-joint\b|\bcomme (convenu|promis|discuté)\b|\b(te |lhe )?(enviei|mandei|reservei|agendei|confirmei|liguei|compartilhei)\b|\bem anexo\b|\bcomo (combinado|conversamos|prometido)\b/iu,
     hedge: DONE_HEDGE_RE,
+  },
+  {
+    // What the owner charges, or who pays them. The accuracy test
+    // (2026-10-14) asked a realtor "Do you charge buyers anything?" with
+    // nothing on file and the reply said "I charge buyers nothing": no
+    // digit, no "free", so every rule above passed it. Only the owner
+    // states a fee. A figure is already caught by the digits rule; this is
+    // the fee said in words. "What I charge" and "how much we charge"
+    // name the question, not an answer. A fact saved in Settings reads
+    // "Commission: 2.5%", so a fee label opening a line states a fee too.
+    kind: "fee",
+    statement:
+      /^\s*(?:(?:buyer|seller|listing|selling|buying)'?s?\s+)?(?:commission|fees?|charges?)\s*:|(?<!\b(?:what|how much)\s)\b(i|we)(?:'ll|'d|\s+will|\s+would)?\s+(don'?t\s+|do not\s+|never\s+|only\s+|usually\s+)?charge\b|\bcharges?\s+(you\s+|buyers?\s+|sellers?\s+)?nothing\b|\b(my|our|the)\s+(fee|fees|commission)\s+(is|are|would be|will be|comes)\b|\bcosts?\s+(you|buyers?|sellers?)\s+nothing\b|\b(won'?t|doesn'?t|does not|will not)\s+cost\s+(you|buyers?|sellers?)\b|\b(you|buyers?|sellers?)\s+(usually\s+|typically\s+|normally\s+|generally\s+)?(don'?t|do not|never|won'?t|will not)\s+pay\b|\b(you|buyers?|sellers?)\s+pay\s+nothing\b|\b(paid|covered)\s+by\s+the\s+(sellers?|buyers?|listing)\b|\bthe\s+(sellers?|buyers?)\s+(usually\s+|typically\s+|normally\s+|generally\s+)?(pays?|covers?)\b|\bno\s+commission\b|(?<!\b(?:lo que|cu[aá]nto|qu[eé])\s)\bcobro\b|\bmi\s+comisi[oó]n\s+es\b|\bno\s+pagas?\s+nada\b|\blo\s+paga\s+el\s+vendedor\b|\bje\s+ne\s+(facture|prends)\b|\bma\s+commission\s+est\b|\bvous\s+ne\s+payez\s+rien\b|\bpay[ée]e?\s+par\s+le\s+vendeur\b|\bn[aã]o\s+cobro\b|\bminha\s+comiss[aã]o\s+[ée]\b|\bvoc[eê]\s+n[aã]o\s+paga\b|\bpag[oa]\s+pelo\s+vendedor\b|\b(koi|no)\s+(fee|charge|commission)\s+nahi\b/iu,
+    hedge: FIND_OUT_HEDGE_RE,
+    partyOf: (sentence) =>
+      /\b(buyers?|compradore?s?|acheteurs?)\b/iu.test(sentence)
+        ? "buyer"
+        : /\b(sellers?|vendedore?s?|vendeurs?)\b/iu.test(sentence)
+          ? "seller"
+          : /\b(landlords?|tenants?|renters?)\b/iu.test(sentence)
+            ? "rental"
+            : "",
   },
   {
     kind: "policy",

@@ -26,7 +26,9 @@ export function yourRules(s: RulesState): string[] {
   // for now rather than for good, so it says so.
   if (s.paused) rules.push("Sending is paused. Every reply waits for your OK until you resume.");
   else if (s.holdAll) rules.push("Every reply waits for your OK.");
-  else rules.push("Simple replies send by themselves. Everything else waits for your OK.");
+  // Never "simple" or "easy" replies (R-106): every reply works toward the
+  // booking, and what still waits is said plainly.
+  else rules.push("FollowUp sends your replies itself. A price, a date or anything unsure waits for your OK.");
 
   // Price. Auto skips the risk check (automation.ts), so on an account
   // where Auto is allowed the rule has an exception and says which. While

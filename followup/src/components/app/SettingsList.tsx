@@ -159,7 +159,7 @@ export default function SettingsList({
     {
       title: "How replies go out",
       rows: [
-        { page: "replies", name: "Replies and check-ins", status: holdAll ? "Every reply waits for you" : "Simple replies send themselves" },
+        { page: "replies", name: "Replies and check-ins", status: holdAll ? "Every reply waits for you" : "FollowUp sends them" },
         { page: "booking", name: "Booking hours", status: booking ?? "" },
         { page: "pause", name: "Pause all sending", status: paused ? "Paused" : "Off", state: paused ? "needs" : undefined },
       ],

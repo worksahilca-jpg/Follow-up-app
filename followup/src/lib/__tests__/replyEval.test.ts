@@ -114,6 +114,21 @@ describe("runReplyEval scoring", () => {
     expect(closed.passed).toBe(1);
   });
 
+  it("a question with nothing of theirs in it can't fail for going to anyone, but a template still fails (2026-10-14)", async () => {
+    const plain: ReplyCase = { name: "experience", lines: [["in", "How long have you been a realtor?"]], asks: ["experience"], noDetail: true };
+    const ok = await runReplyEval(draftOf("Good question, I'll confirm that for you. Are you buying or selling?"), gradeOf({ answered: [true], usedDetail: false }), [plain], noWait);
+    expect(ok.passed).toBe(1);
+    const stock = await runReplyEval(draftOf("Thanks for reaching out! I'd be happy to help."), gradeOf({ answered: [true], usedDetail: false, robotic: true }), [plain], noWait);
+    expect(stock.problems.generic).toBe(1);
+    expect(stock.failures[0].detail).toMatch(/read like a template/);
+  });
+
+  it("the questions with nothing of theirs in them are marked, and only those", () => {
+    expect(REPLY_CASES.filter((c) => c.noDetail).map((c) => c.name).sort()).toEqual(
+      ["buyer's fee", "experience", "fee and availability, fee known", "fee and availability, nothing known", "wants to talk today"].sort()
+    );
+  });
+
   it("a ranking the owner stored is theirs to state", async () => {
     const award: ReplyCase = { ...fee, facts: [{ label: "Award", value: "Award-winning agent, TRREB 2025" }], mustInclude: [] };
     const r = await runReplyEval(draftOf("I'm an award-winning agent and I'll confirm my fee and my week for you. What area are you selling in?"), gradeOf({}), [award], noWait);

@@ -173,6 +173,8 @@ export const UNGROUNDED_DRAFT_REASONS: Record<string, string> = {
   booking: "the draft tells them a time is booked or confirmed, and only you can confirm that — check it before it goes",
   done: "the draft says you already sent, called or arranged something this conversation doesn't show — check it before it goes",
   policy: "the draft states what's free, included, refundable or guaranteed, and you haven't said that here — check it before it goes",
+  // Accuracy test, 2026-10-14: "I charge buyers nothing" with no fee on file.
+  fee: "the draft says what you charge or who pays you, and you haven't said that here — check it before it goes",
   hours: "the draft says when you're open, and only you know that — check it before it goes",
   service: "the draft says what you cover, offer or accept, and you haven't said that here — check it before it goes",
   // Founder, 2026-09-29: a link or address that didn't come from the

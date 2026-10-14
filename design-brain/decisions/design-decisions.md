@@ -12691,3 +12691,51 @@ or qualifying changes; one question at a time, with buttons. Honest note given w
 - **Weak spots, honestly:** the pushing/bragging check is English phrases only; in other languages only the prompt
   stands guard. "Learning per language" uses the language the customer last wrote in, not the language each old reply
   was written in, which is right almost always but not always.
+
+## 2026-10-14 — Fifth accuracy run, on the live app after PR #509
+
+The first run of the reply test with the eight trust rules (A-247) on the real model. Read from a small, blurry
+screenshot: the scores are certain, the details in brackets are best readings.
+
+- **Emails:** 121 of 122. **Instagram:** 36 of 37, 0 customers set aside (the same friend's joke as the fourth run,
+  left as it is on purpose). **Qualifying:** 5 small misses, 0 made up (two chats read as Warm instead of Ready or
+  Later, their timing labels with them, and one viewing time not picked up).
+- **Replies:** 10 of 20. About half were the test, not the replies:
+  - "Could go to anyone" failed every reply to a question with nothing of the customer's in it ("How long have you
+    been a realtor?", "How much do you charge?"). Those five cases are now marked; the template check still runs.
+  - The drafter is given the customer's profile name and the grader wasn't, so "Thanks for letting me know, Sam"
+    counted as invented. The grader now gets the name, and is told that offering to help, look, check or confirm is
+    a promise, not a fact, while getting one of the customer's own details wrong is invented.
+  - **Real:** "Do you charge buyers anything?" with nothing on file got "I charge buyers nothing." No digit and no
+    "free", so every code rule passed it. A fee said in words is now the owner's to state, like availability or a
+    policy (`fee` in src/lib/grounding.ts): the draft is redrafted once, then waits for the owner. A seller's
+    commission on file does not cover what buyers pay. Unreviewed emails now count the owner's facts as their words
+    for these rules too, as DMs already did, so an email quoting the saved commission still goes.
+  - Not yet explained, waiting for a readable rerun: two drafts broke the "no invented days" rule twice (held, never
+    sent alone), one read like a template, and the family-move reply may have placed the search in the city they're
+    leaving.
+- **The second try is told what was wrong** (founder, same day: "Yes, add it"). A DM that breaks a rule is written
+  once more, as before, but the retry now hears which rule and how to fix it ("It named a day nobody in this
+  conversation mentioned…"), instead of the same request again. Fewer drafts end up held for the owner to fix.
+
+## 2026-10-14 — "Simple replies" taken out of the app (R-106)
+
+Caught while reading the decisions before drawing the next build. R-106 (Oct 10) rejected calling automatic sending
+"easy" or "simple" replies: *"No lead should be taken lightly."* The words had stayed in four places, and one was new
+today: the Settings row ("Simple replies send themselves", from Sep 26), Your rules ("Simple replies send by
+themselves"), the /security page ("simple replies go by themselves"), and the plans page line written for A-245. All
+now say what A-217 says: FollowUp sends the replies itself, and a price, a date or anything unsure waits for the
+owner. The launch plan's build item was renamed the same way. **For future sessions:** never "simple", "easy" or
+"routine" replies in anything an owner or a visitor reads.
+- **The next queued build turned out to be built already.** "FollowUp sends replies itself for testers who say yes"
+  was next on the launch plan. Testers are on the beta plan, which counts as active, so they get the one-time "Let
+  FollowUp reply for you?" question on Today (A-217, A-218) once they have sent 5 replies with most as FollowUp wrote
+  them. Production, read-only: 7 testers, 2 qualify (8 and 7.7 in 10 sent as written), 0 have answered, 0 send by
+  themselves. The question shows only when nobody is waiting (A-243), which may be why. Nothing new was drawn; the
+  plan item is ticked.
+
+## 2026-10-14 — Learn from mistakes stays by hand (A-248)
+
+Planned, not built. Production, read-only: in two weeks testers sent 5 replies through FollowUp and changed 1; 2 of 7
+testers have "Improve FollowUp" on. An automatic loop would have almost nothing to learn from, so the founder chose the
+manual loop that already works (run the test, fix, add a made-up check) until testers send 20+ replies a week.

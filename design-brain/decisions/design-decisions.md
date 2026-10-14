@@ -12559,7 +12559,9 @@ stays everyone. The A-243 build (commit 8c31f76, branch only, never merged) is n
   - Calls to make are rows that open the customer's page, where the call buttons are.
   - "Still to do today" shows four other replies, then "Show N more replies".
   - Black edge set directly on the box: the `border-ink` class came out grey.
-- **Weak spots, honestly:** the numbers and the progress bar are counted when the page loads, so they don't move as the
-  owner sends (a refresh does). A team that calls customers now needs one more tap to reach No answer / Spoke. The
+- **Fixed the same day (founder: *"Yes, fix it now"*):** the numbers, the bar, "Done today" and "Start with" now update
+  after every send, without a reload (Today fetches its server data again; the open card stays). Checked: 5 → 4
+  replies, 0 → 1 of 6 done, the next customer opened.
+- **Weak spots, honestly:** A team that calls customers now needs one more tap to reach No answer / Spoke. The
   made-up data had every customer "quiet", so the order looked oldest-first; real new customers rank above (A-230).
 

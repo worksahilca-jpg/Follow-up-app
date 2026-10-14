@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
 import { WARM_CARD } from "@/components/app/ReplyCard";
 import { oneQueue, summariseGroups, UNKNOWN_SOURCE_LABEL, WHOLE_QUEUE } from "@/lib/approvalGroups";
@@ -596,8 +597,14 @@ export default function ApprovalQueue({
     const pending = timers.current;
     return () => pending.forEach(clearTimeout);
   }, []);
+  // The day's numbers, progress and "Done today" are worked out on the
+  // server (A-244). After every send they are fetched again, so "5 replies
+  // to send" becomes 4 and the bar moves as the owner works; what is on
+  // screen here (the open card, a half-written reply) stays as it is.
+  const router = useRouter();
   // Stable, so a card's own timers aren't restarted by every re-render.
   const resolve = useCallback((leadId: string, result: string | null) => {
+    router.refresh();
     if (!result) {
       setResolved((prev) => new Set(prev).add(leadId));
       return;
@@ -613,7 +620,7 @@ export default function ApprovalQueue({
         });
       }, RESULT_HOLD_MS)
     );
-  }, []);
+  }, [router]);
   const visible = items.filter((i) => !resolved.has(i.leadId));
   // What still needs a decision: the counts never include a card that is on its way out.
   const active = visible.filter((i) => !leaving[i.leadId]);

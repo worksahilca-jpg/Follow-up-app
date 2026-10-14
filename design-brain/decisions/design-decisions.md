@@ -12550,3 +12550,16 @@ stays everyone. The A-243 build (commit 8c31f76, branch only, never merged) is n
 - **Drawn and approved (A-244, 2026-10-14):** greeting, the day in numbers, progress, Do this first, Still to do
   today, Tomorrow, Done today. *"Yes, build this"*. Not known by the app yet: a viewing's address and a time a customer
   asked to be called; those lines show without them until booking is built (A-242).
+- **Built (A-244, 2026-10-14),** checked in a real browser at 390x844 and 1280x900 with made-up customers and two
+  booked calls (today and tomorrow): the day, "Reply to Omar" opening the reply card inside "Do this first", and a row
+  in "Still to do today" bringing Lucía up. All 3,746 tests pass. Choices made while building:
+  - "Do this first" says only what FollowUp knows: the A-230 reason ("Raj Malhotra wants to book.") or "is waiting for
+    your reply" with their own words quoted. No guessed summary.
+  - The third number is "booked for today" (calls booked through the booking link) until viewings come with A-242.
+  - Calls to make are rows that open the customer's page, where the call buttons are.
+  - "Still to do today" shows four other replies, then "Show N more replies".
+  - Black edge set directly on the box: the `border-ink` class came out grey.
+- **Weak spots, honestly:** the numbers and the progress bar are counted when the page loads, so they don't move as the
+  owner sends (a refresh does). A team that calls customers now needs one more tap to reach No answer / Spoke. The
+  made-up data had every customer "quiet", so the order looked oldest-first; real new customers rank above (A-230).
+

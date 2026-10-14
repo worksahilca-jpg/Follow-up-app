@@ -62,14 +62,13 @@ describe("the dashboard on a brand-new account", () => {
     expect(source).toMatch(/\{sentence \? \(/);
   });
 
-  it("still gives an account that has worked its count", () => {
-    // The fix must not overcorrect: an owner with customers and an empty
-    // queue has earned "0 customers are waiting for you", and losing it would
-    // make the line useless in the one case it was written for.
-    // The words are split for the green italic phrase (A-221, A-243):
-    // "customers are" <em>waiting for you</em>.
-    expect(source).toContain('"customers are"');
-    expect(source).toContain("<em>waiting for you</em>");
+  it("still gives an account that has worked its day", () => {
+    // The fix must not overcorrect: an owner with customers gets their day
+    // (A-244): a greeting on their own clock, then who to start with, and
+    // the day in numbers. Only a brand-new account gets the sentence.
+    expect(source).toContain("greeting(now, timezone, me?.name)");
+    expect(source).toContain("dayLine(firstUpName");
+    expect(source).toContain("<DayNumbers");
   });
 });
 

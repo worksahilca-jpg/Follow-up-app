@@ -1,7 +1,8 @@
 /**
- * Today's two plain sentences (A-243, after R-113: "how do i get to know
- * what to do"). The page says what to do before showing anything to act
- * on, and who comes next as a line, not a row to decode.
+ * Today's plain sentences (A-243, A-244; after R-113 "how do i get to know
+ * what to do" and R-114 "Today is the gist of everything"). Today is the
+ * owner's whole day: what to do first, what is left, how far through they
+ * are, and tomorrow. Each line says what it is in words.
  */
 
 /** "Ivy, Aman and 2 more": who comes after, by first name, two at most. */
@@ -18,4 +19,70 @@ export function todaysInstruction(waiting: number, firstName: string | null): st
   if (!firstName || waiting < 1) return null;
   if (waiting === 1) return `Reply to ${firstName}, then you're done.`;
   return `Reply to them one at a time. Start with ${firstName}.`;
+}
+
+/** The hour on the owner's own clock, 0–23. */
+function hourIn(now: Date, timeZone: string): number {
+  const h = new Intl.DateTimeFormat("en-US", { timeZone, hour: "2-digit", hourCycle: "h23" }).format(now);
+  return Number(h) % 24;
+}
+
+/** "Good morning, Priya." on the owner's own clock; no name, no comma. */
+export function greeting(now: Date, timeZone: string, name: string | null | undefined): string {
+  const h = hourIn(now, timeZone);
+  const part = h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+  const first = name?.trim().split(/\s+/)[0];
+  return first ? `${part}, ${first}.` : `${part}.`;
+}
+
+/** The line under the greeting: who to start with, or that the day is clear. */
+export function dayLine(startWith: string | null, anythingToDo: boolean): string {
+  if (startWith) return `Here is your day. Start with ${startWith}.`;
+  return anythingToDo ? "Here is your day." : "Nothing needs you right now.";
+}
+
+/**
+ * "Do this first", said as a sentence from what FollowUp knows for sure:
+ * the reason they are on top (A-230), never a guess at what they meant.
+ */
+export function focusSentence(name: string, why: string | null | undefined): string {
+  switch (why) {
+    case "Wants to book":
+      return `${name} wants to book.`;
+    case "Asked the price":
+      return `${name} asked about the price.`;
+    case "Likely to book":
+      return `${name} looks ready to book.`;
+    default:
+      return `${name} is waiting for your reply.`;
+  }
+}
+
+/** "3 of 11 done today": nothing to show when there is nothing at all in the day. */
+export function dayProgress(done: number, toGo: number): { done: number; total: number; toGo: number; pct: number } | null {
+  const d = Math.max(0, done);
+  const left = Math.max(0, toGo);
+  const total = d + left;
+  if (total === 0) return null;
+  return { done: d, total, toGo: left, pct: Math.round((d / total) * 100) };
+}
+
+/** Which of the owner's days a time falls on: 0 today, 1 tomorrow, anything else is neither. */
+export function dayOffset(at: Date, now: Date, timeZone: string): number {
+  const ymd = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
+  return Math.round((Date.parse(ymd(at)) - Date.parse(ymd(now))) / 86_400_000);
+}
+
+/** "6:30 PM" on the owner's own clock. */
+export function clockTime(at: Date, timeZone: string): string {
+  return new Intl.DateTimeFormat("en-US", { timeZone, hour: "numeric", minute: "2-digit" }).format(at);
+}
+
+/** "Done today": what happened, one plain line each. Only what is true; nothing when nothing happened. */
+export function doneLines(input: { handled: number; wroteFor: number; booked: { name: string; when: string }[] }): string[] {
+  const lines: string[] = [];
+  if (input.handled > 0) lines.push(`You handled ${input.handled} ${input.handled === 1 ? "customer" : "customers"}.`);
+  if (input.wroteFor > 0) lines.push(`FollowUp wrote to ${input.wroteFor} ${input.wroteFor === 1 ? "customer" : "customers"} for you.`);
+  for (const b of input.booked) lines.push(`${b.name} booked a call for ${b.when}.`);
+  return lines;
 }

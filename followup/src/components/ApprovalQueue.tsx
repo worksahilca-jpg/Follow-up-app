@@ -7,7 +7,8 @@ import { WARM_CARD } from "@/components/app/ReplyCard";
 import { oneQueue, summariseGroups, UNKNOWN_SOURCE_LABEL, WHOLE_QUEUE } from "@/lib/approvalGroups";
 import type { TodayTier } from "@/lib/calmToday";
 import { plainHoldReason } from "@/lib/holdReasons";
-import { todaysInstruction, whoIsNext } from "@/lib/todayWords";
+import { focusSentence } from "@/lib/todayWords";
+import { DAY_BOX, DayHeading, DayRow, type TodayRow } from "@/components/app/TodayDay";
 import { useUndoableSend } from "@/components/useUndoableSend";
 import SiteReplyCard from "@/components/app/SiteReplyCard";
 import type { PendingApproval } from "@/lib/pendingApprovals";
@@ -101,11 +102,14 @@ const ONE = "px-2 sm:px-0 lg:rounded-[18px] lg:border lg:border-line lg:bg-card 
 
 function ApprovalCard({
   item,
+  bare = false,
   onResolved,
   sendLocked = false,
   onSkip,
 }: {
   item: ApprovalItem;
+  /** Inside "Do this first" (A-244), which is the box: no box of its own. */
+  bare?: boolean;
   /** Done with this card. `result` is what happened, said for a moment before it leaves (A-048). */
   onResolved: (leadId: string, result: string | null, sent?: boolean) => void;
   /** Only admins send, and this person isn't one (A-041). */
@@ -262,7 +266,7 @@ function ApprovalCard({
   const how = [way, when].filter(Boolean).join(", ");
 
   return (
-    <article className={ONE} aria-label={`${item.leadName} is waiting for you`}>
+    <article className={bare ? undefined : ONE} aria-label={`${item.leadName} is waiting for you`}>
       <p className="text-[14px] leading-snug text-ink-soft">
         {item.why && <span className="font-semibold text-ink">{item.why} · </span>}
         <Link href={`/leads/${item.leadId}`} className="font-semibold text-ink hover:underline">
@@ -555,23 +559,23 @@ function ApprovalCard({
 
 export default function ApprovalQueue({
   items,
+  rows = [],
   answeredForYou = 0,
   sendLocked = false,
   handledToday = 0,
-  setAside = 0,
   holdAll = false,
   weekResults = null,
   plan = null,
 }: {
   items: ApprovalItem[];
+  /** The rest of the owner's day (A-244): calls to make and times booked for today, in order. */
+  rows?: TodayRow[];
   /** Only admins send, and this person isn't one (A-041). */
   sendLocked?: boolean;
   /** Replies FollowUp sent on its own this week — what it did instead of asking. */
   answeredForYou?: number;
   /** People the owner dealt with since their midnight (A-031 / A-046). */
   handledToday?: number;
-  /** Cards set aside with Later, hidden until they come back. */
-  setAside?: number;
   /**
    * Business.holdAllForApproval: every reply waits for the owner. The
    * empty state must not then say only unsure ones do (strategy audit
@@ -592,7 +596,7 @@ export default function ApprovalQueue({
     const pending = timers.current;
     return () => pending.forEach(clearTimeout);
   }, []);
-  // Stable, so a card's own timers (We talked) aren't restarted by every re-render.
+  // Stable, so a card's own timers aren't restarted by every re-render.
   const resolve = useCallback((leadId: string, result: string | null) => {
     if (!result) {
       setResolved((prev) => new Set(prev).add(leadId));
@@ -613,57 +617,33 @@ export default function ApprovalQueue({
   const visible = items.filter((i) => !resolved.has(i.leadId));
   // What still needs a decision: the counts never include a card that is on its way out.
   const active = visible.filter((i) => !leaving[i.leadId]);
-  // One customer at a time, on the desk as on the phone (A-209, A-220).
-  // "Skip for now" (A-243) moves someone to the back of the line for this
-  // visit only: nothing is saved, so they are first again next time.
+  // One customer at a time in "Do this first" (A-244). "Skip for now" (A-243)
+  // moves someone to the back of the line for this visit only; a row in
+  // "Still to do today" brings that person up instead. Nothing is saved.
   const [skipped, setSkipped] = useState<string[]>([]);
-  const skip = useCallback((leadId: string) => setSkipped((prev) => [...prev.filter((id) => id !== leadId), leadId]), []);
+  const [picked, setPicked] = useState<string | null>(null);
+  // Closed until the owner presses "Reply to Raj", as drawn; once they are
+  // replying, the next customer opens straight after a send.
+  const [open, setOpen] = useState(false);
+  const [showAll, setShowAll] = useState(false);
+  const focusRef = useRef<HTMLElement>(null);
+  const skip = useCallback((leadId: string) => {
+    setPicked(null);
+    setSkipped((prev) => [...prev.filter((id) => id !== leadId), leadId]);
+  }, []);
+  const pick = (leadId: string) => {
+    setPicked(leadId);
+    setOpen(true);
+    focusRef.current?.scrollIntoView({ block: "start" });
+  };
 
   // An empty queue is the state the owner most wants to be in, so it is
   // said out loud, with what FollowUp did instead of asking. Handled here
   // since the page loaded counts too, so the line moves as the owner works.
   const handled = handledToday + (items.length - active.length);
 
-  if (visible.length === 0) {
-    // A finish line, not a blank (A-046, the Todoist study): said calmly,
-    // with what FollowUp keeps doing. No confetti, points or streaks.
-    const done = handled > 0;
-    return (
-      // Faded in only when the owner emptied the list just now; an empty
-      // Today on load simply is (no motion without a change of state).
-      <motion.div
-        initial={items.length > 0 ? { opacity: 0 } : false}
-        animate={{ opacity: 1, transition: { duration: MOTION.move, ease: MOTION.easeOut } }}
-        className="max-w-[640px]"
-        role="status"
-      >
-        <div className={CARD}>
-          <span aria-hidden="true" className="flex h-9 w-9 items-center justify-center rounded-full" style={{ background: "var(--sage-soft)", color: "var(--sage)" }}>
-            <Check className="h-5 w-5" strokeWidth={2.4} />
-          </span>
-          <p className="mt-2.5 text-[17px] font-semibold tracking-[-0.01em]">{done ? "You're done for today." : "You're all caught up."}</p>
-          <p className="mt-0.5 text-[13.5px] leading-normal text-ink-soft">
-            {done
-              ? `You handled ${handled} ${handled === 1 ? "person" : "people"} today. FollowUp keeps watching, and will tell you when someone writes.`
-              : holdAll
-                ? "Every reply FollowUp writes shows up here first. Nothing goes out until you send it, apart from a short “let me check” when a price or date question has waited 30 minutes."
-                : "Anything FollowUp isn't sure about will show up here before it sends."}
-            {answeredForYou > 0 &&
-              ` It answered ${answeredForYou} ${answeredForYou === 1 ? "customer" : "customers"} on its own this week.`}
-          </p>
-          {/* What happens next, by name (research round 2, #2): a plan for what is left quiets it as much as finishing it does. */}
-          {plan && <p className="mt-2 text-[13.5px] leading-normal text-ink">{plan}</p>}
-          {/* The end of the day is what the owner remembers (peak-end, A-088): real
-              outcomes only, nothing when they are all zero. */}
-          {weekResults && <p className="mt-2 text-[13px] leading-normal text-ink-soft tabular-nums">{weekResults}</p>}
-        </div>
-
-      </motion.div>
-    );
-  }
-
   /*
-   * One list (A-087): everyone who needs the owner, longest waiting first,
+   * One list (A-087): everyone who needs the owner, in Today's order (A-230),
    * whatever channel they wrote on. See @/lib/approvalGroups for what
    * "safe" is allowed to mean.
    */
@@ -674,34 +654,93 @@ export default function ApprovalQueue({
   // counting groups would keep the whole-queue box on screen beside a
   // single routine row and reintroduce the twin buttons.
   const groupsWithRoutine = groups.filter((g) => g.safeToSend.length > 0).length;
-  const total = handled + active.length;
-  // Everyone still waiting on a decision, in Today's order (A-230), anyone
-  // skipped at the back in the order they were skipped.
+  // Everyone still waiting on a decision, anyone skipped at the back in the order they were skipped.
   // (The groups keep the items they were given, so these are the page's ApprovalItems.)
   const waiting = (groups.flatMap((g) => g.needsYou) as ApprovalItem[]).filter((i) => !leaving[i.leadId]);
   const queue = [
     ...waiting.filter((i) => !skipped.includes(i.leadId)),
     ...skipped.map((id) => waiting.find((i) => i.leadId === id)).filter((i): i is ApprovalItem => Boolean(i)),
   ];
-  // The one on screen, and who comes after them, by first name (A-243).
-  const selected = queue[0] ?? null;
+  const selected = (picked && queue.find((i) => i.leadId === picked)) || queue[0] || null;
   const selectedFirst = selected ? selected.leadName.split(" ")[0] || selected.leadName : null;
-  const after = whoIsNext(queue.slice(1).map((i) => i.leadName));
-  const instruction = todaysInstruction(queue.length, selectedFirst);
   // What the last press did, said for a moment before it goes (A-048).
   const justDone = Object.values(leaving).at(-1) ?? null;
+  const others = queue.filter((i) => i.leadId !== selected?.leadId);
+  const shown = showAll ? others : others.slice(0, REPLY_ROWS);
+  const hidden = others.length - shown.length;
+  const stillToDo = others.length + rows.length;
+
+  // "Do this first" (A-244): what the first customer wants in a sentence, then
+  // one black button. Pressed, it opens into the reply card (A-243).
+  const focus = selected ? (
+    <section ref={focusRef} aria-label="Do this first" className="scroll-mt-20 rounded-[18px] lg:scroll-mt-6 bg-card p-4 sm:p-5" style={{ border: "1.5px solid var(--ink)" }}>
+      <p className="flex items-center gap-1.5 text-[13.5px] text-ink-soft" role={justDone ? "status" : undefined}>
+        {justDone && <Check className="h-4 w-4 shrink-0" style={{ color: "var(--sage)" }} aria-hidden="true" />}
+        {justDone ? [justDone, selectedFirst && `Now ${selectedFirst}.`].filter(Boolean).join(" ") : "Do this first"}
+      </p>
+      {open ? (
+        <motion.div key={selected.leadId} className="mt-3" initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { duration: MOTION.move, ease: MOTION.easeOut } }}>
+          <ApprovalCard
+            item={selected}
+            bare
+            onResolved={resolve}
+            sendLocked={sendLocked}
+            onSkip={queue.length > 1 ? () => skip(selected.leadId) : undefined}
+          />
+        </motion.div>
+      ) : (
+        <>
+          <p className="mt-1.5 text-[18px] font-semibold leading-snug tracking-[-0.01em]">{focusSentence(selected.leadName, selected.why)}</p>
+          <p className="mt-1.5 text-[14.5px] leading-normal text-ink-soft">{focusDetail(selected)}</p>
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="mt-4 h-[50px] w-full rounded-full px-7 text-[16px] font-semibold sm:w-auto"
+            style={{ backgroundColor: "var(--accent)", color: "var(--on-accent)" }}
+          >
+            Reply to {selectedFirst}
+          </button>
+        </>
+      )}
+    </section>
+  ) : visible.length === 0 || rows.length > 0 ? (
+    // A finish line, not a blank (A-046, the Todoist study): said calmly,
+    // with what FollowUp keeps doing. No confetti, points or streaks.
+    // Faded in only when the owner emptied the list just now; an empty
+    // Today on load simply is (no motion without a change of state).
+    <motion.div
+      initial={items.length > 0 ? { opacity: 0 } : false}
+      animate={{ opacity: 1, transition: { duration: MOTION.move, ease: MOTION.easeOut } }}
+      className={CARD}
+      role="status"
+    >
+      <span aria-hidden="true" className="flex h-9 w-9 items-center justify-center rounded-full" style={{ background: "var(--sage-soft)", color: "var(--sage)" }}>
+        <Check className="h-5 w-5" strokeWidth={2.4} />
+      </span>
+      <p className="mt-2.5 text-[17px] font-semibold tracking-[-0.01em]">
+        {rows.length > 0 ? "No replies waiting." : handled > 0 ? "You're done for today." : "You're all caught up."}
+      </p>
+      <p className="mt-0.5 text-[13.5px] leading-normal text-ink-soft">
+        {rows.length > 0
+          ? "Your calls and booked times for today are below."
+          : handled > 0
+            ? `You handled ${handled} ${handled === 1 ? "person" : "people"} today. FollowUp keeps watching, and will tell you when someone writes.`
+            : holdAll
+              ? "Every reply FollowUp writes shows up here first. Nothing goes out until you send it, apart from a short “let me check” when a price or date question has waited 30 minutes."
+              : "Anything FollowUp isn't sure about will show up here before it sends."}
+        {rows.length === 0 && answeredForYou > 0 &&
+          ` It answered ${answeredForYou} ${answeredForYou === 1 ? "customer" : "customers"} on its own this week.`}
+      </p>
+      {/* What happens next, by name (research round 2, #2): a plan for what is left quiets it as much as finishing it does. */}
+      {rows.length === 0 && plan && <p className="mt-2 text-[13.5px] leading-normal text-ink">{plan}</p>}
+      {/* The end of the day is what the owner remembers (peak-end, A-088): real
+          outcomes only, nothing when they are all zero. */}
+      {rows.length === 0 && weekResults && <p className="mt-2 text-[13px] leading-normal text-ink-soft tabular-nums">{weekResults}</p>}
+    </motion.div>
+  ) : null;
 
   return (
-    <div className="max-w-[640px]">
-      {/* What to do, before anything to act on (A-243, R-113). Just after a
-          send it says what happened first (A-048): "Sent to Omar. Now Ivy." */}
-      {(justDone || instruction) && (
-        <p className="mb-4 flex items-center gap-1.5 px-2 text-[16px] leading-snug text-ink-soft sm:px-0" role={justDone ? "status" : undefined}>
-          {justDone && <Check className="h-4 w-4 shrink-0" style={{ color: "var(--sage)" }} aria-hidden="true" />}
-          <span>{justDone ? [justDone, selectedFirst && `Now ${selectedFirst}.`].filter(Boolean).join(" ") : instruction}</span>
-        </p>
-      )}
-
+    <div>
       {/* Said once, above everything, rather than 48 times on 48 cards. */}
       {summary.fromBeforePermission > 0 && (
         <p className="mb-3 px-1 text-[12.5px] leading-relaxed text-ink-soft">
@@ -726,26 +765,7 @@ export default function ApprovalQueue({
         </div>
       )}
 
-      {/* The one customer (A-220): their words, the reply, Send. Keyed by
-          person so a change and the answer blank start fresh. */}
-      {selected && (
-        <motion.div key={selected.leadId} initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { duration: MOTION.move, ease: MOTION.easeOut } }}>
-          <ApprovalCard
-            item={selected}
-            onResolved={resolve}
-            sendLocked={sendLocked}
-            onSkip={queue.length > 1 ? () => skip(selected.leadId) : undefined}
-          />
-        </motion.div>
-      )}
-
-      {/* Who's next, as one plain line (A-243). Today never shows a list;
-          everyone is in Customers. */}
-      {selectedFirst && after && (
-        <p className="mt-4 px-2 text-[15px] leading-snug text-ink-soft sm:px-0">
-          After {selectedFirst}: {after}.
-        </p>
-      )}
+      {focus}
 
       {/* Routine drafts: one quiet row per source, sent together on one press. */}
       {groups
@@ -762,14 +782,59 @@ export default function ApprovalQueue({
           </div>
         ))}
 
-      {/* Progress only when there is progress (A-080, the goal-gradient
-          rule), desk only, once the day has five or more people in it. */}
-      {total >= 5 && handled > 0 && (
-        <p className="mt-3 hidden px-1 text-[12.5px] text-ink-faint tabular-nums sm:block">
-          {handled} of {total} handled today
-          {setAside > 0 && ` · ${setAside} set aside for later`}
-        </p>
+      {/* Still to do today (A-244): every other reply, call and booked time,
+          one row each. A reply row brings that person up into "Do this first". */}
+      {stillToDo > 0 && (
+        <section aria-label="Still to do today" className="mt-7">
+          <DayHeading
+            title="Still to do today"
+            aside={selectedFirst ? `${stillToDo} more after ${selectedFirst}` : `${stillToDo} ${stillToDo === 1 ? "thing" : "things"}`}
+          />
+          <div className={`${DAY_BOX} overflow-hidden`}>
+            {shown.map((i, n) => (
+              <DayRow key={i.leadId} first={n === 0} row={replyRow(i)} onClick={() => pick(i.leadId)} />
+            ))}
+            {hidden > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowAll(true)}
+                className="flex min-h-[52px] w-full items-center gap-3 border-t border-line px-4 py-3 text-left text-[14.5px] font-medium hover:bg-paper"
+              >
+                <span aria-hidden="true" className="w-9 shrink-0" />
+                Show {hidden} more {hidden === 1 ? "reply" : "replies"}
+              </button>
+            )}
+            {rows.map((r, n) => (
+              <DayRow key={r.key} row={r} first={shown.length === 0 && n === 0} />
+            ))}
+          </div>
+        </section>
       )}
     </div>
   );
+}
+
+/** How many other replies "Still to do today" lists before "Show N more replies". */
+const REPLY_ROWS = 4;
+
+/** "Raj wrote 4 minutes ago by email. FollowUp has a reply ready. Read it, then send." */
+function focusDetail(item: ApprovalItem): string {
+  const first = item.leadName.split(" ")[0] || item.leadName;
+  const way = CHANNEL_WAY[item.leadLastMessageChannel ?? ""] ?? null;
+  const wrote = [first, "wrote", item.asked, way].filter(Boolean).join(" ");
+  // Without a reason on top, their own words say what they want.
+  const said = !item.why && item.leadLastMessage ? `: “${excerpt(item.leadLastMessage, 90)}”` : "";
+  return `${wrote}${said}${said ? "" : "."} FollowUp has a reply ready. Read it, then send.`;
+}
+
+/** One reply in "Still to do today": who, then why or what they said, and how long they have waited. */
+function replyRow(item: ApprovalItem): TodayRow {
+  const what = item.why ?? (item.leadLastMessage ? `“${excerpt(item.leadLastMessage, 48)}”` : null);
+  const wait = item.wait ? item.wait.charAt(0).toLowerCase() + item.wait.slice(1) : null;
+  return { key: item.leadId, kind: "reply", title: `Reply to ${item.leadName}`, sub: [what, wait].filter(Boolean).join(" · ") || null, time: null, href: null };
+}
+
+function excerpt(text: string, max: number): string {
+  const flat = text.replace(/\s+/g, " ").trim();
+  return flat.length > max ? `${flat.slice(0, max).trimEnd()}…` : flat;
 }

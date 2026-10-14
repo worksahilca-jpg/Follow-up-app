@@ -28,13 +28,12 @@ import {
   UNANSWERED_DEFAULT_HOURS,
   DEAD_LEAD_ACTION,
   DEAD_LEAD_DEFAULT_DAYS,
-  SILENCE_DEFAULT_TRIGGER_DAYS,
   effectiveUnansweredHours,
-  quietReminderPlan,
   reactivationAlreadySent,
   isConsentKeyword,
   type TimelineMessage,
 } from "@/lib/automation";
+import { followUpState, quietLeadNext, readFollowUpPlans, type FollowUpPlans, type PlanLead } from "@/lib/followUpPlans";
 import { isExitPayload } from "@/lib/quickReplies";
 import { settledByTalk, lastInboundTime } from "@/lib/talked";
 import { prisma } from "@/lib/db";
@@ -65,11 +64,12 @@ export interface BusinessAutomationRules {
    */
   holdAllForApproval: boolean;
   masterEnabled: boolean;
-  silenceTriggerDays: number;
   unansweredEnabled: boolean;
   unansweredHours: number;
   deadLeadEnabled: boolean;
   deadLeadDays: number;
+  /** Business.followUpPlans, read (src/lib/followUpPlans.ts): the days the owner changed, and their own plan. */
+  followUpPlans: FollowUpPlans;
 }
 
 /**
@@ -91,7 +91,7 @@ export async function getBusinessAutomationRules(businessId: string): Promise<Bu
     hasAnySendChannel(businessId),
     // Defaults to held, matching the column's own `@default(true)`: if the
     // row cannot be read, the safe answer is the one that promises less.
-    prisma.business.findUnique({ where: { id: businessId }, select: { holdAllForApproval: true } }),
+    prisma.business.findUnique({ where: { id: businessId }, select: { holdAllForApproval: true, followUpPlans: true } }),
   ]);
   const master = rows.find((r) => r.action === "auto_send");
   const unanswered = rows.find((r) => r.action === UNANSWERED_ACTION);
@@ -100,11 +100,11 @@ export async function getBusinessAutomationRules(businessId: string): Promise<Bu
     canSend,
     holdAllForApproval: business?.holdAllForApproval ?? true,
     masterEnabled: master?.enabled ?? false,
-    silenceTriggerDays: master?.triggerDays ?? SILENCE_DEFAULT_TRIGGER_DAYS,
     unansweredEnabled: unanswered?.enabled ?? true,
     unansweredHours: unanswered?.triggerHours ?? UNANSWERED_DEFAULT_HOURS,
     deadLeadEnabled: deadLead?.enabled ?? true,
     deadLeadDays: deadLead?.triggerDays ?? DEAD_LEAD_DEFAULT_DAYS,
+    followUpPlans: readFollowUpPlans(business?.followUpPlans),
   };
 }
 
@@ -207,6 +207,9 @@ export interface AutomationStatusLead {
   // They typed an email into the DM (src/lib/dmContact.ts, A-238): past the
   // window FollowUp follows up there, so the window is not in the way.
   hasDmEmail?: boolean;
+  // What the follow-up plan reads about this customer (src/lib/followUpPlans.ts):
+  // the plan the owner picked, where they stand, the day they asked for, bookings.
+  followUp?: PlanLead;
 }
 
 /**
@@ -398,23 +401,29 @@ export function computeAutomationStatus(
 
   if (!due) {
     const daysSinceContact = (now.getTime() - new Date(lead.lastContacted).getTime()) / 86_400_000;
-    // The quiet-lead cadence, read by the same pure function the engine
-    // uses (quietReminderPlan) — four reminders, then nothing until the
-    // welcome back. Null when they spoke last, which the unanswered branch
-    // above has already described.
-    const plan = quietReminderPlan(timeline, new Date(lead.lastContacted).getTime(), rules.silenceTriggerDays, rules.deadLeadDays);
-    if (rules.deadLeadEnabled && daysSinceContact >= rules.deadLeadDays && !reactivationAlreadySent(timeline, rules.deadLeadDays)) {
+    // The follow-up plan, read by the same pure functions the engine uses
+    // (followUpState, quietLeadNext): the plan's messages, then nothing
+    // until the welcome back. Null when they spoke last, which the
+    // unanswered branch above has already described.
+    const plan = followUpState(timeline, new Date(lead.lastContacted).getTime(), rules.followUpPlans, lead.followUp ?? {}, now.getTime(), rules.deadLeadDays);
+    const next = quietLeadNext(plan, {
+      pastWelcomeBackWait: daysSinceContact >= rules.deadLeadDays,
+      welcomeBackOn: rules.deadLeadEnabled,
+      welcomeBackSent: reactivationAlreadySent(timeline, rules.deadLeadDays),
+      nowMs: now.getTime(),
+    });
+    if (next === "welcome_back") {
       due = "dead_lead";
-    } else if (plan?.dueAt && plan.dueAt.getTime() <= now.getTime()) {
+    } else if (next === "plan") {
       due = "silence";
-    } else if (etaHours === null && plan?.dueAt) {
+    } else if (etaHours === null && plan?.dueAt != null) {
       // Only fills in an ETA here when the unanswered branch above didn't
       // already set a more urgent (and more relevant, since it's the
       // branch actually governing this lead) one. With the cadence
       // finished there is no ETA at all, and the lead reads as "sent"
       // below — nothing more is coming until it reaches the dead-lead
       // threshold.
-      etaHours = (plan.dueAt.getTime() - now.getTime()) / 3_600_000;
+      etaHours = (plan.dueAt - now.getTime()) / 3_600_000;
     }
   }
 

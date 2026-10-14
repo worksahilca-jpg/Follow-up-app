@@ -45,7 +45,8 @@ describe("writing it", () => {
     gen.mockResolvedValue({ subject: "s", body: "Hi, checking in." });
     const ex = await writeRuleExample("biz", lead("Quiet", "outbound", 3), "silence", {}, NOW);
     expect(ex).toEqual({ text: "Hi, checking in.", what: "the first check-in" });
-    expect(gen.mock.calls[0][2]).toMatch(/nudge/i);
+    expect(gen.mock.calls[0][2]).toMatch(/follow-up 1 of 5/);
+    expect(gen.mock.calls[0][2]).toMatch(/answer anything left open/);
   });
   it("writes a DM for an Instagram customer", async () => {
     dm.mockResolvedValue({ body: "Hey!", quickReplies: [], shapeFailed: null });

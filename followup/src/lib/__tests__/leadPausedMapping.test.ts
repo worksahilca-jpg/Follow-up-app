@@ -26,7 +26,7 @@ const RULES: BusinessAutomationRules = {
   // allows sending keeps these cases about what they are about.
   holdAllForApproval: false,
   masterEnabled: true,
-  silenceTriggerDays: 5,
+  followUpPlans: {},
   unansweredEnabled: true,
   unansweredHours: 24,
   deadLeadEnabled: true,

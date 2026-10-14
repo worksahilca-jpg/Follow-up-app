@@ -41,6 +41,10 @@ import { isCallablePhone, telHref } from "@/lib/callPlan";
 import { displayChannel } from "@/lib/displayChannel";
 import CustomerStanding from "@/components/app/CustomerStanding";
 import { readQualification, templateFor } from "@/lib/qualification";
+import CustomerPlan from "@/components/app/CustomerPlan";
+import { planCard } from "@/lib/planCard";
+import { getBusinessAutomationRules } from "@/lib/automationStatus";
+import { PLAN_NAMES } from "@/lib/followUpPlans";
 
 export const dynamic = "force-dynamic";
 
@@ -59,13 +63,14 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
   // who this is and why it's here, the conversation, then the reply.
   // Everything else about the customer sits below, under "More about".
   const ctx = await getSessionContext();
-  const [approval, business, checklist] = ctx
+  const [approval, business, checklist, rules] = ctx
     ? await Promise.all([
         getPendingApprovals(ctx.businessId).then((all) => all.find((a) => a.leadId === lead.id) ?? null),
         prisma.business.findUnique({ where: { id: ctx.businessId }, select: { timezone: true, teamCalls: true, industry: true } }),
         prisma.lead.findFirst({ where: { id: lead.id, businessId: ctx.businessId }, select: { qualification: true, qualifiedAt: true } }),
+        getBusinessAutomationRules(ctx.businessId),
       ])
-    : [null, null, null];
+    : [null, null, null, null];
   const timeZone = business?.timezone ?? "America/New_York";
   const basis = lead.suggestedMessage
     ? describeBasis({
@@ -96,10 +101,25 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
   const channel = channelName(channelId, lead.source);
   const now = new Date();
   const firstWrote = firstMessage ? new Date(firstMessage.date).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone }) : null;
+  // Their follow-up plan (A-245), from the same plan the engine sends by.
+  const plan = rules ? planCard(lead, rules, now, timeZone) : null;
+  const planLine = (bordered: boolean) =>
+    plan && (
+      <CustomerPlan
+        leadId={lead.id}
+        firstName={firstName}
+        title={plan.title}
+        sentence={plan.sentence}
+        plan={plan.plan}
+        picked={plan.picked}
+        ownExists={Boolean(rules?.followUpPlans.own)}
+        waitingFor={plan.waitingFor}
+        bordered={bordered}
+      />
+    );
   // "What FollowUp did" in one line (A-220): the newest thing it did, then what's next. The full record is under Details.
-  const didLine = [lastActionSummary(auditTrail, now), lead.nextFollowUp ? `Next check-in ${formatDate(lead.nextFollowUp, timeZone)}` : null]
-    .filter(Boolean)
-    .join(" · ");
+  const nextCheckIn = plan?.nextAt != null ? (plan.nextAt <= now.getTime() ? "Next check-in due now" : `Next check-in ${formatDate(new Date(plan.nextAt).toISOString(), timeZone)}`) : null;
+  const didLine = [lastActionSummary(auditTrail, now), nextCheckIn].filter(Boolean).join(" · ");
 
   // Where this customer stands (A-246, src/lib/qualification.ts): for a
   // line of work with a checklist. Ready, Warm, Later and "has an agent"
@@ -110,9 +130,6 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
   const checklistShown = template && qualification && qualification.template === template.id ? qualification : null;
   const dealOpen = lead.automationStatus?.kind !== "closed" && lead.stage !== "won" && lead.stage !== "lost";
   const showReady = Boolean(checklistShown && dealOpen && checklistShown.tier === "ready" && checklist?.qualifiedAt);
-  const nextMessage = lead.nextFollowUp
-    ? new Date(lead.nextFollowUp).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric", timeZone })
-    : null;
   const standing =
     template && checklistShown ? (
       <CustomerStanding
@@ -122,7 +139,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
         qualification={showReady || checklistShown.tier !== "ready" ? checklistShown : { ...checklistShown, tier: undefined }}
         open={dealOpen}
         callHref={phone ? telHref(phone) : null}
-        nextMessage={nextMessage}
+        plan={planLine(true)}
       />
     ) : null;
 
@@ -272,8 +289,11 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
               <LeadTrustPanel part="did" source={lead.source} optedOutAt={lead.optedOutAt} auditTrail={auditTrail} />
             </div>
           </CollapsibleSection>
-          <CollapsibleSection row title="Follow-up plan" status={lead.nextFollowUp ? `Next ${formatDate(lead.nextFollowUp, timeZone)}` : "None"}>
-            <LeadWorkflowEnrollment leadId={lead.id} />
+          <CollapsibleSection row title="Follow-up plan" status={plan ? `${PLAN_NAMES[plan.plan]} · ${plan.status}` : "None"}>
+            {planLine(false)}
+            <div className={plan ? "mt-4" : ""}>
+              <LeadWorkflowEnrollment leadId={lead.id} />
+            </div>
           </CollapsibleSection>
           <CollapsibleSection row title="Stage" status={stageLabel(lead.stage)}>
             <dl className="grid grid-cols-[110px_minmax(0,1fr)] items-center gap-x-4 gap-y-2.5 text-[14.5px]">

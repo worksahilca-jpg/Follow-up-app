@@ -37,7 +37,7 @@ export default function CustomerStanding({
   qualification: q,
   open,
   callHref,
-  nextMessage,
+  plan,
 }: {
   leadId: string;
   leadName: string;
@@ -47,8 +47,8 @@ export default function CustomerStanding({
   open: boolean;
   /** tel: link when there is a number to call; null shows Message alone. */
   callHref: string | null;
-  /** "Thursday, Oct 16": when FollowUp writes next, or null when nothing is planned. */
-  nextMessage: string | null;
+  /** Their follow-up plan and its one sentence (A-245, src/components/app/CustomerPlan.tsx), or null. */
+  plan: React.ReactNode;
 }) {
   const first = leadName.split(" ")[0] || leadName;
   const tier = open ? q.tier : undefined;
@@ -100,9 +100,7 @@ export default function CustomerStanding({
         <Pill>{tier === "warm" ? "Warm" : "Later"}</Pill>
         <Title>{notYetTitle(q, first, tier)}</Title>
         <Facts q={q} className="mt-2.5" />
-        <p className="mt-2.5 text-[14px] leading-relaxed text-ink-soft">
-          {nextMessage ? `FollowUp keeps in touch. Next message ${nextMessage}. ` : ""}Nothing for you to do.
-        </p>
+        {plan ?? <p className="mt-2.5 text-[14px] leading-relaxed text-ink-soft">Nothing for you to do.</p>}
         <HowItKnows template={template} q={q} first={first} />
       </Box>
     );
@@ -217,7 +215,7 @@ function Facts({ q, className = "" }: { q: Qualification; className?: string }) 
     <dl className={`grid grid-cols-3 gap-1.5 ${className}`}>
       {glanceFacts(q).map(([label, value]) => (
         <div key={label} className="min-w-0">
-          <dt className="text-[11.5px] text-ink-faint">{label}</dt>
+          <dt className="text-[12px] text-ink-faint">{label}</dt>
           <dd className={"line-clamp-2 text-[13.5px] leading-snug " + (value ? "font-semibold" : "text-ink-faint")}>{value ?? "Not yet"}</dd>
         </div>
       ))}

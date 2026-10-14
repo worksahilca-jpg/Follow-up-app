@@ -6,8 +6,10 @@
  *      (the default, holding accounts) within five minutes, at any hour —
  *      the fresh-reply pass. Drafting and holding are never held back by
  *      the send window; only sending is.
- *   2. A quiet lead gets four reminders — day 3, 7, 14, 30 from the message
- *      they went quiet on — each with its own angle, and then nothing.
+ *   2. A quiet lead follows its plan (A-245, 2026-10-14, which replaced the
+ *      four reminders of day 3, 7, 14, 30): Fast is day 1, 3, 7, 14, 30 from
+ *      the message they went quiet on, Long adds a message a month, each
+ *      with its own angle, and then nothing.
  *   3. Past the dead-lead threshold, one welcome back: no apology unless
  *      WE ignored THEM, and never a second one.
  *   4. Reminders only go out 8:00–20:00 local, stop the moment the
@@ -53,13 +55,8 @@ import { isWithinSendWindow } from "@/lib/sendWindow";
 import {
   runAutomationForBusiness,
   runFreshRepliesForAllBusinesses,
-  quietReminderDays,
-  quietReminderPlan,
-  quietReminderHint,
   deadLeadMessageHint,
-  reactivationAlreadySent,
   freshInboundToAnswer,
-  type TimelineMessage,
 } from "@/lib/automation";
 import { computeAutomationStatus, type BusinessAutomationRules } from "@/lib/automationStatus";
 import type { Message } from "@/lib/types";
@@ -147,106 +144,30 @@ beforeEach(() => {
  * 2. Four reminders, each different, then stop.
  * ------------------------------------------------------------------ */
 
-describe("the quiet-lead calendar", () => {
-  it("is day 3, 7, 14 and 30 while the owner has left the Settings value alone", () => {
-    expect(quietReminderDays(3)).toEqual([3, 7, 14, 30]);
-    // The number on screen is reminder 1's day, literally: 5 is a choice now,
-    // not the old default read as "day 3" (reminderCadence.ts).
-    expect(quietReminderDays(5)).toEqual([5, 9, 16, 32]);
-  });
+describe("the plans the engine runs (A-245)", () => {
+  it("sends Fast's first message a day after the one they went quiet on, not before", async () => {
+    hourly({ silence: [aLead([row("inbound", 1 * D), row("outbound", 12 * H)])] });
+    expect((await runAutomationForBusiness("biz1")).checked).toBe(0);
 
-  it("uses a silence value the owner changed as reminder 1, and keeps the later ones in order", () => {
-    expect(quietReminderDays(1)).toEqual([1, 7, 14, 30]);
-    // Never a second reminder four days BEFORE the first one.
-    expect(quietReminderDays(10)).toEqual([10, 14, 21, 37]);
-  });
-});
-
-describe("where a quiet lead is in the cadence", () => {
-  const t = (direction: string, msAgo: number, trigger: string | null = null): TimelineMessage => ({ direction, at: Date.now() - msAgo, trigger });
-
-  it("counts from the message they went quiet on: reminder 1 is due on day 3", () => {
-    const plan = quietReminderPlan([t("inbound", 10 * D), t("outbound", 4 * D)], 0, 3)!;
-    expect(plan.step).toBe(0);
-    expect(Math.round((Date.now() - plan.dueAt!.getTime()) / D)).toBe(1); // due a day ago (day 3 of 4)
-  });
-
-  it("moves to reminder 2 once reminder 1 has gone — however it went, approved from Today included", () => {
-    // A "manual" send carries no automation marker; it still counts.
-    const plan = quietReminderPlan([t("inbound", 20 * D), t("outbound", 12 * D), t("outbound", 9 * D, "manual")], 0, 3)!;
-    expect(plan.step).toBe(1);
-    expect(plan.dueAt!.getTime()).toBeLessThanOrEqual(Date.now());
-  });
-
-  it("is finished after four, and stays finished", () => {
-    const plan = quietReminderPlan(
-      [t("inbound", 44 * D), t("outbound", 40 * D), t("outbound", 37 * D), t("outbound", 33 * D), t("outbound", 26 * D), t("outbound", 10 * D)],
-      0,
-      3
-    )!;
-    expect(plan).toEqual({ step: 4, dueAt: null });
-  });
-
-  it("stops the moment they reply — a lead whose own message is newest is not quiet", () => {
-    expect(quietReminderPlan([t("outbound", 10 * D), t("inbound", 1 * M)], 0, 3)).toBeNull();
-  });
-
-  it("keeps the gap after a reminder that was approved late, instead of sending the next one the day after", () => {
-    // Reminder 1 went on day 6 (approved late): reminder 2 is day 10, not day 7.
-    const anchor = 8 * D;
-    const plan = quietReminderPlan([t("inbound", 9 * D), t("outbound", anchor), t("outbound", anchor - 6 * D)], 0, 3)!;
-    expect(plan.step).toBe(1);
-    expect(Math.round((plan.dueAt!.getTime() - (Date.now() - anchor)) / D)).toBe(10);
-  });
-
-  it("ignores the instant acknowledgement, which is not a touch", () => {
-    const plan = quietReminderPlan([t("inbound", 10 * D), t("outbound", 10 * D - M, "instant_ack"), t("outbound", 5 * D)], 0, 3)!;
-    expect(plan.step).toBe(0);
-  });
-
-  it("does not start again after a welcome back went unanswered", () => {
-    const timeline = [t("inbound", 200 * D), t("outbound", 190 * D), t("outbound", 60 * D)];
-    expect(reactivationAlreadySent(timeline, 45)).toBe(true);
-    expect(quietReminderPlan(timeline, 0, 3)).toEqual({ step: 4, dueAt: null });
-  });
-});
-
-describe("the four angles", () => {
-  const hints = [0, 1, 2, 3].map((s) => quietReminderHint(s, 5));
-
-  it("gives each reminder its own job", () => {
-    expect(hints[0]).toMatch(/light nudge/);
-    expect(hints[1]).toMatch(/something new and useful/);
-    expect(hints[2]).toMatch(/still looking or would rather you close this off/);
-    expect(hints[3]).toMatch(/last message that will be sent/);
-    expect(new Set(hints).size).toBe(4);
-  });
-
-  it("never asks for an apology, and forbids the words that say nothing new, on every one", () => {
-    for (const h of hints) {
-      expect(h).toMatch(/Do not apologise/);
-      expect(h).toMatch(/Never write "just checking in"/);
-    }
-  });
-
-  it("closes the file on the fourth without a question that needs an answer", () => {
-    expect(hints[3]).toMatch(/No question that needs an answer/);
-  });
-});
-
-describe("the silence rule runs the cadence", () => {
-  it("drafts reminder 2 with the reminder-2 angle for a lead that already got reminder 1", async () => {
-    hourly({ silence: [aLead([row("inbound", 20 * D), row("outbound", 12 * D), row("outbound", 9 * D)])] });
+    hourly({ silence: [aLead([row("inbound", 3 * D), row("outbound", 2 * D)])] });
     const r = await runAutomationForBusiness("biz1");
     expect(r.sent).toBe(1);
-    expect(hintGiven()).toMatch(/reminder 2 of 4/);
+    expect(hintGiven()).toMatch(/follow-up 1 of 5/);
+    expect(hintGiven()).toMatch(/answer anything left open/);
+  });
+
+  it("drafts the second message with its own angle for a lead that already got the first", async () => {
+    hourly({ silence: [aLead([row("inbound", 20 * D), row("outbound", 12 * D), row("outbound", 11 * D)])] });
+    const r = await runAutomationForBusiness("biz1");
+    expect(r.sent).toBe(1);
+    expect(hintGiven()).toMatch(/follow-up 2 of 5/);
     expect(hintGiven()).toMatch(/something new and useful/);
     expect(send).toHaveBeenCalledWith("q1", expect.any(String), expect.objectContaining({ trigger: "silence", extraAuditMeta: { reminderStep: 2 } }));
   });
 
-  it("writes nothing for a lead whose four reminders have all gone", async () => {
+  it("writes nothing for a lead whose plan has finished", async () => {
     hourly({
-      silence: [aLead([row("inbound", 44 * D), row("outbound", 40 * D), row("outbound", 37 * D), row("outbound", 33 * D), row("outbound", 26 * D), row("outbound", 10 * D)])],
+      silence: [aLead([row("inbound", 44 * D), row("outbound", 40 * D), row("outbound", 39 * D), row("outbound", 37 * D), row("outbound", 33 * D), row("outbound", 26 * D), row("outbound", 10 * D)])],
     });
     const r = await runAutomationForBusiness("biz1");
     expect(r.checked).toBe(0);
@@ -254,15 +175,30 @@ describe("the silence rule runs the cadence", () => {
     expect(send).not.toHaveBeenCalled();
   });
 
-  it("waits for the owner's own silence setting before reminder 1", async () => {
-    p.automation.findFirst.mockImplementation(async ({ where }: { where: { action: string } }) =>
-      where.action === "auto_send" ? { enabled: true, triggerDays: 10 } : null
-    );
+  it("keeps a Later customer going once a month after day 30, on Long", async () => {
+    const later = { v: 2, template: "real_estate", items: [], tier: "later" };
+    const messages = [row("inbound", 62 * D), row("outbound", 61 * D), ...[60, 58, 54, 47, 31].map((d) => row("outbound", d * D))];
+    hourly({ silence: [aLead(messages, { qualification: later })] });
+    const r = await runAutomationForBusiness("biz1");
+    expect(r.sent).toBe(1);
+    expect(hintGiven()).toMatch(/follow-up 6 of 10/);
+  });
+
+  it("uses the days the owner changed", async () => {
+    account({ followUpPlans: { fast: [10, 20] } });
     hourly({ silence: [aLead([row("inbound", 8 * D), row("outbound", 6 * D)])] });
     expect((await runAutomationForBusiness("biz1")).checked).toBe(0);
 
     hourly({ silence: [aLead([row("inbound", 12 * D), row("outbound", 11 * D)])] });
     expect((await runAutomationForBusiness("biz1")).checked).toBe(1);
+  });
+
+  it("waits for the day the customer asked for, and stops once they book", async () => {
+    hourly({ silence: [aLead([row("inbound", 3 * D), row("outbound", 2 * D)], { followUpNotBefore: new Date(Date.now() + 30 * D) })] });
+    expect((await runAutomationForBusiness("biz1")).checked).toBe(0);
+
+    hourly({ silence: [aLead([row("inbound", 3 * D), row("outbound", 2 * D)], { bookings: [{ createdAt: ago(1 * D), scheduledAt: ago(-2 * D) }] })] });
+    expect((await runAutomationForBusiness("biz1")).checked).toBe(0);
   });
 
   it("never gives a lead in the owner's own workflow the default reminders as well", async () => {
@@ -272,7 +208,7 @@ describe("the silence rule runs the cadence", () => {
     expect(silenceQuery.where.sequenceId).toBeNull();
   });
 
-  it("rebuilds a cached draft that was written for a different reminder, and reuses the right one", async () => {
+  it("rebuilds a cached draft that was written for a different message, and reuses the right one", async () => {
     const messages = [row("inbound", 20 * D), row("outbound", 12 * D), row("outbound", 9 * D)];
     const newest = messages[2].sentAt;
     hourly({ silence: [aLead(messages, { suggestedMessage: "Reminder one words.", suggestedDraftedFor: newest, suggestedDraftKind: "reminder_1" })] });
@@ -561,7 +497,7 @@ describe("what the lead's badge says", () => {
     canSend: true,
     holdAllForApproval: true,
     masterEnabled: true,
-    silenceTriggerDays: 3,
+    followUpPlans: {},
     unansweredEnabled: true,
     unansweredHours: 24,
     deadLeadEnabled: true,
@@ -588,16 +524,16 @@ describe("what the lead's badge says", () => {
     expect(computeAutomationStatus(badgeLead([msg("outbound", 30 * H), msg("inbound", 2 * M)]), RULES)).toEqual({ kind: "due_soon", reason: "unanswered", heldForApproval: true });
   });
 
-  it("says a reminder is due on day 3, and that nothing is coming once all four have gone", () => {
-    expect(computeAutomationStatus(badgeLead([msg("inbound", 5 * D), msg("outbound", 4 * D)]), RULES)).toEqual({
+  it("says the plan's first message is due on day 1, and that nothing is coming once the plan has finished", () => {
+    expect(computeAutomationStatus(badgeLead([msg("inbound", 3 * D), msg("outbound", 2 * D)]), RULES)).toEqual({
       kind: "due_soon",
       reason: "silence",
       heldForApproval: true,
     });
-    // Before day 3 it reads as waiting on them, as it always has.
-    expect(computeAutomationStatus(badgeLead([msg("inbound", 3 * D), msg("outbound", 2 * D)]), RULES)).toEqual({ kind: "sent" });
+    // Before day 1 it reads as waiting on them, as it always has.
+    expect(computeAutomationStatus(badgeLead([msg("inbound", 1 * D), msg("outbound", 12 * H)]), RULES)).toEqual({ kind: "sent" });
     const done = computeAutomationStatus(
-      badgeLead([msg("inbound", 44 * D), msg("outbound", 40 * D), msg("outbound", 37 * D), msg("outbound", 33 * D), msg("outbound", 26 * D), msg("outbound", 10 * D)]),
+      badgeLead([msg("inbound", 44 * D), msg("outbound", 40 * D), msg("outbound", 39 * D), msg("outbound", 37 * D), msg("outbound", 33 * D), msg("outbound", 26 * D), msg("outbound", 10 * D)]),
       RULES
     );
     expect(done).toEqual({ kind: "sent" });

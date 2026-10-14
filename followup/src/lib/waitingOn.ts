@@ -59,6 +59,11 @@ export function describeNext(lead: Lead, rules: BusinessAutomationRules, now: Da
     return `${next.what} ${when}${next.unless ? `, unless ${first} writes first` : ""}.`;
   }
   if (status?.kind === "off") return `Follow-ups are off for ${first}.`;
+  // Said as the reason, not as a decision about the customer: with nothing
+  // connected, or check-ins switched off, it isn't that FollowUp chose to
+  // stop, and the owner can fix it (app analysis, 2026-10-14).
+  if (!rules.canSend || status?.kind === "no_send_channel") return "Nothing can go out until you reconnect your email or Instagram.";
+  if (!rules.masterEnabled && status?.kind !== "workflow") return "Check-ins are off in Settings, so FollowUp won’t write first.";
   return `FollowUp won’t write again unless ${first} does.`;
 }
 

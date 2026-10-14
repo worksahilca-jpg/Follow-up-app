@@ -81,7 +81,12 @@ function echoLead(overrides: Record<string, unknown> = {}) {
   };
 }
 
-/** Messenger lead who wrote, was answered, and last wrote `hoursAgo` hours ago. */
+/**
+ * Messenger lead who last wrote `hoursAgo` hours ago, before this step was
+ * scheduled. The business's own last message is more than a day old: on
+ * every plan, never more than 1 message a day (A-245), so a step inside the
+ * same day as an answer would wait whatever Meta allowed.
+ */
 function messengerLead(hoursAgo: number) {
   return echoLead({
     name: "Sam Okafor",
@@ -91,8 +96,8 @@ function messengerLead(hoursAgo: number) {
       {
         channel: "messenger",
         messages: [
+          { id: "m2", direction: "outbound", body: "We deliver all over the north.", sentAt: new Date(Date.now() - Math.max(hoursAgo + 1, 25) * H), opened: false },
           { id: "m1", direction: "inbound", body: "Do you deliver to Leeds?", sentAt: new Date(Date.now() - hoursAgo * H), opened: false },
-          { id: "m2", direction: "outbound", body: "We do!", sentAt: new Date(Date.now() - (hoursAgo - 1) * H), opened: false },
         ],
       },
     ],

@@ -59,6 +59,7 @@ import { heldSince } from "@/lib/pendingApprovals";
 import { isNoAnswerDraft } from "@/lib/callPlan";
 import type { Message } from "@/lib/types";
 import { draftingContext, getBusinessFacts } from "@/lib/businessFacts";
+import { factsText } from "@/lib/factLines";
 import { getHabits, habitOn, thanksIsNewest } from "@/lib/habits";
 
 export const UNANSWERED_ACTION = "unanswered_reply";
@@ -245,174 +246,79 @@ export const DEAD_LEAD_NAME = "Reactivate cold leads";
 export const DEAD_LEAD_DEFAULT_DAYS = 45;
 
 /* ------------------------------------------------------------------ *
- * The quiet-lead cadence — founder's follow-up strategy, 2026-09-25.
+ * The follow-up plans — A-245, 2026-10-14 (replacing the four-reminder
+ * cadence of the follow-up strategy of 2026-09-25).
  * ------------------------------------------------------------------ */
 
-// The reminder calendar lives in @/lib/reminderCadence (no server imports,
-// so Settings can show the same days); re-exported here for existing callers.
-import { SILENCE_DEFAULT_TRIGGER_DAYS, QUIET_REMINDER_DEFAULT_DAYS, quietReminderDays } from "@/lib/reminderCadence";
-export { SILENCE_DEFAULT_TRIGGER_DAYS, QUIET_REMINDER_DEFAULT_DAYS, quietReminderDays };
-
-/** Outbound messages this close to the previous counted one are the same touch (a split answer, a quick correction). */
-const SAME_TOUCH_MS = 12 * 3_600_000;
-const DAY_MS = 86_400_000;
-
-
-/** One message as the cadence reads it — the shape both the engine (Prisma rows) and the badge (Message) reduce to. */
-export type TimelineMessage = {
-  direction: string;
-  at: number; // ms since epoch
-  trigger?: string | null;
-  quickReplyPayload?: string | null;
-};
+// The plans live in @/lib/followUpPlans (no server imports, so Settings, the
+// plans page and the customer card show the same days the engine uses);
+// re-exported here for existing callers.
+import { SILENCE_DEFAULT_TRIGGER_DAYS } from "@/lib/reminderCadence";
+import {
+  followUpState,
+  quietLeadNext,
+  reactivationAlreadySent,
+  readFollowUpPlans,
+  stepHint,
+  type FollowUpPlans,
+  type PlanState,
+  type TimelineMessage,
+} from "@/lib/followUpPlans";
+import { readQualification } from "@/lib/qualification";
+export { SILENCE_DEFAULT_TRIGGER_DAYS, reactivationAlreadySent, type TimelineMessage };
 
 function isAckMessage(m: { direction: string; trigger?: string | null }): boolean {
   return m.direction === "outbound" && isNotAnAnswer(m.trigger);
 }
 
-/**
- * Has a welcome back already gone out since the customer last wrote?
- *
- * Read off the thread itself: an outbound message that followed at least
- * `deadLeadDays` of silence IS a reactivation, however it went out —
- * automatically, approved from Today, or typed by the owner after a long
- * gap. Reading a trigger column instead would miss the second and third,
- * and the second is the normal case on a holding account.
- *
- * Why it matters: research/product/2026-09-15-reaching-back-out-to-
- * ignored-leads.md §6.7 — one reactivation that goes unanswered is the
- * end; repeated attempts did worse than sending nothing in the largest
- * field experiment on file. Before this, the dead-lead rule fired again
- * every 45 days for as long as the lead existed.
- */
-export function reactivationAlreadySent(messages: TimelineMessage[], deadLeadDays: number): boolean {
-  const judged = messages.filter((m) => !isAckMessage(m)).sort((a, b) => a.at - b.at);
-  let lastInbound = -1;
-  judged.forEach((m, i) => {
-    if (m.direction === "inbound") lastInbound = i;
-  });
-  for (let i = Math.max(1, lastInbound + 1); i < judged.length; i++) {
-    if (judged[i].direction === "outbound" && judged[i].at - judged[i - 1].at >= deadLeadDays * DAY_MS) return true;
-  }
-  return false;
-}
-
-export type QuietReminderPlan = {
-  /** 0-based index of the NEXT reminder; equal to the cadence length once it is finished. */
-  step: number;
-  /** When that reminder is due; null once the cadence is finished. */
-  dueAt: Date | null;
+/** A lead row as the plan reads it: the engine's Prisma rows carry all of these. */
+type PlanRow = {
+  createdAt: Date;
+  lastContacted: Date | null;
+  followUpPlan?: string | null;
+  followUpNotBefore?: Date | null;
+  qualification?: unknown;
+  bookings?: { createdAt: Date; scheduledAt: Date }[];
+  conversations: { messages: { direction: string; sentAt: Date; trigger: string | null; quickReplyPayload: string | null }[] }[];
 };
 
-/**
- * Where this lead is in the quiet-lead cadence — pure, so the engine and
- * the lead's status badge (src/lib/automationStatus.ts) cannot disagree
- * about it, which has shipped as a bug twice already for the unanswered
- * rule.
- *
- * Returns null when the customer spoke last: that lead is not quiet, a
- * reply is owed (the unanswered rule), or they tapped "Not now" and
- * nothing automatic goes to them at all. Either way the cadence has nothing
- * to say — "stop the moment they reply" is this line.
- *
- * Stateless on purpose. The step is COUNTED from the thread rather than
- * stored:
- *   - the anchor is our first message after their last one — the message
- *     they went quiet on (or, with no messages at all, `fallbackAnchorMs`,
- *     the lead's creation);
- *   - every later outbound touch counts, whoever sent it. A reminder the
- *     owner approved from Today is a "manual" send with no automation
- *     marker, and it must advance the cadence exactly like an automatic
- *     one — otherwise a holding account would get reminder 1 again three
- *     days after approving reminder 1. An owner's own nudge counts for the
- *     same reason: the customer does not care who pressed Send, only how
- *     many times they have been chased.
- * No column can drift from what the customer actually received, because
- * there is no column.
- *
- * Due at the later of the calendar day (anchor + days[step]) and the
- * default gap after the previous touch — so a reminder approved late
- * pushes the next one back instead of landing the day after it.
- */
-export function quietReminderPlan(
-  messages: TimelineMessage[],
-  fallbackAnchorMs: number,
-  triggerDays: number,
-  deadLeadDays: number = DEAD_LEAD_DEFAULT_DAYS
-): QuietReminderPlan | null {
-  const days = quietReminderDays(triggerDays);
-  const judged = messages.filter((m) => !isAckMessage(m)).sort((a, b) => a.at - b.at);
-  const newest = judged[judged.length - 1];
-  if (newest && newest.direction === "inbound") return null;
-
-  // A welcome back went out after the cadence and nobody answered it: the
-  // cadence does not start again on top of it (see reactivationAlreadySent).
-  if (reactivationAlreadySent(messages, deadLeadDays)) return { step: days.length, dueAt: null };
-
-  let lastInbound = -1;
-  judged.forEach((m, i) => {
-    if (m.direction === "inbound") lastInbound = i;
-  });
-  const ours = judged.slice(lastInbound + 1);
-  const anchor = ours.length > 0 ? ours[0].at : fallbackAnchorMs;
-  let touches = 0;
-  let lastTouch = anchor;
-  for (const m of ours.slice(1)) {
-    if (m.at - lastTouch >= SAME_TOUCH_MS) {
-      touches += 1;
-      lastTouch = m.at;
-    }
-  }
-  if (touches >= days.length) return { step: days.length, dueAt: null };
-  const onCalendar = anchor + days[touches] * DAY_MS;
-  const afterPrevious = touches === 0 ? onCalendar : lastTouch + (days[touches] - days[touches - 1]) * DAY_MS;
-  return { step: touches, dueAt: new Date(Math.max(onCalendar, afterPrevious)) };
+export function timelineOfRow(l: PlanRow): TimelineMessage[] {
+  return l.conversations.flatMap((c) =>
+    c.messages.map((m) => ({ direction: m.direction, at: m.sentAt.getTime(), trigger: m.trigger, quickReplyPayload: m.quickReplyPayload }))
+  );
 }
 
 /**
- * The angle of each reminder, passed to the drafting prompt as its
- * messageHint — the same steering mechanism deadLeadMessageHint and
- * workflow steps use, deliberately not a second system prompt.
- *
- * Four different jobs, so no two read alike and none is "just checking
- * in" (founder, 2026-09-25; research 2026-09-09 §2 "each touch changing
- * the message angle"). The rules every one of them repeats rather than
- * assumes, per research 2026-09-15 §5:
- *   - no apology — the customer went quiet on US, nobody failed them, and
- *     an apology to someone unaware of any failure lowers trust (§1.2,
- *     Steer E);
- *   - no fact the conversation does not contain — the grounding check
- *     holds a draft that invents one anyway, but a hint that invites
- *     "offer a time slot" without this line would be inviting it;
- *   - never the words that signal nothing new to say.
- * Step 4 is research Steer D ("closing the file"): no question that needs
- * an answer, no deadline, nothing a person could read as pressure.
+ * Where this lead is in its follow-up plan (src/lib/followUpPlans.ts), read
+ * off its row. The same function the badge, Coming up and the customer card
+ * read, so none of them can promise a message the engine won't send.
  */
-export function quietReminderHint(step: number, daysQuiet: number): string {
-  const number = Math.min(Math.max(step, 0), QUIET_REMINDER_DEFAULT_DAYS.length - 1) + 1;
-  const angles = [
-    "Angle for this one — a light nudge: remind them, in one short line and in their own terms, what they " +
-      "asked about, and if the conversation already contains the answer, put that answer in front of them " +
-      "again. End with one easy question.",
-    "Angle for this one — something new and useful the earlier messages did not offer: another option that " +
-      "fits what they described, an offer to find a time that suits them, or one relevant detail from this " +
-      "conversation they may have missed. Do not restate the previous nudge. Do not name a specific day, time, " +
-      "price or figure unless it already appears in the conversation.",
-    "Angle for this one — one easy closing question and nothing else: ask whether they are still looking or " +
-      "would rather you close this off, in a way that makes either answer feel completely fine. Two short " +
-      "sentences at most.",
-    "Angle for this one — the last message that will be sent about this. Two short sentences at most: say you " +
-      "will leave it here for now, and that the door is open whenever they want to pick it back up. No question " +
-      "that needs an answer, no deadline, no \"last chance\", nothing that reads as pressure.",
-  ];
-  return (
-    `This is reminder ${number} of 4 to someone who went quiet after the last message here — nothing from them ` +
-    `in about ${daysQuiet} days. ${angles[number - 1]} ` +
-    "Do not apologise: they stopped replying, nobody let them down. Never write \"just checking in\", " +
-    "\"circling back\", \"touching base\", \"following up\" or anything that means the same — every message must " +
-    "give them a reason to read it. Do not repeat the wording or the angle of any earlier message in this " +
-    "conversation. Never state a price, date, time or fact that is not already in the conversation."
+export function planStateOfRow(l: PlanRow, plans: FollowUpPlans, nowMs: number, deadLeadDays: number): PlanState | null {
+  return followUpState(
+    timelineOfRow(l),
+    (l.lastContacted ?? l.createdAt ?? new Date(nowMs)).getTime(),
+    plans,
+    {
+      override: l.followUpPlan ?? null,
+      tier: readQualification(l.qualification)?.tier ?? null,
+      notBeforeMs: l.followUpNotBefore ? l.followUpNotBefore.getTime() : null,
+      bookings: (l.bookings ?? []).map((b) => ({ createdAt: b.createdAt.getTime(), scheduledAt: b.scheduledAt.getTime() })),
+      createdAtMs: l.createdAt ? l.createdAt.getTime() : undefined,
+    },
+    nowMs,
+    deadLeadDays
   );
+}
+
+/** What the quiet-lead queries load: the thread, and the confirmed bookings that stop a plan (rule 1). */
+const PLAN_LEAD_INCLUDE = {
+  conversations: { include: { messages: { orderBy: { sentAt: "asc" as const } } } },
+  bookings: { where: { status: "confirmed" }, select: { createdAt: true, scheduledAt: true } },
+} satisfies Prisma.LeadInclude;
+
+/** What a plan message is saved as (Lead.suggestedDraftKind), so a cached draft is only reused for the same message. */
+export function planDraftKind(state: Pick<PlanState, "step" | "kind">): string {
+  return state.kind === "checkback" ? "checkback" : `reminder_${state.step + 1}`;
 }
 
 /* ------------------------------------------------------------------ *
@@ -866,15 +772,11 @@ export async function runAutomationForBusiness(
     return EMPTY_RESULT;
   }
 
-  // The quiet-lead cadence (quietReminderPlan). The query below only has to
-  // be broad enough to include every lead that COULD be due — the plan
-  // itself decides who is — so it asks for leads quiet at least as long as
-  // the shortest wait anywhere in the cadence: reminder 1's delay, or the
-  // smallest gap between two reminders, whichever is less.
-  const triggerDays = automation.triggerDays;
-  const reminderDays = quietReminderDays(triggerDays);
-  const shortestWaitDays = Math.min(reminderDays[0], ...reminderDays.slice(1).map((d, i) => d - reminderDays[i]));
-  const cutoff = new Date(Date.now() - shortestWaitDays * 24 * 60 * 60 * 1000);
+  // The follow-up plans (src/lib/followUpPlans.ts, A-245). The query below
+  // only has to be broad enough to include every lead that COULD be due —
+  // the plan itself decides who is — so it asks for leads quiet at least a
+  // day: no plan sends sooner (one a day, on every plan).
+  const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
   // Runs hourly (vercel.json). A lead this pass sends to gets a new
   // lastContacted and drops out of the window on its own; a lead it holds
   // for approval does not, so it's excluded from re-assessment for most of
@@ -894,10 +796,12 @@ export async function runAutomationForBusiness(
   // always resolves against the same timezone.
   const business = await prisma.business.findUnique({
     where: { id: businessId },
-    select: { timezone: true, tier: true, holdAllForApproval: true, autonomousAllowed: true, autonomousAllowedAt: true, autoSendAllowedAt: true },
+    select: { timezone: true, tier: true, holdAllForApproval: true, autonomousAllowed: true, autonomousAllowedAt: true, autoSendAllowedAt: true, followUpPlans: true },
   });
   const timezone = business?.timezone ?? "America/New_York";
   const tier = (business?.tier ?? "plus") as "free" | "plus" | "pro";
+  // The owner's plans: the days they changed, and their own (A-245).
+  const plans = readFollowUpPlans(business?.followUpPlans);
   // Nothing automated leaves this account unreviewed — see the column's
   // comment in schema.prisma. It overrides both the per-lead tier and the
   // risk verdict below: every draft goes to the approval queue instead.
@@ -972,12 +876,12 @@ export async function runAutomationForBusiness(
         // sets such a lead to OFF; this holds even if the tier is flipped
         // back on from the lead's page while it is still enrolled.
         sequenceId: null,
-        // A lead past the dead-lead threshold exits the normal silence
-        // cadence entirely — it belongs to the `deadLeads` query below
-        // instead, with its own messaging. Passed as the lower bound of a
-        // range rather than the separate `NOT` it used to be, and only
-        // while that rule is enabled: disabled means "no dead-lead rule,"
-        // not "these leads vanish from the normal cadence too."
+        // A lead past the dead-lead threshold belongs to the `deadLeads`
+        // query below instead, which decides between its plan and a
+        // welcome back. Passed as the lower bound of a range rather than
+        // the separate `NOT` it used to be, and only while that rule is
+        // enabled: disabled means "no dead-lead rule," not "these leads
+        // vanish from their plans too."
         //
         // Inside AND because the OR below is already spoken for. Two `OR`
         // keys in one object is not a conjunction, it is the second one
@@ -987,7 +891,7 @@ export async function runAutomationForBusiness(
         saidNoAt: null,
         OR: [{ lastAutomationCheckedAt: null }, { lastAutomationCheckedAt: { lt: recheckCutoff } }],
       },
-      include: { conversations: { include: { messages: { orderBy: { sentAt: "asc" } } } } },
+      include: PLAN_LEAD_INCLUDE,
     }),
     deadLeadEnabled && !fresh
       ? prisma.lead.findMany({
@@ -1000,7 +904,7 @@ export async function runAutomationForBusiness(
             saidNoAt: null,
             OR: [{ lastAutomationCheckedAt: null }, { lastAutomationCheckedAt: { lt: recheckCutoff } }],
           },
-          include: { conversations: { include: { messages: { orderBy: { sentAt: "asc" } } } } },
+          include: PLAN_LEAD_INCLUDE,
         })
       : Promise.resolve([]),
     // The business's samples with no language preferred, fetched once up
@@ -1015,16 +919,13 @@ export async function runAutomationForBusiness(
   ]);
 
   const nowMs = Date.now();
-  const timelineOf = (l: { conversations: { messages: { direction: string; sentAt: Date; trigger: string | null; quickReplyPayload: string | null }[] }[] }): TimelineMessage[] =>
-    l.conversations.flatMap((c) =>
-      c.messages.map((m) => ({ direction: m.direction, at: m.sentAt.getTime(), trigger: m.trigger, quickReplyPayload: m.quickReplyPayload }))
-    );
+  const timelineOf = timelineOfRow;
 
-  // Only the quiet leads whose next reminder is actually due, and which
-  // reminder it is. A lead whose four reminders have all gone out drops
-  // out here and stays out until it either writes (the unanswered rule) or
-  // reaches the dead-lead threshold (the welcome back).
-  const reminderStepById = new Map<string, number>();
+  // Only the quiet leads whose plan's next message is actually due, and
+  // which message it is (src/lib/followUpPlans.ts). A lead whose plan has
+  // finished drops out here and stays out until it either writes (the
+  // unanswered rule) or reaches the dead-lead threshold (the welcome back).
+  const planStepById = new Map<string, PlanState>();
   // "We talked" finishes the check-ins until they write again, and the
   // welcome back with them (src/lib/talked.ts).
   // "Don't send" does the same until either side writes again (founder
@@ -1035,13 +936,25 @@ export async function runAutomationForBusiness(
   };
   const silent = quietCandidates.filter((l) => {
     if (talkedOut(l)) return false;
-    const plan = quietReminderPlan(timelineOf(l), (l.lastContacted ?? l.createdAt ?? new Date(nowMs)).getTime(), triggerDays, deadLeadDays);
-    if (!plan?.dueAt || plan.dueAt.getTime() > nowMs) return false;
-    reminderStepById.set(l.id, plan.step);
+    const plan = planStateOfRow(l, plans, nowMs, deadLeadDays);
+    if (quietLeadNext(plan, { pastWelcomeBackWait: false, welcomeBackOn: deadLeadEnabled, welcomeBackSent: false, nowMs }) !== "plan") return false;
+    planStepById.set(l.id, plan!);
     return true;
   });
-  // One welcome back per silence, not one every 45 days forever.
-  const deadLeads = deadCandidates.filter((l) => !talkedOut(l) && !reactivationAlreadySent(timelineOf(l), deadLeadDays));
+  // Past the welcome-back wait: a plan already under way keeps going, and
+  // otherwise one welcome back per silence, not one every 45 days forever
+  // (quietLeadNext says when). A plan message found here joins the quiet
+  // ones above.
+  const deadLeads = deadCandidates.filter((l) => {
+    if (talkedOut(l)) return false;
+    const plan = planStateOfRow(l, plans, nowMs, deadLeadDays);
+    const next = quietLeadNext(plan, { pastWelcomeBackWait: true, welcomeBackOn: true, welcomeBackSent: reactivationAlreadySent(timelineOf(l), deadLeadDays), nowMs });
+    if (next === "plan") {
+      planStepById.set(l.id, plan!);
+      silent.push(l);
+    }
+    return next === "welcome_back";
+  });
 
   // Merge in priority order — unanswered (the lead wrote and got ignored)
   // is the most urgent, dead-lead reactivation is a deliberate exit from
@@ -1347,10 +1260,11 @@ export async function runAutomationForBusiness(
       //     2026-09-25 this lead got NO steer at all, because the merge
       //     hands it the unanswered framing, which had none (research
       //     2026-09-15 §7.1);
-      //   - reminder N of the quiet-lead cadence (quietReminderHint);
+      //   - message N of the lead's follow-up plan (stepHint);
       //   - otherwise an ordinary reply, null, which is what scoring.ts
       //     writes.
-      const reminderStep = reminderStepById.get(lead.id);
+      const planStep = planStepById.get(lead.id);
+      const reminderStep = planStep?.step;
       const daysQuiet = Math.floor((nowMs - new Date(lead.lastContacted ?? lead.createdAt).getTime()) / 86_400_000);
       const theyWroteLast = (() => {
         const judged = conversation.filter((m) => !(m.direction === "outbound" && isNotAnAnswer(m.trigger)));
@@ -1361,8 +1275,8 @@ export async function runAutomationForBusiness(
         ? "reactivation"
         : isUnanswered && isCold
           ? "belated_reply"
-          : reminderStep !== undefined
-            ? `reminder_${reminderStep + 1}`
+          : planStep !== undefined
+            ? planDraftKind(planStep)
             : null;
       const messageHint = isDeadLead
         ? deadLeadMessageHint(daysQuiet, theyWroteLast ? "lead" : "business")
@@ -1371,8 +1285,8 @@ export async function runAutomationForBusiness(
           : // An untouched lead has no conversation for a reminder to
             // refer back to; it keeps the plain draft it always had and is
             // held for the owner whatever it says (UNTOUCHED_LEAD_REASON).
-            reminderStep !== undefined && !isUntouched
-            ? quietReminderHint(reminderStep, daysQuiet)
+            planStep !== undefined && !isUntouched
+            ? stepHint(planStep, daysQuiet)
             : undefined;
       // "Current" now means the right conversation AND the right kind of
       // message. For silence this is new: a quiet lead used to reuse
@@ -1453,11 +1367,16 @@ export async function runAutomationForBusiness(
       // still go out on the reuse path, on AUTONOMOUS with no check at all.
       if (!dmShapeFailed && !emailShapeFailed && message) {
         if (isDm) {
+          // What the business has told customers counts as its own words
+          // here too, as it does where the DM was drafted (dmDrafting.ts):
+          // without it a reused reply quoting a stored fact ("My commission
+          // is 2.5%") was held for inventing a number nobody had invented.
+          const known = factsText(await getBusinessFacts(lead.businessId));
           const shape = checkDmDraftShape(
             { body: message, buttons: quickReplies?.buttons ?? [] },
-            conversationText(conversation),
+            known ? `${conversationText(conversation)}\n${known}` : conversationText(conversation),
             leadLanguageOf(lead)?.language,
-            businessText(conversation)
+            known ? `${businessText(conversation)}\n${known}` : businessText(conversation)
           );
           if (!shape.ok) dmShapeFailed = shape.rule;
         } else {
@@ -1874,8 +1793,8 @@ export async function runAutomationForBusiness(
               riskLevel: risk.riskLevel,
               reason: holdReason,
               trigger: unansweredIds.has(lead.id) ? "unanswered" : isDeadLead ? DEAD_LEAD_ACTION : "silence",
-              // Which of the four reminders this was, so the trail can say
-              // "reminder 3 of 4" rather than just "silence".
+              // Which message of the plan this was, so the trail can say
+              // "check-in 3" rather than just "silence".
               ...(reminderStep !== undefined ? { reminderStep: reminderStep + 1 } : {}),
               ...(freshInboundAt ? { fresh: true } : {}),
             }))

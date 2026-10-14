@@ -12,7 +12,7 @@ import type { Lead } from "@/lib/types";
 const NOW = new Date("2026-09-26T16:00:00Z"); // Saturday noon in Toronto
 const DAY = 86_400_000;
 const rules: BusinessAutomationRules = {
-  canSend: true, holdAllForApproval: true, masterEnabled: true, silenceTriggerDays: 3,
+  canSend: true, holdAllForApproval: true, masterEnabled: true, followUpPlans: {},
   unansweredEnabled: true, unansweredHours: 24, deadLeadEnabled: true, deadLeadDays: 45,
 };
 function lead(id: string, over: Partial<Lead>): Lead {
@@ -22,11 +22,11 @@ const out = (daysAgo: number) => ({ id: "m", direction: "outbound", channel: "em
 
 describe("getComingUp", () => {
   it("dates a quiet customer's next check-in from the engine's own calendar", () => {
-    // We wrote 2 days ago: the first check-in is on day 3, so tomorrow.
-    const l = lead("Leila", { conversation: [out(2)] as Lead["conversation"], lastContacted: new Date(NOW.getTime() - 2 * DAY).toISOString() });
+    // We wrote 6 hours ago: Fast's first check-in is on day 1 (A-245), so in 18 hours.
+    const l = lead("Leila", { conversation: [out(0.25)] as Lead["conversation"], lastContacted: new Date(NOW.getTime() - 0.25 * DAY).toISOString() });
     const [item] = getComingUp([l], rules, NOW, new Set());
     expect(item.what).toBe("First check-in");
-    expect(item.at.getTime()).toBe(NOW.getTime() + DAY);
+    expect(item.at.getTime()).toBe(NOW.getTime() + 0.75 * DAY);
   });
 
   it("names the step of a follow-up plan", () => {
@@ -51,9 +51,9 @@ describe("getComingUp", () => {
   // Coming up and "Waiting on" still dated all three.
   it("promises nothing the engine won't do while auto follow-up is switched off", () => {
     const paused = { ...rules, masterEnabled: false };
-    // All four check-ins went out; the welcome back would be due tomorrow.
+    // The whole plan went out; the welcome back would be due tomorrow.
     const cold = lead("Cold", {
-      conversation: [out(74), out(71), out(67), out(60), out(44)] as Lead["conversation"],
+      conversation: [out(74), out(73), out(71), out(67), out(60), out(44)] as Lead["conversation"],
       lastContacted: new Date(NOW.getTime() - 44 * DAY).toISOString(),
     });
     expect(getComingUp([cold], rules, NOW, new Set()).map((i) => i.what)).toEqual(["Welcome back, after 45 quiet days"]);

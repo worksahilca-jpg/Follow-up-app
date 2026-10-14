@@ -13,9 +13,11 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, Trash2, ChevronUp, ChevronDown, Mail, ArrowRightLeft, Workflow as WorkflowIcon } from "lucide-react";
+import { Plus, Trash2, ChevronUp, ChevronDown, Mail, ArrowRightLeft } from "lucide-react";
 import { CARRIER_CHANNELS_AVAILABLE } from "@/lib/pricing";
-import { READY_PLANS, toStepDelays, dayLabel, type ReadyPlan } from "@/lib/readyPlans";
+import { READY_PLANS, toStepDelays, type ReadyPlan } from "@/lib/readyPlans";
+import { EveryPlanBox, PlanEditor, PlansOverview, type PlansData } from "@/components/app/FollowUpPlansView";
+import type { PlanId } from "@/lib/followUpPlans";
 
 type SequenceAction = "EMAIL" | "CHANGE_STAGE";
 
@@ -92,8 +94,9 @@ export default function WorkflowsPage() {
 
   // Business.holdAllForApproval — true for every beta account.
   const [holdAllForApproval, setHoldAllForApproval] = useState(false);
-  // Phone: one ready plan open at a time (A-066); "" = all closed.
-  const [openPlan, setOpenPlan] = useState<string>(READY_PLANS[0]?.id ?? "");
+  // The follow-up plans (A-245): Fast, Long and My own, and which one is being changed.
+  const [plansData, setPlansData] = useState<PlansData | null>(null);
+  const [editingPlan, setEditingPlan] = useState<PlanId | null>(null);
 
   function load() {
     fetch("/api/sequences")
@@ -105,6 +108,15 @@ export default function WorkflowsPage() {
   }
 
   useEffect(load, []);
+
+  useEffect(() => {
+    fetch("/api/follow-up-plans")
+      .then((r) => r.json())
+      .then((data: { success?: boolean } & PlansData) => {
+        if (data.success) setPlansData({ plans: data.plans, counts: data.counts, realtor: data.realtor, holdAll: data.holdAll, isAdmin: data.isAdmin });
+      })
+      .catch(() => {});
+  }, []);
 
   // A second, tiny read, because this page sells a multi-step plan and on
   // a holding account the plan cannot run past its first message step:
@@ -121,6 +133,20 @@ export default function WorkflowsPage() {
       .then((data: { holdAllForApproval?: boolean }) => setHoldAllForApproval(Boolean(data.holdAllForApproval)))
       .catch(() => {});
   }, []);
+
+  if (editingPlan && plansData) {
+    return (
+      <PlanEditor
+        which={editingPlan}
+        data={plansData}
+        onCancel={() => setEditingPlan(null)}
+        onSaved={(plans, counts) => {
+          setPlansData({ ...plansData, plans, counts });
+          setEditingPlan(null);
+        }}
+      />
+    );
+  }
 
   return (
     <div>
@@ -141,90 +167,36 @@ export default function WorkflowsPage() {
         ← Settings
       </Link>
       <h1 className="title-serif mt-2 text-[30px] leading-[1.12] lg:text-[34px]">Follow-up plans</h1>
-      {/* The stop-on-reply guarantee (PRODUCT_DIRECTION Rule 3) is said
-          here, in the one sentence everyone reads, as drawn (A-066). */}
-      <p className="mt-2 max-w-[640px] text-[15px] leading-relaxed text-ink-soft">
-        Pick a plan and change a day if you want. Put someone on it from their page. It stops the moment they answer.
+      {/* The follow-up plans (A-245, as drawn): FollowUp picks, the owner
+          can change it for everyone here or for one customer on their page.
+          The stop-on-reply guarantee (PRODUCT_DIRECTION Rule 3) is the
+          first line of "On every plan" below. */}
+      <p className="mt-2 max-w-[660px] text-[15px] leading-relaxed text-ink-soft">
+        FollowUp picks a plan for each customer from what they’ve told you. Change it here for everyone, or for one customer on their page.
       </p>
 
       {!creating && !picked && (
-        <div className="mt-6">
-          {/* Desktop: the three plans side by side. */}
-          <div className="hidden gap-3 lg:grid lg:grid-cols-3">
+        <div className="mt-5 grid gap-4 lg:mt-6">
+          {plansData && <PlansOverview data={plansData} onEdit={setEditingPlan} />}
+          {plansData && <EveryPlanBox holdAll={plansData.holdAll} />}
+          {/* The three ready plans of A-044 stay, as one quiet line (A-245):
+              each opens its editor, and a blank plan is the last link. */}
+          {/* Inline links in a sentence (WCAG 2.5.8's inline exception), with
+              a tall line so each is still an easy tap. */}
+          <p className="text-[14px] leading-8 text-ink-soft">
+            More plans for special cases:{" "}
             {READY_PLANS.map((plan) => (
-              <div key={plan.id} className="flex flex-col rounded-[18px] border border-line bg-card p-5">
-                <p className="text-base font-medium">{plan.name}</p>
-                <p className="mt-0.5 text-[13px] text-ink-faint">{plan.who}</p>
-                <ul className="mt-3 flex-1">
-                  {plan.steps.map((st) => (
-                    <li key={st.day} className="flex gap-3 border-t border-line-2 py-2.5 text-sm">
-                      <span className="w-20 shrink-0 whitespace-nowrap font-medium tabular-nums">{dayLabel(st.day)}</span>
-                      <span className="text-ink-soft">{st.label}</span>
-                    </li>
-                  ))}
-                </ul>
-                <button
-                  onClick={() => setPicked(plan)}
-                  className="mt-3 h-10 rounded-full border px-4 text-sm font-medium"
-                  style={{ borderColor: "var(--line-strong)" }}
-                >
-                  Use this plan
+              <span key={plan.id}>
+                <button type="button" onClick={() => setPicked(plan)} className="underline underline-offset-[3px] hover:text-ink">
+                  {plan.name}
                 </button>
-              </div>
+                {" · "}
+              </span>
             ))}
-          </div>
-
-          {/* Phone: one list, one plan open (R-015). */}
-          <div className="overflow-hidden rounded-[18px] border border-line bg-card lg:hidden">
-            {READY_PLANS.map((plan, i) => {
-              const isOpen = openPlan === plan.id;
-              return (
-                <div key={plan.id} className={i ? "border-t border-line-2" : ""}>
-                  <button
-                    type="button"
-                    aria-expanded={isOpen}
-                    onClick={() => setOpenPlan(isOpen ? "" : plan.id)}
-                    className="flex min-h-16 w-full items-center gap-2.5 px-4 py-2.5 text-left"
-                  >
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-base font-medium">{plan.name}</span>
-                      <span className="mt-0.5 block text-[13.5px] text-ink-faint">
-                        {isOpen ? plan.who : plan.steps.map((st) => dayLabel(st.day)).join(" · ")}
-                      </span>
-                    </span>
-                    <ChevronDown
-                      className="h-[18px] w-[18px] shrink-0 transition-transform"
-                      style={{ transform: isOpen ? "rotate(0deg)" : "rotate(-90deg)", color: isOpen ? "var(--ink)" : "var(--ink-faint)" }}
-                    />
-                  </button>
-                  {isOpen && (
-                    <div className="px-4 pb-4">
-                      {plan.steps.map((st) => (
-                        <div key={st.day} className="flex gap-3.5 border-t border-line-2 py-[11px]">
-                          <span className="w-16 shrink-0 text-sm font-medium tabular-nums">{dayLabel(st.day)}</span>
-                          <span className="text-[14.5px] text-ink-soft">{st.label}</span>
-                        </div>
-                      ))}
-                      <button
-                        onClick={() => setPicked(plan)}
-                        className="mt-2 h-[50px] w-full rounded-full text-base font-semibold"
-                        style={{ background: "var(--accent)", color: "var(--on-accent)" }}
-                      >
-                        Use this plan
-                      </button>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          <button
-            onClick={() => setCreating(true)}
-            className="mt-2 inline-flex min-h-11 items-center text-sm text-ink-soft underline underline-offset-[3px]"
-          >
-            Start from scratch instead
-          </button>
+            <button type="button" onClick={() => setCreating(true)} className="underline underline-offset-[3px] hover:text-ink">
+              Start from scratch
+            </button>
+          </p>
         </div>
       )}
 
@@ -244,10 +216,10 @@ export default function WorkflowsPage() {
       {/* --slate, not --coral: nothing is broken and nothing is lost. It
           is a fact about how far a plan runs on this account, said before
           the owner builds one rather than in a notification afterwards. */}
-      {holdAllForApproval && (
+      {holdAllForApproval && (picked || creating || sequences.length > 0) && (
         <div className="mt-3 rounded-[12px] p-3" style={{ backgroundColor: "var(--slate-soft)" }}>
           <p className="text-sm font-medium" style={{ color: "var(--slate)" }}>
-            On the beta plan, a plan runs one step at a time.
+            On the beta plan, a special plan runs one step at a time.
           </p>
           <p className="mt-1 text-[13px] leading-relaxed" style={{ color: "var(--slate)" }}>
             Your account holds every follow-up for your approval, so FollowUp writes the first message of the plan,
@@ -277,14 +249,7 @@ export default function WorkflowsPage() {
       )}
 
       <div className="mt-6 space-y-4">
-        {loaded && sequences.length === 0 && !creating && !picked && (
-          <div className="box p-8 text-center">
-            <WorkflowIcon className="h-6 w-6 mx-auto text-ink-soft" />
-            <p className="text-sm text-ink-soft mt-3">
-              No plans yet. Pick one above.
-            </p>
-          </div>
-        )}
+        {loaded && sequences.length > 0 && !creating && !picked && <h2 className="text-[15px] font-semibold">Your special plans</h2>}
         {sequences.map((seq) => (
           <WorkflowCard
             key={seq.id}
@@ -633,7 +598,7 @@ function WorkflowEditor({
                   placeholder={'Optional — steer what this draft focuses on, e.g. "mention our case studies"'}
                   className="mt-2.5 w-full rounded-[12px] border border-line bg-paper px-3 py-1.5 text-[13px]"
                 />
-                <p className="mt-1.5 text-[11px] text-ink-soft">
+                <p className="mt-1.5 text-[12px] text-ink-soft">
                   Switches to {FALLBACK_CHANNELS} if this lead has no email on file, or hasn&apos;t replied by this
                   step.
                 </p>

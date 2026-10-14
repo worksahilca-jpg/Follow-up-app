@@ -358,6 +358,12 @@ model Business {
   // who has decided to trust it.
   holdAllForApproval Boolean @default(true)
 
+  // The owner's follow-up plans (A-245, src/lib/followUpPlans.ts): the days
+  // they changed on Fast or Long, and their own plan with whom it is for.
+  // Shape { fast?: number[], long?: number[], own?: { days, after, useFor } }.
+  // Null means the plans as drawn: Fast for most customers, Long for Later.
+  followUpPlans Json?
+
   // May any lead on this account be set to Auto — the one mode that skips
   // the risk check and sends price and tense conversations without review?
   //
@@ -946,6 +952,15 @@ model Lead {
   // alert (src/lib/ownerAlerts.ts) has one stable moment to claim and an
   // owner is told once per customer, not on every later message.
   qualifiedAt           DateTime?
+  // The follow-up plan the owner picked for this one customer on their page
+  // (A-245): "fast", "long" or "own". Null: FollowUp picks from where they
+  // stand (Later goes on Long, everyone else on the business's usual plan).
+  followUpPlan          String?
+  // A day the customer asked to hear back ("try me in March"), read from
+  // their own words by src/lib/followUpPlans.ts. No follow-up goes out
+  // before it; replies to their messages still do. Replaced by a newer day
+  // they give, cleared when they write about something else.
+  followUpNotBefore     DateTime?
   // What an Instagram or Messenger customer typed into a DM when asked how
   // to reach them (founder, 2026-10-12, A-238). Meta stops automatic DMs 24
   // hours after their last message; a follow-up after that goes to this

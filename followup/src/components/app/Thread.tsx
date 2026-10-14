@@ -71,7 +71,7 @@ export default function Thread({
                   <div className="whitespace-pre-wrap rounded-[16px] rounded-bl-[6px] border border-line bg-card px-3 py-[9px] text-[14px] leading-[1.4] sm:text-[15px]">
                     {m.body}
                   </div>
-                  <span className="text-[11.5px] text-ink-faint">
+                  <span className="text-[12px] text-ink-faint">
                     {first} · {at}
                   </span>
                 </div>
@@ -90,7 +90,7 @@ export default function Thread({
                 >
                   {m.body}
                 </div>
-                <span className="text-right text-[11.5px] text-ink-faint">
+                <span className="text-right text-[12px] text-ink-faint">
                   {who} · {at}
                   {m.opened ? " · Opened" : ""}
                 </span>

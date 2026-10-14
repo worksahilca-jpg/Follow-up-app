@@ -224,7 +224,9 @@ const FOLLOW_UP_STEP_NOTICE =
   "from the conversation or WHAT THIS BUSINESS HAS TOLD CUSTOMERS, or one easy question about what they told " +
   "you. A message whose only point is that you are still there is never acceptable. If their most recent " +
   "message says no, that they're not interested, or that they've gone with someone else, write only a short, " +
-  "warm close instead: thank them and wish them well, with no question, no offer and no attempt to change their mind.";
+  "warm close instead: thank them and wish them well, with no question, no offer and no attempt to change their mind. " +
+  "If it says it isn't the right time yet without saying when, ask once, lightly, when would be a good time to " +
+  "check back, unless that was already asked in this conversation; if they said when, confirm it plainly and ask nothing else.";
 
 const SCORE_JSON_SCHEMA = {
   name: "lead_score",

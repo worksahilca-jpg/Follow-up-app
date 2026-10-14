@@ -4109,6 +4109,42 @@ it's dead"*.
   - **A limit across everything FollowUp sends by itself:** at most 1 a day and 3 a week per customer.
   - **The fifth idea, for booking (A-242, November):** a short recap the day after a viewing, and one offer to
     reschedule a missed one, then pause.
+- **Drawn and approved (2026-10-14, *"Build it, merge when green"*):** five phones and the computer, inside the real app
+  (board `plans-board.png`, made-up customers).
+  - **Settings › How replies go out:** the box becomes "Your follow-up plans": Right away · Most customers: Fast, day 1,
+    3, 7, 14, 30 · Later customers: Long, the Fast days then once a month · Always: prices and dates come to you · It
+    stops: when they book, reply or say no. "Change" opens the plans window.
+  - **The plans window:** "FollowUp picks a plan for each customer from what they've told you. Change it here for
+    everyone, or for one customer on their page." Fast, Long and My own in the existing ready-plan pattern (day | what,
+    one open at a time on a phone, side by side on a computer). Fast: Day 1 answer anything left open · Day 3 something
+    new that fits what they want · Day 7 one easy next step · Day 14 something new again · Day 30 close the loop.
+    Long: Day 1–30 the same five · Monthly something new each time · Month 6 close the loop, then stop. "Used for most
+    customers · N now" under each.
+  - **"On every plan" box** with four ticks: stops when they book, reply or say no; stops 6 months after their last
+    message, a new message starts it again; never more than 1 a day or 3 a week to one customer; a date they give
+    ("try me in March") holds everything until then. One quiet line: each message follows the "Replies and check-ins"
+    setting.
+  - **My own:** day chips with × and "+ Add a day"; "After the last day: Stop / Once a month, up to 6 months"; "Use it
+    for: Most customers / Later customers / Only when I pick it"; one black "Save my plan".
+  - **On the customer's card:** "On the Fast plan · Change plan", then one sentence: "Next message Thursday, Oct 15,
+    the first of 5. It stops when she books, replies or says no. Nothing for you to do." For a date they gave: "Tom
+    asked to hear back in March, so nothing goes out before Monday, Mar 1. Then the Long plan carries on."
+  - **Kept:** the three old plans (After a quote, After a no-show, Seasonal check-in), as one quiet line "More plans
+    for special cases".
+- **Built (2026-10-14, same day, one merge with the six app fixes):** as drawn, in `src/lib/followUpPlans.ts` (the
+  plans and the four rules, read by the engine, the badge, Coming up and the card alike), the Settings box, the
+  plans window (`src/components/app/FollowUpPlansView.tsx`) and the customer card (`src/components/app/CustomerPlan.tsx`).
+  - **Built from drawn patterns, not drawn themselves:** "Change the days" on Fast and Long opens the My own editor
+    with only the days (Long adds "Then once a month, up to 6 months"); "Change plan" on the card opens the plans as
+    pills in place (the one they're on is black), plus "Let FollowUp pick" once the owner has picked, and "Don't wait
+    for Mar 1" while a day they asked for holds the plan; "Start from scratch" stays as a fourth link in "More plans".
+  - **Two honest changes to the drawn words:** the card says "they", never "she" (a name is not a pronoun); on an
+    account that holds every message the card ends "Each one waits for your OK on Today." instead of "Nothing for you
+    to do.", because there it is not true.
+  - **The quiet-rule card in Settings** now says "FollowUp follows your plans: Fast (day 1, 3, 7, 14, 30) for most
+    customers, Long for Later customers. Change the plans" instead of a day box; the days have one home.
+  - **A new plan for a new own plan is "Only when I pick it"** until the owner says otherwise, so saving a plan never
+    moves every customer by surprise.
 
 ## A-246 — Qualifying a realtor's customer: three short rounds, then Ready, Warm or Later ^A-246
 

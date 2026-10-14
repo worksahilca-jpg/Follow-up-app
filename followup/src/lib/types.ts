@@ -1,4 +1,5 @@
 import type { AutomationStatus } from "@/lib/automationStatus";
+import type { PlanLead } from "@/lib/followUpPlans";
 
 export type PipelineStage =
   | "new"
@@ -118,6 +119,11 @@ export interface Lead {
   // about the lead's actual state — components must treat it the same as
   // any other absent optional field, not render a default status for it.
   automationStatus?: AutomationStatus;
+  // What the follow-up plan reads about this customer (src/lib/followUpPlans.ts,
+  // A-245): the plan the owner picked on their page, where they stand, a day
+  // they asked to hear back, their bookings. Computed in leads-data.ts like
+  // automationStatus, and absent on demo leads for the same reason.
+  followUp?: PlanLead;
 }
 
 export interface TeamMember {

@@ -25,6 +25,7 @@ import type { Message } from "@/lib/types";
 import { Prisma, type Priority as DbPriority } from "@prisma/client";
 import { draftingContext } from "@/lib/businessFacts";
 import { recordAudit } from "@/lib/audit";
+import { checkBackDate } from "@/lib/followUpPlans";
 import { heldSince } from "@/lib/pendingApprovals";
 import {
   bookingWhen,
@@ -276,6 +277,9 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
   const newPriority = priorityFromScore(scoreResult.score);
   const latestInbound = [...conversation].reverse().find((m) => m.direction === "inbound");
   const latestInboundAt = latestInbound ? new Date(latestInbound.date) : null;
+  // A day they asked to hear back, read from their own words and counted
+  // from when they wrote (src/lib/followUpPlans.ts).
+  const askedDay = latestInbound && latestInboundAt ? checkBackDate(latestInbound.body, latestInboundAt.getTime()) : null;
   // "Handoff" — the explicit "this one's ready, go close it" moment the
   // product was missing (see PRODUCT_DIRECTION.md's mission: AI decides
   // qualified, business owner takes over). Fires only on a genuine
@@ -340,6 +344,10 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
             askedIfPersonAt: scoreResult.asksIfAutomated ? latestInboundAt : null,
             // Only "thanks" / "ok": what the skip_thanks habit keys on (src/lib/habits.ts).
             thanksOnlyAt: scoreResult.onlyThanks ? latestInboundAt : null,
+            // "Try me in March" (A-245): no follow-up before the day they
+            // asked for. A newer day replaces it, a plain thanks keeps it,
+            // and anything else they write means they're back, so it goes.
+            ...(askedDay !== null ? { followUpNotBefore: new Date(askedDay) } : scoreResult.onlyThanks ? {} : { followUpNotBefore: null }),
           }
         : {}),
       ...(qualification ? { qualification: qualification as unknown as Prisma.InputJsonValue } : {}),

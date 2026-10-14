@@ -23,12 +23,15 @@ import type { Prisma } from "@prisma/client";
 import { getAtRiskLeads } from "@/lib/rescue";
 import { computeAutomationStatus, getBusinessAutomationRules, type BusinessAutomationRules } from "@/lib/automationStatus";
 import { leadLanguageOf } from "@/lib/leadLanguage";
+import { readQualification } from "@/lib/qualification";
+import type { PlanLead } from "@/lib/followUpPlans";
 
 type DbLead = Prisma.LeadGetPayload<{
   include: {
     conversations: { include: { messages: true } };
     assignedTo: true;
     sequence: { select: { name: true; active: true } };
+    bookings: { select: { createdAt: true; scheduledAt: true } };
   };
 }>;
 
@@ -57,6 +60,16 @@ export function mapDbLeadToUiLead(dbLead: DbLead, rules: BusinessAutomationRules
     )
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
+  // What the follow-up plan reads about this customer (A-245): the same
+  // inputs the engine's planStateOfRow takes, so the badge, Coming up and
+  // the customer card say what the engine will do.
+  const followUp: PlanLead = {
+    override: dbLead.followUpPlan ?? null,
+    tier: readQualification(dbLead.qualification)?.tier ?? null,
+    notBeforeMs: dbLead.followUpNotBefore ? dbLead.followUpNotBefore.getTime() : null,
+    bookings: (dbLead.bookings ?? []).map((b) => ({ createdAt: b.createdAt.getTime(), scheduledAt: b.scheduledAt.getTime() })),
+    createdAtMs: dbLead.createdAt.getTime(),
+  };
   const stage = dbLead.stage.toLowerCase() as Lead["stage"];
   const automationTier = dbLead.automationTier.toLowerCase() as Lead["automationTier"];
   const lastContacted = (dbLead.lastContacted ?? dbLead.createdAt).toISOString();
@@ -126,9 +139,11 @@ export function mapDbLeadToUiLead(dbLead: DbLead, rules: BusinessAutomationRules
         aiPausedReason: dbLead.aiPausedReason,
         talkedAt: dbLead.talkedAt ? dbLead.talkedAt.toISOString() : null,
         hasDmEmail: !dbLead.email && !!dbLead.dmEmail,
+        followUp,
       },
       rules
     ),
+    followUp,
   };
 }
 
@@ -139,6 +154,8 @@ const leadInclude = {
   // Only the trigger is needed — see computeAutomationStatus's
   // hasSubstantiveFollowUp check, mirroring findUnansweredLeads() in
   // automation.ts.
+  // Confirmed bookings stop the follow-up plan (A-245, rule 1).
+  bookings: { where: { status: "confirmed" }, select: { createdAt: true, scheduledAt: true } },
 } satisfies Prisma.LeadInclude;
 
 export async function getLeads(): Promise<Lead[]> {

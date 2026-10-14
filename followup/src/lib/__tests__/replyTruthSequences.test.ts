@@ -80,7 +80,8 @@ function enrolled(lastDirection: "inbound" | "outbound") {
         channel: "email",
         messages: [
           { id: "m1", direction: "outbound", body: "Hi", sentAt: new Date(Date.now() - 2 * 86400_000), opened: false },
-          { id: "m2", direction: lastDirection, body: "Reply", sentAt: new Date(Date.now() - 60_000), opened: false },
+          // More than a day ago: on every plan, never more than 1 message a day (A-245).
+          { id: "m2", direction: lastDirection, body: "Reply", sentAt: new Date(Date.now() - 25 * 3_600_000), opened: false },
         ],
       },
     ],

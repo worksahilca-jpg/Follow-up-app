@@ -439,7 +439,7 @@ export default function TwilioConfig() {
                       )}
                       {numberStatus.calls.length > 0 && (
                         <div className="mt-2">
-                          <p className="text-[11px] font-medium uppercase tracking-wide text-ink-soft mb-1">Recent calls to your number</p>
+                          <p className="text-[12px] font-medium uppercase tracking-wide text-ink-soft mb-1">Recent calls to your number</p>
                           <ul className="space-y-1">
                             {numberStatus.calls.map((c) => (
                               <li key={c.sid} className="text-[13px] rounded-[12px] border border-line bg-paper px-2.5 py-1.5">
@@ -466,7 +466,7 @@ export default function TwilioConfig() {
                 <p className="text-[13px] font-medium flex items-center gap-1.5">
                   <PhoneCall className="h-3.5 w-3.5" /> Answers your calls
                   <span
-                    className="rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+                    className="rounded-full px-2 py-0.5 text-[12px] font-semibold uppercase tracking-wide"
                     style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}
                   >
                     Beta

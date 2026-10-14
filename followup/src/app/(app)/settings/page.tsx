@@ -855,7 +855,7 @@ function SettingsPageInner() {
           (inWindow ? "lg:bg-card-2 lg:px-3 lg:pb-4 lg:pt-5" : "lg:sticky lg:top-6 lg:self-start lg:rounded-[14px] lg:bg-card-2 lg:p-3")
         }
       >
-        <p className="px-2.5 pb-2 font-mono text-[11px] uppercase tracking-[0.09em] text-ink-faint">Settings</p>
+        <p className="px-2.5 pb-2 font-mono text-[12px] uppercase tracking-[0.09em] text-ink-faint">Settings</p>
         {SETTINGS_GROUPS.map((g) => {
           const on = g === navGroup;
           const Icon = GROUP_ICON[g];

@@ -61,8 +61,8 @@ export default function Sidebar({ businessName = "", counts = {} }: { businessNa
     <>
       {/* Phone: a quiet top bar (brand, and the bell with its word) … */}
       {!ownPhoneBar && (
-        <header className="lg:hidden fixed top-0 inset-x-0 z-30 flex items-center justify-between border-b border-line bg-paper px-4 py-3">
-          <Link href="/dashboard" className="flex items-center gap-2">
+        <header className="lg:hidden fixed top-0 inset-x-0 z-30 flex items-center justify-between border-b border-line bg-paper px-4 py-1.5">
+          <Link href="/dashboard" className="flex min-h-11 items-center gap-2">
             <LogoMark height={20} />
             <span className="text-base font-semibold">FollowUp</span>
           </Link>
@@ -175,7 +175,7 @@ function BusinessMenu({ initial, name }: { initial: string; name: string }) {
       >
         <span
           aria-hidden
-          className="h-5 w-5 shrink-0 rounded-[6px] inline-flex items-center justify-center text-[11px] font-semibold"
+          className="h-5 w-5 shrink-0 rounded-[6px] inline-flex items-center justify-center text-[12px] font-semibold"
           style={{ background: "var(--accent)", color: "var(--on-accent)" }}
         >
           {initial}

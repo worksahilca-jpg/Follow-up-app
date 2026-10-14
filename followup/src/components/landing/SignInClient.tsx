@@ -106,7 +106,7 @@ function SignInPageInner({ inviteBusinessName }: { inviteBusinessName: string | 
         {/* Not "Welcome back": the landing page's button lands first-time
             visitors on this exact screen, so roughly half the traffic here
             has never signed in before. */}
-        <div className="font-mono text-[11px] font-medium uppercase tracking-[0.1em] text-ink-faint">Private beta</div>
+        <div className="font-mono text-[12px] font-medium uppercase tracking-[0.1em] text-ink-faint">Private beta</div>
         <h1 className="mt-2.5 text-4xl leading-[1.05]">Sign in to FollowUp.</h1>
         <p className="mt-3 text-base leading-relaxed text-ink-soft">
           FollowUp is in a private beta. Sign in with the Google account Sahil added.

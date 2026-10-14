@@ -73,9 +73,9 @@ export default function CopyWebhookUrl() {
           <p className="text-[13px] text-ink-soft mt-1">
             Point Zapier, Make, a Google Forms bridge, or any tool that can send a webhook at this URL, and
             every submission becomes a lead here — scored and ready to follow up on, same as an email. Send
-            JSON or form fields: <code className="text-[11px]">name</code> (required),{" "}
-            <code className="text-[11px]">email</code> or <code className="text-[11px]">phone</code>{" "}
-            (one required), <code className="text-[11px]">message</code> (optional).
+            JSON or form fields: <code className="text-[12px]">name</code> (required),{" "}
+            <code className="text-[12px]">email</code> or <code className="text-[12px]">phone</code>{" "}
+            (one required), <code className="text-[12px]">message</code> (optional).
           </p>
 
           {adminOnly ? (

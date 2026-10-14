@@ -12733,3 +12733,9 @@ owner. The launch plan's build item was renamed the same way. **For future sessi
   them. Production, read-only: 7 testers, 2 qualify (8 and 7.7 in 10 sent as written), 0 have answered, 0 send by
   themselves. The question shows only when nobody is waiting (A-243), which may be why. Nothing new was drawn; the
   plan item is ticked.
+
+## 2026-10-14 — Learn from mistakes stays by hand (A-248)
+
+Planned, not built. Production, read-only: in two weeks testers sent 5 replies through FollowUp and changed 1; 2 of 7
+testers have "Improve FollowUp" on. An automatic loop would have almost nothing to learn from, so the founder chose the
+manual loop that already works (run the test, fix, add a made-up check) until testers send 20+ replies a week.

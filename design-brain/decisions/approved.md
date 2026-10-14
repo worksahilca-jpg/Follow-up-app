@@ -4205,3 +4205,15 @@ evidence and its strength).
   ("top agent", "award-winning") is rewritten once; if it still does, it waits for the owner with "Held because the
   draft rushes them ..." or "... praises you with a ranking or title you haven't told FollowUp".
 
+
+## A-248 — Learn from mistakes by hand until testers send 20+ replies a week ^A-248
+
+**Approved:** 2026-10-14, founder, on the plan for "Learn from mistakes, safely": *"Keep it by hand for now"*.
+
+**What specifically:**
+- The loop stays manual: after a change to replies or qualifying, the founder runs the tests on /admin; each mistake
+  found becomes a fix plus a permanent check with a made-up example (the first: "I charge buyers nothing", 2026-10-14).
+- The automatic version (count each reply the owner fixes, turn repeats into checks) is built once testers send 20+
+  replies a week through FollowUp. At the time: 5 replies in two weeks, 1 changed.
+- Whenever it is built: no customer's words are kept for it. Checks use made-up examples, and Gmail messages are never
+  used to improve FollowUp for everyone (Google's Limited Use rules, already in the privacy policy).

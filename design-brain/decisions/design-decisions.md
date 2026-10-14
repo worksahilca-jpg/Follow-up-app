@@ -13057,3 +13057,17 @@ window.
   merge.
 - /api/automation/rule-records and /api/business/track-record have no screen any more. Removing them is left for a
   later cleanup.
+
+## 2026-10-14 — Sixth accuracy run (after PR #510), read from the founder's screenshot
+
+- Read from a small whole-page screenshot, so the counts are clear but the exact wording of the misses is not.
+- **Replies on Instagram and Messenger:** 17 of 20 passed every check (the fifth run had 10 of 20). None invented
+  a fact. Two broke the DM shape rules; one could go to anyone.
+- **The three misses, as far as they can be read:**
+  - "buyer gives details, asks for help": a shape rule about digits.
+  - "lost offers acknowledges the feeling": generic ("That's tough. I can help with offers and the next one…").
+  - "weekend viewing, no pressure": a calendar shape rule ("…Which day would suit you…").
+  - A broken shape rule is redrafted once, then waits for the owner. Nothing was sent alone.
+- **Qualifying:** 718 of 720 answers right, none made up.
+- **Next:** a readable close-up of the three misses, then decide whether the digits one is a false alarm (the
+  customer's own "3 bed"?) before changing any rule.

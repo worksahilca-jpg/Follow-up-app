@@ -6,6 +6,17 @@ hierarchy has failed.
 
 ---
 
+## Update — 2026-10-15 (A-221, A-258)
+
+The 2026-09-13 section below is history. What the app uses today:
+- **Public Sans:** everything you press or scan (buttons, labels, rows, body sentences). IBM Plex Mono for small
+  uppercase labels.
+- **FU Display** (the homepage's display serif): every page title (A-221).
+- **Newsreader:** the words you read, the customer's message and the reply, wherever they appear (A-258), through
+  the `font-read` utility. One weight, ~22 KB, not preloaded.
+- Rule 1 below ("one family in the product") was relaxed on purpose, with the founder's yes: a reading face for
+  messages makes the customer's words and the reply read like a letter and sets them apart from the controls.
+
 ## Current state — decided, 2026-09-13
 
 - **Three families, product-wide, one system: Bricolage Grotesque (display/headings),

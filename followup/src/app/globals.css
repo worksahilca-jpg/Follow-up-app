@@ -195,6 +195,9 @@
   --font-display: var(--font-public-sans), "Public Sans", ui-sans-serif, system-ui, sans-serif;
   --font-body: var(--font-public-sans), "Public Sans", ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-plex-mono), "IBM Plex Mono", ui-monospace, monospace;
+  /* The words you read (A-258): the customer's message and the reply, set
+     like a letter in Newsreader. Sizes stay with each place. */
+  --font-read: var(--font-newsreader), "Newsreader", Georgia, "Times New Roman", serif;
 }
 
 body {

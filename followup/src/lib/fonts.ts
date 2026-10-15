@@ -1,4 +1,4 @@
-import { Public_Sans, IBM_Plex_Mono, Instrument_Serif } from "next/font/google";
+import { Public_Sans, IBM_Plex_Mono, Instrument_Serif, Newsreader } from "next/font/google";
 
 // The app-wide typefaces — Public Sans (headings and body, headings set
 // tighter and heavier) and IBM Plex Mono (eyebrows/labels/mono meta text).
@@ -34,4 +34,21 @@ export const instrumentSerif = Instrument_Serif({
   weight: "400",
   style: ["italic"],
   variable: "--font-instrument-serif",
+});
+
+// Newsreader, for the words you read in the app: the customer's message and
+// the reply (A-258). Added 2026-10-15 with the founder's yes ("yes b is
+// good") after a drawing of Today in three faces. Titles keep FU Display
+// (A-221); buttons, labels and everything else stay Public Sans. Used through
+// Tailwind's `font-read`.
+//
+// One static weight (messages are never bold): the variable file with the
+// optical-size axis was 129 KB. Not preloaded: the root layout would otherwise
+// push it to every page, the homepage included (A-193 made that page light);
+// the browser fetches it only on a page that shows a message.
+export const newsreader = Newsreader({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-newsreader",
+  preload: false,
 });

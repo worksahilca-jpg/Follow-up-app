@@ -167,7 +167,7 @@ export default function ReplyBar({
               onFocus={() => setFocused(true)}
               onBlur={() => setFocused(false)}
               placeholder={sentTo ? `Sent to ${first}. Write again…` : `Reply to ${first}…`}
-              className="max-h-40 min-h-[44px] flex-1 resize-none bg-transparent py-2.5 text-base leading-snug"
+              className="max-h-40 min-h-[44px] flex-1 resize-none bg-transparent py-2.5 font-read text-[17px] leading-snug"
               style={{ outline: "none" }}
             />
             <button

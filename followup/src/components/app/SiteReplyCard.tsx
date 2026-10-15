@@ -169,7 +169,7 @@ export default function SiteReplyCard({
 
       {draft ? (
         <>
-          <p className="mt-2.5 whitespace-pre-wrap rounded-xl border px-3.5 py-3 text-[15px] leading-relaxed" style={{ background: "var(--glass-strong)", borderColor: "var(--wash-edge)" }}>
+          <p className="mt-2.5 whitespace-pre-wrap rounded-xl border px-3.5 py-3 font-read text-[16px] leading-[1.5]" style={{ background: "var(--glass-strong)", borderColor: "var(--wash-edge)" }}>
             {needsPrice ? fillPriceSlot(draft, price.trim() || blankHint) : words}
           </p>
           {needsPrice && (

@@ -279,7 +279,7 @@ function ApprovalCard({
           summary of them. Their words are the biggest text on the card. */}
       {item.leadLastMessage && (
         <div className="mt-2.5">
-          <p className="whitespace-pre-wrap rounded-[16px] bg-card-2 px-4 py-3.5 text-[16.5px] leading-[1.45] text-ink sm:text-[17px]">{item.leadLastMessage}</p>
+          <p className="whitespace-pre-wrap rounded-[16px] bg-card-2 px-4 py-3.5 font-read text-[17.5px] leading-[1.5] text-ink">{item.leadLastMessage}</p>
           {/* The 30-minute holding message went (A-060): the customer is not
               waiting in silence, and the owner should know that before
               deciding how fast this one has to be. */}
@@ -330,7 +330,7 @@ function ApprovalCard({
               rows={7}
               autoFocus
               aria-label={`Your reply to ${firstName}`}
-              className="w-full resize-y rounded-xl border border-line bg-card/80 p-3 text-base leading-relaxed focus:outline-none"
+              className="w-full resize-y rounded-xl border border-line bg-card/80 p-3 font-read text-[17.5px] leading-[1.5] focus:outline-none"
             />
             <div className="flex flex-wrap items-center gap-1.5">
               <button
@@ -362,7 +362,7 @@ function ApprovalCard({
             </div>
           </div>
         ) : needsPrice ? (
-          <p className="whitespace-pre-wrap text-[16px] leading-[1.45] sm:text-[16.5px]">
+          <p className="whitespace-pre-wrap font-read text-[17.5px] leading-[1.5]">
             {splitAtPriceSlot(text).map((part, i) =>
               i === 0 ? (
                 <span key={i}>{part}</span>
@@ -404,7 +404,7 @@ function ApprovalCard({
             )}
           </p>
         ) : (
-          <p className="whitespace-pre-wrap text-[16px] leading-[1.45] sm:text-[16.5px]">
+          <p className="whitespace-pre-wrap font-read text-[17.5px] leading-[1.5]">
             <MarkedText text={text} words={item.checkWords ?? []} />
           </p>
         )}

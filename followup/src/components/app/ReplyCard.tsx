@@ -263,7 +263,7 @@ export default function ReplyCard({
             rows={5}
             placeholder={`Write to ${first}…`}
             aria-label={`Your reply to ${first}`}
-            className="w-full resize-y rounded-xl border border-line bg-card/80 p-3 text-base leading-relaxed focus:outline-none"
+            className="w-full resize-y rounded-xl border border-line bg-card/80 p-3 font-read text-[17px] leading-[1.5] focus:outline-none"
           />
           <div className="flex flex-wrap items-center gap-2">
             <button
@@ -296,7 +296,7 @@ export default function ReplyCard({
           </div>
         </motion.div>
       ) : (
-        <p key="read" className={"mt-2 whitespace-pre-wrap text-[14px] leading-[1.45] sm:text-[15px]" + (dense ? " lg:mt-2 lg:leading-normal" : "")}>
+        <p key="read" className={"mt-2 whitespace-pre-wrap font-read text-[15px] leading-[1.5] sm:text-[16px]" + (dense ? " lg:mt-2 lg:leading-normal" : "")}>
           {needsPrice
             ? splitAtPriceSlot(text).map((part, i) =>
                 i === 0 ? (

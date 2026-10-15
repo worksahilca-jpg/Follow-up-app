@@ -41,6 +41,7 @@ the other end? Lead with what the code already does:
 | `leads_retrieval` | **Yes** | Read a Lead Ads form submission (`GET /{leadgen-id}?fields=field_data,created_time,form_id`) |
 | `pages_read_engagement` | **Check first** | No FollowUp code reads Page posts or engagement. It is requested only because the Oct 7 Lead Ads setup paired it with `leads_retrieval`. On the App Review page, if Meta lists it as required for `leads_retrieval`, request it and say so; if not, drop it from `LEAD_ADS_SCOPES` before recording. An unused permission is a common rejection |
 | **Human Agent** (Messenger) | **Yes** | A reply a person sends between 24 hours and 7 days after the customer's last message goes out with the `HUMAN_AGENT` tag (`sendFacebookMessage`, `humanAgent: true`). Never on an automated send |
+| **Business Asset User Profile Access** (feature) | **Yes, Advanced Access** | Read the name of a person who messaged the Page (`GET /{psid}?fields=name,first_name,last_name` in `lookupSenderName`, `lib/facebook.ts`). Without it every Messenger customer is called "Facebook Messenger", which is what the founder's own Messenger customers show today. Added 2026-10-15: Meta's User Profile API docs say business apps need Advanced Access to this feature, and the Oct 13 version of this pack left it out |
 | `public_profile` | No action | Standard |
 
 **Found while preparing this:** Meta's Instagram approval lists only `instagram_business_basic` and
@@ -92,6 +93,13 @@ late Instagram replies will be refused by Meta. Add it to this submission (Video
 
 > Requested only because Meta requires it alongside `leads_retrieval` for reading lead form submissions on a Page.
 > FollowUp does not read Page posts, comments, followers or insights.
+
+### Business Asset User Profile Access
+
+> When someone messages the connected Page, FollowUp shows the business owner who wrote, so the owner can recognise the
+> person and greet them by name. We read only the name of a person who has messaged that Page first, only for the
+> business that owns the Page, and only at the moment their message arrives. We do not read profile pictures, friends,
+> or anything else about the person, and we never use the name outside that business's own conversation with them.
 
 ### Human Agent (Messenger, and Instagram if not yet granted)
 
@@ -169,7 +177,7 @@ Upload this video to both permissions and say in the notes which step shows whic
 1. Logged out → sign in → show the connected Page.
 2. **On the phone, from the second account**, send the Page: *"Hi, is the 3 bedroom on Elm Street still available?"*
    Show the phone.
-3. Back in FollowUp, **Today**: the person appears with their message and the reply FollowUp wrote.
+3. Back in FollowUp, **Today**: the person appears **by their Facebook name** with their message and the reply FollowUp wrote. Zoom on the name: this step is the Business Asset User Profile Access video too. (The second account has a role on the app, which is how the name shows before review. If it shows "Facebook Messenger" instead, the feature is not added to the app yet: add it under App Review → Permissions and Features first.)
 4. **Stop here and say it:** "Nothing has been sent. Every reply waits for me. I read it, and I decide."
 5. Press **Send**. Let the 10-second undo run out.
 6. **Cut to the phone: the reply has arrived in Messenger.**

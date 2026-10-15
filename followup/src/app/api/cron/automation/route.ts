@@ -8,6 +8,7 @@ import { pruneRateLimitHits } from "@/lib/rateLimit";
 import { recheckDmLeadsForAllBusinesses } from "@/lib/inbound/dmRecheck";
 import { pruneDemoTries } from "@/lib/demoReply";
 import { remindStaleApprovalsForAllBusinesses } from "@/lib/staleApprovals";
+import { writeMomentNotesForAllBusinesses } from "@/lib/theirMomentData";
 
 // One invocation covers every business with automation enabled — at real
 // tenant counts that's comfortably past a default serverless timeout even
@@ -94,6 +95,13 @@ export async function GET(request: NextRequest) {
       failed("DM re-check")(err);
       return { checked: 0, setAside: 0 };
     });
+    // "Their moment" (A-262): customers whose named time has come get one
+    // note held on Today for the owner's OK (src/lib/theirMomentData.ts).
+    // Its own failure, like the reminders.
+    const moments = await writeMomentNotesForAllBusinesses().catch((err) => {
+      failed("their moment")(err);
+      return { written: 0, waiting: 0, skipped: 0, failed: 0 };
+    });
     // Retention for the raw inbound-capture log (InboundWebhookEvent):
     // processed rows after 14 days, unreplayed failures after 90. It is
     // written once per inbound message forever, so it needs a policy from
@@ -136,7 +144,7 @@ export async function GET(request: NextRequest) {
      * the failure to Sentry either way. (This used to say console.error
      * did; it never did, as the server config has no console integration.)
      */
-    const body = { success: errors.length === 0, automation, sequences, staleApprovals, dmRechecked, pruned, prunedSetAside, prunedRateLimitHits, prunedDemoTries, errors };
+    const body = { success: errors.length === 0, automation, sequences, staleApprovals, dmRechecked, moments, pruned, prunedSetAside, prunedRateLimitHits, prunedDemoTries, errors };
     const nothingRan = automation === null && sequences === null;
     return NextResponse.json(body, { status: nothingRan ? 500 : 200 });
   } catch (err) {

@@ -130,6 +130,11 @@ export interface Lead {
    * staying in touch.
    */
   stayInTouch?: { since: string; messageId: string | null } | null;
+  /**
+   * "Their moment" (A-262): a time they named about a plan of theirs, with
+   * their words. Absent once the note for it has been written.
+   */
+  moment?: { at: string; quote: string; saidAt: string | null } | null;
 }
 
 export interface TeamMember {

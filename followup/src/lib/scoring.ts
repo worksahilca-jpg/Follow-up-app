@@ -7,6 +7,7 @@
  */
 
 import { judgeStayInTouchReply } from "@/lib/stayInTouchData";
+import { readMoment } from "@/lib/theirMoment";
 import { prisma } from "@/lib/db";
 import { tooManyRecentActions } from "@/lib/rateLimit";
 import { byTranscriptOrder } from "@/lib/transcript";
@@ -292,6 +293,13 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
   // A day they asked to hear back, read from their own words and counted
   // from when they wrote (src/lib/followUpPlans.ts).
   const askedDay = latestInbound && latestInboundAt ? checkBackDate(latestInbound.body, latestInboundAt.getTime()) : null;
+  // "Their moment" (A-262): a time they named about a plan of theirs, kept
+  // with their words. Read once per message: a re-score of the same message
+  // never resets a moment whose note has already been written.
+  const moment =
+    latestInbound && latestInboundAt && lead.momentSaidAt?.getTime() !== latestInboundAt.getTime()
+      ? readMoment(latestInbound.body, latestInboundAt.getTime())
+      : null;
   // "Handoff" — the explicit "this one's ready, go close it" moment the
   // product was missing (see PRODUCT_DIRECTION.md's mission: AI decides
   // qualified, business owner takes over). Fires only on a genuine
@@ -360,6 +368,7 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
             // asked for. A newer day replaces it, a plain thanks keeps it,
             // and anything else they write means they're back, so it goes.
             ...(askedDay !== null ? { followUpNotBefore: new Date(askedDay) } : scoreResult.onlyThanks ? {} : { followUpNotBefore: null }),
+            ...(moment ? { momentAt: new Date(moment.at), momentQuote: moment.quote, momentSaidAt: latestInboundAt, momentNoteAt: null } : {}),
           }
         : {}),
       ...(qualification ? { qualification: qualification as unknown as Prisma.InputJsonValue } : {}),

@@ -9,6 +9,7 @@ import { oneQueue, summariseGroups, UNKNOWN_SOURCE_LABEL, WHOLE_QUEUE } from "@/
 import type { TodayTier } from "@/lib/calmToday";
 import { plainHoldReason } from "@/lib/holdReasons";
 import { STAY_IN_TOUCH_TRIGGER } from "@/lib/stayInTouch";
+import { THEIR_MOMENT_TRIGGER } from "@/lib/theirMoment";
 import { DAY_BOX, DayHeading, DayRow, type TodayRow } from "@/components/app/TodayDay";
 import { useUndoableSend } from "@/components/useUndoableSend";
 import SiteReplyCard from "@/components/app/SiteReplyCard";
@@ -263,8 +264,12 @@ function ApprovalCard({
   // the line no longer leads with a reason tag ("Asked the price ·").
   // A note to someone staying in touch (A-260) answers nothing they asked: the line says why it exists.
   const stay = item.trigger === STAY_IN_TOUCH_TRIGGER;
-  const did = stay ? "said yes to hearing from you" : CHANNEL_DID[item.leadLastMessageChannel ?? ""] ?? "wrote to you";
-  const when = stay ? null : item.asked ?? null;
+  // A note for their moment (A-262): the head is what they said and when, and their words are the quote.
+  const moment = item.trigger === THEIR_MOMENT_TRIGGER && Boolean(item.said);
+  const note = stay || moment;
+  const did = stay ? "said yes to hearing from you" : moment ? `said ${item.said?.when ?? "earlier"}` : CHANNEL_DID[item.leadLastMessageChannel ?? ""] ?? "wrote to you";
+  const when = note ? null : item.asked ?? null;
+  const quoted = moment ? item.said?.quote ?? null : item.leadLastMessage;
 
   return (
     <article className={bare ? undefined : ONE} aria-label={`${item.leadName} is waiting for you`}>
@@ -274,15 +279,15 @@ function ApprovalCard({
         </Link>{" "}
         {did}
         {when && ` ${when}`}
-        {item.leadLastMessage ? ":" : "."}
+        {quoted ? ":" : "."}
       </p>
 
       {/* What they actually said, before what we're about to reply with:
           judging a reply needs the customer's own words, not FollowUp's
           summary of them. Their words are the biggest text on the card. */}
-      {item.leadLastMessage && (
+      {quoted && (
         <div className="mt-2.5">
-          <p className="whitespace-pre-wrap rounded-[16px] bg-card-2 px-4 py-3.5 font-read text-[17.5px] leading-[1.5] text-ink">{item.leadLastMessage}</p>
+          <p className="whitespace-pre-wrap rounded-[16px] bg-card-2 px-4 py-3.5 font-read text-[17.5px] leading-[1.5] text-ink">{quoted}</p>
           {/* The 30-minute holding message went (A-060): the customer is not
               waiting in silence, and the owner should know that before
               deciding how fast this one has to be. */}
@@ -314,7 +319,7 @@ function ApprovalCard({
       {/* The reply on the wash (A-220), said in words (A-243): who wrote it,
           FollowUp or the owner (A-089), with no label to decode. */}
       <p className="mt-4 text-[14px] leading-snug text-ink-soft">
-        {mine ? (stay ? "Your note, as you changed it:" : "Your reply, as you changed it:") : stay ? "FollowUp wrote this note for you:" : "FollowUp wrote this reply for you:"}
+        {mine ? (note ? "Your note, as you changed it:" : "Your reply, as you changed it:") : note ? "FollowUp wrote this note for you:" : "FollowUp wrote this reply for you:"}
       </p>
       <div className="mt-2 rounded-[16px] px-4 py-3.5" style={WARM_CARD}>
         {item.textTo && <p className="text-[12.5px] text-ink-soft">Text to {item.textTo}</p>}
@@ -448,10 +453,10 @@ function ApprovalCard({
           nothing when the every-reply-waits setting is the only reason.
           A price draft's reason is the blank, which the lines above say. */}
       {/* A note to someone staying in touch: why them, in plain words. Information, not a task, so no dot. */}
-      {stay && item.reason && !editing && (
+      {note && item.reason && !editing && (
         <p className="mt-2.5 text-[13px] leading-snug text-ink">{item.reason.trim().replace(/\.?$/, ".")}</p>
       )}
-      {!stay && (checkHint ?? plainReason) && !needsPrice && !item.askedIfPerson && !editing && !edited && (
+      {!note && (checkHint ?? plainReason) && !needsPrice && !item.askedIfPerson && !editing && !edited && (
         <p className="mt-2.5 flex items-baseline gap-2 text-[13px] leading-snug text-ink">
           <span aria-hidden className="inline-block h-[7px] w-[7px] shrink-0 -translate-y-px rounded-full" style={{ background: "var(--state-needs)" }} />
           {checkHint ?? plainReason}
@@ -818,6 +823,10 @@ function replyRow(item: ApprovalItem): TodayRow {
   // A note to someone staying in touch (A-260) answers nothing: the row says what it is.
   if (item.trigger === STAY_IN_TOUCH_TRIGGER) {
     return { key: item.leadId, kind: "reply", title: `Note to ${item.leadName}`, sub: "Said yes to hearing from you · waiting for your OK", time: null, href: null };
+  }
+  // A note for their moment (A-262): the time they named has come.
+  if (item.trigger === THEIR_MOMENT_TRIGGER) {
+    return { key: item.leadId, kind: "reply", title: `Note to ${item.leadName}`, sub: "Their moment · waiting for your OK", time: null, href: null };
   }
   const what = item.why ?? (item.leadLastMessage ? `“${excerpt(item.leadLastMessage, 48)}”` : null);
   const wait = item.wait ? item.wait.charAt(0).toLowerCase() + item.wait.slice(1) : null;

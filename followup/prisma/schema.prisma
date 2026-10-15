@@ -991,6 +991,15 @@ model Lead {
   stayInTouchAt         DateTime?
   stayInTouchMessageId  String?
   stayInTouchNoteAt     DateTime?
+  // "Their moment" (A-262): a time the customer named ("we'll talk to the
+  // bank in January"), read from their own words (src/lib/theirMoment.ts).
+  // momentAt: the day FollowUp brings them up on Today with a note;
+  // momentQuote / momentSaidAt: their words and when they wrote them;
+  // momentNoteAt: when that note was written, so it is written once.
+  momentAt              DateTime?
+  momentQuote           String?
+  momentSaidAt          DateTime?
+  momentNoteAt          DateTime?
   // What an Instagram or Messenger customer typed into a DM when asked how
   // to reach them (founder, 2026-10-12, A-238). Meta stops automatic DMs 24
   // hours after their last message; a follow-up after that goes to this

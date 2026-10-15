@@ -146,6 +146,10 @@ export function mapDbLeadToUiLead(dbLead: DbLead, rules: BusinessAutomationRules
     ),
     followUp,
     stayInTouch: dbLead.stayInTouchAt ? { since: dbLead.stayInTouchAt.toISOString(), messageId: dbLead.stayInTouchMessageId ?? null } : null,
+    moment:
+      dbLead.momentAt && dbLead.momentQuote && !dbLead.momentNoteAt
+        ? { at: dbLead.momentAt.toISOString(), quote: dbLead.momentQuote, saidAt: dbLead.momentSaidAt ? dbLead.momentSaidAt.toISOString() : null }
+        : null,
   };
 }
 

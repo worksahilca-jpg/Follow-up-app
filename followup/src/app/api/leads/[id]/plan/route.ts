@@ -7,6 +7,7 @@ import { recordAudit } from "@/lib/audit";
 import { readFollowUpPlans } from "@/lib/followUpPlans";
 import { sendRefusal } from "@/lib/sendingControl";
 import { ownerStopsStaying } from "@/lib/stayInTouchData";
+import { ownerSetsMoment } from "@/lib/theirMomentData";
 
 /**
  * "Change plan" on a customer's page (A-245): put this one customer on
@@ -21,6 +22,8 @@ const schema = z.object({
   plan: z.enum(["fast", "long", "own"]).nullable().optional(),
   stopWaiting: z.literal(true).optional(),
   stayInTouch: z.literal(false).optional(),
+  // "Their moment" (A-262): another day ("YYYY-MM-DD"), or null for none.
+  moment: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
 });
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -32,9 +35,17 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
   const parsed = await parseJsonBody(request, schema);
   if (!parsed.ok) return parsed.response;
-  const { plan, stopWaiting, stayInTouch } = parsed.data;
+  const { plan, stopWaiting, stayInTouch, moment } = parsed.data;
   if (stayInTouch === false) {
     await ownerStopsStaying(ctx.businessId, lead.id, ctx.userId);
+    return NextResponse.json({ success: true });
+  }
+  if (moment !== undefined) {
+    const at = moment === null ? null : new Date(`${moment}T12:00:00Z`);
+    if (at && (Number.isNaN(at.getTime()) || at.getTime() < Date.now() - 86_400_000)) {
+      return NextResponse.json({ success: false, message: "Pick a day ahead." }, { status: 400 });
+    }
+    await ownerSetsMoment(ctx.businessId, lead.id, ctx.userId, at);
     return NextResponse.json({ success: true });
   }
   if (plan === undefined && !stopWaiting) return NextResponse.json({ success: false, message: "Nothing to change." }, { status: 400 });

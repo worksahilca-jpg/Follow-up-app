@@ -123,6 +123,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
         ownExists={Boolean(rules?.followUpPlans.own)}
         waitingFor={plan.waitingFor}
         staying={Boolean(plan.staying)}
+        moment={plan.moment ?? null}
         bordered={bordered}
       />
     );

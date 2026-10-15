@@ -220,6 +220,12 @@ company's whole screen (R-029, references are principles).
   out-of-the-box animation."*
   - One damped spring (cubic-bezier(.32,.72,0,1)), 0.35–0.6 s, no overshoot or wobble.
   - Badges, notifications and sent messages behave the way they do on an iPhone or a Mac.
+  - **Added 2026-10-15, founder, for the app itself:** *"I want the feel of this product as Apple, I mean animations
+    smoothness that Mac or iOS have, and also style too."* The product, not only the home page: the way a page
+    opens, a sheet rises, a card leaves and a button answers should feel like an iPhone or a Mac app, at 60 frames
+    on a mid phone. The direction is recorded here; what exactly changes is drawn first and decided in
+    `decisions/` (the motion rules in `brand/motion.md` that this touches, such as "no page transitions between app
+    routes", are re-decided there, not quietly dropped).
 - **Every number moves for a visible reason.** A counter only changes when something visibly lands on it, and the thing
   that lands carries the counter's own name ("Qualified" lands on "qualified").
 

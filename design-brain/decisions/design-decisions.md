@@ -13560,3 +13560,60 @@ in the day, built as drawn.
   is not asked about again if the customer books a second time and misses that too (the second one is); the booking
   link appears in an email or text only, never a DM; a call can be answered only once a day after it ends on Today,
   not from the customer's page.
+
+## 2026-10-15 — Built: the Apple feel, all six moves (A-264)
+
+Founder: *"I want the feel of this product as Apple, I mean animations smoothness that Mac or iOS have, and also style
+too."* Six moves proposed; *"do it bro"*, *"work on all"*. Built on the phone and the computer, as in A-264.
+- **One spring.** `--ease-apple` cubic-bezier(.32,.72,0,1) + `--motion-settle` 350 ms, in `globals.css` and
+  `motion.ts`. A button's release now settles on it (the press itself stays 90 ms); a card opening in place, a sheet,
+  a window and a page all share it.
+- **The push.** `PushNav.tsx` listens for clicks on links marked `data-nav="push"` / `"pop"` in the capture phase (so
+  it runs before the link's own handler, which steps aside once the event is prevented) and wraps the router push in
+  `document.startViewTransition`; `html[data-nav]` picks the direction in CSS. The transition resolves when the URL
+  changes, or after 1.2 s at most. On Customers a row carries `data-phone-href`, so a phone opens the customer's own
+  chat-style page (A-222) instead of the list's panel. `CustomerSide.tsx` adds the edge swipe: touch within 24 px of
+  the left edge, `<main>` follows the thumb (`--swipe-x`), commit past a third or a flick; the pop keyframe starts
+  from where the thumb let go (`--swipe-x` and `--pop-ms` on `<html>`).
+- **Sheets and windows.** `AppWindow.tsx` now leaves before it unmounts (`app-win--closing`, 300 ms on the phone,
+  180 ms on the computer, 0 with less motion) and the phone's sheet follows a pull on its handle or on content that
+  sits at its top (`--sheet-y`, `app-win--dragging`); let go past 120 px or a 0.6 px/ms flick and it goes.
+- **Style.** `.ios-sep` hairlines inset to the words on Today's rows (64 px) and Customers' rows (42 px; Customers
+  had no hairlines before). `ScrollTitle` + `BarTitle`: the phone's top bar shows "Today", "Customers", "Activity",
+  "Results", "Settings", "Coming up" or "Follow-up plans" once the page's title has scrolled past it.
+- **Checked** on a local production build, phone 390×844 with touch and laptop 1440×900 (`verify_apple.cjs`, 45
+  checks): the push and pop with `data-nav` set and cleared, a Customers row opening the phone page, the edge swipe
+  following the thumb and committing (and springing back when short), the sheet's pull, exit, spring-back and Esc,
+  the bar title appearing and hiding, the press at 0.97, the laptop's panel unchanged, the window's fade on Esc and on
+  a click outside, no slide on the computer, and with "reduce motion": no slide, instant close, every link still
+  working. No console errors, nothing sideways. Types, lint and 4,062 tests pass.
+- **Measured, honestly.** The slide itself is drawn by the browser's compositor (two snapshots, transform and
+  opacity only), so it keeps moving while the page behind it works. The main thread is another matter: during a push
+  the longest gap between frames was 33 ms once the customer page's code was already loaded, 150 ms on the first
+  visit (its code downloading and hydrating), and 100 ms once with the CPU slowed 4× (a mid phone). That stall is the
+  customer page's own render, not the motion, and it predates this change; it is the next thing to make lighter.
+- **Weak spots:** the edge swipe cannot run in Safari or Chrome's own tab, where the browser's back gesture owns the
+  edge (it works in the installed app and anywhere the browser gives us the edge); a sheet whose content is scrolled
+  only scrolls, it needs the handle to pull; the pull-vs-scroll case could not be exercised on the sample data (the
+  sheet was too short to scroll); Firefox has no view transitions, so a phone in Firefox gets the plain navigation;
+  the Customers hairlines are new and the founder has not seen them yet; pages without `ScrollTitle` (a customer's
+  page, admin) keep a plain bar.
+
+## 2026-10-15 — Built: "Put FollowUp on your Home Screen", one tap, at the foot of Today (A-265)
+
+Founder: *"cool let it be web"*, then *"yes build it"* on a one-line install prompt. What already existed: on an
+iPhone the alerts card walks through the three Safari taps (A-216), because Apple only lets a Home Screen app send
+alerts. The gap was Android, where Chrome can install with one tap once it judges the app installable.
+- `InstallCard.tsx`: catches the browser's `beforeinstallprompt` at module load (Chrome can fire it before the
+  card mounts), shows one row at the foot of Today on a phone ("Put FollowUp on your Home Screen · One tap. It
+  opens like an app, full screen, with its own icon." · Add · Not now), calls the browser's own prompt on Add, hides
+  for two weeks on Not now, and never shows once installed or while the alerts card above is asking (the alerts
+  card now publishes whether it is on screen, `useAlertsAsking`; one ask on Today at a time). Below every customer,
+  so nothing waits behind it (A-243). A computer never sees it.
+- **Checked** on a local production build with a synthetic install event, phone 390×844 (Android user agent) and
+  laptop 1440×900: no card until the browser offers to install, then the card; Add calls the prompt and the card
+  goes; Not now hides it this visit and the next; a computer never shows it; both buttons 44 px; no console errors.
+  Types, lint and the component tests pass.
+- **Weak spots:** the real event's timing is Chrome's (it waits for engagement, so a first visit may not see the
+  card); the iPhone path stays inside the alerts card, so an iPhone owner who said "Not now" to alerts gets no
+  install nudge for two weeks; not drawn first (built straight from the founder's yes on the one-line description).

@@ -162,7 +162,7 @@ export default function PersonPanel({
       <div className="flex-1 px-5 py-5">
         <div className="mb-3 flex items-center justify-between">
           <Eyebrow>Conversation</Eyebrow>
-          <Link href={`/leads/${lead.id}`} className="text-[13px] text-ink-soft underline underline-offset-[3px] hover:text-ink">
+          <Link href={`/leads/${lead.id}`} data-nav="push" className="text-[13px] text-ink-soft underline underline-offset-[3px] hover:text-ink">
             Open full page
           </Link>
         </div>

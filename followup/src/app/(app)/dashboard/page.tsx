@@ -30,6 +30,7 @@ import { FIRST_VALUE_SEND, firstValueNote } from "@/lib/firstValue";
 import HabitQuestion from "@/components/HabitQuestion";
 import DailyQuestion from "@/components/DailyQuestion";
 import { AlertsCard } from "@/components/app/AlertsSetup";
+import InstallCard from "@/components/app/InstallCard";
 import ReplyForMeCard from "@/components/app/ReplyForMeCard";
 import { GoingQuietRow } from "@/components/app/TodayRows";
 import { DayDone, DayNumbers, DayTomorrow, type TodayRow } from "@/components/app/TodayDay";
@@ -40,6 +41,7 @@ import { todaysQuestion } from "@/lib/dailyQuestionData";
 import { planLine } from "@/lib/comingUp";
 import { findHabitSuggestion } from "@/lib/habits";
 import MeetingOutcomeCard, { type MeetingToLookBackOn } from "@/components/app/MeetingOutcomeCard";
+import ScrollTitle from "@/components/app/ScrollTitle";
 import { LOOK_BACK_DAYS, endedMeetings, isMeetingOutcome, meetingWhen } from "@/lib/meetingOutcome";
 import { PLAN_NAMES, choosePlan, readFollowUpPlans } from "@/lib/followUpPlans";
 import { readQualification } from "@/lib/qualification";
@@ -389,6 +391,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       {/* The owner's day (A-244): the date, a greeting on their own clock,
           and who to start with. A brand-new account gets a sentence instead
           (#301): "No customers yet." */}
+      {/* Once the greeting scrolls away on a phone, the top bar says "Today" (A-264). */}
+      <ScrollTitle title="Today" />
       <div className="text-[12.5px] text-ink-faint">
         {new Intl.DateTimeFormat(undefined, { timeZone: timezone, weekday: "long", month: "long", day: "numeric" }).format(now)}
       </div>
@@ -613,6 +617,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           <DayDone lines={done} />
         </div>
       )}
+      {/* One tap to install, on phones whose browser can (A-265): at the foot of the day, below every customer.
+          It hides itself while the alerts card above is asking (one ask at a time). */}
+      <div className="mt-8 empty:hidden lg:hidden">
+        <InstallCard />
+      </div>
       </div>
       </div>
     </div>

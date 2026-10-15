@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import ScrollTitle from "@/components/app/ScrollTitle";
 import { useSession } from "next-auth/react";
 import { Lead } from "@/lib/types";
 import { daysSince, PIPELINE_STAGES } from "@/lib/demo-data";
@@ -134,10 +135,22 @@ const said = (l: Lead) => {
 };
 
 /** One customer: their name, one line, and (for Ready to book) a Call button beside the row. */
-function Row({ lead, href, line, meta, selected, call = false }: { lead: Lead; href: string; line: string; meta?: string | null; selected?: boolean; call?: boolean }) {
+function Row({ lead, href, line, meta, selected, first = false, call = false }: { lead: Lead; href: string; line: string; meta?: string | null; selected?: boolean; first?: boolean; call?: boolean }) {
   return (
-    <li className={"flex min-w-0 items-center gap-2.5" + (selected ? " -mx-2 rounded-[12px] bg-card-2 px-2" : "")}>
-      <Link href={href} scroll={false} aria-current={selected ? "true" : undefined} className="flex min-h-[52px] min-w-0 flex-1 items-center gap-2.5 py-2">
+    // The hairline between rows starts where the name starts (A-264): the 32px initials + the 10px gap.
+    <li
+      style={{ "--sep-inset": "42px" } as React.CSSProperties}
+      className={"flex min-w-0 items-center gap-2.5" + (first ? "" : " ios-sep") + (selected ? " -mx-2 rounded-[12px] bg-card-2 px-2" : "")}
+    >
+      {/* On a phone the row opens the customer's own page, sliding in (A-222, A-264); on a computer, the panel beside the list. */}
+      <Link
+        href={href}
+        data-nav="push"
+        data-phone-href={`/leads/${lead.id}`}
+        scroll={false}
+        aria-current={selected ? "true" : undefined}
+        className="flex min-h-[52px] min-w-0 flex-1 items-center gap-2.5 py-2"
+      >
         <Initials name={lead.name} size={32} />
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[14px] font-semibold">{lead.name}</span>
@@ -279,11 +292,11 @@ export default function LeadsPageClient({
   const rowHref = (id: string) => `/leads?${show ? `show=${show}&` : ""}p=${id}`;
   // What a row says depends on where it is (A-220): why they're ready, why they're going quiet,
   // what happens next, when the booking is; otherwise their last message.
-  const rowFor = (lead: Lead, where: Show | null) => {
+  const rowFor = (lead: Lead, where: Show | null, first = false) => {
     const last = lastOf(lead);
     const line = where && where !== "all" && where !== "needs" ? (lines[lead.id] ?? said(lead)) : said(lead);
     const meta = where === "needs" || where === "all" || !where ? (last ? shortAge(last.date) : null) : null;
-    return <Row key={lead.id} lead={lead} href={rowHref(lead.id)} line={line} meta={meta} selected={lead.id === openId} call={where === "ready"} />;
+    return <Row key={lead.id} lead={lead} href={rowHref(lead.id)} line={line} meta={meta} selected={lead.id === openId} first={first} call={where === "ready"} />;
   };
 
   const searchBox = (
@@ -334,6 +347,7 @@ export default function LeadsPageClient({
           Customers
         </Link>
         <div className="flex items-baseline justify-between gap-3">
+          <ScrollTitle title={TITLE[show]} />
           <h1 className="title-serif text-[26px] leading-tight">{TITLE[show]}</h1>
           <span className="text-[14px] font-semibold text-ink-soft tabular-nums">{inGroup.length}</span>
         </div>
@@ -429,7 +443,7 @@ export default function LeadsPageClient({
         )}
 
         {filtered.length > 0 && (
-          <ul className="-mx-2 mt-3 rounded-[16px] border border-line bg-card px-3 py-1 sm:mx-0">{filtered.map((l) => rowFor(l, show))}</ul>
+          <ul className="-mx-2 mt-3 rounded-[16px] border border-line bg-card px-3 py-1 sm:mx-0">{filtered.map((l, i) => rowFor(l, show, i === 0))}</ul>
         )}
         {filtered.length === 0 && leads.length > 0 && (
           <p className="py-8 text-center text-[14px] text-ink-soft">
@@ -472,7 +486,7 @@ export default function LeadsPageClient({
           </h2>
           <span className="text-[12.5px] font-semibold text-ink-soft tabular-nums">{ids.length}</span>
         </div>
-        <ul>{people.slice(0, SHOWN).map((l) => rowFor(l, key))}</ul>
+        <ul>{people.slice(0, SHOWN).map((l, i) => rowFor(l, key, i === 0))}</ul>
         {people.length > SHOWN && (
           <Link href={`/leads?show=${key}`} className="flex min-h-11 items-center text-[13px] text-ink-soft underline underline-offset-[3px]">
             Show all {people.length}
@@ -486,6 +500,7 @@ export default function LeadsPageClient({
     <div className="max-w-[720px]">
       {/* The title and two small round buttons on one row (A-089), then search, then the people. */}
       <div className="flex items-center justify-between gap-3">
+        <ScrollTitle title="Customers" />
         <h1 className="title-serif text-[28px] leading-tight">Customers</h1>
         <div className="flex shrink-0 items-center gap-2 sm:whitespace-nowrap">
           <LeadsMoreMenu onLogCall={() => setShowLogCall(true)} onImport={() => setShowImport(true)} />
@@ -510,7 +525,7 @@ export default function LeadsPageClient({
               {filtered.length} {filtered.length === 1 ? "customer" : "customers"} found
             </p>
             {filtered.length > 0 && (
-              <ul className="-mx-2 mt-1.5 rounded-[16px] border border-line bg-card px-3 py-1 sm:mx-0">{filtered.map((l) => rowFor(l, null))}</ul>
+              <ul className="-mx-2 mt-1.5 rounded-[16px] border border-line bg-card px-3 py-1 sm:mx-0">{filtered.map((l, i) => rowFor(l, null, i === 0))}</ul>
             )}
           </>
         ) : (

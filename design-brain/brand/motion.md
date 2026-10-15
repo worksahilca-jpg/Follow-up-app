@@ -91,7 +91,10 @@ the sidebar search results, the Customers filter row) open in place with the sam
 - Hover lift on cards (`HoverLift` — currently unused inside the app; keep it that way)
 - Any animation on a number that represents something stressful
 - Spinner-as-personality, loading animations with character
-- Page transitions between app routes
+- ~~Page transitions between app routes~~ — **narrowed 2026-10-15 (A-264, the Apple feel):** on a phone, opening a
+  customer pushes their page in from the right and Back slides it out, the way an iPhone does; the motion explains
+  where the page came from and where Back goes. A tab switch still has no transition, and the computer has none
+  (there a customer opens beside the list). Everything else here stands.
 
 ## Open decisions
 

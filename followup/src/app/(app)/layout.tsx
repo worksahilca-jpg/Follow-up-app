@@ -1,8 +1,10 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getSessionContext } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import Sidebar from "@/components/Sidebar";
 import SeenPing from "@/components/SeenPing";
+import PushNav from "@/components/app/PushNav";
 import { getPendingApprovals, onTodayNow } from "@/lib/pendingApprovals";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -34,6 +36,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <div className="theme-auto flex min-h-screen bg-paper text-ink lg:bg-sidebar">
       {/* One "opened today" record per person per day (src/lib/appOpens.ts). */}
       <SeenPing />
+      {/* On a phone, a customer slides in and Back slides it out (A-264). Reads the URL, so it waits for it. */}
+      <Suspense fallback={null}>
+        <PushNav />
+      </Suspense>
       <Sidebar businessName={business.name ?? ""} counts={{ today, customers }} />
       <main className="flex-1 min-w-0 lg:pt-2">
         <div className="app-sheet">

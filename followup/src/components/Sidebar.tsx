@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { Sun, Users, History, ChartColumn, Settings, CircleHelp, ChevronsUpDown, LogOut, ArrowLeft, ChevronRight } from "lucide-react";
 import SidebarSearch from "@/components/app/SidebarSearch";
+import { BarTitle } from "@/components/app/ScrollTitle";
 import FeedbackDialog from "./FeedbackDialog";
 import LogoMark from "@/components/LogoMark";
 import { GROUP_ICON } from "@/components/app/settingsIcons";
@@ -76,6 +77,8 @@ export default function Sidebar({ businessName = "", counts = {} }: { businessNa
             <LogoMark height={20} />
             <span className="text-base font-semibold">FollowUp</span>
           </Link>
+          {/* The page's title, once its own has scrolled away (A-264, iOS large titles). */}
+          <BarTitle />
           <Link
             href="/settings"
             aria-current={inSettings ? "page" : undefined}

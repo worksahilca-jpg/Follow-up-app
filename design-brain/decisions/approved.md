@@ -4397,3 +4397,26 @@ size (study: `references/crm/2026-10-15-hubspot-workflow-and-feel.md`).
 **Built:** 2026-10-15, `components/app/PageSkeleton.tsx`, a `loading.tsx` for Today, Customers, a customer,
 Settings and the Settings window, and the press rules in `globals.css`. Checked on a local production build at
 390×844 and 1440×900.
+
+## A-255 — Plain, specific words on every everyday screen ^A-255
+
+**Approved:** 2026-10-15, founder: *"yes change all"*, to a list of old → new wording, after he asked: *"change all
+these wordings that are complex, like where the customer writes you … I want everything to be very simple and
+specific."*
+**What specifically (old → new):**
+- **Settings:** "Where customers write" → "Connected apps" (under it: Gmail, Instagram, Facebook, WhatsApp);
+  "How replies go out" → "Sending replies"; "Follow-up plan" → "When to check in"; "Booking hours" → "Your free hours
+  for viewings"; "Pause all sending" → "Stop all sending"; "More" (Team, plan, your data) → "Account" (Team, billing,
+  your data); "Already use a CRM?" → "Use HubSpot or Follow Up Boss?"; "Not customers" → "Skipped: not customers".
+- **Customers:** "Needs you" → "Waiting for you"; "Going quiet" / "Gone quiet. Worth a nudge." → "Stopped replying" /
+  "Send a quick check-in."; "Waiting on them" / "FollowUp checks in for you" → "Waiting for their reply" / "FollowUp
+  will check in"; "Everyone" → "All customers".
+- **One customer:** "Your reply, ready" → "Reply ready to send"; "What FollowUp did" stays in plain case; "Already
+  spoke" → "I already talked to them"; "How FollowUp knows" → "Why FollowUp thinks this"; "Why it's here" → "Why it
+  needs you".
+- **Today:** "Asked the price · Omar Haddad asked you by email, 4 days ago:" → "Omar Haddad emailed you 4 days ago:";
+  "Still to do today" → "Next"; "Going quiet · Omar and 2 more" → "Stopped replying: Omar and 2 more".
+**Kept on purpose:** "Send", "Change it" with its task sentence, and "Skip for now" (R-113: Today says the task in a
+sentence; bare labels like "Later" read as an expert tool).
+**Supersedes the names in:** A-253 (Settings) and A-211 / A-220 (the Customers groups). The structure of those
+screens is unchanged; only the words change.

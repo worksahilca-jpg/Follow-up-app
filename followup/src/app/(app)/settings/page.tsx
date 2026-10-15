@@ -57,9 +57,9 @@ export default function SettingsPage() {
 type SettingsPage = { title: string; lede?: string; sections: string[] };
 const PAGES: Record<string, SettingsPage> = {
   // One page each since A-253 (R-115: "Connect this or that … Connected, Okay, Done").
-  connections: { title: "Where customers write", sections: ["connections"] },
-  replies: { title: "How replies go out", sections: ["replies-out"] },
-  booking: { title: "Booking hours", lede: "When customers can book a call through your link, and which calendar it checks.", sections: ["booking"] },
+  connections: { title: "Connected apps", sections: ["connections"] },
+  replies: { title: "Sending replies", sections: ["replies-out"] },
+  booking: { title: "Your free hours", lede: "When customers can book a call through your link, and which calendar it checks.", sections: ["booking"] },
   alerts: { title: "Alerts", lede: "How FollowUp tells you a customer needs you: on your phone, by email, or both.", sections: ["alerts"] },
   business: { title: "Your business", sections: ["business"] },
   team: { title: "Team", lede: "Admins can invite teammates, change roles and remove people.", sections: ["team"] },
@@ -97,20 +97,20 @@ function pageFor(id: string): string | null {
 
 /** Each group's icon, beside its word: the phone's home rows and the desk's side list (A-220). */
 const GROUP_ICON: Record<SettingsGroup, LucideIcon> = {
-  "Where customers write": Inbox,
-  "How replies go out": Send,
+  "Connected apps": Inbox,
+  "Sending replies": Send,
   Alerts: Bell,
   "Your business": Store,
-  More: Ellipsis,
+  Account: Ellipsis,
 };
 
 /** One grey line under a group's title (A-213). */
 const GROUP_WHY: Record<SettingsGroup, string> = {
-  "Where customers write": "The places FollowUp reads and answers for you.",
-  "How replies go out": "What FollowUp sends, and when. Change it any time.",
+  "Connected apps": "The places FollowUp reads and answers for you.",
+  "Sending replies": "What FollowUp sends, and when. Change it any time.",
   Alerts: "How FollowUp tells you a customer needs you.",
   "Your business": "Who you are, so replies sound like you.",
-  More: "Your team, your plan, how you sign in, and your data.",
+  Account: "Your team, your plan, how you sign in, and your data.",
 };
 
 function SettingsPageInner() {
@@ -118,7 +118,7 @@ function SettingsPageInner() {
   // Opened over a page (src/app/(app)/@modal): moving between Settings'
   // own pages adds no history, so closing returns in one step.
   const inWindow = useInWindow();
-  const [group, setGroup] = useState<SettingsGroup>("Where customers write");
+  const [group, setGroup] = useState<SettingsGroup>("Connected apps");
   // The phone has stepped from the five home rows into one group's list (#write, #replies-out, #more).
   const [groupOpen, setGroupOpen] = useState(false);
   // A link elsewhere in the app (a Sidebar nag, the dashboard's setup strip)
@@ -169,7 +169,7 @@ function SettingsPageInner() {
       const back = ["instagram", "facebook", "gmail", "outlook"].some((k) => params.get(k));
       const page = pageFor(id) ?? (back ? "connections" : params.get("billing") ? "billing" : null);
       // The desk shows a page beside the side list, never an empty one: with nothing asked for, the first place.
-      if (!page && !groupOfSlug(id) && window.matchMedia("(min-width: 64rem)").matches) return GROUP_PAGE["Where customers write"] ?? null;
+      if (!page && !groupOfSlug(id) && window.matchMedia("(min-width: 64rem)").matches) return GROUP_PAGE["Connected apps"] ?? null;
       return page;
     };
     const readGroup = () => {
@@ -678,7 +678,7 @@ function SettingsPageInner() {
       <div hidden={!page} className="mt-7 max-w-[640px] space-y-8">
       {/* Where customers write (A-253): one row per place, Connect or Connected; the rest happens in the back. */}
       <section id="connections" hidden={!visible("connections")} className="scroll-mt-16">
-        <h2 className="sr-only">Where customers write</h2>
+        <h2 className="sr-only">Connected apps</h2>
         <Connections
           gmail={{ connected: gmailConnected, email: gmailEmail, loaded: gmailStatusLoaded }}
           outlook={{ connected: outlookConnected, email: outlookEmail, loaded: outlookStatusLoaded }}
@@ -694,7 +694,7 @@ function SettingsPageInner() {
       {/* How replies go out (A-253): who sends, then the plan, booking hours and pause. The four "FollowUp writes"
           switches live on the Follow-up plan page; the hours and days use their defaults. */}
       <section id="replies-out" hidden={!visible("replies-out")} className="scroll-mt-16">
-        <h2 className="sr-only">How replies go out</h2>
+        <h2 className="sr-only">Sending replies</h2>
         <p id="who-sends" className="text-[14px] text-ink-faint">
           Who sends your replies?
         </p>
@@ -732,19 +732,19 @@ function SettingsPageInner() {
 
         <div className={BOX + " mt-6"}>
           <Link href="/workflows" className={ROW + " hover:bg-card-2"}>
-            <span className="flex-1">Follow-up plan</span>
-            <span className="truncate text-[15px] text-ink-faint">{planLine(followUpPlans, planFor(followUpPlans, "most"))}</span>
+            <span className="shrink-0 whitespace-nowrap">When to check in</span>
+            <span className="min-w-0 flex-1 truncate text-right text-[15px] text-ink-faint">{planLine(followUpPlans, planFor(followUpPlans, "most"))}</span>
             <ChevronRight aria-hidden className="h-[18px] w-[18px] shrink-0 text-ink-faint" />
           </Link>
           <button type="button" onClick={() => openMore("booking")} className={ROW + " border-t border-line-2 text-left hover:bg-card-2"}>
-            <span className="flex-1">Booking hours</span>
-            <span className="truncate text-[15px] text-ink-faint">{bookingSummary}</span>
+            <span className="shrink-0 whitespace-nowrap">Your free hours</span>
+            <span className="min-w-0 flex-1 truncate text-right text-[15px] text-ink-faint">{bookingSummary}</span>
             <ChevronRight aria-hidden className="h-[18px] w-[18px] shrink-0 text-ink-faint" />
           </button>
           <div className={ROW + " border-t border-line-2"}>
-            <span className="flex-1">Pause all sending</span>
+            <span className="flex-1">Stop all sending</span>
             {/* Anyone can pause (it only ever holds messages); an admin turns it back off. */}
-            <Switch checked={sendingPaused} onChange={() => savePause(!sendingPaused)} disabled={pauseSaving || (sendingPaused && !isAdmin)} label="Pause all sending" />
+            <Switch checked={sendingPaused} onChange={() => savePause(!sendingPaused)} disabled={pauseSaving || (sendingPaused && !isAdmin)} label="Stop all sending" />
           </div>
         </div>
         {sendingPaused && (
@@ -818,7 +818,7 @@ function SettingsPageInner() {
       {/* Booking hours have their own page (A-080's "How it writes" group);
           they used to sit inside the Email page under the Gmail row. */}
       <section id="booking" hidden={!visible("booking")} className="scroll-mt-16">
-        <h2 className={sectionLabel} style={SECTION_STYLE}>Booking hours</h2>
+        <h2 className={sectionLabel} style={SECTION_STYLE}>Your free hours</h2>
         <div className="mt-4">
           <BookingCalendarConfig />
         </div>

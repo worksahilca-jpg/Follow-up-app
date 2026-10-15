@@ -74,7 +74,7 @@ export default async function InboxList({ searchParams }: { searchParams: Promis
 
       {needs.length > 0 && (
         <div className="mt-6 lg:mt-0">
-          <Label phone="Needs you" desk="Needs you" />
+          <Label phone="Waiting for you" desk="Waiting for you" />
           <ul>
             {needs.map(({ lead, approval }, i) => (
               <Row
@@ -206,8 +206,8 @@ function Row({
             {/* Phone: one black dot for "needs you" (A-029). Desktop: every state's coloured dot. */}
             {unread && <span aria-hidden className="h-2 w-2 shrink-0 rounded-full lg:hidden" style={{ background: "var(--ink)" }} />}
             <span
-              title={unread ? "Needs you" : undefined}
-              aria-label={unread ? "Needs you" : undefined}
+              title={unread ? "Waiting for you" : undefined}
+              aria-label={unread ? "Waiting for you" : undefined}
               className="hidden h-[7px] w-[7px] shrink-0 rounded-full lg:block"
               style={{ background: `var(--state-${state})` }}
             />

@@ -83,16 +83,16 @@ export type ApprovalItem = PendingApproval & {
   asked?: string | null;
 };
 
-/** How they wrote, said the way a person would: "asked you by email", "on Instagram" (A-243). */
-const CHANNEL_WAY: Record<string, string> = {
-  email: "by email",
-  call: "on a call",
-  text: "by text",
-  whatsapp: "on WhatsApp",
-  instagram: "on Instagram",
-  messenger: "on Messenger",
-  web: "through your website form",
-  lead_form: "through your Facebook lead form",
+/** How they reached you, in one plain verb (A-255): "Omar Haddad emailed you 4 days ago:". */
+const CHANNEL_DID: Record<string, string> = {
+  email: "emailed you",
+  call: "called you",
+  text: "texted you",
+  whatsapp: "messaged you on WhatsApp",
+  instagram: "messaged you on Instagram",
+  messenger: "messaged you on Messenger",
+  web: "filled in your website form",
+  lead_form: "filled in your Facebook lead form",
 };
 
 /** The one card on Today (A-220): white, a hairline, 18px corners, phone padding. */
@@ -257,23 +257,20 @@ function ApprovalCard({
     }
   }
 
-  // Who, how and when, said as a sentence (A-243): "Omar Haddad asked you by
-  // email, 2 days ago:". A question is "asked you"; anything else "wrote".
-  // Why they are on top leads the line when there is a reason (A-230).
-  const way = CHANNEL_WAY[item.leadLastMessageChannel ?? ""] ?? null;
-  const verb = item.leadLastMessage?.includes("?") ? "asked you" : "wrote";
+  // Who, how and when, in one plain sentence (A-255): "Omar Haddad emailed
+  // you 4 days ago:". Their message right under it says what they want, so
+  // the line no longer leads with a reason tag ("Asked the price ·").
+  const did = CHANNEL_DID[item.leadLastMessageChannel ?? ""] ?? "wrote to you";
   const when = item.asked ?? null;
-  const how = [way, when].filter(Boolean).join(", ");
 
   return (
     <article className={bare ? undefined : ONE} aria-label={`${item.leadName} is waiting for you`}>
       <p className="text-[14px] leading-snug text-ink-soft">
-        {item.why && <span className="font-semibold text-ink">{item.why} · </span>}
         <Link href={`/leads/${item.leadId}`} className="font-semibold text-ink hover:underline">
           {item.leadName}
         </Link>{" "}
-        {verb}
-        {how && ` ${how}`}
+        {did}
+        {when && ` ${when}`}
         {item.leadLastMessage ? ":" : "."}
       </p>
 
@@ -779,9 +776,9 @@ export default function ApprovalQueue({
       {/* Still to do today (A-244): every other reply, call and booked time,
           one row each. A reply row brings that person up into "Do this first". */}
       {stillToDo > 0 && (
-        <section aria-label="Still to do today" className="mt-7">
+        <section aria-label="Next" className="mt-7">
           {/* No count beside it (A-250): the day's box already says how many. */}
-          <DayHeading title="Still to do today" />
+          <DayHeading title="Next" />
           <div className={`${DAY_BOX} overflow-hidden`}>
             {shown.map((i, n) => (
               <DayRow key={i.leadId} first={n === 0} row={replyRow(i)} onClick={() => pick(i.leadId)} />

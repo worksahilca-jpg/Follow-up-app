@@ -13465,3 +13465,55 @@ and what it means for them. The "Anything new?" example now shows market informa
 - **Not built, needs a yes:** FollowUp remembering when a customer said they'd be ready ("January", "when our lease
   ends") and writing a note then. That is the strongest kind in the research, but it is new behaviour.
 - **Weak spot:** still not run against the real AI here; read the first notes on Today.
+
+## 2026-10-15 — Proposed (drawn, not approved): "Their moment" for customers staying in touch
+
+Founder's "yes" to drawing it, after the stay-in-touch research (the strongest kind of note is set off by something
+the customer said). Drawn inside the real app, made-up customers, phone and laptop (`moment/moment-board.png`):
+- **The customer's page:** under "Staying in touch", a "Priya's moment" block: their words in quotes ("We'll talk
+  to the bank in January."), when FollowUp brings them up ("in the first week of January, with a note about it"),
+  and Change.
+- **Today, when the moment comes:** the usual note card, headed "Priya Nair said in October:" with their words, the
+  note (starts from what they said, one useful offer, one easy question, how to stop), and "Why now: it's January,
+  when Priya said she'd talk to the bank."
+- **Settings › Follow-up plans:** one more line in the Stay in touch box.
+- **Where the time comes from:** the qualifying reader already finds "When" (A-246) and a day they asked to hear
+  back (`followUpNotBefore`); a moment is either of those, or a step they named ("talk to the bank in January").
+- **Open questions for the founder:** (1) a vague time ("next spring"): FollowUp would use the first week of it; (2)
+  customers who did *not* say yes to staying in touch: within 6 months of their last message their enquiry gives
+  implied consent in Canada (CASL), so a moment inside that window could still be used; after it, only with the yes.
+- **Weak spots:** the date header on the laptop drawing says January 4 while the rest of the sample data is October
+  (a drawing artefact). The note's wording is hand-written to show the target, not model output.
+
+## 2026-10-15 — The owner's chat bubble: too sharp (R-119), three softer looks drawn
+
+Founder, on the board above: *"this black theme of the message doesn't look good bro, it's too sharp, white and
+black."* Recorded as [R-119](rejected.md#^R-119) (it restates R-018: black is for the one action, not blocks).
+Three looks drawn on the real conversation (`bubbles/bubbles-board.png`), the customer's white bubble unchanged:
+A soft charcoal (`--accent-deep`, still white text), B FollowUp green (`--sage-soft` with ink text, the same bubble
+as the reply on Today, so "FollowUp wrote this" and "you sent this" share one colour), C quiet paper (`--card-2`).
+Recommendation: B, because it is already the app's colour for the business's own words and keeps the two sides of
+the chat apart without any dark block. Waiting for the founder's pick.
+
+## 2026-10-15 — The chat takes the landing page's message theme (R-120, drawn)
+
+Founder, on the softer bubbles: *"now this we cannot differentiate bro, use our landing page theme"*, then *"we will
+be doing changes in landing page too so right"*: one message theme for the app and the landing, and the landing's
+is the base. Its chat demo (`src/landing/home.html`, the "Two endings" window): the customer's bubble `#EEF0EE`,
+corners 18/18/18/6, no edge; the reply `#1B1D1F` with white text, corners 18/18/6/18 (the code also carries a
+FollowUp-green `#1F6B47` for the reply); padding 10px 14px; the meta line 13px `#5F6661`.
+- **Drawn on the app's conversation** (`bubbles/bubbles-landing-board.png`), phone and laptop: D the landing's
+  charcoal on the grey, E the landing's green on the grey. Both tell the sides apart at a glance; neither is pure
+  black beside white.
+- **Recommendation:** D, because it is what the landing shows today, so the app and the website match at once.
+- **If built:** the two bubble colours become shared tokens (`--bubble-them`, `--bubble-you`) used by both the app's
+  `Thread.tsx` and the landing, so a later change to the landing moves both.
+
+## 2026-10-15 — Built: the chat in the landing page's message theme (A-261)
+
+Founder picked the landing's own look ("okay that's fine" on D). Built as shared tokens: `--bubble-them #EEF0EE`,
+`--bubble-you #1B1D1F`, `--on-bubble-you #fff` declared in `globals.css` and in the landing's `home.html`
+(its demo bubbles now read the tokens), with `bubbleTokens.test.ts` failing if the two files drift. `Thread.tsx`
+uses them with the landing's corners and padding. The Today card is unchanged.
+- **Weak spot:** the two files still hold the value twice (a static HTML page can't read the app's CSS); the test
+  is the guard, not a single declaration.

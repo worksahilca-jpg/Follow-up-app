@@ -7,7 +7,7 @@ import { NextRequest } from "next/server";
 
 const { business, lead } = vi.hoisted(() => ({
   business: { findUnique: vi.fn(), update: vi.fn() },
-  lead: { findMany: vi.fn() },
+  lead: { findMany: vi.fn(), count: vi.fn() },
 }));
 vi.mock("@/lib/db", () => ({ prisma: { business, lead } }));
 const { getSessionContext, requireAdmin } = vi.hoisted(() => ({ getSessionContext: vi.fn(), requireAdmin: vi.fn() }));
@@ -26,6 +26,7 @@ beforeEach(() => {
   requireAdmin.mockResolvedValue(true);
   business.findUnique.mockResolvedValue({ followUpPlans: null, industry: "Real estate", holdAllForApproval: true });
   business.update.mockResolvedValue({});
+  lead.count.mockResolvedValue(2);
   lead.findMany.mockResolvedValue([
     { followUpPlan: null, qualification: null },
     { followUpPlan: null, qualification: { v: 2, template: "real_estate", items: [], tier: "later" } },
@@ -37,7 +38,7 @@ describe("seeing the plans", () => {
   it("shows the plans as drawn, how many customers are on each, and who may change them", async () => {
     requireAdmin.mockResolvedValue(false);
     const data = await (await GET()).json();
-    expect(data).toMatchObject({ success: true, plans: {}, counts: { fast: 1, long: 2, own: 0 }, realtor: true, holdAll: true, isAdmin: false });
+    expect(data).toMatchObject({ success: true, plans: {}, counts: { fast: 1, long: 2, own: 0 }, realtor: true, holdAll: true, isAdmin: false, stay: { days: 30, count: 2 } });
     expect(lead.findMany.mock.calls[0][0].where).toMatchObject({ businessId: "biz1" });
   });
 
@@ -73,5 +74,25 @@ describe("changing them", () => {
   it("refuses a plan with no usable day", async () => {
     expect((await PATCH(req({ long: [0, 99] }))).status).toBe(400);
     expect(business.update).not.toHaveBeenCalled();
+  });
+});
+
+describe("Stay in touch: how often (A-260)", () => {
+  it("saves every 2 weeks or once a month, for this business, as an admin", async () => {
+    const res = await PATCH(req({ stayInTouchDays: 14 }));
+    expect(res.status).toBe(200);
+    expect(business.update).toHaveBeenCalledWith({ where: { id: "biz1" }, data: { stayInTouchDays: 14 } });
+    expect((await res.json()).stay).toEqual({ days: 14, count: 2 });
+    expect(lead.count.mock.calls[0][0].where).toMatchObject({ businessId: "biz1", stayInTouchAt: { not: null }, optedOutAt: null });
+  });
+
+  it("refuses any other number of days", async () => {
+    expect((await PATCH(req({ stayInTouchDays: 3 }))).status).toBe(400);
+    expect(business.update).not.toHaveBeenCalled();
+  });
+
+  it("is an admin's call", async () => {
+    requireAdmin.mockResolvedValue(false);
+    expect((await PATCH(req({ stayInTouchDays: 14 }))).status).toBe(403);
   });
 });

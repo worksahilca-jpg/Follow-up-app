@@ -20,6 +20,7 @@ export default function CustomerPlan({
   picked,
   ownExists,
   waitingFor,
+  staying = false,
   bordered = false,
 }: {
   leadId: string;
@@ -30,6 +31,8 @@ export default function CustomerPlan({
   picked: boolean;
   ownExists: boolean;
   waitingFor: string | null;
+  /** Staying in touch (A-260): "Change" offers to stop the notes, not a plan. */
+  staying?: boolean;
   /** Inside the "where they stand" card: a hairline above, as drawn. */
   bordered?: boolean;
 }) {
@@ -38,7 +41,7 @@ export default function CustomerPlan({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function save(body: { plan?: PlanId | null; stopWaiting?: true }) {
+  async function save(body: { plan?: PlanId | null; stopWaiting?: true; stayInTouch?: false }) {
     setBusy(true);
     setError(null);
     try {
@@ -70,11 +73,29 @@ export default function CustomerPlan({
           onClick={() => setOpen(!open)}
           className="-my-3 inline-flex min-h-11 shrink-0 items-center text-[13.5px] underline underline-offset-[3px] hover:text-ink-soft"
         >
-          {open ? "Close" : "Change plan"}
+          {open ? "Close" : staying ? "Change" : "Change plan"}
         </button>
       </div>
       <p className="mt-1.5 text-[14px] leading-relaxed text-ink-soft">{sentence}</p>
-      {open && (
+      {open && staying && (
+        <div className="mt-2 grid gap-1">
+          <p className="text-[13.5px] leading-snug text-ink-soft">FollowUp stops writing to {firstName}. If they write, you still get a reply ready, as always.</p>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => save({ stayInTouch: false })}
+            className="inline-flex min-h-11 items-center justify-self-start text-[14px] underline underline-offset-[3px] hover:text-ink-soft disabled:opacity-60"
+          >
+            Stop staying in touch
+          </button>
+          {error && (
+            <p className="text-[13px]" role="alert" style={{ color: "var(--coral)" }}>
+              {error}
+            </p>
+          )}
+        </div>
+      )}
+      {open && !staying && (
         <div className="mt-3 grid gap-1">
           <div role="group" aria-label={`Plan for ${firstName}`} className="flex flex-wrap gap-2">
             {options.map(([id, label]) => (

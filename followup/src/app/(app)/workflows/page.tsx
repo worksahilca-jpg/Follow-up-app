@@ -16,7 +16,7 @@ import Link from "next/link";
 import { Plus, Trash2, ChevronUp, ChevronDown, Mail, ArrowRightLeft } from "lucide-react";
 import { CARRIER_CHANNELS_AVAILABLE } from "@/lib/pricing";
 import { READY_PLANS, toStepDelays, type ReadyPlan } from "@/lib/readyPlans";
-import { EveryPlanBox, PlanEditor, PlansOverview, type PlansData } from "@/components/app/FollowUpPlansView";
+import { EveryPlanBox, PlanEditor, PlansOverview, StayInTouchBox, type PlansData } from "@/components/app/FollowUpPlansView";
 import FollowUpSwitches from "@/components/app/FollowUpSwitches";
 import type { PlanId } from "@/lib/followUpPlans";
 
@@ -114,7 +114,7 @@ export default function WorkflowsPage() {
     fetch("/api/follow-up-plans")
       .then((r) => r.json())
       .then((data: { success?: boolean } & PlansData) => {
-        if (data.success) setPlansData({ plans: data.plans, counts: data.counts, realtor: data.realtor, holdAll: data.holdAll, isAdmin: data.isAdmin });
+        if (data.success) setPlansData({ plans: data.plans, counts: data.counts, realtor: data.realtor, holdAll: data.holdAll, isAdmin: data.isAdmin, stay: data.stay });
       })
       .catch(() => {});
   }, []);
@@ -187,6 +187,7 @@ export default function WorkflowsPage() {
       {!creating && !picked && (
         <div className="mt-5 grid gap-4 lg:mt-6">
           {plansData && <PlansOverview data={plansData} onEdit={setEditingPlan} />}
+          {plansData && <StayInTouchBox data={plansData} onSaved={(stay) => setPlansData({ ...plansData, stay })} />}
           {plansData && <EveryPlanBox holdAll={plansData.holdAll} />}
           {/* The four things FollowUp writes on its own, one line each (A-253: moved here from Settings). */}
           <FollowUpSwitches />

@@ -70,6 +70,8 @@ export interface BusinessAutomationRules {
   deadLeadDays: number;
   /** Business.followUpPlans, read (src/lib/followUpPlans.ts): the days the owner changed, and their own plan. */
   followUpPlans: FollowUpPlans;
+  /** Business.stayInTouchDays (A-260): days between notes to a customer staying in touch. */
+  stayInTouchDays?: number;
 }
 
 /**
@@ -91,7 +93,7 @@ export async function getBusinessAutomationRules(businessId: string): Promise<Bu
     hasAnySendChannel(businessId),
     // Defaults to held, matching the column's own `@default(true)`: if the
     // row cannot be read, the safe answer is the one that promises less.
-    prisma.business.findUnique({ where: { id: businessId }, select: { holdAllForApproval: true, followUpPlans: true } }),
+    prisma.business.findUnique({ where: { id: businessId }, select: { holdAllForApproval: true, followUpPlans: true, stayInTouchDays: true } }),
   ]);
   const master = rows.find((r) => r.action === "auto_send");
   const unanswered = rows.find((r) => r.action === UNANSWERED_ACTION);
@@ -105,6 +107,7 @@ export async function getBusinessAutomationRules(businessId: string): Promise<Bu
     deadLeadEnabled: deadLead?.enabled ?? true,
     deadLeadDays: deadLead?.triggerDays ?? DEAD_LEAD_DEFAULT_DAYS,
     followUpPlans: readFollowUpPlans(business?.followUpPlans),
+    stayInTouchDays: business?.stayInTouchDays ?? 30,
   };
 }
 

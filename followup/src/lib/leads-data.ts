@@ -69,6 +69,7 @@ export function mapDbLeadToUiLead(dbLead: DbLead, rules: BusinessAutomationRules
     notBeforeMs: dbLead.followUpNotBefore ? dbLead.followUpNotBefore.getTime() : null,
     bookings: (dbLead.bookings ?? []).map((b) => ({ createdAt: b.createdAt.getTime(), scheduledAt: b.scheduledAt.getTime() })),
     createdAtMs: dbLead.createdAt.getTime(),
+    stayingSince: dbLead.stayInTouchAt ? dbLead.stayInTouchAt.getTime() : null,
   };
   const stage = dbLead.stage.toLowerCase() as Lead["stage"];
   const automationTier = dbLead.automationTier.toLowerCase() as Lead["automationTier"];
@@ -144,6 +145,7 @@ export function mapDbLeadToUiLead(dbLead: DbLead, rules: BusinessAutomationRules
       rules
     ),
     followUp,
+    stayInTouch: dbLead.stayInTouchAt ? { since: dbLead.stayInTouchAt.toISOString(), messageId: dbLead.stayInTouchMessageId ?? null } : null,
   };
 }
 

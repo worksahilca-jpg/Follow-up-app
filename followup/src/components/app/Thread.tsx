@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import type { Message } from "@/lib/types";
 import { Eyebrow } from "./canvasBits";
 
@@ -27,6 +28,7 @@ export default function Thread({
   timeZone,
   now,
   dense = false,
+  stayYesId = null,
 }: {
   messages: Message[];
   leadName: string;
@@ -34,6 +36,8 @@ export default function Thread({
   now: Date;
   /** On desktop, the Inbox board's smaller type (14.5px bubbles, 460px wide). The phone keeps ThreadPhone's. */
   dense?: boolean;
+  /** The message that said yes to staying in touch (A-260): one quiet line under it says it was kept. */
+  stayYesId?: string | null;
 }) {
   const first = leadName.split(" ")[0] ?? leadName;
   if (messages.length === 0) {
@@ -66,7 +70,7 @@ export default function Thread({
             const at = time.format(new Date(m.date));
             const width = "max-w-[82%] " + (dense ? "sm:max-w-[520px] lg:max-w-[460px]" : "sm:max-w-[520px]");
             if (m.direction === "inbound") {
-              return (
+              const bubble = (
                 <div key={m.id} className={"flex flex-col items-start gap-[3px] self-start " + width}>
                   <div className="whitespace-pre-wrap rounded-[16px] rounded-bl-[6px] border border-line bg-card px-3 py-[9px] font-read text-[15px] leading-[1.45] sm:text-[16px]">
                     {m.body}
@@ -75,6 +79,15 @@ export default function Thread({
                     {first} · {at}
                   </span>
                 </div>
+              );
+              if (m.id !== stayYesId) return bubble;
+              return (
+                <Fragment key={m.id}>
+                  {bubble}
+                  <p className="mx-3 mt-1 text-center text-[13px] leading-snug text-ink-soft">
+                    {first} said yes to staying in touch. FollowUp keeps {first}&apos;s words and the date.
+                  </p>
+                </Fragment>
               );
             }
             const who = m.source?.endsWith("_direct")

@@ -78,15 +78,25 @@ function lockKey(channel: DmChannel, businessId: string, contactId: string): str
 // "Hi", "Hello there!": in its own module so the re-check (dmRecheck.ts) reads it too.
 export { isBareGreeting } from "@/lib/inbound/greeting";
 import { isBareGreeting } from "@/lib/inbound/greeting";
+import { OWNER_SAID_NOT_CUSTOMER, ownerSaidNotCustomer, recentCorrections } from "@/lib/senderVerdicts";
+import { cleanKinds } from "@/lib/notCustomerReasons";
 
 /** The business's name, trade and AI eligibility, fetched once per delivery and only if someone new wrote. */
 export function dmContextLoader(businessId: string, channel: DmChannel): () => Promise<DmJudgeContext> {
   let loaded: Promise<DmJudgeContext> | null = null;
   return () => {
-    loaded ??= prisma.business
-      .findUnique({ where: { id: businessId }, select: { name: true, industry: true, subscriptionStatus: true, tier: true } })
-      .then((b) => ({
-        classifier: b ? { name: b.name, industry: b.industry } : undefined,
+    loaded ??= Promise.all([
+      prisma.business.findUnique({
+        where: { id: businessId },
+        select: { name: true, industry: true, subscriptionStatus: true, tier: true, notCustomerAlways: true },
+      }),
+      // The owner's own calls, with their answers (A-259): a chat is judged
+      // the way this owner judges, as an inbox already is.
+      recentCorrections(businessId),
+    ]).then(([b, corrections]) => ({
+        classifier: b
+          ? { name: b.name, industry: b.industry, corrections, setAsideKinds: cleanKinds(b.notCustomerAlways) }
+          : undefined,
         // The same two tests checkAiEligibility applies to every lead.
         aiAllowed:
           !!b &&
@@ -129,6 +139,15 @@ export async function judgeNewDmContact(args: {
 }): Promise<DmGateResult> {
   const { businessId, channel, contactId, message, hasOwnWords } = args;
   const threadId = dmThreadId(channel, contactId);
+
+  // The owner said who this is on "Not a customer" (A-259): a friend, a
+  // colleague, someone selling, spam. Set aside without a fresh look, their
+  // "hi" included, and the owner's own messages to them too. Before, the
+  // next message was judged from scratch and could bring a friend back.
+  if (await ownerSaidNotCustomer(businessId, dmLeadKey(channel, contactId))) {
+    return keepDmSetAside(businessId, channel, contactId, args.name, message, OWNER_SAID_NOT_CUSTOMER);
+  }
+
   const row = await prisma.filteredEmail.findUnique({
     where: { businessId_threadId: { businessId, threadId } },
     select: { id: true, threadPayload: true },

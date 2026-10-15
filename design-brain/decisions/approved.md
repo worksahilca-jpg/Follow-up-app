@@ -4483,3 +4483,22 @@ feel would need his yes after a drawing).
   page one pixel bigger than before (15px phone, 16px computer), so the smaller-looking serif reads the same.
 - **Light:** one weight, self-hosted through `next/font` (the security policy blocks outside font files), about 22 KB,
   fetched only on a page that shows a message; the homepage never downloads it.
+
+## A-259 — "Not a customer" asks who it was, and FollowUp learns from the answer ^A-259
+
+**Approved:** 2026-10-15, founder: *"yes build it"*, after the board drawn in the real app (`not-a-customer-board.png`).
+His idea: *"if it's not a customer, it should learn from that too why it is not a customer, so we can improve."*
+Extends A-073 (its "third correction" sheet was approved 2026-09-29 and never built).
+**What specifically:**
+- **One optional question in the confirm box:** "Who is [name]?" with four answers: A friend or family · Someone I
+  work with · Selling me something · Spam. Laid out two by two on a phone (the drawing's three rows were the weak
+  spot). Skipping it works as before.
+- **The line under the answers says what FollowUp will do**, in plain words, before the owner confirms.
+- **Friend or work contact:** that person is never treated as a customer again, on Instagram and Messenger too (today
+  a set-aside chat is judged again when they write).
+- **Selling or spam:** set aside, and FollowUp's checker sees this owner's own examples of that kind.
+- **The third answer of one kind** (selling or spam) brings one sheet, once: "Set these aside from now on?" ·
+  "Yes, from now on" · "Just these three".
+- **Settings › Your business › Who isn't a customer:** what FollowUp learned, one row per kind, each with Undo.
+- **Privacy:** only the owner's answer is kept, with the address or handle it applies to; never message text. The
+  founder's /admin shows totals by answer and channel across testers, numbers only.

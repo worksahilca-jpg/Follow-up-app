@@ -367,6 +367,11 @@ model Business {
   // Shape { fast?: number[], long?: number[], own?: { days, after, useFor } }.
   // Null means the plans as drawn: Fast for most customers, Long for Later.
   followUpPlans Json?
+  // "Set these aside from now on?" (A-259, A-073): the kinds of sender the
+  // owner asked FollowUp to set aside without asking (selling | spam), and
+  // the kinds already asked about, so the question comes once.
+  notCustomerAlways String[] @default([])
+  notCustomerAsked  String[] @default([])
 
   // May any lead on this account be set to Auto — the one mode that skips
   // the risk check and sends price and tense conversations without review?
@@ -751,6 +756,12 @@ model SenderVerdict {
   // The subject line the owner was looking at, for the classifier's
   // examples. Never a message body.
   subject    String?
+  // Why, when the owner said so on "Not a customer" (A-259,
+  // src/lib/notCustomerReasons.ts): friend | work | selling | spam. Null
+  // when they skipped the question, and on every "customer" verdict.
+  // Instagram and Messenger contacts are kept here too, by their lead key
+  // (ig:… / fb:…), but only when a reason was given.
+  reason     String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 

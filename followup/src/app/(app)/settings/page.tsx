@@ -12,6 +12,7 @@ import TeamSection from "@/components/TeamSection";
 import BusinessProfileSection from "@/components/BusinessProfileSection";
 import BusinessFactsSection from "@/components/BusinessFactsSection";
 import HowYouWorkSection from "@/components/HowYouWorkSection";
+import NotCustomerSection from "@/components/NotCustomerSection";
 import SourceRoutingSection from "@/components/SourceRoutingSection";
 import CopyWebhookUrl from "@/components/CopyWebhookUrl";
 import OutboundWebhookConfig from "@/components/OutboundWebhookConfig";
@@ -811,6 +812,10 @@ function SettingsPageInner() {
         {/* What FollowUp knows (A-096): what it will say about the business on its own. */}
         <div className="mt-4">
           <BusinessFactsSection />
+        </div>
+        {/* Who isn't a customer (A-259): what FollowUp learned from "Not a customer". */}
+        <div className="mt-4 empty:hidden">
+          <NotCustomerSection />
         </div>
         {/* How you work (A-099): what FollowUp does for the owner because they said yes on Today. */}
         <div className="mt-4 empty:hidden">

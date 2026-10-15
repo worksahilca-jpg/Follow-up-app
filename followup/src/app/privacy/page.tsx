@@ -94,7 +94,8 @@ export default function PrivacyPage() {
                 customers and draft replies. Because it may be the same number you use for personal chats, a
                 message from someone who isn&apos;t already a lead is first checked by our AI provider. Chats
                 that look personal are set aside rather than treated as leads; we keep them only so you can
-                bring one back if we got it wrong, and they are deleted with your account.
+                bring one back if we got it wrong. Their messages are deleted after 30 days with no new message,
+                and the rest with your account. Instagram and Facebook messages get the same check.
               </li>
               <li>
                 <strong className="text-ink">Leads you add yourself</strong> — manually entered leads, ones

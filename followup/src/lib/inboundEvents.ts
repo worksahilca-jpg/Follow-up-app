@@ -279,13 +279,19 @@ const UNPROCESSED_RETENTION_DAYS = 90;
  * without a new message the messages go; the row stays, so the owner can
  * still see who was set aside, and Restore says plainly that the messages
  * weren't kept.
+ *
+ * Instagram and Messenger joined on 2026-10-15. Their "is this a customer?" check (A-234) keeps a
+ * set-aside chat the same way, and had no sweep, so a friend's DMs stayed forever. The founder: "do not
+ * pick any private thing".
  */
 const SET_ASIDE_THREAD_RETENTION_DAYS = 30;
+/** Every provider whose set-aside rows keep the chat itself (a mailbox row keeps only who and why). */
+const SET_ASIDE_CHAT_PROVIDERS = ["whatsapp", "instagram", "messenger"];
 
 export async function pruneSetAsideThreads(now: Date = new Date()): Promise<{ cleared: number }> {
   const cutoff = new Date(now.getTime() - SET_ASIDE_THREAD_RETENTION_DAYS * 24 * 60 * 60_000);
   const result = await prisma.filteredEmail.updateMany({
-    where: { provider: "whatsapp", threadPayload: { not: Prisma.DbNull }, lastMessageAt: { lt: cutoff } },
+    where: { provider: { in: SET_ASIDE_CHAT_PROVIDERS }, threadPayload: { not: Prisma.DbNull }, lastMessageAt: { lt: cutoff } },
     data: { threadPayload: Prisma.DbNull },
   });
   return { cleared: result.count };

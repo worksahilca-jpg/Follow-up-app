@@ -13135,3 +13135,27 @@ even a single lead"*):
 **Not changed, on purpose:**
 - A chat is still read once to judge it. There's no way to tell a lead without reading the message.
 - What's set aside stays one tap from coming back, for 30 days, so a misjudged lead isn't lost.
+
+
+## 2026-10-15 — The founder's own DMs, read with his permission
+
+The founder: *"if you want to read my DMs go ahead … and train yourself."* His 15 Instagram and Messenger chats
+were read once to check every verdict. Nothing identifying was copied into the repo.
+
+- **Set aside (7):** all correct. Emojis, Reels with no words, a friend's Hinglish banter, a creator's pitch, and
+  "save and share". No customer was lost.
+- **Kept as customers (8):**
+  - 5 are real or likely enquiries (availability, price, "how it works and what it costs", a 3-bed search).
+  - 3 are friends, all from Oct 11–12, before the re-check existed:
+    - **Two Reels with no words.** Today someone new who sends only that isn't picked up at all, but this chat
+      came in first.
+      - **Fixed:** the re-check now sets aside a chat of only shared Reels or posts, with no model call.
+      - Every chat checked before this rule gets one more look in the hourly pass.
+    - **A friend's emoji, then a Hinglish joke.** The judge kept it, because two reads must agree before a chat
+      goes aside. This is already a case in the DM test.
+    - **A friend asking for his number in Hinglish.** The judge kept it. Read alone, it is also what a real
+      customer might write, so leaning "keep" is right.
+  - For the last two, the owner taps "Not a customer" on the person page. That moves the chat aside, and the
+    next message is judged again.
+- **Not possible:** retraining the model itself. What changes is its instructions, the rules around it, and the
+  test cases it is measured on.

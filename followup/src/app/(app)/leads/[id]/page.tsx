@@ -122,6 +122,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
         picked={plan.picked}
         ownExists={Boolean(rules?.followUpPlans.own)}
         waitingFor={plan.waitingFor}
+        staying={Boolean(plan.staying)}
         bordered={bordered}
       />
     );
@@ -182,7 +183,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
         <div aria-hidden="true" className="flex-1 lg:hidden" />
         {/* id: the target of CatchUp's "Show all N messages". */}
         <div id="conversation" className="mt-4 lg:mt-6">
-          <Thread messages={lead.conversation} leadName={lead.name} timeZone={timeZone} now={now} />
+          <Thread messages={lead.conversation} leadName={lead.name} timeZone={timeZone} now={now} stayYesId={lead.stayInTouch?.messageId ?? null} />
         </div>
 
         {didLine && (

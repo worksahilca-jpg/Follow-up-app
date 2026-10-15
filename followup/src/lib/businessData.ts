@@ -55,6 +55,7 @@ export interface BusinessExport {
   businessFacts: Record<string, unknown>[];
   ownerHabits: Record<string, unknown>[];
   crmWrites: Record<string, unknown>[];
+  stayInTouchNews: Record<string, unknown>[];
 }
 
 /**
@@ -99,6 +100,7 @@ export async function exportBusinessData(businessId: string): Promise<BusinessEx
     businessFacts,
     ownerHabits,
     crmWrites,
+    stayInTouchNews,
   ] = await Promise.all([
     prisma.user.findMany({
       where: { businessId },
@@ -143,6 +145,8 @@ export async function exportBusinessData(businessId: string): Promise<BusinessEx
       where: { businessId },
       select: { leadId: true, provider: true, kind: true, text: true, status: true, attempts: true, createdAt: true, doneAt: true },
     }),
+    // What the owner said was new, for the customers staying in touch (A-260).
+    prisma.stayInTouchNews.findMany({ where: { businessId }, select: { text: true, fits: true, createdAt: true } }),
   ]);
 
   // Picked explicitly (rather than destructuring-and-omitting the secret
@@ -207,6 +211,7 @@ export async function exportBusinessData(businessId: string): Promise<BusinessEx
     businessFacts,
     ownerHabits,
     crmWrites,
+    stayInTouchNews,
   };
 }
 
@@ -329,6 +334,8 @@ export async function deleteBusinessData(
     prisma.filteredEmail.deleteMany({ where: { businessId } }),
     // What FollowUp wrote in the owner's CRM (A-252): carries customers' words. CASCADE too; listed so the erasure reads whole.
     prisma.crmWrite.deleteMany({ where: { businessId } }),
+    // The owner's news for the customers staying in touch (A-260). CASCADE too; listed so the erasure reads whole.
+    prisma.stayInTouchNews.deleteMany({ where: { businessId } }),
     prisma.crmConnection.deleteMany({ where: { businessId } }),
     prisma.notification.deleteMany({ where: { user: { businessId } } }),
     // Both cascade from User already; listed so the erasure reads as

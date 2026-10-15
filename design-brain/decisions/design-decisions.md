@@ -13381,6 +13381,8 @@ Founder: *"yes build it"*. Built as drawn, with the 2×2 answers the drawing's w
 
 ## 2026-10-15 — Proposed (drawn, not approved): "Stay in touch" after the customer's yes
 
+**APPROVED the same day as [A-260](approved.md#a-260); built, see the next entry.**
+
 From Ryan Serhant's "three F's" (follow up, follow through, follow back), which the founder shared. Follow up is what
 FollowUp already does. Follow back (staying in touch for years) is drawn here. Follow through (reminding the owner of
 promises like "I'll send you the good ones") is noted as a possible later idea, not drawn.
@@ -13403,3 +13405,33 @@ promises like "I'll send you the good ones") is noted as a possible later idea, 
 - **Weak spots:** the question card sits under "Done today" at the bottom of Today, which is easy to miss; on the
   phone drawing its buttons sit behind the bottom bar (a drawing artefact, the built card would sit above it). A
   note with a price waits for the owner's OK under today's sending rule, so in practice every note waits.
+
+## 2026-10-15 — Built: "Stay in touch" (A-260)
+
+Built as drawn. What a future session needs to know:
+- **Hearing the yes:** when a customer writes, FollowUp checks whether they are answering the plan's close-the-loop
+  message (the last fixed message, Day 30 on Fast) and asks the AI one narrow question: yes, no or unclear. Each
+  message is judged once. A yes keeps the date and the message (`Lead.stayInTouchAt`, `stayInTouchMessageId`) and the
+  chat shows one quiet line under it. "STOP" while staying ends it without asking the AI; a no in their own words
+  to a note ends it too.
+- **While it holds:** the plan stops ("staying"); no plan message and no welcome back. A customer who writes still
+  gets a reply ready, as always. The customer's page says "Staying in touch" with the date, and "Change" opens
+  "Stop staying in touch".
+- **The owner's news:** Today's "One quick question" card asks "Anything new for…?" only when nothing else is waiting
+  and the last ask (or "Not now") was at least half a period ago. Save writes notes for at most 20 customers, only
+  those due (one per period each), never one who already has a message waiting, and never past the daily AI ceiling.
+  Instagram and Messenger customers past Meta's 24 hours are left, and the card says so. The card then says who it
+  fits, who it doesn't and why, and if a note couldn't be written (never calling that a misfit).
+- **Each note** waits on Today as "Note to {name}", with "said yes to hearing from you", the note, and a plain line
+  "Why {first}: …". English notes without a way to stop get one added. The news is kept 60 days as a fact the
+  checks can trust, is in the data export, and is erased with the business.
+- **Settings › Follow-up plans:** a "Stay in touch" box (how often, five rules, the CASL/TCPA line). The 6-month line
+  now says "unless they said yes to staying in touch".
+- **Checked:** local production build at 390×844 and 1440×900 on sample data: the customer's card and sentence, the
+  "said yes" line in the chat, Stop staying in touch (back to the plan), the Settings box (choice saves and stays),
+  the note on Today with its "Why" line. No console errors, nothing scrolls sideways. 4,013 tests pass.
+- **Weak spots:** the "Anything new?" card only shows when nothing is waiting, so a busy owner may rarely see it; it
+  was not seen in the browser for that reason (covered by tests). The AI's yes/no reading and note writing were not
+  run locally (no key); mocked tests only, so the first real yes should be watched. The customer's card says "fits
+  what {first} wants" without saying what that is. Every note waits for the owner's OK, by design. The Saved card links
+  to Settings › Follow-up plans, not to the notes themselves.

@@ -4502,3 +4502,21 @@ Extends A-073 (its "third correction" sheet was approved 2026-09-29 and never bu
 - **Settings › Your business › Who isn't a customer:** what FollowUp learned, one row per kind, each with Undo.
 - **Privacy:** only the owner's answer is kept, with the address or handle it applies to; never message text. The
   founder's /admin shows totals by answer and channel across testers, numbers only.
+
+## A-260 — "Stay in touch" after the customer's yes ^A-260
+
+**Approved:** 2026-10-15, founder, on the drawing (board `stay-in-touch-board.png`): *"yes"*, then *"Yes, fix all the
+gaps and whatever we can improve."* From Ryan Serhant's "follow back". Earlier the same day: *"This product is not just
+for Canada. It's for both Canada and the US."*
+- **When:** only after the customer says yes to the plan's close-the-loop question ("keep sending, or close your file?").
+  FollowUp keeps the date and which message said yes. One quiet line in the chat says so.
+- **What:** one note every 2 weeks or once a month (Settings › Follow-up plans, "How often"; once a month by default),
+  and only when the owner has something new that fits what that customer wants. FollowUp never makes up a home, a
+  price or a date.
+- **Where the news comes from:** Today's "One quick question" card (A-101): "Anything new for the N customers staying
+  in touch?" After Save it says who it fits, and who it doesn't and why.
+- **Each note** is written for that customer from the owner's words, waits on Today for the owner's OK, and ends with
+  how to stop. "Stop" (or any no) ends it at once. A reply goes to the owner like any message.
+- **On the customer's page:** "Staying in touch" replaces the plan line, with "Change" to stop it.
+- **Rules:** the 6-month stop on every plan doesn't apply to a customer who said yes (CASL express consent; US texts
+  need consent under the TCPA). No pressure, no deadlines.

@@ -279,6 +279,7 @@ type PlanRow = {
   followUpNotBefore?: Date | null;
   qualification?: unknown;
   bookings?: { createdAt: Date; scheduledAt: Date }[];
+  stayInTouchAt?: Date | null;
   conversations: { messages: { direction: string; sentAt: Date; trigger: string | null; quickReplyPayload: string | null }[] }[];
 };
 
@@ -304,6 +305,7 @@ export function planStateOfRow(l: PlanRow, plans: FollowUpPlans, nowMs: number, 
       notBeforeMs: l.followUpNotBefore ? l.followUpNotBefore.getTime() : null,
       bookings: (l.bookings ?? []).map((b) => ({ createdAt: b.createdAt.getTime(), scheduledAt: b.scheduledAt.getTime() })),
       createdAtMs: l.createdAt ? l.createdAt.getTime() : undefined,
+      stayingSince: l.stayInTouchAt ? l.stayInTouchAt.getTime() : null,
     },
     nowMs,
     deadLeadDays

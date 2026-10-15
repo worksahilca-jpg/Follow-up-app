@@ -7,6 +7,7 @@ import { parseJsonBody } from "@/lib/validation";
 import { recordAudit } from "@/lib/audit";
 import { readQualification } from "@/lib/qualification";
 import { choosePlan, cleanDays, readFollowUpPlans, type FollowUpPlans, type PlanId } from "@/lib/followUpPlans";
+import { cleanStayDays } from "@/lib/stayInTouch";
 
 /**
  * The follow-up plans (A-245): Fast, Long and the owner's own, for the
@@ -28,7 +29,15 @@ const bodySchema = z.object({
     })
     .nullable()
     .optional(),
+  // "Stay in touch" (A-260): days between notes, 14 or 30.
+  stayInTouchDays: z.union([z.literal(14), z.literal(30)]).optional(),
 });
+
+/** "Stay in touch" (A-260): how often, and how many customers said yes and are still open. */
+async function stayFor(businessId: string, days: number | null | undefined): Promise<{ days: 14 | 30; count: number }> {
+  const count = await prisma.lead.count({ where: { businessId, stayInTouchAt: { not: null }, optedOutAt: null, stage: { notIn: ["WON", "LOST"] } } });
+  return { days: cleanStayDays(days), count };
+}
 
 /** How many open customers each plan has right now ("Used for most customers · 9 now"). */
 async function countsFor(businessId: string, plans: FollowUpPlans): Promise<Record<PlanId, number>> {
@@ -46,7 +55,7 @@ export async function GET() {
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
   const business = await prisma.business.findUnique({
     where: { id: ctx.businessId },
-    select: { followUpPlans: true, industry: true, holdAllForApproval: true },
+    select: { followUpPlans: true, industry: true, holdAllForApproval: true, stayInTouchDays: true },
   });
   const plans = readFollowUpPlans(business?.followUpPlans);
   return NextResponse.json({
@@ -56,6 +65,7 @@ export async function GET() {
     realtor: /real ?estate|realtor|realty/i.test(business?.industry ?? ""),
     holdAll: business?.holdAllForApproval ?? true,
     isAdmin: await requireAdmin(ctx),
+    stay: await stayFor(ctx.businessId, business?.stayInTouchDays),
   });
 }
 
@@ -65,6 +75,12 @@ export async function PATCH(request: NextRequest) {
   if (!(await requireAdmin(ctx))) return NextResponse.json({ success: false, message: "Only an admin can change the plans." }, { status: 403 });
   const parsed = await parseJsonBody(request, bodySchema);
   if (!parsed.ok) return parsed.response;
+
+  if (parsed.data.stayInTouchDays !== undefined) {
+    await prisma.business.update({ where: { id: ctx.businessId }, data: { stayInTouchDays: parsed.data.stayInTouchDays } });
+    void recordAudit(ctx, "automation.stay_in_touch.changed", { meta: { days: parsed.data.stayInTouchDays } });
+    return NextResponse.json({ success: true, stay: await stayFor(ctx.businessId, parsed.data.stayInTouchDays) });
+  }
 
   const business = await prisma.business.findUnique({ where: { id: ctx.businessId }, select: { followUpPlans: true } });
   const next: FollowUpPlans = { ...readFollowUpPlans(business?.followUpPlans) };

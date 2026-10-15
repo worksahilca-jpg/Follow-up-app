@@ -35,6 +35,7 @@ personality: every automated action says what happened, why, and what the owner 
 | `--sage` (+ `-soft`) | `#0d6e3c` | Done, fine |
 | `--state-needs` | `#c96a1b` | The "your turn" **dot only** (3.7:1, never text) |
 | `--radius-box` | `16px` | Boxes; buttons and chips are full pills |
+| `--bubble-them` / `--bubble-you` | `#eef0ee` / `#1b1d1f` | Chat bubbles, the same values as the landing page (A-261); never pure black, never a near-twin of each other |
 
 Status colours are semantic, never decoration. Soft tint as background, strong shade as
 text. No new colour without the founder's yes (`[TO DECIDE]` values are proposals).

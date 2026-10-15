@@ -1560,3 +1560,27 @@ offer itself, why it's good for them, and one easy question.
 **Not rejected:** the trust rules stay: no made-up facts, no deadline or "don't miss", every note says how to stop.
 "Better for you" is said with its reason (under their budget, near the place they named), never as a bare claim.
 **Instead:** the amendment to [A-260](approved#^A-260), same day.
+
+## R-119 — The owner's chat bubble in solid black ^R-119
+
+**Rejected:** 2026-10-15, founder, on the "Their moment" board (the conversation on a customer's page): *"this black
+theme of the message doesn't look good bro, it's too sharp, white and black."*
+**What was rejected:** the "You" bubble in the customer's conversation (A-220's chat, `Thread.tsx`): solid `--ink`
+with white text, on every sent message.
+**The principle (same as [R-018](#^R-018), restated):** black is for the one action on a screen (Send), never for
+blocks of text. A solid black block repeated down a conversation reads heavy and sharp, not calm. White text on
+pure black is the hardest pairing to read at message size.
+**Not rejected:** the customer's white bubble with a hairline; the black Send button.
+**Instead:** three softer looks drawn the same day (`bubbles/bubbles-board.png`): A soft charcoal (`--accent-deep`),
+B FollowUp green (`--sage-soft`, the same as the reply on Today), C quiet paper (`--card-2`). Decision pending.
+
+## R-120 — Softer "You" bubbles that can't be told from the customer's ^R-120
+
+**Rejected:** 2026-10-15, founder, on the bubble board (A soft charcoal, B FollowUp green, C quiet paper): *"now this
+we cannot differentiate bro, use our landing page theme."*
+**What was rejected:** B and C (pale fills next to the customer's white bubble), and by extension A as a half-step.
+**The principle:** the two sides of a conversation must be told apart at a glance, before reading a word. Softening
+the owner's bubble must not cost that. The founder's reference is the landing page's own look for messages: use its
+theme, not a new one.
+**Together with [R-119](#^R-119):** not pure black (too sharp), not a near-twin of the customer's bubble (can't tell
+them apart). The landing page's message style is the direction; drawn next.

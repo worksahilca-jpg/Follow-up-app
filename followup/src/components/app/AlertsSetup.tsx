@@ -467,6 +467,27 @@ export function AlertsSetupStep({ onDone }: { onDone: () => void }) {
   );
 }
 
+/** Whether Today's alerts card is on screen, for the install card: one ask at a time. */
+let alertsAsking = false;
+const askListeners = new Set<() => void>();
+function setAlertsAsking(v: boolean) {
+  if (alertsAsking === v) return;
+  alertsAsking = v;
+  askListeners.forEach((l) => l());
+}
+export function useAlertsAsking(): boolean {
+  return useSyncExternalStore(
+    (l) => {
+      askListeners.add(l);
+      return () => {
+        askListeners.delete(l);
+      };
+    },
+    () => alertsAsking,
+    () => false
+  );
+}
+
 // "Not now" on Today's card, per device: alerts are per device, so a no on
 // the computer must not hide the card on the phone. It comes back once,
 // two weeks later (founder's call to change; recorded in A-216).
@@ -504,13 +525,22 @@ export function AlertsCard({ open = false }: { open?: boolean }) {
     setDismissed(true);
   }
 
-  if (dismissed || (saidNotNow && !open) || a.kind === "loading" || a.kind === "unavailable") return null;
-
   // Just turned on here: say it worked, and offer the test again.
   const justOn = a.kind === "phone" && a.device === "on" && a.tested !== null;
-  if (a.kind === "phone" && !justOn && a.device !== "off" && a.device !== "needs-home-screen") return null;
-  // A computer shows the card only while no phone has alerts yet.
-  if (a.kind === "computer" && a.devices > 0 && !phoneDone) return null;
+  const hidden =
+    dismissed ||
+    (saidNotNow && !open) ||
+    a.kind === "loading" ||
+    a.kind === "unavailable" ||
+    (a.kind === "phone" && !justOn && a.device !== "off" && a.device !== "needs-home-screen") ||
+    // A computer shows the card only while no phone has alerts yet.
+    (a.kind === "computer" && a.devices > 0 && !phoneDone);
+  // Tell the install card (InstallCard.tsx) whether this one is asking: one ask on Today at a time.
+  useEffect(() => {
+    setAlertsAsking(!hidden);
+    return () => setAlertsAsking(false);
+  }, [hidden]);
+  if (hidden) return null;
 
   const done = justOn || phoneDone;
   return (

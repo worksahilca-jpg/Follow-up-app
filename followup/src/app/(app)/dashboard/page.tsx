@@ -30,6 +30,7 @@ import { FIRST_VALUE_SEND, firstValueNote } from "@/lib/firstValue";
 import HabitQuestion from "@/components/HabitQuestion";
 import DailyQuestion from "@/components/DailyQuestion";
 import { AlertsCard } from "@/components/app/AlertsSetup";
+import InstallCard from "@/components/app/InstallCard";
 import ReplyForMeCard from "@/components/app/ReplyForMeCard";
 import { GoingQuietRow } from "@/components/app/TodayRows";
 import { DayDone, DayNumbers, DayTomorrow, type TodayRow } from "@/components/app/TodayDay";
@@ -616,6 +617,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           <DayDone lines={done} />
         </div>
       )}
+      {/* One tap to install, on phones whose browser can (A-265): at the foot of the day, below every customer.
+          It hides itself while the alerts card above is asking (one ask at a time). */}
+      <div className="mt-8 empty:hidden lg:hidden">
+        <InstallCard />
+      </div>
       </div>
       </div>
     </div>

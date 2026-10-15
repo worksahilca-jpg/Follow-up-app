@@ -13598,3 +13598,22 @@ too."* Six moves proposed; *"do it bro"*, *"work on all"*. Built on the phone an
   sheet was too short to scroll); Firefox has no view transitions, so a phone in Firefox gets the plain navigation;
   the Customers hairlines are new and the founder has not seen them yet; pages without `ScrollTitle` (a customer's
   page, admin) keep a plain bar.
+
+## 2026-10-15 — Built: "Put FollowUp on your Home Screen", one tap, at the foot of Today (A-265)
+
+Founder: *"cool let it be web"*, then *"yes build it"* on a one-line install prompt. What already existed: on an
+iPhone the alerts card walks through the three Safari taps (A-216), because Apple only lets a Home Screen app send
+alerts. The gap was Android, where Chrome can install with one tap once it judges the app installable.
+- `InstallCard.tsx`: catches the browser's `beforeinstallprompt` at module load (Chrome can fire it before the
+  card mounts), shows one row at the foot of Today on a phone ("Put FollowUp on your Home Screen · One tap. It
+  opens like an app, full screen, with its own icon." · Add · Not now), calls the browser's own prompt on Add, hides
+  for two weeks on Not now, and never shows once installed or while the alerts card above is asking (the alerts
+  card now publishes whether it is on screen, `useAlertsAsking`; one ask on Today at a time). Below every customer,
+  so nothing waits behind it (A-243). A computer never sees it.
+- **Checked** on a local production build with a synthetic install event, phone 390×844 (Android user agent) and
+  laptop 1440×900: no card until the browser offers to install, then the card; Add calls the prompt and the card
+  goes; Not now hides it this visit and the next; a computer never shows it; both buttons 44 px; no console errors.
+  Types, lint and the component tests pass.
+- **Weak spots:** the real event's timing is Chrome's (it waits for engagement, so a first visit may not see the
+  card); the iPhone path stays inside the alerts card, so an iPhone owner who said "Not now" to alerts gets no
+  install nudge for two weeks; not drawn first (built straight from the founder's yes on the one-line description).

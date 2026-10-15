@@ -4614,3 +4614,13 @@ what exactly changed.
   transition, so nothing re-renders mid-flight; the measurement is in `design-decisions.md`. With "reduce motion" on:
   no slide, no swipe, no pull, a window closes at once; every link and button still works as before.
 - **Narrows** `brand/motion.md` "page transitions between app routes": allowed for the phone's push and pop only.
+
+## A-265 — A web app, installed from the browser; no App Store app for now ^A-265
+
+**Date:** 2026-10-15. **Founder:** asked *"let it be a web app only right or do you think we need to make an app?"*,
+heard the trade (Add to Home Screen already gives an icon, full screen and the buzz; a store app costs Apple's
+review and cut, a second codebase and weeks, for zero daily testers today) and said *"cool let it be web"*.
+
+**What specifically:** FollowUp stays one web app on every device. On a phone it is installed from the browser
+("Add to Home Screen"), where the buzz and the Apple feel (A-264) work. Revisit a store app when a tester asks for
+one, when phone buzzes start being missed, or after the first paying customers; not before.

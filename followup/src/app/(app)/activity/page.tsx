@@ -1,4 +1,5 @@
 import Link from "next/link";
+import ScrollTitle from "@/components/app/ScrollTitle";
 import { getSessionContext } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { getActivityFeed, type ActivityItem, type ActivityType } from "@/lib/activity";
@@ -111,6 +112,7 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
 
   return (
     <div>
+      <ScrollTitle title="Activity" />
       <h1 className="title-serif text-[30px] leading-[1.12] lg:text-[34px]">Activity</h1>
       <p className="mt-2 max-w-[640px] text-[15px] leading-relaxed text-ink-soft">
         Everything FollowUp did for you: what it sent, when it stopped, and what it held for you.
@@ -161,7 +163,7 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
                             <>
                               {" · "}
                               {item.leadId ? (
-                                <Link href={`/leads/${item.leadId}`} className="font-medium hover:underline">
+                                <Link href={`/leads/${item.leadId}`} data-nav="push" className="font-medium hover:underline">
                                   {item.leadName}
                                 </Link>
                               ) : (
@@ -223,7 +225,7 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
                   const cls = "block py-[11px] " + (i ? "border-t border-line-2" : "");
                   const href = hrefFor(item);
                   return href ? (
-                    <Link key={item.id} href={href} className={cls}>
+                    <Link key={item.id} href={href} data-nav="push" className={cls}>
                       {row}
                     </Link>
                   ) : (

@@ -112,7 +112,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
         <LeadsPageClient leads={leads} groups={groups} lines={lines} show={show} stage={stage ?? null} openId={open.id} />
       </div>
       <aside aria-label={open.name} className="lg:overflow-y-auto lg:border-l lg:border-line lg:bg-card">
-        <Link href={show ? `/leads?show=${show}` : "/leads"} className="mb-3 inline-flex min-h-11 items-center text-[13px] text-ink-faint lg:hidden">
+        <Link href={show ? `/leads?show=${show}` : "/leads"} data-nav="pop" className="mb-3 inline-flex min-h-11 items-center text-[13px] text-ink-faint lg:hidden">
           ← Customers
         </Link>
         <div className="overflow-hidden rounded-[18px] border border-line bg-card lg:overflow-visible lg:rounded-none lg:border-0">

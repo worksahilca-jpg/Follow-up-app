@@ -4583,3 +4583,34 @@ customer no way to pick a time.
   free hours. It still waits for the owner's Send, with the reason on the card: "FollowUp added your booking link
   because Raj said yes to meeting. Raj picks a time from your free hours." An email or text only; a DM never carries
   a link.
+
+## A-264 — The Apple feel: one spring, pages that push and pop on the phone, sheets that follow the thumb ^A-264
+
+**Date:** 2026-10-15. **Founder:** *"I want the feel of this product as Apple, I mean animations smoothness that
+Mac or iOS have, and also style too."* Six moves were proposed; he said *"do it bro"* and *"work on all"*. Built on the
+phone and the computer. The direction itself is in `brand/brand-principles.md` ("Motion speaks Apple"); this entry is
+what exactly changed.
+
+- **One spring everywhere.** `--ease-apple` cubic-bezier(.32,.72,0,1) and `--motion-settle` 350 ms (mirrored in
+  `motion.ts`) for everything that moves into place: a page, a sheet, a window, a card opening in place, a button's
+  release. The small state changes keep A-048's fast/move/exit tokens. No overshoot, no wobble, transform and opacity
+  only.
+- **Phone: a customer slides in like iOS.** A row that opens a customer (Today, Customers, Activity, Coming up, the
+  reply card's name, "Open full page", "Open person") carries `data-nav="push"`; Back and "← Customers" carry
+  `data-nav="pop"`. The browser's own view transition moves two snapshots: the new page comes in from the right while
+  the old eases a third of the way left under a soft shadow (350 ms); Back is the reverse (320 ms). On Customers, a
+  row on a phone opens the customer's own chat-style page (A-222), no longer the computer's panel. A swipe from the
+  left edge (24 px) pulls the page with the thumb; let go past a third of the width, or with a flick, and it leaves
+  from where the thumb was; otherwise it springs back. A tab switch has no slide. The computer has none.
+- **Sheets and windows leave the way they came.** The phone's sheet rises on the spring and slides back down (300 ms);
+  a pull on its handle, or on its content while that sits at the top, moves it with the thumb; let go past 120 px or
+  with a flick and it goes, else it springs back. The computer's window settles in (fade + scale from 0.985, 280 ms)
+  and fades out (180 ms). The dimmed page lightens with it. Esc, ×, a tap outside: all the same exit.
+- **Tap feel.** A press dips to 0.97 in 90 ms; the release settles on the spring.
+- **Style.** iOS grouped lists: the hairline between rows starts where the words start, not at the edge (`.ios-sep`
+  with `--sep-inset`: 64 px on Today's rows, 42 px on Customers' rows). Large titles: once the page's title scrolls
+  away on a phone, the top bar shows it small and centred ("Today", "Customers", …), fading in over 220 ms.
+- **The smoothness guarantee.** Only transform, translate, scale and opacity ever animate; the page slide is a view
+  transition, so nothing re-renders mid-flight; the measurement is in `design-decisions.md`. With "reduce motion" on:
+  no slide, no swipe, no pull, a window closes at once; every link and button still works as before.
+- **Narrows** `brand/motion.md` "page transitions between app routes": allowed for the phone's push and pop only.

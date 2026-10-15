@@ -1,4 +1,5 @@
 import Link from "next/link";
+import ScrollTitle from "@/components/app/ScrollTitle";
 import { getLeads } from "@/lib/leads-data";
 import { getSessionContext } from "@/lib/session";
 import { getPendingApprovals } from "@/lib/pendingApprovals";
@@ -37,6 +38,7 @@ export default async function ComingUpPage() {
       <Link href="/dashboard" className="-my-3 inline-flex min-h-11 items-center text-[13px] text-ink-faint hover:text-ink">
         ← Today
       </Link>
+      <ScrollTitle title="Coming up" />
       <h1 className="title-serif mt-3 text-[30px] leading-[1.12] lg:text-[34px]">Coming up</h1>
       <p className="mt-2 max-w-[640px] text-[15px] leading-relaxed text-ink-soft">
         {groups.length === 0
@@ -59,6 +61,7 @@ export default async function ComingUpPage() {
                     <Link
                       key={it.leadId}
                       href={`/leads/${it.leadId}`}
+                      data-nav="push"
                       className="grid grid-cols-[44px_200px_minmax(0,1fr)_88px] items-center gap-4 border-t border-line-2 px-5 py-3 hover:bg-paper"
                     >
                       <Initials name={it.name} size={32} />
@@ -84,6 +87,7 @@ export default async function ComingUpPage() {
                   <Link
                     key={it.leadId}
                     href={`/leads/${it.leadId}`}
+                    data-nav="push"
                     className={"flex min-h-[60px] items-center gap-3 " + (i ? "border-t border-line-2" : "")}
                   >
                     <Initials name={it.name} size={36} />

@@ -40,6 +40,7 @@ import { todaysQuestion } from "@/lib/dailyQuestionData";
 import { planLine } from "@/lib/comingUp";
 import { findHabitSuggestion } from "@/lib/habits";
 import MeetingOutcomeCard, { type MeetingToLookBackOn } from "@/components/app/MeetingOutcomeCard";
+import ScrollTitle from "@/components/app/ScrollTitle";
 import { LOOK_BACK_DAYS, endedMeetings, isMeetingOutcome, meetingWhen } from "@/lib/meetingOutcome";
 import { PLAN_NAMES, choosePlan, readFollowUpPlans } from "@/lib/followUpPlans";
 import { readQualification } from "@/lib/qualification";
@@ -389,6 +390,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       {/* The owner's day (A-244): the date, a greeting on their own clock,
           and who to start with. A brand-new account gets a sentence instead
           (#301): "No customers yet." */}
+      {/* Once the greeting scrolls away on a phone, the top bar says "Today" (A-264). */}
+      <ScrollTitle title="Today" />
       <div className="text-[12.5px] text-ink-faint">
         {new Intl.DateTimeFormat(undefined, { timeZone: timezone, weekday: "long", month: "long", day: "numeric" }).format(now)}
       </div>

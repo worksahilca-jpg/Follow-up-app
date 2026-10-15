@@ -94,6 +94,7 @@ export default function ConversationPane({
         </div>
         <Link
           href={`/leads/${lead.id}`}
+          data-nav="push"
           className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-line bg-card px-3.5 text-[13px] font-medium lg:rounded-[8px] lg:px-3 lg:font-normal"
         >
           <ExternalLink className="hidden h-3.5 w-3.5 text-ink-soft lg:block" aria-hidden />

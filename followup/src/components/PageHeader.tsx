@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import type { ReactNode } from "react";
+import ScrollTitle from "@/components/app/ScrollTitle";
 
 /**
  * PageHeader — the app's one page-header shape.
@@ -54,6 +55,8 @@ export function PageHeader({ title, subtitle, back, actions, primary, className 
 
       <div className={"sm:flex sm:items-start sm:justify-between sm:gap-4 " + (back ? "mt-2" : "")}>
         <div className="min-w-0">
+          {/* Once the title scrolls away on a phone, the top bar shows it small (A-264). */}
+          {typeof title === "string" && <ScrollTitle title={title} />}
           <h1 className="title-serif text-[32px] leading-[1.1]">{title}</h1>
           {subtitle && <p className="text-ink-soft mt-1 max-w-xl">{subtitle}</p>}
         </div>

@@ -26,7 +26,7 @@ export function ComingUpList({
             <ul className="mt-1 divide-y divide-line">
               {g.items.map((it) => (
                 <li key={it.leadId}>
-                  <Link href={`/leads/${it.leadId}`} className="flex items-baseline justify-between gap-3 py-2.5 hover:underline">
+                  <Link href={`/leads/${it.leadId}`} data-nav="push" className="flex items-baseline justify-between gap-3 py-2.5 hover:underline">
                     <span className="font-medium text-sm">{it.name}</span>
                     <span className="text-xs text-ink-soft text-right">
                       {it.what}

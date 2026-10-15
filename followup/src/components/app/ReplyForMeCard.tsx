@@ -146,7 +146,7 @@ export default function ReplyForMeCard({
     </section>
     {first ? (
       // The customer waiting, one row; their page answers them meanwhile.
-      <Link href={`/leads/${first.leadId}`} className="mt-2.5 flex min-h-11 items-center gap-2.5 rounded-[16px] border border-line bg-card px-3 py-2.5">
+      <Link href={`/leads/${first.leadId}`} data-nav="push" className="mt-2.5 flex min-h-11 items-center gap-2.5 rounded-[16px] border border-line bg-card px-3 py-2.5">
         <Initials name={first.name} size={30} />
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[13.5px] font-semibold">{first.name}</span>

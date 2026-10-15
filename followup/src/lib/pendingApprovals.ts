@@ -1,3 +1,4 @@
+import { saidWhen } from "@/lib/theirMoment";
 import { siteReplyFrom, type SiteReply } from "@/lib/siteReply";
 import { HOLDING_TRIGGER, NOT_AN_ANSWER_TRIGGERS, isNotAnAnswer } from "@/lib/notAnAnswer";
 import { prisma } from "@/lib/db";
@@ -128,6 +129,8 @@ export type PendingApproval = {
   // conversation yet). Without this, approving a draft meant judging it
   // with no visible context for what it's actually replying to.
   leadLastMessage: string | null;
+  /** "Their moment" (A-262): their words and when they said them ("in October"), for the card's head. */
+  said?: { quote: string; when: string } | null;
   /** As a screen names it (src/lib/displayChannel.ts): "lead_form" for a Facebook Lead Ad, never stored. */
   leadLastMessageChannel: string | null;
   /**
@@ -377,6 +380,9 @@ export async function getPendingApprovals(businessId: string, now: Date = new Da
       leadLastMessageChannel: displayChannel(lastInbound?.channel, lead.source),
       leadLastMessageAt: lastInbound ? lastInbound.sentAt.toISOString() : null,
       saidNo: lead.saidNoAt != null,
+      ...(typeof meta.quote === "string" && meta.quote
+        ? { said: { quote: meta.quote, when: saidWhen(typeof meta.saidOn === "string" ? new Date(meta.saidOn) : event.createdAt, now, timezone) } }
+        : {}),
       askedIfPerson: lead.askedIfPersonAt != null,
       customerToldAt,
       site: siteReplyFrom(lead, lastInbound?.body),

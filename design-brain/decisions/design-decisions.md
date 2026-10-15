@@ -13514,3 +13514,22 @@ Founder picked the landing's own look ("okay that's fine" on D). Built as shared
 uses them with the landing's corners and padding. The Today card is unchanged.
 - **Weak spot:** the two files still hold the value twice (a static HTML page can't read the app's CSS); the test
   is the guard, not a single declaration.
+
+## 2026-10-15 — Built: Their moment (A-262)
+
+Founder: "build", then "go" on the two recommendations (a vague time means the first day of that season; a customer
+who did not say yes only within 6 months of their last message). Built end to end: four columns on the customer
+(`momentAt`, `momentQuote`, `momentSaidAt`, `momentNoteAt`); the reader (`theirMoment.ts`) keeps a time they named
+about a plan of theirs (forward-looking words, at least two weeks ahead, their own sentence kept), never a time in
+the past, a bare month, a viewing next week, or a "try me in March" (that is the plan's own hold); an hourly pass
+(`theirMomentData.ts`) writes one note from their words when the moment comes and holds it for the owner, never
+sends it, lets a moment pass quietly when there is no yes and the enquiry is older than six months, and keeps it for
+the next hour while something else already waits for the owner.
+- **Screens, as drawn:** the customer page shows "Priya's moment", her sentence, and "FollowUp brings Priya up on
+  Today in the first week of January, with a note about it." with Change (a day picker, Save, No moment). Today
+  shows the note as a row ("Their moment · waiting for your OK"), then the card: "Raj said in July:", his sentence,
+  the note, a plain "Why now:" line (information, no dot), Send to Raj / Change it / Skip for now. Settings' rule
+  list gains one line. Checked on the built app at 390 and 1440, no console errors.
+- **Weak spots:** the note itself was not produced by the model locally (the sample note is hand-written); the time
+  reader is English-only by rule; a note is written at most an hour after the moment, not the minute; a vague
+  season uses its first day; "around Mar 20" names the day but the owner's picker only takes a day, not a week.

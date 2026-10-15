@@ -4545,3 +4545,21 @@ the recommended D.
 - **One source:** `--bubble-them`, `--bubble-you`, `--on-bubble-you` in the app's `globals.css` and in the landing's
   `home.html`; a test keeps the two equal, so a change to the landing moves the app with it.
 - **Scope:** the conversation on a customer's page (`Thread.tsx`). The Today card keeps its own look (A-258).
+
+## A-262 — "Their moment": FollowUp keeps the time a customer named and brings them up then ^A-262
+
+**Approved:** 2026-10-15, founder, on the drawing (`moment/moment-board.png`): *"build"*, then *"go"*. From the
+stay-in-touch research (`followup/research/product/2026-10-15-what-to-send-when-staying-in-touch.md`): a note set
+off by something the customer said is the kind most likely to get an answer.
+- **What is kept:** a time they named about a plan of theirs ("we'll talk to the bank in January", "our lease ends
+  in March", "moving next spring"), with their own sentence and when they said it. Read from their words by rule, not
+  by a model's guess; never a time in the past, a bare month, a viewing next week, or "try me in March" (that is the
+  plan's own hold, A-245). A vague time ("next spring") becomes the first day of that season.
+- **Who:** a customer staying in touch (A-260), always; anyone else only within 6 months of their last message (an
+  enquiry gives implied consent for that long in Canada, CASL), both as the founder's "build" took the recommendation.
+- **When it comes:** one note on Today, headed with what they said and when ("Priya Nair said in October:"), their
+  words as the quote, "FollowUp wrote this note for you:", then "Why now: …". It starts from their words, offers one
+  useful thing, asks one easy question, says how to stop, and waits for the owner's OK. Never sent on its own.
+- **On the customer's page:** under the plan, "{First}'s moment": their words, "FollowUp brings {First} up on Today
+  in the first week of January, with a note about it.", and Change (another day, or none).
+- **Settings › Follow-up plans:** one more line in the Stay in touch box.

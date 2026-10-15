@@ -633,6 +633,35 @@ export function checkBackDate(text: string, sentAtMs: number): number | null {
   return null;
 }
 
+/**
+ * The first clear time ahead in their words, however it is said: "we'll
+ * talk to the bank in January", "our lease ends in March", "moving next
+ * spring". Unlike checkBackDate it needs no ask: it reads a moment they
+ * named, for "Their moment" (src/lib/theirMoment.ts, A-262), which decides
+ * whether the sentence is about a plan of theirs at all. The sentence the
+ * time sat in comes back too, so the owner can see their words. The same
+ * "said as one" rule as above, so a bare "March" never counts.
+ */
+export function timeInWords(text: string, sentAtMs: number): { at: number; sentence: string } | null {
+  for (const sentence of text.split(/(?<=[.?!\n])\s*/)) {
+    if (!sentence.trim()) continue;
+    WHEN.lastIndex = 0;
+    let match: RegExpExecArray | null;
+    while ((match = WHEN.exec(sentence))) {
+      const [whole, prep = "", edge = "", what, yearWord = ""] = match;
+      const lower = whole.toLowerCase();
+      const prefix = lower.slice(0, lower.lastIndexOf(what.toLowerCase()));
+      const hasNext = /\bnext\s*$/.test(prefix);
+      const relative = /(?:weeks?|months?)$/i.test(what) && !/^next\s/i.test(what);
+      const named = /^(?:next\s|new year|holidays)/i.test(what);
+      if (relative ? !prep : !named && !prep && !edge && !hasNext && !/\bthis\s*$/.test(prefix)) continue;
+      const at = resolve(prep.toLowerCase(), edge.toLowerCase(), what, yearWord.toLowerCase(), sentAtMs, hasNext);
+      if (at !== null && at > sentAtMs + DAY && at <= sentAtMs + 400 * DAY) return { at, sentence: sentence.trim() };
+    }
+  }
+  return null;
+}
+
 /* ------------------------------------------------------------------ *
  * Words for the screens.
  * ------------------------------------------------------------------ */

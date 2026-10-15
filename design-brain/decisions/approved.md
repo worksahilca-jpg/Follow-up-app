@@ -4520,3 +4520,8 @@ for Canada. It's for both Canada and the US."*
 - **On the customer's page:** "Staying in touch" replaces the plan line, with "Change" to stop it.
 - **Rules:** the 6-month stop on every plan doesn't apply to a customer who said yes (CASL express consent; US texts
   need consent under the TCPA). No pressure, no deadlines.
+- **Amended 2026-10-15 (founder: "Something that makes them reply back", see [R-118](rejected#^R-118)):** each note
+  opens with the owner's news straight away, says why it's good for this customer by setting it next to what they
+  said (under their budget, near the school they named), and ends with one easy question they can answer in a word
+  ("Want me to send you the photos?"), then how to stop. Never "just checking in" or "any plans?". Never "better" or
+  "perfect for you" without the reason. Settings › Follow-up plans lists this as a rule.

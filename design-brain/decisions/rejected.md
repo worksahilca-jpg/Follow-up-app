@@ -1547,3 +1547,16 @@ Today in smaller type is clutter, and the phone buzz already does "tell me now".
 1440 × 900 screen, so Connected apps already scrolls inside the box.
 **Not rejected:** Settings' own list and its five rows (A-253, A-255) stay as they are.
 **Instead:** [A-257](approved#^A-257), Settings as its own page with a tree.
+
+## R-118 — "Stay in touch" notes that just check in ^R-118
+
+**Rejected:** 2026-10-15, founder, after A-260 was built: *"'stay in touch' doesn't mean that you just ask them,
+'Hey, did you plan anything?' or something about anything, like a boring text. I want something like, 'Okay, there's
+another offer. This will be better for you.' Something that makes them reply back."*
+**What was rejected:** a note with nothing in it ("any plans?", "just checking in", "are you still looking?"), and a
+note that ends on a soft line nobody needs to answer ("Happy to send the details if you'd like").
+**Underlying principle (inferred):** every message FollowUp writes must give the customer a reason to answer: the
+offer itself, why it's good for them, and one easy question.
+**Not rejected:** the trust rules stay: no made-up facts, no deadline or "don't miss", every note says how to stop.
+"Better for you" is said with its reason (under their budget, near the place they named), never as a bare claim.
+**Instead:** the amendment to [A-260](approved#^A-260), same day.

@@ -572,6 +572,9 @@ on "needs you" and the reminders keep coming (principle 1: the owner can always 
 
 ## A-027 — Three places on the phone, four on the desktop ^A-027
 
+**SUPERSEDED IN PART (2026-10-15) by [A-256](#^A-256):** Activity is a place again (the bell is gone); each customer
+keeps "what FollowUp did" for them as well.
+
 **SUPERSEDED IN PART (2026-10-09) by [A-209](#^A-209):** Numbers is back in the menu as Results.
 
 
@@ -3380,6 +3383,9 @@ moment, Customers and a customer, on desk and phone, drawn over the real app.
 
 ## A-209 — The app strategy: four places, one customer at a time, the homepage's look ^A-209
 
+**SUPERSEDED IN PART (2026-10-15) by [A-256](#^A-256):** the four places are Today · Customers · Activity · Results;
+Settings sits in the phone's top bar (where the bell and its "Alerts" word were) and at the foot of the desk list.
+
 **Approved:** 2026-10-09, founder: *"all yes, draw the rest"*, to the five questions on board version 2
 (https://claude.ai/artifact/F12ZLs1H4UBdCWRtumdRvg; research: `ux-patterns/2026-10-09-app-strategy-simple-familiar.md`).
 
@@ -3481,6 +3487,9 @@ after *"looks good but needs a lot more changes."*
    Account. Picking one shows only its rows, under a display-font section title.
 
 ## A-213 — Settings and single tasks open as windows over the page, like Wispr ^A-213
+
+**SUPERSEDED FOR SETTINGS (2026-10-15) by [A-257](#^A-257):** Settings is its own page with its own list (R-117:
+the window was too small). Search and single tasks stay windows.
 
 **Approved (direction, to draw):** 2026-10-10, founder: *"make it a bit towards Wispr, see how they pop up a new window
 for settings and stuff."*
@@ -3626,6 +3635,9 @@ Customers PR (Waiting and Pipeline links land in Customers). The second feedback
 its page are removed. Help is the one place to tell us something; old `#feedback` links land on Settings.
 
 ## A-220 — The phone app redesign, drawing 1 (compact) ^A-220
+
+**SUPERSEDED IN PART (2026-10-15) by [A-256](#^A-256):** top bar is the mark, the name and Settings; the tabs are
+Today, Customers, Activity, Results.
 
 **Progress (2026-10-10):** builds 1–4 merged (#473, #474, #476, #480). Build 5 (Results, PR #481) shown on phone and
 computer: *"cool"*, then *"i mean we wil bedesigning it too but yes these features are good"*. So what is approved
@@ -4420,3 +4432,39 @@ specific."*
 sentence; bare labels like "Later" read as an expert tool).
 **Supersedes the names in:** A-253 (Settings) and A-211 / A-220 (the Customers groups). The structure of those
 screens is unchanged; only the words change.
+
+## A-256 — Activity instead of the bell ^A-256
+
+**Approved:** 2026-10-15, founder: *"Do you even think that this notification button is useful? Can we make an
+activity bar … like Today's Customers, Result, and then Activity, instead of notifications?"*, then *"Yes"* to
+drawing A on the board (after asking *"what to chose"* and being told A).
+**What specifically:**
+- **The bell goes** (R-116), on the phone and the computer.
+- **Four places:** Today · Customers · Activity · Results, in the phone's tabs and the desk's side list (Activity
+  under Customers).
+- **Settings** moves to the phone's top bar, on the right where the bell was, with its word. On the computer it stays
+  at the foot of the side list.
+- **Activity** is the page that was `/activity` ("What FollowUp did"): its title is "Activity", one plain sentence
+  under it on the phone too, no "← Today". The bell's own jobs land here as orange-dot "Needs you" lines (a reply that
+  couldn't go, an inbox FollowUp lost, a customer who is back, and the like). The "a reply is waiting" lines are left
+  out: Today already shows each one.
+**Why (the numbers):** 95 of the bell's 108 lines in 30 days repeated Today; 31 of 108 were ever opened.
+
+## A-257 — Settings as a tree, on its own page ^A-257
+
+**Approved:** 2026-10-15, founder: *"can we make that settings page a little bigger … it's too small"*, *"Or we can
+also design it like HubSpot has it"*, *"Take your example: Claude has all these features properly arranged … Every
+sub-branch should be in a branch in a stem. There will be a parent, like General"*, then *"Yes, as you have organised
+it … I want something like that."*
+**What specifically:**
+- **On a computer, Settings is its own page**, not a window (R-117). The left column becomes Settings' list:
+  "← Back to FollowUp", the title "Settings", then the five parents (Connected apps, Sending replies, Alerts, Your
+  business, Account).
+- **The stem:** the parent you are in opens its branches under it on a thin line (Sending replies: When to check in,
+  Your free hours; Account: Team, Your plan, Sign-ins, Your data). Only that one opens, so the list stays short.
+- **Each page says where it sits** at the top ("Settings › Account").
+- **On a phone, nothing moves:** one level per screen, "←" one step up the stem, as it already works.
+- **Kept:** branches stay their own short pages. Stacking them on the parent's page (Claude's General page style) was
+  tried in the drawing and made Account about six phone screens long (A-069, R-115).
+**Asked, not decided:** a new font "like Claude's" (Claude's own typefaces are Anthropic's; free ones with the same
+feel would need his yes after a drawing).

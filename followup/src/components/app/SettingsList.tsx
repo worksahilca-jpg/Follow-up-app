@@ -12,9 +12,9 @@ import { GROUP_PAGE, type SettingsGroup } from "@/lib/settingsGroups";
  * Settings (A-220, the phone redesign): on a phone, four rows (where customers
  * write, how replies go out, alerts, your business), then More, then Help and
  * Sign out. Since A-253 each of the four opens its own page; only More opens a
- * short list (Team, Your plan, Sign-ins, Your data). On the desk the side list
- * holds the same five and this draws More's rows (A-222: same words, each its
- * own layout). The one broken thing shows first, only when there is one.
+ * short list (Team, Your plan, Sign-ins, Your data). On the desk the app's
+ * left column holds the same five as Settings' tree (Sidebar, A-257) and this
+ * draws Account's rows (A-222: same words, each its own layout). The one broken thing shows first, only when there is one.
  * Built from the research, not taste:
  *
  * - Stripe (three layers): the everyday places first, and what most

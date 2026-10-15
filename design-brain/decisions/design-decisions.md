@@ -13274,3 +13274,25 @@ Drawn on the real app (local build, test account), board in the session; nothing
     scroll" already rejected (A-069, R-115). So branches stay their own short pages.
   - **Weak spots:** the "Your free hours" page still uses old words inside ("a lead", "booking hours"); it should get
     the A-255 treatment when this is built.
+
+## 2026-10-15 — A-256 and A-257 built: Activity instead of the bell; Settings as a tree on its own page
+
+Founder: *"Yes, as you have organised it"* (A + the tree), then *"Keep fixing all the bugs and glitches. Plus, do the
+security check too."*
+
+- **Nav:** tabs Today · Customers · Activity · Results; Settings in the phone's top bar with its word (lit on Settings
+  and on the plans page); the bell, its dropdown and its three API routes are removed.
+- **Activity:** title "Activity", one sentence on the phone too, no "← Today". Notices the bell used to carry are
+  orange-dot "Needs you" lines; the "a reply is waiting" lines are left out (Today shows each). A lost-inbox notice
+  opens Connected apps. Empty tabs are hidden (A-209), so "Stopped 0" no longer shows.
+- **Settings (computer):** no window. Inside Settings the left column is the tree: "← Back to FollowUp", "Settings",
+  five parents; the open parent shows its branches on a thin line; each page shows its path ("Settings › Account").
+  The plans page ("When to check in") is a branch of Sending replies and keeps the tree. Old links from emails
+  (#billing, #integrations…) land on their branch. Phone: unchanged, one level per screen.
+- **Found while checking, and fixed:** Activity used to show every "reply is waiting" bell line as "Needs you now"
+  (the same thing as Today, again); the plans page had a "← Settings" link beside the tree on the computer.
+- **Security check:** no secrets; three endpoints fewer; production packages 0 known vulnerabilities. **Found and
+  fixed:** Activity showed every teammate's notices to everyone in the business; each notice is addressed to one
+  person, so each person now sees their own (sends, holds and finished plans stay shared).
+- **Pipeline (asked the same night):** not built. It was removed on Oct 10 as a copy of Customers (A-219), and
+  across all outside testers 0 of 23 customers ever had a stage or a value set, and 0 testers connected a CRM.

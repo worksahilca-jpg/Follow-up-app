@@ -1537,7 +1537,7 @@ ever opened.
 **Principle (inferred, marked):** a place in the app must show something no other place shows. A box that repeats
 Today in smaller type is clutter, and the phone buzz already does "tell me now". The two things only the bell carried
 (a reply that couldn't be sent, an inbox FollowUp lost) need a home before it goes.
-**Instead:** proposed 2026-10-15, waiting for the founder's pick: Activity as a place (see design-decisions).
+**Instead:** [A-256](approved#^A-256), Activity as a place.
 
 ## R-117 — Settings as an 860 × 600 window on the computer: too small ^R-117
 
@@ -1546,4 +1546,4 @@ Today in smaller type is clutter, and the phone buzz already does "tell me now".
 **What was rejected:** the size of the Settings window (A-213), 860 × 600 on a computer: about two-thirds of a
 1440 × 900 screen, so Connected apps already scrolls inside the box.
 **Not rejected:** Settings' own list and its five rows (A-253, A-255) stay as they are.
-**Instead:** proposed 2026-10-15, waiting for the founder's pick: a bigger window, or Settings as a whole page.
+**Instead:** [A-257](approved#^A-257), Settings as its own page with a tree.

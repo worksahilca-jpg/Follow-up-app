@@ -13234,3 +13234,29 @@ specific"*, then *"yes change all"* to the old → new list (A-255).
   test was updated to the new words.
 - **Not changed (not on the list):** the group keys behind old links (#write, #more still work), "Follow-up plans" on
   the plans page itself, and the landing page.
+
+## 2026-10-15 — Proposed: Activity instead of the bell; Settings with more room
+
+Founder, while #518 waited for checks: the bell (R-116) and the Settings window size (R-117), then "or like HubSpot".
+Drawn on the real app (local build, test account), board in the session; nothing built.
+
+- **Activity (his idea):** the bell goes. `/activity` (built for A-066, out of the menu since A-027, reached today
+  only from a link on Today and Results) becomes a place. Its title is the tab's word, "Activity", with one sentence
+  under it. A reply that couldn't be sent and a lost inbox become Activity lines with the orange dot ("Needs you").
+  - **A (recommended):** 4 tabs, Today · Customers · Activity · Results. Settings moves to the phone's top right,
+    where the bell was, with its word (A-209: every icon has a word on the phone). Reason: Settings is opened rarely;
+    Activity would be checked daily; 4 tabs are easier than 5 (Hick).
+  - **B:** 5 tabs, Settings stays a tab. Every tab gets narrower.
+  - **Computer, same for both:** Activity under Customers in the side list; Settings stays at the foot.
+  - This would supersede A-027's line "Activity becomes 'what FollowUp did' inside each person" (that line stays
+    true too: each customer keeps their own record).
+- **Settings with more room:**
+  - **Bigger window:** 1120 × 844 on a 1440 × 900 screen (`width: min(1120px, 100vw − 96px)`,
+    `height: min(860px, 100vh − 56px)`).
+  - **Whole page, HubSpot's way (recommended):** Settings takes the screen. The left column becomes Settings' own
+    list with "Back to FollowUp" on top, so there is one list, not two. The page `/settings` already exists; the
+    window route would go. This would supersede A-213 for Settings only (Search and the small windows stay windows).
+  - Principle taken from HubSpot, not its screen: Settings is a place you go to do one job, with its own list, and a
+    clear way back. Its density, search box and grouped admin sections are not taken.
+- **Weak spots, honestly:** "Couldn't send · Maria" on the board is an example line; the local data had no failed
+  send. Moving Settings to a corner on the phone makes it a little harder to find the first time.

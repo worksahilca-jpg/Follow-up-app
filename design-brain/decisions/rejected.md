@@ -1524,3 +1524,26 @@ doesn't need, or that wouldn't make sense to them, comes off the screen and Foll
 - moving it to another Settings page.
 **Would need to change:** nothing for owners. A developer path can live outside the owner's Settings if a real
 customer ever asks for one.
+
+## R-116 — The bell: a second inbox that repeats Today ^R-116
+
+**Rejected:** 2026-10-15, founder: *"Do you even think that this notification button is useful? Can we make an
+activity bar or a particular thing, like Today's Customers, Result, and then Activity, instead of notifications?"*
+**What was rejected:** the bell (`NotificationBell.tsx`), top right on the phone ("Alerts") and beside the name on
+the computer: a small dropdown of notification lines, polled every 45 s.
+**What the numbers said** (production, read-only aggregate, the 8 outside testers, last 30 days): 108 lines, of which
+95 said "X messaged … a reply is written and waiting for your approval", which Today already shows; 31 of 108 were
+ever opened.
+**Principle (inferred, marked):** a place in the app must show something no other place shows. A box that repeats
+Today in smaller type is clutter, and the phone buzz already does "tell me now". The two things only the bell carried
+(a reply that couldn't be sent, an inbox FollowUp lost) need a home before it goes.
+**Instead:** proposed 2026-10-15, waiting for the founder's pick: Activity as a place (see design-decisions).
+
+## R-117 — Settings as an 860 × 600 window on the computer: too small ^R-117
+
+**Rejected:** 2026-10-15, founder: *"can we make that settings page a little bigger? I mean, it's too small"*, then
+*"Or we can also design it like HubSpot has it."*
+**What was rejected:** the size of the Settings window (A-213), 860 × 600 on a computer: about two-thirds of a
+1440 × 900 screen, so Connected apps already scrolls inside the box.
+**Not rejected:** Settings' own list and its five rows (A-253, A-255) stay as they are.
+**Instead:** proposed 2026-10-15, waiting for the founder's pick: a bigger window, or Settings as a whole page.

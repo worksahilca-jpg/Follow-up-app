@@ -3,7 +3,7 @@ import { MotionConfig } from "framer-motion";
 import "./globals.css";
 import AuthProvider from "@/components/AuthProvider";
 import SiteAnalytics from "@/components/SiteAnalytics";
-import { publicSans, ibmPlexMono } from "@/lib/fonts";
+import { publicSans, ibmPlexMono, newsreader } from "@/lib/fonts";
 
 // metadataBase makes every relative URL below (the OG image, icons) resolve
 // to an absolute one — required for social platforms that fetch the image
@@ -50,7 +50,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`h-full antialiased ${publicSans.variable} ${ibmPlexMono.variable}`}
+      className={`h-full antialiased ${publicSans.variable} ${ibmPlexMono.variable} ${newsreader.variable}`}
     >
       <body className="min-h-full flex flex-col bg-paper text-ink">
         {/* Every framer-motion animation in the app — the landing page's

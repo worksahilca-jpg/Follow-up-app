@@ -4468,3 +4468,18 @@ it … I want something like that."*
   tried in the drawing and made Account about six phone screens long (A-069, R-115).
 **Asked, not decided:** a new font "like Claude's" (Claude's own typefaces are Anthropic's; free ones with the same
 feel would need his yes after a drawing).
+
+## A-258 — Newsreader for the customer's message and the reply ^A-258
+
+**Approved:** 2026-10-15, founder, after the drawing of Today in three faces (now, A Source Serif 4, B Newsreader):
+*"yes b is good"* (first asked: *"I like your font that you use. Can we have something like that?"*).
+**What specifically:**
+- **The words you read are set in Newsreader** (free, OFL), like a letter: the customer's message and the reply on
+  the Today card, the edit box when you change a reply, the bubbles in a customer's conversation (theirs and yours),
+  the reply card on a customer's page, the website-form reply and the "Reply to …" box.
+- **Everything you press or scan stays Public Sans:** buttons, labels, rows, sentences around the card. **Titles keep
+  FU Display** (A-221), as the board said ("your titles already use a serif").
+- **Sizes:** the Today card 17.5px on a 1.5 line (the same height as Public Sans at 16.5px, as drawn); a customer's
+  page one pixel bigger than before (15px phone, 16px computer), so the smaller-looking serif reads the same.
+- **Light:** one weight, self-hosted through `next/font` (the security policy blocks outside font files), about 22 KB,
+  fetched only on a page that shows a message; the homepage never downloads it.

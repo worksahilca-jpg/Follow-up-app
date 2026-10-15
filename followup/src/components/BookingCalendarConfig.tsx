@@ -202,7 +202,7 @@ export default function BookingCalendarConfig() {
             <p className="text-sm font-medium">When can people book?</p>
             <p className="text-[13px] text-ink-soft mt-1">30-minute calls. Only these days and hours are offered on your booking link.</p>
 
-            <div role="group" aria-label="Days people can book" className="mt-2.5 flex flex-wrap gap-1.5">
+            <div role="group" aria-label="Days people can book" className="mt-2.5 flex flex-wrap gap-x-1.5 gap-y-2">
               {WEEKDAYS.map((d) => {
                 const on = hours.days.includes(d.value);
                 return (
@@ -211,7 +211,7 @@ export default function BookingCalendarConfig() {
                     type="button"
                     aria-pressed={on}
                     onClick={() => toggleDay(d.value)}
-                    className="h-9 min-w-[44px] px-3 rounded-full border text-[13px] font-medium"
+                    className="tap-44 h-9 min-w-[44px] px-3 rounded-full border text-[13px] font-medium"
                     style={
                       on
                         ? { backgroundColor: "var(--accent)", color: "var(--on-accent)", borderColor: "var(--accent)" }
@@ -232,7 +232,7 @@ export default function BookingCalendarConfig() {
                 id="booking-from"
                 value={hours.startMinute}
                 onChange={(e) => void saveHours({ ...hours, startMinute: Number(e.target.value) }, timezone)}
-                className="h-9 rounded-[10px] border px-2.5 text-[13px]"
+                className="h-11 rounded-[10px] border px-2.5 text-[13px] lg:h-9"
                 style={selectStyle}
               >
                 {times
@@ -249,7 +249,7 @@ export default function BookingCalendarConfig() {
                 aria-label="To"
                 value={hours.endMinute}
                 onChange={(e) => void saveHours({ ...hours, endMinute: Number(e.target.value) }, timezone)}
-                className="h-9 rounded-[10px] border px-2.5 text-[13px]"
+                className="h-11 rounded-[10px] border px-2.5 text-[13px] lg:h-9"
                 style={selectStyle}
               >
                 {times
@@ -265,7 +265,7 @@ export default function BookingCalendarConfig() {
                 aria-label="Time zone"
                 value={timezone}
                 onChange={(e) => void saveHours(hours, e.target.value)}
-                className="h-9 rounded-[10px] border px-2.5 text-[13px]"
+                className="h-11 rounded-[10px] border px-2.5 text-[13px] lg:h-9"
                 style={selectStyle}
               >
                 {!timezoneListed && <option value={timezone}>{timezone}</option>}

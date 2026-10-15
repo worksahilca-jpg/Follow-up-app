@@ -13263,3 +13263,14 @@ Drawn on the real app (local build, test account), board in the session; nothing
     clear way back. Its density, search box and grouped admin sections are not taken.
 - **Weak spots, honestly:** "Couldn't send · Maria" on the board is an example line; the local data had no failed
   send. Moving Settings to a corner on the phone makes it a little harder to find the first time.
+- **Later the same day, founder:** *"Take your example: Claude has all these features properly arranged … Every
+  sub-branch should be in a branch in a stem. There will be a parent, like General … then we will go to whatever
+  comes under General."* Drawn as a tree (second board): Settings is its own page on a computer; the left column is
+  Settings' list of five parents; the parent you are in opens its branches under it on a thin line (Sending replies:
+  When to check in, Your free hours; Account: Team, Your plan, Sign-ins, Your data); each page shows its path
+  ("Settings › Account"). On a phone the same tree, one level per screen, "←" one step up (it already works this way).
+  - **Tried and dropped while drawing:** every branch stacked as sections on its parent's page, the way Claude's
+    General page stacks Profile, Appearance and the rest. Account became about six phone screens long, the "one long
+    scroll" already rejected (A-069, R-115). So branches stay their own short pages.
+  - **Weak spots:** the "Your free hours" page still uses old words inside ("a lead", "booking hours"); it should get
+    the A-255 treatment when this is built.

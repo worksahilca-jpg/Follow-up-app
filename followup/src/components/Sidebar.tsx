@@ -1,37 +1,45 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { Sun, Users, ChartColumn, Settings, CircleHelp, ChevronsUpDown, LogOut } from "lucide-react";
+import { Sun, Users, History, ChartColumn, Settings, CircleHelp, ChevronsUpDown, LogOut, ArrowLeft, ChevronRight } from "lucide-react";
 import SidebarSearch from "@/components/app/SidebarSearch";
-import NotificationBell from "./NotificationBell";
 import FeedbackDialog from "./FeedbackDialog";
 import LogoMark from "@/components/LogoMark";
+import { GROUP_ICON } from "@/components/app/settingsIcons";
+import { SETTINGS_BRANCHES, SETTINGS_GROUPS, SETTINGS_MOVED, groupHref, settingsPlace } from "@/lib/settingsGroups";
 
 /**
  * The app frame (step 1 of the app plan: A-209, A-211, A-212, A-213; the
  * map is design-brain/components/app-map.md). Simplified after the founder,
  * 2026-10-10: "simplify, copy Wispr if you want".
  *
- * Desk, like Wispr's sidebar: the brand at the top with the bell, then
- * plain rows: Search, and the three places (Today, Customers, Results).
+ * Desk, like Wispr's sidebar: the brand at the top, then plain rows:
+ * Search, and the four places (Today, Customers, Activity, Results).
  * Only Today keeps a count, because that's who needs you. Settings and Help
  * sit at the foot, and under them the account: the business name, which
  * opens your email, plan, team and Sign out. Search and Settings open as
  * windows over the page (src/app/(app)/@modal).
  *
- * Phone: four tabs at the bottom (Today, Customers, Results, Settings),
- * and "Alerts" written beside the bell at the top.
+ * Phone: four tabs at the bottom (Today, Customers, Activity, Results),
+ * and Settings, with its word, at the top right.
  *
- * Results is the Numbers page (A-066), back in the menu (A-209).
+ * Activity took the bell's place (A-256): what FollowUp did, and the few
+ * things only the bell used to say, in one list. Results is the Numbers
+ * page (A-066), back in the menu (A-209).
+ *
+ * In Settings, the desk column becomes Settings' own tree (A-257, founder:
+ * "every sub-branch should be in a branch in a stem"): Back to FollowUp,
+ * the five parents, and the branches of the one you are in on a thin line.
  */
 type Counts = { today?: number; customers?: number };
 
 const places = [
   { href: "/dashboard", label: "Today", icon: Sun, count: "today" as const },
   { href: "/leads", label: "Customers", icon: Users },
+  { href: "/activity", label: "Activity", icon: History },
   { href: "/analytics", label: "Results", icon: ChartColumn },
 ];
 
@@ -56,17 +64,27 @@ export default function Sidebar({ businessName = "", counts = {} }: { businessNa
   const settingsActive = isActive(pathname, "/settings");
   // A customer's page brings its own phone bar (Back, their name) and no tabs, like a chat app (A-222).
   const ownPhoneBar = /^\/leads\/[^/]+$/.test(pathname ?? "");
+  // Settings and the follow-up plans page (its "When to check in" branch) show Settings' tree on the desk.
+  const inSettings = settingsActive || isActive(pathname, "/workflows");
 
   return (
     <>
-      {/* Phone: a quiet top bar (brand, and the bell with its word) … */}
+      {/* Phone: a quiet top bar (brand, and Settings with its word) … */}
       {!ownPhoneBar && (
         <header className="lg:hidden fixed top-0 inset-x-0 z-30 flex items-center justify-between border-b border-line bg-paper px-4 py-1.5">
           <Link href="/dashboard" className="flex min-h-11 items-center gap-2">
             <LogoMark height={20} />
             <span className="text-base font-semibold">FollowUp</span>
           </Link>
-          <NotificationBell align="right" label="Alerts" />
+          <Link
+            href="/settings"
+            aria-current={inSettings ? "page" : undefined}
+            className="flex h-11 items-center gap-1.5 rounded-[10px] px-2 text-[14px]"
+            style={{ color: inSettings ? "var(--ink)" : "var(--ink-soft)", fontWeight: inSettings ? 600 : 400 }}
+          >
+            <Settings className="h-4 w-4" strokeWidth={1.8} />
+            Settings
+          </Link>
         </header>
       )}
 
@@ -77,7 +95,7 @@ export default function Sidebar({ businessName = "", counts = {} }: { businessNa
           className="lg:hidden fixed bottom-0 inset-x-0 z-30 grid grid-cols-4 border-t border-line bg-paper px-2 pt-1.5"
           style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 10px)" }}
         >
-          {[...places, { href: "/settings", label: "Settings", icon: Settings }].map(({ href, label, icon: Icon }) => {
+          {places.map(({ href, label, icon: Icon }) => {
             const active = isActive(pathname, href);
             return (
               <Link
@@ -102,9 +120,11 @@ export default function Sidebar({ businessName = "", counts = {} }: { businessNa
             <LogoMark height={17} />
             <span className="text-[15px] font-semibold tracking-[-0.01em]">FollowUp</span>
           </Link>
-          <NotificationBell />
         </div>
 
+        {inSettings ? (
+          <SettingsTree pathname={pathname ?? ""} />
+        ) : (
         <nav aria-label="Main" className="mt-5 flex flex-col gap-0.5">
           <SidebarSearch className={rowClass + " text-left"} style={rowStyle(false)} />
           <div className="h-2" aria-hidden />
@@ -120,12 +140,15 @@ export default function Sidebar({ businessName = "", counts = {} }: { businessNa
             );
           })}
         </nav>
+        )}
 
         <div className="mt-auto flex flex-col gap-0.5">
-          <Link href="/settings" aria-current={settingsActive ? "page" : undefined} className={rowClass} style={rowStyle(settingsActive)}>
-            <Settings className="h-4 w-4" strokeWidth={1.8} />
-            Settings
-          </Link>
+          {!inSettings && (
+            <Link href="/settings" className={rowClass} style={rowStyle(false)}>
+              <Settings className="h-4 w-4" strokeWidth={1.8} />
+              Settings
+            </Link>
+          )}
           {/* Help: tell the people building FollowUp what broke, from any screen. */}
           <FeedbackDialog label="Help" icon={CircleHelp} className={rowClass + " text-left"} />
           <div className="mx-2.5 my-2 border-t border-line" aria-hidden />
@@ -133,6 +156,85 @@ export default function Sidebar({ businessName = "", counts = {} }: { businessNa
         </div>
       </aside>
     </>
+  );
+}
+
+/** The address's #part, followed as Settings moves (hash links, Back, and its own pushState steps). */
+function subscribeHash(onChange: () => void) {
+  window.addEventListener("hashchange", onChange);
+  window.addEventListener("popstate", onChange);
+  window.addEventListener(SETTINGS_MOVED, onChange);
+  return () => {
+    window.removeEventListener("hashchange", onChange);
+    window.removeEventListener("popstate", onChange);
+    window.removeEventListener(SETTINGS_MOVED, onChange);
+  };
+}
+
+/**
+ * Inside Settings a plain #link moves the page (it listens for the hash);
+ * from the plans page, or to it, it's an ordinary page change.
+ */
+function TreeLink({ href, sameDoc, ...rest }: { href: string; sameDoc: boolean } & Omit<React.ComponentProps<"a">, "href">) {
+  return sameDoc && href.startsWith("/settings#") ? <a href={href.slice("/settings".length)} {...rest} /> : <Link href={href} {...rest} />;
+}
+
+/** Settings' tree in the desk column (A-257): the parents, and the open one's branches on a stem. */
+function SettingsTree({ pathname }: { pathname: string }) {
+  const hash = useSyncExternalStore(subscribeHash, () => window.location.hash, () => "");
+  const { group, branch } = settingsPlace(pathname, hash);
+  const sameDoc = pathname === "/settings";
+  return (
+    <nav aria-label="Settings" className="mt-5 flex flex-col gap-0.5">
+      <Link href="/dashboard" className={rowClass} style={rowStyle(false)}>
+        <ArrowLeft className="h-4 w-4" strokeWidth={1.8} />
+        Back to FollowUp
+      </Link>
+      <p className="mb-1.5 mt-5 px-2.5 text-[20px] font-semibold tracking-[-0.01em] text-ink">Settings</p>
+      {SETTINGS_GROUPS.map((g) => {
+        const Icon = GROUP_ICON[g];
+        const open = g === group;
+        const branches = SETTINGS_BRANCHES[g];
+        return (
+          <div key={g}>
+            <TreeLink
+              href={groupHref(g)}
+              sameDoc={sameDoc}
+              aria-current={open && !branch ? "page" : undefined}
+              aria-expanded={branches ? open : undefined}
+              className={rowClass}
+              style={{ ...rowStyle(open && !branch), color: open ? "var(--ink)" : "var(--ink-soft)" }}
+            >
+              <Icon className="h-4 w-4" strokeWidth={1.8} />
+              <span className="flex-1">{g}</span>
+              {branches && (
+                <ChevronRight
+                  aria-hidden="true"
+                  className="h-3.5 w-3.5 text-ink-faint transition-transform"
+                  style={open ? { transform: "rotate(90deg)" } : undefined}
+                />
+              )}
+            </TreeLink>
+            {open && branches && (
+              <div className="mb-1.5 ml-[17px] mt-0.5 flex flex-col gap-0.5 border-l border-line pl-2.5">
+                {branches.map((b) => (
+                  <TreeLink
+                    key={b.label}
+                    href={b.href}
+                    sameDoc={sameDoc}
+                    aria-current={b.label === branch ? "page" : undefined}
+                    className="flex h-8 items-center rounded-lg px-2.5 text-sm transition-colors hover:bg-[var(--nav-on)]"
+                    style={rowStyle(b.label === branch)}
+                  >
+                    {b.label}
+                  </TreeLink>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </nav>
   );
 }
 

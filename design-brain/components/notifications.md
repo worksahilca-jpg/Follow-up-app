@@ -11,7 +11,7 @@ who learn to ignore notifications will ignore the one that mattered.
 | **Inline** | Text next to the element | Validation, the result of a local action | Until resolved |
 | **Toast** | Transient, corner | Confirming an action the user just took | 3–5s, auto-dismiss |
 | **Banner** | In-page, top of a section | A condition affecting this screen (channel disconnected, sync failing) | Until resolved |
-| **Notification centre** | The bell (`NotificationBell.tsx`) | Events that happened while away | Until read/archived |
+| **Notification centre** | ~~The bell~~ Activity's "Needs you" lines (A-256, since 2026-10-15) | Events that happened while away | Kept in Activity's record |
 
 ## Choosing the level
 

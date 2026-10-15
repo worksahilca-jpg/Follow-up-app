@@ -600,12 +600,6 @@ input::placeholder, textarea::placeholder {
     padding: 0;
   }
 }
-/* The real window taking over from its loading window (A-254) appears in
-   place: the loading one has already risen in. */
-.app-win.app-win--settled,
-.app-win-dim.app-win--settled {
-  animation: none;
-}
 @keyframes app-win-fade {
   from {
     opacity: 0;

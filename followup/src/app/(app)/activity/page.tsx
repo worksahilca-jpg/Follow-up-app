@@ -6,21 +6,41 @@ import { getActivityFeed, type ActivityItem, type ActivityType } from "@/lib/act
 export const dynamic = "force-dynamic";
 
 /**
- * What FollowUp did, as drawn on the canvas (A-066): grouped by day, one
- * sentence per action with the customer's name, and the state at the end.
- * Tabs narrow it to what was sent, what stopped itself because someone
- * wrote, and what was held for the owner.
+ * Activity (A-256): what FollowUp did, as drawn on the canvas (A-066):
+ * grouped by day, one sentence per action with the customer's name, and
+ * the state at the end. Tabs narrow it to what was sent, what stopped
+ * itself because someone wrote, and what was held for the owner.
  *
- * Out of the menu since A-027; each person's own page carries the same
- * record for that person ("What FollowUp did").
+ * A place in the menu again since the bell went (R-116). The bell's own
+ * jobs land here as "Needs you" lines with the orange dot; each person's
+ * own page still carries their part ("What FollowUp did").
  */
 const WHAT: Record<ActivityType, { verb: string; state: string }> = {
   automated_send: { verb: "Sent on its own", state: "Sent" },
   sequence_paused: { verb: "Stopped the check-ins", state: "Stopped" },
-  rapid_engagement: { verb: "Needs you now", state: "Waiting for you" },
+  rapid_engagement: { verb: "Needs you now", state: "Needs you" },
   sequence_completed: { verb: "Finished the plan", state: "Done" },
   held: { verb: "Held a reply for you", state: "Held for you" },
+  notice: { verb: "Needs you", state: "Needs you" },
 };
+
+/** The owner's turn: the orange dot, never alone (the line beside it says what to do). */
+const NEEDS_YOU: ActivityType[] = ["rapid_engagement", "notice"];
+
+/**
+ * Where a line opens: the customer it's about, or, for an inbox FollowUp
+ * lost ("Reconnect Gmail in Settings …", src/lib/gmailSyncNotices.ts and
+ * src/lib/integrations/outlook.ts), Connected apps, where Reconnect is.
+ */
+function hrefFor(item: ActivityItem): string | null {
+  if (item.leadId) return `/leads/${item.leadId}`;
+  if (item.type === "notice" && /\breconnect\b/i.test(item.message)) return "/settings#connections";
+  return null;
+}
+
+function Dot() {
+  return <span aria-hidden="true" className="mr-2 inline-block h-2 w-2 rounded-full align-[1px]" style={{ background: "var(--state-needs)" }} />;
+}
 
 type Tab = "all" | "sent" | "stopped" | "held";
 const TABS: { id: Tab; label: string; types: ActivityType[] | null }[] = [
@@ -36,29 +56,19 @@ function detailFor(item: ActivityItem): string | null {
   if (item.type === "automated_send") return item.detail ? `“${item.detail.replace(/\s+/g, " ").trim()}”` : null;
   if (item.type === "held") return item.detail;
   if (item.type === "sequence_paused") return item.leadName ? `${item.leadName.split(" ")[0]} wrote back.` : "They wrote back.";
-  if (item.type === "rapid_engagement") return item.message;
+  if (item.type === "rapid_engagement" || item.type === "notice") return item.message;
   return null;
 }
 
-export default async function ActivityPage({ searchParams }: { searchParams: Promise<{ show?: string; from?: string }> }) {
+export default async function ActivityPage({ searchParams }: { searchParams: Promise<{ show?: string }> }) {
   const ctx = await getSessionContext();
   if (!ctx) return null;
-  const { show, from } = await searchParams;
-  // Back to where they came from (app analysis, 2026-10-14): this page is
-  // opened from Today and from Results, and "← Settings" sent both of them
-  // somewhere they had never been.
-  const back = from === "results" ? { href: "/analytics", label: "Results" } : { href: "/dashboard", label: "Today" };
-  // The tabs keep where they came from, so Back still goes there.
-  const tabHref = (id: string) => {
-    const q = new URLSearchParams();
-    if (id !== "all") q.set("show", id);
-    if (from === "results") q.set("from", "results");
-    return q.size ? `/activity?${q}` : "/activity";
-  };
+  const { show } = await searchParams;
+  const tabHref = (id: string) => (id === "all" ? "/activity" : `/activity?show=${id}`);
   const tab = TABS.find((t) => t.id === show) ?? TABS[0];
 
   const [items, business] = await Promise.all([
-    getActivityFeed(ctx.businessId),
+    getActivityFeed(ctx.businessId, ctx.userId),
     prisma.business.findUnique({ where: { id: ctx.businessId }, select: { timezone: true } }),
   ]);
   const timeZone = business?.timezone ?? "America/New_York";
@@ -101,17 +111,15 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
 
   return (
     <div>
-      <Link href={back.href} className="inline-flex min-h-11 items-center text-[13px] text-ink-faint hover:text-ink">
-        ← {back.label}
-      </Link>
-      <h1 className="title-serif mt-2 text-[30px] leading-[1.12] lg:text-[34px]">What FollowUp did</h1>
-      <p className="mt-2 hidden max-w-[640px] text-[15px] leading-relaxed text-ink-soft lg:block">
-        Every message it sent, every time it stopped because someone wrote, and every reply it held for you.
-        {weekParts.length > 0 && ` This week: ${weekParts.join(" · ")}.`}
+      <h1 className="title-serif text-[30px] leading-[1.12] lg:text-[34px]">Activity</h1>
+      <p className="mt-2 max-w-[640px] text-[15px] leading-relaxed text-ink-soft">
+        Everything FollowUp did for you: what it sent, when it stopped, and what it held for you.
+        <span className="hidden lg:inline">{weekParts.length > 0 && ` This week: ${weekParts.join(" · ")}.`}</span>
       </p>
 
       <div role="tablist" aria-label="Show" className="mt-2.5 flex gap-5 overflow-x-auto border-b border-line lg:gap-[22px]">
-        {TABS.map((t) => {
+        {/* An empty kind has no tab (A-209); All is always there, and the one you're on stays. */}
+        {TABS.filter((t) => t.id === "all" || t.id === tab.id || count(t) > 0).map((t) => {
           const on = t.id === tab.id;
           return (
             <Link
@@ -147,6 +155,7 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
                       <span className="text-[13px] tabular-nums text-ink-faint">{timeOf(item.occurredAt)}</span>
                       <span className="min-w-0">
                         <span className="text-[14.5px]">
+                          {NEEDS_YOU.includes(item.type) && <Dot />}
                           {w.verb}
                           {item.leadName && (
                             <>
@@ -161,11 +170,19 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
                             </>
                           )}
                         </span>
-                        {detail && <span className="mt-0.5 block truncate text-[13.5px] text-ink-soft">{detail}</span>}
+                        {detail && (
+                          // A notice is a whole sentence for the owner, so it wraps; a sent message is a quote and stays on one line.
+                          <span className={"mt-0.5 block text-[13.5px] text-ink-soft " + (NEEDS_YOU.includes(item.type) ? "line-clamp-2" : "truncate")}>{detail}</span>
+                        )}
+                        {!item.leadId && hrefFor(item) && (
+                          <Link href={hrefFor(item)!} className="mt-1 inline-block text-[13.5px] font-medium underline underline-offset-[3px]">
+                            Open Connected apps
+                          </Link>
+                        )}
                       </span>
                       <span
                         className="text-right text-[13px]"
-                        style={{ color: item.type === "held" || item.type === "rapid_engagement" ? "var(--ink)" : "var(--ink-soft)", fontWeight: item.type === "held" || item.type === "rapid_engagement" ? 500 : 400 }}
+                        style={{ color: item.type === "held" || NEEDS_YOU.includes(item.type) ? "var(--ink)" : "var(--ink-soft)", fontWeight: item.type === "held" || NEEDS_YOU.includes(item.type) ? 500 : 400 }}
                       >
                         {w.state}
                       </span>
@@ -189,6 +206,7 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
                     <>
                       <span className="flex justify-between gap-2.5">
                         <span className="text-[15.5px]">
+                          {NEEDS_YOU.includes(item.type) && <Dot />}
                           {w.verb}
                           {first && (
                             <>
@@ -203,8 +221,9 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
                     </>
                   );
                   const cls = "block py-[11px] " + (i ? "border-t border-line-2" : "");
-                  return item.leadId ? (
-                    <Link key={item.id} href={`/leads/${item.leadId}`} className={cls}>
+                  const href = hrefFor(item);
+                  return href ? (
+                    <Link key={item.id} href={href} className={cls}>
                       {row}
                     </Link>
                   ) : (

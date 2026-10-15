@@ -3,8 +3,8 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import SettingsList from "@/components/app/SettingsList";
-import { SETTINGS_GROUPS, GROUP_PAGE, GROUP_SLUG, PARENT_PAGE, groupOfPage, groupOfSlug, type SettingsGroup } from "@/lib/settingsGroups";
-import AppWindow, { useInWindow } from "@/components/app/AppWindow";
+import { GROUP_PAGE, GROUP_SLUG, PAGE_SECTIONS, PARENT_PAGE, groupOfPage, groupOfSlug, pageForId as pageFor, SETTINGS_MOVED, type SettingsGroup } from "@/lib/settingsGroups";
+import AppWindow from "@/components/app/AppWindow";
 import { planFor, planLine, type FollowUpPlans } from "@/lib/followUpPlans";
 import { describeBookingHours, describeTimeZone, type BookingHours } from "@/lib/bookingHours";
 import Link from "next/link";
@@ -26,7 +26,7 @@ import TeamCallsSetting from "@/components/TeamCallsSetting";
 import TeamWeek from "@/components/TeamWeek";
 import SignInsSection from "@/components/SignInsSection";
 import { TIER_INFO, VOICE_ADDON_INFO, VOICE_ADDON_AVAILABLE, CARRIER_CHANNELS_AVAILABLE, FREE_TIER_LEAD_CAP } from "@/lib/pricing";
-import { ChevronRight, CreditCard, Inbox, Send, Bell, Store, Ellipsis, type LucideIcon } from "lucide-react";
+import { ChevronRight, CreditCard } from "lucide-react";
 
 /** Section headings on a setting's page read like the list's group labels
  *  (SettingsList): small and quiet, the card under them carries it.
@@ -57,53 +57,19 @@ export default function SettingsPage() {
 type SettingsPage = { title: string; lede?: string; sections: string[] };
 const PAGES: Record<string, SettingsPage> = {
   // One page each since A-253 (R-115: "Connect this or that … Connected, Okay, Done").
-  connections: { title: "Connected apps", sections: ["connections"] },
-  replies: { title: "Sending replies", sections: ["replies-out"] },
-  booking: { title: "Your free hours", lede: "When customers can book a call through your link, and which calendar it checks.", sections: ["booking"] },
-  alerts: { title: "Alerts", lede: "How FollowUp tells you a customer needs you: on your phone, by email, or both.", sections: ["alerts"] },
-  business: { title: "Your business", sections: ["business"] },
-  team: { title: "Team", lede: "Admins can invite teammates, change roles and remove people.", sections: ["team"] },
-  billing: { title: "Your plan", sections: ["billing"] },
-  security: { title: "Sign-ins", sections: ["security"] },
-  data: { title: "Your data", lede: "Download everything, or permanently delete this business.", sections: ["data"] },
+  connections: { title: "Connected apps", sections: PAGE_SECTIONS.connections },
+  replies: { title: "Sending replies", sections: PAGE_SECTIONS.replies },
+  booking: { title: "Your free hours", lede: "When customers can book a call through your link, and which calendar it checks.", sections: PAGE_SECTIONS.booking },
+  alerts: { title: "Alerts", lede: "How FollowUp tells you a customer needs you: on your phone, by email, or both.", sections: PAGE_SECTIONS.alerts },
+  business: { title: "Your business", sections: PAGE_SECTIONS.business },
+  team: { title: "Team", lede: "Admins can invite teammates, change roles and remove people.", sections: PAGE_SECTIONS.team },
+  billing: { title: "Your plan", sections: PAGE_SECTIONS.billing },
+  security: { title: "Sign-ins", sections: PAGE_SECTIONS.security },
+  data: { title: "Your data", lede: "Download everything, or permanently delete this business.", sections: PAGE_SECTIONS.data },
   // Off owners' Settings (A-253): no row leads here, and nobody outside used any of it (2026-10-14). A direct link
   // still opens it, so what a business set up keeps working and support can reach it.
-  advanced: { title: "Advanced", sections: ["lead-webhook", "outbound-webhook", "phone", "lead-routing"] },
+  advanced: { title: "Advanced", sections: PAGE_SECTIONS.advanced },
 };
-/**
- * Old addresses still land where their setting lives now: the setup steps
- * (#integrations, #website-widget), the sign-in and alert emails, and the
- * Meta and Google sign-ins coming back (#social, #email).
- */
-const ALIASES: Record<string, string> = {
-  email: "connections",
-  integrations: "connections",
-  website: "connections",
-  "website-widget": "connections",
-  social: "connections",
-  whatsapp: "connections",
-  crm: "connections",
-  write: "connections",
-  automation: "replies",
-  pause: "replies",
-};
-/** Old section id (or a page id) → the page that shows it. */
-function pageFor(id: string): string | null {
-  if (PAGES[id]) return id;
-  if (ALIASES[id]) return ALIASES[id];
-  for (const [page, def] of Object.entries(PAGES)) if (def.sections.includes(id)) return page;
-  return null;
-}
-
-/** Each group's icon, beside its word: the phone's home rows and the desk's side list (A-220). */
-const GROUP_ICON: Record<SettingsGroup, LucideIcon> = {
-  "Connected apps": Inbox,
-  "Sending replies": Send,
-  Alerts: Bell,
-  "Your business": Store,
-  Account: Ellipsis,
-};
-
 /** One grey line under a group's title (A-213). */
 const GROUP_WHY: Record<SettingsGroup, string> = {
   "Connected apps": "The places FollowUp reads and answers for you.",
@@ -115,9 +81,6 @@ const GROUP_WHY: Record<SettingsGroup, string> = {
 
 function SettingsPageInner() {
   const searchParams = useSearchParams();
-  // Opened over a page (src/app/(app)/@modal): moving between Settings'
-  // own pages adds no history, so closing returns in one step.
-  const inWindow = useInWindow();
   const [group, setGroup] = useState<SettingsGroup>("Connected apps");
   // The phone has stepped from the five home rows into one group's list (#write, #replies-out, #more).
   const [groupOpen, setGroupOpen] = useState(false);
@@ -399,7 +362,7 @@ function SettingsPageInner() {
 
   /** "←" to `hash`: the browser's Back when that is where this step came from, so Back never loops. */
   function back(hash: string, open: () => void) {
-    if (!inWindow && window.history.state?.settingsFrom === hash) window.history.back();
+    if (window.history.state?.settingsFrom === hash) window.history.back();
     else open();
   }
 
@@ -413,10 +376,10 @@ function SettingsPageInner() {
 
   function go(url: string) {
     // Each step remembers where it came from, so "←" can be the browser's own Back (see back()).
-    if (inWindow) window.history.replaceState(window.history.state, "", url);
-    else window.history.pushState({ settingsFrom: window.location.hash }, "", url);
-    if (inWindow) document.querySelector(".app-win__body")?.scrollTo(0, 0);
-    else window.scrollTo(0, 0);
+    window.history.pushState({ settingsFrom: window.location.hash }, "", url);
+    // pushState fires no event of its own: this tells the desk's stem (Sidebar, A-257) where Settings is now.
+    window.dispatchEvent(new Event(SETTINGS_MOVED));
+    window.scrollTo(0, 0);
   }
 
   async function savePause(paused: boolean) {
@@ -593,39 +556,11 @@ function SettingsPageInner() {
       : TIER_INFO[billingTier].label;
 
   return (
-    // Desk: a side list of the groups beside the open one (A-212, A-213,
-    // like Wispr's Settings window). Phone: the one list, as before.
-    <div className={"lg:grid lg:grid-cols-[236px_minmax(0,1fr)] " + (inWindow ? "lg:min-h-full" : "lg:gap-10")}>
-      <nav
-        aria-label="Settings sections"
-        className={
-          "hidden lg:flex lg:flex-col lg:gap-0.5 text-[14px] " +
-          (inWindow ? "lg:bg-card-2 lg:px-3 lg:pb-4 lg:pt-5" : "lg:sticky lg:top-6 lg:self-start lg:rounded-[14px] lg:bg-card-2 lg:p-3")
-        }
-      >
-        <p className="px-2.5 pb-2 font-mono text-[12px] uppercase tracking-[0.09em] text-ink-faint">Settings</p>
-        {SETTINGS_GROUPS.map((g) => {
-          const on = g === navGroup;
-          const Icon = GROUP_ICON[g];
-          const only = GROUP_PAGE[g];
-          return (
-            <button
-              key={g}
-              type="button"
-              aria-current={on ? "true" : undefined}
-              onClick={() => (only ? openMore(only) : openGroup(g))}
-              className="flex min-h-8 items-center gap-2.5 whitespace-nowrap rounded-lg px-2.5 py-1 text-left hover:bg-[var(--nav-on)]"
-              style={on ? { background: "var(--nav-on)", color: "var(--ink)", fontWeight: 500 } : { color: "var(--ink-soft)" }}
-            >
-              <Icon className="h-4 w-4 shrink-0" strokeWidth={1.8} />
-              {g}
-            </button>
-          );
-        })}
-        {/* No Help or Sign out here: on a computer the app's own side list has Help and the account menu has
-            Sign out (A-219: nothing twice). The phone's Settings list carries both (SettingsList). */}
-      </nav>
-      <div className={"min-w-0 " + (inWindow ? "lg:px-9 lg:pb-9 lg:pt-7" : "")}>
+    // Desk: Settings is its own page and its tree is the app's left column
+    // (A-257). Phone: the one list, one level per screen, as before.
+    <div>
+      {/* No side list here: on a computer the app's own column becomes Settings' tree (Sidebar, A-257). */}
+      <div className="min-w-0">
       {!page ? (
         // Phone: Settings' five rows, or the group a row stepped into. Desk: the group the side list has open.
         <div>
@@ -634,7 +569,8 @@ function SettingsPageInner() {
             <button type="button" onClick={() => back("", () => openMore(null))} className="min-h-11 text-[13px] text-ink-faint hover:text-ink lg:hidden">
               ← Settings
             </button>
-            <h1 className="title-serif text-[30px] leading-[1.12] lg:text-[28px]">{navGroup}</h1>
+            <Path trail={["Settings"]} />
+            <h1 className="title-serif text-[30px] leading-[1.12] lg:mt-2 lg:text-[28px]">{navGroup}</h1>
             <p className="mt-1 text-[14px] text-ink-faint">{GROUP_WHY[navGroup]}</p>
           </div>
           <div className="mt-6 lg:mt-5">
@@ -664,10 +600,11 @@ function SettingsPageInner() {
                   ? back(`#${GROUP_SLUG[pageGroup]}`, () => openGroup(pageGroup))
                   : back("", () => openMore(null))
             }
-            className={"min-h-11 text-[13px] text-ink-faint hover:text-ink lg:min-h-0" + (!parentPage && pageGroup && GROUP_PAGE[pageGroup] ? " lg:hidden" : "")}
+            className="min-h-11 text-[13px] text-ink-faint hover:text-ink lg:hidden"
           >
             ← {parentPage ? PAGES[parentPage].title : pageGroup && !GROUP_PAGE[pageGroup] ? pageGroup : "Settings"}
           </button>
+          <Path trail={["Settings", ...(parentPage ? [PAGES[parentPage].title] : pageGroup && !GROUP_PAGE[pageGroup] ? [pageGroup] : [])]} />
           <h1 className="title-serif mt-1 text-[30px] leading-[1.12] lg:mt-2 lg:text-[28px]">{page.title}</h1>
           {page.lede && <p className="mt-2 text-[15px] leading-relaxed text-ink-soft">{page.lede}</p>}
         </div>
@@ -1122,4 +1059,24 @@ function ChoiceRow({
   );
 }
 
-
+/**
+ * Where a page sits, on a computer ("Settings › Account", A-257): the stem
+ * on the left moves you, this only says where you are. The phone's "←"
+ * already says it one step at a time.
+ */
+function Path({ trail }: { trail: string[] }) {
+  return (
+    <p className="hidden items-center text-[13px] text-ink-faint lg:flex">
+      {trail.map((t, i) => (
+        <span key={t} className="flex items-center">
+          {i > 0 && (
+            <span aria-hidden="true" className="mx-1.5">
+              ›
+            </span>
+          )}
+          <span className={i === trail.length - 1 ? "text-ink-soft" : ""}>{t}</span>
+        </span>
+      ))}
+    </p>
+  );
+}

@@ -134,7 +134,7 @@ export default async function NumbersPage() {
           </div>
         ))}
       </div>
-      <Link href="/activity?from=results" className="mt-3.5 inline-flex min-h-11 items-center text-[14px] text-ink-soft underline underline-offset-[3px] hover:text-ink">
+      <Link href="/activity" className="mt-3.5 inline-flex min-h-11 items-center text-[14px] text-ink-soft underline underline-offset-[3px] hover:text-ink">
         See everything FollowUp did
       </Link>
 

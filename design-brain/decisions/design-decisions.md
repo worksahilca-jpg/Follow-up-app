@@ -13158,3 +13158,25 @@ were read once to check every verdict. Nothing identifying was copied into the r
     next message is judged again.
 - **Not possible:** retraining the model itself. What changes is its instructions, the rules around it, and the
   test cases it is measured on.
+
+## 2026-10-15 — HubSpot study: a tap should answer at once (proposed, drawn, waiting for the founder)
+
+Founder: *"analyse HubSpot's workflow, the interface … how they open all the pages … the animations, the click effect
+… how we can make it as simple as we can."* Study: `references/crm/2026-10-15-hubspot-workflow-and-feel.md` (grade C:
+HubSpot's sites and Mobbin were unreachable, so nothing was seen first-hand).
+
+- **Already ours:** one task then the next (Today, A-243/A-250, the card fold A-048), a side panel (A-212), windows over
+  the page (A-213), connect later and ask for little (A-241, A-253). Nothing to copy there.
+- **Two gaps, drawn on the real app at phone size** (scratchpad `hubdraw/hubspot-lessons-board.png`):
+  1. **Opening a page.** `(app)/loading.tsx` is one placeholder for every page (four stat boxes and a list) from
+     before the redesign, so each tap shows a shape the page doesn't have, then jumps. Proposed: Today, Customers, a
+     customer and Settings each get a placeholder in their own shape.
+  2. **Pressing a button.** No button or row has a pressed state (`active:` is used nowhere; only `.switch` has
+     `:active`). On a phone there's no hover, so Send shows nothing until the server answers. Proposed: buttons and
+     tappable rows darken and dip to 97% the moment they're pressed, over `--motion-fast` (150 ms); under reduced
+     motion they only darken.
+- **Third gap, not drawn yet:** on the computer, a customer opens as a whole new page from Customers; HubSpot opens a
+  preview over the list. Held back to keep this round small.
+- **Weak spots, honestly:** the evidence about HubSpot is second-hand; the "now" placeholder was drawn by putting
+  `loading.tsx`'s exact markup on screen, because in dev mode a tap shows nothing at all (production prefetches the
+  placeholder). Pressed-state colour `#3a3836` is a proposal, not a token yet.

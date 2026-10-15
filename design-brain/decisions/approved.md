@@ -4533,3 +4533,15 @@ for Canada. It's for both Canada and the US."*
   them. Then the reason from their own words, one easy question, how to stop. Research:
   `followup/research/product/2026-10-15-what-to-send-when-staying-in-touch.md`.
 
+
+## A-261 — The chat takes the landing page's message theme ^A-261
+
+**Approved:** 2026-10-15, founder: *"use our landing page theme"*, *"we will be doing changes in landing page too so
+right"* (one theme for both), then *"okay that's fine"* on the board (`bubbles/bubbles-landing-board.png`), taken as
+the recommended D.
+- **The customer's bubble:** the landing's soft grey `#EEF0EE`, no edge, corners 18/18/18/6.
+- **Yours:** the landing's charcoal `#1B1D1F` with white text, corners 18/18/6/18. Not pure black (R-119); beside
+  the grey it reads soft, and the two sides are told apart at a glance (R-120).
+- **One source:** `--bubble-them`, `--bubble-you`, `--on-bubble-you` in the app's `globals.css` and in the landing's
+  `home.html`; a test keeps the two equal, so a change to the landing moves the app with it.
+- **Scope:** the conversation on a customer's page (`Thread.tsx`). The Today card keeps its own look (A-258).

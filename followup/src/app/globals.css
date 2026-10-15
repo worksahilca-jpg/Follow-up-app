@@ -63,6 +63,15 @@
   --coral-fill: #b32a44;
   --on-coral: #ffffff;
 
+  /* Chat bubbles (A-261): the customer's and the business's own, the same
+     two colours the landing page's chat demo uses (src/landing/home.html
+     declares the same tokens; bubbleTokens.test.ts keeps them equal). Not
+     pure black beside white (R-119), and never a near-twin of the
+     customer's bubble (R-120). */
+  --bubble-them: #eef0ee;
+  --bubble-you: #1b1d1f;
+  --on-bubble-you: #ffffff;
+
   /* The box: a white card with a hairline edge and no drop shadow, as on
      every canvas board. Lifted surfaces (a dialog, a menu) keep a soft
      shadow, because they float above the page. */

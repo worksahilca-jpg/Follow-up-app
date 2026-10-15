@@ -169,7 +169,7 @@ export function CustomerSkeleton() {
   );
 }
 
-/** On a phone the title and a box of rows; on a computer the side list beside a section of rows. */
+/** A title and a box of rows. On a computer Settings' tree is already in the left column (Sidebar, A-257). */
 function SettingsShape() {
   const row = (
     <div className="flex items-center gap-3 border-b border-line px-4 py-3.5 last:border-b-0">
@@ -180,22 +180,15 @@ function SettingsShape() {
     </div>
   );
   return (
-    <div className="lg:grid lg:grid-cols-[236px_minmax(0,1fr)] lg:gap-10">
-      <div className="hidden rounded-[16px] bg-card-2/70 p-3 lg:block">
-        <Bar className="mb-3 ml-2 mt-1 h-2.5 w-16" />
-        {[0, 1, 2, 3, 4].map((i) => (
-          <Bar key={i} className="mx-2 my-3.5 h-3.5 w-3/4" />
-        ))}
-      </div>
-      <div className="max-w-[640px]">
-        <Bar className="h-9 w-40 lg:w-72" />
-        <div className="box mt-5 overflow-hidden">
-          {row}
-          {row}
-          {row}
-          {row}
-          {row}
-        </div>
+    <div className="max-w-[640px]">
+      <Bar className="hidden h-3 w-24 lg:block" />
+      <Bar className="h-9 w-40 lg:mt-3 lg:w-72" />
+      <div className="box mt-5 overflow-hidden">
+        {row}
+        {row}
+        {row}
+        {row}
+        {row}
       </div>
     </div>
   );
@@ -207,32 +200,6 @@ export function SettingsSkeleton() {
     <Frame>
       <SettingsShape />
     </Frame>
-  );
-}
-
-/**
- * Settings opened from inside the app is a window over the page (A-213).
- * Its slot used to borrow the page placeholder, which sat beside the page in
- * the layout's row and squeezed it into a narrow column until Settings
- * arrived. This is the window itself, already open with Settings' shape
- * inside; `app-win--loading` tells the real window to take its place
- * without rising in a second time (AppWindow).
- */
-export function SettingsWindowSkeleton() {
-  return (
-    <div role="status" aria-busy="true">
-      <span className="sr-only">Loading Settings</span>
-      <div className="app-win-dim" aria-hidden="true" />
-      <div className="app-win app-win--large app-win--loading" aria-hidden="true">
-        <span className="app-win__grab" />
-        <span className="app-win__x" />
-        <div className="app-win__body">
-          <div className="animate-pulse motion-reduce:animate-none">
-            <SettingsShape />
-          </div>
-        </div>
-      </div>
-    </div>
   );
 }
 

@@ -167,7 +167,7 @@ export default function BusinessProfileSection() {
               <button
                 onClick={save}
                 disabled={saving}
-                className="rounded-full px-3 py-1.5 text-[13px] font-medium text-paper disabled:opacity-60"
+                className="tap-44 rounded-full px-3 py-1.5 text-[13px] font-medium text-paper disabled:opacity-60"
                 style={{ backgroundColor: "var(--ink)" }}
               >
                 {saving ? "Saving…" : "Save"}

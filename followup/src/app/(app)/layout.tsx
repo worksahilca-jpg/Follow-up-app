@@ -5,7 +5,7 @@ import Sidebar from "@/components/Sidebar";
 import SeenPing from "@/components/SeenPing";
 import { getPendingApprovals, onTodayNow } from "@/lib/pendingApprovals";
 
-export default async function AppLayout({ children, modal }: { children: React.ReactNode; modal: React.ReactNode }) {
+export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const ctx = await getSessionContext();
   if (!ctx) redirect("/signin");
 
@@ -45,8 +45,6 @@ export default async function AppLayout({ children, modal }: { children: React.R
           <div className="app-frame max-w-[1152px] mx-auto px-5 sm:px-8 lg:px-14 pt-20 lg:pt-9 pb-28 lg:pb-12">{children}</div>
         </div>
       </main>
-      {/* Settings (and later other windows) open here, over the page (A-213). */}
-      {modal}
     </div>
   );
 }

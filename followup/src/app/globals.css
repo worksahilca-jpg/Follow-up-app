@@ -391,6 +391,29 @@ input::placeholder, textarea::placeholder {
    while pressed, and one drop shadow over one inset shadow puts it above a
    recess. No bevel, no gloss, no gradient — S-07 rules out 3D as ornament,
    so the depth here is affordance and stops there. */
+/* A control under 44px tall still takes a thumb's tap at 44px on a phone (design rule 44×44; the 2026-10-15
+   sweep): an unseen band centred on it, so nothing moves or changes colour. Selects can't carry a band, so they
+   are 44px tall on the phone instead. */
+@media (max-width: 63.98rem) {
+  .tap-44 {
+    position: relative;
+  }
+  .tap-44::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    top: 50%;
+    height: 44px;
+    transform: translateY(-50%);
+  }
+}
+
+/* The switch is 24px tall; its band reaches 44px everywhere. */
+.switch::before {
+  content: "";
+  position: absolute;
+  inset: -10px 0;
+}
 .switch {
   position: relative;
   width: 44px;
@@ -599,12 +622,6 @@ input::placeholder, textarea::placeholder {
   .app-win__body {
     padding: 0;
   }
-}
-/* The real window taking over from its loading window (A-254) appears in
-   place: the loading one has already risen in. */
-.app-win.app-win--settled,
-.app-win-dim.app-win--settled {
-  animation: none;
 }
 @keyframes app-win-fade {
   from {

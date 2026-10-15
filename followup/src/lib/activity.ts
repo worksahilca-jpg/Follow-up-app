@@ -17,8 +17,14 @@
  */
 
 import { prisma } from "@/lib/db";
+import { HOLD_SUMMARY_MARKER } from "@/lib/holdNotices";
 
-export type ActivityType = "automated_send" | "sequence_paused" | "rapid_engagement" | "sequence_completed" | "held";
+/**
+ * "notice": something only the bell used to say, now that Activity has its
+ * place (A-256): a reply that couldn't go, an inbox FollowUp lost, a
+ * customer who is back. Each one is for the owner to act on.
+ */
+export type ActivityType = "automated_send" | "sequence_paused" | "rapid_engagement" | "sequence_completed" | "held" | "notice";
 
 export interface ActivityItem {
   id: string;
@@ -32,7 +38,12 @@ export interface ActivityItem {
 
 const LIMIT = 60;
 
-export async function getActivityFeed(businessId: string): Promise<ActivityItem[]> {
+/**
+ * `viewerId`: notifications are addressed to one person (the customer's
+ * owner, or the admins), so each person sees their own; what FollowUp sent,
+ * held or finished is the business's and everyone in it sees that.
+ */
+export async function getActivityFeed(businessId: string, viewerId: string): Promise<ActivityItem[]> {
   const [automatedSends, notifications, completedSequences, holds] = await Promise.all([
     prisma.followUp.findMany({
       where: { automated: true, status: "sent", sentAt: { not: null }, lead: { businessId } },
@@ -40,10 +51,12 @@ export async function getActivityFeed(businessId: string): Promise<ActivityItem[
       orderBy: { sentAt: "desc" },
       take: LIMIT,
     }),
-    // Notification has no businessId column (it's per-user) — reached via
-    // the assigned user's own businessId instead.
+    // Notification has no businessId column (it's per-user): the viewer's
+    // own, and only while they belong to this business.
+    // "… waiting for your approval" lines are left out: every one of them is a
+    // reply Today already shows (A-256, R-116: 95 of the bell's 108 lines).
     prisma.notification.findMany({
-      where: { user: { businessId } },
+      where: { userId: viewerId, user: { businessId }, NOT: { message: { contains: HOLD_SUMMARY_MARKER } } },
       select: { id: true, leadId: true, message: true, createdAt: true },
       orderBy: { createdAt: "desc" },
       take: LIMIT,
@@ -90,14 +103,9 @@ export async function getActivityFeed(businessId: string): Promise<ActivityItem[
   }
 
   for (const n of notifications) {
-    // No type column on Notification (see the model comment) — the two
-    // kinds this feed cares about have distinct, stable message shapes,
-    // so a substring check is enough to pick an icon/label. The message
-    // text itself (already written for the bell dropdown) reads fine
-    // standalone either way, even if this ever misclassifies one.
     items.push({
       id: `notif-${n.id}`,
-      type: n.message.includes("replied mid-sequence") ? "sequence_paused" : "rapid_engagement",
+      type: noticeType(n.message),
       leadId: n.leadId,
       leadName: n.leadId ? (leadNames.get(n.leadId) ?? null) : null,
       message: n.message,
@@ -137,4 +145,17 @@ export async function getActivityFeed(businessId: string): Promise<ActivityItem[
 
   items.sort((a, b) => (a.occurredAt < b.occurredAt ? 1 : -1));
   return items.slice(0, LIMIT);
+}
+
+/**
+ * No type column on Notification (see the model comment): two kinds have
+ * distinct, stable message shapes (src/lib/sequences.ts,
+ * src/lib/engagement.ts); everything else is a notice for the owner. The
+ * message itself is written to stand alone, so a misread kind only changes
+ * the label beside it.
+ */
+export function noticeType(message: string): ActivityType {
+  if (message.includes("replied mid-sequence")) return "sequence_paused";
+  if (message.includes("actively replying right now")) return "rapid_engagement";
+  return "notice";
 }

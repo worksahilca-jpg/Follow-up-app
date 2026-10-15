@@ -21,17 +21,19 @@ for the founder, not something to squeeze in.
 |---|---|---|---|
 | **Today** | Place. What needs me now: one customer at a time, then "Next" | Sidebar | Tab |
 | **Customers** | Place. Everyone, grouped by who needs you | Sidebar | Tab |
+| **Activity** | Place (A-256). Everything FollowUp did, and the owner's own "Needs you" lines | Sidebar | Tab |
 | **Results** | Place. What FollowUp did for me, real numbers only | Sidebar | Tab |
-| **Settings** | A **window** over the page, with a side list of sections | Sidebar (bottom) | Tab → a sheet that rises |
+| **Settings** | Its **own page** with a tree (A-257): five parents, the open one's branches on a stem, "Settings › Account" on each page | Sidebar (bottom); inside Settings the sidebar becomes the tree | Top bar, right, with its word; one level per screen |
 | **A customer** | A page opened from Today or Customers: the conversation, plus a side panel | Side panel on the right | "Details" below the chat |
 | **Small windows** | One task each (add a customer, mark won, invite a teammate…) | Centred window | Sheet from the bottom |
-| **Alerts** | Phone notifications; the bell holds the recent ones | Bell (no word) | Bell + "Alerts" |
+| **Alerts** | Phone notifications (the buzz). No bell since A-256: what happened is in Activity | Settings › Alerts | Settings › Alerts |
 | **Setup card** | Temporary. "Finish setting up", until it's done | Sidebar | Top of Settings |
 | **Your business menu** | Email, plan, team, Sign out | The business name at the foot of the sidebar (opens upward) | In the Settings sheet |
 | **Search** | Find a customer by name, email or phone | A "Search" row, opening a small window (Ctrl+K or ⌘K) | The search box on Customers |
 
 **Hard limits:**
-- **Three places + Settings.** A fourth place needs one removed (the phone's tab bar holds 4 comfortably, 5 at most).
+- **Four places + Settings** (A-256: Today, Customers, Activity, Results; Settings in the phone's top bar). A fifth
+  place needs one removed (the phone's tab bar holds 4 comfortably, 5 at most).
 - **Settings holds at most about 8 sections.** Past that, group them under a heading in the side list.
 - **Today never shows a list.** It shows the next decision only.
 - **One black button per screen or window.**

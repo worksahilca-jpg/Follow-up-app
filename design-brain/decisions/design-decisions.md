@@ -13234,3 +13234,89 @@ specific"*, then *"yes change all"* to the old → new list (A-255).
   test was updated to the new words.
 - **Not changed (not on the list):** the group keys behind old links (#write, #more still work), "Follow-up plans" on
   the plans page itself, and the landing page.
+
+## 2026-10-15 — Proposed: Activity instead of the bell; Settings with more room
+
+Founder, while #518 waited for checks: the bell (R-116) and the Settings window size (R-117), then "or like HubSpot".
+Drawn on the real app (local build, test account), board in the session; nothing built.
+
+- **Activity (his idea):** the bell goes. `/activity` (built for A-066, out of the menu since A-027, reached today
+  only from a link on Today and Results) becomes a place. Its title is the tab's word, "Activity", with one sentence
+  under it. A reply that couldn't be sent and a lost inbox become Activity lines with the orange dot ("Needs you").
+  - **A (recommended):** 4 tabs, Today · Customers · Activity · Results. Settings moves to the phone's top right,
+    where the bell was, with its word (A-209: every icon has a word on the phone). Reason: Settings is opened rarely;
+    Activity would be checked daily; 4 tabs are easier than 5 (Hick).
+  - **B:** 5 tabs, Settings stays a tab. Every tab gets narrower.
+  - **Computer, same for both:** Activity under Customers in the side list; Settings stays at the foot.
+  - This would supersede A-027's line "Activity becomes 'what FollowUp did' inside each person" (that line stays
+    true too: each customer keeps their own record).
+- **Settings with more room:**
+  - **Bigger window:** 1120 × 844 on a 1440 × 900 screen (`width: min(1120px, 100vw − 96px)`,
+    `height: min(860px, 100vh − 56px)`).
+  - **Whole page, HubSpot's way (recommended):** Settings takes the screen. The left column becomes Settings' own
+    list with "Back to FollowUp" on top, so there is one list, not two. The page `/settings` already exists; the
+    window route would go. This would supersede A-213 for Settings only (Search and the small windows stay windows).
+  - Principle taken from HubSpot, not its screen: Settings is a place you go to do one job, with its own list, and a
+    clear way back. Its density, search box and grouped admin sections are not taken.
+- **Weak spots, honestly:** "Couldn't send · Maria" on the board is an example line; the local data had no failed
+  send. Moving Settings to a corner on the phone makes it a little harder to find the first time.
+- **Later the same day, founder:** *"Take your example: Claude has all these features properly arranged … Every
+  sub-branch should be in a branch in a stem. There will be a parent, like General … then we will go to whatever
+  comes under General."* Drawn as a tree (second board): Settings is its own page on a computer; the left column is
+  Settings' list of five parents; the parent you are in opens its branches under it on a thin line (Sending replies:
+  When to check in, Your free hours; Account: Team, Your plan, Sign-ins, Your data); each page shows its path
+  ("Settings › Account"). On a phone the same tree, one level per screen, "←" one step up (it already works this way).
+  - **Tried and dropped while drawing:** every branch stacked as sections on its parent's page, the way Claude's
+    General page stacks Profile, Appearance and the rest. Account became about six phone screens long, the "one long
+    scroll" already rejected (A-069, R-115). So branches stay their own short pages.
+  - **Weak spots:** the "Your free hours" page still uses old words inside ("a lead", "booking hours"); it should get
+    the A-255 treatment when this is built.
+
+## 2026-10-15 — A-256 and A-257 built: Activity instead of the bell; Settings as a tree on its own page
+
+Founder: *"Yes, as you have organised it"* (A + the tree), then *"Keep fixing all the bugs and glitches. Plus, do the
+security check too."*
+
+- **Nav:** tabs Today · Customers · Activity · Results; Settings in the phone's top bar with its word (lit on Settings
+  and on the plans page); the bell, its dropdown and its three API routes are removed.
+- **Activity:** title "Activity", one sentence on the phone too, no "← Today". Notices the bell used to carry are
+  orange-dot "Needs you" lines; the "a reply is waiting" lines are left out (Today shows each). A lost-inbox notice
+  opens Connected apps. Empty tabs are hidden (A-209), so "Stopped 0" no longer shows.
+- **Settings (computer):** no window. Inside Settings the left column is the tree: "← Back to FollowUp", "Settings",
+  five parents; the open parent shows its branches on a thin line; each page shows its path ("Settings › Account").
+  The plans page ("When to check in") is a branch of Sending replies and keeps the tree. Old links from emails
+  (#billing, #integrations…) land on their branch. Phone: unchanged, one level per screen.
+- **Found while checking, and fixed:** Activity used to show every "reply is waiting" bell line as "Needs you now"
+  (the same thing as Today, again); the plans page had a "← Settings" link beside the tree on the computer.
+- **Security check:** no secrets; three endpoints fewer; production packages 0 known vulnerabilities. **Found and
+  fixed:** Activity showed every teammate's notices to everyone in the business; each notice is addressed to one
+  person, so each person now sees their own (sends, holds and finished plans stay shared).
+- **Pipeline (asked the same night):** not built. It was removed on Oct 10 as a copy of Customers (A-219), and
+  across all outside testers 0 of 23 customers ever had a stage or a value set, and 0 testers connected a CRM.
+
+## 2026-10-15 — Proposed: a reading serif for messages and replies (founder: "I like your font")
+
+Founder: *"Do you think we should change fonts and stuff too? … I like your font that you use. Can we have something
+like that?"* Claude's own typefaces are Anthropic's and can't be used. Drawn on Today (phone, real app), three ways;
+nothing built. Titles already use a serif (`.title-serif`), so the only real change is the customer's message and
+the reply; buttons and labels stay Public Sans in all three.
+- **Now:** Public Sans for messages.
+- **A, Source Serif 4** (free, OFL): sturdy, bookish; the reply runs a line longer, so Send sits ~20px lower.
+- **B, Newsreader** (free, OFL), recommended: lighter and warmer, closest to Claude's reading text, same height as now.
+- **If chosen:** self-hosted through `next/font` (the app's security policy blocks outside font files, which is
+  right); one face, two weights, about 40 KB. Needs his yes first (new font).
+- **Honest note:** fonts are a small part of why Claude feels professional; spacing, quiet colour and the same
+  structure everywhere carry most of it, and A-257 was that part.
+
+## 2026-10-15 — Whole-app sweep: 44px taps reach the Settings pages
+
+Founder: *"Keep fixing all the bugs and glitches."* Every app page (19 addresses including each Settings page) at
+360, 390, 1024 and 1440 wide, light and dark, on the local production build: **no console errors, nothing scrolls
+sideways, nothing spills past the screen.** The one finding: on a phone, controls under the 44px rule (A-196's sweep
+had covered the main screens, not the Settings pages).
+- **Fixed without changing their look:** every switch (an unseen band takes the tap at 44px), Download, Delete…,
+  Save, Remove and the booking day chips (`tap-44`, phone only; the day chips' row gap is 8px so bands don't overlap).
+- **Fixed by size, phone only:** selects can't carry a band, so the invite row (email, role, Invite) and the booking
+  time selects are 44px tall on a phone; the computer is unchanged.
+- **Left on purpose:** the plans page's "More plans for special cases" are links inside a sentence (WCAG 2.5.8's
+  inline exception, with a tall line), and the customer's name inside Today's sentence.

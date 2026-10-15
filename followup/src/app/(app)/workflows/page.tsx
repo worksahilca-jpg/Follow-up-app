@@ -164,9 +164,17 @@ export default function WorkflowsPage() {
           state all avoid by saying "plan". */}
       {/* Ready plans first (A-044, the Zapier study): pick one, change a
           day. The blank builder is a quiet link, not the main button. */}
-      <Link href="/settings" className="text-[13px] text-ink-faint hover:text-ink">
+      {/* Phone: one step up. Computer: Settings' tree is the left column (A-257), so the page only says where it sits. */}
+      <Link href="/settings" className="inline-flex min-h-11 items-center text-[13px] text-ink-faint hover:text-ink lg:hidden">
         ← Settings
       </Link>
+      <p className="hidden items-center text-[13px] text-ink-faint lg:flex">
+        Settings
+        <span aria-hidden="true" className="mx-1.5">
+          ›
+        </span>
+        <span className="text-ink-soft">Sending replies</span>
+      </p>
       <h1 className="title-serif mt-2 text-[30px] leading-[1.12] lg:text-[34px]">Follow-up plans</h1>
       {/* The follow-up plans (A-245, as drawn): FollowUp picks, the owner
           can change it for everyone here or for one customer on their page.

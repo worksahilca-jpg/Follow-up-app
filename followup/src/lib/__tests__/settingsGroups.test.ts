@@ -6,10 +6,11 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { GROUP_PAGE, GROUP_SLUG, PARENT_PAGE, SETTINGS_GROUPS, groupOfPage, groupOfSlug } from "@/lib/settingsGroups";
+import { GROUP_PAGE, GROUP_SLUG, PAGE_SECTIONS, PARENT_PAGE, SETTINGS_GROUPS, groupOfPage, groupOfSlug, pageForId } from "@/lib/settingsGroups";
 
 const source = readFileSync(join(__dirname, "..", "..", "app", "(app)", "settings", "page.tsx"), "utf8");
-const pagesBlock = source.slice(source.indexOf("const PAGES"), source.indexOf("/** Old section id"));
+const pagesStart = source.indexOf("const PAGES");
+const pagesBlock = source.slice(pagesStart, source.indexOf("\n};\n", pagesStart));
 const pages = [...pagesBlock.matchAll(/^\s{2}([a-z]+): \{ title:/gm)].map((m) => m[1]);
 
 describe("Settings' side list", () => {
@@ -52,13 +53,16 @@ describe("Settings' side list", () => {
   // A-253 made two groups one page each. Links already out in the world (setup steps, the
   // sign-in and alert emails, Meta and Google coming back) still name the old sections.
   it("lands every old address on a page that exists", () => {
-    const block = source.slice(source.indexOf("const ALIASES"), source.indexOf("/** Old section id"));
-    const aliases = [...block.matchAll(/^\s{2}"?([a-z-]+)"?: "([a-z]+)",$/gm)];
-    expect(aliases.length).toBeGreaterThanOrEqual(8);
-    for (const [, from, to] of aliases) expect(pages, `#${from} → ${to}`).toContain(to);
-    for (const old of ["integrations", "website-widget", "social", "whatsapp", "crm", "email"]) {
-      expect(aliases.map((a) => a[1]), `#${old} no longer opens anything`).toContain(old);
+    for (const old of ["integrations", "website-widget", "website", "social", "whatsapp", "crm", "email", "write", "automation", "pause"]) {
+      const page = pageForId(old);
+      expect(page, `#${old} no longer opens anything`).not.toBeNull();
+      expect(pages, `#${old} → ${page}`).toContain(page);
     }
+  });
+
+  // The page's titles and the tree's sections (lib/settingsGroups.ts, A-257) name the same pages.
+  it("knows the sections of every page the screen shows", () => {
+    expect(Object.keys(PAGE_SECTIONS).sort()).toEqual([...pages].sort());
   });
 
   it("steps a page opened from another page back to that page, in the same group", () => {

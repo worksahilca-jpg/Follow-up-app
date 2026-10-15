@@ -30,8 +30,10 @@ repeatedly rediscovered. Do not restructure the nav unilaterally; propose it.
 5. **Settings goes last**, visually separated, often bottom-anchored.
 6. **Never add a nav item because a feature shipped.** Ask whether it's a destination or a
    view inside an existing destination. This is how navigation rots.
-7. **Notifications are not a destination.** They're an overlay from a persistent
-   indicator (`NotificationBell.tsx`).
+7. ~~**Notifications are not a destination.** They're an overlay from a persistent
+   indicator (`NotificationBell.tsx`).~~ **SUPERSEDED (2026-10-15) by A-256:** there is no bell. The phone buzz says
+   "now"; Activity is the place that keeps what happened, with the owner's own "Needs you" lines (R-116: 95 of 108
+   bell lines repeated Today).
 
 ## Wayfinding
 

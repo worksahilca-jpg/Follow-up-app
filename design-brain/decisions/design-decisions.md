@@ -13378,3 +13378,87 @@ Founder: *"yes build it"*. Built as drawn, with the 2×2 answers the drawing's w
   errors, nothing scrolls sideways. 3,979 tests pass.
 - **Weak spots:** in the narrow side column on a computer, three of the four answers wrap to two lines. The /admin
   table was not opened in the browser (the local tester isn't a platform admin); its counting is covered by tests.
+
+## 2026-10-15 — Proposed (drawn, not approved): "Stay in touch" after the customer's yes
+
+**APPROVED the same day as [A-260](approved.md#a-260); built, see the next entry.**
+
+From Ryan Serhant's "three F's" (follow up, follow through, follow back), which the founder shared. Follow up is what
+FollowUp already does. Follow back (staying in touch for years) is drawn here. Follow through (reminding the owner of
+promises like "I'll send you the good ones") is noted as a possible later idea, not drawn.
+- **Founder, same day:** *"This product is not just for Canada. It's for both Canada and the US. If it's legal or if
+  it's appropriate, that is what I'm going for."* Every rule here has to hold in both countries.
+- **The drawing (board `stay-in-touch-board.png`, made-up customers, inside the real app):** the day-30 "keep sending,
+  or close your file?" message gets a yes; one quiet line in the chat says the yes was kept; the plan line on the
+  customer's page becomes "Staying in touch" (once a month, only when the owner has something new that fits);
+  Today's existing "One quick question" card (A-101) asks the owner what's new for the customers staying in touch;
+  after Save it says who it fits and who it doesn't; each note waits on Today like any reply, written from the
+  owner's words, and ends with how to stop; Settings › Follow-up plans gets a "Stay in touch" box (every 2 weeks or
+  once a month) and its rules.
+- **Rules drawn:** only after their yes (words and date kept); only with something new from the owner, never a made-up
+  home, price or date; each note says how to stop and "stop" ends it at once; no pressure; a reply goes to the owner.
+  The 6-month stop on every plan gets "unless they said yes to staying in touch".
+- **Law, as facts only:** in Canada an enquiry gives implied consent for 6 months, after which express consent is
+  needed (CASL). In the US, email is opt-out (CAN-SPAM: an unsubscribe and an address) and marketing texts need prior
+  written consent (TCPA). Asking for the yes works in both. Before charging customers, the lawyer's read (already on
+  the founder's list) should include the yes question.
+- **Weak spots:** the question card sits under "Done today" at the bottom of Today, which is easy to miss; on the
+  phone drawing its buttons sit behind the bottom bar (a drawing artefact, the built card would sit above it). A
+  note with a price waits for the owner's OK under today's sending rule, so in practice every note waits.
+
+## 2026-10-15 — Built: "Stay in touch" (A-260)
+
+Built as drawn. What a future session needs to know:
+- **Hearing the yes:** when a customer writes, FollowUp checks whether they are answering the plan's close-the-loop
+  message (the last fixed message, Day 30 on Fast) and asks the AI one narrow question: yes, no or unclear. Each
+  message is judged once. A yes keeps the date and the message (`Lead.stayInTouchAt`, `stayInTouchMessageId`) and the
+  chat shows one quiet line under it. "STOP" while staying ends it without asking the AI; a no in their own words
+  to a note ends it too.
+- **While it holds:** the plan stops ("staying"); no plan message and no welcome back. A customer who writes still
+  gets a reply ready, as always. The customer's page says "Staying in touch" with the date, and "Change" opens
+  "Stop staying in touch".
+- **The owner's news:** Today's "One quick question" card asks "Anything new for…?" only when nothing else is waiting
+  and the last ask (or "Not now") was at least half a period ago. Save writes notes for at most 20 customers, only
+  those due (one per period each), never one who already has a message waiting, and never past the daily AI ceiling.
+  Instagram and Messenger customers past Meta's 24 hours are left, and the card says so. The card then says who it
+  fits, who it doesn't and why, and if a note couldn't be written (never calling that a misfit).
+- **Each note** waits on Today as "Note to {name}", with "said yes to hearing from you", the note, and a plain line
+  "Why {first}: …". English notes without a way to stop get one added. The news is kept 60 days as a fact the
+  checks can trust, is in the data export, and is erased with the business.
+- **Settings › Follow-up plans:** a "Stay in touch" box (how often, five rules, the CASL/TCPA line). The 6-month line
+  now says "unless they said yes to staying in touch".
+- **Checked:** local production build at 390×844 and 1440×900 on sample data: the customer's card and sentence, the
+  "said yes" line in the chat, Stop staying in touch (back to the plan), the Settings box (choice saves and stays),
+  the note on Today with its "Why" line. No console errors, nothing scrolls sideways. 4,013 tests pass.
+- **Weak spots:** the "Anything new?" card only shows when nothing is waiting, so a busy owner may rarely see it; it
+  was not seen in the browser for that reason (covered by tests). The AI's yes/no reading and note writing were not
+  run locally (no key); mocked tests only, so the first real yes should be watched. The customer's card says "fits
+  what {first} wants" without saying what that is. Every note waits for the owner's OK, by design. The Saved card links
+  to Settings › Follow-up plans, not to the notes themselves.
+
+## 2026-10-15 — "Stay in touch" notes must make them want to reply (R-118, A-260 amended)
+
+The founder rejected boring check-in notes and asked for "another offer, this will be better for you, something that
+makes them reply back". The note writer now: opens with the news, says why it suits them from their own words, asks
+one easy question, then says how to stop. It may only call something better with the reason, from facts in the
+owner's news or the conversation, because a bare "better deal" reads like spam and can't be checked. Settings ›
+Follow-up plans gets a sixth rule saying so.
+- **Example (hand-written to show the target, not model output):** before, "Hi Raj, a 3-bed townhouse just listed
+  in Erin Mills at $879k, a short walk from the school you mentioned. Happy to send you the details if you'd like."
+  After, "Hi Raj, a 3-bed townhouse just came up in Erin Mills at $879k. That's under the $900k you gave me, and a
+  short walk to the school you mentioned. Want me to send you the photos?" Then the stop line.
+- **Weak spot:** the change is in the AI's instructions. It can't be run here (no key), so the first real notes on
+  Today should be read before trusting it.
+
+## 2026-10-15 — Stay in touch: lead with what's most useful, not always the offer (research)
+
+The founder corrected the offer-first reading of R-118: "If an offer is the best thing to start with, then go for
+it. If there is something else that is more useful, more attractive, or impactful, use that. Do the research."
+Research (`followup/research/product/2026-10-15-what-to-send-when-staying-in-touch.md`): relevance with a stated
+reason beats personal detail (White et al. 2008); greetings by name don't help, suggestions based on what the person
+did do (Wattal, ~10M emails); messages set off by the customer beat scheduled ones (Epsilon 2014, NP Digital 2025).
+The note writer now picks the lead: their own moment when the news touches it, a real match, or useful information
+and what it means for them. The "Anything new?" example now shows market information too, not only a listing.
+- **Not built, needs a yes:** FollowUp remembering when a customer said they'd be ready ("January", "when our lease
+  ends") and writing a note then. That is the strongest kind in the research, but it is new behaviour.
+- **Weak spot:** still not run against the real AI here; read the first notes on Today.

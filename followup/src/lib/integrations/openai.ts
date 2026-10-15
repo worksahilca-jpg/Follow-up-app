@@ -2324,3 +2324,166 @@ export async function extractQualificationFacts(
     return [{ key: i.key as CriterionKey, known: i.known, value: i.value, quote: i.quote, ...(bucket ? { bucket } : {}) }];
   });
 }
+
+/* ------------------------------------------------------------------ *
+ * "Stay in touch" (A-260, src/lib/stayInTouch.ts).
+ * ------------------------------------------------------------------ */
+
+export type StayAnswer = "yes" | "no" | "unclear";
+const STAY_ANSWERS: readonly StayAnswer[] = ["yes", "no", "unclear"];
+
+const STAY_ANSWER_SCHEMA = {
+  name: "stay_in_touch_answer",
+  strict: true,
+  schema: {
+    type: "object",
+    properties: {
+      answer: {
+        type: "string",
+        enum: ["yes", "no", "unclear"],
+        description:
+          "'yes': they want to keep hearing from the business. 'no': they asked to stop, to close their file, said " +
+          "they are no longer looking, already found what they needed elsewhere, or are working with someone else. " +
+          "'unclear': anything else, including a new question or request that does not choose either way.",
+      },
+    },
+    required: ["answer"],
+    additionalProperties: false,
+  },
+} as const;
+
+/**
+ * Did the customer say yes to staying in touch, ask to stop, or neither?
+ * `asked` is the business's own message they are answering (the plan's
+ * close-the-loop question, or a stay-in-touch note). A yes starts regular
+ * notes, so only a clear yes counts; unsure is "unclear", which changes
+ * nothing.
+ */
+export async function classifyStayInTouchAnswer(input: { asked: string; reply: Message[] }): Promise<StayAnswer> {
+  const client = getClient();
+  const completion = await client.chat.completions.create({
+    model: MODEL,
+    temperature: 0,
+    messages: [
+      {
+        role: "system",
+        content:
+          "A small business asked a customer whether to keep sending them things that fit what they want, or to " +
+          "close their file for now; or it sent them such a note. Read the customer's answer and say what they " +
+          "chose. A yes means regular notes will start, so answer 'yes' only when they clearly want to keep " +
+          "hearing. Asking to stop, in any words, is 'no'. When you are not sure, 'unclear'." +
+          UNTRUSTED_CONVERSATION_NOTICE,
+      },
+      {
+        role: "user",
+        content:
+          `What the business wrote:\n${neutraliseDelimiter(input.asked.slice(0, 1500))}\n\n` +
+          `The customer's answer:\n${formatTranscript(input.reply.slice(-4))}`,
+      },
+    ],
+    response_format: { type: "json_schema", json_schema: STAY_ANSWER_SCHEMA },
+  });
+  const raw = completion.choices[0]?.message?.content;
+  if (!raw) throw new Error("OpenAI returned no content for classifyStayInTouchAnswer.");
+  const parsed = JSON.parse(raw) as { answer?: unknown };
+  if (!STAY_ANSWERS.includes(parsed.answer as StayAnswer)) {
+    throw new Error(`OpenAI returned an unrecognised stay-in-touch answer: ${JSON.stringify(parsed.answer)}`);
+  }
+  return parsed.answer as StayAnswer;
+}
+
+const STAY_NOTE_SCHEMA = {
+  name: "stay_in_touch_note",
+  strict: true,
+  schema: {
+    type: "object",
+    properties: {
+      fits: {
+        type: "boolean",
+        description:
+          "true only when the owner's news clearly matches what this customer told the business they want: the " +
+          "place, the kind of home or service, the price range, the timing. A loose or partial match is false.",
+      },
+      why: {
+        type: "string",
+        description:
+          "For the owner, in English, one short clause with no full stop. When it fits, why: \"it's in Oakville " +
+          "and close to $1.2M, which is what Anika wants\". When it doesn't, what they want instead: \"wants a " +
+          "2-bed condo in Liberty Village\". Use the customer's first name, never he or she.",
+      },
+      note: {
+        type: "string",
+        description: "The note to the customer when fits is true; an empty string when it is false.",
+      },
+    },
+    required: ["fits", "why", "note"],
+    additionalProperties: false,
+  },
+} as const;
+
+/**
+ * One note for one customer staying in touch, from the owner's news, or a
+ * "doesn't fit" with the reason. Only facts in the owner's news and the
+ * conversation may appear: the plans page promises that FollowUp never
+ * makes up a home, a price or a date.
+ */
+export async function writeStayInTouchNote(input: {
+  business: ClassifierBusinessContext;
+  firstName: string | null;
+  conversation: Message[];
+  news: string;
+  dm: boolean;
+  leadLanguage?: Partial<LeadLanguage> | null;
+}): Promise<{ fits: boolean; why: string; note: string }> {
+  const client = getClient();
+  const language = registerInstruction(input.leadLanguage);
+  const completion = await client.chat.completions.create({
+    model: MODEL,
+    temperature: 0.4,
+    messages: [
+      {
+        role: "system",
+        content:
+          `You write for ${businessIdentity(input.business)}, as its owner. This customer said yes when the owner ` +
+          "asked whether to keep sending them things that fit what they want. The owner has something new, in the " +
+          "<owner_news> block. First decide whether it clearly fits what this customer said they want. If it does, " +
+          "write one short note that gives them a real reason to write back. Open with their first name and the " +
+          "most useful thing for this customer, straight away. Pick it: when something they told you is coming " +
+          "due (the timing they gave, a step they planned, a worry they had) and the news touches it, lead with " +
+          "that link; when the news is a home, a price or an opening that matches what they asked for, lead with " +
+          "it; when it is information (what homes near them sold for, a rate change, a program, a tip), lead " +
+          "with what it means for them. Never \"just checking in\", \"any plans?\", \"are you still looking?\" or " +
+          "a hello with nothing in it. Say plainly why it matters to them, by putting the news next to what they " +
+          "told you (under the budget they gave, near the place they named, the month they said), only when the " +
+          "facts show it: never \"a better deal\" or \"perfect for you\" without the reason. Then ask one easy " +
+          "question they can answer in a word or two that moves them forward, like whether to send the photos, " +
+          "the numbers or the details, or whether to see it. Use only facts that are in the owner's news or in the " +
+          "conversation: no price, date, address, size, feature or claim that is not written there. No deadline, " +
+          "no urgency, no \"don't miss\", nothing about how busy the market is. End with one short sentence " +
+          "telling them they can ask you to stop these notes any time. Write in the language of the customer's " +
+          "latest message. " +
+          (input.dm ? "It is a direct message: plain text, short, no subject. " : "It is an email reply: no subject line, no signature block. ") +
+          (language ? `${language} ` : "") +
+          HUMAN_VOICE_NOTICE +
+          UNTRUSTED_CONVERSATION_NOTICE,
+      },
+      {
+        role: "user",
+        content:
+          `Customer's first name: ${input.firstName ?? UNKNOWN_FIRST_NAME}\n\n` +
+          `<owner_news>\n${neutraliseDelimiter(input.news.slice(0, 600)).replace(/<\s*\/?\s*owner_news\s*>/gi, "(removed tag)")}\n</owner_news>\n\n` +
+          `The conversation so far (what they want is in here):\n${formatTranscript(input.conversation.slice(-12))}`,
+      },
+    ],
+    response_format: { type: "json_schema", json_schema: STAY_NOTE_SCHEMA },
+  });
+  const raw = completion.choices[0]?.message?.content;
+  if (!raw) throw new Error("OpenAI returned no content for writeStayInTouchNote.");
+  const parsed = JSON.parse(raw) as { fits?: unknown; why?: unknown; note?: unknown };
+  if (typeof parsed.fits !== "boolean" || typeof parsed.why !== "string" || typeof parsed.note !== "string") {
+    throw new Error("OpenAI returned a malformed stay-in-touch note.");
+  }
+  const note = parsed.note.trim();
+  // A "fits" with nothing written is not a note.
+  return { fits: parsed.fits && note.length > 0, why: parsed.why.trim().slice(0, 200), note };
+}

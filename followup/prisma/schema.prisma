@@ -182,6 +182,7 @@ model Business {
   filteredEmails   FilteredEmail[]
   crmConnection    CrmConnection?
   crmWrites        CrmWrite[]
+  stayInTouchNews  StayInTouchNews[]
 
   // Billing (Stripe) — Free/Plus/Pro tiers plus an optional Voice add-on
   // (research/market/2026-09-11-tier-pricing-recommendation.md). subscriptionStatus
@@ -218,7 +219,7 @@ model Business {
   // so FollowUp can push lead.created / lead.stage_changed events out
   // instead of only receiving them. See src/lib/outboundWebhook.ts and
   // src/app/api/webhooks/outbound/route.ts. Null until they set one.
-  outboundWebhookUrl String?
+  outboundWebhookUrl    String?
   // Signs every event sent to outboundWebhookUrl (src/lib/webhookSignature.ts, A-252), so the
   // receiving app can check it came from FollowUp. Made when a URL is saved; encrypted at rest.
   outboundWebhookSecret String?
@@ -366,12 +367,18 @@ model Business {
   // they changed on Fast or Long, and their own plan with whom it is for.
   // Shape { fast?: number[], long?: number[], own?: { days, after, useFor } }.
   // Null means the plans as drawn: Fast for most customers, Long for Later.
-  followUpPlans Json?
+  followUpPlans      Json?
   // "Set these aside from now on?" (A-259, A-073): the kinds of sender the
   // owner asked FollowUp to set aside without asking (selling | spam), and
   // the kinds already asked about, so the question comes once.
-  notCustomerAlways String[] @default([])
-  notCustomerAsked  String[] @default([])
+  notCustomerAlways  String[]  @default([])
+  notCustomerAsked   String[]  @default([])
+  // "Stay in touch" (A-260): how many days between notes to a customer who
+  // said yes to staying in touch, 14 or 30. stayInTouchAskedAt: when Today
+  // last asked "Anything new for the customers staying in touch?", answered
+  // or "Not now", so it asks at most twice per that many days.
+  stayInTouchDays    Int       @default(30)
+  stayInTouchAskedAt DateTime?
 
   // May any lead on this account be set to Auto — the one mode that skips
   // the risk check and sends price and tense conversations without review?
@@ -976,6 +983,14 @@ model Lead {
   // before it; replies to their messages still do. Replaced by a newer day
   // they give, cleared when they write about something else.
   followUpNotBefore     DateTime?
+  // "Stay in touch" (A-260): when the customer said yes to hearing from the
+  // business after the plan's close-the-loop question, and which message
+  // said it (their consent, kept with the date). Null: not staying in touch.
+  // Cleared when they say stop or no. stayInTouchNoteAt: the last note
+  // written for them, which spaces the notes out (Business.stayInTouchDays).
+  stayInTouchAt         DateTime?
+  stayInTouchMessageId  String?
+  stayInTouchNoteAt     DateTime?
   // What an Instagram or Messenger customer typed into a DM when asked how
   // to reach them (founder, 2026-10-12, A-238). Meta stops automatic DMs 24
   // hours after their last message; a follow-up after that goes to this
@@ -2281,4 +2296,19 @@ model SignIn {
   createdAt DateTime @default(now())
 
   @@index([userId, createdAt])
+}
+
+// What the owner said is new, for the customers staying in touch (A-260):
+// the answer to Today's "Anything new for the N customers staying in
+// touch?". FollowUp writes each note from these words only, and never
+// makes up a home, a price or a date. `fits` is how many notes it wrote.
+model StayInTouchNews {
+  id         String   @id @default(cuid())
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  businessId String
+  text       String
+  fits       Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  @@index([businessId, createdAt])
 }

@@ -250,6 +250,12 @@ export type PlanLead = {
   bookings?: { createdAt: number; scheduledAt: number }[];
   /** When the customer was added, ms: where the six months count from for one who never wrote. */
   createdAtMs?: number;
+  /**
+   * Lead.stayInTouchAt, ms (A-260): they said yes to hearing from the
+   * business when the plan closed the loop. The plan is over for them; the
+   * owner's notes take its place (src/lib/stayInTouch.ts).
+   */
+  stayingSince?: number | null;
 };
 
 export type PlanStop =
@@ -260,7 +266,9 @@ export type PlanStop =
   /** The next one would land more than 6 months after their last message. */
   | "six_months"
   /** A welcome back went out after the plan and nobody answered it. */
-  | "welcome_back";
+  | "welcome_back"
+  /** They said yes to staying in touch (A-260): the owner's notes, not the plan, from here on. */
+  | "staying";
 
 export type PlanState = {
   plan: PlanId;
@@ -338,6 +346,11 @@ export function followUpState(
     capAt,
   });
 
+  // They said yes to staying in touch (A-260): no plan message and no
+  // welcome back, ever, while that holds. A note goes only when the owner
+  // has something new (src/lib/stayInTouch.ts).
+  if (lead.stayingSince != null) return done("staying", 0, 0, 0);
+
   // Rule 1: a booking since they last wrote, or one still to come.
   const booked = (lead.bookings ?? []).some((b) => b.scheduledAt >= nowMs || lastInboundAt === null || b.createdAt > lastInboundAt);
 
@@ -411,6 +424,7 @@ export function quietLeadNext(
   state: PlanState | null,
   opts: { pastWelcomeBackWait: boolean; welcomeBackOn: boolean; welcomeBackSent: boolean; nowMs: number }
 ): "plan" | "welcome_back" | null {
+  if (state?.stopped === "staying") return null;
   const planDue = state?.dueAt != null && state.dueAt <= opts.nowMs;
   if (!opts.pastWelcomeBackWait || !opts.welcomeBackOn) return planDue ? "plan" : null;
   if (state === null) return opts.welcomeBackSent ? null : "welcome_back";
@@ -418,6 +432,23 @@ export function quietLeadNext(
   if (state.dueAt !== null && (state.touches > 0 || state.kind === "checkback")) return planDue ? "plan" : null;
   if (state.stopped === "six_months" || opts.nowMs > state.capAt) return null;
   return opts.welcomeBackSent ? null : "welcome_back";
+}
+
+/**
+ * Was the last plan message they got the one that closes the loop ("keep
+ * going, or close their file?")? `state` is their plan as it stood just
+ * before they answered. Day 30 on Fast and Long, and Month 6 on Long, close
+ * the loop; on the owner's own plan, its last day. Read from the step
+ * count, like the rest of the plan, so it needs no record of its own.
+ * Used by "Stay in touch" (A-260) to know a yes answers that question.
+ */
+export function closedTheLoop(state: PlanState | null, plans: FollowUpPlans): boolean {
+  if (!state || state.touches === 0 || state.stopped === "booked" || state.stopped === "staying") return false;
+  const { days } = planDays(plans ?? {}, state.plan);
+  const i = state.touches - 1;
+  if (i < days.length) return fixedKinds(days.length)[i] === "close";
+  // The monthly part closes on its last message.
+  return state.touches === state.total && state.total > days.length;
 }
 
 /* ------------------------------------------------------------------ *

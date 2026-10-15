@@ -1,6 +1,7 @@
 import { askedWhen, followUpState, PLAN_NAMES, stepWords, type PlanId, type PlanState } from "@/lib/followUpPlans";
 import type { BusinessAutomationRules } from "@/lib/automationStatus";
 import type { Lead } from "@/lib/types";
+import { stayEvery } from "@/lib/stayInTouch";
 
 /**
  * What the customer's page says about their follow-up plan (A-245, drawn
@@ -27,6 +28,8 @@ export type PlanCard = {
   status: string;
   /** When the next message is due, ms, while one is. */
   nextAt: number | null;
+  /** They said yes to staying in touch (A-260): "Change" offers to stop that instead of a plan. */
+  staying?: boolean;
 };
 
 const DAY = 86_400_000;
@@ -45,9 +48,11 @@ export function planCard(lead: Lead, rules: BusinessAutomationRules, now: Date, 
   );
   const plan: PlanId = state?.plan ?? (lead.followUp?.override === "long" || lead.followUp?.override === "own" ? lead.followUp.override : lead.followUp?.tier === "later" ? "long" : "fast");
   const name = PLAN_NAMES[plan];
+  const staying = lead.followUp?.stayingSince != null;
   const base = {
     plan,
-    title: plan === "own" ? "On your own plan" : `On the ${name} plan`,
+    title: staying ? "Staying in touch" : plan === "own" ? "On your own plan" : `On the ${name} plan`,
+    staying,
     picked: Boolean(lead.followUp?.override),
     waitingFor: null as string | null,
     nextAt: null as number | null,
@@ -60,6 +65,16 @@ export function planCard(lead: Lead, rules: BusinessAutomationRules, now: Date, 
   if (!rules.canSend || status.kind === "no_send_channel") return paused("Paused: nothing can go out until you reconnect your email or Instagram in Settings.");
   if (status.kind === "workflow" || status.kind === "workflow_paused") {
     return { ...base, title: "On a special plan", sentence: `“${status.sequenceName}” runs instead of the usual plan.`, status: "special plan" };
+  }
+  if (staying) {
+    const since = lead.stayInTouch?.since ? new Intl.DateTimeFormat("en-US", { timeZone, month: "short", day: "numeric" }).format(new Date(lead.stayInTouch.since)) : null;
+    return {
+      ...base,
+      sentence:
+        `${first} said yes${since ? ` on ${since}` : ""}. FollowUp writes one useful note ${stayEvery(rules.stayInTouchDays ?? 30)}, only when you have ` +
+        `something new that fits what ${first} wants. Each note says how to stop, and waits for your OK on Today.`,
+      status: "staying in touch",
+    };
   }
   if (status.kind === "off") return paused(`Paused: you turned FollowUp off for ${first}, so nothing goes out on its own.`);
   if (status.kind === "talked") return paused(`You spoke with ${first}, so nothing goes out until they write again.`);

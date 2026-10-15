@@ -6,17 +6,21 @@ import { parseJsonBody } from "@/lib/validation";
 import { recordAudit } from "@/lib/audit";
 import { readFollowUpPlans } from "@/lib/followUpPlans";
 import { sendRefusal } from "@/lib/sendingControl";
+import { ownerStopsStaying } from "@/lib/stayInTouchData";
 
 /**
  * "Change plan" on a customer's page (A-245): put this one customer on
  * Fast, Long or My own, or hand the choice back to FollowUp (null). It can
  * also stop waiting for the day they asked for ("Don't wait"), when the
  * owner knows better. Either way it only changes what FollowUp sends on its
- * own; replies to the customer are untouched.
+ * own; replies to the customer are untouched. For a customer staying in
+ * touch (A-260), `stayInTouch: false` stops the notes: nothing more is
+ * written to them unless they write.
  */
 const schema = z.object({
   plan: z.enum(["fast", "long", "own"]).nullable().optional(),
   stopWaiting: z.literal(true).optional(),
+  stayInTouch: z.literal(false).optional(),
 });
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -28,7 +32,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
   const parsed = await parseJsonBody(request, schema);
   if (!parsed.ok) return parsed.response;
-  const { plan, stopWaiting } = parsed.data;
+  const { plan, stopWaiting, stayInTouch } = parsed.data;
+  if (stayInTouch === false) {
+    await ownerStopsStaying(ctx.businessId, lead.id, ctx.userId);
+    return NextResponse.json({ success: true });
+  }
   if (plan === undefined && !stopWaiting) return NextResponse.json({ success: false, message: "Nothing to change." }, { status: 400 });
 
   // Not waiting any more can make a message go sooner, so with "Only admins

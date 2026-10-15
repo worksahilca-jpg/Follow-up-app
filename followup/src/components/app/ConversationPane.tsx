@@ -107,7 +107,7 @@ export default function ConversationPane({
       </div>
       <div className="flex-1 px-1 py-6 lg:px-6 lg:py-7">
         <div className={COLUMN}>
-          <Thread messages={lead.conversation} leadName={lead.name} timeZone={timeZone} now={now} dense />
+          <Thread messages={lead.conversation} leadName={lead.name} timeZone={timeZone} now={now} dense stayYesId={lead.stayInTouch?.messageId ?? null} />
         </div>
       </div>
       {/* Pinned under the thread on desktop; on the phone it follows the thread, clear of the tab bar. */}

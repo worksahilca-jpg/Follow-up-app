@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/db";
-import { pickDailyQuestion, whyAsk } from "@/lib/dailyQuestion";
+import { FIRST_QUESTION_AFTER_MS, pickDailyQuestion, whyAsk } from "@/lib/dailyQuestion";
+import { stayingSummary, shouldAskForNews } from "@/lib/stayInTouchData";
+import { MAX_NEWS, newsExample, newsQuestion, newsWhy, STAY_IN_TOUCH_TRIGGER } from "@/lib/stayInTouch";
 import type { DailyQuestionProps } from "@/components/DailyQuestion";
 
 /**
@@ -16,6 +18,24 @@ export async function todaysQuestion(businessId: string, now: Date = new Date())
       prisma.businessFact.findMany({ where: { businessId }, select: { label: true } }),
     ]);
     if (!business) return null;
+    // Customers staying in touch who are due a note come first (A-260): the
+    // question is how they hear from the business at all. Same quiet rules
+    // as every question (A-101): not in the first hour, one a day.
+    const quietNow = now.getTime() - business.createdAt.getTime() >= FIRST_QUESTION_AFTER_MS && !(business.questionAfter && business.questionAfter > now);
+    if (quietNow) {
+      const staying = await stayingSummary(businessId, now).catch(() => null);
+      if (staying && shouldAskForNews(staying, now)) {
+        const firsts = staying.due.map((d) => d.first);
+        return {
+          kind: "stay",
+          label: STAY_IN_TOUCH_TRIGGER,
+          question: newsQuestion(firsts.length, firsts),
+          why: newsWhy(firsts),
+          example: newsExample(business.industry),
+          maxLength: MAX_NEWS,
+        };
+      }
+    }
     const question = pickDailyQuestion(
       {
         trade: business.industry,

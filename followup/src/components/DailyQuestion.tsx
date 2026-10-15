@@ -14,7 +14,15 @@ import { useRouter } from "next/navigation";
  * to ask: the page refreshes after an answer, and staying mounted is what
  * keeps the confirmation on screen through that refresh (as HabitQuestion).
  */
-export type DailyQuestionProps = { label: string; question: string; example: string; why: string };
+export type DailyQuestionProps = {
+  label: string;
+  question: string;
+  example: string;
+  why: string;
+  /** "stay": news for the customers staying in touch (A-260), answered at /api/stay-in-touch/news. */
+  kind?: "stay";
+  maxLength?: number;
+};
 
 export default function DailyQuestion({ question }: { question: DailyQuestionProps | null }) {
   const router = useRouter();
@@ -22,21 +30,25 @@ export default function DailyQuestion({ question }: { question: DailyQuestionPro
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<"saved" | "later" | null>(null);
+  // What FollowUp did with the news (A-260): who it wrote for, and who it didn't and why.
+  const [lines, setLines] = useState<string[]>([]);
 
   async function send(label: string, value?: string) {
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch("/api/business/question", {
+      const stay = question?.kind === "stay";
+      const res = await fetch(stay ? "/api/stay-in-touch/news" : "/api/business/question", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(value ? { label, answer: value } : { label }),
+        body: JSON.stringify(stay ? (value ? { text: value } : { notNow: true }) : value ? { label, answer: value } : { label }),
       });
-      const data = (await res.json().catch(() => ({}))) as { success?: boolean; message?: string };
+      const data = (await res.json().catch(() => ({}))) as { success?: boolean; message?: string; lines?: string[] };
       if (!res.ok || !data.success) {
         setError(data.message ?? "That didn't save. Try again.");
         return;
       }
+      setLines(Array.isArray(data.lines) ? data.lines : []);
       setDone(value ? "saved" : "later");
       setAnswer("");
       router.refresh();
@@ -47,6 +59,21 @@ export default function DailyQuestion({ question }: { question: DailyQuestionPro
     }
   }
 
+  if (done === "saved" && lines.length > 0) {
+    return (
+      <section className="mt-5 box p-4 sm:p-5 max-w-[640px]" role="status">
+        <p className="text-[15px] leading-snug">{lines[0]}</p>
+        {lines.slice(1).map((l) => (
+          <p key={l} className="mt-2 text-[14px] leading-snug text-ink-soft">
+            {l}
+          </p>
+        ))}
+        <Link href="/workflows" className="mt-3 inline-block text-[14px] text-ink-soft underline underline-offset-2">
+          See Stay in touch
+        </Link>
+      </section>
+    );
+  }
   if (done === "saved") {
     return (
       <section className="mt-5 box p-4 sm:p-5 max-w-[640px]" role="status">
@@ -72,8 +99,8 @@ export default function DailyQuestion({ question }: { question: DailyQuestionPro
       </label>
       <textarea
         id="daily-answer"
-        rows={2}
-        maxLength={200}
+        rows={question.kind === "stay" ? 3 : 2}
+        maxLength={question.maxLength ?? 200}
         value={answer}
         onChange={(e) => setAnswer(e.target.value)}
         placeholder={question.example}
@@ -91,7 +118,7 @@ export default function DailyQuestion({ question }: { question: DailyQuestionPro
           onClick={() => void send(question.label, value)}
           className="h-11 rounded-full bg-ink px-6 text-[14.5px] font-medium text-paper disabled:opacity-60"
         >
-          {busy && value ? "Saving…" : "Save"}
+          {busy && value ? (question.kind === "stay" ? "Writing…" : "Saving…") : "Save"}
         </button>
         <button
           type="button"

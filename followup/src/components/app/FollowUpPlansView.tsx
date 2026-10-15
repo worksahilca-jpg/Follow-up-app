@@ -33,6 +33,8 @@ export type PlansData = {
   realtor: boolean;
   holdAll: boolean;
   isAdmin: boolean;
+  /** "Stay in touch" (A-260): how often, and how many customers said yes. */
+  stay?: { days: 14 | 30; count: number };
 };
 
 const WHO: Record<PlanId, string> = {
@@ -154,7 +156,7 @@ export function PlansOverview({ data, onEdit }: { data: PlansData; onEdit: (id: 
 
 const RULES = [
   "Stops when they book, reply or say no.",
-  "Stops 6 months after their last message. If they write again, it starts again.",
+  "Stops 6 months after their last message, unless they said yes to staying in touch. If they write again, it starts again.",
   "Never more than 1 message a day, or 3 a week, to one customer.",
   "If they say when to come back (“try me in March”), nothing goes out before then.",
 ];
@@ -176,6 +178,74 @@ export function EveryPlanBox({ holdAll }: { holdAll: boolean }) {
         {holdAll
           ? "Each message follows “Who sends your replies” in Settings: right now every one waits for your OK."
           : "Each message follows “Who sends your replies” in Settings: FollowUp sends them itself, and a price, a date or anything unsure waits for your OK."}
+      </p>
+    </div>
+  );
+}
+
+const STAY_RULES = [
+  "Only after they say yes. FollowUp keeps their words and the date.",
+  "Only when you have something new that fits them. FollowUp never makes up a home, a price or a date.",
+  "Each note leads with what's most useful to them, says why from what they told you, and asks one easy question. Never a “just checking in”.",
+  "Each note says how to stop. “Stop” ends it at once.",
+  "No pressure: no deadlines, no “are you ready yet?”.",
+  "Each note waits for your OK on Today. When they write back, it comes to you like any message.",
+];
+
+/**
+ * "Stay in touch" (A-260, as drawn): for customers who said yes when the
+ * plan closed the loop. How often (every 2 weeks or once a month), then the
+ * rules it keeps, then why their yes matters, in one quiet line.
+ */
+export function StayInTouchBox({ data, onSaved }: { data: PlansData; onSaved: (stay: { days: 14 | 30; count: number }) => void }) {
+  const stay = data.stay ?? { days: 30 as const, count: 0 };
+  const [error, setError] = useState<string | null>(null);
+  async function change(days: "14" | "30") {
+    if (Number(days) === stay.days) return;
+    setError(null);
+    try {
+      const res = await fetch("/api/follow-up-plans", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ stayInTouchDays: Number(days) }) });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok || !out.success) throw new Error(typeof out.message === "string" ? out.message : "That didn't save. Try again.");
+      onSaved(out.stay);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "That didn't save. Try again.");
+    }
+  }
+  return (
+    <div className="rounded-[16px] border border-line bg-card px-4 py-3.5 lg:max-w-[760px] lg:px-5 lg:py-4">
+      <p className="text-[15px] font-semibold">Stay in touch</p>
+      <p className="mt-0.5 text-[13.5px] leading-snug text-ink-soft">
+        For customers who said yes when FollowUp closed the loop{stay.count > 0 ? ` · ${stay.count} now` : ""}
+      </p>
+      {data.isAdmin ? (
+        <Pills
+          label="How often"
+          options={[
+            ["14", "Every 2 weeks"],
+            ["30", "Once a month"],
+          ]}
+          value={String(stay.days) as "14" | "30"}
+          onChange={(v) => void change(v)}
+        />
+      ) : (
+        <p className="mt-3 text-[14px]">{stay.days === 14 ? "Every 2 weeks" : "Once a month"}</p>
+      )}
+      {error && (
+        <p className="mt-2 text-[13px]" role="alert" style={{ color: "var(--coral)" }}>
+          {error}
+        </p>
+      )}
+      <ul className="mt-3">
+        {STAY_RULES.map((r) => (
+          <li key={r} className="flex gap-2.5 py-[7px] text-[14.5px] leading-snug">
+            <Check aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-sage" strokeWidth={2.4} />
+            <span>{r}</span>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-1.5 text-[13px] leading-relaxed text-ink-faint">
+        Why the yes matters: anti-spam rules in Canada (CASL) and the US (TCPA, for texts) ask for it before notes like these. FollowUp keeps it on record.
       </p>
     </div>
   );

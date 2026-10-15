@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db";
 import { describeBasis } from "@/lib/basedOn";
 import { wordsToCheck } from "@/lib/grounding";
 import { displayChannel } from "@/lib/displayChannel";
+import { recentNewsText } from "@/lib/stayInTouchData";
 
 /**
  * Adds `basis` to each waiting reply, from that customer's own messages, and
@@ -21,8 +22,12 @@ export async function withBasis<T extends { leadId: string; leadName: string; dr
 ): Promise<(T & { basis: string | null; checkWords: string[] })[]> {
   if (items.length === 0) return [];
   // The owner's own facts are theirs to have written (A-096): never a word to check.
+  // So is the news they gave for the customers staying in touch (A-260): the notes are written from it.
   const factText = businessId
-    ? (await prisma.businessFact.findMany({ where: { businessId }, select: { value: true } }).catch(() => [])).map((f) => f.value).join("\n")
+    ? [
+        (await prisma.businessFact.findMany({ where: { businessId }, select: { value: true } }).catch(() => [])).map((f) => f.value).join("\n"),
+        await recentNewsText(businessId),
+      ].join("\n")
     : "";
   const rows = await prisma.message.findMany({
     where: { conversation: { leadId: { in: items.map((i) => i.leadId) } } },

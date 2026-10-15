@@ -8,6 +8,7 @@ import { WARM_CARD } from "@/components/app/ReplyCard";
 import { oneQueue, summariseGroups, UNKNOWN_SOURCE_LABEL, WHOLE_QUEUE } from "@/lib/approvalGroups";
 import type { TodayTier } from "@/lib/calmToday";
 import { plainHoldReason } from "@/lib/holdReasons";
+import { STAY_IN_TOUCH_TRIGGER } from "@/lib/stayInTouch";
 import { DAY_BOX, DayHeading, DayRow, type TodayRow } from "@/components/app/TodayDay";
 import { useUndoableSend } from "@/components/useUndoableSend";
 import SiteReplyCard from "@/components/app/SiteReplyCard";
@@ -260,8 +261,10 @@ function ApprovalCard({
   // Who, how and when, in one plain sentence (A-255): "Omar Haddad emailed
   // you 4 days ago:". Their message right under it says what they want, so
   // the line no longer leads with a reason tag ("Asked the price ·").
-  const did = CHANNEL_DID[item.leadLastMessageChannel ?? ""] ?? "wrote to you";
-  const when = item.asked ?? null;
+  // A note to someone staying in touch (A-260) answers nothing they asked: the line says why it exists.
+  const stay = item.trigger === STAY_IN_TOUCH_TRIGGER;
+  const did = stay ? "said yes to hearing from you" : CHANNEL_DID[item.leadLastMessageChannel ?? ""] ?? "wrote to you";
+  const when = stay ? null : item.asked ?? null;
 
   return (
     <article className={bare ? undefined : ONE} aria-label={`${item.leadName} is waiting for you`}>
@@ -311,7 +314,7 @@ function ApprovalCard({
       {/* The reply on the wash (A-220), said in words (A-243): who wrote it,
           FollowUp or the owner (A-089), with no label to decode. */}
       <p className="mt-4 text-[14px] leading-snug text-ink-soft">
-        {mine ? "Your reply, as you changed it:" : "FollowUp wrote this reply for you:"}
+        {mine ? (stay ? "Your note, as you changed it:" : "Your reply, as you changed it:") : stay ? "FollowUp wrote this note for you:" : "FollowUp wrote this reply for you:"}
       </p>
       <div className="mt-2 rounded-[16px] px-4 py-3.5" style={WARM_CARD}>
         {item.textTo && <p className="text-[12.5px] text-ink-soft">Text to {item.textTo}</p>}
@@ -444,7 +447,11 @@ function ApprovalCard({
       {/* Why it waits, in the owner's words (A-087): what to check, or
           nothing when the every-reply-waits setting is the only reason.
           A price draft's reason is the blank, which the lines above say. */}
-      {(checkHint ?? plainReason) && !needsPrice && !item.askedIfPerson && !editing && !edited && (
+      {/* A note to someone staying in touch: why them, in plain words. Information, not a task, so no dot. */}
+      {stay && item.reason && !editing && (
+        <p className="mt-2.5 text-[13px] leading-snug text-ink">{item.reason.trim().replace(/\.?$/, ".")}</p>
+      )}
+      {!stay && (checkHint ?? plainReason) && !needsPrice && !item.askedIfPerson && !editing && !edited && (
         <p className="mt-2.5 flex items-baseline gap-2 text-[13px] leading-snug text-ink">
           <span aria-hidden className="inline-block h-[7px] w-[7px] shrink-0 -translate-y-px rounded-full" style={{ background: "var(--state-needs)" }} />
           {checkHint ?? plainReason}
@@ -808,6 +815,10 @@ const REPLY_ROWS = 4;
 
 /** One reply in "Still to do today": who, then why or what they said, and how long they have waited. */
 function replyRow(item: ApprovalItem): TodayRow {
+  // A note to someone staying in touch (A-260) answers nothing: the row says what it is.
+  if (item.trigger === STAY_IN_TOUCH_TRIGGER) {
+    return { key: item.leadId, kind: "reply", title: `Note to ${item.leadName}`, sub: "Said yes to hearing from you · waiting for your OK", time: null, href: null };
+  }
   const what = item.why ?? (item.leadLastMessage ? `“${excerpt(item.leadLastMessage, 48)}”` : null);
   const wait = item.wait ? item.wait.charAt(0).toLowerCase() + item.wait.slice(1) : null;
   return { key: item.leadId, kind: "reply", title: `Reply to ${item.leadName}`, sub: [what, wait].filter(Boolean).join(" · ") || null, time: null, href: null };

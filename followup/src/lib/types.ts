@@ -124,6 +124,12 @@ export interface Lead {
   // they asked to hear back, their bookings. Computed in leads-data.ts like
   // automationStatus, and absent on demo leads for the same reason.
   followUp?: PlanLead;
+  /**
+   * "Stay in touch" (A-260): when they said yes to hearing from the business,
+   * and the message that said it (shown in the chat). Null or absent: not
+   * staying in touch.
+   */
+  stayInTouch?: { since: string; messageId: string | null } | null;
 }
 
 export interface TeamMember {

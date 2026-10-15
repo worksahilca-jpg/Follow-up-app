@@ -63,6 +63,7 @@ vi.mock("@/lib/db", () => ({
     businessFact: { findMany: vi.fn(async () => []), deleteMany: trackedDeleteMany("businessFact") },
     ownerHabit: { findMany: vi.fn(async () => []), deleteMany: trackedDeleteMany("ownerHabit") },
     crmWrite: { findMany: vi.fn(async () => []), deleteMany: trackedDeleteMany("crmWrite") },
+    stayInTouchNews: { findMany: vi.fn(async () => []), deleteMany: trackedDeleteMany("stayInTouchNews") },
     auditEvent: {
       findMany: vi.fn(async () => []),
       updateMany: vi.fn(async () => {

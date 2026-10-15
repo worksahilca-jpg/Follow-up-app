@@ -6,6 +6,7 @@
  * of either provider's interface.
  */
 
+import { judgeStayInTouchReply } from "@/lib/stayInTouchData";
 import { prisma } from "@/lib/db";
 import { tooManyRecentActions } from "@/lib/rateLimit";
 import { byTranscriptOrder } from "@/lib/transcript";
@@ -65,7 +66,7 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
     where: { id: leadId },
     include: {
       conversations: { include: { messages: { orderBy: { sentAt: "asc" } } } },
-      business: { select: { tier: true, name: true, industry: true, timezone: true } },
+      business: { select: { tier: true, name: true, industry: true, timezone: true, followUpPlans: true } },
     },
   });
   if (!lead) return false;
@@ -142,6 +143,17 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
   // written against the word "STOP", shown on the lead's page as the
   // suggested reply (bug hunt, 2026-10-02). The last draft stays as it was.
   const newest = conversation[conversation.length - 1];
+
+  // "Stay in touch" (A-260, src/lib/stayInTouchData.ts): a yes to the
+  // plan's close-the-loop question starts it, and a stop or a no to a note
+  // ends it. Before the STOP return below, so a STOP ends it too. A failure
+  // here never costs the reply.
+  if (newest.direction === "inbound") {
+    await judgeStayInTouchReply(lead, lead.business.followUpPlans).catch((err) =>
+      console.error(`Could not judge a stay-in-touch answer for lead ${lead.id}:`, err)
+    );
+  }
+
   if (newest.direction === "inbound" && (isOptOutMessage(newest.body) || isOptInMessage(newest.body))) return false;
 
   // How this lead writes, read from their NEWEST message, every time.

@@ -4377,3 +4377,18 @@ computer). The board answers R-115 (*"we just have to show 'Connect this' or 'th
   - webhooks in and out, the signing secret, routing per source, the Twilio phone;
   - "Your rules", the week line, "Let some leads skip the check" (stays off), Pause shown more than once.
 **Still open (his call):** should FollowUp run "Scan spam for missed leads" by itself?
+
+## A-254 — A tap answers at once: each page opens in its own shape, and buttons react to the thumb ^A-254
+
+**Approved:** 2026-10-15, founder: *"yes build 1 and 2"*, to the HubSpot-lessons board drawn on the real app at phone
+size (study: `references/crm/2026-10-15-hubspot-workflow-and-feel.md`).
+**What specifically:**
+1. **Each place opens in its own shape.** While a page loads, the grey placeholder already looks like that page:
+   - Today: the date line, the greeting, the progress box, and one customer card with its two buttons;
+   - Customers: the title with its two round buttons, the search pill, and boxes of two-line rows with a round
+     initial on the left and the wait on the right;
+   - a customer, and Settings, in their own shapes too;
+   - anywhere else, a plain title and rows. The old four stat boxes are gone.
+2. **Buttons react to the thumb.** The instant a button is pressed it dips slightly and its colour deepens, over
+   `--motion-fast` (150 ms); it comes back when the thumb lifts. No bounce. Under reduced motion it only changes colour.
+**Not in this yes:** opening a customer over the list on the computer (drawn later, if wanted).

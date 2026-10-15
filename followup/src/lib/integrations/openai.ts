@@ -2487,3 +2487,83 @@ export async function writeStayInTouchNote(input: {
   // A "fits" with nothing written is not a note.
   return { fits: parsed.fits && note.length > 0, why: parsed.why.trim().slice(0, 200), note };
 }
+
+const MOMENT_NOTE_SCHEMA = {
+  name: "moment_note",
+  strict: true,
+  schema: {
+    type: "object",
+    properties: {
+      why: {
+        type: "string",
+        description:
+          "For the owner, in English, one short clause with no full stop, saying why now from the customer's own " +
+          "words: \"it's January, when Priya said she'd talk to the bank\". Use the customer's first name, never he or she.",
+      },
+      note: { type: "string", description: "The note to the customer." },
+    },
+    required: ["why", "note"],
+    additionalProperties: false,
+  },
+} as const;
+
+/**
+ * "Their moment" (A-262): the time a customer named has come. One note that
+ * starts from their own words, offers one useful thing, asks one easy
+ * question, and says how to stop. Only facts in the conversation may appear.
+ */
+export async function writeMomentNote(input: {
+  business: ClassifierBusinessContext;
+  firstName: string | null;
+  conversation: Message[];
+  /** Their words, as kept. */
+  quote: string;
+  /** "in October". */
+  saidWhen: string;
+  /** "January": the month it is now. */
+  month: string;
+  dm: boolean;
+  leadLanguage?: Partial<LeadLanguage> | null;
+}): Promise<{ why: string; note: string }> {
+  const client = getClient();
+  const language = registerInstruction(input.leadLanguage);
+  const completion = await client.chat.completions.create({
+    model: MODEL,
+    temperature: 0.4,
+    messages: [
+      {
+        role: "system",
+        content:
+          `You write for ${businessIdentity(input.business)}, as its owner. ${input.saidWhen} this customer named a time of ` +
+          `their own, in the <their_words> block. That time has come: it is now ${input.month}. Write one short note that ` +
+          "gives them a real reason to write back. Open with their first name and what they told you, in your words (never " +
+          "quoted back at them), so they know you remembered. Then offer one useful thing you can actually do for them " +
+          "now that follows from it: send what fits, run the numbers, line up a visit, answer what they were waiting on. " +
+          "Then ask one easy question they can answer in a word or two. Never \"just checking in\", \"any plans?\", " +
+          "\"are you still looking?\" or a hello with nothing in it. Use only facts that are in the conversation: no " +
+          "price, date, address, size, feature or claim that is not written there. No deadline, no urgency, no " +
+          "\"don't miss\", nothing about how busy the market is. End with one short sentence telling them they can ask " +
+          "you to stop these notes any time. Write in the language of the customer's latest message. " +
+          (input.dm ? "It is a direct message: plain text, short, no subject. " : "It is an email reply: no subject line, no signature block. ") +
+          (language ? `${language} ` : "") +
+          HUMAN_VOICE_NOTICE +
+          UNTRUSTED_CONVERSATION_NOTICE,
+      },
+      {
+        role: "user",
+        content:
+          `Customer's first name: ${input.firstName ?? UNKNOWN_FIRST_NAME}\n\n` +
+          `<their_words>\n${neutraliseDelimiter(input.quote.slice(0, 300)).replace(/<\s*\/?\s*their_words\s*>/gi, "(removed tag)")}\n</their_words>\n\n` +
+          `The conversation so far:\n${formatTranscript(input.conversation.slice(-12))}`,
+      },
+    ],
+    response_format: { type: "json_schema", json_schema: MOMENT_NOTE_SCHEMA },
+  });
+  const raw = completion.choices[0]?.message?.content;
+  if (!raw) throw new Error("OpenAI returned no content for writeMomentNote.");
+  const parsed = JSON.parse(raw) as { why?: unknown; note?: unknown };
+  if (typeof parsed.why !== "string" || typeof parsed.note !== "string" || !parsed.note.trim()) {
+    throw new Error("OpenAI returned a malformed moment note.");
+  }
+  return { why: parsed.why.trim().slice(0, 200), note: parsed.note.trim() };
+}

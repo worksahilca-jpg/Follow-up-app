@@ -47,6 +47,7 @@ const { pruneDemo } = vi.hoisted(() => ({ pruneDemo: vi.fn(async () => ({ delete
 vi.mock("@/lib/demoReply", () => ({ pruneDemoTries: pruneDemo }));
 vi.mock("@/lib/cronAuth", () => ({ requireCronSecret: cronAuth }));
 vi.mock("@/lib/inbound/dmRecheck", () => ({ recheckDmLeadsForAllBusinesses: vi.fn(async () => ({ checked: 0, setAside: 0 })) }));
+vi.mock("@/lib/theirMomentData", () => ({ writeMomentNotesForAllBusinesses: vi.fn(async () => ({ written: 0, waiting: 0, skipped: 0, failed: 0 })) }));
 
 import { GET } from "@/app/api/cron/automation/route";
 import type { NextRequest } from "next/server";

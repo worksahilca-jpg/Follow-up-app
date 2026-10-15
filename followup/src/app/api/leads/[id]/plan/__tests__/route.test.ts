@@ -63,3 +63,24 @@ describe("changing one customer's plan", () => {
     expect(lead.update).not.toHaveBeenCalled();
   });
 });
+
+const { ownerSetsMoment } = vi.hoisted(() => ({ ownerSetsMoment: vi.fn(async () => true) }));
+vi.mock("@/lib/theirMomentData", () => ({ ownerSetsMoment }));
+
+describe("their moment (A-262)", () => {
+  it("another day, scoped to this business", async () => {
+    expect((await PATCH(req({ moment: "2027-02-01" }), params)).status).toBe(200);
+    expect(ownerSetsMoment).toHaveBeenCalledWith("biz1", "l1", "u1", new Date("2027-02-01T12:00:00Z"));
+  });
+
+  it("none", async () => {
+    expect((await PATCH(req({ moment: null }), params)).status).toBe(200);
+    expect(ownerSetsMoment).toHaveBeenCalledWith("biz1", "l1", "u1", null);
+  });
+
+  it("refuses a day gone by, and a badly written one", async () => {
+    expect((await PATCH(req({ moment: "2020-01-01" }), params)).status).toBe(400);
+    expect((await PATCH(req({ moment: "next week" }), params)).status).toBe(400);
+    expect(ownerSetsMoment).not.toHaveBeenCalled();
+  });
+});

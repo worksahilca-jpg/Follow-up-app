@@ -1,3 +1,4 @@
+import { describeMoment } from "@/lib/theirMoment";
 import { askedWhen, followUpState, PLAN_NAMES, stepWords, type PlanId, type PlanState } from "@/lib/followUpPlans";
 import type { BusinessAutomationRules } from "@/lib/automationStatus";
 import type { Lead } from "@/lib/types";
@@ -30,6 +31,8 @@ export type PlanCard = {
   nextAt: number | null;
   /** They said yes to staying in touch (A-260): "Change" offers to stop that instead of a plan. */
   staying?: boolean;
+  /** "Their moment" (A-262): their words, when FollowUp brings them up ("in the first week of January"), and the day. */
+  moment?: { quote: string; when: string; at: number } | null;
 };
 
 const DAY = 86_400_000;
@@ -53,6 +56,7 @@ export function planCard(lead: Lead, rules: BusinessAutomationRules, now: Date, 
     plan,
     title: staying ? "Staying in touch" : plan === "own" ? "On your own plan" : `On the ${name} plan`,
     staying,
+    moment: lead.moment ? { quote: lead.moment.quote, when: describeMoment(new Date(lead.moment.at), timeZone), at: Date.parse(lead.moment.at) } : null,
     picked: Boolean(lead.followUp?.override),
     waitingFor: null as string | null,
     nextAt: null as number | null,

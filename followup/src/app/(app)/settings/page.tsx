@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import SettingsList from "@/components/app/SettingsList";
+import ScrollTitle from "@/components/app/ScrollTitle";
 import { GROUP_PAGE, GROUP_SLUG, PAGE_SECTIONS, PARENT_PAGE, groupOfPage, groupOfSlug, pageForId as pageFor, SETTINGS_MOVED, type SettingsGroup } from "@/lib/settingsGroups";
 import AppWindow from "@/components/app/AppWindow";
 import { planFor, planLine, type FollowUpPlans } from "@/lib/followUpPlans";
@@ -565,6 +566,7 @@ function SettingsPageInner() {
       {!page ? (
         // Phone: Settings' five rows, or the group a row stepped into. Desk: the group the side list has open.
         <div>
+          {!groupOpen && <ScrollTitle title="Settings" />}
           <h1 className={"title-serif text-[32px] leading-[1.1] lg:hidden" + (groupOpen ? " hidden" : "")}>Settings</h1>
           <div className={groupOpen ? "" : "hidden lg:block"}>
             <button type="button" onClick={() => back("", () => openMore(null))} className="min-h-11 text-[13px] text-ink-faint hover:text-ink lg:hidden">

@@ -246,7 +246,7 @@ h1 {
 a, button, input, select, textarea, [tabindex] {
   transition: background-color var(--motion-fast) ease, border-color var(--motion-fast) ease, color var(--motion-fast) ease,
     box-shadow var(--motion-fast) ease, opacity var(--motion-fast) ease, transform var(--motion-fast) ease,
-    scale var(--motion-fast) ease;
+    scale var(--motion-settle) var(--ease-apple);
 }
 
 /* A tap answers at once (A-254). A phone has no hover, so before this a
@@ -262,6 +262,8 @@ button:not(:disabled):not(.switch):active,
 [role="button"]:not([aria-disabled="true"]):active {
   scale: 0.97;
   opacity: 0.85;
+  /* Down at once; the release above settles on the spring (A-264). */
+  transition-duration: 90ms, 90ms, 90ms, 90ms, 90ms, 90ms, 90ms;
 }
 a:active {
   opacity: 0.6;
@@ -275,6 +277,10 @@ a:active {
   --motion-fast: 150ms; /* switches, buttons, controls coming back */
   --motion-move: 220ms; /* something entering: a menu, an example, a result */
   --motion-exit: 120ms; /* the same thing leaving, faster */
+  /* A page, a sheet or a card settling into place: the iPhone's own damped
+     spring (A-264, the same curve the home page uses, A-191), no overshoot. */
+  --motion-settle: 350ms;
+  --ease-apple: cubic-bezier(0.32, 0.72, 0, 1);
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-in: cubic-bezier(0.4, 0, 1, 1);
   /* Lets `details` animate to its natural height (below). */
@@ -288,8 +294,8 @@ details.open-in-place::details-content {
   block-size: 0;
   overflow: clip;
   opacity: 0;
-  transition: block-size var(--motion-move) var(--ease-out), opacity var(--motion-move) var(--ease-out),
-    content-visibility var(--motion-move) allow-discrete;
+  transition: block-size 300ms var(--ease-apple), opacity 300ms var(--ease-apple),
+    content-visibility 300ms allow-discrete;
 }
 details.open-in-place[open]::details-content {
   block-size: auto;
@@ -541,7 +547,11 @@ input::placeholder, textarea::placeholder {
   inset: 0;
   z-index: 70;
   background: var(--win-dim);
-  animation: app-win-fade 0.16s ease-out;
+  animation: app-win-fade 0.25s var(--ease-apple);
+  transition: opacity 0.25s var(--ease-apple);
+}
+.app-win-dim--closing {
+  opacity: 0;
 }
 .app-win {
   position: fixed;
@@ -557,7 +567,18 @@ input::placeholder, textarea::placeholder {
   right: 0;
   bottom: 0;
   border-radius: 20px 20px 0 0;
-  animation: app-win-rise 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: app-win-rise var(--motion-settle) var(--ease-apple);
+  /* The sheet follows the thumb (AppWindow.tsx sets --sheet-y while dragging), then settles. */
+  translate: 0 var(--sheet-y, 0px);
+  transition: translate var(--motion-settle) var(--ease-apple);
+  will-change: translate;
+}
+.app-win--dragging {
+  transition: none;
+}
+.app-win--closing {
+  translate: 0 110%;
+  transition: translate 0.3s var(--ease-in);
 }
 .app-win--large {
   top: 48px;
@@ -608,7 +629,15 @@ input::placeholder, textarea::placeholder {
     border-radius: 16px;
     overflow: hidden;
     transform: translate(-50%, -50%);
-    animation: app-win-in 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+    translate: none;
+    animation: app-win-in 0.28s var(--ease-apple);
+    transition: opacity 0.18s var(--ease-in), scale 0.18s var(--ease-in);
+  }
+  /* A Mac sheet leaves the way it came, a touch faster. */
+  .app-win--closing {
+    translate: none;
+    opacity: 0;
+    scale: 0.985;
   }
   .app-win--large {
     height: min(600px, calc(100vh - 96px));
@@ -642,21 +671,126 @@ input::placeholder, textarea::placeholder {
 }
 @keyframes app-win-rise {
   from {
-    transform: translateY(24px);
-    opacity: 0;
+    transform: translateY(100%);
   }
 }
 @keyframes app-win-in {
   from {
     opacity: 0;
-    transform: translate(-50%, calc(-50% + 10px));
+    scale: 0.985;
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  .app-win,
-  .app-win-dim {
-    animation: none;
+/* With "reduce motion" on, a window appears and goes at once: see the reduced-motion block below. */
+
+/* ------------------------------------------------------------------
+   A page pushes in like iOS (A-264). On a phone, a row opens its
+   customer by sliding the new page in from the right while the old one
+   eases a third of the way left; Back slides it out again. Only the
+   browser's own view transition moves (two snapshots, transform and
+   opacity only), so nothing on the page itself re-renders mid-flight.
+   PushNav.tsx sets html[data-nav] for the one navigation. A tab switch
+   gets no slide, the same as an iPhone's tabs. Not on a computer: there
+   a customer opens beside the list.
+   ------------------------------------------------------------------ */
+@media (max-width: 63.99rem) {
+  html[data-nav] {
+    view-transition-name: root;
   }
+  html[data-nav] ::view-transition-group(root) {
+    animation-duration: var(--motion-settle);
+    animation-timing-function: var(--ease-apple);
+  }
+  html[data-nav="push"]::view-transition-old(root) {
+    animation: vt-push-out var(--motion-settle) var(--ease-apple) both;
+  }
+  html[data-nav="push"]::view-transition-new(root) {
+    animation: vt-push-in var(--motion-settle) var(--ease-apple) both;
+    box-shadow: -12px 0 32px rgba(0, 0, 0, 0.14);
+  }
+  /* A back-swipe (CustomerSide.tsx) hands over where the thumb left the page
+     (--swipe-x on <html>) and how much of the way is left (--pop-ms). */
+  html[data-nav="pop"]::view-transition-old(root) {
+    animation: vt-pop-out var(--pop-ms, 320ms) var(--ease-apple) both;
+    box-shadow: -12px 0 32px rgba(0, 0, 0, 0.14);
+    z-index: 1;
+  }
+  html[data-nav="pop"]::view-transition-new(root) {
+    animation: vt-pop-in var(--pop-ms, 320ms) var(--ease-apple) both;
+  }
+}
+@keyframes vt-push-in {
+  from {
+    transform: translateX(100%);
+  }
+}
+@keyframes vt-push-out {
+  to {
+    transform: translateX(-30%);
+    opacity: 0.92;
+  }
+}
+@keyframes vt-pop-out {
+  from {
+    transform: translateX(var(--swipe-x, 0px));
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+@keyframes vt-pop-in {
+  from {
+    transform: translateX(calc(-30% + var(--swipe-x, 0px) * 0.3));
+    opacity: 0.92;
+  }
+}
+
+/* The page under a thumb that is swiping back from the left edge
+   (CustomerSide.tsx sets --swipe-x on <main>): it follows the thumb, then
+   either settles back or leaves to the right. */
+main[data-swipe] {
+  translate: var(--swipe-x, 0px) 0;
+  will-change: translate;
+}
+main[data-swipe="settling"] {
+  transition: translate var(--motion-settle) var(--ease-apple);
+}
+main[data-swipe="leaving"] {
+  transition: translate 0.24s var(--ease-in);
+}
+
+/* iOS lists: the hairline between rows starts where the words start, not
+   at the edge (A-264). `--sep-inset` is the row's own left padding plus its
+   leading icon, set by the row. */
+.ios-sep {
+  position: relative;
+}
+.ios-sep::before {
+  content: "";
+  position: absolute;
+  left: var(--sep-inset, 16px);
+  right: 0;
+  top: 0;
+  height: 1px;
+  background: var(--line);
+}
+
+/* The page's title moves into the phone's top bar once it scrolls away
+   (A-264, iOS large titles): Sidebar.tsx shows it, ScrollTitle.tsx watches. */
+.bar-title {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  translate: -50% calc(-50% + 4px);
+  opacity: 0;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  pointer-events: none;
+  transition: opacity 0.22s var(--ease-apple), translate 0.22s var(--ease-apple);
+}
+html[data-title-collapsed] .bar-title {
+  opacity: 1;
+  translate: -50% -50%;
 }
 
 /* Someone who asked the OS for less movement gets the state change and
@@ -700,6 +834,16 @@ input::placeholder, textarea::placeholder {
     animation: none;
   }
   details.open-in-place::details-content {
+    transition: none;
+  }
+  /* The Apple feel (A-264) steps aside: a window appears and goes at once, the page
+     and the bar title don't glide. The slide and the swipe are turned off in
+     PushNav.tsx and CustomerSide.tsx, which read the same preference. */
+  .app-win,
+  .app-win-dim,
+  main[data-swipe],
+  .bar-title {
+    animation: none;
     transition: none;
   }
   .switch:not(:disabled):active .switch-knob,

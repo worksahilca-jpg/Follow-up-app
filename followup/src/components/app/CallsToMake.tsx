@@ -100,7 +100,7 @@ function CallRow({ card, primary }: { card: CallCard; primary: boolean }) {
 
   return (
     <div className="box p-5">
-      <Link href={`/leads/${card.leadId}`} className="flex items-center gap-3">
+      <Link href={`/leads/${card.leadId}`} data-nav="push" className="flex items-center gap-3">
         <Initials name={card.name} size={40} />
         <span className="min-w-0">
           <span className="block font-medium">{card.name}</span>

@@ -13,6 +13,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import ScrollTitle from "@/components/app/ScrollTitle";
 import { Plus, Trash2, ChevronUp, ChevronDown, Mail, ArrowRightLeft } from "lucide-react";
 import { CARRIER_CHANNELS_AVAILABLE } from "@/lib/pricing";
 import { READY_PLANS, toStepDelays, type ReadyPlan } from "@/lib/readyPlans";
@@ -175,6 +176,7 @@ export default function WorkflowsPage() {
         </span>
         <span className="text-ink-soft">Sending replies</span>
       </p>
+      <ScrollTitle title="Follow-up plans" />
       <h1 className="title-serif mt-2 text-[30px] leading-[1.12] lg:text-[34px]">Follow-up plans</h1>
       {/* The follow-up plans (A-245, as drawn): FollowUp picks, the owner
           can change it for everyone here or for one customer on their page.

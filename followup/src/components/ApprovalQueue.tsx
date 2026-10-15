@@ -277,7 +277,7 @@ function ApprovalCard({
   return (
     <article className={bare ? undefined : ONE} aria-label={`${item.leadName} is waiting for you`}>
       <p className="text-[14px] leading-snug text-ink-soft">
-        <Link href={`/leads/${item.leadId}`} className="font-semibold text-ink hover:underline">
+        <Link href={`/leads/${item.leadId}`} data-nav="push" className="font-semibold text-ink hover:underline">
           {item.leadName}
         </Link>{" "}
         {did}

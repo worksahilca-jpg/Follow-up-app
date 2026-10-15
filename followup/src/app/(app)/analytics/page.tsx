@@ -1,4 +1,5 @@
 import Link from "next/link";
+import ScrollTitle from "@/components/app/ScrollTitle";
 import TeamPerformanceSection from "@/components/TeamPerformanceSection";
 import { Eyebrow } from "@/components/app/canvasBits";
 import { getAnalytics } from "@/lib/analytics-data";
@@ -89,6 +90,7 @@ export default async function NumbersPage() {
       {/* Results is a place in the menu now (A-209), not a page under Settings: no way "back" to show. */}
       {/* Your week (A-226): the one number on the green wash, beside last week, and a dot for each customer on the
           day they first got an answer. */}
+      <ScrollTitle title="Results" />
       <section className="rounded-[22px] border border-[var(--wash-edge)] bg-[var(--wash)] px-[18px] py-5 lg:px-8 lg:py-7">
         <Eyebrow green>
           This week · {fmtDay(weekStart)} to {fmtDay(now)}

@@ -54,20 +54,24 @@ export function DayRow({ row, first, onClick }: { row: TodayRow; first?: boolean
       ) : null}
     </>
   );
-  const cls = `flex min-h-[60px] items-center gap-3 px-4 py-3 ${first ? "" : "border-t border-line"}`;
+  // The hairline between rows starts where the words start (A-264): 16px padding + 36px icon + 12px gap.
+  const cls = `flex min-h-[60px] items-center gap-3 px-4 py-3 ${first ? "" : "ios-sep"}`;
+  const sep = { "--sep-inset": "64px" } as React.CSSProperties;
   if (onClick) {
     return (
-      <button type="button" onClick={onClick} className={`${cls} w-full text-left hover:bg-paper`}>
+      <button type="button" onClick={onClick} style={sep} className={`${cls} w-full text-left hover:bg-paper`}>
         {body}
       </button>
     );
   }
   return row.href ? (
-    <Link href={row.href} className={`${cls} hover:bg-paper`}>
+    <Link href={row.href} data-nav="push" style={sep} className={`${cls} hover:bg-paper`}>
       {body}
     </Link>
   ) : (
-    <div className={cls}>{body}</div>
+    <div style={sep} className={cls}>
+      {body}
+    </div>
   );
 }
 

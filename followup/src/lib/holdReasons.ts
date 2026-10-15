@@ -25,6 +25,7 @@
  */
 
 import { ANSWER_SLOT_REASON, PRICE_SLOT_REASON } from "@/lib/priceSlot";
+import { isBookingLinkReason } from "@/lib/bookingOffer";
 
 /** Business.holdAllForApproval, reached via the hourly silence check. */
 export const HOLD_ALL_AUTOMATION_REASON =
@@ -144,6 +145,13 @@ export const IN_CRM_REASON =
  */
 export const NO_ANSWER_REASON = "nobody picked up the call, so this asks for a good time to talk";
 
+/**
+ * A call that didn't happen ("How did it go?", A-263): FollowUp wrote one
+ * note offering a new time, with the customer's booking link. It waits for
+ * a person to send it.
+ */
+export const MEETING_MISSED_REASON = "the call didn't happen, so this offers a new time with your booking link";
+
 export const ASKED_IF_PERSON_REASON = "they asked whether they're talking to a real person, so this one is for you to answer";
 
 /**
@@ -242,6 +250,8 @@ export function plainHoldReason(reason: string, opts: { firstName: string; topic
   if (!r || isHeldOnlyByApprovalSetting(r)) return null;
   const known = PLAIN_BY_REASON[r];
   if (known) return known(first);
+  // Their booking link in the reply (A-263): its own two sentences, not a check.
+  if (isBookingLinkReason(r)) return `${r}.`;
   const off = /^FollowUp is switched off for (.+?), so this reply only goes when you send it$/.exec(r);
   if (off) return `FollowUp is off for ${off[1]}, so this only goes when you send it.`;
   // The risk judge's own words: say what kind of check it is, not its essay.
@@ -271,6 +281,7 @@ const PLAIN_BY_REASON: Record<string, (first: string) => string> = {
   [IN_CRM_REASON]: () => "They're also in your CRM, which may send its own follow-up.",
   [RISK_CHECK_FAILED_REASON]: () => "FollowUp couldn't check this one, so it's waiting to be safe.",
   [NO_ANSWER_REASON]: (first) => `No answer when you called. This asks ${first} for a good time to talk.`,
+  [MEETING_MISSED_REASON]: (first) => `The call didn't happen. This offers ${first} a new time from your free hours.`,
   [ASKED_IF_PERSON_REASON]: (first) => `${first} asked if they're talking to a real person. Answer this one yourself.`,
   "this conversation was already in your inbox before FollowUp started watching it, so it hasn't seen what you may have already done about it":
     () => "This was in your inbox before FollowUp started. Check you haven't already answered.",

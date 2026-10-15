@@ -13533,3 +13533,30 @@ the next hour while something else already waits for the owner.
 - **Weak spots:** the note itself was not produced by the model locally (the sample note is hand-written); the time
   reader is English-only by rule; a note is written at most an hour after the moment, not the minute; a vague
   season uses its first day; "around Mar 20" names the day but the owner's picker only takes a day, not a week.
+
+## 2026-10-15 — Built: "How did it go?" after a call, and the booking link in the reply (A-263)
+
+Founder: *"Fix these gaps. Yes, build it."* Both gaps from the "meeting booked, then what?" questions, drawn earlier
+in the day, built as drawn.
+- **"How did it go?"** Three columns on a booking (`outcome`, `outcomeAt`, `outcomeFromStage`); the words and rules
+  in `meetingOutcome.ts`, the taps in `meetingOutcomeData.ts`, the door at `POST /api/leads/[id]/meeting`. Won and
+  Lost go through the same door as the Details switch (`leadStage.ts`, shared), so a close means one thing. The card
+  (`MeetingOutcomeCard.tsx`) sits first in Today's main column: on a phone under the day's count, on a computer above
+  "Do this first". "Still deciding" teaches the plan a new first step: the call becomes the plan's anchor and day 1 is
+  a thank-you (`StepKind "thanks"`, its own angle and label); the customer's page says "A thank-you after your call
+  goes Friday, Oct 16, then the Fast plan carries on." A call that didn't happen still stops the plan: the one note
+  (a template, never a generated reply) offers a new time with the booking link and waits for the owner's OK.
+  Answering counts as handled, so the day's bar moves.
+- **The booking link.** `bookingOffer.ts` reads the thread by rule: our last real message offered to see, visit,
+  tour, call or meet and asked; their newest message is a yes without a no. The reply writer then gets one job (the
+  link, unchanged, no other question) instead of the next qualifying question; the send pass holds any draft that
+  carries the customer's `/book/` page, on every tier, with the card's reason.
+- **Checked** on a local production build at 390 and 1440: the card, its four answers at 44px, "Still deciding" and
+  its sentence, the customer page's thank-you line, Undo, "Didn't happen" and its held note with the reason, Omar's
+  held reply carrying the link with its reason; no console errors, nothing sideways. Types, lint and 4,062 tests pass.
+- **Weak spots, honestly:** the yes-to-meeting reading is English-only and by rule (a yes in Spanish, or a "yes" to
+  a different question in the same breath, is missed or caught wrong; the owner still reads every such reply before
+  it goes); the thank-you is written by the plan's engine, which was not run locally; a call answered "Didn't happen"
+  is not asked about again if the customer books a second time and misses that too (the second one is); the booking
+  link appears in an email or text only, never a DM; a call can be answered only once a day after it ends on Today,
+  not from the customer's page.

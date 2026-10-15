@@ -39,6 +39,10 @@ import { replyForMeOffer } from "@/lib/replyForMeOffer";
 import { todaysQuestion } from "@/lib/dailyQuestionData";
 import { planLine } from "@/lib/comingUp";
 import { findHabitSuggestion } from "@/lib/habits";
+import MeetingOutcomeCard, { type MeetingToLookBackOn } from "@/components/app/MeetingOutcomeCard";
+import { LOOK_BACK_DAYS, endedMeetings, isMeetingOutcome, meetingWhen } from "@/lib/meetingOutcome";
+import { PLAN_NAMES, choosePlan, readFollowUpPlans } from "@/lib/followUpPlans";
+import { readQualification } from "@/lib/qualification";
 
 // "last checked 2 minutes ago" — deliberately coarse (minutes/hours/days,
 // no seconds) since this is a status line, not a live clock.
@@ -93,7 +97,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     // component, so without it "Good morning" came from the server's
     // clock — UTC on Vercel — and greeted a Toronto owner at 8pm with it.
     ctx
-      ? prisma.business.findUnique({ where: { id: ctx.businessId }, select: { timezone: true, holdAllForApproval: true, sendingPausedAt: true, onlyAdminsSend: true, instagramUsername: true } })
+      ? prisma.business.findUnique({ where: { id: ctx.businessId }, select: { timezone: true, holdAllForApproval: true, sendingPausedAt: true, onlyAdminsSend: true, instagramUsername: true, followUpPlans: true } })
       : null,
     // Pause all sending, and Only admins send (A-041). The role is read here
     // rather than trusted from the session, which doesn't carry it.
@@ -274,6 +278,44 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         }),
       ])
     : [[], [], []];
+  // "How did it go?" (A-263): calls that are over and not yet answered, and
+  // the ones answered today (their card stays, with Undo, until tomorrow).
+  const lookBackRows = ctx && leads.length > 0
+    ? await prisma.booking.findMany({
+        where: {
+          businessId: ctx.businessId,
+          status: "confirmed",
+          scheduledAt: { gte: new Date(now.getTime() - (LOOK_BACK_DAYS + 1) * 86_400_000), lte: now },
+          OR: [{ outcome: null, lead: { stage: { notIn: ["WON", "LOST"] } } }, { outcomeAt: { gte: dayStart } }],
+        },
+        select: {
+          id: true,
+          leadId: true,
+          scheduledAt: true,
+          durationMinutes: true,
+          status: true,
+          outcome: true,
+          outcomeAt: true,
+          lead: { select: { name: true, followUpPlan: true, qualification: true } },
+        },
+        orderBy: { scheduledAt: "desc" },
+        take: 6,
+      })
+    : [];
+  const lookBacks = endedMeetings(lookBackRows, now);
+  const answeredToday = lookBackRows.filter((b) => b.outcome && b.outcomeAt && b.outcomeAt >= dayStart);
+  const plans = readFollowUpPlans(business?.followUpPlans);
+  const toMeeting = (b: (typeof lookBackRows)[number]): MeetingToLookBackOn => ({
+    bookingId: b.id,
+    leadId: b.leadId,
+    name: b.lead.name,
+    first: b.lead.name.trim().split(/\s+/)[0] || b.lead.name,
+    when: meetingWhen(b.scheduledAt, now, timezone),
+    plan: PLAN_NAMES[choosePlan(plans, b.lead.followUpPlan, readQualification(b.lead.qualification)?.tier ?? null)],
+    outcome: isMeetingOutcome(b.outcome) ? b.outcome : null,
+  });
+  // One question at a time: the newest unanswered call, after today's answers.
+  const meetingCards = [...answeredToday.slice(0, 2), ...lookBacks.slice(0, 1)].map(toMeeting);
   const bookingRow = (b: (typeof nearBookings)[number]): TodayRow => ({
     key: `booking-${b.id}`,
     kind: "booking",
@@ -325,9 +367,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     wroteFor: wroteForToday.length,
     booked: bookedToday.map((b) => ({ name: b.lead.name, when: bookedWhen(b.scheduledAt) })),
   });
-  const progress = dayProgress(handledToday, approvalItems.length + callCards.length + bookingsToday.length);
-  // Who to start with: the first reply in Today's order (A-230), else the first call.
-  const firstUp = oneQueue(approvalItems).flatMap((g) => g.needsYou)[0]?.leadName ?? callCards[0]?.name ?? null;
+  const progress = dayProgress(handledToday, approvalItems.length + callCards.length + bookingsToday.length + lookBacks.length);
+  // Who to start with: a call to look back on (one tap), else the first reply in Today's order (A-230), else the first call.
+  const firstUp = lookBacks[0]?.lead.name ?? oneQueue(approvalItems).flatMap((g) => g.needsYou)[0]?.leadName ?? callCards[0]?.name ?? null;
   const firstUpName = firstUp ? firstUp.split(" ")[0] || firstUp : null;
   // The next booked call still to come today, for "1 booked call at 3:00 PM" (A-250).
   const nextBooked = bookingsToday.filter((b) => b.scheduledAt >= now).sort((a, b) => a.scheduledAt.getTime() - b.scheduledAt.getTime())[0];
@@ -337,6 +379,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       calls={callCards.length}
       booked={bookingsToday.length}
       nextBookedAt={nextBooked ? clockTime(nextBooked.scheduledAt, timezone) : null}
+      lookBack={lookBacks.length}
       progress={progress}
     />
   );
@@ -354,7 +397,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       ) : (
         <>
           <h1 className="title-serif mt-0.5 text-[28px] leading-[1.15] sm:text-[32px]">{greeting(now, timezone, me?.name)}</h1>
-          <p className="mt-1.5 text-[16px] leading-snug text-ink-soft">{dayLine(firstUpName, needYou + bookingsToday.length > 0)}</p>
+          <p className="mt-1.5 text-[16px] leading-snug text-ink-soft">{dayLine(firstUpName, needYou + bookingsToday.length + lookBacks.length > 0)}</p>
         </>
       )}
 
@@ -375,6 +418,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           that asks the one-time question below: one question at a time.
           Not above a waiting customer either (A-243), except on the visit
           the phone link opened, which is for alerts. */}
+      {/* "How did it go?" after a call (A-263): the quickest thing in the day, so it comes first. */}
+      {meetingCards.map((m) => (
+        <div key={m.bookingId} className="mb-4">
+          <MeetingOutcomeCard meeting={m} />
+        </div>
+      ))}
       {!offer && (needYou === 0 || alertsOpen) && <div className="mb-4"><AlertsCard open={alertsOpen} /></div>}
       {/* Do this first, then everything still to do today (A-244). With no
           customers at all, the box below says what FollowUp checked. */}

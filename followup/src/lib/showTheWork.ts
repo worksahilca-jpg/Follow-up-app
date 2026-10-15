@@ -8,6 +8,7 @@ import { describeBasis } from "@/lib/basedOn";
 import { wordsToCheck } from "@/lib/grounding";
 import { displayChannel } from "@/lib/displayChannel";
 import { recentNewsText } from "@/lib/stayInTouchData";
+import { MEETING_MISSED_KIND } from "@/lib/meetingOutcome";
 
 /**
  * Adds `basis` to each waiting reply, from that customer's own messages, and
@@ -15,7 +16,14 @@ import { recentNewsText } from "@/lib/stayInTouchData";
  * in the conversation or in what FollowUp knows (research round 2, #1), so
  * the card can underline them.
  */
-export async function withBasis<T extends { leadId: string; leadName: string; draftMessage: string; source?: string | null }>(
+/**
+ * Notes FollowUp writes from a template, not from the model: "No answer"
+ * (A-103) and the new time after a missed call (A-263). Their words are
+ * FollowUp's own, so none of them is a word to check.
+ */
+const TEMPLATED_TRIGGERS = new Set(["no_answer", MEETING_MISSED_KIND]);
+
+export async function withBasis<T extends { leadId: string; leadName: string; draftMessage: string; source?: string | null; trigger?: string | null }>(
   items: T[],
   timeZone?: string,
   businessId?: string
@@ -44,7 +52,7 @@ export async function withBasis<T extends { leadId: string; leadName: string; dr
   }
   return items.map((item) => ({
     ...item,
-    checkWords: wordsToCheck(item.draftMessage, `${(byLead.get(item.leadId) ?? []).map((m) => m.body).join("\n")}\n${factText}`),
+    checkWords: TEMPLATED_TRIGGERS.has(item.trigger ?? "") ? [] : wordsToCheck(item.draftMessage, `${(byLead.get(item.leadId) ?? []).map((m) => m.body).join("\n")}\n${factText}`),
     basis: describeBasis({
       draft: item.draftMessage,
       leadFirstName: item.leadName.split(" ")[0] ?? "",

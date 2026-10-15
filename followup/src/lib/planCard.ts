@@ -105,6 +105,16 @@ export function planCard(lead: Lead, rules: BusinessAutomationRules, now: Date, 
     };
   }
   const when = state.dueAt <= now.getTime() + DAY / 24 ? "is due now" : day(state.dueAt, true);
+  // After a call they are still deciding about (A-263): the thank-you first, then the plan.
+  if (state.kind === "thanks") {
+    const goes = when === "is due now" ? "is due now" : `goes ${when}`;
+    return {
+      ...base,
+      nextAt: state.dueAt,
+      sentence: `A thank-you after your call ${goes}, then the ${name} plan carries on. It stops when they book, reply or say no.${yours}`,
+      status: when === "is due now" ? "due now" : `next ${day(state.dueAt, false)}`,
+    };
+  }
   const sentence =
     when === "is due now"
       ? `The next message, ${stepWords(state.step, state.total)}, is due now. It stops when they book, reply or say no.${yours}`

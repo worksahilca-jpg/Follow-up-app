@@ -20,6 +20,7 @@ import { playbookFor } from "@/lib/tradePlaybooks";
 import { factsPromptBlock, factsText, type FactLine } from "@/lib/factLines";
 import { customerGreetingName } from "@/lib/leadName";
 import { qualifyPromptBlock, type Criterion, type CriterionKey, type ExtractedItem } from "@/lib/qualification";
+import { bookingLinkPromptBlock } from "@/lib/bookingOffer";
 import { checkerPhrase, cleanKinds, standingRuleNotice, type NotCustomerReason, type SetAsideKind } from "@/lib/notCustomerReasons";
 
 /**
@@ -1369,6 +1370,8 @@ export async function generateFollowUpMessage(
     trade?: string | null;
     facts?: readonly FactLine[];
     qualify?: Pick<Criterion, "ask"> | null;
+    /** They said yes to meeting (A-263, src/lib/bookingOffer.ts): their booking page, for this reply's one job. */
+    bookingLink?: string | null;
   },
   voiceSamples: string[] = [],
   messageHint?: string,
@@ -1672,7 +1675,7 @@ export async function generateFollowUpMessage(
           UNTRUSTED_CONVERSATION_NOTICE +
           VOICE_AGENT_TRUST_NOTICE +
           (playbookFor(lead.trade) ? "\n\n" + playbookFor(lead.trade) : "") +
-          qualifyPromptBlock(lead.qualify ?? null) +
+          (lead.bookingLink ? bookingLinkPromptBlock(lead.bookingLink) : qualifyPromptBlock(lead.qualify ?? null)) +
           factsPromptBlock(lead.facts ?? []) +
           languageDecisionBlock +
           voiceBlock +

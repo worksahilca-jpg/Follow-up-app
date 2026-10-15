@@ -49,14 +49,16 @@ export function dayLine(startWith: string | null, anythingToDo: boolean): string
  * many calls do I need to do?"). `nextBookedAt` is the next booked call's time
  * today on the owner's clock, or null when none is still to come.
  */
-export function dayParts(n: { replies: number; calls: number; booked: number; nextBookedAt: string | null }): string | null {
+export function dayParts(n: { replies: number; calls: number; booked: number; nextBookedAt: string | null; lookBack?: number }): string | null {
   const parts: string[] = [];
+  // A call that is over and not yet answered "How did it go?" (A-263) comes first: it is the quickest thing in the day.
+  if (n.lookBack && n.lookBack > 0) parts.push(`${n.lookBack} ${n.lookBack === 1 ? "call" : "calls"} to look back on`);
   if (n.replies > 0) parts.push(`${n.replies} ${n.replies === 1 ? "reply" : "replies"} to send`);
   if (n.calls > 0) parts.push(`${n.calls} ${n.calls === 1 ? "call" : "calls"} to make`);
   if (n.booked === 1) parts.push(`1 booked call${n.nextBookedAt ? ` at ${n.nextBookedAt}` : ""}`);
   if (n.booked > 1) parts.push(`${n.booked} booked calls${n.nextBookedAt ? `, the next at ${n.nextBookedAt}` : ""}`);
   if (parts.length === 0) return null;
-  if (n.calls === 0 && n.booked === 0) return `${parts[0]}. No calls or bookings today.`;
+  if (n.calls === 0 && n.booked === 0) return `${parts.join(" · ")}. ${n.lookBack ? "Nothing else booked today." : "No calls or bookings today."}`;
   return parts.join(" · ");
 }
 

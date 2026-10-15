@@ -8,6 +8,8 @@
 
 import { judgeStayInTouchReply } from "@/lib/stayInTouchData";
 import { readMoment } from "@/lib/theirMoment";
+import { saidYesToMeeting } from "@/lib/bookingOffer";
+import { appUrl } from "@/lib/stripe";
 import { prisma } from "@/lib/db";
 import { tooManyRecentActions } from "@/lib/rateLimit";
 import { byTranscriptOrder } from "@/lib/transcript";
@@ -278,7 +280,12 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
     // chips under a message that had two questions.
     suggestedQuickReplies = (dm.shapeFailed ? { question: dm.quickReplies.question, buttons: [] } : dm.quickReplies) as unknown as Prisma.InputJsonValue;
   } else {
-    const draft = await generateFollowUpMessage({ name: lead.name, conversation, ...(await draftingContext(lead.businessId)), qualify }, voiceSamples, undefined, undefined, leadLanguage);
+    // They said yes to meeting (A-263): the reply carries their booking
+    // page instead of the next qualifying question. An email or text only;
+    // a DM refuses every link (src/lib/dmDrafts.ts). The send pass holds a
+    // draft that carries it, so the owner always sees it go.
+    const bookingLink = customerJustWrote && saidYesToMeeting(conversation) ? `${appUrl()}/book/${lead.id}` : null;
+    const draft = await generateFollowUpMessage({ name: lead.name, conversation, ...(await draftingContext(lead.businessId)), qualify, bookingLink }, voiceSamples, undefined, undefined, leadLanguage);
     suggestedMessage = await composeFollowUpEmail(lead.name.split(" ")[0], lead.businessId, draft.body, {
       languageSample: latestInboundText(conversation),
       leadLanguage,

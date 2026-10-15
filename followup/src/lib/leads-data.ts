@@ -31,7 +31,7 @@ type DbLead = Prisma.LeadGetPayload<{
     conversations: { include: { messages: true } };
     assignedTo: true;
     sequence: { select: { name: true; active: true } };
-    bookings: { select: { createdAt: true; scheduledAt: true } };
+    bookings: { select: { createdAt: true; scheduledAt: true; outcome: true } };
   };
 }>;
 
@@ -67,7 +67,7 @@ export function mapDbLeadToUiLead(dbLead: DbLead, rules: BusinessAutomationRules
     override: dbLead.followUpPlan ?? null,
     tier: readQualification(dbLead.qualification)?.tier ?? null,
     notBeforeMs: dbLead.followUpNotBefore ? dbLead.followUpNotBefore.getTime() : null,
-    bookings: (dbLead.bookings ?? []).map((b) => ({ createdAt: b.createdAt.getTime(), scheduledAt: b.scheduledAt.getTime() })),
+    bookings: (dbLead.bookings ?? []).map((b) => ({ createdAt: b.createdAt.getTime(), scheduledAt: b.scheduledAt.getTime(), outcome: b.outcome ?? null })),
     createdAtMs: dbLead.createdAt.getTime(),
     stayingSince: dbLead.stayInTouchAt ? dbLead.stayInTouchAt.getTime() : null,
   };
@@ -161,7 +161,7 @@ const leadInclude = {
   // hasSubstantiveFollowUp check, mirroring findUnansweredLeads() in
   // automation.ts.
   // Confirmed bookings stop the follow-up plan (A-245, rule 1).
-  bookings: { where: { status: "confirmed" }, select: { createdAt: true, scheduledAt: true } },
+  bookings: { where: { status: "confirmed" }, select: { createdAt: true, scheduledAt: true, outcome: true } },
 } satisfies Prisma.LeadInclude;
 
 export async function getLeads(): Promise<Lead[]> {

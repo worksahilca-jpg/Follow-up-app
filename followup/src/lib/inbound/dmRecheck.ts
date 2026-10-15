@@ -14,6 +14,7 @@ import {
   type DmJudgeContext,
 } from "@/lib/inbound/dmContactGate";
 import { hasWordsToJudge } from "@/lib/inbound/greeting";
+import { isSharedContentOnly } from "@/lib/sharedContent";
 import { instagramRecipientId, isInstagramLeadId, isMessengerLeadId, messengerRecipientId } from "@/lib/instagramId";
 
 /**
@@ -116,6 +117,16 @@ async function recheck(businessId: string, leadId: string, options: { context?: 
   const otherChannel = lead.conversations.some((c) => c.channel !== channel);
   if (dmCustomerSettled(lead, messages, { hasBooking: lead._count.bookings > 0, otherChannel })) return "settled";
 
+  const contactIdOf = () => (channel === "instagram" ? instagramRecipientId(lead.phone!) : messengerRecipientId(lead.phone!));
+  // Only Reels, posts or story mentions, never a word: someone new who sends only that is not picked up at all
+  // (src/lib/sharedContent.ts), so a chat that came in before that rule goes aside too, with no model call
+  // (founder's own inbox, 2026-10-15: two Reels from a friend had sat in Customers since Oct 11).
+  const theirs = messages.filter((m) => m.direction === "inbound");
+  if (theirs.length > 0 && theirs.every((m) => isSharedContentOnly(m.body))) {
+    const moved = await moveDmLeadAside(businessId, channel, contactIdOf(), lead.id, "Only shared Reels or posts, nothing asked.");
+    return moved ? "set_aside" : "skipped";
+  }
+
   // Something new with words since the last look, or there's nothing to judge.
   const stamp = () => prisma.lead.updateMany({ where: { id: lead.id, businessId }, data: { dmCheckedAt: new Date() } });
   const newWords = messages.some((m) => m.direction === "inbound" && (!lead.dmCheckedAt || m.sentAt > lead.dmCheckedAt) && hasWordsToJudge(m.body));
@@ -126,7 +137,7 @@ async function recheck(businessId: string, leadId: string, options: { context?: 
 
   const context = await (options.context ?? dmContextLoader(businessId, channel))();
   if (!context.aiAllowed) return "skipped";
-  const contactId = channel === "instagram" ? instagramRecipientId(lead.phone) : messengerRecipientId(lead.phone);
+  const contactId = contactIdOf();
   if (
     (await tooManyRecentActions(businessId, `${channel}_rejudge:${contactId}`, { windowMinutes: 60, max: DM_REJUDGE_MAX_PER_HOUR })) ||
     (await pastDailyLooks(businessId, channel))
@@ -158,6 +169,9 @@ async function recheck(businessId: string, leadId: string, options: { context?: 
   return moved ? "set_aside" : "skipped";
 }
 
+/** When the shared-content rule above shipped: chats checked before it get one more look. */
+export const SHARED_ONLY_RULE_AT = new Date("2026-10-15T01:00:00.000Z");
+
 /** How many unsettled DM customers one business has re-checked per hourly pass. */
 export const DM_RECHECK_PER_BUSINESS_PER_RUN = 10;
 
@@ -170,13 +184,16 @@ export const DM_RECHECK_PER_BUSINESS_PER_RUN = 10;
 export async function recheckDmLeadsForAllBusinesses(): Promise<{ checked: number; setAside: number }> {
   const candidates = await prisma.lead.findMany({
     where: {
-      OR: [{ phone: { startsWith: "ig:" } }, { phone: { startsWith: "fb:" } }],
+      AND: [
+        { OR: [{ phone: { startsWith: "ig:" } }, { phone: { startsWith: "fb:" } }] },
+        // Never looked at, or looked at before the shared-content rule above: one more look each.
+        { OR: [{ dmCheckedAt: null }, { dmCheckedAt: { lt: SHARED_ONLY_RULE_AT } }] },
+      ],
       stage: "NEW",
       email: null,
       talkedAt: null,
       qualifiedAt: null,
       dmConfirmedAt: null,
-      dmCheckedAt: null,
       sequenceId: null,
     },
     select: { id: true, businessId: true },

@@ -199,7 +199,10 @@ export async function unsubscribeFacebookPageWebhooks(pageId: string, pageAccess
  * Best-effort display name for a PSID; Meta only allows this after the person has messaged the Page.
  *
  * Before App Review this is refused and every Messenger lead is called
- * "Facebook Messenger". Meta's reason used to be thrown away, so nobody
+ * "Facebook Messenger": Meta gives names only to apps with Advanced Access
+ * to the "Business Asset User Profile Access" feature, and an app without
+ * it may get an empty object back instead of an error (Meta's User Profile
+ * API docs, read 2026-10-15). Meta's reason used to be thrown away, so nobody
  * could tell a missing permission from a missing feature; it is now
  * logged (codes and Meta's words, never the token). `name` is asked for
  * alongside the two halves because some setups return only the full name
@@ -223,14 +226,24 @@ async function lookupSenderName(businessId: string, psid: string): Promise<strin
   return halves || full || null;
 }
 
+/** What a Messenger lead is called while Meta refuses the name lookup. On leadName.ts's placeholder list. */
+const MESSENGER_PLACEHOLDER_NAME = "Facebook Messenger";
+
 export async function findOrCreateLeadByMessenger(businessId: string, psid: string): Promise<Lead> {
   const phone = messengerLeadId(psid);
   const existing = await prisma.lead.findFirst({ where: { businessId, phone } });
   if (existing) {
-    return prisma.lead.update({ where: { id: existing.id }, data: { lastContacted: new Date() } });
+    // Ask Meta again while the lead still has the placeholder, the way
+    // findOrCreateLeadByInstagram fills in a handle it learns late. Names
+    // need Meta's "Business Asset User Profile Access", so every Messenger
+    // lead from before that review would otherwise stay "Facebook Messenger"
+    // for good. Only ever replaces the placeholder: a name the owner typed
+    // is never touched, and a lead that has its name costs no Graph call.
+    const name = existing.name === MESSENGER_PLACEHOLDER_NAME ? await lookupSenderName(businessId, psid) : null;
+    return prisma.lead.update({ where: { id: existing.id }, data: { lastContacted: new Date(), ...(name ? { name } : {}) } });
   }
   try {
-    const name = (await lookupSenderName(businessId, psid)) ?? "Facebook Messenger";
+    const name = (await lookupSenderName(businessId, psid)) ?? MESSENGER_PLACEHOLDER_NAME;
     const lead = await prisma.lead.create({
       data: {
         businessId,

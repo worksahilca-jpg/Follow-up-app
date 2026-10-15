@@ -10,6 +10,7 @@ import type { TodayTier } from "@/lib/calmToday";
 import { plainHoldReason } from "@/lib/holdReasons";
 import { STAY_IN_TOUCH_TRIGGER } from "@/lib/stayInTouch";
 import { THEIR_MOMENT_TRIGGER } from "@/lib/theirMoment";
+import { isBookingLinkReason } from "@/lib/bookingOffer";
 import { DAY_BOX, DayHeading, DayRow, type TodayRow } from "@/components/app/TodayDay";
 import { useUndoableSend } from "@/components/useUndoableSend";
 import SiteReplyCard from "@/components/app/SiteReplyCard";
@@ -163,6 +164,8 @@ function ApprovalCard({
     if (restored.current) keepEdit(item.leadId, item.draftMessage, { text, mine, price });
   }, [item.leadId, item.draftMessage, text, mine, price]);
   const plainReason = plainHoldReason(item.reason, { firstName, topic: item.riskTopic });
+  // Their booking link in the reply (A-263): information, not a check, so no dot.
+  const offersBooking = isBookingLinkReason(item.reason);
   // With the words underlined, the line under the reply points at them (#1).
   const checkHint =
     item.checkWords && item.checkWords.some((w) => text.includes(w))
@@ -453,10 +456,10 @@ function ApprovalCard({
           nothing when the every-reply-waits setting is the only reason.
           A price draft's reason is the blank, which the lines above say. */}
       {/* A note to someone staying in touch: why them, in plain words. Information, not a task, so no dot. */}
-      {note && item.reason && !editing && (
+      {(note || offersBooking) && item.reason && !editing && (
         <p className="mt-2.5 text-[13px] leading-snug text-ink">{item.reason.trim().replace(/\.?$/, ".")}</p>
       )}
-      {!note && (checkHint ?? plainReason) && !needsPrice && !item.askedIfPerson && !editing && !edited && (
+      {!note && (checkHint ?? (offersBooking ? null : plainReason)) && !needsPrice && !item.askedIfPerson && !editing && !edited && (
         <p className="mt-2.5 flex items-baseline gap-2 text-[13px] leading-snug text-ink">
           <span aria-hidden className="inline-block h-[7px] w-[7px] shrink-0 -translate-y-px rounded-full" style={{ background: "var(--state-needs)" }} />
           {checkHint ?? plainReason}

@@ -82,18 +82,21 @@ export function DayNumbers({
   calls,
   booked,
   nextBookedAt,
+  lookBack = 0,
   progress,
 }: {
   replies: number;
   calls: number;
   booked: number;
+  /** Calls that are over and still to be answered "How did it go?" (A-263). */
+  lookBack?: number;
   /** The next booked call's time today, "3:00 PM", or null when none is still to come. */
   nextBookedAt: string | null;
   progress: { done: number; total: number; toGo: number; pct: number } | null;
 }) {
   if (!progress) return null;
   const title = progress.toGo === 0 ? "All done for today" : `${progress.toGo} ${progress.toGo === 1 ? "thing" : "things"} to do today`;
-  const parts = progress.toGo > 0 ? dayParts({ replies, calls, booked, nextBookedAt }) : null;
+  const parts = progress.toGo > 0 ? dayParts({ replies, calls, booked, nextBookedAt, lookBack }) : null;
   return (
     <section aria-label="Your day in numbers">
       <div className={`${DAY_BOX} p-4`}>

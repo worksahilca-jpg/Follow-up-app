@@ -14,6 +14,8 @@ import { draftDm } from "@/lib/dmDrafting";
 import { Prisma } from "@prisma/client";
 import { publicErrorMessage } from "@/lib/publicError";
 import { draftingContext } from "@/lib/businessFacts";
+import { saidYesToMeeting } from "@/lib/bookingOffer";
+import { appUrl } from "@/lib/stripe";
 
 // POST /api/leads/[id]/regenerate — asks the AI for a fresh draft against
 // this lead's real conversation, and saves it as the new suggested message.
@@ -108,7 +110,9 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
       newSubject = null;
       newQuickReplies = (dm.shapeFailed ? { question: dm.quickReplies.question, buttons: [] } : dm.quickReplies) as unknown as Prisma.InputJsonValue;
     } else {
-      const draft = await generateFollowUpMessage({ name: lead.name, conversation, ...(await draftingContext(lead.businessId)) }, voiceSamples, undefined, undefined, language);
+      // They said yes to meeting (A-263): a new draft keeps the one job, the booking link.
+      const bookingLink = saidYesToMeeting(conversation) ? `${appUrl()}/book/${lead.id}` : null;
+      const draft = await generateFollowUpMessage({ name: lead.name, conversation, ...(await draftingContext(lead.businessId)), bookingLink }, voiceSamples, undefined, undefined, language);
       newMessage = await composeFollowUpEmail(lead.name.split(" ")[0], lead.businessId, draft.body, {
         languageSample: latestInboundText(conversation),
         leadLanguage: language,

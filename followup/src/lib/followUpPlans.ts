@@ -39,7 +39,7 @@ export type PlanId = "fast" | "long" | "own";
 export const PLAN_IDS: readonly PlanId[] = ["fast", "long", "own"];
 
 /** What a step is for. The words come from the conversation; this only sets the angle. */
-export type StepKind = "open" | "new" | "step" | "close" | "checkback";
+export type StepKind = "open" | "new" | "step" | "close" | "checkback" | "thanks";
 
 /** The owner's own plan. `useFor`: whom FollowUp puts on it by itself; "picked" = only customers the owner moves onto it. */
 export type OwnPlan = { days: number[]; after: "stop" | "monthly"; useFor: "most" | "later" | "picked" };
@@ -246,8 +246,13 @@ export type PlanLead = {
   tier?: string | null;
   /** Lead.followUpNotBefore, ms: a day they asked to hear back. */
   notBeforeMs?: number | null;
-  /** Their confirmed bookings, ms. Canceled ones are left out by the caller. */
-  bookings?: { createdAt: number; scheduledAt: number }[];
+  /**
+   * Their confirmed bookings, ms. Canceled ones are left out by the caller.
+   * `outcome` is the owner's answer to "How did it go?" (A-263,
+   * src/lib/meetingOutcome.ts): "deciding" means the call is over and the
+   * plan carries on from it, with a thank-you the day after.
+   */
+  bookings?: { createdAt: number; scheduledAt: number; outcome?: string | null }[];
   /** When the customer was added, ms: where the six months count from for one who never wrote. */
   createdAtMs?: number;
   /**
@@ -351,13 +356,24 @@ export function followUpState(
   // has something new (src/lib/stayInTouch.ts).
   if (lead.stayingSince != null) return done("staying", 0, 0, 0);
 
-  // Rule 1: a booking since they last wrote, or one still to come.
-  const booked = (lead.bookings ?? []).some((b) => b.scheduledAt >= nowMs || lastInboundAt === null || b.createdAt > lastInboundAt);
+  // Rule 1: a booking since they last wrote, or one still to come. A call
+  // the owner answered "Still deciding" about (A-263) is over: it no longer
+  // stops the plan, it starts it again (below). A call that didn't happen
+  // still stops it: the owner's one note offers a new time, then waits.
+  const open = (lead.bookings ?? []).filter((b) => b.outcome !== "deciding");
+  const booked = open.some((b) => b.scheduledAt >= nowMs || lastInboundAt === null || b.createdAt > lastInboundAt);
+
+  // The call they are still deciding after, when it is after the message
+  // they went quiet on: the plan starts again from it, day 1 a thank-you.
+  const metAt = (lead.bookings ?? [])
+    .filter((b) => b.outcome === "deciding" && b.scheduledAt <= nowMs && b.scheduledAt > anchor && (lastInboundAt === null || b.scheduledAt > lastInboundAt))
+    .reduce<number | null>((m, b) => (m === null || b.scheduledAt > m ? b.scheduledAt : m), null);
 
   // Rule 4: their day, when it is after the message they went quiet on.
   const firstDay = planDays(plans, plan).days[0];
-  const theirDay = lead.notBeforeMs && lead.notBeforeMs > anchor ? lead.notBeforeMs : null;
-  const start = theirDay ? theirDay - firstDay * DAY : anchor;
+  const theirDay = !metAt && lead.notBeforeMs && lead.notBeforeMs > anchor ? lead.notBeforeMs : null;
+  const start = metAt ?? (theirDay ? theirDay - firstDay * DAY : anchor);
+  const moved = metAt !== null || theirDay !== null;
   const steps = planSteps(plans, plan, start, capAt);
 
   // A welcome back went out instead of the plan and nobody answered it: the
@@ -366,14 +382,14 @@ export function followUpState(
   // nothing before it, unless it was the day they asked for. Read this way
   // rather than as "any long gap", because Long's monthly messages and a
   // check-back in March are long gaps by design.
-  if (!theirDay && ours.length > 1 && ours[1].at - anchor >= deadLeadDays * DAY) return done("welcome_back", 0, 0, 0);
+  if (!moved && ours.length > 1 && ours[1].at - anchor >= deadLeadDays * DAY) return done("welcome_back", 0, 0, 0);
 
   // Touches: our messages after the anchor (or, once their day moved the
   // plan, after its new start), one per 12 hours.
   let touches = 0;
   let lastTouch = start;
-  for (const m of theirDay ? ours.filter((o) => o.at > start) : ours.slice(1)) {
-    if (m.at - lastTouch >= SAME_TOUCH_MS || (theirDay && touches === 0)) {
+  for (const m of moved ? ours.filter((o) => o.at > start) : ours.slice(1)) {
+    if (m.at - lastTouch >= SAME_TOUCH_MS || (moved && touches === 0)) {
       touches += 1;
       lastTouch = m.at;
     }
@@ -397,7 +413,7 @@ export function followUpState(
     plan,
     step: touches,
     total: steps.length,
-    kind: theirDay && touches === 0 ? "checkback" : next.kind,
+    kind: metAt && touches === 0 ? "thanks" : theirDay && touches === 0 ? "checkback" : next.kind,
     final: touches === steps.length - 1,
     dueAt: due,
     touches,
@@ -429,7 +445,7 @@ export function quietLeadNext(
   if (!opts.pastWelcomeBackWait || !opts.welcomeBackOn) return planDue ? "plan" : null;
   if (state === null) return opts.welcomeBackSent ? null : "welcome_back";
   if (state.stopped === "booked" || state.heldUntil !== null) return null;
-  if (state.dueAt !== null && (state.touches > 0 || state.kind === "checkback")) return planDue ? "plan" : null;
+  if (state.dueAt !== null && (state.touches > 0 || state.kind === "checkback" || state.kind === "thanks")) return planDue ? "plan" : null;
   if (state.stopped === "six_months" || opts.nowMs > state.capAt) return null;
   return opts.welcomeBackSent ? null : "welcome_back";
 }
@@ -487,6 +503,12 @@ export function stepHint(state: Pick<PlanState, "step" | "total" | "kind" | "fin
       "Angle for this one — they asked you to get back to them around now. Say so in one short line, in their own " +
       "terms, and ask one easy question about whether now is a good time to pick it back up. If it isn't, that is " +
       "completely fine.",
+    thanks:
+      "Angle for this one — you met or spoke with them yesterday and they are still deciding. Thank them for their " +
+      "time in one short, specific line, then give one useful thing from the conversation (an answer, a detail they " +
+      "asked about, a next step they can take or ignore) and ask one easy question about what they'd like next. Still " +
+      "deciding is completely fine; say nothing that reads as pressure, and name no day, time, price or figure that " +
+      "the conversation does not contain.",
   };
   const last = state.final
     ? " This is the last message about this unless they answer: no deadline, no \"last chance\", nothing that reads as pressure."
@@ -494,6 +516,8 @@ export function stepHint(state: Pick<PlanState, "step" | "total" | "kind" | "fin
   const which =
     kind === "checkback"
       ? `They asked you to get back to them around now; nothing from them in about ${daysQuiet} days.`
+      : kind === "thanks"
+      ? "You met or spoke with them yesterday and they are still deciding; this is the thank-you after it."
       : `This is follow-up ${state.step + 1} of ${state.total} to someone who went quiet after the last message here — ` +
         `nothing from them in about ${daysQuiet} days.`;
   return (
@@ -715,6 +739,8 @@ export function stepLabel(kind: StepKind, opts: { index?: number; monthly?: bool
       return opts.monthly ? "Close the loop, then stop" : "Close the loop: keep going, or close their file?";
     case "checkback":
       return "Back in touch on the day they asked";
+    case "thanks":
+      return "A thank-you the day after you met";
   }
 }
 
@@ -746,6 +772,7 @@ export function stepWords(step: number, total: number): string {
 /** "First check-in", "Last check-in", "Check-in 3 of 10": the name of the next message in a list. */
 export function checkInName(state: Pick<PlanState, "step" | "total" | "kind">): string {
   if (state.kind === "checkback") return "Check-in they asked for";
+  if (state.kind === "thanks") return "Thank-you after your call";
   if (state.total > 1 && state.step === state.total - 1) return "Last check-in";
   if (state.step === 0) return "First check-in";
   return `Check-in ${state.step + 1} of ${state.total}`;

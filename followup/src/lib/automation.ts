@@ -87,6 +87,7 @@ import { META_DM_WINDOW_HOURS, META_HUMAN_AGENT_MAX_HOURS, UNANSWERED_CEILING_CH
 export { META_DM_WINDOW_HOURS, UNANSWERED_META_DM_MAX_HOURS };
 import { isInstagramLeadId, isMessengerLeadId } from "@/lib/instagramId";
 import { HOLD_ALL_AUTOMATION_REASON, BACKLOG_BEFORE_PERMISSION_REASON, RISK_CHECK_FAILED_REASON, UNTOUCHED_LEAD_REASON, NEVER_WROTE_REASON, FOUND_IN_SPAM_REASON, FORM_SPAM_CHECK_REASON, FORM_SPAM_CHECK_SOURCE, isUnconfirmedSpamSource, IN_CRM_REASON, UNGROUNDED_DRAFT_REASONS, ASKED_IF_PERSON_REASON } from "@/lib/holdReasons";
+import { bookingLinkReason, carriesBookingLink } from "@/lib/bookingOffer";
 import { isSharedContentOnly } from "@/lib/sharedContent";
 
 /**
@@ -278,7 +279,7 @@ type PlanRow = {
   followUpPlan?: string | null;
   followUpNotBefore?: Date | null;
   qualification?: unknown;
-  bookings?: { createdAt: Date; scheduledAt: Date }[];
+  bookings?: { createdAt: Date; scheduledAt: Date; outcome?: string | null }[];
   stayInTouchAt?: Date | null;
   conversations: { messages: { direction: string; sentAt: Date; trigger: string | null; quickReplyPayload: string | null }[] }[];
 };
@@ -303,7 +304,7 @@ export function planStateOfRow(l: PlanRow, plans: FollowUpPlans, nowMs: number, 
       override: l.followUpPlan ?? null,
       tier: readQualification(l.qualification)?.tier ?? null,
       notBeforeMs: l.followUpNotBefore ? l.followUpNotBefore.getTime() : null,
-      bookings: (l.bookings ?? []).map((b) => ({ createdAt: b.createdAt.getTime(), scheduledAt: b.scheduledAt.getTime() })),
+      bookings: (l.bookings ?? []).map((b) => ({ createdAt: b.createdAt.getTime(), scheduledAt: b.scheduledAt.getTime(), outcome: b.outcome ?? null })),
       createdAtMs: l.createdAt ? l.createdAt.getTime() : undefined,
       stayingSince: l.stayInTouchAt ? l.stayInTouchAt.getTime() : null,
     },
@@ -315,12 +316,12 @@ export function planStateOfRow(l: PlanRow, plans: FollowUpPlans, nowMs: number, 
 /** What the quiet-lead queries load: the thread, and the confirmed bookings that stop a plan (rule 1). */
 const PLAN_LEAD_INCLUDE = {
   conversations: { include: { messages: { orderBy: { sentAt: "asc" as const } } } },
-  bookings: { where: { status: "confirmed" }, select: { createdAt: true, scheduledAt: true } },
+  bookings: { where: { status: "confirmed" }, select: { createdAt: true, scheduledAt: true, outcome: true } },
 } satisfies Prisma.LeadInclude;
 
 /** What a plan message is saved as (Lead.suggestedDraftKind), so a cached draft is only reused for the same message. */
 export function planDraftKind(state: Pick<PlanState, "step" | "kind">): string {
-  return state.kind === "checkback" ? "checkback" : `reminder_${state.step + 1}`;
+  return state.kind === "checkback" || state.kind === "thanks" ? state.kind : `reminder_${state.step + 1}`;
 }
 
 /* ------------------------------------------------------------------ *
@@ -1520,7 +1521,9 @@ export async function runAutomationForBusiness(
       // They asked if they're talking to a real person (Lead.askedIfPersonAt):
       // the only honest reply is a person's, so it waits on every tier.
       const askedIfPerson = lead.askedIfPersonAt != null;
-      if (holdAll || isUntouched || phoneNeverWrote || unconfirmedSpam || effectiveTier !== "AUTONOMOUS" || tier === "free" || needsPrice || askedIfPerson) {
+      // Their booking link in the reply (A-263) always waits for the owner.
+      const offersBooking = carriesBookingLink(message, lead.id);
+      if (holdAll || isUntouched || phoneNeverWrote || unconfirmedSpam || effectiveTier !== "AUTONOMOUS" || tier === "free" || needsPrice || askedIfPerson || offersBooking) {
         /**
          * Every draft that reaches here gets a verdict, including ones
          * that are going to be held no matter what it says.
@@ -1610,6 +1613,12 @@ export async function runAutomationForBusiness(
         }
         if (askedIfPerson) {
           risk = { riskLevel: "high", reason: ASKED_IF_PERSON_REASON, topic: "other" };
+          riskAssessed = true;
+        }
+        // The reply carries their booking link (A-263): the owner sees it
+        // go, on every tier, with the reason the card shows.
+        if (carriesBookingLink(message, lead.id)) {
+          risk = { riskLevel: "high", reason: bookingLinkReason(greetingFirstName(lead.name) || "they"), topic: "other" };
           riskAssessed = true;
         }
         if (riskAssessed) verdictToKeep = risk;

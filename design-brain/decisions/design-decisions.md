@@ -13449,3 +13449,16 @@ Follow-up plans gets a sixth rule saying so.
   short walk to the school you mentioned. Want me to send you the photos?" Then the stop line.
 - **Weak spot:** the change is in the AI's instructions. It can't be run here (no key), so the first real notes on
   Today should be read before trusting it.
+
+## 2026-10-15 — Stay in touch: lead with what's most useful, not always the offer (research)
+
+The founder corrected the offer-first reading of R-118: "If an offer is the best thing to start with, then go for
+it. If there is something else that is more useful, more attractive, or impactful, use that. Do the research."
+Research (`followup/research/product/2026-10-15-what-to-send-when-staying-in-touch.md`): relevance with a stated
+reason beats personal detail (White et al. 2008); greetings by name don't help, suggestions based on what the person
+did do (Wattal, ~10M emails); messages set off by the customer beat scheduled ones (Epsilon 2014, NP Digital 2025).
+The note writer now picks the lead: their own moment when the news touches it, a real match, or useful information
+and what it means for them. The "Anything new?" example now shows market information too, not only a listing.
+- **Not built, needs a yes:** FollowUp remembering when a customer said they'd be ready ("January", "when our lease
+  ends") and writing a note then. That is the strongest kind in the research, but it is new behaviour.
+- **Weak spot:** still not run against the real AI here; read the first notes on Today.

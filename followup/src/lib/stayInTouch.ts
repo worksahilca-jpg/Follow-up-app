@@ -84,7 +84,7 @@ export function newsWhy(firsts: readonly string[]): string {
 }
 
 const NEWS_EXAMPLES: Record<string, string> = {
-  "real estate": "e.g. A 3-bed in Erin Mills just listed at $879k. Open house Saturday 2 to 4.",
+  "real estate": "e.g. A 3-bed in Erin Mills just listed at $879k. Or: homes in Erin Mills sold 3% higher this month.",
   "mortgage brokerage": "e.g. Five-year fixed rates dropped this week. Happy to rerun the numbers.",
   "home services (contractor, cleaning, etc.)": "e.g. We have two openings in November for kitchen work.",
 };

@@ -41,8 +41,10 @@ const CRMS: { id: Provider; name: string; tile: string; bg: string; fg: string; 
     tile: "Hs",
     bg: "#fdece4",
     fg: "#c2451d",
-    keyLabel: "Private app access token",
-    where: "Settings → Integrations → Private Apps in HubSpot. It needs contacts read and write, and notes write",
+    // New HubSpot accounts can't make private apps any more; they get a service key, which FollowUp sends the
+    // same way (founder's HubSpot test, 2026-10-15). An older account's private app token still works.
+    keyLabel: "service key",
+    where: "In HubSpot, search Settings for “service key” and create one that can read and write contacts. An older private app token works too",
   },
 ];
 const SOON = { name: "GoHighLevel", tile: "GH", bg: "#e9f3ee", fg: "#1f6b47" };

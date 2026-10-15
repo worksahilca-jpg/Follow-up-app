@@ -229,10 +229,12 @@ export default function LeadsPageClient({
 
   const activeSavedFilter = savedFilters.find((f) => f.id === activeSavedFilterId) ?? null;
 
-  // The people in the open group, in the group's own order; Everyone newest message first.
+  // The people in the open group, in the group's own order; Everyone newest message first. Someone with no
+  // message yet (just brought in from a CRM) goes by when they arrived there, not to the very bottom
+  // (founder's HubSpot test, 2026-10-15: the three new contacts were 34th to 36th).
   const inGroup = useMemo(() => {
     if (!show || show === "all") {
-      const at = (l: Lead) => (lastOf(l) ? new Date(lastOf(l)!.date).getTime() : 0);
+      const at = (l: Lead) => (lastOf(l) ? new Date(lastOf(l)!.date).getTime() : new Date(l.lastContacted).getTime() || 0);
       return [...leads].sort((a, b) => at(b) - at(a));
     }
     return groups[show].map((id) => byId.get(id)).filter((l): l is Lead => Boolean(l));

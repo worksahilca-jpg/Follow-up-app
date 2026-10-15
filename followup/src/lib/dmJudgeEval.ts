@@ -77,6 +77,15 @@ export const DM_JUDGE_CASES: DmJudgeCase[] = [
   },
   ask(plumber, "plumber: drain backing up", "My basement drain is backing up, can you come today?", true),
   ask(salon, "salon: books a colour", "do you have anything open saturday for a balayage?", true),
+  // Founder, 2026-10-15: "we should not miss even a single lead." Real enquiries that read most like
+  // personal chat, the kind most likely to be set aside by mistake.
+  ask(realtor, "a friend asks for himself", "bro I'm finally moving out of my parents' place lol, can you help me find something?", true),
+  ask(realtor, "Hinglish: uncle wants a plot", "Yaar mere uncle ko Mississauga mein plot chahiye, aapke paas kuch hai?", true),
+  ask(realtor, "one word on a listing post", "interested", true),
+  ask(realtor, "just the price", "price?", true),
+  ask(realtor, "asks for a mortgage contact", "Do you know a good mortgage broker? We want to get pre-approved first", true),
+  ask(realtor, "moving to Canada, needs a rental", "Moving to Toronto from Delhi in January, need a room near Humber college", true),
+  ask(realtor, "saw the sign", "Is this the realtor? Got your name from the sign on Queen St", true),
 
   // ---- not customers: set aside ------------------------------------------------
   ask(realtor, "a friend catching up", "hey bro what's up, long time", false),

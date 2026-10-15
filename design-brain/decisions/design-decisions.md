@@ -13095,3 +13095,40 @@ fix targets the most likely cause, and a check covers it either way.
 
 **Weak spot:** these fixes were made without seeing the exact replies. The digits one is a rule change; the other two
 are instructions to the writer, and only the next run on /admin shows whether they worked.
+
+
+## 2026-10-15 — The first real CRM test (HubSpot), and personal DMs
+
+The founder connected a free HubSpot account with 3 fake contacts (all @example.com). FollowUp accepted the key and
+brought all 3 in on the next sync, at 00:20 UTC.
+
+**What the test found, and the fixes:**
+- **HubSpot's key:**
+  - New HubSpot accounts can't make private apps any more. They get a "service key", which FollowUp sends the
+    same way.
+  - The connect window now asks for "your service key" and says where to find it. An older private app token
+    still works.
+  - The window had also asked for "notes write". HubSpot has no such scope: a note needs only contacts write
+    (HubSpot's notes reference). That line is gone.
+- **The new contacts sat at the bottom of Everyone.** Customers with no message yet sorted last (34th to 36th),
+  and the founder couldn't find them. Everyone now places someone with no message by when they were added in
+  the CRM.
+
+**Personal DMs** (founder: *"do not pick any private thing … It should fetch only the leads … we should not miss
+even a single lead"*):
+- **Already built:**
+  - Every new Instagram, Messenger and WhatsApp chat is checked "customer or not?".
+  - A chat is set aside only when two reads agree, and it is checked again on each new message until settled.
+- **Gap found:**
+  - A set-aside Instagram or Messenger chat kept its messages forever (7 rows today). WhatsApp's already went
+    after 30 quiet days.
+  - All three now do. The row stays, so the owner can still see who was set aside.
+  - The privacy page now says so, and that Instagram and Facebook messages get the same check.
+- **Accuracy:**
+  - The DM test gained 7 real enquiries that read most like personal chat ("interested", "price?", a friend
+    asking for himself, Hinglish for a plot, a newcomer needing a room, someone who saw the sign).
+  - The next Run on /admin shows whether any is set aside.
+
+**Not changed, on purpose:**
+- A chat is still read once to judge it. There's no way to tell a lead without reading the message.
+- What's set aside stays one tap from coming back, for 30 days, so a misjudged lead isn't lost.

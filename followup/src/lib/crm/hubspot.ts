@@ -2,10 +2,12 @@ import { CRM_TIMEOUT_MS, type CrmClient, type CrmPerson } from "./types";
 import { readWhen } from "./dates";
 
 /**
- * HubSpot — a private app access token (Settings → Integrations → Private
- * Apps in their portal; needs the crm.objects.contacts.read/write and
- * crm.objects.notes.write scopes), Bearer auth. Uses the documented CRM
- * Search API (developers.hubspot.com/docs/api-reference) filtered on
+ * HubSpot — a service key (Settings → search "service key" in their portal),
+ * or an older account's private app access token: both are Bearer auth on
+ * the same API (founder's HubSpot test, 2026-10-15: new accounts can't make
+ * private apps any more). Needs crm.objects.contacts.read and .write; a note
+ * needs only contacts write (HubSpot's notes reference). Uses the documented
+ * CRM Search API (developers.hubspot.com/docs/api-reference) filtered on
  * `lastmodifieddate`, paginated via the response's `paging.next.after`
  * cursor — a real incremental sync, unlike Follow Up Boss above.
  */
@@ -30,7 +32,7 @@ export const hubspotClient: CrmClient = {
   async testConnection(token) {
     try {
       const res = await fetch(`${BASE}/crm/v3/objects/contacts?limit=1`, { headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(CRM_TIMEOUT_MS) });
-      if (!res.ok) return { ok: false, message: res.status === 401 ? "HubSpot didn't accept that token. Copy it again from your private app." : `HubSpot returned ${res.status}. Try again in a minute.` };
+      if (!res.ok) return { ok: false, message: res.status === 401 ? "HubSpot didn't accept that key. Copy it again from Settings → Service keys in HubSpot." : `HubSpot returned ${res.status}. Try again in a minute.` };
       return { ok: true };
     } catch (err) {
       console.error("HubSpot connect check failed:", err);

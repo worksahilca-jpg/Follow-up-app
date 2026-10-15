@@ -139,6 +139,23 @@ describe("recheckDmLead", () => {
     expect(h.judge).not.toHaveBeenCalled();
   });
 
+  // The founder's own inbox, 2026-10-15: two Reels from a friend, no words, in Customers since Oct 11.
+  it("sets aside a chat of only shared Reels or posts, with no model call", async () => {
+    h.findFirst.mockResolvedValue(dmLead([inbound("[Sent ig_reel with no message text]", 1), inbound("[Sent ig_reel with no message text]", 2)], { dmCheckedAt: at(5) }));
+    expect(await recheckDmLead("biz1", "lead1")).toBe("set_aside");
+    expect(h.judge).not.toHaveBeenCalled();
+    expect(h.move).toHaveBeenCalledWith("biz1", "instagram", "1784100000000001", "lead1", "Only shared Reels or posts, nothing asked.");
+  });
+
+  it("keeps judging when a shared Reel comes with words, or a photo of their own", async () => {
+    h.findFirst.mockResolvedValue(dmLead([inbound("[Sent ig_reel with no message text]", 1), inbound("is this one still available?", 2)]));
+    h.judge.mockResolvedValue({ import: true });
+    expect(await recheckDmLead("biz1", "lead1")).toBe("kept");
+    h.findFirst.mockResolvedValue(dmLead([inbound("[Sent image with no message text]", 1)]));
+    expect(await recheckDmLead("biz1", "lead1")).toBe("skipped");
+    expect(h.move).not.toHaveBeenCalled();
+  });
+
   it("lets it stay when a limit is reached", async () => {
     h.findFirst.mockResolvedValue(dmLead(friendChat));
     h.limited.mockResolvedValue(true);
@@ -155,6 +172,9 @@ describe("recheckDmLeadsForAllBusinesses", () => {
     h.judge.mockResolvedValue({ import: false, reason: "Friends chatting." });
     const result = await recheckDmLeadsForAllBusinesses();
     expect(result).toEqual({ checked: 10, setAside: 1 });
-    expect(h.findMany.mock.calls[0][0].where).toMatchObject({ dmCheckedAt: null, dmConfirmedAt: null, stage: "NEW" });
+    const where = h.findMany.mock.calls[0][0].where;
+    expect(where).toMatchObject({ dmConfirmedAt: null, stage: "NEW" });
+    // Never checked, or checked before the shared-content rule (2026-10-15): one more look each.
+    expect(where.AND[1]).toEqual({ OR: [{ dmCheckedAt: null }, { dmCheckedAt: { lt: new Date("2026-10-15T01:00:00.000Z") } }] });
   });
 });

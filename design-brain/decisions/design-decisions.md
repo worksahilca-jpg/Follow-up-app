@@ -13381,3 +13381,28 @@ Founder: *"yes build it"*. Built as drawn, with the 2×2 answers the drawing's w
   errors, nothing scrolls sideways. 3,979 tests pass.
 - **Weak spots:** in the narrow side column on a computer, three of the four answers wrap to two lines. The /admin
   table was not opened in the browser (the local tester isn't a platform admin); its counting is covered by tests.
+
+## 2026-10-15 — Proposed (drawn, not approved): "Stay in touch" after the customer's yes
+
+From Ryan Serhant's "three F's" (follow up, follow through, follow back), which the founder shared. Follow up is what
+FollowUp already does. Follow back (staying in touch for years) is drawn here. Follow through (reminding the owner of
+promises like "I'll send you the good ones") is noted as a possible later idea, not drawn.
+- **Founder, same day:** *"This product is not just for Canada. It's for both Canada and the US. If it's legal or if
+  it's appropriate, that is what I'm going for."* Every rule here has to hold in both countries.
+- **The drawing (board `stay-in-touch-board.png`, made-up customers, inside the real app):** the day-30 "keep sending,
+  or close your file?" message gets a yes; one quiet line in the chat says the yes was kept; the plan line on the
+  customer's page becomes "Staying in touch" (once a month, only when the owner has something new that fits);
+  Today's existing "One quick question" card (A-101) asks the owner what's new for the customers staying in touch;
+  after Save it says who it fits and who it doesn't; each note waits on Today like any reply, written from the
+  owner's words, and ends with how to stop; Settings › Follow-up plans gets a "Stay in touch" box (every 2 weeks or
+  once a month) and its rules.
+- **Rules drawn:** only after their yes (words and date kept); only with something new from the owner, never a made-up
+  home, price or date; each note says how to stop and "stop" ends it at once; no pressure; a reply goes to the owner.
+  The 6-month stop on every plan gets "unless they said yes to staying in touch".
+- **Law, as facts only:** in Canada an enquiry gives implied consent for 6 months, after which express consent is
+  needed (CASL). In the US, email is opt-out (CAN-SPAM: an unsubscribe and an address) and marketing texts need prior
+  written consent (TCPA). Asking for the yes works in both. Before charging customers, the lawyer's read (already on
+  the founder's list) should include the yes question.
+- **Weak spots:** the question card sits under "Done today" at the bottom of Today, which is easy to miss; on the
+  phone drawing its buttons sit behind the bottom bar (a drawing artefact, the built card would sit above it). A
+  note with a price waits for the owner's OK under today's sending rule, so in practice every note waits.

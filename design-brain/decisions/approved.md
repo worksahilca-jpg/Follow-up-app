@@ -4563,3 +4563,23 @@ off by something the customer said is the kind most likely to get an answer.
 - **On the customer's page:** under the plan, "{First}'s moment": their words, "FollowUp brings {First} up on Today
   in the first week of January, with a note about it.", and Change (another day, or none).
 - **Settings › Follow-up plans:** one more line in the Stay in touch box.
+
+## A-263 — After a call, Today asks "How did it go?"; a yes to meeting puts the booking link in the reply ^A-263
+
+**Date:** 2026-10-15. **Founder:** *"Fix these gaps. Yes, build it."* (on the drawings `gaps/gaps-board.png` and
+`gaps/desk/gaps-laptop-board.png`). The two gaps were named in the "meeting booked, then what?" questions of the same
+day: nothing asked how a meeting went (Won/Lost was hidden in Details), and FollowUp offered a viewing but gave the
+customer no way to pick a time.
+
+- **"How did it go?"** The day after a booked call (any time in the week after it ends), Today opens with one card
+  above "Do this first": "After your call · How did it go with Raj? · You had a call with Raj Malhotra yesterday at
+  2:00 PM. One tap, and FollowUp does the rest." and four answers, 2×2 on a phone: **Working with me** (Won; FollowUp
+  stays out of the chat), **Still deciding** (a short thank-you tomorrow, then the plan carries on until they book
+  again or say no), **Not going ahead** (Lost; nothing more), **Didn't happen** (one note offering a new time, with the
+  booking link, held for the owner's OK; then FollowUp waits). The card then says what FollowUp does, with Undo. It
+  counts in the day ("1 call to look back on") and is who to start with.
+- **The booking link in the reply.** When FollowUp offered a viewing, a visit, a call or a meeting and the customer
+  says yes, the next reply's one job is the link to their own booking page, where they pick a time from the owner's
+  free hours. It still waits for the owner's Send, with the reason on the card: "FollowUp added your booking link
+  because Raj said yes to meeting. Raj picks a time from your free hours." An email or text only; a DM never carries
+  a link.

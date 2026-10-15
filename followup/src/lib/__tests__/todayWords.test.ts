@@ -55,6 +55,9 @@ describe("the whole day (A-244, R-114)", () => {
   it("says what the day is made of once, leaving out what there is none of (A-250)", () => {
     expect(dayParts({ replies: 4, calls: 0, booked: 0, nextBookedAt: null })).toBe("4 replies to send. No calls or bookings today.");
     expect(dayParts({ replies: 1, calls: 0, booked: 0, nextBookedAt: null })).toBe("1 reply to send. No calls or bookings today.");
+    // A call to look back on (A-263) comes first and keeps the replies in the line.
+    expect(dayParts({ replies: 5, calls: 0, booked: 0, nextBookedAt: null, lookBack: 1 })).toBe("1 call to look back on · 5 replies to send. Nothing else booked today.");
+    expect(dayParts({ replies: 0, calls: 1, booked: 0, nextBookedAt: null, lookBack: 2 })).toBe("2 calls to look back on · 1 call to make");
     expect(dayParts({ replies: 4, calls: 2, booked: 1, nextBookedAt: "3:00 PM" })).toBe("4 replies to send · 2 calls to make · 1 booked call at 3:00 PM");
     expect(dayParts({ replies: 0, calls: 1, booked: 0, nextBookedAt: null })).toBe("1 call to make");
     expect(dayParts({ replies: 0, calls: 0, booked: 3, nextBookedAt: "11:30 AM" })).toBe("3 booked calls, the next at 11:30 AM");

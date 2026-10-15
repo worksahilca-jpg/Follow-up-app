@@ -1600,6 +1600,12 @@ model Booking {
   durationMinutes Int      @default(30)
   status          String   @default("confirmed") // confirmed | canceled
   createdAt       DateTime @default(now())
+  // "How did it go?" (A-263): the owner's one-tap answer on Today once the
+  // call is over (working | deciding | not_going | didnt_happen), when they
+  // gave it, and the stage the customer was on, so Undo can put it back.
+  outcome          String?
+  outcomeAt        DateTime?
+  outcomeFromStage String?
 
   // The real double-booking guard: two people confirming the same slot in
   // the same instant race a findFirst-then-create check in application

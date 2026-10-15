@@ -41,8 +41,10 @@ text. No new colour without the founder's yes (`[TO DECIDE]` values are proposal
 
 ## Type
 
-- **Public Sans** for everything in the app (headings heavier and tighter). **IBM Plex Mono**
+- **Public Sans** for everything you press or scan (headings heavier and tighter). **IBM Plex Mono**
   only for small uppercase labels ("WRITTEN BY FOLLOWUP · WAITS FOR YOUR OK").
+- **FU Display** (`title-serif`) for page titles (A-221). **Newsreader** (`font-read`) only for the
+  words you read: the customer's message and the reply (A-258). Nothing else uses a serif.
   **Instrument Serif italic** only for one word in a marketing headline, never in the app.
 - Ladder: page title `text-3xl` (one per screen, from `PageHeader`), section `text-xl`,
   box title `text-lg` or `text-sm font-medium` inside Settings boxes.

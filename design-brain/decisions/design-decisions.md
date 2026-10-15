@@ -13323,3 +13323,20 @@ had covered the main screens, not the Settings pages).
   time selects are 44px tall on a phone; the computer is unchanged.
 - **Left on purpose:** the plans page's "More plans for special cases" are links inside a sentence (WCAG 2.5.8's
   inline exception, with a tall line), and the customer's name inside Today's sentence.
+
+## 2026-10-15 — A-258 built: Newsreader for the customer's message and the reply
+
+Founder picked B from the three-face board: *"yes b is good"*. Built in the real app, checked on the local production
+build at 390×844 and 1440×900.
+- **Where:** Today card (their message, the reply, the edit box), the customer page (conversation bubbles both ways,
+  the reply card, the "Reply to …" box), the website-form reply. One Tailwind utility, `font-read`
+  (`--font-read` in `globals.css`), so the next place is one class.
+- **Not changed:** titles (FU Display, A-221), buttons, labels, rows (Public Sans).
+- **Weight check, an honest correction:** the proposal said "about 40 KB". The first build used the variable file with
+  the optical-size axis: 129 KB, and the root layout preloaded it on every page, the homepage included (A-193 had just
+  made that page light). Changed to one static weight (messages are never bold), not preloaded: **22 KB, fetched only
+  where a message shows; the homepage fetches nothing new** (checked in the browser). Same line breaks as the drawing.
+- **Checked:** Newsreader loads on Today and the customer page, titles and buttons unchanged, white-on-black sent bubbles
+  read cleanly, nothing scrolls sideways; typecheck clean, 3,948 tests pass.
+- **Weak spot to watch:** a serif at 15px in a phone bubble is the smallest place it appears; it reads well in the
+  check, but if testers squint, the fix is 16px there, not a different face.

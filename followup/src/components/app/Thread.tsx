@@ -68,7 +68,7 @@ export default function Thread({
             if (m.direction === "inbound") {
               return (
                 <div key={m.id} className={"flex flex-col items-start gap-[3px] self-start " + width}>
-                  <div className="whitespace-pre-wrap rounded-[16px] rounded-bl-[6px] border border-line bg-card px-3 py-[9px] text-[14px] leading-[1.4] sm:text-[15px]">
+                  <div className="whitespace-pre-wrap rounded-[16px] rounded-bl-[6px] border border-line bg-card px-3 py-[9px] font-read text-[15px] leading-[1.45] sm:text-[16px]">
                     {m.body}
                   </div>
                   <span className="text-[12px] text-ink-faint">
@@ -85,7 +85,7 @@ export default function Thread({
             return (
               <div key={m.id} className={"flex flex-col items-end gap-[3px] self-end " + width}>
                 <div
-                  className="whitespace-pre-wrap rounded-[16px] rounded-br-[6px] px-3 py-[9px] text-[14px] leading-[1.4] sm:text-[15px]"
+                  className="whitespace-pre-wrap rounded-[16px] rounded-br-[6px] px-3 py-[9px] font-read text-[15px] leading-[1.45] sm:text-[16px]"
                   style={{ background: "var(--ink)", color: "var(--on-accent)" }}
                 >
                   {m.body}

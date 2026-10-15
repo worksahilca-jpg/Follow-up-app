@@ -4389,6 +4389,11 @@ size (study: `references/crm/2026-10-15-hubspot-workflow-and-feel.md`).
      initial on the left and the wait on the right;
    - a customer, and Settings, in their own shapes too;
    - anywhere else, a plain title and rows. The old four stat boxes are gone.
-2. **Buttons react to the thumb.** The instant a button is pressed it dips slightly and its colour deepens, over
-   `--motion-fast` (150 ms); it comes back when the thumb lifts. No bounce. Under reduced motion it only changes colour.
-**Not in this yes:** opening a customer over the list on the computer (drawn later, if wanted).
+2. **Buttons react to the thumb.** The instant a button is pressed it dips slightly and softens (the black Send
+   turns charcoal, as drawn), over `--motion-fast` (150 ms); it comes back when the thumb lifts. A link, a whole row
+   included, softens. No bounce. Under reduced motion it only changes colour.
+**Not in this yes:** opening a customer over the list on the computer. (It turned out to exist already: see
+`design-decisions.md`, 2026-10-15.)
+**Built:** 2026-10-15, `components/app/PageSkeleton.tsx`, a `loading.tsx` for Today, Customers, a customer,
+Settings and the Settings window, and the press rules in `globals.css`. Checked on a local production build at
+390×844 and 1440×900.

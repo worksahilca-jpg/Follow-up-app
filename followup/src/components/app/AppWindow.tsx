@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useRef, useSyncExternalStore } from "react";
+import { createContext, useContext, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
@@ -47,6 +47,10 @@ export default function AppWindow(props: Props) {
 
 function Window({ label, onClose, size = "large", children }: Props) {
   const ref = useRef<HTMLDivElement>(null);
+  // Taking over from the loading window (PageSkeleton, A-254), which is still
+  // on screen while this first renders: it already rose in, so this one
+  // appears in its place instead of rising a second time.
+  const [takingOver] = useState(() => document.querySelector(".app-win--loading") !== null);
   const close = useRef(onClose);
   useEffect(() => {
     close.current = onClose;
@@ -93,8 +97,8 @@ function Window({ label, onClose, size = "large", children }: Props) {
 
   return (
     <InWindow.Provider value={true}>
-      <div className="app-win-dim" onClick={onClose} aria-hidden />
-      <div ref={ref} role="dialog" aria-modal="true" aria-label={label} tabIndex={-1} className={`app-win app-win--${size}`}>
+      <div className={`app-win-dim${takingOver ? " app-win--settled" : ""}`} onClick={onClose} aria-hidden />
+      <div ref={ref} role="dialog" aria-modal="true" aria-label={label} tabIndex={-1} className={`app-win app-win--${size}${takingOver ? " app-win--settled" : ""}`}>
         <span className="app-win__grab" aria-hidden />
         <button type="button" onClick={onClose} aria-label="Close" className="app-win__x">
           <X className="h-4 w-4" strokeWidth={2} />

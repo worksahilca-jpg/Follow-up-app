@@ -233,7 +233,26 @@ h1 {
    element, without touching each component's own classes. */
 a, button, input, select, textarea, [tabindex] {
   transition: background-color var(--motion-fast) ease, border-color var(--motion-fast) ease, color var(--motion-fast) ease,
-    box-shadow var(--motion-fast) ease, opacity var(--motion-fast) ease, transform var(--motion-fast) ease;
+    box-shadow var(--motion-fast) ease, opacity var(--motion-fast) ease, transform var(--motion-fast) ease,
+    scale var(--motion-fast) ease;
+}
+
+/* A tap answers at once (A-254). A phone has no hover, so before this a
+   press on Send showed nothing until the server answered. A button dips a
+   little and softens while the thumb is down; a link (a whole row too)
+   softens. The browser's own grey tap box is turned off so this is the one
+   signal. `scale` is its own property, so it adds to any translate a button
+   already carries instead of replacing it. The switch has its own press. */
+a, button, [role="button"] {
+  -webkit-tap-highlight-color: transparent;
+}
+button:not(:disabled):not(.switch):active,
+[role="button"]:not([aria-disabled="true"]):active {
+  scale: 0.97;
+  opacity: 0.85;
+}
+a:active {
+  opacity: 0.6;
 }
 
 /* Motion tokens (design brain A-048, the Framer study). Four speeds and
@@ -581,6 +600,12 @@ input::placeholder, textarea::placeholder {
     padding: 0;
   }
 }
+/* The real window taking over from its loading window (A-254) appears in
+   place: the loading one has already risen in. */
+.app-win.app-win--settled,
+.app-win-dim.app-win--settled {
+  animation: none;
+}
 @keyframes app-win-fade {
   from {
     opacity: 0;
@@ -635,6 +660,11 @@ input::placeholder, textarea::placeholder {
   .switch,
   .switch-knob {
     transition-duration: 1ms;
+  }
+  /* A press still shows, as a change of colour only (A-254). */
+  button:not(:disabled):not(.switch):active,
+  [role="button"]:not([aria-disabled="true"]):active {
+    scale: none;
   }
   /* The line holds still; the seconds beside it still count. */
   .undo-line {

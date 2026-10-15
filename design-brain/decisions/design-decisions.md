@@ -13435,3 +13435,17 @@ Built as drawn. What a future session needs to know:
   run locally (no key); mocked tests only, so the first real yes should be watched. The customer's card says "fits
   what {first} wants" without saying what that is. Every note waits for the owner's OK, by design. The Saved card links
   to Settings › Follow-up plans, not to the notes themselves.
+
+## 2026-10-15 — "Stay in touch" notes must make them want to reply (R-118, A-260 amended)
+
+The founder rejected boring check-in notes and asked for "another offer, this will be better for you, something that
+makes them reply back". The note writer now: opens with the news, says why it suits them from their own words, asks
+one easy question, then says how to stop. It may only call something better with the reason, from facts in the
+owner's news or the conversation, because a bare "better deal" reads like spam and can't be checked. Settings ›
+Follow-up plans gets a sixth rule saying so.
+- **Example (hand-written to show the target, not model output):** before, "Hi Raj, a 3-bed townhouse just listed
+  in Erin Mills at $879k, a short walk from the school you mentioned. Happy to send you the details if you'd like."
+  After, "Hi Raj, a 3-bed townhouse just came up in Erin Mills at $879k. That's under the $900k you gave me, and a
+  short walk to the school you mentioned. Want me to send you the photos?" Then the stop line.
+- **Weak spot:** the change is in the AI's instructions. It can't be run here (no key), so the first real notes on
+  Today should be read before trusting it.

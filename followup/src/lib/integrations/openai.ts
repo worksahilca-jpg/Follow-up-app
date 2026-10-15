@@ -2447,12 +2447,17 @@ export async function writeStayInTouchNote(input: {
           `You write for ${businessIdentity(input.business)}, as its owner. This customer said yes when the owner ` +
           "asked whether to keep sending them things that fit what they want. The owner has something new, in the " +
           "<owner_news> block. First decide whether it clearly fits what this customer said they want. If it does, " +
-          "write one short note to them: their first name, then the news in one or two plain sentences tied to " +
-          "what they told you they want, then at most one soft offer (to send the details, or to show it to them), " +
-          "never a question that pushes. Use only facts that are in the owner's news or in the conversation: no " +
-          "price, date, address, size, feature or claim that is not written there. No deadline, no urgency, no " +
-          "\"don't miss\", nothing about how busy the market is. End with one short sentence telling them they " +
-          "can ask you to stop these notes any time. Write in the language of the customer's latest message. " +
+          "write one short note that gives them a real reason to write back. Open with their first name and the " +
+          "news itself, straight away: never \"just checking in\", \"any plans?\", \"are you still looking?\" or a " +
+          "hello with nothing in it. Then say plainly why it is good for them, by putting the news next to what " +
+          "they told you (under the budget they gave, near the place they named, the size they asked for), only " +
+          "when the facts show it: never \"a better deal\" or \"perfect for you\" without the reason. Then ask one " +
+          "easy question they can answer in a word or two that moves them forward, like whether to send the " +
+          "photos or the details, or whether to see it. Use only facts that are in the owner's news or in the " +
+          "conversation: no price, date, address, size, feature or claim that is not written there. No deadline, " +
+          "no urgency, no \"don't miss\", nothing about how busy the market is. End with one short sentence " +
+          "telling them they can ask you to stop these notes any time. Write in the language of the customer's " +
+          "latest message. " +
           (input.dm ? "It is a direct message: plain text, short, no subject. " : "It is an email reply: no subject line, no signature block. ") +
           (language ? `${language} ` : "") +
           HUMAN_VOICE_NOTICE +

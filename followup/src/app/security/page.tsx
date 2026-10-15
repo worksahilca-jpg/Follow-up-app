@@ -127,7 +127,7 @@ function PillBtn({ children, danger }: { children: React.ReactNode; danger?: boo
 function settings(emailsOn: boolean): [name: string, body: string, control: React.ReactNode, state: string][] {
   return [
     ["Ask before every reply", "Or let FollowUp send them. Prices and dates still wait for you.", <Toggle key="t" on />, "on"],
-    ["Pause all sending", "One tap holds everything.", <Toggle key="t" />, "off"],
+    ["Stop all sending", "One tap holds everything.", <Toggle key="t" />, "off"],
     ["Only admins send", "Teammates write; an admin sends.", <Toggle key="t" />, "off"],
     emailsOn
       ? ["New sign-in emails", "When a device we haven’t seen signs in.", <Toggle key="t" on />, "on"]

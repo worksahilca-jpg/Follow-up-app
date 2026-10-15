@@ -13211,3 +13211,26 @@ Founder: *"yes build 1 and 2"*.
     page can still shift a little;
   - Results, Activity and the other places get the plain title-and-rows shape, not their own;
   - the press can't be seen in a still picture; it needs a thumb on a real phone.
+
+## 2026-10-15 — A-255 built: plain, specific words on every everyday screen
+
+Founder: *"change all these wordings that are complex, like where the customer writes you … very simple and
+specific"*, then *"yes change all"* to the old → new list (A-255).
+
+- **Changed everywhere the owner sees it:** Settings (the five rows, their pages, the Sending replies rows, the
+  Connected apps page), Customers (group names and their lines), a customer's page, Today, the inbox and activity
+  labels, and the "I already talked to them" button wherever it appears (call box, calls to make, undo, the history
+  line, the waiting note).
+- **Today's who-wrote line** is one plain verb per channel ("emailed you", "texted you", "messaged you on
+  Instagram", "filled in your website form"), and no longer leads with a reason tag ("Asked the price ·"). The
+  customer's own words sit right under it, and the orange-dot line still says what to check.
+- **One deviation, said plainly:** "Booking hours" became **"Your free hours"**, not "Your free hours for viewings".
+  The booking link books calls, so "viewings" would have been wrong.
+- **Found while checking, and fixed:** on a phone, "When to check in" and "Your free hours" broke across two and
+  three lines because the value beside them took the room. The name now stays on one line and the value is
+  shortened with "…".
+- **Checked** on a local production build at 390×844 and 1440×900: Today, Customers, Settings, Connected apps,
+  Sending replies and a customer's page. Nothing scrolls sideways. Types, lint (0 errors) and 3,935 tests pass; one
+  test was updated to the new words.
+- **Not changed (not on the list):** the group keys behind old links (#write, #more still work), "Follow-up plans" on
+  the plans page itself, and the landing page.

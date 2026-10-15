@@ -86,7 +86,7 @@ export default function ConversationPane({
             <span className="truncate text-base font-semibold lg:text-[15px]">{lead.name}</span>
             {approval && (
               <span className="hidden sm:inline-flex">
-                <StatePill state="needs" label="Needs you" />
+                <StatePill state="needs" label="Waiting for you" />
               </span>
             )}
           </div>

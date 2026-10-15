@@ -136,7 +136,7 @@ export default function SettingsList({
   // off owners' Settings: no row leads to it.
   const groups: { title: string; rows: Row[] }[] = [
     {
-      title: "More",
+      title: "Account",
       rows: [
         { page: "team", name: "Team", status: team === null ? "" : team <= 1 ? "Just you" : `${team} people` },
         { page: "billing", name: "Your plan", status: planStatus },
@@ -156,8 +156,8 @@ export default function SettingsList({
   const where: Pick<Row, "status" | "state"> =
     socialRow.state === "needs" ? socialRow : connected.length ? { status: andList(connected) } : social ? { status: "Nothing connected yet", state: "needs" } : { status: "" };
   const home: { g: SettingsGroup; icon: LucideIcon; status: string; state?: StateKey }[] = [
-    { g: "Where customers write", icon: Inbox, status: where.status ?? "", state: where.state },
-    { g: "How replies go out", icon: Send, status: paused ? "Paused" : holdAll ? "Every reply waits for your OK" : "FollowUp replies for you", state: paused ? "needs" : undefined },
+    { g: "Connected apps", icon: Inbox, status: where.status ?? "", state: where.state },
+    { g: "Sending replies", icon: Send, status: paused ? "Paused" : holdAll ? "Every reply waits for your OK" : "FollowUp replies for you", state: paused ? "needs" : undefined },
     { g: "Alerts", icon: Bell, status: alerts },
     { g: "Your business", icon: Store, status: businessName ?? "" },
   ];
@@ -193,7 +193,7 @@ export default function SettingsList({
           ))}
         </div>
         <div className={BOX}>
-          <HomeRow name="More" icon={Ellipsis} status="Team, plan, your data" first onClick={() => onGroup("More")} />
+          <HomeRow name="Account" icon={Ellipsis} status="Team, billing, your data" first onClick={() => onGroup("Account")} />
         </div>
         <div className="mt-2 grid justify-items-start px-1">
           <FeedbackDialog label="Help" icon={CircleHelp} className="flex min-h-11 items-center gap-2.5 text-[15px] text-ink" />
@@ -246,7 +246,7 @@ export default function SettingsList({
           </div>
         )}
 
-        {group === "More" && signedInAs && (
+        {group === "Account" && signedInAs && (
           <p className="-mt-3 break-all px-1 text-[13.5px] text-ink-faint">
             Signed in as <span className="text-ink-soft">{signedInAs}</span>
           </p>

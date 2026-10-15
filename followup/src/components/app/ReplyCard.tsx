@@ -231,7 +231,7 @@ export default function ReplyCard({
   }
 
   // Who wrote it, at a glance (A-089): FollowUp's words until the owner changes them. The same words as Today's card (A-220).
-  const author = mine ? "Edited by you" : "Your reply, ready";
+  const author = mine ? "Edited by you" : "Reply ready to send";
   const label = draft ? author : "Write a reply";
 
   return (

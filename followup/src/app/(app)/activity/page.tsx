@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
 const WHAT: Record<ActivityType, { verb: string; state: string }> = {
   automated_send: { verb: "Sent on its own", state: "Sent" },
   sequence_paused: { verb: "Stopped the check-ins", state: "Stopped" },
-  rapid_engagement: { verb: "Needs you now", state: "Needs you" },
+  rapid_engagement: { verb: "Needs you now", state: "Waiting for you" },
   sequence_completed: { verb: "Finished the plan", state: "Done" },
   held: { verb: "Held a reply for you", state: "Held for you" },
 };

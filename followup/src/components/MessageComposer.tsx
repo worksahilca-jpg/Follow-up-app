@@ -125,7 +125,7 @@ export default function MessageComposer({
   if (sent) {
     return (
       <section>
-        <h2 className="font-display text-xl">Your reply, ready</h2>
+        <h2 className="font-display text-xl">Reply ready to send</h2>
         {sentTemplate ? (
           /* Not a success message. What went out was the template; these
              words did not reach anyone, and the one useful thing to say is
@@ -154,7 +154,7 @@ export default function MessageComposer({
           underneath already says what drafted this and that nothing sends
           without approval, which is the part that earns trust. The icon was
           decoration standing in for an explanation that's already there. */}
-      <h2 className="font-display text-xl">Your reply, ready</h2>
+      <h2 className="font-display text-xl">Reply ready to send</h2>
       <p className="text-[13px] text-ink-soft mt-1">Written from your conversation. Nothing sends until you do.</p>
 
       <div className="mt-3 rounded-[12px] border border-line bg-card overflow-hidden">

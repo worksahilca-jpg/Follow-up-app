@@ -27,7 +27,7 @@ const ACTION_COPY: Record<string, (meta: Record<string, unknown> | null) => { la
   }),
   // "We talked" (src/lib/talked.ts, design brain A-039).
   "lead.talked": () => ({ label: "You talked with them", detail: "Check-ins stopped until they write again" }),
-  "lead.talked_undone": () => ({ label: "You undid \"Already spoke\"", detail: "Check-ins are back on" }),
+  "lead.talked_undone": () => ({ label: "You undid \"I already talked to them\"", detail: "Check-ins are back on" }),
   // "Keep following up anyway" on a customer with an agent (A-246).
   "lead.keep_following": () => ({ label: "You asked FollowUp to keep following up", detail: "Even though they have an agent" }),
   // "I replied" on a lead site (b018, A-075).

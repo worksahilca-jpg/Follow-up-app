@@ -13337,3 +13337,44 @@ build at 390×844 and 1440×900.
   read cleanly, nothing scrolls sideways; typecheck clean, 3,948 tests pass.
 - **Weak spot to watch:** a serif at 15px in a phone bubble is the smallest place it appears; it reads well in the
   check, but if testers squint, the fix is 16px there, not a different face.
+
+## 2026-10-15 — Proposed: "Not a customer" asks who it was, so FollowUp learns (extends A-073)
+
+Founder: *"if it's not a customer, it should learn from that too why it is not a customer, so we can improve."*
+Drawn on the real app (phone, local sample data), nothing built; board `not-a-customer-board.png` (scratchpad).
+- **What happens today (code read):** an email "Not a customer" remembers the address only (`senderVerdicts.ts`,
+  subject saved as null, so the checker's examples carry no topic). An Instagram or Messenger one only moves the chat
+  aside; the next message from them is judged again from scratch, so nothing is learned. A-073's "third correction →
+  set these aside?" sheet was approved 2026-09-29 and never built.
+- **Proposed:** the confirm box asks one optional question, "Who is [name]?", with four answers (A friend or family ·
+  Someone I work with · Selling me something · Spam). The line under them says what FollowUp will do. Friend and work
+  contact: that person is never treated as a customer again (DMs included). Selling and spam: set aside, and the
+  checker is shown this owner's examples of the kind. The third of one kind brings A-073's sheet once. Settings › Your
+  business gets "Who isn't a customer", every learned rule with Undo.
+- **Privacy:** only the owner's answer is kept, with the sender's address or handle; no message text (the privacy
+  page's promise and H1). Founder's /admin shows totals by answer and channel across testers, numbers only.
+- **Weak spot:** four chips wrap to three rows on a 390px phone; a 2×2 grid would be tidier if he approves.
+
+## 2026-10-15 — A-259 built: "Not a customer" asks who it was, and FollowUp learns from the answer
+
+Founder: *"yes build it"*. Built as drawn, with the 2×2 answers the drawing's weak spot called for.
+- **Confirm box:** "Who is [first name]?", optional, four answers two by two (each 44px tall on a phone), a line under
+  them that changes with the answer, then Yes / Cancel. Skipping the question works exactly as before.
+- **What each answer does:** a friend or work contact is remembered, on Instagram and Messenger too: their next
+  message (their "hi", and the owner's own messages to them from the app) is set aside without a fresh look. Before,
+  a set-aside chat was judged again from scratch. Selling and spam are remembered for that sender, and the checker
+  sees the owner's answers beside the examples ("…NOT a customer, it was someone selling the owner something").
+- **The third of one kind (selling, spam):** one sheet, asked of admins only, once per kind: "Set these aside from
+  now on?" A yes becomes one fixed sentence in the checker's instructions ("…A person asking about the owner's own
+  service still is.").
+- **Settings › Your business › Who isn't a customer:** one row per answer, Undo for admins (forgets everyone with that
+  answer and drops the rule; set-aside chats stay in Filtered out). Bringing a chat back from Filtered out forgets
+  that contact too.
+- **/admin:** "Not a customer, and why": last 30 days, answer × channel, numbers only, from the audit log.
+- **Privacy:** only the answer is kept, with the address or Instagram/Messenger key; no message text. One migration
+  (three additive columns).
+- **Checked:** local production build at 390×844 and 1440×900: four answers in two rows, the line changes, the third
+  "selling" brings the sheet with "Yes, from now on" focused, Settings shows the rows and Undo works, no console
+  errors, nothing scrolls sideways. 3,979 tests pass.
+- **Weak spots:** in the narrow side column on a computer, three of the four answers wrap to two lines. The /admin
+  table was not opened in the browser (the local tester isn't a platform admin); its counting is covered by tests.

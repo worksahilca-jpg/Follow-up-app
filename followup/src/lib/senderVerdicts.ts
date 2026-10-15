@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/db";
 import { isSharedSender } from "@/lib/sharedSenders";
+import { isInstagramLeadId, isMessengerLeadId } from "@/lib/instagramId";
+import { isNotCustomerReason, type NotCustomerReason } from "@/lib/notCustomerReasons";
 
 /**
  * Learning from the owner's corrections, one business at a time (founder,
@@ -18,6 +20,12 @@ import { isSharedSender } from "@/lib/sharedSenders";
  *  - The most recent few corrections, sender and subject line only, go to
  *    the classifier as this owner's own examples (see classifyAsProspect).
  *
+ * Since A-259 a "not a customer" can carry the owner's answer to "Who is
+ * this?" (friend, work, selling, spam; src/lib/notCustomerReasons.ts). The
+ * answer travels with the example, and an Instagram or Messenger contact
+ * with an answer is remembered too, by its lead key (recordContactVerdict),
+ * so their next message is set aside instead of judged afresh.
+ *
  * No other business's corrections are ever read, no message body is kept,
  * and nothing trains a model: the privacy page's promise stands.
  *
@@ -32,7 +40,7 @@ import { isSharedSender } from "@/lib/sharedSenders";
 
 export type SenderVerdictKind = "customer" | "not_customer";
 
-export type OwnerCorrection = { sender: string; subject: string | null; verdict: SenderVerdictKind };
+export type OwnerCorrection = { sender: string; subject: string | null; verdict: SenderVerdictKind; reason?: NotCustomerReason | null };
 
 /** How many recent corrections the classifier is shown. Enough to show a pattern, few enough to stay a hint. */
 export const MAX_CORRECTION_EXAMPLES = 8;
@@ -65,7 +73,10 @@ export async function recordSenderVerdict(
   businessId: string,
   sender: string,
   verdict: SenderVerdictKind,
-  subject: string | null
+  subject: string | null,
+  // The owner's answer to "Who is this?" (A-259). Kept on a "not a
+  // customer" only; a "customer" clears it.
+  reason: NotCustomerReason | null = null
 ): Promise<void> {
   const key = normalizeSender(sender);
   // An address, never free text: a From header with no angle brackets
@@ -75,10 +86,33 @@ export async function recordSenderVerdict(
   // One person's "not a customer" is not the next person's (see header).
   if (verdict === "not_customer" && isSharedSender(key)) return;
   const trimmed = subject?.trim().slice(0, 200) || null;
+  const why = verdict === "not_customer" ? reason : null;
   await prisma.senderVerdict.upsert({
     where: { businessId_sender: { businessId, sender: key } },
-    update: { verdict, subject: trimmed },
-    create: { businessId, sender: key, verdict, subject: trimmed },
+    update: { verdict, subject: trimmed, reason: why },
+    create: { businessId, sender: key, verdict, subject: trimmed, reason: why },
+  });
+}
+
+/** An Instagram or Messenger contact's lead key (ig:… / fb:…), the only non-address sender kept. */
+function isContactKey(key: string): boolean {
+  return isInstagramLeadId(key) || isMessengerLeadId(key);
+}
+
+/**
+ * The owner said an Instagram or Messenger contact is not a customer and
+ * said who they were (A-259): remembered, so the next message from them is
+ * set aside without a fresh look (src/lib/inbound/dmContactGate.ts). With no
+ * answer nothing is kept, and the chat is checked again as before.
+ */
+export async function recordContactVerdict(businessId: string, contactKey: string, reason: NotCustomerReason): Promise<void> {
+  // Read back through normalizeSender (ownerSaidNotCustomer, forgetSender), so stored the same way.
+  const key = normalizeSender(contactKey);
+  if (!isContactKey(key)) return;
+  await prisma.senderVerdict.upsert({
+    where: { businessId_sender: { businessId, sender: key } },
+    update: { verdict: "not_customer", subject: null, reason },
+    create: { businessId, sender: key, verdict: "not_customer", subject: null, reason },
   });
 }
 
@@ -113,16 +147,47 @@ export async function recentCorrections(businessId: string): Promise<OwnerCorrec
       where: { businessId },
       orderBy: { updatedAt: "desc" },
       take: MAX_CORRECTION_EXAMPLES,
-      select: { sender: true, subject: true, verdict: true },
+      select: { sender: true, subject: true, verdict: true, reason: true },
     });
     return rows
-      .filter((r): r is OwnerCorrection => r.verdict === "customer" || r.verdict === "not_customer")
+      .filter((r): r is typeof r & { verdict: SenderVerdictKind } => r.verdict === "customer" || r.verdict === "not_customer")
       // A stored "not a customer" on a shared sender would teach the
       // classifier the same over-broad rule (see header).
       .filter((r) => !(r.verdict === "not_customer" && isSharedSender(r.sender)))
-      .map((r) => ({ sender: r.sender, subject: r.subject, verdict: r.verdict }));
+      .map((r) => ({
+        // A contact's lead key means nothing to the checker; the channel does.
+        sender: isInstagramLeadId(r.sender) ? "an Instagram chat" : isMessengerLeadId(r.sender) ? "a Messenger chat" : r.sender,
+        subject: r.subject,
+        verdict: r.verdict,
+        reason: isNotCustomerReason(r.reason) ? r.reason : null,
+      }));
   } catch (err) {
     console.error(`Could not read owner corrections for business ${businessId}:`, err);
     return [];
   }
+}
+
+/**
+ * What the owner has taught FollowUp, by answer (Settings › Your business ›
+ * Who isn't a customer, and the "from now on" question): how many senders
+ * carry each answer, and when the latest was given.
+ */
+export async function notCustomerCounts(businessId: string): Promise<Partial<Record<NotCustomerReason, { count: number; latest: Date }>>> {
+  const rows = await prisma.senderVerdict.groupBy({
+    by: ["reason"],
+    where: { businessId, verdict: "not_customer", reason: { not: null } },
+    _count: { _all: true },
+    _max: { updatedAt: true },
+  });
+  const out: Partial<Record<NotCustomerReason, { count: number; latest: Date }>> = {};
+  for (const r of rows) {
+    if (isNotCustomerReason(r.reason) && r._max.updatedAt) out[r.reason] = { count: r._count._all, latest: r._max.updatedAt };
+  }
+  return out;
+}
+
+/** "Undo" on one answer in Settings: FollowUp forgets everyone the owner gave that answer for. */
+export async function forgetReason(businessId: string, reason: NotCustomerReason): Promise<number> {
+  const { count } = await prisma.senderVerdict.deleteMany({ where: { businessId, verdict: "not_customer", reason } });
+  return count;
 }

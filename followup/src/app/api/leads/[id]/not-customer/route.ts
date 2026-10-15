@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
-import { getSessionContext } from "@/lib/session";
+import { getSessionContext, requireAdmin, type SessionContext } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { deleteLeadCascade } from "@/lib/leads-admin";
 import { recordAudit } from "@/lib/audit";
-import { OWNER_SAID_NOT_CUSTOMER, recordSenderVerdict } from "@/lib/senderVerdicts";
+import { OWNER_SAID_NOT_CUSTOMER, notCustomerCounts, recordContactVerdict, recordSenderVerdict } from "@/lib/senderVerdicts";
+import { isNotCustomerReason, shouldAskAlways, type NotCustomerReason } from "@/lib/notCustomerReasons";
 import { publicErrorMessage } from "@/lib/publicError";
 import { moveDmLeadAside } from "@/lib/inbound/dmContactGate";
 import { instagramRecipientId, isInstagramLeadId, isMessengerLeadId, messengerRecipientId } from "@/lib/instagramId";
@@ -26,9 +27,17 @@ import { instagramRecipientId, isInstagramLeadId, isMessengerLeadId, messengerRe
 //     (Settings → filtered emails), one tap from coming back — which also
 //     keeps the sync from re-judging those threads;
 //  3. the lead goes, as with delete.
-export async function POST(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+//
+// The body may carry the owner's answer to "Who is this?" (A-259):
+// { reason: "friend" | "work" | "selling" | "spam" }. Anything else, or no
+// body, is "no answer", and everything works as before.
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const ctx = await getSessionContext();
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
+
+  const body: unknown = await request.json().catch(() => null);
+  const raw = body && typeof body === "object" ? (body as { reason?: unknown }).reason : undefined;
+  const reason: NotCustomerReason | null = isNotCustomerReason(raw) ? raw : null;
 
   const { id } = await params;
   const lead = await prisma.lead.findFirst({
@@ -68,11 +77,18 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     try {
       const contactId = dmChannel === "instagram" ? instagramRecipientId(lead.phone) : messengerRecipientId(lead.phone);
       await moveDmLeadAside(ctx.businessId, dmChannel, contactId, lead.id, OWNER_SAID_NOT_CUSTOMER);
+      // With an answer, this contact is remembered: their next message is set
+      // aside instead of judged afresh (A-259). Without one, as before.
+      if (reason) {
+        await recordContactVerdict(ctx.businessId, lead.phone, reason).catch((err) =>
+          console.error(`Could not remember a not-customer contact for business ${ctx.businessId}:`, err)
+        );
+      }
     } catch (err) {
       return NextResponse.json({ success: false, message: publicErrorMessage(err, "Couldn't do that. Try again.", "leads/[id]/not-customer") }, { status: 500 });
     }
-    void recordAudit(ctx, "lead.not_customer", { targetType: "lead", targetId: lead.id, meta: { channel: dmChannel } });
-    return NextResponse.json({ success: true });
+    void recordAudit(ctx, "lead.not_customer", { targetType: "lead", targetId: lead.id, meta: { channel: dmChannel, reason } });
+    return NextResponse.json({ success: true, ...(await askAlways(ctx, reason)) });
   }
 
   if (!lead.email) {
@@ -103,7 +119,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
   }
 
   try {
-    await recordSenderVerdict(ctx.businessId, lead.email, "not_customer", null);
+    await recordSenderVerdict(ctx.businessId, lead.email, "not_customer", null, reason);
     for (const c of emailThreads) {
       const threadId = c.externalId!;
       const lastMessageAt = c.messages[0]?.sentAt ?? new Date();
@@ -133,7 +149,32 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
   void recordAudit(ctx, "lead.not_customer", {
     targetType: "lead",
     targetId: lead.id,
-    meta: { threads: emailThreads.length },
+    meta: { threads: emailThreads.length, channel: "email", reason },
   });
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ success: true, ...(await askAlways(ctx, reason)) });
+}
+
+/**
+ * After the third answer of one kind (selling, spam), the screen asks once:
+ * "Set these aside from now on?" (A-259, A-073). Returns that kind and how
+ * many there are now, or nothing.
+ * Best-effort: the owner's correction already stands, and a failed count
+ * only means the question waits for the next one.
+ */
+async function askAlways(ctx: SessionContext, reason: NotCustomerReason | null): Promise<{ ask?: NotCustomerReason; askCount?: number }> {
+  if (reason !== "selling" && reason !== "spam") return {};
+  const businessId = ctx.businessId;
+  try {
+    // A standing rule is an account setting: only an admin is asked.
+    if (!(await requireAdmin(ctx))) return {};
+    const [counts, business] = await Promise.all([
+      notCustomerCounts(businessId),
+      prisma.business.findUnique({ where: { id: businessId }, select: { notCustomerAsked: true } }),
+    ]);
+    const count = counts[reason]?.count ?? 0;
+    return shouldAskAlways(reason, count, business?.notCustomerAsked ?? []) ? { ask: reason, askCount: count } : {};
+  } catch (err) {
+    console.error(`Could not count the owner's answers for business ${businessId}:`, err);
+    return {};
+  }
 }

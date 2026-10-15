@@ -13,7 +13,7 @@ import { findOrCreateLeadByMessenger } from "@/lib/facebook";
 import { findOrCreateConversation } from "@/lib/conversations";
 import { scoreAndDraftForLead } from "@/lib/scoring";
 import { recordAudit } from "@/lib/audit";
-import { recordSenderVerdict } from "@/lib/senderVerdicts";
+import { forgetSender, recordSenderVerdict } from "@/lib/senderVerdicts";
 import { publicErrorMessage } from "@/lib/publicError";
 
 // POST /api/integrations/gmail/filtered/[id]/restore — "this was a lead":
@@ -61,6 +61,9 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
       await takeDmSetAside(ctx.businessId, channel, contactId, conversation.id, thread.messages, undefined);
       // The owner said "customer": never judged again (A-239, src/lib/inbound/dmRecheck.ts).
       await prisma.lead.updateMany({ where: { id: lead.id, businessId: ctx.businessId }, data: { dmConfirmedAt: new Date() } });
+      // And their earlier "not a customer" is forgotten (A-259), so Settings
+      // stops counting them and the latest word wins.
+      await forgetSender(ctx.businessId, lead.phone);
       // The email or mobile they had typed comes back with them (A-238), oldest first so the newest wins.
       for (const m of thread.messages) if (m.direction === "inbound") await rememberDmContact(ctx.businessId, lead.id, m.body);
     } else if (row.provider === "whatsapp") {

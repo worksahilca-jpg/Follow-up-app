@@ -6,13 +6,15 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { prismaMock, deleteLeadCascade, recordAudit, getSessionContext, moveDmLeadAside } = vi.hoisted(() => ({
+const { prismaMock, deleteLeadCascade, recordAudit, getSessionContext, requireAdmin, moveDmLeadAside } = vi.hoisted(() => ({
   moveDmLeadAside: vi.fn(async () => true),
   prismaMock: {
     lead: { findFirst: vi.fn() },
-    senderVerdict: { upsert: vi.fn(async () => ({})) },
+    senderVerdict: { upsert: vi.fn(async () => ({})), groupBy: vi.fn(async (): Promise<unknown[]> => []) },
     filteredEmail: { upsert: vi.fn(async () => ({})) },
+    business: { findUnique: vi.fn(async (): Promise<unknown> => ({ notCustomerAsked: [] })) },
   },
+  requireAdmin: vi.fn(async () => true),
   deleteLeadCascade: vi.fn(async () => undefined),
   recordAudit: vi.fn(async () => undefined),
   getSessionContext: vi.fn(),
@@ -20,14 +22,21 @@ const { prismaMock, deleteLeadCascade, recordAudit, getSessionContext, moveDmLea
 vi.mock("@/lib/db", () => ({ prisma: prismaMock }));
 vi.mock("@/lib/leads-admin", () => ({ deleteLeadCascade }));
 vi.mock("@/lib/audit", () => ({ recordAudit }));
-vi.mock("@/lib/session", () => ({ getSessionContext }));
+vi.mock("@/lib/session", () => ({ getSessionContext, requireAdmin }));
 vi.mock("@/lib/inbound/dmContactGate", () => ({ moveDmLeadAside }));
 
 import { POST } from "@/app/api/leads/[id]/not-customer/route";
 import { OWNER_SAID_NOT_CUSTOMER } from "@/lib/senderVerdicts";
 
 const params = Promise.resolve({ id: "lead1" });
-const call = () => POST(new Request("http://localhost/api/leads/lead1/not-customer", { method: "POST" }), { params });
+const call = (body?: unknown) =>
+  POST(
+    new Request("http://localhost/api/leads/lead1/not-customer", {
+      method: "POST",
+      ...(body === undefined ? {} : { headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }),
+    }),
+    { params }
+  );
 const last = new Date("2026-09-20T10:00:00Z");
 
 /** Someone who only ever emailed, and never did business here. */
@@ -162,3 +171,65 @@ describe("POST /api/leads/[id]/not-customer — an Instagram customer", () => {
   });
 });
 
+
+// A-259: the owner's answer to "Who is this?" is kept, and the third of one kind asks once.
+describe("POST /api/leads/[id]/not-customer — with the owner's answer", () => {
+  const dm = () =>
+    pitch({ name: "@friend", email: null, phone: "ig:1784100000000001", conversations: [{ channel: "instagram", externalId: null, emailProvider: null, messages: [{ sentAt: last }] }] });
+  const counted = (reason: string, n: number) => [{ reason, _count: { _all: n }, _max: { updatedAt: last } }];
+
+  it("keeps the answer on the remembered email sender, and in the audit", async () => {
+    const res = await call({ reason: "work" });
+    expect(await res.json()).toEqual({ success: true });
+    expect(prismaMock.senderVerdict.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ create: expect.objectContaining({ sender: "kira@pixelstudio.example", reason: "work" }) })
+    );
+    expect(recordAudit).toHaveBeenCalledWith(expect.anything(), "lead.not_customer", expect.objectContaining({ meta: expect.objectContaining({ reason: "work", channel: "email" }) }));
+  });
+
+  it("remembers an Instagram contact when the owner said who they were", async () => {
+    prismaMock.lead.findFirst.mockResolvedValue(dm());
+    const res = await call({ reason: "friend" });
+    expect(await res.json()).toEqual({ success: true });
+    expect(moveDmLeadAside).toHaveBeenCalled();
+    expect(prismaMock.senderVerdict.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { businessId_sender: { businessId: "biz1", sender: "ig:1784100000000001" } },
+        create: expect.objectContaining({ verdict: "not_customer", reason: "friend", subject: null }),
+      })
+    );
+  });
+
+  it("ignores an answer it doesn't know, and keeps nothing for a chat", async () => {
+    prismaMock.lead.findFirst.mockResolvedValue(dm());
+    const res = await call({ reason: "enemy" });
+    expect(await res.json()).toEqual({ success: true });
+    expect(prismaMock.senderVerdict.upsert).not.toHaveBeenCalled();
+  });
+
+  it("asks an admin once, after the third chat selling them something", async () => {
+    prismaMock.lead.findFirst.mockResolvedValue(dm());
+    prismaMock.senderVerdict.groupBy.mockResolvedValueOnce(counted("selling", 3));
+    const res = await call({ reason: "selling" });
+    expect(await res.json()).toEqual({ success: true, ask: "selling", askCount: 3 });
+  });
+
+  it("doesn't ask before the third, after it was asked, or a teammate who isn't an admin", async () => {
+    prismaMock.senderVerdict.groupBy.mockResolvedValueOnce(counted("selling", 2));
+    expect(await (await call({ reason: "selling" })).json()).toEqual({ success: true });
+
+    prismaMock.senderVerdict.groupBy.mockResolvedValueOnce(counted("selling", 4));
+    prismaMock.business.findUnique.mockResolvedValueOnce({ notCustomerAsked: ["selling"] });
+    expect(await (await call({ reason: "selling" })).json()).toEqual({ success: true });
+
+    prismaMock.senderVerdict.groupBy.mockResolvedValueOnce(counted("selling", 3));
+    requireAdmin.mockResolvedValueOnce(false);
+    expect(await (await call({ reason: "selling" })).json()).toEqual({ success: true });
+  });
+
+  it("never asks about a friend: a person, not a pattern", async () => {
+    prismaMock.senderVerdict.groupBy.mockResolvedValueOnce(counted("friend", 5));
+    expect(await (await call({ reason: "friend" })).json()).toEqual({ success: true });
+    expect(prismaMock.senderVerdict.groupBy).not.toHaveBeenCalled();
+  });
+});

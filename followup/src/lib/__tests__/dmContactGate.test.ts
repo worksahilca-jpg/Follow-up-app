@@ -15,6 +15,9 @@ const h = vi.hoisted(() => ({
   judge: vi.fn(),
   tooMany: vi.fn<(businessId: string, action: string, opts: unknown) => Promise<boolean>>(async () => false),
   business: { name: "Maple Realty", industry: "Real estate", subscriptionStatus: "beta", tier: "pro" } as Record<string, unknown> | null,
+  // The owner's "Not a customer" on this contact (A-259), and their recent calls.
+  verdict: null as null | { verdict: string },
+  corrections: [] as unknown[],
 }));
 
 vi.mock("@/lib/db", () => {
@@ -37,6 +40,7 @@ vi.mock("@/lib/db", () => {
       filteredEmail,
       lead,
       business: { findUnique: vi.fn(async () => h.business) },
+      senderVerdict: { findUnique: vi.fn(async () => h.verdict), findMany: vi.fn(async () => h.corrections) },
       $transaction: vi.fn(async (fn: (t: typeof tx) => unknown) => fn(tx)),
     },
   };
@@ -67,6 +71,8 @@ beforeEach(() => {
   h.upserts = [];
   h.updates = [];
   h.business = { name: "Maple Realty", industry: "Real estate", subscriptionStatus: "beta", tier: "pro" };
+  h.verdict = null;
+  h.corrections = [];
   h.tooMany.mockResolvedValue(false);
 });
 
@@ -208,5 +214,41 @@ describe("a bare greeting", () => {
   it("is hi, hello, hey and the like, and nothing more", () => {
     for (const t of ["Hi", "hii", "Hello!", "hey there", "Good morning", "Sat Sri Akal", "Hi 🙂"]) expect(isBareGreeting(t)).toBe(true);
     for (const t of ["hey bro what's up", "Hi, how much?", "hello is this available", ""]) expect(isBareGreeting(t)).toBe(false);
+  });
+});
+
+// A-259: the owner said who this was on "Not a customer".
+describe("someone the owner already said isn't a customer", () => {
+  it("is set aside without a fresh look, their 'hi' included", async () => {
+    h.verdict = { verdict: "not_customer" };
+    const r = await ask(msg("m1", "hi"));
+    expect(r).toEqual({ admit: false });
+    expect(h.judge).not.toHaveBeenCalled();
+    expect(h.upserts[0]).toMatchObject({ create: { provider: "instagram", reason: "You marked this sender as not a customer." } });
+  });
+
+  it("stays aside when the owner writes to them from the Instagram app", async () => {
+    h.verdict = { verdict: "not_customer" };
+    const r = await ask(msg("m2", "haha see you sunday", "outbound"));
+    expect(r).toEqual({ admit: false });
+    expect(h.judge).not.toHaveBeenCalled();
+  });
+
+  it("is judged as before once the owner brought them back (the latest word wins)", async () => {
+    h.verdict = { verdict: "customer" };
+    h.judge.mockResolvedValue({ import: true });
+    const r = await ask(msg("m3", "Is the condo on King St still available?"));
+    expect(r).toMatchObject({ admit: true });
+    expect(h.judge).toHaveBeenCalled();
+  });
+
+  it("hands the checker this owner's answers and standing rules", async () => {
+    h.business = { ...h.business, notCustomerAlways: ["selling", "nonsense"] };
+    h.corrections = [{ sender: "ig:555", subject: null, verdict: "not_customer", reason: "selling" }];
+    h.judge.mockResolvedValue({ import: false, reason: "A marketing offer." });
+    await ask(msg("m4", "We can get you 50 buyer leads a month, interested?"));
+    const business = h.judge.mock.calls[0][2];
+    expect(business.setAsideKinds).toEqual(["selling"]);
+    expect(business.corrections).toEqual([{ sender: "an Instagram chat", subject: null, verdict: "not_customer", reason: "selling" }]);
   });
 });

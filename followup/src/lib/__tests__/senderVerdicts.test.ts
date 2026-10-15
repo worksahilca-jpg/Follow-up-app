@@ -133,9 +133,10 @@ describe("the owner's corrections guide the judge", () => {
       expect.objectContaining({ where: { businessId: "biz1" }, orderBy: { updatedAt: "desc" } })
     );
     const business = classifyWithSecondLook.mock.calls[0][2];
+    // No answer to "Who is this?" on either (A-259): reason null.
     expect(business.corrections).toEqual([
-      { sender: "sales@leadflow.example", subject: "50 leads for you", verdict: "not_customer" },
-      { sender: "omar@example.com", subject: "Cleaning next week?", verdict: "customer" },
+      { sender: "sales@leadflow.example", subject: "50 leads for you", verdict: "not_customer", reason: null },
+      { sender: "omar@example.com", subject: "Cleaning next week?", verdict: "customer", reason: null },
     ]);
   });
 
@@ -215,7 +216,7 @@ describe("a shared form or lead-site sender", () => {
     classifyWithSecondLook.mockResolvedValue({ isProspect: false, reason: "a pitch" });
     await fetchSalesConversations("biz1");
     expect(classifyWithSecondLook.mock.calls[0][2].corrections).toEqual([
-      { sender: "sales@leadflow.example", subject: "50 leads for you", verdict: "not_customer" },
+      { sender: "sales@leadflow.example", subject: "50 leads for you", verdict: "not_customer", reason: null },
     ]);
   });
 });

@@ -905,6 +905,33 @@ describe("the owner's corrections in the lead check (2026-09-29)", () => {
     expect(system).not.toMatch(/owner_corrections/);
     expect(user).not.toMatch(/owner_corrections/);
   });
+
+  // A-259: the owner's answer to "Who is this?" rides with the example, and a
+  // "from now on" rule is a fixed sentence in the instructions.
+  it("carries the owner's answer, and their standing rule", async () => {
+    create.mockResolvedValue(verdict);
+    await classifyAsProspect(conversation, { name: "Kira", email: "kira@pixelstudio.example" }, {
+      name: "Maple Realty",
+      industry: "Real estate",
+      corrections: [
+        { sender: "an Instagram chat", subject: null, verdict: "not_customer", reason: "selling" },
+        { sender: "sam@example.com", subject: null, verdict: "not_customer", reason: "friend" },
+      ],
+      setAsideKinds: ["selling"],
+    });
+    const [system, user] = create.mock.calls[0][0].messages.map((m: { content: string }) => m.content) as string[];
+    expect(user).toContain("- from an Instagram chat: the owner said this is NOT a customer, it was someone selling the owner something");
+    expect(user).toContain("- from sam@example.com: the owner said this is NOT a customer, it was a friend or family member of the owner");
+    expect(system).toContain("This owner has asked for these to be set aside without asking them: anyone selling to the owner");
+    expect(user).not.toContain("set aside without asking");
+  });
+
+  it("says nothing about standing rules when there are none", async () => {
+    create.mockResolvedValue(verdict);
+    await classifyAsProspect(conversation, { name: "Kira", email: "kira@pixelstudio.example" }, { name: "Maple Realty", industry: "Real estate", setAsideKinds: [] });
+    const system = create.mock.calls[0][0].messages[0].content as string;
+    expect(system).not.toContain("set aside without asking");
+  });
 });
 
 // Lead-check eval, 2026-09-29 (b005): the only two misses in 80 were real

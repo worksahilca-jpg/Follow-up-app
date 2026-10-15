@@ -35,6 +35,7 @@ import { Lead, Message } from "@/lib/types";
 import { classifyWithSecondLook } from "@/lib/integrations/openai";
 import { getBusinessAbout } from "@/lib/businessFacts";
 import { OWNER_SAID_NOT_CUSTOMER, ownerSaidNotCustomer, recentCorrections } from "@/lib/senderVerdicts";
+import { cleanKinds } from "@/lib/notCustomerReasons";
 import { mapWithConcurrency } from "@/lib/concurrency";
 import { pickAssignee } from "@/lib/assignment";
 import { notifyLeadEvent } from "@/lib/outboundWebhook";
@@ -606,12 +607,19 @@ async function processThreadRefs(
   // per thread.
   const business = await prisma.business.findUnique({
     where: { id: businessId },
-    select: { name: true, industry: true, users: { select: TEAM_ADDRESS_SELECT } },
+    select: { name: true, industry: true, notCustomerAlways: true, users: { select: TEAM_ADDRESS_SELECT } },
   });
   // With the owner's own recent corrections, so the classifier judges the
   // way this owner does (src/lib/senderVerdicts.ts).
   const businessContext = business
-    ? { name: business.name, industry: business.industry, about: await getBusinessAbout(businessId), corrections: await recentCorrections(businessId) }
+    ? {
+        name: business.name,
+        industry: business.industry,
+        about: await getBusinessAbout(businessId),
+        corrections: await recentCorrections(businessId),
+        // "Set these aside from now on" (A-259).
+        setAsideKinds: cleanKinds(business.notCustomerAlways),
+      }
     : null;
   // The business itself: this inbox and everyone on the team (see
   // ownAddressSet). Their mail is ours, never a customer's.

@@ -155,7 +155,7 @@ describe("the Gmail sync and the business's own people", () => {
       data: { id: "thread-1", messages: [gmailMessage("m1", "Jane Doe <jane@example.com>", t0, "Could you quote a kitchen reno?")] },
     });
     await fetchSalesConversations("biz1");
-    expect(classifyWithSecondLook.mock.calls[0][2]).toEqual({ name: "Sam's Plumbing", industry: "Plumbing", about: null, corrections: [] });
+    expect(classifyWithSecondLook.mock.calls[0][2]).toEqual({ name: "Sam's Plumbing", industry: "Plumbing", about: null, corrections: [], setAsideKinds: [] });
   });
 });
 

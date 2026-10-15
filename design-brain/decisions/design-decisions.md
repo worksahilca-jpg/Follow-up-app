@@ -13054,6 +13054,8 @@ window.
   merge.
 - /api/automation/rule-records and /api/business/track-record have no screen any more. Removing them is left for a
   later cleanup.
+  **Done 2026-10-15 (PR #517):** both routes removed, with `lib/ruleRecords.ts` and `recentTrackRecord`, which only
+  they used.
 
 ## 2026-10-14 — Sixth accuracy run (after PR #510), read from the founder's screenshot
 

@@ -75,20 +75,3 @@ export async function sentAsWritten(businessId: string, since: Date): Promise<{ 
   }
   return { asWritten, total };
 }
-
-/**
- * The owner's own track record with FollowUp's drafts (research round 2, #3):
- * of the last `n` replies a person sent that started as a FollowUp draft,
- * how many went out exactly as written. Trust grows from feedback on how the
- * system actually performed (Lee & See 2004); this is that feedback, and the
- * honest basis for any later "send these without asking". Real rows only.
- */
-export async function recentTrackRecord(businessId: string, n = 20): Promise<{ asWritten: number; total: number }> {
-  const rows = await prisma.followUp.findMany({
-    where: { automated: false, status: "sent", draftEdited: { not: null }, lead: { businessId } },
-    orderBy: { sentAt: "desc" },
-    take: n,
-    select: { draftEdited: true },
-  });
-  return { asWritten: rows.filter((r) => r.draftEdited === false).length, total: rows.length };
-}

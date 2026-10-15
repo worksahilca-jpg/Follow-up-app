@@ -13296,3 +13296,17 @@ security check too."*
   person, so each person now sees their own (sends, holds and finished plans stay shared).
 - **Pipeline (asked the same night):** not built. It was removed on Oct 10 as a copy of Customers (A-219), and
   across all outside testers 0 of 23 customers ever had a stage or a value set, and 0 testers connected a CRM.
+
+## 2026-10-15 — Proposed: a reading serif for messages and replies (founder: "I like your font")
+
+Founder: *"Do you think we should change fonts and stuff too? … I like your font that you use. Can we have something
+like that?"* Claude's own typefaces are Anthropic's and can't be used. Drawn on Today (phone, real app), three ways;
+nothing built. Titles already use a serif (`.title-serif`), so the only real change is the customer's message and
+the reply; buttons and labels stay Public Sans in all three.
+- **Now:** Public Sans for messages.
+- **A, Source Serif 4** (free, OFL): sturdy, bookish; the reply runs a line longer, so Send sits ~20px lower.
+- **B, Newsreader** (free, OFL), recommended: lighter and warmer, closest to Claude's reading text, same height as now.
+- **If chosen:** self-hosted through `next/font` (the app's security policy blocks outside font files, which is
+  right); one face, two weights, about 40 KB. Needs his yes first (new font).
+- **Honest note:** fonts are a small part of why Claude feels professional; spacing, quiet colour and the same
+  structure everywhere carry most of it, and A-257 was that part.

@@ -13183,3 +13183,34 @@ HubSpot's sites and Mobbin were unreachable, so nothing was seen first-hand).
 - **Weak spots, honestly:** the evidence about HubSpot is second-hand; the "now" placeholder was drawn by putting
   `loading.tsx`'s exact markup on screen, because in dev mode a tap shows nothing at all (production prefetches the
   placeholder). Pressed-state colour `#3a3836` is a proposal, not a token yet.
+
+## 2026-10-15 — A-254 built: pages open in their own shape, buttons react to the thumb
+
+Founder: *"yes build 1 and 2"*.
+
+- **What changed:**
+  - `components/app/PageSkeleton.tsx` holds five shapes (Today, Customers, a customer, Settings, and a plain
+    title-and-rows for everywhere else), each at its page's own widths and columns;
+  - a `loading.tsx` for `/dashboard`, `/leads`, `/leads/[id]`, `/settings` and the Settings window
+    (`@modal/(.)settings`); `(app)/loading.tsx` is now the plain one;
+  - the press rules sit beside the shared transition in `globals.css`: a button dips to 97% and softens to 85% while
+    pressed; a link softens to 60%; the browser's grey tap box is off; reduced motion keeps only the softening. They
+    use the `scale` property, so a button's own translate is kept.
+- **Found while checking, and fixed:** opening Settings from inside the app (it opens as a window, A-213) used to put
+  the page placeholder *beside* the page in the layout's row, so on a phone Today was squeezed into a narrow column
+  until Settings arrived. This was true before A-254 too (with the four boxes). The window now has its own
+  placeholder: the window itself, already open, with Settings' shape inside. The real window takes its place without
+  rising in a second time (`app-win--settled`).
+- **Checked** on a local production build (`next build` and `next start` with the local database). At 390×844 and
+  1440×900, a tap to Today, Customers, Settings and a customer each showed its own placeholder, and the page width
+  under it never changed (390→390, 1216→1216). Nothing scrolled sideways. Send measured `scale 0.97`, `opacity 0.85`
+  while pressed. Types, lint (0 errors) and 3,935 tests pass.
+- **A correction to the HubSpot study (2026-10-15 entry above):** it listed a third gap, "a customer opens as a
+  whole new page on the computer". That was wrong. A tap on a Customers row already opens the customer in a panel
+  over the list, with "Open full page" (`/leads?p=…`), which is HubSpot's preview panel. I had read only the
+  `/leads/[id]` route and not the row's link. The study is corrected.
+- **Weak spots, honestly:**
+  - the customer placeholder shows a "where they stand" card on a phone even for a customer who has none, so that
+    page can still shift a little;
+  - Results, Activity and the other places get the plain title-and-rows shape, not their own;
+  - the press can't be seen in a still picture; it needs a thumb on a real phone.

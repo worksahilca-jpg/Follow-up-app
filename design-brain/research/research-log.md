@@ -501,6 +501,7 @@ a squeezed computer; proposed a chat-app customer page and a thumb-first Today. 
 **2026-10-15: HubSpot, how it opens pages and how work flows.** Founder: *"analyse HubSpot's workflow … how they
 open all the pages … the animations, the click effect … how we can make it as simple as we can."* HubSpot's sites and
 Mobbin were unreachable, so this is from search summaries (grade C). FollowUp already has HubSpot's best flow ideas
-(one task then the next, a side panel, connect later). Reading our own code found three real gaps: every page opens
-with an old skeleton that no longer matches it, no button has a pressed state (a tap on a phone shows nothing until
-the server answers), and a customer opens as a whole new page on the computer. → [[references/crm/2026-10-15-hubspot-workflow-and-feel]]
+(one task then the next, a side panel, connect later). Reading our own code found two real gaps: every page opens
+with an old skeleton that no longer matches it, and no button has a pressed state (a tap on a phone shows nothing
+until the server answers). Both built the same day (A-254). A third claimed gap, a customer opening as a whole new
+page on the computer, was wrong: the panel over the list already exists. → [[references/crm/2026-10-15-hubspot-workflow-and-feel]]

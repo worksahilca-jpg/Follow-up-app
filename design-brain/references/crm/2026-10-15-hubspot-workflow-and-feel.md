@@ -63,6 +63,7 @@ bookmarks and three-column record.
 - One customer at a time with the next sliding up: Today (A-243, A-250) and the card fold (A-048) are FollowUp's
   task queue, with no "Start" step.
 - A side panel beside the customer on Today (A-212); Settings and single tasks open as windows over the page (A-213).
+- A customer opens in a panel over the Customers list on the computer, with "Open full page" (HubSpot's preview).
 - Connect later, ask for little: Setup starts with Instagram or Gmail (A-241); Connect → Connected (A-253).
 - Navigation goes between pages without a full reload (`next/link` in `Sidebar.tsx`); there is a sidebar search.
 
@@ -76,9 +77,9 @@ bookmarks and three-column record.
    `:active`). On a phone there is no hover, so a tap on Send shows nothing until the server answers. Proposal: every
    button and tappable row darkens slightly the moment it is pressed, using the existing `--motion-fast` (A-048);
    nothing bounces or scales under reduced motion.
-3. **A customer opens as a whole new page on the computer.** From Customers, a click leaves the list. Proposal (desk
-   only; the phone keeps its full chat page, A-222): open the customer in a panel over the list, with "Open full page".
-   Needs drawing first.
+3. ~~A customer opens as a whole new page on the computer.~~ **Wrong, corrected the same day:** a tap on a
+   Customers row already opens the customer in a panel over the list, with "Open full page" (`/leads?p=…`). That is
+   HubSpot's preview panel, already built. Only the `/leads/[id]` route had been read.
 
 **Not taken:** collapsible pinned menus and bookmarks (three places don't need them), customisable record layouts,
 the three-column record, a "Start N tasks" button (Today already starts with the first customer open).

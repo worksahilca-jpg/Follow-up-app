@@ -4521,7 +4521,15 @@ for Canada. It's for both Canada and the US."*
 - **Rules:** the 6-month stop on every plan doesn't apply to a customer who said yes (CASL express consent; US texts
   need consent under the TCPA). No pressure, no deadlines.
 - **Amended 2026-10-15 (founder: "Something that makes them reply back", see [R-118](rejected#^R-118)):** each note
-  opens with the owner's news straight away, says why it's good for this customer by setting it next to what they
+  opens with the owner's news straight away *(SUPERSEDED 2026-10-15 by the next bullet: not always the news)*, says why it's good for this customer by setting it next to what they
   said (under their budget, near the school they named), and ends with one easy question they can answer in a word
   ("Want me to send you the photos?"), then how to stop. Never "just checking in" or "any plans?". Never "better" or
   "perfect for you" without the reason. Settings › Follow-up plans lists this as a rule.
+- **Amended again 2026-10-15 (founder: "I'm not just saying that you have to start with an offer. If an offer is the
+  best thing to start with, then go for it. If there is something else that is more useful, more attractive, or
+  impactful, use that. Do the research."):** each note leads with whatever is most useful to that customer:
+  something they told you coming due (their timing, their plan) when the news touches it; a home or opening that
+  matches what they asked for; or information (what nearby homes sold for, a rate change) and what it means for
+  them. Then the reason from their own words, one easy question, how to stop. Research:
+  `followup/research/product/2026-10-15-what-to-send-when-staying-in-touch.md`.
+

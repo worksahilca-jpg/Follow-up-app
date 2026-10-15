@@ -186,7 +186,7 @@ export function EveryPlanBox({ holdAll }: { holdAll: boolean }) {
 const STAY_RULES = [
   "Only after they say yes. FollowUp keeps their words and the date.",
   "Only when you have something new that fits them. FollowUp never makes up a home, a price or a date.",
-  "Each note leads with your news, says why it suits them from what they told you, and asks one easy question. Never a “just checking in”.",
+  "Each note leads with what's most useful to them, says why from what they told you, and asks one easy question. Never a “just checking in”.",
   "Each note says how to stop. “Stop” ends it at once.",
   "No pressure: no deadlines, no “are you ready yet?”.",
   "Each note waits for your OK on Today. When they write back, it comes to you like any message.",

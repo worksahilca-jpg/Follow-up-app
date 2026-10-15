@@ -13310,3 +13310,16 @@ the reply; buttons and labels stay Public Sans in all three.
   right); one face, two weights, about 40 KB. Needs his yes first (new font).
 - **Honest note:** fonts are a small part of why Claude feels professional; spacing, quiet colour and the same
   structure everywhere carry most of it, and A-257 was that part.
+
+## 2026-10-15 — Whole-app sweep: 44px taps reach the Settings pages
+
+Founder: *"Keep fixing all the bugs and glitches."* Every app page (19 addresses including each Settings page) at
+360, 390, 1024 and 1440 wide, light and dark, on the local production build: **no console errors, nothing scrolls
+sideways, nothing spills past the screen.** The one finding: on a phone, controls under the 44px rule (A-196's sweep
+had covered the main screens, not the Settings pages).
+- **Fixed without changing their look:** every switch (an unseen band takes the tap at 44px), Download, Delete…,
+  Save, Remove and the booking day chips (`tap-44`, phone only; the day chips' row gap is 8px so bands don't overlap).
+- **Fixed by size, phone only:** selects can't carry a band, so the invite row (email, role, Invite) and the booking
+  time selects are 44px tall on a phone; the computer is unchanged.
+- **Left on purpose:** the plans page's "More plans for special cases" are links inside a sentence (WCAG 2.5.8's
+  inline exception, with a tall line), and the customer's name inside Today's sentence.

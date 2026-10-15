@@ -156,7 +156,7 @@ export default function DataPrivacySection() {
             type="button"
             onClick={handleExport}
             disabled={exporting}
-            className="shrink-0 text-sm font-medium rounded-full px-3.5 py-2 disabled:opacity-60"
+            className="tap-44 shrink-0 text-sm font-medium rounded-full px-3.5 py-2 disabled:opacity-60"
             style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
           >
             {exporting ? "Preparing…" : "Download"}
@@ -218,7 +218,7 @@ export default function DataPrivacySection() {
           {!confirmOpen && (
             <button
               onClick={() => setConfirmOpen(true)}
-              className="shrink-0 text-sm font-medium rounded-full px-3.5 py-2"
+              className="tap-44 shrink-0 text-sm font-medium rounded-full px-3.5 py-2"
               style={{ backgroundColor: "var(--coral-fill)", color: "var(--on-coral)" }}
             >
               Delete…

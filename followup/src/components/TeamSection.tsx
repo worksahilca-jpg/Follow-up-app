@@ -203,12 +203,12 @@ export default function TeamSection({ onlyAdminsSend = false }: { onlyAdminsSend
                 <select
                   value={m.role}
                   onChange={(e) => changeRole(m.id, e.target.value as TeamRole)}
-                  className="rounded-[12px] border border-line bg-paper px-2 py-1 text-[13px]"
+                  className="min-h-11 rounded-[12px] border border-line bg-paper px-2 py-1 text-[13px] lg:min-h-0"
                 >
                   <option value="ADMIN">Admin</option>
                   <option value="SALES">Can reply</option>
                 </select>
-                <button onClick={() => remove(m.id, m.name)} className="text-[13px]" style={{ color: "var(--coral)" }}>
+                <button onClick={() => remove(m.id, m.name)} className="tap-44 text-[13px]" style={{ color: "var(--coral)" }}>
                   Remove
                 </button>
               </div>
@@ -268,12 +268,12 @@ export default function TeamSection({ onlyAdminsSend = false }: { onlyAdminsSend
             value={inviteEmail}
             onChange={(e) => setInviteEmail(e.target.value)}
             placeholder="teammate@company.com"
-            className="flex-1 min-w-0 rounded-[12px] border border-line bg-paper px-3 py-2 text-sm"
+            className="flex-1 min-w-0 min-h-11 rounded-[12px] border border-line bg-paper px-3 py-2 text-sm lg:min-h-0"
           />
           <select
             value={inviteRole}
             onChange={(e) => setInviteRole(e.target.value as TeamRole)}
-            className="rounded-[12px] border border-line bg-paper px-2 py-2 text-sm"
+            className="min-h-11 rounded-[12px] border border-line bg-paper px-2 py-2 text-sm lg:min-h-0"
           >
             <option value="SALES">Can reply</option>
             <option value="ADMIN">Admin</option>
@@ -281,7 +281,7 @@ export default function TeamSection({ onlyAdminsSend = false }: { onlyAdminsSend
           <button
             onClick={sendInvite}
             disabled={inviting || !inviteEmail.trim()}
-            className="inline-flex items-center gap-1.5 text-sm font-medium rounded-full px-3.5 py-2 disabled:opacity-60"
+            className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium rounded-full px-3.5 py-2 disabled:opacity-60 lg:min-h-0"
             style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
           >
             <UserPlus className="h-3.5 w-3.5" /> {inviting ? "Sending…" : "Invite"}

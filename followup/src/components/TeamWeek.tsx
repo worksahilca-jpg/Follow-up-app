@@ -74,7 +74,7 @@ export default function TeamWeek() {
       </div>
 
       <p className="mt-3 text-[12.5px] text-ink-faint">
-        Calls are the ones marked No answer or Already spoke. Meetings are times booked through your booking link on that person&apos;s customers.
+        Calls are the ones marked No answer or I already talked to them. Meetings are times booked through your booking link on that person&apos;s customers.
       </p>
     </section>
   );

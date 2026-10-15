@@ -376,7 +376,7 @@ function Facts({ lead, approval, now, crm }: { lead: Lead; approval: PendingAppr
     null;
   return (
     <>
-      <Fact label={approval ? "Why it's here" : "State"}>
+      <Fact label={approval ? "Why it needs you" : "State"}>
         {approval ? (
           <>
             <span aria-hidden className="mr-2 inline-block h-[7px] w-[7px] rounded-full align-[2px]" style={{ background: "var(--state-needs)" }} />

@@ -230,7 +230,7 @@ function HowItKnows({ template, q, first }: { template: Template; q: Qualificati
   return (
     <details className="group mt-3 border-t border-line pt-2.5">
       <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between text-[13.5px] font-medium text-ink-soft [&::-webkit-details-marker]:hidden">
-        How FollowUp knows
+        Why FollowUp thinks this
         <span className="flex items-center gap-1.5 text-[12.5px] font-normal text-ink-faint">
           {rows.length} {rows.length === 1 ? "check" : "checks"}
           <ChevronRight aria-hidden className="h-4 w-4 transition-transform duration-300 group-open:rotate-90 motion-reduce:transition-none" />

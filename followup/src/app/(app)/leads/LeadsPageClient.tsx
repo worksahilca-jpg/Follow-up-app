@@ -110,19 +110,19 @@ export type GroupLines = Record<string, string>;
 type Groups = { needs: string[]; ready: string[]; booked: string[]; quiet: string[]; waiting: string[] };
 
 const TITLE: Record<Show, string> = {
-  needs: "Needs you",
+  needs: "Waiting for you",
   ready: "Ready to book",
   booked: "Booked",
-  quiet: "Going quiet",
-  waiting: "Waiting on them",
-  all: "Everyone",
+  quiet: "Stopped replying",
+  waiting: "Waiting for their reply",
+  all: "All customers",
 };
 /** One plain line under the rows that open a list (A-220). */
 const SUB: Partial<Record<Show, string>> = {
   ready: "FollowUp has what it asks for. Time for a call.",
   booked: "Calls and visits coming up",
-  quiet: "Gone quiet. Worth a nudge.",
-  waiting: "FollowUp checks in for you",
+  quiet: "Send a quick check-in.",
+  waiting: "FollowUp will check in",
 };
 /** About eight, then the rest one tap away (Miller's law, the design skill). */
 const SHOWN = 8;

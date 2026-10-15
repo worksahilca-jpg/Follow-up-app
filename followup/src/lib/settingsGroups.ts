@@ -8,27 +8,27 @@
  * lights up the right one. The app map (design-brain/components/app-map.md) is
  * where new settings go.
  */
-export const SETTINGS_GROUPS = ["Where customers write", "How replies go out", "Alerts", "Your business", "More"] as const;
+export const SETTINGS_GROUPS = ["Connected apps", "Sending replies", "Alerts", "Your business", "Account"] as const;
 export type SettingsGroup = (typeof SETTINGS_GROUPS)[number];
 const GROUP_OF_PAGE: Record<string, SettingsGroup> = {
   // One page each since A-253: every place customers write is a row with Connect or Connected, and how replies go
   // out is two choices and three rows.
-  connections: "Where customers write",
-  replies: "How replies go out",
-  booking: "How replies go out",
+  connections: "Connected apps",
+  replies: "Sending replies",
+  booking: "Sending replies",
   alerts: "Alerts",
   business: "Your business",
-  team: "More",
-  billing: "More",
-  security: "More",
-  data: "More",
+  team: "Account",
+  billing: "Account",
+  security: "Account",
+  data: "Account",
   // Not listed in More (A-253: owners never see it); a direct link still opens it.
-  advanced: "More",
+  advanced: "Account",
 };
 /** A group that is one page opens that page straight away; the rest open a short list first. */
 export const GROUP_PAGE: Partial<Record<SettingsGroup, string>> = {
-  "Where customers write": "connections",
-  "How replies go out": "replies",
+  "Connected apps": "connections",
+  "Sending replies": "replies",
   Alerts: "alerts",
   "Your business": "business",
 };
@@ -36,11 +36,11 @@ export const GROUP_PAGE: Partial<Record<SettingsGroup, string>> = {
 export const PARENT_PAGE: Record<string, string> = { booking: "replies" };
 /** Each group's address, so the phone's Back button steps from a page to its group to Settings. */
 export const GROUP_SLUG: Record<SettingsGroup, string> = {
-  "Where customers write": "write",
-  "How replies go out": "replies-out",
+  "Connected apps": "write",
+  "Sending replies": "replies-out",
   Alerts: "alerts",
   "Your business": "business",
-  More: "more",
+  Account: "more",
 };
 /** Which group a setting's page sits in. */
 export function groupOfPage(page: string): SettingsGroup | null {

@@ -117,7 +117,7 @@ export default function CallBox({
               {busy === "no_answer" ? "…" : "No answer"}
             </button>
             <button type="button" onClick={spoke} disabled={busy !== null} className={pill} title={`You spoke with ${first}. FollowUp stops checking in until ${first} writes again.`}>
-              {busy === "spoke" ? "…" : "Already spoke"}
+              {busy === "spoke" ? "…" : "I already talked to them"}
             </button>
           </div>
         </>

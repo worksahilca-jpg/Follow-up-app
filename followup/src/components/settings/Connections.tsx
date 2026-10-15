@@ -197,7 +197,7 @@ export default function Connections({
     (kept[provider] ?? 0) > 0 && (
       <div className="mt-4">
         <button type="button" onClick={() => setShowKept((v) => !v)} className={BOX + " flex min-h-[52px] w-full items-center gap-3 px-4 text-left hover:bg-card-2"}>
-          <span className="flex-1 text-[16px]">Not customers</span>
+          <span className="flex-1 text-[16px]">Skipped: not customers</span>
           <span className="text-[15px] text-ink-faint">{kept[provider]}</span>
         </button>
         <p className="mt-1.5 text-[14px] text-ink-faint">
@@ -297,7 +297,7 @@ export default function Connections({
       </div>
       {!isAdmin && <p className="text-[14px] text-ink-soft">Only an admin can connect or disconnect these.</p>}
 
-      <p className="mt-4 text-[14px] text-ink-faint">Already use a CRM?</p>
+      <p className="mt-4 text-[14px] text-ink-faint">Use HubSpot or Follow Up Boss?</p>
       <CrmConfig />
 
       {open === "gmail" && (

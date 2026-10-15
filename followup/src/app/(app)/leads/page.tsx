@@ -93,13 +93,13 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
 
   const approval = approvals.find((a) => a.leadId === open.id) ?? null;
   const place: { state: StateKey; label: string } = needs.has(open.id)
-    ? { state: "needs", label: "Needs you" }
+    ? { state: "needs", label: "Waiting for you" }
     : groups.ready.includes(open.id)
       ? { state: "needs", label: "Ready to book" }
       : groups.booked.includes(open.id)
         ? { state: "checked", label: "Booked" }
         : quiet.includes(open.id)
-      ? { state: "quiet", label: "Going quiet" }
+      ? { state: "quiet", label: "Stopped replying" }
       : waiting.includes(open.id)
         ? { state: "waiting", label: "Waiting" }
         : restingState(open);

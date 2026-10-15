@@ -133,7 +133,7 @@ function CallRow({ card, primary }: { card: CallCard; primary: boolean }) {
             </button>
             <span aria-hidden>·</span>
             <button type="button" onClick={() => act("spoke")} disabled={busy !== null} className={link}>
-              {busy === "spoke" ? "…" : "Already spoke"}
+              {busy === "spoke" ? "…" : "I already talked to them"}
             </button>
             <span aria-hidden>·</span>
             <button type="button" onClick={() => act("later")} disabled={busy !== null} className={link}>

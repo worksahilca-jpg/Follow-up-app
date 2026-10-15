@@ -13158,3 +13158,79 @@ were read once to check every verdict. Nothing identifying was copied into the r
     next message is judged again.
 - **Not possible:** retraining the model itself. What changes is its instructions, the rules around it, and the
   test cases it is measured on.
+
+## 2026-10-15 — HubSpot study: a tap should answer at once (proposed, drawn, waiting for the founder)
+
+Founder: *"analyse HubSpot's workflow, the interface … how they open all the pages … the animations, the click effect
+… how we can make it as simple as we can."* Study: `references/crm/2026-10-15-hubspot-workflow-and-feel.md` (grade C:
+HubSpot's sites and Mobbin were unreachable, so nothing was seen first-hand).
+
+- **Already ours:** one task then the next (Today, A-243/A-250, the card fold A-048), a side panel (A-212), windows over
+  the page (A-213), connect later and ask for little (A-241, A-253). Nothing to copy there.
+- **Two gaps, drawn on the real app at phone size** (scratchpad `hubdraw/hubspot-lessons-board.png`):
+  1. **Opening a page.** `(app)/loading.tsx` is one placeholder for every page (four stat boxes and a list) from
+     before the redesign, so each tap shows a shape the page doesn't have, then jumps. Proposed: Today, Customers, a
+     customer and Settings each get a placeholder in their own shape.
+  2. **Pressing a button.** No button or row has a pressed state (`active:` is used nowhere; only `.switch` has
+     `:active`). On a phone there's no hover, so Send shows nothing until the server answers. Proposed: buttons and
+     tappable rows darken and dip to 97% the moment they're pressed, over `--motion-fast` (150 ms); under reduced
+     motion they only darken.
+- **Third gap, not drawn yet:** on the computer, a customer opens as a whole new page from Customers; HubSpot opens a
+  preview over the list. Held back to keep this round small.
+- **Weak spots, honestly:** the evidence about HubSpot is second-hand; the "now" placeholder was drawn by putting
+  `loading.tsx`'s exact markup on screen, because in dev mode a tap shows nothing at all (production prefetches the
+  placeholder). Pressed-state colour `#3a3836` is a proposal, not a token yet.
+
+## 2026-10-15 — A-254 built: pages open in their own shape, buttons react to the thumb
+
+Founder: *"yes build 1 and 2"*.
+
+- **What changed:**
+  - `components/app/PageSkeleton.tsx` holds five shapes (Today, Customers, a customer, Settings, and a plain
+    title-and-rows for everywhere else), each at its page's own widths and columns;
+  - a `loading.tsx` for `/dashboard`, `/leads`, `/leads/[id]`, `/settings` and the Settings window
+    (`@modal/(.)settings`); `(app)/loading.tsx` is now the plain one;
+  - the press rules sit beside the shared transition in `globals.css`: a button dips to 97% and softens to 85% while
+    pressed; a link softens to 60%; the browser's grey tap box is off; reduced motion keeps only the softening. They
+    use the `scale` property, so a button's own translate is kept.
+- **Found while checking, and fixed:** opening Settings from inside the app (it opens as a window, A-213) used to put
+  the page placeholder *beside* the page in the layout's row, so on a phone Today was squeezed into a narrow column
+  until Settings arrived. This was true before A-254 too (with the four boxes). The window now has its own
+  placeholder: the window itself, already open, with Settings' shape inside. The real window takes its place without
+  rising in a second time (`app-win--settled`).
+- **Checked** on a local production build (`next build` and `next start` with the local database). At 390×844 and
+  1440×900, a tap to Today, Customers, Settings and a customer each showed its own placeholder, and the page width
+  under it never changed (390→390, 1216→1216). Nothing scrolled sideways. Send measured `scale 0.97`, `opacity 0.85`
+  while pressed. Types, lint (0 errors) and 3,935 tests pass.
+- **A correction to the HubSpot study (2026-10-15 entry above):** it listed a third gap, "a customer opens as a
+  whole new page on the computer". That was wrong. A tap on a Customers row already opens the customer in a panel
+  over the list, with "Open full page" (`/leads?p=…`), which is HubSpot's preview panel. I had read only the
+  `/leads/[id]` route and not the row's link. The study is corrected.
+- **Weak spots, honestly:**
+  - the customer placeholder shows a "where they stand" card on a phone even for a customer who has none, so that
+    page can still shift a little;
+  - Results, Activity and the other places get the plain title-and-rows shape, not their own;
+  - the press can't be seen in a still picture; it needs a thumb on a real phone.
+
+## 2026-10-15 — A-255 built: plain, specific words on every everyday screen
+
+Founder: *"change all these wordings that are complex, like where the customer writes you … very simple and
+specific"*, then *"yes change all"* to the old → new list (A-255).
+
+- **Changed everywhere the owner sees it:** Settings (the five rows, their pages, the Sending replies rows, the
+  Connected apps page), Customers (group names and their lines), a customer's page, Today, the inbox and activity
+  labels, and the "I already talked to them" button wherever it appears (call box, calls to make, undo, the history
+  line, the waiting note).
+- **Today's who-wrote line** is one plain verb per channel ("emailed you", "texted you", "messaged you on
+  Instagram", "filled in your website form"), and no longer leads with a reason tag ("Asked the price ·"). The
+  customer's own words sit right under it, and the orange-dot line still says what to check.
+- **One deviation, said plainly:** "Booking hours" became **"Your free hours"**, not "Your free hours for viewings".
+  The booking link books calls, so "viewings" would have been wrong.
+- **Found while checking, and fixed:** on a phone, "When to check in" and "Your free hours" broke across two and
+  three lines because the value beside them took the room. The name now stays on one line and the value is
+  shortened with "…".
+- **Checked** on a local production build at 390×844 and 1440×900: Today, Customers, Settings, Connected apps,
+  Sending replies and a customer's page. Nothing scrolls sideways. Types, lint (0 errors) and 3,935 tests pass; one
+  test was updated to the new words.
+- **Not changed (not on the list):** the group keys behind old links (#write, #more still work), "Follow-up plans" on
+  the plans page itself, and the landing page.

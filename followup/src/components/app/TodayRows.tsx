@@ -20,7 +20,7 @@ export function GoingQuietRow({ first, total }: { first: { id: string; name: str
       href={more > 0 ? "/leads?show=quiet" : `/leads/${first.id}`}
       className="mt-2.5 flex min-h-11 max-w-[640px] items-center gap-2.5 rounded-[14px] border border-line bg-card px-3 py-2.5"
     >
-      <span className="shrink-0 text-[12px] font-medium text-ink-faint">Going quiet</span>
+      <span className="shrink-0 text-[12px] font-medium text-ink-faint">Stopped replying:</span>
       <span className="min-w-0 flex-1 truncate text-[13.5px]">
         <span className="font-semibold">{first.name}</span>
         <span className="text-ink-soft">{more > 0 ? ` and ${more} more` : ` · ${first.reason}`}</span>

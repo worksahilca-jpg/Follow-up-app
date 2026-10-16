@@ -6,12 +6,15 @@ import { CRM_PROVIDERS, isCrmProvider } from "@/lib/crm";
 import { recordAudit } from "@/lib/audit";
 import { parseJsonBody } from "@/lib/validation";
 import { loadCrmRecord } from "@/lib/crm/record";
+import { packGhlKey } from "@/lib/crm/gohighlevel";
 
 const pauseSchema = z.object({ writesPaused: z.boolean() });
 
 const crmConfigSchema = z.object({
   provider: z.string().max(40),
   apiKey: z.string().trim().min(1, "Paste a real API key.").max(2048),
+  // GoHighLevel only: the sub-account's Location ID, kept with the key (src/lib/crm/gohighlevel.ts).
+  locationId: z.string().trim().max(64).optional(),
 });
 
 // One CRM connection per business — see CrmConnection in schema.prisma.
@@ -74,8 +77,10 @@ export async function POST(request: NextRequest) {
 
   const parsed = await parseJsonBody(request, crmConfigSchema);
   if (!parsed.ok) return parsed.response;
-  const { provider, apiKey } = parsed.data;
+  const { provider, locationId } = parsed.data;
   if (!isCrmProvider(provider)) return NextResponse.json({ success: false, message: "Pick a CRM." }, { status: 400 });
+  if (provider === "gohighlevel" && !locationId) return NextResponse.json({ success: false, message: "Paste the Location ID too." }, { status: 400 });
+  const apiKey = provider === "gohighlevel" ? packGhlKey(locationId!, parsed.data.apiKey) : parsed.data.apiKey;
 
   const test = await CRM_PROVIDERS[provider].client.testConnection(apiKey);
   if (!test.ok) return NextResponse.json({ success: false, message: test.message ?? "That key didn't work." }, { status: 400 });

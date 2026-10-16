@@ -105,3 +105,24 @@ describe("PATCH /api/crm/config: pause writing there", () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe("POST /api/crm/config for GoHighLevel", () => {
+  it("needs the Location ID and saves it with the key", async () => {
+    const { POST } = await import("@/app/api/crm/config/route");
+    const { CRM_PROVIDERS } = await import("@/lib/crm");
+    requireAdmin.mockResolvedValue(true);
+    const upsert = vi.fn(async () => ({}));
+    const { prisma } = await import("@/lib/db");
+    (prisma.crmConnection as unknown as { upsert: typeof upsert }).upsert = upsert;
+    const test = vi.spyOn(CRM_PROVIDERS.gohighlevel.client, "testConnection").mockResolvedValue({ ok: true, accountLabel: "Priya Sharma Realty" });
+    const post = (body: unknown) => POST(new Request("http://localhost/api/crm/config", { method: "POST", body: JSON.stringify(body), headers: { "Content-Type": "application/json" } }) as never);
+
+    expect((await post({ provider: "gohighlevel", apiKey: "pit-0000-1111-2222" })).status).toBe(400);
+    expect(test).not.toHaveBeenCalled();
+
+    expect((await post({ provider: "gohighlevel", apiKey: "pit-0000-1111-2222", locationId: "loc123ABC" })).status).toBe(200);
+    expect(test).toHaveBeenCalledWith("loc123ABC|pit-0000-1111-2222");
+    expect(upsert).toHaveBeenCalledWith(expect.objectContaining({ where: { businessId: "b1" }, create: expect.objectContaining({ provider: "gohighlevel", apiKey: "loc123ABC|pit-0000-1111-2222" }) }));
+    test.mockRestore();
+  });
+});

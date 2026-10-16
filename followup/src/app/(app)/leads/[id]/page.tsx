@@ -19,7 +19,6 @@ import { isSocialLeadId } from "@/lib/instagramId";
 import type { LeadLanguage } from "@/lib/leadLanguage";
 import { sendLockedForSession } from "@/lib/sendingControl";
 import CatchUp from "@/components/CatchUp";
-import { describeBasis } from "@/lib/basedOn";
 import { languageName } from "@/lib/leadLanguage";
 import Link from "next/link";
 import SiteReplyCard from "@/components/app/SiteReplyCard";
@@ -29,7 +28,7 @@ import ReplyBar from "@/components/app/ReplyBar";
 import CustomerSide from "@/components/app/CustomerSide";
 import { ChannelIcon } from "@/components/app/ChannelIcon";
 import Thread from "@/components/app/Thread";
-import { Eyebrow, Initials, waitingFor } from "@/components/app/canvasBits";
+import { Initials, waitingFor } from "@/components/app/canvasBits";
 import { getSessionContext } from "@/lib/session";
 import { getPendingApprovals, type PendingApproval } from "@/lib/pendingApprovals";
 import { prisma } from "@/lib/db";
@@ -83,14 +82,6 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
       ? { name: CRM_PROVIDERS[crmProvider].label, watching: approval?.reason === IN_CRM_REASON }
       : null;
   const timeZone = business?.timezone ?? "America/New_York";
-  const basis = lead.suggestedMessage
-    ? describeBasis({
-        draft: lead.suggestedMessage,
-        leadFirstName: lead.name.split(" ")[0] ?? "",
-        messages: lead.conversation.map((m) => ({ direction: m.direction === "inbound" ? "inbound" : "outbound", body: m.body, sentAt: new Date(m.date), source: m.source ?? null, channel: displayChannel(m.channel, lead.source) })),
-        timeZone,
-      })
-    : null;
   // The number to call: theirs, or the mobile an Instagram or Messenger customer typed into the DM (A-238).
   const phone = isCallablePhone(lead.phone) ? lead.phone : isCallablePhone(lead.dmPhone) ? lead.dmPhone : null;
   // The Call box (A-103): only on a team that calls customers, and only for a number someone can dial.
@@ -189,6 +180,9 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
         }
       : null;
 
+  // One box at the top, never two (A-269): the call note while a call is coming, otherwise where they stand.
+  const topBox = prep ? <CallBriefCard call={prep} onTheirPage /> : standing;
+
   // Why the reply waits, said inside the reply card on a phone (A-222), where the side column isn't.
   const holdWhy = approval
     ? (plainHoldReason(approval.reason, { firstName: lead.name.split(" ")[0] || lead.name, topic: approval.riskTopic }) ?? "Every reply waits for your OK.")
@@ -214,13 +208,9 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
           </div>
         </div>
 
-        {/* Phone: a call coming up comes first (A-268), then where the customer stands (A-246). */}
-        {prep && (
-          <div className="mt-3 lg:hidden">
-            <CallBriefCard call={prep} onTheirPage />
-          </div>
-        )}
-        {standing && <div className="mt-3 lg:hidden">{standing}</div>}
+        {/* Phone: one box at the top, never two (A-269): a call coming up (A-268), otherwise where the customer
+            stands (A-246). The note already says what they want, so the Ready card waits until the call is over. */}
+        {topBox && <div className="mt-3 lg:hidden">{topBox}</div>}
 
         <div aria-hidden="true" className="flex-1 lg:hidden" />
         {/* id: the target of CatchUp's "Show all N messages". */}
@@ -228,12 +218,8 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
           <Thread messages={lead.conversation} leadName={lead.name} timeZone={timeZone} now={now} stayYesId={lead.stayInTouch?.messageId ?? null} />
         </div>
 
-        {didLine && (
-          <div className="mt-4 px-1">
-            <Eyebrow>What FollowUp did</Eyebrow>
-            <p className="mt-1 text-[13px] leading-relaxed text-ink-soft">{didLine}</p>
-          </div>
-        )}
+        {/* Left out while a reply waits: the reply right under it says the same (A-269). */}
+        {didLine && !approval && <p className="mt-4 px-1 text-[13px] leading-relaxed text-ink-soft">{didLine}</p>}
 
         {callable && (
           <div className="mt-6">
@@ -273,7 +259,6 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
               waiting={Boolean(approval)}
               seenInboundAt={newestInboundAt(lead.conversation)}
               sendLocked={sendLocked}
-              basis={basis}
               languageName={replyLanguage}
               textTo={approval?.textTo ?? null}
               why={holdWhy}
@@ -298,12 +283,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
           </>
         }
       >
-        {prep && (
-          <div className="mb-4 hidden lg:block">
-            <CallBriefCard call={prep} onTheirPage />
-          </div>
-        )}
-        {standing && <div className="hidden lg:block">{standing}</div>}
+        {topBox && <div className={"hidden lg:block" + (prep ? " mb-4" : "")}>{topBox}</div>}
         <Facts lead={lead} approval={approval} now={now} crm={crm} />
 
         {/* Three pills, as drawn. The third is Call when there is a number
@@ -315,8 +295,8 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
             <WeTalkedButton leadId={lead.id} leadName={lead.name} talked={lead.automationStatus?.kind === "talked"} onSite={Boolean(siteReply)} />
           )}
           <CopyBookingLinkButton leadId={lead.id} />
-          {/* The ready card already carries "Call {name}": one Call button, not two. */}
-          {callable || (showReady && phone) ? null : phone ? (
+          {/* The call note or the ready card already carries "Call {name}": one Call button, not two. */}
+          {callable || ((prep || showReady) && phone) ? null : phone ? (
             <a href={telHref(phone)} className={PILL}>
               Call
             </a>

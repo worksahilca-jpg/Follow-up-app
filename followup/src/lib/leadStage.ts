@@ -44,6 +44,10 @@ export async function moveLeadStage(businessId: string, leadId: string, stage: P
     } else {
       await prisma.deal.create({ data: { leadId: lead.id, ...dealData } });
     }
+  } else {
+    // Reopened (an "Undo" after "How did it go?", or the stage moved back): the deal is no longer won or lost.
+    // Left alone, Results counted "Won 1" this week beside "Won, all time 0" (2026-10-16).
+    await prisma.deal.updateMany({ where: { leadId: lead.id, OR: [{ wonAt: { not: null } }, { lostAt: { not: null } }] }, data: { stage, wonAt: null, lostAt: null } });
   }
 
   void notifyLeadEvent(businessId, "lead.stage_changed", updated, { previousStage: lead.stage });

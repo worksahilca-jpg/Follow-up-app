@@ -4175,6 +4175,9 @@ it's dead"*.
 
 ## A-246 — Qualifying a realtor's customer: three short rounds, then Ready, Warm or Later ^A-246
 
+**PARTLY SUPERSEDED (2026-10-16)** by [[#^A-269|A-269]]: while a call is booked, "Before your call" is the one box at
+the top of the customer's page and the standing card waits until the call is over. The process below is unchanged.
+
 **Approved:** 2026-10-14, founder (*"Yes, use this process"*), after asking twice whether it was a proven system:
 *"Is this a proven system with the big companies ... I want to know how they qualify the leads, so we're going to make
 a structure based on that."* Every question comes from what Zillow, Structurely, Ylopo, the LPMAMA checklist, REsimpli
@@ -4695,3 +4698,19 @@ a made-up buyer, Aisha, phone and computer), he said *"sure"*.
   "Before your call with Raj at 4:00 PM"; the same parts as the note, each under its heading, a dot per line when a
   part has two; "Open Raj". Only when the note has something in it, once per person per call, never at night, inside
   the day's email cap and the owner's email-alerts switch.
+
+## A-269 — A customer's page, simpler: one box on top, one Call, the reply in Today's words ^A-269
+
+**Date:** 2026-10-16. **Founder:** *"let's make it more accurate and simple … our design is basically more complex"*.
+Shown the before/after drawn inside the real page (`prototypes/customer-simple/customer-page-board.png`, Raj with a
+call at 4:00 PM), he said *"yes build it"*.
+- **One box at the top, never two.** With a call coming (A-268) it is "Before your call"; otherwise it is where the
+  customer stands (A-246). The note already says what they want, so the Ready card waits until the call is over.
+- **"Call {name}" once.** The side column's Call pill steps aside when the note or the Ready card carries one.
+- **The reply reads and acts like Today's (A-266):** "FollowUp wrote this reply for you:" (plain, not a mono label),
+  the words, the reason line, "If it looks right, press **Send**.", then **Send to {first}** · **Change it** · Don't
+  send. "Based on Raj's message on email on Oct 13." is gone from this page. The same card serves Inbox, so it reads
+  the same there.
+- **No code-style labels:** the conversation's day line is plain ("Tue, Oct 13"); "WHAT FOLLOWUP DID · Held a reply"
+  is gone while a reply waits right under it, and otherwise is one plain line.
+- **Measured on the drawing:** phone 2.5 → 2 screens, 311 → 269 words.

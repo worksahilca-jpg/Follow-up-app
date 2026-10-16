@@ -37,6 +37,8 @@ const h = vi.hoisted(() => ({
   inbound: new Map<string, Date[]>(),
   sendPushToUser: vi.fn(),
   pushConfigured: { value: true },
+  // Booked calls (A-268), as the "about to start" scan reads them.
+  calls: [] as { id: string; leadId: string; businessId: string; scheduledAt: Date; lead: { name: string; assignedToId: string | null; stage: string }; business: { timezone: string } }[],
 }));
 
 vi.mock("@/lib/db", () => {
@@ -59,6 +61,11 @@ vi.mock("@/lib/db", () => {
   };
   return {
     prisma: {
+      booking: {
+        findMany: vi.fn(async ({ where }: { where: { scheduledAt: { gt: Date; lte: Date } } }) =>
+          h.calls.filter((c) => c.scheduledAt > where.scheduledAt.gt && c.scheduledAt <= where.scheduledAt.lte)
+        ),
+      },
       auditEvent: {
         findMany: vi.fn(async ({ where }: { where: { action: string } }) =>
           where.action === "ai.hold" ? [...h.approvals.keys()].map((businessId) => ({ businessId })) : []
@@ -193,6 +200,7 @@ beforeEach(() => {
   h.firstInbound.clear();
   h.inbound.clear();
   h.users.length = 0;
+  h.calls.length = 0;
   h.users.push({ id: "owner1", email: "owner@shop.test", businessId: "biz1", role: "ADMIN", alertEmailEnabled: true });
   h.pushConfigured.value = true;
   h.sendPushToUser.mockReset();
@@ -702,5 +710,79 @@ describe("waitStart — where the customer's current wait began", () => {
 
   it("is nothing when the customer hasn't written", () => {
     expect(waitStart([])).toBeNull();
+  });
+});
+
+describe("a booked call about to start (A-268)", () => {
+  const call = (minutesAhead: number, at: Date = NOW, over: Partial<(typeof h.calls)[number]["lead"]> = {}) => {
+    h.calls.push({
+      id: `bk${h.calls.length + 1}`,
+      leadId: "lead9",
+      businessId: "biz1",
+      scheduledAt: new Date(at.getTime() + minutesAhead * 60_000),
+      lead: { name: "Aisha Rahman", assignedToId: null, stage: "QUALIFIED", ...over },
+      business: { timezone: "America/Toronto" },
+    });
+  };
+
+  it("buzzes the owner's phone once, half an hour ahead, with the time and that the note is ready", async () => {
+    call(20);
+    const r = await runOwnerAlerts(NOW);
+    expect(r.callsSoon).toBe(1);
+    expect(h.sendPushToUser).toHaveBeenCalledWith("owner1", {
+      title: "Call with Aisha at 11:20 AM",
+      body: "What to talk about is ready.",
+      url: "/leads/lead9",
+      tag: "call-bk1",
+    });
+    await runOwnerAlerts(new Date(NOW.getTime() + 60_000));
+    expect(h.sendPushToUser).toHaveBeenCalledTimes(1);
+    // Phone only: no email for it.
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("waits until the half hour before, and says nothing once the call has started", async () => {
+    call(45);
+    call(-5);
+    await runOwnerAlerts(NOW);
+    expect(h.sendPushToUser).not.toHaveBeenCalled();
+  });
+
+  it("stays quiet at night", async () => {
+    const night = new Date("2026-09-26T03:00:00Z"); // 11 PM in Toronto
+    call(20, night);
+    await runOwnerAlerts(night);
+    expect(h.sendPushToUser).not.toHaveBeenCalled();
+  });
+
+  it("stays quiet for a deal already won or lost", async () => {
+    call(20, NOW, { stage: "WON" });
+    await runOwnerAlerts(NOW);
+    expect(h.sendPushToUser).not.toHaveBeenCalled();
+  });
+
+  it("tries again next minute when no phone got it", async () => {
+    call(20);
+    h.sendPushToUser.mockResolvedValueOnce({ delivered: 0, removed: 0, failed: 1 });
+    await runOwnerAlerts(NOW);
+    expect(h.rows.filter((r) => r.kind === "call_soon")).toHaveLength(0);
+    await runOwnerAlerts(new Date(NOW.getTime() + 60_000));
+    expect(h.sendPushToUser).toHaveBeenCalledTimes(2);
+    expect(h.rows.filter((r) => r.kind === "call_soon" && r.pushedAt)).toHaveLength(1);
+  });
+
+  it("goes to the person the customer is assigned to", async () => {
+    h.users.push({ id: "agent2", email: "agent@shop.test", businessId: "biz1", role: "SALES", alertEmailEnabled: true });
+    call(20, NOW, { assignedToId: "agent2" });
+    await runOwnerAlerts(NOW);
+    expect(h.sendPushToUser.mock.calls.map((c) => c[0])).toEqual(["agent2"]);
+  });
+
+  it("isn't looked for when no phone can be told", async () => {
+    h.pushConfigured.value = false;
+    call(20);
+    const { prisma } = await import("@/lib/db");
+    await runOwnerAlerts(NOW);
+    expect(prisma.booking.findMany).not.toHaveBeenCalled();
   });
 });

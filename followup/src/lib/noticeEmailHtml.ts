@@ -47,7 +47,9 @@ export interface NoticeEmailView {
   /** The sand card inside the white one: a person and what they wrote, or a few facts. */
   sub?:
     | { kind: "person"; initials: string; name: string; channel: string | null; when: string | null; quote: string | null }
-    | { kind: "rows"; rows: [string, string][] };
+    | { kind: "rows"; rows: [string, string][] }
+    // A short note in parts, each a heading over its lines (A-268's "Before your call").
+    | { kind: "parts"; parts: { label: string; lines: string[] }[] };
   /** Paragraphs between the sub-card and the button. */
   after?: NoticeText[];
   button: { text: string; href: string };
@@ -81,6 +83,19 @@ function subCard(sub: NonNullable<NoticeEmailView["sub"]>): string {
     if (sub.quote) {
       inner += `<p class="fu-ink fu-quote" style="margin:14px 0 0;padding-left:14px;border-left:2px solid ${EDGE};font-size:15px;line-height:1.5;color:${INK};">&ldquo;${e(sub.quote)}&rdquo;</p>`;
     }
+  } else if (sub.kind === "parts") {
+    inner = sub.parts
+      .map(
+        (part, i) =>
+          `<div class="fu-rule" style="${i ? `margin-top:12px;padding-top:12px;border-top:1px solid ${RULE};` : ""}">` +
+          `<div class="fu-dim" style="font-size:13px;font-weight:600;color:${DIM};">${e(part.label)}</div>` +
+          // Two or more lines under one heading get a dot each, so they read as separate things.
+          part.lines
+            .map((l, j) => `<div class="fu-ink" style="margin-top:${j ? 6 : 3}px;font-size:15px;line-height:1.45;color:${INK};">${part.lines.length > 1 ? "&bull;&nbsp;" : ""}${e(l)}</div>`)
+            .join("") +
+          `</div>`
+      )
+      .join("");
   } else {
     inner = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">${sub.rows
       .map(

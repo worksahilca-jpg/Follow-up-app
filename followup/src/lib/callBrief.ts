@@ -202,6 +202,20 @@ export function callNotOver(scheduledAt: Date, durationMinutes: number, now: Dat
 /** The phone buzz shortly before a call (A-268): its title and line. */
 export const CALL_SOON_MINUTES = 30;
 
+/** The note by email, to the owner only, an hour before a call (A-268; founder, 2026-10-16: "yes its fine"). */
+export const CALL_NOTE_MINUTES = 60;
+
+/** Due: the call starts within the next hour and hasn't started yet. */
+export function callNoteDue(scheduledAt: Date, now: Date): boolean {
+  const until = scheduledAt.getTime() - now.getTime();
+  return until > 0 && until <= CALL_NOTE_MINUTES * 60_000;
+}
+
+/** The note as parts to read in an email or anywhere outside the app: each part's heading and its lines. */
+export function briefParts(b: CallBrief, first: string): { label: string; lines: string[] }[] {
+  return BRIEF_SECTIONS.filter((s) => b[s].length > 0).map((s) => ({ label: sectionTitle(s, first), lines: b[s].map((l) => l.text) }));
+}
+
 /** Due: the call starts within the next half hour and hasn't started yet. */
 export function callSoonDue(scheduledAt: Date, now: Date): boolean {
   const until = scheduledAt.getTime() - now.getTime();

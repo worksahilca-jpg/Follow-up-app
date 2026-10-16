@@ -11,7 +11,9 @@ import { renderNoticeEmailHtml, noticeDate } from "@/lib/noticeEmailHtml";
 import { isPushConfigured, sendPushToUser, type PushPayload } from "@/lib/webPush";
 import { isUniqueViolation } from "@/lib/uniqueViolation";
 import { readQualification, readyWhy, shownItems, templateById, templateFor, viewingOf, type Qualification } from "@/lib/qualification";
-import { CALL_SOON_MINUTES, callSoonDue } from "@/lib/callBrief";
+import { CALL_NOTE_MINUTES, CALL_SOON_MINUTES, briefParts, callNoteDue, callSoonDue, type CallBrief } from "@/lib/callBrief";
+import { currentCallBrief } from "@/lib/callBriefStore";
+import { getLeadForBusiness } from "@/lib/leads-data";
 import { clockTime } from "@/lib/todayWords";
 
 /**
@@ -621,25 +623,31 @@ export type CallSoon = {
   assignedToId: string | null;
   leadName: string;
   scheduledAt: Date;
+  durationMinutes: number;
   timeZone: string;
+  /** Booking.brief and Lead.qualification as stored, for the note email. */
+  stored: unknown;
+  qualification: unknown;
 };
 
-/** Every booked call starting within the next half hour, where it isn't night. */
-export async function findCallsSoon(now: Date = new Date()): Promise<CallSoon[]> {
+/** Every booked call starting within the next `minutes`, where it isn't night and the deal is still open. */
+async function findCallsStarting(now: Date, minutes: number, due: (at: Date, now: Date) => boolean): Promise<CallSoon[]> {
   const rows = await prisma.booking.findMany({
-    where: { status: "confirmed", scheduledAt: { gt: now, lte: new Date(now.getTime() + CALL_SOON_MINUTES * 60_000) } },
+    where: { status: "confirmed", scheduledAt: { gt: now, lte: new Date(now.getTime() + minutes * 60_000) } },
     select: {
       id: true,
       leadId: true,
       businessId: true,
       scheduledAt: true,
-      lead: { select: { name: true, assignedToId: true, stage: true } },
+      durationMinutes: true,
+      brief: true,
+      lead: { select: { name: true, assignedToId: true, stage: true, qualification: true } },
       business: { select: { timezone: true } },
     },
   });
   const out: CallSoon[] = [];
   for (const r of rows) {
-    if (!callSoonDue(r.scheduledAt, now)) continue;
+    if (!due(r.scheduledAt, now)) continue;
     if (r.lead.stage === "WON" || r.lead.stage === "LOST") continue;
     const timeZone = r.business.timezone || "America/New_York";
     if (inQuietHours(now, timeZone)) continue;
@@ -650,10 +658,23 @@ export async function findCallsSoon(now: Date = new Date()): Promise<CallSoon[]>
       assignedToId: r.lead.assignedToId,
       leadName: r.lead.name,
       scheduledAt: r.scheduledAt,
+      durationMinutes: r.durationMinutes,
       timeZone,
+      stored: r.brief,
+      qualification: r.lead.qualification,
     });
   }
   return out;
+}
+
+/** Every booked call starting within the next half hour: the phone buzz. */
+export function findCallsSoon(now: Date = new Date()): Promise<CallSoon[]> {
+  return findCallsStarting(now, CALL_SOON_MINUTES, callSoonDue);
+}
+
+/** Every booked call starting within the next hour: the note by email. */
+export function findCallNotesDue(now: Date = new Date()): Promise<CallSoon[]> {
+  return findCallsStarting(now, CALL_NOTE_MINUTES, callNoteDue);
 }
 
 /** "Call with Aisha at 2:00 PM" · "What to talk about is ready." Opens their page, where the note is at the top. */
@@ -694,6 +715,99 @@ async function alertCallsSoon(user: Recipient, calls: CallSoon[], result: AlertR
   }
 }
 
+/* ------------------------------------------------------------------ *
+ * The note by email (A-268; founder, 2026-10-16, asked whether an email
+ * an hour before each call is fine: "yes its fine"): the same note as
+ * Today's row, to the owner (or the person the customer is assigned to)
+ * only. Never the calendar invite, which the customer also gets. Sent
+ * only when the note has something in it, once per person per call (the
+ * claim's time is an hour before the call, so it never collides with
+ * the buzz's claim at the call's start), within the day's email cap and
+ * never at night.
+ * ------------------------------------------------------------------ */
+
+/** Most notes written by the model in one tick; the rest wait a minute. The run must end within a minute. */
+export const CALL_NOTES_PER_TICK = 4;
+
+export function callNoteEmail(c: CallSoon, brief: CallBrief, base: string): EmailContent {
+  const { first } = whoIs(c.leadName);
+  const time = clockTime(c.scheduledAt, c.timeZone);
+  const parts = briefParts(brief, first);
+  const url = `${base}/leads/${c.leadId}`;
+  const foot = footer(base);
+  const line = `${c.durationMinutes} minutes. Everything below comes from your messages with ${first}.`;
+  return {
+    subject: `Before your call with ${first} at ${time}`,
+    text: [
+      `Your call with ${first} at ${time}`,
+      line,
+      "",
+      ...parts.flatMap((p) => [p.label, ...p.lines.map((l) => `- ${l}`), ""]),
+      url,
+      "",
+      foot.text,
+    ].join("\n"),
+    html: renderNoticeEmailHtml({
+      base,
+      label: "Before your call",
+      title: `Your call with ${first} at ${time}`,
+      date: noticeDate(new Date(), c.timeZone),
+      before: [line],
+      sub: { kind: "parts", parts },
+      button: { text: first === "A customer" ? "Open the conversation" : `Open ${first}`, href: url },
+      why: `Each line is from your messages with ${first}. Open FollowUp to see their own words.`,
+      footnote: FOOTNOTE,
+      footnoteLink: foot.link,
+    }),
+  };
+}
+
+/** Emails one person the notes for their calls starting within the hour. */
+async function alertCallNotes(
+  user: Recipient,
+  calls: CallSoon[],
+  now: Date,
+  noteFor: (c: CallSoon) => Promise<CallBrief | null | "later">,
+  result: AlertRunResult
+): Promise<void> {
+  if (!user.alertEmailEnabled || !user.email) return;
+  const mine = calls.filter((c) => c.businessId === user.businessId);
+  if (mine.length === 0) return;
+  const dayStart = startOfLocalDay(now, user.business?.timezone ?? "America/New_York");
+  let emailedToday = await prisma.ownerAlert.count({ where: { userId: user.id, emailedAt: { gte: dayStart } } });
+  for (const c of mine) {
+    if (emailedToday >= DAILY_EMAIL_CAP) return;
+    let rowId: string;
+    try {
+      const row = await prisma.ownerAlert.create({
+        data: { userId: user.id, businessId: c.businessId, leadId: c.leadId, waitStartedAt: new Date(c.scheduledAt.getTime() - CALL_NOTE_MINUTES * 60_000), kind: "call_note" },
+        select: { id: true },
+      });
+      rowId = row.id;
+    } catch (err) {
+      if (!isUniqueViolation(err)) console.error(`Call note claim failed for booking ${c.bookingId}:`, err);
+      continue;
+    }
+    const brief = await noteFor(c);
+    if (brief === "later") {
+      // Out of notes for this minute: released, the next tick writes it.
+      await prisma.ownerAlert.deleteMany({ where: { id: rowId, emailedAt: null, pushedAt: null } });
+      continue;
+    }
+    // Nothing true to say: no email, and the claim stays so it isn't asked again (the buzz still comes).
+    if (!brief) continue;
+    const sent = await sendAlertEmail({ to: user.email, ...callNoteEmail(c, brief, inboundBaseUrl()), idempotencyKey: rowId });
+    if (sent.sent) {
+      await prisma.ownerAlert.update({ where: { id: rowId }, data: { emailedAt: new Date() } });
+      emailedToday += 1;
+      result.emails += 1;
+      result.callNotes += 1;
+    } else {
+      await prisma.ownerAlert.deleteMany({ where: { id: rowId, emailedAt: null, pushedAt: null } });
+    }
+  }
+}
+
 export type AlertRunResult = {
   /** Waiting customers found this tick that were news to at least one person. */
   customers: number;
@@ -704,6 +818,8 @@ export type AlertRunResult = {
   ready: number;
   /** Booked calls starting within half an hour that someone's phone was told about (A-268). */
   callsSoon: number;
+  /** Notes for calls starting within the hour that reached someone's inbox (A-268). */
+  callNotes: number;
   /** Set when neither channel has keys: the run did nothing, on purpose. */
   skipped?: string;
 };
@@ -934,7 +1050,7 @@ async function alertReady(
  * (and anything recent arrives as one summary, not a flood).
  */
 export async function runOwnerAlerts(now: Date = new Date()): Promise<AlertRunResult> {
-  const result: AlertRunResult = { customers: 0, emails: 0, pushes: 0, summaries: 0, ready: 0, callsSoon: 0 };
+  const result: AlertRunResult = { customers: 0, emails: 0, pushes: 0, summaries: 0, ready: 0, callsSoon: 0, callNotes: 0 };
   const channels = { email: isAlertEmailConfigured(), push: isPushConfigured() };
   if (!channels.email && !channels.push) return { ...result, skipped: "no alert channel is configured" };
 
@@ -959,12 +1075,51 @@ export async function runOwnerAlerts(now: Date = new Date()): Promise<AlertRunRe
   }
   const soonByUser = soon.length > 0 ? await groupByRecipient(soon) : new Map<string, CallSoon[]>();
 
+  // The note an hour before a call (A-268): by email, so only when email can go.
+  let notesDue: CallSoon[] = [];
+  if (channels.email) {
+    try {
+      notesDue = await findCallNotesDue(now);
+    } catch (err) {
+      console.error("Owner alerts: could not read the calls starting within the hour:", err);
+    }
+  }
+  const notesByUser = notesDue.length > 0 ? await groupByRecipient(notesDue) : new Map<string, CallSoon[]>();
+  // Each call's note is read (or written) once per tick, whoever it goes to, and only so many are written.
+  const notes = new Map<string, CallBrief | null>();
+  let written = 0;
+  const noteFor = async (c: CallSoon): Promise<CallBrief | null | "later"> => {
+    if (notes.has(c.bookingId)) return notes.get(c.bookingId) ?? null;
+    if (written >= CALL_NOTES_PER_TICK) return "later";
+    written += 1;
+    let brief: CallBrief | null = null;
+    try {
+      const lead = await getLeadForBusiness(c.leadId, c.businessId);
+      brief = lead
+        ? await currentCallBrief({
+            bookingId: c.bookingId,
+            businessId: c.businessId,
+            leadId: c.leadId,
+            leadName: lead.name,
+            conversation: lead.conversation,
+            qualification: c.qualification,
+            stored: c.stored,
+          })
+        : null;
+    } catch (err) {
+      console.error(`Owner alerts: the note for booking ${c.bookingId} could not be read:`, err);
+      return "later";
+    }
+    notes.set(c.bookingId, brief);
+    return brief;
+  };
+
   const waiting = await findWaitingCustomers(now);
-  if (waiting.length === 0 && ready.length === 0 && soon.length === 0) return result;
+  if (waiting.length === 0 && ready.length === 0 && soon.length === 0 && notesDue.length === 0) return result;
 
   const byUser = await groupByRecipient(waiting);
   const users = await prisma.user.findMany({
-    where: { id: { in: [...new Set([...readyByUser.keys(), ...soonByUser.keys(), ...byUser.keys()])] } },
+    where: { id: { in: [...new Set([...readyByUser.keys(), ...soonByUser.keys(), ...notesByUser.keys(), ...byUser.keys()])] } },
     // Only what an alert needs. The business relation is narrowed to its
     // timezone so this never pulls (and decrypts) the channel tokens on
     // the Business row.
@@ -981,6 +1136,11 @@ export async function runOwnerAlerts(now: Date = new Date()): Promise<AlertRunRe
       await alertCallsSoon(user, soonByUser.get(user.id) ?? [], result);
     } catch (err) {
       console.error(`Call alerts failed for user ${user.id}:`, err);
+    }
+    try {
+      await alertCallNotes(user, notesByUser.get(user.id) ?? [], now, noteFor, result);
+    } catch (err) {
+      console.error(`Call note emails failed for user ${user.id}:`, err);
     }
     try {
       await alertOne(user, byUser.get(user.id) ?? [], now, channels, result);

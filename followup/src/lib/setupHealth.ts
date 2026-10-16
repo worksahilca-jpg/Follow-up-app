@@ -61,9 +61,10 @@ const DAY_MS = 24 * 60 * 60_000;
 async function alertEmailsStalled(now: Date): Promise<HealthProblem | null> {
   if (!isAlertEmailConfigured()) return null; // already reported as missing
   const since = new Date(now.getTime() - DAY_MS);
-  // A call about to start is told by phone only (A-268), so it is never an email that was due.
+  // A call about to start is told by phone only (A-268), and a call's note is claimed even when there's nothing to
+  // email, so neither is an email that was due.
   const due = await prisma.ownerAlert.count({
-    where: { createdAt: { gte: since }, kind: { not: "call_soon" }, user: { alertEmailEnabled: true } },
+    where: { createdAt: { gte: since }, kind: { notIn: ["call_soon", "call_note"] }, user: { alertEmailEnabled: true } },
   });
   if (due === 0) return null;
   const sent = await prisma.ownerAlert.count({ where: { createdAt: { gte: since }, emailedAt: { not: null } } });

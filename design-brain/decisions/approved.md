@@ -4689,3 +4689,9 @@ a made-up buyer, Aisha, phone and computer), he said *"sure"*.
 - **Not built from the drawing: the calendar invite.** FollowUp's calendar event invites the customer, so its
   description is shown to them; "On Aisha's mind: tired of bidding wars" must never reach Aisha. Asked the founder
   what to do instead (an email to the owner only is the proposal).
+- **Added 2026-10-16, in place of the invite: the note by email, an hour before.** Asked "should I email you the note
+  an hour before each call?", then shown the example (4:00 PM call → the email at 3:00, the buzz at 3:30), the founder
+  said *"yes its fine"*. To the owner, or the person the customer is assigned to, only; never the customer. Subject
+  "Before your call with Raj at 4:00 PM"; the same parts as the note, each under its heading, a dot per line when a
+  part has two; "Open Raj". Only when the note has something in it, once per person per call, never at night, inside
+  the day's email cap and the owner's email-alerts switch.

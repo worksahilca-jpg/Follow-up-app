@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
@@ -11,7 +11,10 @@ import { plainHoldReason } from "@/lib/holdReasons";
 import { STAY_IN_TOUCH_TRIGGER } from "@/lib/stayInTouch";
 import { THEIR_MOMENT_TRIGGER } from "@/lib/theirMoment";
 import { isBookingLinkReason } from "@/lib/bookingOffer";
-import { DAY_BOX, DayHeading, DayRow, type TodayRow } from "@/components/app/TodayDay";
+import { DayHeading, DayRow, type TodayRow } from "@/components/app/TodayDay";
+import { Initials } from "@/components/app/canvasBits";
+import MeetingOutcomeCard, { type MeetingToLookBackOn } from "@/components/app/MeetingOutcomeCard";
+import { outcomeWords } from "@/lib/meetingOutcome";
 import { useUndoableSend } from "@/components/useUndoableSend";
 import SiteReplyCard from "@/components/app/SiteReplyCard";
 import type { PendingApproval } from "@/lib/pendingApprovals";
@@ -276,14 +279,31 @@ function ApprovalCard({
 
   return (
     <article className={bare ? undefined : ONE} aria-label={`${item.leadName} is waiting for you`}>
-      <p className="text-[14px] leading-snug text-ink-soft">
-        <Link href={`/leads/${item.leadId}`} data-nav="push" className="font-semibold text-ink hover:underline">
-          {item.leadName}
-        </Link>{" "}
-        {did}
-        {when && ` ${when}`}
-        {quoted ? ":" : "."}
-      </p>
+      {bare ? (
+        // Today's card (A-266): their initials and name, then how and when they wrote, on its own line.
+        <div className="flex items-center gap-3">
+          <Initials name={item.leadName} size={40} />
+          <div className="min-w-0">
+            {/* A 44px tap band around the name, keeping the line its own size. */}
+            <Link href={`/leads/${item.leadId}`} data-nav="push" className="relative block truncate text-[16px] font-semibold leading-snug text-ink before:absolute before:inset-x-0 before:-inset-y-[11px] before:content-[''] hover:underline">
+              {item.leadName}
+            </Link>
+            <p className="text-[13.5px] leading-snug text-ink-faint">
+              {did.charAt(0).toUpperCase() + did.slice(1)}
+              {when && ` ${when}`}
+            </p>
+          </div>
+        </div>
+      ) : (
+        <p className="text-[14px] leading-snug text-ink-soft">
+          <Link href={`/leads/${item.leadId}`} data-nav="push" className="font-semibold text-ink hover:underline">
+            {item.leadName}
+          </Link>{" "}
+          {did}
+          {when && ` ${when}`}
+          {quoted ? ":" : "."}
+        </p>
+      )}
 
       {/* What they actually said, before what we're about to reply with:
           judging a reply needs the customer's own words, not FollowUp's
@@ -485,7 +505,7 @@ function ApprovalCard({
             </>
           ) : (
             <>
-              If it looks right, press <b>Send</b>. To change a word, press <b>Change it</b>.
+              If it looks right, press <b>Send</b>.
             </>
           )}
         </p>
@@ -578,8 +598,14 @@ export default function ApprovalQueue({
   holdAll = false,
   weekResults = null,
   plan = null,
+  meetings = [],
+  quiet = null,
 }: {
   items: ApprovalItem[];
+  /** Calls to look back on (A-263): a row each in Then, opening the four answers in place (A-266). */
+  meetings?: MeetingToLookBackOn[];
+  /** Customers who stopped replying (A-046), as the list's last row: the first one, and how many in all. */
+  quiet?: { id: string; name: string; total: number } | null;
   /** The rest of the owner's day (A-244): calls to make and times booked for today, in order. */
   rows?: TodayRow[];
   /** Only admins send, and this person isn't one (A-041). */
@@ -684,19 +710,23 @@ export default function ApprovalQueue({
   const others = queue.filter((i) => i.leadId !== selected?.leadId);
   const shown = showAll ? others : others.slice(0, REPLY_ROWS);
   const hidden = others.length - shown.length;
-  const stillToDo = others.length + rows.length;
+  const [openMeeting, setOpenMeeting] = useState<string | null>(null);
+  const stillToDo = others.length + rows.length + meetings.length + (quiet ? 1 : 0);
 
   // "Do this first" (A-244), open from the start (A-250, 2026-10-14): their
   // words, FollowUp's reply and Send (A-243's card), with no tap before it.
   const focus = selected ? (
     <section ref={focusRef} aria-label="Do this first" className="scroll-mt-20 rounded-[18px] lg:scroll-mt-6 bg-card p-4 sm:p-5" style={{ border: "1.5px solid var(--ink)" }}>
-      <p className="flex items-center gap-1.5 text-[13.5px] text-ink-soft" role={justDone ? "status" : undefined}>
-        {justDone && <Check className="h-4 w-4 shrink-0" style={{ color: "var(--sage)" }} aria-hidden="true" />}
-        {justDone ? [justDone, selectedFirst && `Now ${selectedFirst}.`].filter(Boolean).join(" ") : "Do this first"}
-      </p>
+      {/* No label over the card (A-266): the sentence under the greeting already says who to start with. What the
+          last press did is said here for a moment. */}
+      {justDone && (
+        <p className="mb-3 flex items-center gap-1.5 text-[13.5px] text-ink-soft" role="status">
+          <Check className="h-4 w-4 shrink-0" style={{ color: "var(--sage)" }} aria-hidden="true" />
+          {[justDone, selectedFirst && `Now ${selectedFirst}.`].filter(Boolean).join(" ")}
+        </p>
+      )}
       <motion.div
         key={selected.leadId}
-        className="mt-3"
         initial={selected.leadId === firstCard ? false : { opacity: 0 }}
         animate={{ opacity: 1, transition: { duration: MOTION.move, ease: MOTION.easeOut } }}
       >
@@ -788,13 +818,13 @@ export default function ApprovalQueue({
           </div>
         ))}
 
-      {/* Still to do today (A-244): every other reply, call and booked time,
-          one row each. A reply row brings that person up into "Do this first". */}
+      {/* Then (A-266; was "Next", A-244): every other person, one row each with their initials and one plain
+          sentence; calls and booked times; a call to look back on, which opens its four answers in place; and who
+          stopped replying. A reply row brings that person up into the card. No box around the rows. */}
       {stillToDo > 0 && (
-        <section aria-label="Next" className="mt-7">
-          {/* No count beside it (A-250): the day's box already says how many. */}
-          <DayHeading title="Next" />
-          <div className={`${DAY_BOX} overflow-hidden`}>
+        <section aria-label={selected ? "Then" : "Still to do today"} className="mt-7">
+          <DayHeading title={selected ? "Then" : "Still to do today"} />
+          <div className="-mx-3">
             {shown.map((i, n) => (
               <DayRow key={i.leadId} first={n === 0} row={replyRow(i)} onClick={() => pick(i.leadId)} />
             ))}
@@ -802,15 +832,45 @@ export default function ApprovalQueue({
               <button
                 type="button"
                 onClick={() => setShowAll(true)}
-                className="flex min-h-[52px] w-full items-center gap-3 border-t border-line px-4 py-3 text-left text-[14.5px] font-medium hover:bg-paper"
+                className="ios-sep flex min-h-[52px] w-full items-center gap-3 px-4 py-3 text-left text-[14.5px] font-medium hover:bg-paper"
+                style={{ "--sep-inset": "64px" } as React.CSSProperties}
               >
                 <span aria-hidden="true" className="w-9 shrink-0" />
-                Show {hidden} more {hidden === 1 ? "reply" : "replies"}
+                Show {hidden} more {hidden === 1 ? "person" : "people"}
               </button>
             )}
             {rows.map((r, n) => (
               <DayRow key={r.key} row={r} first={shown.length === 0 && n === 0} />
             ))}
+            {meetings.map((m, n) => (
+              <Fragment key={m.bookingId}>
+                <DayRow
+                  row={meetingRow(m)}
+                  first={shown.length === 0 && rows.length === 0 && n === 0}
+                  expanded={openMeeting === m.bookingId}
+                  onClick={() => setOpenMeeting((o) => (o === m.bookingId ? null : m.bookingId))}
+                />
+                {openMeeting === m.bookingId && (
+                  <div className="px-3 pb-3">
+                    <MeetingOutcomeCard meeting={m} />
+                  </div>
+                )}
+              </Fragment>
+            ))}
+            {quiet && (
+              <DayRow
+                first={shown.length === 0 && rows.length === 0 && meetings.length === 0}
+                row={{
+                  key: "quiet",
+                  kind: "reply",
+                  person: quiet.name,
+                  title: quiet.total > 1 ? `${quiet.name} and ${quiet.total - 1} more` : quiet.name,
+                  sub: "Stopped replying. A quick check-in could bring them back.",
+                  time: null,
+                  href: quiet.total > 1 ? "/leads?show=quiet" : `/leads/${quiet.id}`,
+                }}
+              />
+            )}
           </div>
         </section>
       )}
@@ -821,22 +881,20 @@ export default function ApprovalQueue({
 /** How many other replies "Still to do today" lists before "Show N more replies". */
 const REPLY_ROWS = 4;
 
-/** One reply in "Still to do today": who, then why or what they said, and how long they have waited. */
+/** One person in Then (A-266): their name, then one plain sentence of what is ready and how long they have waited. */
 function replyRow(item: ApprovalItem): TodayRow {
+  const base = { key: item.leadId, kind: "reply" as const, title: item.leadName, person: item.leadName, time: null, href: null };
   // A note to someone staying in touch (A-260) answers nothing: the row says what it is.
-  if (item.trigger === STAY_IN_TOUCH_TRIGGER) {
-    return { key: item.leadId, kind: "reply", title: `Note to ${item.leadName}`, sub: "Said yes to hearing from you · waiting for your OK", time: null, href: null };
-  }
+  if (item.trigger === STAY_IN_TOUCH_TRIGGER) return { ...base, sub: "Said yes to hearing from you. A short note is ready for your OK." };
   // A note for their moment (A-262): the time they named has come.
-  if (item.trigger === THEIR_MOMENT_TRIGGER) {
-    return { key: item.leadId, kind: "reply", title: `Note to ${item.leadName}`, sub: "Their moment · waiting for your OK", time: null, href: null };
-  }
-  const what = item.why ?? (item.leadLastMessage ? `“${excerpt(item.leadLastMessage, 48)}”` : null);
-  const wait = item.wait ? item.wait.charAt(0).toLowerCase() + item.wait.slice(1) : null;
-  return { key: item.leadId, kind: "reply", title: `Reply to ${item.leadName}`, sub: [what, wait].filter(Boolean).join(" · ") || null, time: null, href: null };
+  if (item.trigger === THEIR_MOMENT_TRIGGER) return { ...base, sub: "The time they named has come. A short note is ready for your OK." };
+  const did = CHANNEL_DID[item.leadLastMessageChannel ?? ""] ?? "wrote to you";
+  const how = `${did.charAt(0).toUpperCase()}${did.slice(1)}${item.asked ? ` ${item.asked}` : ""}.`;
+  return { ...base, sub: `${how} Your reply is ready.` };
 }
 
-function excerpt(text: string, max: number): string {
-  const flat = text.replace(/\s+/g, " ").trim();
-  return flat.length > max ? `${flat.slice(0, max).trimEnd()}…` : flat;
+/** A call to look back on (A-263) as a row: the question until it is answered, then what was said. */
+function meetingRow(m: MeetingToLookBackOn): TodayRow {
+  const sub = m.outcome ? outcomeWords(m.outcome, m.first, m.plan).headline : `How did your call ${m.when} go? One tap.`;
+  return { key: `meeting-${m.bookingId}`, kind: "call", title: m.name, person: m.name, sub, time: null, href: null };
 }

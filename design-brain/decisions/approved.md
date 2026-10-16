@@ -3636,6 +3636,9 @@ its page are removed. Help is the one place to tell us something; old `#feedback
 
 ## A-220 — The phone app redesign, drawing 1 (compact) ^A-220
 
+**Customers PARTLY SUPERSEDED (2026-10-16)** by [[#^A-267|A-267]]: the groups with counts (Needs you, Ready to book, then
+rows for Waiting on them, Booked, Everyone) become one list of everyone with a status in words.
+
 **SUPERSEDED IN PART (2026-10-15) by [A-256](#^A-256):** top bar is the mark, the name and Settings; the tabs are
 Today, Customers, Activity, Results.
 
@@ -4261,6 +4264,9 @@ their first reply?": *"Yes, add it"*.
 
 ## A-250 — Today says the day once, and the first reply is already open ^A-250
 
+**PARTLY SUPERSEDED (2026-10-16)** by [[#^A-266|A-266]]: the day's box ("4 things to do today", "0 done", the bar and its
+line) is gone; one sentence under the greeting says the day. The first reply open at once still holds.
+
 **Approved:** 2026-10-14, founder (*"Yes, build it"*), on a drawing made inside the real app (phone now vs proposed, a
 busy day, and the computer). He had asked to make the product *"as simple as we can ... user can learn easily and
 quickly, it should not be too complicated"*, starting with Today.
@@ -4566,6 +4572,9 @@ off by something the customer said is the kind most likely to get an answer.
 
 ## A-263 — After a call, Today asks "How did it go?"; a yes to meeting puts the booking link in the reply ^A-263
 
+**PARTLY SUPERSEDED (2026-10-16)** by [[#^A-266|A-266]]: "How did it go?" is no longer a card above the first reply; it
+is a row in Today's list that opens the same four answers. The answers, what they do, and the booking link still hold.
+
 **Date:** 2026-10-15. **Founder:** *"Fix these gaps. Yes, build it."* (on the drawings `gaps/gaps-board.png` and
 `gaps/desk/gaps-laptop-board.png`). The two gaps were named in the "meeting booked, then what?" questions of the same
 day: nothing asked how a meeting went (Won/Lost was hidden in Details), and FollowUp offered a viewing but gave the
@@ -4624,3 +4633,32 @@ review and cut, a second codebase and weeks, for zero daily testers today) and s
 **What specifically:** FollowUp stays one web app on every device. On a phone it is installed from the browser
 ("Add to Home Screen"), where the buzz and the Apple feel (A-264) work. Revisit a store app when a tester asks for
 one, when phone buzzes start being missed, or after the first paying customers; not before.
+
+## A-266 — Today, simpler and friendlier: one sentence, faces, plain rows ^A-266
+
+**Date:** 2026-10-16. **Founder:** *"today page still lacks alot bro i want to make it as simple and as friendly i can
+make"*. Shown the drawing made inside the real app (`simpler-board.png`, now next to proposed, phone and computer),
+he said *"yes"*.
+- **One sentence says the day**, under the greeting, in place of the day's box: "4 people are waiting for your reply.
+  Start with Karan." Calls to make and booked calls join the same sentence when there are any. No count box, no bar.
+- **The first reply, open at once (A-250 kept):** the customer's initials, their name, then "Emailed you 2 days ago"
+  under it; their words; "FollowUp wrote this reply for you:"; the reply; any dot line; "If it looks right, press
+  **Send**."; Send to Karan and Change it; Skip for now. No "Do this first" label.
+- **"Then":** every other person as one row: their initials, their name, one plain sentence ("Wrote in Spanish 3 days
+  ago. Your reply is ready."). One row per customer record; never merged by name, since two people can share one.
+- **"How did your call go?"** is a row in that list, opening the same four answers (A-263) in place.
+- **"Later":** Tomorrow, Done today and what FollowUp does on its own, one line each.
+- **Computer:** the same, the card and Then on the left, Later on the right.
+
+## A-267 — Customers as one list, like a phone's messages ^A-267
+
+**Date:** 2026-10-16. **Founder:** *"we got customers page sorted but it feels too complex like i dont know make that
+simple too"*. Shown the drawing (`simpler-board.png`), he said *"yes"*.
+- **One list of everyone**, no boxes, no counts, no rows that open other lists. People with a reply ready first (an
+  orange dot and "Your reply is ready"), then Ready to book (in green, with a Call button), then everyone else,
+  newest message first.
+- **Each row:** initials, name, their last words (or "You: …"), how long ago, and one status in words when there is
+  one ("Booked · Sat, Oct 18, 10:30 AM", "Stopped replying", "Waiting for their reply").
+- **One + button** holds Add customer, Log a call, Import CSV and Clean up (was a separate "More" menu).
+- The lists behind a link (`/leads?show=…`) still open, for links from Today and elsewhere.
+

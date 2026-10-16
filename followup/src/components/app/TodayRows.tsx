@@ -1,34 +1,11 @@
 import Link from "next/link";
-import { CalendarCheck, ChevronRight, Clock, Hand, Send } from "lucide-react";
+import { CalendarCheck, Clock, Hand, Send } from "lucide-react";
 import { Eyebrow } from "@/components/app/canvasBits";
 import type { DidToday } from "@/lib/didToday";
 
 /**
- * The quiet rows under Today's one card (A-220). Today never shows a list:
- * anything more than one row lives in Customers or on the activity page.
+ * Quiet rows for Today (A-220). "Stopped replying" is a row of Today's list now (A-266, ApprovalQueue).
  */
-
-/**
- * Customers going quiet (A-046's "About to be lost"), as one row: the first
- * by name and the reason, or how many more. One person opens them; more than
- * one opens the Going quiet group in Customers.
- */
-export function GoingQuietRow({ first, total }: { first: { id: string; name: string; reason: string }; total: number }) {
-  const more = total - 1;
-  return (
-    <Link
-      href={more > 0 ? "/leads?show=quiet" : `/leads/${first.id}`}
-      className="mt-2.5 flex min-h-11 max-w-[640px] items-center gap-2.5 rounded-[14px] border border-line bg-card px-3 py-2.5"
-    >
-      <span className="shrink-0 text-[12px] font-medium text-ink-faint">Stopped replying:</span>
-      <span className="min-w-0 flex-1 truncate text-[13.5px]">
-        <span className="font-semibold">{first.name}</span>
-        <span className="text-ink-soft">{more > 0 ? ` and ${more} more` : ` · ${first.reason}`}</span>
-      </span>
-      <ChevronRight className="h-[18px] w-[18px] shrink-0 text-ink-faint" aria-hidden="true" />
-    </Link>
-  );
-}
 
 const ICON = { sent: Send, held: Hand, stopped: Clock, finished: CalendarCheck } as const;
 

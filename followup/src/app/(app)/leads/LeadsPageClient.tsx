@@ -15,7 +15,7 @@ import EmptyState from "@/components/EmptyState";
 import CleanupLeadsButton from "@/components/CleanupLeadsButton";
 import { motion } from "framer-motion";
 import { MOTION } from "@/lib/motion";
-import { Search, Plus, Upload, Phone, Inbox, SlidersHorizontal, X, MoreHorizontal, ChevronLeft, ChevronRight, Flame } from "lucide-react";
+import { Search, Plus, Upload, Phone, Inbox, SlidersHorizontal, X, ChevronLeft } from "lucide-react";
 import { Initials, shortAge } from "@/components/app/canvasBits";
 
 /**
@@ -44,7 +44,7 @@ type FilterId = string;
  * dependency, no focus-trap ceremony. The menu holds three low-frequency
  * actions, not a navigation system.
  */
-function LeadsMoreMenu({ onLogCall, onImport }: { onLogCall: () => void; onImport: () => void }) {
+function LeadsMoreMenu({ onAdd, onLogCall, onImport }: { onAdd: () => void; onLogCall: () => void; onImport: () => void }) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -70,11 +70,10 @@ function LeadsMoreMenu({ onLogCall, onImport }: { onLogCall: () => void; onImpor
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-label="More"
-        className="inline-flex h-11 w-11 items-center justify-center gap-1.5 rounded-full border border-line bg-card text-sm font-medium sm:w-auto sm:px-4"
+        aria-label="Add or import customers"
+        className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-line bg-card text-ink"
       >
-        <MoreHorizontal className="h-4 w-4" />
-        <span className="hidden sm:inline">More</span>
+        <Plus className="h-[18px] w-[18px]" />
       </button>
       {open && (
         /* No overflow-hidden. "Clean up leads" opens its own confirm panel,
@@ -88,6 +87,10 @@ function LeadsMoreMenu({ onLogCall, onImport }: { onLogCall: () => void; onImpor
           className="absolute right-0 z-20 mt-1 w-52 box p-1"
           style={{ boxShadow: "var(--shadow-box-hover)" }}
         >
+          <button role="menuitem" className={item} onClick={() => { setOpen(false); onAdd(); }}>
+            <Plus className="h-4 w-4 text-ink-soft" />
+            Add a customer
+          </button>
           <button role="menuitem" className={item} onClick={() => { setOpen(false); onLogCall(); }}>
             <Phone className="h-4 w-4 text-ink-soft" />
             Log a call
@@ -125,8 +128,8 @@ const SUB: Partial<Record<Show, string>> = {
   quiet: "Send a quick check-in.",
   waiting: "FollowUp will check in",
 };
-/** About eight, then the rest one tap away (Miller's law, the design skill). */
-const SHOWN = 8;
+/** The one list shows this many, then "Show everyone" (with its filters) one tap away. */
+const LIST_MAX = 50;
 
 const lastOf = (l: Lead) => l.conversation[l.conversation.length - 1];
 const said = (l: Lead) => {
@@ -134,12 +137,15 @@ const said = (l: Lead) => {
   return m ? (m.direction === "outbound" ? `You: ${m.body}` : m.body) : l.company || l.source;
 };
 
-/** One customer: their name, one line, and (for Ready to book) a Call button beside the row. */
-function Row({ lead, href, line, meta, selected, first = false, call = false }: { lead: Lead; href: string; line: string; meta?: string | null; selected?: boolean; first?: boolean; call?: boolean }) {
+/** Where a customer is, in words, under their last message (A-267). */
+type Status = "needs" | "ready" | "booked" | "quiet" | "waiting";
+
+/** One customer: their name, one line, where they are in words, and (for Ready to book) a Call button beside the row. */
+function Row({ lead, href, line, meta, selected, first = false, call = false, status = null, when = null }: { lead: Lead; href: string; line: string; meta?: string | null; selected?: boolean; first?: boolean; call?: boolean; status?: Status | null; when?: string | null }) {
   return (
-    // The hairline between rows starts where the name starts (A-264): the 32px initials + the 10px gap.
+    // The hairline between rows starts where the name starts (A-264): the 40px initials + the 12px gap.
     <li
-      style={{ "--sep-inset": "42px" } as React.CSSProperties}
+      style={{ "--sep-inset": "52px" } as React.CSSProperties}
       className={"flex min-w-0 items-center gap-2.5" + (first ? "" : " ios-sep") + (selected ? " -mx-2 rounded-[12px] bg-card-2 px-2" : "")}
     >
       {/* On a phone the row opens the customer's own page, sliding in (A-222, A-264); on a computer, the panel beside the list. */}
@@ -149,14 +155,15 @@ function Row({ lead, href, line, meta, selected, first = false, call = false }: 
         data-phone-href={`/leads/${lead.id}`}
         scroll={false}
         aria-current={selected ? "true" : undefined}
-        className="flex min-h-[52px] min-w-0 flex-1 items-center gap-2.5 py-2"
+        className="flex min-h-[60px] min-w-0 flex-1 items-center gap-3 py-2.5"
       >
-        <Initials name={lead.name} size={32} />
+        <Initials name={lead.name} size={40} />
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-[14px] font-semibold">{lead.name}</span>
-          <span className="block truncate text-[12.5px] text-ink-soft">{line.replace(/\s+/g, " ")}</span>
+          <span className="block truncate text-[15px] font-semibold">{lead.name}</span>
+          <span className="block truncate text-[13.5px] text-ink-soft">{line.replace(/\s+/g, " ")}</span>
+          {status && <StatusLine status={status} when={when} />}
         </span>
-        {meta && <span className="shrink-0 text-[12px] text-ink-faint tabular-nums">{meta}</span>}
+        {meta && <span className="shrink-0 self-start pt-0.5 text-[12px] text-ink-faint tabular-nums">{meta}</span>}
       </Link>
       {/* Outlined, never black (one black button per screen); a 48px target around the 32px pill. */}
       {call && lead.phone && (
@@ -169,6 +176,25 @@ function Row({ lead, href, line, meta, selected, first = false, call = false }: 
         </a>
       )}
     </li>
+  );
+}
+
+/** The status in words (A-267): an orange dot only for "your turn"; green for ready to book; plain grey otherwise. */
+function StatusLine({ status, when }: { status: Status; when: string | null }) {
+  if (status === "needs") {
+    return (
+      <span className="mt-0.5 flex items-center gap-1.5 text-[13px] text-ink-faint">
+        <span aria-hidden="true" className="h-[7px] w-[7px] shrink-0 rounded-full" style={{ background: "var(--state-needs)" }} />
+        Your reply is ready
+      </span>
+    );
+  }
+  const words =
+    status === "ready" ? "Ready to book. Time for a call." : status === "booked" ? `Booked${when ? ` · ${when}` : ""}` : status === "quiet" ? "Stopped replying" : "Waiting for their reply";
+  return (
+    <span className="mt-0.5 block truncate text-[13px]" style={{ color: status === "ready" ? "var(--sage)" : "var(--ink-faint)" }}>
+      {words}
+    </span>
   );
 }
 
@@ -292,11 +318,16 @@ export default function LeadsPageClient({
   const rowHref = (id: string) => `/leads?${show ? `show=${show}&` : ""}p=${id}`;
   // What a row says depends on where it is (A-220): why they're ready, why they're going quiet,
   // what happens next, when the booking is; otherwise their last message.
+  const statusOf = (id: string): Status | null =>
+    groups.needs.includes(id) ? "needs" : groups.ready.includes(id) ? "ready" : groups.booked.includes(id) ? "booked" : groups.quiet.includes(id) ? "quiet" : groups.waiting.includes(id) ? "waiting" : null;
   const rowFor = (lead: Lead, where: Show | null, first = false) => {
     const last = lastOf(lead);
     const line = where && where !== "all" && where !== "needs" ? (lines[lead.id] ?? said(lead)) : said(lead);
     const meta = where === "needs" || where === "all" || !where ? (last ? shortAge(last.date) : null) : null;
-    return <Row key={lead.id} lead={lead} href={rowHref(lead.id)} line={line} meta={meta} selected={lead.id === openId} first={first} call={where === "ready"} />;
+    // The one list and search (A-267): their last words, then where they are in words.
+    const status = where ? null : statusOf(lead.id);
+    const call = where === "ready" || status === "ready";
+    return <Row key={lead.id} lead={lead} href={rowHref(lead.id)} line={line} meta={meta} selected={lead.id === openId} first={first} call={call} status={status} when={status === "booked" ? lines[lead.id] ?? null : null} />;
   };
 
   const searchBox = (
@@ -469,50 +500,22 @@ export default function LeadsPageClient({
     );
   }
 
-  // ---- The groups (A-220). ----
-  const group = (key: "needs" | "ready", icon?: React.ReactNode) => {
-    const ids = groups[key];
-    if (ids.length === 0) return null;
-    const people = ids.map((id) => byId.get(id)).filter((l): l is Lead => Boolean(l));
-    return (
-      <section aria-label={TITLE[key]} className="rounded-[16px] border border-line bg-card px-3 pb-1 pt-2.5">
-        <div className="flex items-center justify-between">
-          {/* The span carries the weight: globals.css sets every h2's weight, unlayered, over utilities. */}
-          <h2>
-            <span className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold tracking-normal text-ink-soft">
-              {icon}
-              {TITLE[key]}
-            </span>
-          </h2>
-          <span className="text-[12.5px] font-semibold text-ink-soft tabular-nums">{ids.length}</span>
-        </div>
-        <ul>{people.slice(0, SHOWN).map((l, i) => rowFor(l, key, i === 0))}</ul>
-        {people.length > SHOWN && (
-          <Link href={`/leads?show=${key}`} className="flex min-h-11 items-center text-[13px] text-ink-soft underline underline-offset-[3px]">
-            Show all {people.length}
-          </Link>
-        )}
-      </section>
-    );
-  };
+  // ---- Everyone, as one list (A-267; were groups with counts, A-220). ----
+  // Reply ready first (in Today's order), then ready to book, then everyone else, newest message first.
+  const firstIds = [...groups.needs, ...groups.ready.filter((id) => !groups.needs.includes(id))];
+  const rest = inGroup.filter((l) => !firstIds.includes(l.id));
+  const everyone = [...firstIds.map((id) => byId.get(id)).filter((l): l is Lead => Boolean(l)), ...rest];
+  const listed = everyone.slice(0, LIST_MAX);
 
   return (
     <div className="max-w-[720px]">
-      {/* The title and two small round buttons on one row (A-089), then search, then the people. */}
+      {/* The title and one + button (A-267), then search, then everyone. */}
       <div className="flex items-center justify-between gap-3">
-        <ScrollTitle title="Customers" />
-        <h1 className="title-serif text-[28px] leading-tight">Customers</h1>
-        <div className="flex shrink-0 items-center gap-2 sm:whitespace-nowrap">
-          <LeadsMoreMenu onLogCall={() => setShowLogCall(true)} onImport={() => setShowImport(true)} />
-          <button
-            onClick={() => setShowAddLead(true)}
-            aria-label="Add customer"
-            className="inline-flex h-11 w-11 items-center justify-center gap-1.5 rounded-full border border-line bg-card text-sm font-medium text-ink sm:w-auto sm:px-4"
-          >
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">Add customer</span>
-          </button>
+        <div className="min-w-0">
+          <ScrollTitle title="Customers" />
+          <h1 className="title-serif text-[28px] leading-tight">Customers</h1>
         </div>
+        <LeadsMoreMenu onAdd={() => setShowAddLead(true)} onLogCall={() => setShowLogCall(true)} onImport={() => setShowImport(true)} />
       </div>
       {forms}
       {leads.length > 0 && searchBox}
@@ -524,34 +527,19 @@ export default function LeadsPageClient({
             <p className="mt-4 px-1 text-[12.5px] text-ink-faint">
               {filtered.length} {filtered.length === 1 ? "customer" : "customers"} found
             </p>
-            {filtered.length > 0 && (
-              <ul className="-mx-2 mt-1.5 rounded-[16px] border border-line bg-card px-3 py-1 sm:mx-0">{filtered.map((l, i) => rowFor(l, null, i === 0))}</ul>
-            )}
+            {filtered.length > 0 && <ul className="mt-1">{filtered.map((l, i) => rowFor(l, null, i === 0))}</ul>}
           </>
         ) : (
-          // minmax(0,1fr): a grid item is as wide as its longest line otherwise, and the cut-off
-          // lines pushed every count and Call button off the right of the phone.
-          <div className="-mx-2 mt-3 grid grid-cols-[minmax(0,1fr)] gap-2.5 sm:mx-0">
-            {group("needs")}
-            {group("ready", <Flame className="h-4 w-4" strokeWidth={2} aria-hidden="true" />)}
-            {/* The rest as one card of rows, each opening its list (A-220). */}
-            <nav aria-label="More customers" className="rounded-[16px] border border-line bg-card px-3">
-              {(["quiet", "waiting", "booked", "all"] as const).map((key, i) => (
-                <Link
-                  key={key}
-                  href={`/leads?show=${key}`}
-                  className={"flex min-h-[52px] items-center gap-2.5 py-2.5" + (i ? " border-t border-line" : "")}
-                >
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-[14px] font-semibold">{TITLE[key]}</span>
-                    {SUB[key] && <span className="block truncate text-[12.5px] text-ink-faint">{SUB[key]}</span>}
-                  </span>
-                  <span className="text-[14px] font-semibold tabular-nums">{key === "all" ? leads.length : groups[key].length}</span>
-                  <ChevronRight className="h-[18px] w-[18px] shrink-0 text-ink-faint" aria-hidden="true" />
-                </Link>
-              ))}
-            </nav>
-          </div>
+          <>
+            <ul aria-label="Everyone" className="mt-2">
+              {listed.map((l, i) => rowFor(l, null, i === 0))}
+            </ul>
+            {everyone.length > listed.length && (
+              <Link href="/leads?show=all" className="mt-1 flex min-h-11 items-center text-[13.5px] text-ink-soft underline underline-offset-[3px]">
+                Show everyone ({everyone.length})
+              </Link>
+            )}
+          </>
         ))}
 
       {leads.length === 0 && (

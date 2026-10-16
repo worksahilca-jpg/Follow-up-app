@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 import AppWindow from "@/components/app/AppWindow";
 import Switch from "@/components/Switch";
-import { BOX, PILL, ConnectedAs, ConnectedMark, ConnectionRow, ConnectionSheet, NeedsMark, Soon } from "@/components/settings/connectionBits";
+import { BOX, PILL, ConnectedAs, ConnectedMark, ConnectionRow, ConnectionSheet, NeedsMark } from "@/components/settings/connectionBits";
 
-type Provider = "followupboss" | "hubspot";
+type Provider = "followupboss" | "hubspot" | "gohighlevel";
 
 type RecordItem = {
   id: string;
@@ -46,8 +46,21 @@ const CRMS: { id: Provider; name: string; tile: string; bg: string; fg: string; 
     keyLabel: "service key",
     where: "In HubSpot, search Settings for “service key” and create one that can read and write contacts. An older private app token works too",
   },
+  {
+    // Option A (founder, 2026-10-16): a Private Integration key and the sub-account's Location ID, pasted once. Where
+    // they live in GoHighLevel's screens is from HighLevel's own SDK docs and common setup guides; confirm with the
+    // first real owner.
+    id: "gohighlevel",
+    name: "GoHighLevel",
+    tile: "GH",
+    bg: "#e9f3ee",
+    fg: "#1f6b47",
+    keyLabel: "Private Integration key",
+    where: "In GoHighLevel, Settings → Private Integrations → Create new. Let it read and write contacts and conversations, then copy the key",
+  },
 ];
-const SOON = { name: "GoHighLevel", tile: "GH", bg: "#e9f3ee", fg: "#1f6b47" };
+/** GoHighLevel's second box: which sub-account (src/lib/crm/gohighlevel.ts). */
+const GHL_LOCATION_WHERE = "In GoHighLevel, Settings → Business Profile. It's a short code of letters and numbers";
 
 function Tile({ text, bg, fg }: { text: string; bg: string; fg: string }) {
   return (
@@ -112,6 +125,7 @@ export default function CrmConfig() {
   // null: no window. "pick": which CRM. A provider: its key.
   const [step, setStep] = useState<"pick" | Provider | "connected" | null>(null);
   const [keyDraft, setKeyDraft] = useState("");
+  const [locationDraft, setLocationDraft] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
@@ -131,18 +145,19 @@ export default function CrmConfig() {
   }, []);
 
   async function connect(provider: Provider) {
-    if (!keyDraft.trim()) return;
+    if (!keyDraft.trim() || (provider === "gohighlevel" && !locationDraft.trim())) return;
     setSaving(true);
     setSaveError(null);
     try {
       const res = await fetch("/api/crm/config", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ provider, apiKey: keyDraft.trim() }),
+        body: JSON.stringify({ provider, apiKey: keyDraft.trim(), ...(provider === "gohighlevel" ? { locationId: locationDraft.trim() } : {}) }),
       });
       const data: { success: boolean; message?: string } = await res.json();
       if (data.success) {
         setKeyDraft("");
+        setLocationDraft("");
         await load();
         setStep("connected");
       } else {
@@ -209,7 +224,7 @@ export default function CrmConfig() {
         ) : (
           <ConnectionRow
             glyph="crm"
-            name="Follow Up Boss or HubSpot"
+            name="Follow Up Boss, HubSpot or GoHighLevel"
             first
             action={
               config.isAdmin ? (
@@ -237,6 +252,7 @@ export default function CrmConfig() {
                     onClick={() => {
                       setStep(c.id);
                       setKeyDraft("");
+                      setLocationDraft("");
                       setSaveError(null);
                     }}
                     className={PILL}
@@ -245,11 +261,6 @@ export default function CrmConfig() {
                   </button>
                 </div>
               ))}
-              <div className="flex min-h-[60px] items-center gap-3 border-t border-line-2 px-4 py-2">
-                <Tile text={SOON.tile} bg={SOON.bg} fg={SOON.fg} />
-                <span className="min-w-0 flex-1 text-[16px] font-semibold">{SOON.name}</span>
-                <Soon />
-              </div>
             </div>
           </div>
         </AppWindow>
@@ -274,6 +285,24 @@ export default function CrmConfig() {
               If {opening.name} contacted someone in the last two weeks, FollowUp only watches, and tells you when they&apos;re ready. Nobody gets two
               messages.
             </p>
+            {opening.id === "gohighlevel" && (
+              <>
+                <label htmlFor="crm-location" className="mt-5 block text-[14px] font-medium">
+                  Your Location ID
+                </label>
+                <p className="mt-0.5 text-[13px] text-ink-faint">{GHL_LOCATION_WHERE}.</p>
+                <input
+                  id="crm-location"
+                  type="text"
+                  autoComplete="off"
+                  spellCheck={false}
+                  value={locationDraft}
+                  onChange={(e) => setLocationDraft(e.target.value)}
+                  autoFocus
+                  className="mt-2 h-11 w-full rounded-[12px] border border-line bg-paper px-3 text-base"
+                />
+              </>
+            )}
             <label htmlFor="crm-key" className="mt-5 block text-[14px] font-medium">
               Your {opening.keyLabel}
             </label>
@@ -287,7 +316,7 @@ export default function CrmConfig() {
               onKeyDown={(e) => {
                 if (e.key === "Enter") void connect(opening.id);
               }}
-              autoFocus
+              autoFocus={opening.id !== "gohighlevel"}
               className="mt-2 h-11 w-full rounded-[12px] border border-line bg-paper px-3 text-base"
             />
             {saveError && (
@@ -299,7 +328,7 @@ export default function CrmConfig() {
               <button
                 type="button"
                 onClick={() => connect(opening.id)}
-                disabled={saving || !keyDraft.trim()}
+                disabled={saving || !keyDraft.trim() || (opening.id === "gohighlevel" && !locationDraft.trim())}
                 className="min-h-11 rounded-full bg-ink px-5 text-[15px] font-semibold text-on-accent disabled:opacity-60"
               >
                 {saving ? "Connecting…" : `Connect ${opening.name}`}

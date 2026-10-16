@@ -47,11 +47,17 @@ describe("the home page stays smooth", () => {
   it("measures the page on scroll only where it shows", () => {
     // Each part's scroll effect waits for fuNear() before it measures. The few that don't are cheap
     // and named here: the bar's highlight and tone, the reading thread, play-once triggers, the older
-    // scrubs (each one checks its own fuNear inside tick), the pause-while-scrolling flag and calm mode.
-    const allowed = ["spy()", "draw()", "go()", "tick()", "navTone()", "is-scrolling", "requestAnimationFrame(tick)"];
+    // scrubs (each one checks its own fuNear inside tick) and calm mode.
+    const allowed = ["spy()", "draw()", "go()", "tick()", "navTone()", "requestAnimationFrame(tick)"];
     const loose = scrollListeners().filter((l) => !/near\(\)/.test(l) && !allowed.some((a) => l.includes(a)));
     expect(loose).toEqual([]);
     expect(js).toContain("window.fuNear = function");
+  });
+
+  it("never freezes and restarts its motion on each turn of a mouse wheel", () => {
+    // A Windows wheel scrolls in notches: pausing the loops while scrolling made them stop and start on every notch,
+    // which read as choppy (founder, 2026-10-16, on a Windows laptop). Off-screen parts still rest (is-offscreen).
+    expect(css + js).not.toContain("is-scrolling");
   });
 
   it("calms itself on a computer that can't keep up", () => {

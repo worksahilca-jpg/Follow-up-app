@@ -13620,3 +13620,21 @@ alerts. The gap was Android, where Chrome can install with one tap once it judge
 - **Weak spots:** the real event's timing is Chrome's (it waits for engagement, so a first visit may not see the
   card); the iPhone path stays inside the alerts card, so an iPhone owner who said "Not now" to alerts gets no
   install nudge for two weeks; not drawn first (built straight from the founder's yes on the one-line description).
+
+## 2026-10-16 — Speed: Settings opens without the wait; the homepage's moving messages are lighter
+
+Founder: *"when i open settings it laags dosent renders on time"*, and *"i fell coppiness in landing page"*. He
+answered on a Windows laptop, the whole page, and "yes, make it lighter" for the moving messages.
+- **Settings.** Every box on every Settings page started on arrival, each fetching its own data, so opening Settings
+  made 42 requests (a dozen for pages nobody had opened) and froze a slowed phone's browser for up to 340 ms. A box
+  now starts the first time its page opens and then stays, so a half-typed field survives moving around. Measured
+  on a local build: 23 requests on a computer, 17 on a phone, no freeze. Nothing on screen changed.
+- **Homepage.** The headline's background had 22 messages drifting in at once; it now has 12 (the 7 leads going out
+  stay). Same look and speed, side-by-side screenshots match. The "hold still while scrolling" switch is gone: on a
+  Windows mouse wheel, which scrolls in notches, it froze and restarted the motion on every notch, and measured on a
+  laptop-speed CPU it cost more style work than it saved. Off-screen parts still rest, and calm mode (A-224) stays.
+- **Weak spots, said plainly:** this sandbox has no graphics card and no Windows smooth-wheel, so the homepage
+  numbers are main-thread numbers and noisy run to run (late frames went from about 11% to about 8% on average);
+  the real test is the founder's own laptop after the merge. The first screen still runs about 30 always-on
+  animations; if it still stutters there, the next step is fewer, not faster. Settings' own list still asks for the
+  Instagram, Facebook and WhatsApp status separately from the Connected apps page (3 repeated small requests).

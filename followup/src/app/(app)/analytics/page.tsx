@@ -72,7 +72,7 @@ export default async function NumbersPage() {
   const three = [
     { label: "Booked", value: String(booked), note: "Calls and visits booked through FollowUp" },
     { label: "First reply", value: heardBack != null ? formatSpan(heardBack) : "—", note: heardBack != null ? "Half of your customers heard back faster" : "Nobody has written in yet" },
-    { label: "Won", value: String(won.length), note: "Customers you marked won" },
+    { label: "Won", value: String(won.length), note: "Customers you marked won this week" },
   ];
   const max = Math.max(1, ...weeks.map((w) => w.n));
   const rest: [string, string][] = [

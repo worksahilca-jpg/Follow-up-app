@@ -13708,3 +13708,20 @@ phone width with a made-up customer (`brief/note-email-phone.png`).
   An empty note sends nothing and isn't asked for again that hour, so a message that arrives in that hour won't make
   an email (the buzz and the note in the app still come). The email has no "their own words" list; it points to
   FollowUp for that.
+
+## 2026-10-16 — Fixed: three things that read wrong (Activity, Results)
+
+Founder: *"let's make it more accurate and simple"*, then *"yes fix them"* to the three wrong things found going
+through every screen on the phone.
+- **Activity said "Because Why now: it's October…"** and "Because FollowUp added your booking link because…". Held
+  replies glued "Because" onto the stored reason. They now say why in the reply card's own words (plainHoldReason):
+  "The call didn't happen. This offers Daniel a new time from your free hours.", "Check the price before it goes."
+  Held only by the owner's every-reply-waits setting, the line says "Every reply waits for your OK."
+- **Activity repeated itself.** A reply is held again each time FollowUp rewrites it; each hold was its own line
+  (Daniel 4 times in 18 minutes). Production, outside testers, 30 days: 17 of 61 holds were the same customer and
+  reason again within a day. Now the same customer and reason is one line a day, the newest. Locally 447 → 318 words.
+- **Results said "Won 1" beside "Won, all time 0".** Undoing "How did it go?" moved the customer back but left the
+  deal won. Reopening a customer now clears the deal's won or lost date; the tile says "Customers you marked won this
+  week". Production had no deal in that state (read-only count), so nothing to clean up.
+- **Not changed:** what Activity shows or its look; that is the next drawing's question (Activity mostly repeats what
+  Today shows, R-116's principle).

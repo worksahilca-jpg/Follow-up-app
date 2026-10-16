@@ -6,17 +6,18 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { leadFindUnique, leadUpdate, dealFindFirst, dealCreate, dealUpdate } = vi.hoisted(() => ({
+const { leadFindUnique, leadUpdate, dealFindFirst, dealCreate, dealUpdate, dealUpdateMany } = vi.hoisted(() => ({
   leadFindUnique: vi.fn(),
   leadUpdate: vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({ id: "lead1", stage: data.stage })),
   dealFindFirst: vi.fn(async (): Promise<{ id: string; leadId: string; stage: string; createdAt: Date } | null> => null),
   dealCreate: vi.fn(async () => ({})),
   dealUpdate: vi.fn(async () => ({})),
+  dealUpdateMany: vi.fn(async () => ({ count: 0 })),
 }));
 vi.mock("@/lib/db", () => ({
   prisma: {
     lead: { findUnique: leadFindUnique, update: leadUpdate },
-    deal: { findFirst: dealFindFirst, create: dealCreate, update: dealUpdate },
+    deal: { findFirst: dealFindFirst, create: dealCreate, update: dealUpdate, updateMany: dealUpdateMany },
   },
 }));
 
@@ -72,12 +73,16 @@ describe("POST /api/leads/[id]/stage — Deal record", () => {
     expect(dealCreate).not.toHaveBeenCalled();
   });
 
-  it("never touches the Deal table for a non-closing stage", async () => {
+  it("never makes a Deal for a non-closing stage, and takes back an earlier close", async () => {
     const res = await POST(postRequest("QUALIFIED"), { params });
     expect(res.status).toBe(200);
-    expect(dealFindFirst).not.toHaveBeenCalled();
     expect(dealCreate).not.toHaveBeenCalled();
     expect(dealUpdate).not.toHaveBeenCalled();
+    // Reopened: a deal that was won or lost is no longer either (Results counted it won after an Undo, 2026-10-16).
+    expect(dealUpdateMany).toHaveBeenCalledWith({
+      where: { leadId: "lead1", OR: [{ wonAt: { not: null } }, { lostAt: { not: null } }] },
+      data: { stage: "QUALIFIED", wonAt: null, lostAt: null },
+    });
   });
 
   it("404s for a lead belonging to another business", async () => {

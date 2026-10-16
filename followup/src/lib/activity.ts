@@ -18,6 +18,7 @@
 
 import { prisma } from "@/lib/db";
 import { HOLD_SUMMARY_MARKER } from "@/lib/holdNotices";
+import { plainHoldReason } from "@/lib/holdReasons";
 
 /**
  * "notice": something only the bell used to say, now that Activity has its
@@ -70,11 +71,12 @@ export async function getActivityFeed(businessId: string, viewerId: string): Pro
     // A reply FollowUp wrote but held for the owner's OK. The same row
     // pendingApprovals.ts builds the queue from; its reason is the one the
     // Inbox shows ("Held because …").
+    // More than LIMIT, because repeats of the same hold are folded into one line below.
     prisma.auditEvent.findMany({
       where: { businessId, action: "ai.hold", targetType: "lead", targetId: { not: null } },
       select: { id: true, targetId: true, meta: true, createdAt: true },
       orderBy: { createdAt: "desc" },
-      take: LIMIT,
+      take: LIMIT * 3,
     }),
   ]);
 
@@ -126,25 +128,65 @@ export async function getActivityFeed(businessId: string, viewerId: string): Pro
     });
   }
 
-  for (const h of holds) {
+  for (const h of collapseRepeatHolds(holds)) {
     const name = leadNames.get(h.targetId as string);
     // A lead deleted since keeps no name here, and is left out.
     if (!name) continue;
-    const meta = (h.meta ?? {}) as Record<string, unknown>;
-    const reason = typeof meta.reason === "string" ? meta.reason.trim().replace(/\.\s*$/, "") : "";
     items.push({
       id: `hold-${h.id}`,
       type: "held",
       leadId: h.targetId,
       leadName: name,
       message: `Held a reply for you: ${name}`,
-      detail: reason ? `Because ${reason}.` : null,
+      detail: heldDetail(holdReason(h.meta), name),
       occurredAt: h.createdAt.toISOString(),
     });
   }
 
   items.sort((a, b) => (a.occurredAt < b.occurredAt ? 1 : -1));
   return items.slice(0, LIMIT);
+}
+
+type HoldRow = { id: string; targetId: string | null; meta: unknown; createdAt: Date };
+
+function holdReason(meta: unknown): string {
+  const m = (meta ?? {}) as Record<string, unknown>;
+  return typeof m.reason === "string" ? m.reason.trim() : "";
+}
+
+/** The same day, for the same customer and the same reason, is one line. */
+export const REPEAT_HOLD_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * A reply is held again each time FollowUp rewrites it (a new message, the next run), and each time leaves a row.
+ * Shown one by one, the owner read "Held a reply for you · Daniel" four times in 18 minutes (2026-10-16: 17 of 61
+ * holds for outside testers in 30 days were the same customer and reason again within a day). Newest first in,
+ * newest first out: a row is kept unless a newer row for the same customer and reason is within the window.
+ */
+export function collapseRepeatHolds<T extends HoldRow>(newestFirst: readonly T[]): T[] {
+  const lastKept = new Map<string, number>();
+  const out: T[] = [];
+  for (const h of newestFirst) {
+    const key = `${h.targetId}\u0000${holdReason(h.meta).replace(/\.\s*$/, "")}`;
+    const t = h.createdAt.getTime();
+    const newer = lastKept.get(key);
+    if (newer !== undefined && newer - t < REPEAT_HOLD_WINDOW_MS) continue;
+    lastKept.set(key, t);
+    out.push(h);
+  }
+  return out;
+}
+
+/**
+ * Why it was held, in the same words the reply card uses (plainHoldReason). The stored reasons were written to
+ * finish "Held because …" and a few now start their own sentence ("Why now: …", "FollowUp added your booking link
+ * because …"), so gluing "Because" on the front read "Because Why now: it's October". Held only by the owner's own
+ * every-reply-waits setting, it says that.
+ */
+export function heldDetail(reason: string, leadName: string): string | null {
+  if (!reason) return null;
+  const first = leadName.trim().split(/\s+/)[0] || leadName;
+  return plainHoldReason(reason, { firstName: first }) ?? "Every reply waits for your OK.";
 }
 
 /**

@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState, type ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
 import SettingsList from "@/components/app/SettingsList";
 import ScrollTitle from "@/components/app/ScrollTitle";
@@ -619,16 +619,18 @@ function SettingsPageInner() {
       {/* Where customers write (A-253): one row per place, Connect or Connected; the rest happens in the back. */}
       <section id="connections" hidden={!visible("connections")} className="scroll-mt-16">
         <h2 className="sr-only">Connected apps</h2>
-        <Connections
-          gmail={{ connected: gmailConnected, email: gmailEmail, loaded: gmailStatusLoaded }}
-          outlook={{ connected: outlookConnected, email: outlookEmail, loaded: outlookStatusLoaded }}
-          gmailPushActive={gmailPushActive}
-          gmailNeedsReconnect={gmailNeedsReconnect}
-          outlookAvailable={outlookOauthAvailable}
-          isAdmin={isAdmin}
-          onGmailDisconnect={handleGmailDisconnect}
-          onOutlookDisconnect={handleOutlookDisconnect}
-        />
+        <OnceOpen open={visible("connections")}>
+          <Connections
+            gmail={{ connected: gmailConnected, email: gmailEmail, loaded: gmailStatusLoaded }}
+            outlook={{ connected: outlookConnected, email: outlookEmail, loaded: outlookStatusLoaded }}
+            gmailPushActive={gmailPushActive}
+            gmailNeedsReconnect={gmailNeedsReconnect}
+            outlookAvailable={outlookOauthAvailable}
+            isAdmin={isAdmin}
+            onGmailDisconnect={handleGmailDisconnect}
+            onOutlookDisconnect={handleOutlookDisconnect}
+          />
+        </OnceOpen>
       </section>
 
       {/* How replies go out (A-253): who sends, then the plan, booking hours and pause. The four "FollowUp writes"
@@ -760,21 +762,21 @@ function SettingsPageInner() {
       <section id="booking" hidden={!visible("booking")} className="scroll-mt-16">
         <h2 className={sectionLabel} style={SECTION_STYLE}>Your free hours</h2>
         <div className="mt-4">
-          <BookingCalendarConfig />
+          <OnceOpen open={visible("booking")}><BookingCalendarConfig /></OnceOpen>
         </div>
       </section>
 
       <section id="lead-webhook" hidden={!visible("lead-webhook")} className="scroll-mt-16">
         <h2 className={sectionLabel} style={SECTION_STYLE}>Lead webhook</h2>
         <div className="mt-4">
-          <CopyWebhookUrl />
+          <OnceOpen open={visible("lead-webhook")}><CopyWebhookUrl /></OnceOpen>
         </div>
       </section>
 
       <section id="outbound-webhook" hidden={!visible("outbound-webhook")} className="scroll-mt-16">
         <h2 className={sectionLabel} style={SECTION_STYLE}>Outbound webhook</h2>
         <div className="mt-4">
-          <OutboundWebhookConfig />
+          <OnceOpen open={visible("outbound-webhook")}><OutboundWebhookConfig /></OnceOpen>
         </div>
       </section>
 
@@ -794,7 +796,7 @@ function SettingsPageInner() {
         <section id="phone" hidden={!visible("phone")} className="scroll-mt-16">
           <h2 className={sectionLabel} style={SECTION_STYLE}>Phone (SMS + calls)</h2>
           <div className="mt-4">
-            <TwilioConfig />
+            <OnceOpen open={visible("phone")}><TwilioConfig /></OnceOpen>
           </div>
         </section>
       )}
@@ -803,25 +805,25 @@ function SettingsPageInner() {
           hears that a reply is waiting. Renders nothing until the server has
           at least one alert channel set up — see the component. */}
       <div hidden={!visible("alerts")}>
-        <AlertsSection />
+        <OnceOpen open={visible("alerts")}><AlertsSection /></OnceOpen>
       </div>
 
       <section id="business" hidden={!visible("business")} className="scroll-mt-16">
         <h2 className={sectionLabel} style={SECTION_STYLE}>Your business</h2>
         <div className="mt-4">
-          <BusinessProfileSection />
+          <OnceOpen open={visible("business")}><BusinessProfileSection /></OnceOpen>
         </div>
         {/* What FollowUp knows (A-096): what it will say about the business on its own. */}
         <div className="mt-4">
-          <BusinessFactsSection />
+          <OnceOpen open={visible("business")}><BusinessFactsSection /></OnceOpen>
         </div>
         {/* Who isn't a customer (A-259): what FollowUp learned from "Not a customer". */}
         <div className="mt-4 empty:hidden">
-          <NotCustomerSection />
+          <OnceOpen open={visible("business")}><NotCustomerSection /></OnceOpen>
         </div>
         {/* How you work (A-099): what FollowUp does for the owner because they said yes on Today. */}
         <div className="mt-4 empty:hidden">
-          <HowYouWorkSection />
+          <OnceOpen open={visible("business")}><HowYouWorkSection /></OnceOpen>
         </div>
       </section>
 
@@ -829,13 +831,13 @@ function SettingsPageInner() {
         <h2 className={sectionLabel} style={SECTION_STYLE}>Team</h2>
         {/* "This week" (A-103): admins only, and only while the team calls customers. The page's own lede already says what admins can do, so it isn't said twice. */}
         <div className="mt-4 empty:hidden">
-          <TeamWeek key={teamWeekKey} />
+          <OnceOpen open={visible("team")}><TeamWeek key={teamWeekKey} /></OnceOpen>
         </div>
         <div className="mt-4">
-          <TeamSection onlyAdminsSend={onlyAdminsSend} />
+          <OnceOpen open={visible("team")}><TeamSection onlyAdminsSend={onlyAdminsSend} /></OnceOpen>
         </div>
-        <OnlyAdminsSendSetting onChange={setOnlyAdminsSend} />
-        <TeamCallsSetting onChange={() => setTeamWeekKey((k) => k + 1)} />
+        <OnceOpen open={visible("team")}><OnlyAdminsSendSetting onChange={setOnlyAdminsSend} /></OnceOpen>
+        <OnceOpen open={visible("team")}><TeamCallsSetting onChange={() => setTeamWeekKey((k) => k + 1)} /></OnceOpen>
       </section>
 
       <section id="lead-routing" hidden={!visible("lead-routing")} className="scroll-mt-16">
@@ -845,7 +847,7 @@ function SettingsPageInner() {
             anyone looks at it"); a second sentence saying the same thing
             in different words right above it was redundant. */}
         <div className="mt-4">
-          <SourceRoutingSection />
+          <OnceOpen open={visible("lead-routing")}><SourceRoutingSection /></OnceOpen>
         </div>
       </section>
 
@@ -1006,7 +1008,7 @@ function SettingsPageInner() {
 
       <section id="security" hidden={!visible("security")} className="scroll-mt-16">
         <h2 className={sectionLabel} style={SECTION_STYLE}>Sign-ins and security</h2>
-        <SignInsSection />
+        <OnceOpen open={visible("security")}><SignInsSection /></OnceOpen>
       </section>
 
       <section id="data" hidden={!visible("data")} className="scroll-mt-16">
@@ -1014,13 +1016,25 @@ function SettingsPageInner() {
           Your data
         </h2>
         <div className="mt-4">
-          <DataPrivacySection />
+          <OnceOpen open={visible("data")}><DataPrivacySection /></OnceOpen>
         </div>
       </section>
       </div>
       </div>
     </div>
   );
+}
+
+/**
+ * A page's boxes start, and fetch what they show, the first time their page opens, then stay mounted so a
+ * half-typed field survives moving around. Starting every box on arrival meant about 37 requests before
+ * Settings showed anything, a dozen of them for pages nobody had opened (measured 2026-10-16).
+ */
+function OnceOpen({ open, children }: { open: boolean; children: ReactNode }) {
+  const [seen, setSeen] = useState(open);
+  // Adjusting state while rendering (React's own pattern for "remember a prop changed"): no extra paint.
+  if (open && !seen) setSeen(true);
+  return seen || open ? <>{children}</> : null;
 }
 
 /** A group of rows (A-253): one white box, rows split by a hairline. */

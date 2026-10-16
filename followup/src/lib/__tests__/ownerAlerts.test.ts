@@ -38,7 +38,18 @@ const h = vi.hoisted(() => ({
   sendPushToUser: vi.fn(),
   pushConfigured: { value: true },
   // Booked calls (A-268), as the "about to start" scan reads them.
-  calls: [] as { id: string; leadId: string; businessId: string; scheduledAt: Date; lead: { name: string; assignedToId: string | null; stage: string }; business: { timezone: string } }[],
+  calls: [] as {
+    id: string;
+    leadId: string;
+    businessId: string;
+    scheduledAt: Date;
+    durationMinutes: number;
+    brief: unknown;
+    lead: { name: string; assignedToId: string | null; stage: string; qualification: unknown };
+    business: { timezone: string };
+  }[],
+  // The note each call's email is made from (src/lib/callBriefStore.ts is mocked): null means nothing to say.
+  currentCallBrief: vi.fn(),
 }));
 
 vi.mock("@/lib/db", () => {
@@ -146,6 +157,11 @@ vi.mock("@/lib/pendingApprovals", () => ({
   getPendingApprovals: vi.fn(async (businessId: string) => h.approvals.get(businessId) ?? []),
 }));
 
+vi.mock("@/lib/callBriefStore", () => ({ currentCallBrief: h.currentCallBrief }));
+vi.mock("@/lib/leads-data", () => ({
+  getLeadForBusiness: vi.fn(async (id: string) => ({ id, name: "Aisha Rahman", conversation: [] })),
+}));
+
 vi.mock("@/lib/webPush", () => ({
   isPushConfigured: () => h.pushConfigured.value,
   sendPushToUser: h.sendPushToUser,
@@ -201,6 +217,8 @@ beforeEach(() => {
   h.inbound.clear();
   h.users.length = 0;
   h.calls.length = 0;
+  h.currentCallBrief.mockReset();
+  h.currentCallBrief.mockResolvedValue(null);
   h.users.push({ id: "owner1", email: "owner@shop.test", businessId: "biz1", role: "ADMIN", alertEmailEnabled: true });
   h.pushConfigured.value = true;
   h.sendPushToUser.mockReset();
@@ -720,7 +738,9 @@ describe("a booked call about to start (A-268)", () => {
       leadId: "lead9",
       businessId: "biz1",
       scheduledAt: new Date(at.getTime() + minutesAhead * 60_000),
-      lead: { name: "Aisha Rahman", assignedToId: null, stage: "QUALIFIED", ...over },
+      durationMinutes: 30,
+      brief: null,
+      lead: { name: "Aisha Rahman", assignedToId: null, stage: "QUALIFIED", qualification: null, ...over },
       business: { timezone: "America/Toronto" },
     });
   };
@@ -783,6 +803,93 @@ describe("a booked call about to start (A-268)", () => {
     call(20);
     const { prisma } = await import("@/lib/db");
     await runOwnerAlerts(NOW);
-    expect(prisma.booking.findMany).not.toHaveBeenCalled();
+    // The only look at the calendar is the hour-ahead one for the email; the half-hour one for the buzz never runs.
+    const windows = vi.mocked(prisma.booking.findMany).mock.calls.map((c) => (c[0] as { where: { scheduledAt: { lte: Date } } }).where.scheduledAt.lte.getTime() - NOW.getTime());
+    expect(windows).toEqual([60 * 60_000]);
+    expect(h.rows.filter((r) => r.kind === "call_soon")).toHaveLength(0);
+  });
+});
+
+describe("the note by email, an hour before a booked call (A-268)", () => {
+  const NOTE = {
+    v: 1,
+    messages: 6,
+    wants: [{ text: "A 3-bedroom house in Erin Mills by March.", quotes: [{ quote: "hoping to be in by March", by: "them", at: "2026-10-09T14:00:00.000Z" }] }],
+    asked: [],
+    open: [{ text: "You said you'd check the property tax.", quotes: [{ quote: "I'll check the property tax", by: "you", at: "2026-10-09T15:00:00.000Z" }] }],
+    mind: [],
+    next: [{ text: "A viewing this Saturday.", quotes: [{ quote: "Saturdays are easiest", by: "them", at: "2026-10-14T18:00:00.000Z" }] }],
+  };
+  let n = 0;
+  const call = (minutesAhead: number, over: Partial<(typeof h.calls)[number]["lead"]> = {}) => {
+    n += 1;
+    h.calls.push({
+      id: `note${n}`,
+      leadId: `nlead${n}`,
+      businessId: "biz1",
+      scheduledAt: new Date(NOW.getTime() + minutesAhead * 60_000),
+      durationMinutes: 30,
+      brief: null,
+      lead: { name: "Aisha Rahman", assignedToId: null, stage: "QUALIFIED", qualification: null, ...over },
+      business: { timezone: "America/Toronto" },
+    });
+  };
+
+  it("emails the owner the note once, an hour ahead, with each part and a link to the customer", async () => {
+    h.currentCallBrief.mockResolvedValue(NOTE);
+    call(45);
+    const r = await runOwnerAlerts(NOW);
+    expect(r.callNotes).toBe(1);
+    const sent = emails();
+    expect(sent).toHaveLength(1);
+    expect(sent[0].to).toEqual(["owner@shop.test"]);
+    expect(sent[0].subject).toBe("Before your call with Aisha at 11:45 AM");
+    for (const words of ["What Aisha wants", "A 3-bedroom house in Erin Mills by March.", "Still open", "A next step to offer", "/leads/nlead1"]) {
+      expect(sent[0].html).toContain(words);
+    }
+    expect(sent[0].text).toContain("- You said you'd check the property tax.");
+    await runOwnerAlerts(new Date(NOW.getTime() + 60_000));
+    expect(emails()).toHaveLength(1);
+  });
+
+  it("sends nothing when there's nothing true to say, and doesn't ask again every minute", async () => {
+    call(45);
+    await runOwnerAlerts(NOW);
+    await runOwnerAlerts(new Date(NOW.getTime() + 60_000));
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(h.currentCallBrief).toHaveBeenCalledTimes(1);
+  });
+
+  it("waits until the hour before", async () => {
+    h.currentCallBrief.mockResolvedValue(NOTE);
+    call(90);
+    await runOwnerAlerts(NOW);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("only goes to someone who has email alerts on", async () => {
+    h.users[0].alertEmailEnabled = false;
+    h.currentCallBrief.mockResolvedValue(NOTE);
+    call(45);
+    await runOwnerAlerts(NOW);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("comes as well as the buzz when the call is within half an hour", async () => {
+    h.currentCallBrief.mockResolvedValue(NOTE);
+    call(20);
+    const r = await runOwnerAlerts(NOW);
+    expect(r.callNotes).toBe(1);
+    expect(r.callsSoon).toBe(1);
+    expect(h.rows.map((row) => row.kind).sort()).toEqual(["call_note", "call_soon"]);
+  });
+
+  it("writes at most a few notes a minute, and the rest the next minute", async () => {
+    h.currentCallBrief.mockResolvedValue(NOTE);
+    for (let i = 0; i < 6; i++) call(50);
+    await runOwnerAlerts(NOW);
+    expect(emails()).toHaveLength(4);
+    await runOwnerAlerts(new Date(NOW.getTime() + 60_000));
+    expect(emails()).toHaveLength(6);
   });
 });

@@ -187,6 +187,17 @@ export async function getLeadById(id: string): Promise<Lead | undefined> {
   return mapDbLeadToUiLead(dbLead, rules);
 }
 
+/**
+ * One customer of one business, for code that runs without a signed-in person (the every-minute alerts, A-268's
+ * note email). Same shape as getLeadById; nothing is returned for another business's customer.
+ */
+export async function getLeadForBusiness(id: string, businessId: string): Promise<Lead | undefined> {
+  const dbLead = await prisma.lead.findUnique({ where: { id }, include: leadInclude });
+  if (!dbLead || dbLead.businessId !== businessId) return undefined;
+  const rules = await getBusinessAutomationRules(businessId);
+  return mapDbLeadToUiLead(dbLead, rules);
+}
+
 export interface LeadAuditEntry {
   id: string;
   action: string;

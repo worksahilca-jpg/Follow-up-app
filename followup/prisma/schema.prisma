@@ -1607,6 +1607,12 @@ model Booking {
   outcomeAt        DateTime?
   outcomeFromStage String?
 
+  // "Before your call" (A-268): the note for this call (src/lib/callBrief.ts), every line checked against the
+  // customer's own words before it was kept. It records how many messages it covered, so it is written again only
+  // when the conversation has moved on.
+  brief   Json?
+  briefAt DateTime?
+
   // The real double-booking guard: two people confirming the same slot in
   // the same instant race a findFirst-then-create check in application
   // code, but not this constraint — the DB rejects the second insert

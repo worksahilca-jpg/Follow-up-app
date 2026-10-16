@@ -20,6 +20,7 @@ import { playbookFor } from "@/lib/tradePlaybooks";
 import { factsPromptBlock, factsText, type FactLine } from "@/lib/factLines";
 import { customerGreetingName } from "@/lib/leadName";
 import { qualifyPromptBlock, type Criterion, type CriterionKey, type ExtractedItem } from "@/lib/qualification";
+import { BRIEF_SECTIONS, type BriefSection, type ProposedLine } from "@/lib/callBrief";
 import { bookingLinkPromptBlock } from "@/lib/bookingOffer";
 import { checkerPhrase, cleanKinds, standingRuleNotice, type NotCustomerReason, type SetAsideKind } from "@/lib/notCustomerReasons";
 
@@ -2199,6 +2200,110 @@ export async function summarizeConversation(conversation: Message[], leadFirstNa
   });
   const out = completion.choices[0]?.message?.content?.trim() ?? "";
   return out ? out.slice(0, 500) : null;
+}
+
+/**
+ * "Before your call" (A-268): the lines of the note the owner reads before a booked call, each with the exact words
+ * behind it. The model only proposes: src/lib/callBrief.ts (checkBrief) keeps a line only when every one of its
+ * quotes is found, as written, in a message from the side it names, so an invented line is dropped, never shown.
+ *
+ * The note is in English for the owner; the quotes stay in the language the customer wrote in. Dates are said as
+ * the conversation has them, never turned into weekdays, which a model gets wrong.
+ *
+ * Null when OpenAI isn't configured. Throws on a bad response: the caller shows the note it had, or none.
+ */
+export async function extractCallBrief(conversation: Message[], leadFirstName: string): Promise<ProposedLine[] | null> {
+  if (!process.env.OPENAI_API_KEY || conversation.length === 0) return null;
+  const first = leadFirstName || "the customer";
+  const client = getClient();
+  const completion = await client.chat.completions.create({
+    model: MODEL,
+    messages: [
+      {
+        role: "system",
+        content:
+          `A small-business owner has a booked call with a customer called ${first}. Read their conversation and ` +
+          "write short notes the owner reads a minute before the call, in plain English, saying \"you\" for the " +
+          `business and ${first} for the customer. Five parts, each optional:\n` +
+          `- wants (at most 1 line): what ${first} is looking for, as ${first} said it: for a home, the area, the ` +
+          "kind of home, the timing and the money. e.g. \"A 3-bedroom house in Erin Mills, Mississauga, by March. " +
+          "Pre-approved up to $950,000.\"\n" +
+          `- asked (at most 2 lines): a question ${first} asked, and what you answered, if you did. e.g. \"If the ` +
+          "Folkway Drive house has a finished basement. You said yes and sent the listing on Oct 13.\"\n" +
+          `- open (at most 3 lines): a question of ${first}'s that no later message answers, or something you said ` +
+          "you would check, find or send and no later message did. e.g. \"Which schools are close to Erin Mills. " +
+          "Nobody has answered yet.\" or \"You said you'd check the property tax on Folkway Drive.\"\n" +
+          `- mind (at most 1 line): a worry or feeling ${first} put into words. Never guessed from tone. e.g. ` +
+          "\"Lost two offers this summer and is tired of bidding wars.\"\n" +
+          `- next (at most 1 line): one next step to offer at the end of the call: only something ${first} asked ` +
+          `about or said yes to. e.g. \"A viewing of the Folkway Drive house this weekend. ${first} said Saturdays ` +
+          "are easiest.\" Never a sales tactic, never a reason to hurry, never pressure.\n\n" +
+          "Each line: text, one or two short sentences, at most 30 words; and quotes, the exact words that show it, " +
+          "each copied character for character from one line of the conversation (a short phrase is enough), with " +
+          "by = customer for a line marked inbound or business for a line marked outbound. Every fact in text must " +
+          "be in its quotes. wants, asked, mind and next need at least one quote from the customer. A quote that is " +
+          "not word for word in a message is thrown away, and its line with it. Keep quotes in the language they " +
+          "were written in. Say a date the way the conversation has it, e.g. Oct 13, never as a weekday. When a part " +
+          "has nothing true to say, leave it out. Never guess, never add advice, never add anything the " +
+          "conversation doesn't say." +
+          UNTRUSTED_CONVERSATION_NOTICE,
+      },
+      { role: "user", content: formatTranscript(conversation) },
+    ],
+    // The same note for the same conversation: it is read again until the conversation moves on.
+    temperature: 0,
+    max_tokens: 1200,
+    response_format: {
+      type: "json_schema",
+      json_schema: {
+        name: "call_brief",
+        strict: true,
+        schema: {
+          type: "object",
+          properties: {
+            lines: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  section: { type: "string", enum: [...BRIEF_SECTIONS] },
+                  text: { type: "string" },
+                  quotes: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: { quote: { type: "string" }, by: { type: "string", enum: ["customer", "business"] } },
+                      required: ["quote", "by"],
+                      additionalProperties: false,
+                    },
+                  },
+                },
+                required: ["section", "text", "quotes"],
+                additionalProperties: false,
+              },
+            },
+          },
+          required: ["lines"],
+          additionalProperties: false,
+        },
+      },
+    },
+  });
+
+  const raw = completion.choices[0]?.message?.content;
+  if (!raw) throw new Error("OpenAI returned no content for extractCallBrief.");
+  const parsed = JSON.parse(raw) as { lines?: unknown };
+  if (!Array.isArray(parsed.lines)) throw new Error("OpenAI returned no lines for extractCallBrief.");
+  // Validated, not cast: anything off-shape is dropped here, and checkBrief checks every quote after.
+  return parsed.lines.flatMap((l): ProposedLine[] => {
+    const o = l as Record<string, unknown>;
+    if (!o || !BRIEF_SECTIONS.includes(o.section as BriefSection) || typeof o.text !== "string" || !Array.isArray(o.quotes)) return [];
+    const quotes = o.quotes.flatMap((q): ProposedLine["quotes"] => {
+      const r = q as Record<string, unknown>;
+      return r && typeof r.quote === "string" && (r.by === "customer" || r.by === "business") ? [{ quote: r.quote, by: r.by }] : [];
+    });
+    return [{ section: o.section as BriefSection, text: o.text, quotes }];
+  });
 }
 
 /**

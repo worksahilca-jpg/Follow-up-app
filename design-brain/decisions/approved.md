@@ -4662,3 +4662,30 @@ simple too"*. Shown the drawing (`simpler-board.png`), he said *"yes"*.
 - **One + button** holds Add customer, Log a call, Import CSV and Clean up (was a separate "More" menu).
 - The lists behind a link (`/leads?show=…`) still open, for links from Today and elsewhere.
 
+
+## A-268 — "Before your call": what to talk about, from the customer's own words ^A-268
+
+**Date:** 2026-10-16. **Founder:** *"let's see if someone got booked and we have to hand over to the business owner,
+right? So, how would that business owner or the user get to know what to talk about, what to follow up on, and how to
+close the deal that was going on before?"* Shown the drawing made inside the real Today page (`brief/before-call-board.png`,
+a made-up buyer, Aisha, phone and computer), he said *"sure"*.
+- **Today, the day of a booked call:** the call joins the day's sentence (as A-266 already does) and gets a row in
+  Then: the customer's initials, their name, "Your call is at 2:00 PM. What to talk about is ready." It shows from the
+  start of that day until the call ends; after it, the same customer's row becomes "How did your call go?" (A-263).
+- **Tap the row: the note opens in place** (like the call question): "Before your call", "Your call with Aisha at
+  2:00 PM", "30 minutes. Everything below comes from Aisha's 6 messages.", then up to five short parts, each left out
+  when there's nothing true to say: **What Aisha wants** (area, timing, money), **What Aisha asked** (and what was
+  answered), **Still open** (questions nobody answered; things the owner said they'd check), **On Aisha's mind** (a
+  worry the customer said in words), and **A next step to offer** in one shaded box. Then "See Aisha's own words",
+  which unfolds every line's message with its date; **Call Aisha** (outlined: Today's one black button stays Send) and
+  "Open the chat".
+- **Never made up:** every line carries the customer's (or the owner's) exact words, checked character for character
+  against the messages before it is shown, the same rule as the Ready card (A-246). A line whose words aren't found is
+  dropped, not shown.
+- **No pressure (A-247):** the next step is only something the customer asked about or said yes to. No urgency, no
+  "close them" language anywhere.
+- **Also:** the same note sits at the top of the customer's page until the call; the phone buzzes 30 minutes before
+  ("Call with Aisha at 2:00 PM. What to talk about is ready.").
+- **Not built from the drawing: the calendar invite.** FollowUp's calendar event invites the customer, so its
+  description is shown to them; "On Aisha's mind: tired of bidding wars" must never reach Aisha. Asked the founder
+  what to do instead (an email to the owner only is the proposal).

@@ -41,6 +41,9 @@ import CallBox from "@/components/app/CallBox";
 import { isCallablePhone, telHref } from "@/lib/callPlan";
 import { displayChannel } from "@/lib/displayChannel";
 import CustomerStanding from "@/components/app/CustomerStanding";
+import CallBriefCard, { type CallToPrepare } from "@/components/app/CallBriefCard";
+import { callNotOver, readCallBrief } from "@/lib/callBrief";
+import { clockTime, dayOffset } from "@/lib/todayWords";
 import { readQualification, templateFor } from "@/lib/qualification";
 import CustomerPlan from "@/components/app/CustomerPlan";
 import { planCard } from "@/lib/planCard";
@@ -153,6 +156,39 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
       />
     ) : null;
 
+  // "Before your call" (A-268): the next booked call in the coming week, at the top until it is over.
+  const nextCall = ctx
+    ? await prisma.booking.findFirst({
+        where: {
+          leadId: lead.id,
+          businessId: ctx.businessId,
+          status: "confirmed",
+          scheduledAt: { gte: new Date(now.getTime() - 4 * 60 * 60 * 1000), lte: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000) },
+        },
+        orderBy: { scheduledAt: "asc" },
+        select: { id: true, scheduledAt: true, durationMinutes: true, brief: true },
+      })
+    : null;
+  const prep: CallToPrepare | null =
+    nextCall && callNotOver(nextCall.scheduledAt, nextCall.durationMinutes, now)
+      ? {
+          bookingId: nextCall.id,
+          leadId: lead.id,
+          name: lead.name,
+          first: firstName,
+          time: clockTime(nextCall.scheduledAt, timeZone),
+          day:
+            dayOffset(nextCall.scheduledAt, now, timeZone) === 0
+              ? null
+              : dayOffset(nextCall.scheduledAt, now, timeZone) === 1
+                ? "tomorrow"
+                : new Intl.DateTimeFormat("en-US", { timeZone, weekday: "short", month: "short", day: "numeric" }).format(nextCall.scheduledAt),
+          durationMinutes: nextCall.durationMinutes,
+          phone,
+          brief: readCallBrief(nextCall.brief),
+        }
+      : null;
+
   // Why the reply waits, said inside the reply card on a phone (A-222), where the side column isn't.
   const holdWhy = approval
     ? (plainHoldReason(approval.reason, { firstName: lead.name.split(" ")[0] || lead.name, topic: approval.riskTopic }) ?? "Every reply waits for your OK.")
@@ -178,7 +214,12 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
           </div>
         </div>
 
-        {/* Phone: where the customer stands comes first (A-246); a ready card is what the alert was about. */}
+        {/* Phone: a call coming up comes first (A-268), then where the customer stands (A-246). */}
+        {prep && (
+          <div className="mt-3 lg:hidden">
+            <CallBriefCard call={prep} onTheirPage />
+          </div>
+        )}
         {standing && <div className="mt-3 lg:hidden">{standing}</div>}
 
         <div aria-hidden="true" className="flex-1 lg:hidden" />
@@ -257,6 +298,11 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
           </>
         }
       >
+        {prep && (
+          <div className="mb-4 hidden lg:block">
+            <CallBriefCard call={prep} onTheirPage />
+          </div>
+        )}
         {standing && <div className="hidden lg:block">{standing}</div>}
         <Facts lead={lead} approval={approval} now={now} crm={crm} />
 

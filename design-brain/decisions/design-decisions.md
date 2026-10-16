@@ -13659,3 +13659,36 @@ Founder: *"today page still lacks alot bro i want to make it as simple and as fr
   joins its sentences into one line, which grows on a busy day. Customers no longer shows counts at a glance ("7 waiting
   for their reply"); the status words carry it. A day with calls or bookings tomorrow wasn't in the sample data, so the
   "Tomorrow" line with a booking was not seen on screen.
+
+## 2026-10-16 — Built: "Before your call", what to talk about from the customer's own words (A-268)
+
+Founder: once someone is booked and handed over, how does the owner know *"what to talk about, what to follow up on,
+and how to close the deal that was going on before?"* Drawn inside the real Today page (`brief/before-call-board.png`),
+then *"sure"*.
+- **Today.** A call booked for today is a row at the top of Then ("Your call is at 4:00 PM. What to talk about is
+  ready.") until the call ends; it replaces the old "Booked a 30-minute call with you." row with the time on the right.
+  The row opens the note in place: up to five parts (what they want, what they asked, still open, on their mind, a
+  next step to offer in the one shaded box), "See their own words", Call (outlined: Send stays the one black button)
+  and "Open the chat". The day's sentence already counts booked calls.
+- **The customer's page.** The same note sits at the top until the call (the next call within a week); its link says
+  "Go to the chat" there, since the chat is on the same page. Phone and computer each have a copy, and only the one on
+  screen asks for the note.
+- **Never made up.** The model proposes lines with quotes; `checkBrief` keeps a line only when every quote is found
+  word for word in a message from the side it names (the customer's for wants/asked/mind/next), with no pressure words,
+  at most 200 characters, and each part capped (1/2/3/1/1). Stored on the booking with how many messages it covered,
+  and written again only when the conversation moves on, inside the daily AI ceilings (H2). With no model to ask, the
+  Ready card's facts become "What they want".
+- **The buzz.** Half an hour before a call, phone only, not at night, once per person per call: "Call with Raj at 4:00
+  PM · What to talk about is ready.", opening their page.
+- **Not built: the calendar invite.** The event FollowUp makes invites the customer, so its description would show them
+  "On Raj's mind: …". Asked the founder; the proposal is an email to the owner only.
+- **Checked** on a local production build with two calls seeded for today (one with a stored note built from the sample
+  conversation, one with none and no model key): phone 390×844 and laptop 1440×900, the rows open their notes, "See
+  Raj's own words" lists six quotes with dates, no console errors, nothing scrolls sideways, every link and button in
+  the note is 44 px. Types, lint, 4,102 tests.
+- **Weak spots, said plainly:** a note nobody has opened yet is written when it is first opened, so that first open
+  says "Reading your messages with Raj…" for a few seconds. "What Linda wants" for a seller, built from the Ready card
+  when there's no model, reads as a list ("48 Birch Ave. Before Christmas. Moving closer to family."). On the
+  customer's page the note and the Ready card repeat a little (Saturday morning, pre-approved). How good the model's
+  lines are on real conversations is untested until a tester has a booking; the accuracy suite on /admin has no call-
+  note cases yet.

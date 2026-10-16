@@ -5,6 +5,8 @@
 import { describe, it, expect } from "vitest";
 import type { Message } from "@/lib/types";
 import {
+  briefParts,
+  callNoteDue,
   callNotOver,
   callRowSub,
   callSoonDue,
@@ -192,5 +194,30 @@ describe("when the note shows and when the phone buzzes", () => {
     expect(callSoonDue(at, new Date("2026-10-16T17:30:00.000Z"))).toBe(true);
     expect(callSoonDue(at, new Date("2026-10-16T17:59:00.000Z"))).toBe(true);
     expect(callSoonDue(at, new Date("2026-10-16T18:00:00.000Z"))).toBe(false);
+  });
+});
+
+describe("the note by email (A-268)", () => {
+  const at = new Date("2026-10-16T18:00:00.000Z");
+
+  it("is due in the hour before the call, never after it starts", () => {
+    expect(callNoteDue(at, new Date("2026-10-16T16:59:00.000Z"))).toBe(false);
+    expect(callNoteDue(at, new Date("2026-10-16T17:00:00.000Z"))).toBe(true);
+    expect(callNoteDue(at, new Date("2026-10-16T17:59:00.000Z"))).toBe(true);
+    expect(callNoteDue(at, new Date("2026-10-16T18:00:00.000Z"))).toBe(false);
+  });
+
+  it("reads as headed parts, in the note's order, leaving out empty ones", () => {
+    const b = checkBrief(
+      [
+        line("next", "A Saturday viewing.", ["Saturdays are easiest for us", "customer"]),
+        line("wants", "In by March.", ["hoping to be in by March", "customer"]),
+      ],
+      chat
+    );
+    expect(briefParts(b, "Aisha")).toEqual([
+      { label: "What Aisha wants", lines: ["In by March."] },
+      { label: "A next step to offer", lines: ["A Saturday viewing."] },
+    ]);
   });
 });

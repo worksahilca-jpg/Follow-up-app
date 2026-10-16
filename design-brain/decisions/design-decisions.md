@@ -13695,3 +13695,16 @@ then *"sure"*.
   customer's page the note and the Ready card repeat a little (Saturday morning, pre-approved). How good the model's
   lines are on real conversations is untested until a tester has a booking; the accuracy suite on /admin has no call-
   note cases yet.
+
+## 2026-10-16 — Built: the call note by email, an hour before (A-268)
+
+Founder, on the question of what to do instead of the calendar invite (which the customer also gets): *"yes its
+fine"* to emailing the note to the owner an hour before each call. Built on the every-minute alerts: within the hour
+before a booked call, the note (read from the booking, or written then, at most 4 a minute) goes to whoever the
+customer belongs to, if their email alerts are on and the note has something in it. The email uses the alerts' own
+layout with a new "parts" block (heading, then its lines; a dot per line when there are two or more). Previewed at
+phone width with a made-up customer (`brief/note-email-phone.png`).
+- **Weak spots:** a booking made less than an hour before the call gets its email at once rather than an hour ahead.
+  An empty note sends nothing and isn't asked for again that hour, so a message that arrives in that hour won't make
+  an email (the buzz and the note in the app still come). The email has no "their own words" list; it points to
+  FollowUp for that.

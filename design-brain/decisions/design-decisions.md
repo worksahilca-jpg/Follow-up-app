@@ -13731,3 +13731,27 @@ card), Call once, the reply in Today's words and buttons, plain day lines, no re
   two pills under the note; not simplified yet. "Go to the chat" on the computer points at a chat already beside it.
   The Ready card's "Why FollowUp thinks this" (its checks) isn't reachable while a call is booked; the note's "See
   Raj's own words" carries the same kind of proof.
+
+## 2026-10-16 — Built: Activity simpler, problems on Today (A-270)
+
+Researched first at the founder's ask (four parts, one report). Every product studied keeps "needs you" apart from
+history; repeats are what make people stop looking (Ancker 2017; our own bell: 95 of 108 lines repeated Today).
+- **Weak spots, said plainly:** a sent reply doesn't yet say what happens next ("Next: Thursday, unless she writes
+  first"), which the research suggested; not built. A problem on Today has no phone buzz of its own yet. Account
+  notices are matched by their words (Gmail, Outlook, Reconnect), so a notice worded differently would show without
+  a "Reconnect" link. On a quiet week Activity is nearly empty: honest, but bare. Vendor pages in the research were
+  read through search snippets only.
+
+## 2026-10-16 — Founder: FollowUp is the follow-up agent people can't build themselves; GoHighLevel is a source
+
+Founder, on building the GoHighLevel connection: *"our main goal is not just to connect with crm right that why we
+got more sources … its like people are building personal agents … that can help them followup … so those who dont
+know can also do that"*, and *"i want to help those too … who are using these crms but they are not able to make it
+work it is making more work for them"*. Recorded as he said it:
+- FollowUp is a ready-made follow-up agent for people who can't build one themselves. A CRM is one more place
+  customers come from, like Gmail or Instagram, not the point.
+- People already paying for a CRM (GoHighLevel) that gives them more work, not less, are in scope: FollowUp does the
+  thinking the CRM makes them build (matches `followup/research/competitors/2026-10-07-gohighlevel.md`).
+- **Supersedes** "GoHighLevel stays Soon until 3 or more prospects or testers say they use it" (A-253): the founder
+  said *"lets build ghl too"* on 2026-10-16, with a realtor who uses it meeting him on Tuesday. FollowUp sends through
+  the owner's own GoHighLevel (*"yes"*, same day).

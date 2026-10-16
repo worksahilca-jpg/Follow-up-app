@@ -6,7 +6,6 @@ import { MOTION, OPEN_IN_PLACE } from "@/lib/motion";
 import { useRouter } from "next/navigation";
 import { fillPriceSlot, hasPriceSlot, slotOf, splitAtPriceSlot } from "@/lib/priceSlot";
 import { RememberPrice } from "@/components/app/RememberPrice";
-import { Eyebrow } from "./canvasBits";
 import { useUndoableSend } from "@/components/useUndoableSend";
 import UndoLine from "@/components/UndoLine";
 import { dropKeptEdit, keepEdit, readKeptEdit } from "@/lib/keptEdit";
@@ -14,8 +13,9 @@ import { dropKeptEdit, keepEdit, readKeptEdit } from "@/lib/keptEdit";
 /**
  * The reply, as drawn on the canvas thread boards (Inbox, InboxAI,
  * ThreadPhone, TodayCalmPhone): a warm card under the conversation that
- * says what it is ("Reply ready · waits for your OK"), the words
- * themselves, and three actions: Send, Edit, Don't send.
+ * says what it is ("FollowUp wrote this reply for you:"), the words
+ * themselves, what to do, and three actions: Send to them, Change it,
+ * Don't send (the same words as Today's card, A-269).
  *
  * It sends through the same POST /api/leads/[id]/send the old composer
  * used, after the same 10-second undo Today gives (useUndoableSend,
@@ -230,13 +230,14 @@ export default function ReplyCard({
     );
   }
 
-  // Who wrote it, at a glance (A-089): FollowUp's words until the owner changes them. The same words as Today's card (A-220).
-  const author = mine ? "Edited by you" : "Reply ready to send";
+  // Who wrote it, at a glance (A-089), in the same plain words as Today's card (A-266, A-269): FollowUp's words until
+  // the owner changes them.
+  const author = mine ? "You changed this reply:" : "FollowUp wrote this reply for you:";
   const label = draft ? author : "Write a reply";
 
   return (
     <div className={"relative overflow-hidden rounded-[18px] p-3.5 sm:p-5" + (dense ? " lg:rounded-[16px] lg:px-5 lg:py-[18px]" : "")} style={WARM_CARD}>
-      <Eyebrow green>{label}</Eyebrow>
+      <p className="text-[14px] text-ink-soft">{label}</p>
       {textTo && <p className="mt-1.5 text-[13px] text-ink-soft">Text to {textTo}</p>}
 
       <AnimatePresence initial={false} mode="wait">
@@ -369,6 +370,12 @@ export default function ReplyCard({
         </p>
       )}
       {sendLocked && <p className="mt-2 text-[13px] text-ink-soft">Only admins send on this account. An admin will see this reply waiting.</p>}
+      {/* What to do, said once, as on Today (A-266, A-269). */}
+      {draft && !sendLocked && !editing && !needsPrice && !undoable.pending && (
+        <p className="mt-3 text-[15px]">
+          If it looks right, press <b>Send</b>.
+        </p>
+      )}
 
       {/* The grace period replaces the buttons: while the clock runs, the
           only thing to press is the one that stops it (A-048). */}
@@ -406,7 +413,7 @@ export default function ReplyCard({
             }
             style={{ background: "var(--accent)", color: "var(--on-accent)" }}
           >
-            {undoable.busy ? "Sending…" : "Send"}
+            {undoable.busy ? "Sending…" : `Send to ${first}`}
           </button>
         )}
         {!editing && (
@@ -414,10 +421,10 @@ export default function ReplyCard({
             type="button"
             onClick={() => setEditing(true)}
             disabled={busy !== null}
-            className={"h-11 w-24 rounded-full border text-[14px] font-medium" + (dense ? " lg:h-[38px] lg:w-auto lg:px-4 lg:font-semibold" : "")}
+            className={"h-11 rounded-full border px-5 text-[15px] font-medium" + (dense ? " lg:h-[38px] lg:px-4 lg:text-[14px] lg:font-semibold" : "")}
             style={{ borderColor: "var(--line-strong)", background: "var(--glass)" }}
           >
-            Edit
+            Change it
           </button>
         )}
         {waiting && (

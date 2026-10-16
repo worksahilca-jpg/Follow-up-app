@@ -1,6 +1,5 @@
 import { Fragment } from "react";
 import type { Message } from "@/lib/types";
-import { Eyebrow } from "./canvasBits";
 
 /**
  * The conversation as chat bubbles (A-220): the customer on the left in
@@ -46,7 +45,7 @@ export default function Thread({
 
   const dayKey = new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" });
   const time = new Intl.DateTimeFormat(undefined, { timeZone, hour: "numeric", minute: "2-digit" });
-  const dayName = new Intl.DateTimeFormat(undefined, { timeZone, weekday: "long", month: "short", day: "numeric" });
+  const dayName = new Intl.DateTimeFormat(undefined, { timeZone, weekday: "short", month: "short", day: "numeric" });
   const today = dayKey.format(now);
   const yesterday = dayKey.format(new Date(now.getTime() - 86_400_000));
 
@@ -63,9 +62,8 @@ export default function Thread({
     <div className="flex flex-col gap-4">
       {groups.map((g) => (
         <div key={g.key} className="flex flex-col gap-2.5">
-          <div className="text-center">
-            <Eyebrow>{g.label}</Eyebrow>
-          </div>
+          {/* A plain date, as a phone's messages show it (A-269): not a code-style label. */}
+          <p className="text-center text-[12.5px] text-ink-faint">{g.label}</p>
           {g.items.map((m) => {
             const at = time.format(new Date(m.date));
             const width = "max-w-[82%] " + (dense ? "sm:max-w-[520px] lg:max-w-[460px]" : "sm:max-w-[520px]");

@@ -13722,3 +13722,12 @@ through every screen on the phone.
   week". Production had no deal in that state (read-only count), so nothing to clean up.
 - **Not changed:** what Activity shows or its look; that is the next drawing's question (Activity mostly repeats what
   Today shows, R-116's principle).
+
+## 2026-10-16 — Approved and built: a customer's page, simpler (A-269)
+
+Founder: *"yes build it"* on the drawing. One box on top (the call note while a call is coming, otherwise the standing
+card), Call once, the reply in Today's words and buttons, plain day lines, no repeat of the waiting reply.
+- **Weak spots, said plainly:** on the computer the side column still has the reason, "Waiting 38 h", "Came from" and
+  two pills under the note; not simplified yet. "Go to the chat" on the computer points at a chat already beside it.
+  The Ready card's "Why FollowUp thinks this" (its checks) isn't reachable while a call is booked; the note's "See
+  Raj's own words" carries the same kind of proof.

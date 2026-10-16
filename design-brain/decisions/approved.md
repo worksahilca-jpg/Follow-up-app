@@ -4362,6 +4362,7 @@ improvement list it came with (inferred from the reply, not a "yes" to the optio
   - First, the parts every CRM shares, for the two already connected (Follow Up Boss, HubSpot): the record, trying
     again, "Do not contact", the stage, signed events and the screens.
   - One-click sign-in for a CRM needs that CRM's developer app, which the founder registers.
+  - *SUPERSEDED (2026-10-16): the founder said "lets build ghl too"; see design-decisions.md, same date.*
   - GoHighLevel stays "Soon" until 3 or more prospects or testers say they use it (research,
     `research/competitors/2026-10-07-gohighlevel.md`).
   - Otherwise, a CRM is built first when the testers name it.
@@ -4443,6 +4444,9 @@ sentence; bare labels like "Later" read as an expert tool).
 screens is unchanged; only the words change.
 
 ## A-256 — Activity instead of the bell ^A-256
+
+**PARTLY SUPERSEDED (2026-10-16)** by [[#^A-270|A-270]]: problems ("Needs you") go on top of Today, not Activity; Activity no
+longer lists held replies and has no tabs. The bell stays gone and Activity stays a place.
 
 **Approved:** 2026-10-15, founder: *"Do you even think that this notification button is useful? Can we make an
 activity bar … like Today's Customers, Result, and then Activity, instead of notifications?"*, then *"Yes"* to
@@ -4714,3 +4718,23 @@ call at 4:00 PM), he said *"yes build it"*.
 - **No code-style labels:** the conversation's day line is plain ("Tue, Oct 13"); "WHAT FOLLOWUP DID · Held a reply"
   is gone while a reply waits right under it, and otherwise is one plain line.
 - **Measured on the drawing:** phone 2.5 → 2 screens, 311 → 269 words.
+
+## A-270 — Activity is a calm record; problems go on Today ^A-270
+
+**Date:** 2026-10-16. **Founder:** *"lets simplify activity page too"*, then *"CAN YOU DO DEEP RESEARCH PLEASE FIRST WHAT
+OTHERS TO OR WHAT TO KEPP IN ACTIVITY"*. Research: `research/ux-patterns/2026-10-16-what-to-keep-in-activity.md`
+(CRMs, realtor AI tools, Zapier/IFTTT, banking apps, AI assistants, HAX/Apple guidelines, alert-fatigue studies).
+Shown the short version (Activity only shows what FollowUp did; held replies and tabs go; problems move to Today), he
+said *"yes both"* and *"go for the activity thing too"*. Drawing before the research: `prototypes/activity-simple/`.
+- **Activity shows only what FollowUp did on its own:** replies it sent, check-ins it stopped because someone wrote
+  back ("Wrote back, so FollowUp stopped the check-ins."), check-ins it finished ("No reply yet."), and account
+  notices as one plain line. Nothing on it needs the owner.
+- **Gone:** "Held a reply for you" (each one waits on Today, R-116), the tabs, the orange dots.
+- **Several replies on one day fold into one line** ("FollowUp sent 3 replies on its own · To Nina, Kofi and Ava")
+  that opens to the list.
+- **One line points to Today:** "Replies waiting for your OK are on Today."
+- **Problems go on top of Today** in one "Needs you" box: what broke in one sentence, the one thing to do
+  ("Reconnect Outlook"), and "Got it". Only account-wide notices from the last 3 days, at most 3, the same problem
+  once, gone once fixed (the inbox connected and checked since) or when "Got it" is pressed. Today's own "Replies
+  and check-ins can't go out" box still covers a lost Gmail, so it isn't said twice.
+- **Empty:** "Quiet so far. When FollowUp answers someone or stops a check-in on its own, it shows here."

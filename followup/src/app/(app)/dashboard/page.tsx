@@ -24,6 +24,8 @@ import type { CallCard } from "@/components/app/CallsToMake";
 import { getIncompleteSetupSteps } from "@/lib/setupStatus";
 import { getGmailStatus } from "@/lib/integrations/gmail";
 import { getOutlookStatus } from "@/lib/integrations/outlook";
+import { openProblems } from "@/lib/openProblems";
+import ProblemNotices from "@/components/app/ProblemNotices";
 import { ArrowRight } from "lucide-react";
 import FirstValueNote from "@/components/FirstValueNote";
 import { FIRST_VALUE_SEND, firstValueNote } from "@/lib/firstValue";
@@ -207,6 +209,14 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const sendingPaused = Boolean(business?.sendingPausedAt);
   const sendLocked = Boolean(business?.onlyAdminsSend) && !isAdmin;
   const cantSend = !anySendChannel;
+  // Problems go on Today (A-270): an inbox lost or not being checked, until fixed or "Got it".
+  const problems = ctx
+    ? await openProblems(ctx.businessId, ctx.userId, {
+        gmail: { connected: gmail.connected, needsReconnect: "needsReconnect" in gmail && Boolean(gmail.needsReconnect), lastSyncedAt: "lastSyncedAt" in gmail && gmail.lastSyncedAt ? new Date(gmail.lastSyncedAt) : null },
+        outlook: { connected: outlook.connected },
+        cantSendShown: cantSend,
+      })
+    : [];
   // An inbox is connected if EITHER provider is. Checking only Gmail is what
   // made the empty state claim "FollowUp is watching your inbox" to a business
   // that had connected Outlook and never got the confirmation line, and to a
@@ -424,6 +434,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       {cantSend && (
         <CantSendNotice reconnectEmail={"needsReconnect" in gmail && gmail.needsReconnect ? (gmail.email ?? "your inbox") : null} />
       )}
+      <ProblemNotices problems={problems} />
       {firstValue && <FirstValueNote title={firstValue.title} body={firstValue.body} />}
       <div className={leads.length > 0 ? "mt-5 lg:grid lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] lg:items-start lg:gap-8" : "mt-3.5 sm:mt-5"}>
       <div className="min-w-0">

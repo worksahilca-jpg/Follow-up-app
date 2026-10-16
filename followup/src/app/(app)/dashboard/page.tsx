@@ -40,6 +40,8 @@ import { todaysQuestion } from "@/lib/dailyQuestionData";
 import { planLine } from "@/lib/comingUp";
 import { findHabitSuggestion } from "@/lib/habits";
 import type { MeetingToLookBackOn } from "@/components/app/MeetingOutcomeCard";
+import type { CallToPrepare } from "@/components/app/CallBriefCard";
+import { callNotOver, readCallBrief } from "@/lib/callBrief";
 import ScrollTitle from "@/components/app/ScrollTitle";
 import { LOOK_BACK_DAYS, endedMeetings, isMeetingOutcome, meetingWhen } from "@/lib/meetingOutcome";
 import { PLAN_NAMES, choosePlan, readFollowUpPlans } from "@/lib/followUpPlans";
@@ -260,9 +262,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const dayStart = startOfLocalDay(now, timezone);
   const [nearBookings, bookedToday, wroteForToday] = ctx && leads.length > 0
     ? await Promise.all([
+        // From a few hours back, so a call that has started stays on Today (with its note) until it ends (A-268).
         prisma.booking.findMany({
-          where: { businessId: ctx.businessId, status: "confirmed", scheduledAt: { gte: now, lt: new Date(dayStart.getTime() + 50 * 60 * 60 * 1000) } },
-          select: { id: true, leadId: true, scheduledAt: true, durationMinutes: true, lead: { select: { name: true } } },
+          where: { businessId: ctx.businessId, status: "confirmed", scheduledAt: { gte: new Date(now.getTime() - 4 * 60 * 60 * 1000), lt: new Date(dayStart.getTime() + 50 * 60 * 60 * 1000) } },
+          select: { id: true, leadId: true, scheduledAt: true, durationMinutes: true, brief: true, lead: { select: { name: true, phone: true } } },
           orderBy: { scheduledAt: "asc" },
           take: 20,
         }),
@@ -317,16 +320,19 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   });
   // One question at a time: the newest unanswered call, after today's answers.
   const meetingCards = [...answeredToday.slice(0, 2), ...lookBacks.slice(0, 1)].map(toMeeting);
-  const bookingRow = (b: (typeof nearBookings)[number]): TodayRow => ({
-    key: `booking-${b.id}`,
-    kind: "booking",
-    title: b.lead.name,
-    person: b.lead.name,
-    sub: `Booked a ${b.durationMinutes}-minute call with you.`,
+  // Today's booked calls that aren't over yet: each is a row in Then that opens "Before your call" (A-268).
+  const bookingsToday = nearBookings.filter((b) => dayOffset(b.scheduledAt, now, timezone) === 0 && callNotOver(b.scheduledAt, b.durationMinutes, now));
+  const callsToPrepare: CallToPrepare[] = bookingsToday.map((b) => ({
+    bookingId: b.id,
+    leadId: b.leadId,
+    name: b.lead.name,
+    first: b.lead.name.trim().split(/\s+/)[0] || b.lead.name,
     time: clockTime(b.scheduledAt, timezone),
-    href: `/leads/${b.leadId}`,
-  });
-  const bookingsToday = nearBookings.filter((b) => dayOffset(b.scheduledAt, now, timezone) === 0);
+    durationMinutes: b.durationMinutes,
+    phone: b.lead.phone ?? null,
+    // The stored note shows at once; the card asks again in the background in case a message came since.
+    brief: readCallBrief(b.brief),
+  }));
   const bookingsTomorrow = nearBookings.filter((b) => dayOffset(b.scheduledAt, now, timezone) === 1);
   // Calls to make (A-103) as rows: the customer's page has the call and its buttons.
   const callRows: TodayRow[] = callCards.map((c) => ({
@@ -434,7 +440,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         const queue = (
           <ApprovalQueue
             items={approvalItems}
-            rows={[...callRows, ...bookingsToday.map(bookingRow)]}
+            rows={callRows}
+            calls={callsToPrepare}
             plan={approvalItems.length === 0 && comingUp ? planLine(comingUp.groups) : null}
             weekResults={weekResults}
             answeredForYou={rescue?.answeredForYou ?? 0}

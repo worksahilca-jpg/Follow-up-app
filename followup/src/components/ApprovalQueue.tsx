@@ -14,6 +14,8 @@ import { isBookingLinkReason } from "@/lib/bookingOffer";
 import { DayHeading, DayRow, type TodayRow } from "@/components/app/TodayDay";
 import { Initials } from "@/components/app/canvasBits";
 import MeetingOutcomeCard, { type MeetingToLookBackOn } from "@/components/app/MeetingOutcomeCard";
+import CallBriefCard, { type CallToPrepare } from "@/components/app/CallBriefCard";
+import { callRowSub } from "@/lib/callBrief";
 import { outcomeWords } from "@/lib/meetingOutcome";
 import { useUndoableSend } from "@/components/useUndoableSend";
 import SiteReplyCard from "@/components/app/SiteReplyCard";
@@ -599,9 +601,12 @@ export default function ApprovalQueue({
   weekResults = null,
   plan = null,
   meetings = [],
+  calls = [],
   quiet = null,
 }: {
   items: ApprovalItem[];
+  /** Calls booked for today and not over yet (A-268): a row each, first in Then, opening "Before your call" in place. */
+  calls?: CallToPrepare[];
   /** Calls to look back on (A-263): a row each in Then, opening the four answers in place (A-266). */
   meetings?: MeetingToLookBackOn[];
   /** Customers who stopped replying (A-046), as the list's last row: the first one, and how many in all. */
@@ -711,7 +716,10 @@ export default function ApprovalQueue({
   const shown = showAll ? others : others.slice(0, REPLY_ROWS);
   const hidden = others.length - shown.length;
   const [openMeeting, setOpenMeeting] = useState<string | null>(null);
-  const stillToDo = others.length + rows.length + meetings.length + (quiet ? 1 : 0);
+  const [openCall, setOpenCall] = useState<string | null>(null);
+  const stillToDo = calls.length + others.length + rows.length + meetings.length + (quiet ? 1 : 0);
+  // Calls to make, booked calls and calls to get ready for: the rest of the day, below the empty state.
+  const dayAhead = rows.length + calls.length;
 
   // "Do this first" (A-244), open from the start (A-250, 2026-10-14): their
   // words, FollowUp's reply and Send (A-243's card), with no tap before it.
@@ -739,7 +747,7 @@ export default function ApprovalQueue({
         />
       </motion.div>
     </section>
-  ) : visible.length === 0 || rows.length > 0 ? (
+  ) : visible.length === 0 || dayAhead > 0 ? (
     // A finish line, not a blank (A-046, the Todoist study): said calmly,
     // with what FollowUp keeps doing. No confetti, points or streaks.
     // Faded in only when the owner emptied the list just now; an empty
@@ -754,24 +762,24 @@ export default function ApprovalQueue({
         <Check className="h-5 w-5" strokeWidth={2.4} />
       </span>
       <p className="mt-2.5 text-[17px] font-semibold tracking-[-0.01em]">
-        {rows.length > 0 ? "No replies waiting." : handled > 0 ? "You're done for today." : "You're all caught up."}
+        {dayAhead > 0 ? "No replies waiting." : handled > 0 ? "You're done for today." : "You're all caught up."}
       </p>
       <p className="mt-0.5 text-[13.5px] leading-normal text-ink-soft">
-        {rows.length > 0
+        {dayAhead > 0
           ? "Your calls and booked times for today are below."
           : handled > 0
             ? `You handled ${handled} ${handled === 1 ? "person" : "people"} today. FollowUp keeps watching, and will tell you when someone writes.`
             : holdAll
               ? "Every reply FollowUp writes shows up here first. Nothing goes out until you send it, apart from a short “let me check” when a price or date question has waited 30 minutes."
               : "Anything FollowUp isn't sure about will show up here before it sends."}
-        {rows.length === 0 && answeredForYou > 0 &&
+        {dayAhead === 0 && answeredForYou > 0 &&
           ` It answered ${answeredForYou} ${answeredForYou === 1 ? "customer" : "customers"} on its own this week.`}
       </p>
       {/* What happens next, by name (research round 2, #2): a plan for what is left quiets it as much as finishing it does. */}
-      {rows.length === 0 && plan && <p className="mt-2 text-[13.5px] leading-normal text-ink">{plan}</p>}
+      {dayAhead === 0 && plan && <p className="mt-2 text-[13.5px] leading-normal text-ink">{plan}</p>}
       {/* The end of the day is what the owner remembers (peak-end, A-088): real
           outcomes only, nothing when they are all zero. */}
-      {rows.length === 0 && weekResults && <p className="mt-2 text-[13px] leading-normal text-ink-soft tabular-nums">{weekResults}</p>}
+      {dayAhead === 0 && weekResults && <p className="mt-2 text-[13px] leading-normal text-ink-soft tabular-nums">{weekResults}</p>}
     </motion.div>
   ) : null;
 
@@ -825,8 +833,24 @@ export default function ApprovalQueue({
         <section aria-label={selected ? "Then" : "Still to do today"} className="mt-7">
           <DayHeading title={selected ? "Then" : "Still to do today"} />
           <div className="-mx-3">
+            {/* A call booked for today comes first (A-268): it happens at a time, and its note is what to read before. */}
+            {calls.map((c, n) => (
+              <Fragment key={c.bookingId}>
+                <DayRow
+                  row={callPrepRow(c)}
+                  first={n === 0}
+                  expanded={openCall === c.bookingId}
+                  onClick={() => setOpenCall((o) => (o === c.bookingId ? null : c.bookingId))}
+                />
+                {openCall === c.bookingId && (
+                  <div className="px-3 pb-3">
+                    <CallBriefCard call={c} />
+                  </div>
+                )}
+              </Fragment>
+            ))}
             {shown.map((i, n) => (
-              <DayRow key={i.leadId} first={n === 0} row={replyRow(i)} onClick={() => pick(i.leadId)} />
+              <DayRow key={i.leadId} first={calls.length === 0 && n === 0} row={replyRow(i)} onClick={() => pick(i.leadId)} />
             ))}
             {hidden > 0 && (
               <button
@@ -840,13 +864,13 @@ export default function ApprovalQueue({
               </button>
             )}
             {rows.map((r, n) => (
-              <DayRow key={r.key} row={r} first={shown.length === 0 && n === 0} />
+              <DayRow key={r.key} row={r} first={calls.length === 0 && shown.length === 0 && n === 0} />
             ))}
             {meetings.map((m, n) => (
               <Fragment key={m.bookingId}>
                 <DayRow
                   row={meetingRow(m)}
-                  first={shown.length === 0 && rows.length === 0 && n === 0}
+                  first={calls.length === 0 && shown.length === 0 && rows.length === 0 && n === 0}
                   expanded={openMeeting === m.bookingId}
                   onClick={() => setOpenMeeting((o) => (o === m.bookingId ? null : m.bookingId))}
                 />
@@ -859,7 +883,7 @@ export default function ApprovalQueue({
             ))}
             {quiet && (
               <DayRow
-                first={shown.length === 0 && rows.length === 0 && meetings.length === 0}
+                first={calls.length === 0 && shown.length === 0 && rows.length === 0 && meetings.length === 0}
                 row={{
                   key: "quiet",
                   kind: "reply",
@@ -891,6 +915,11 @@ function replyRow(item: ApprovalItem): TodayRow {
   const did = CHANNEL_DID[item.leadLastMessageChannel ?? ""] ?? "wrote to you";
   const how = `${did.charAt(0).toUpperCase()}${did.slice(1)}${item.asked ? ` ${item.asked}` : ""}.`;
   return { ...base, sub: `${how} Your reply is ready.` };
+}
+
+/** A call booked for today (A-268) as a row: when it is, and that the note to read before it is ready. */
+function callPrepRow(c: CallToPrepare): TodayRow {
+  return { key: `prep-${c.bookingId}`, kind: "booking", title: c.name, person: c.name, sub: callRowSub(c.time), time: null, href: null };
 }
 
 /** A call to look back on (A-263) as a row: the question until it is answered, then what was said. */

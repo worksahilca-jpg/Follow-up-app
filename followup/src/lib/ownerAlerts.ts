@@ -11,6 +11,8 @@ import { renderNoticeEmailHtml, noticeDate } from "@/lib/noticeEmailHtml";
 import { isPushConfigured, sendPushToUser, type PushPayload } from "@/lib/webPush";
 import { isUniqueViolation } from "@/lib/uniqueViolation";
 import { readQualification, readyWhy, shownItems, templateById, templateFor, viewingOf, type Qualification } from "@/lib/qualification";
+import { CALL_SOON_MINUTES, callSoonDue } from "@/lib/callBrief";
+import { clockTime } from "@/lib/todayWords";
 
 /**
  * Telling the owner, outside the app, that a customer is waiting.
@@ -603,6 +605,95 @@ export function startOfLocalDay(now: Date, timeZone: string): Date {
   return new Date(now.getTime() - elapsed * 1000 - now.getMilliseconds());
 }
 
+/* ------------------------------------------------------------------ *
+ * "Before your call" (A-268): a buzz half an hour before a booked call,
+ * saying when it is and that the note on what to talk about is ready.
+ * Phone only: an email half an hour ahead is one more thing to read,
+ * and the note itself is in FollowUp. Claimed once per person per call
+ * (kind "call_soon", the call's start as the claim's time), never at
+ * night, never for a deal already won or lost.
+ * ------------------------------------------------------------------ */
+
+export type CallSoon = {
+  bookingId: string;
+  leadId: string;
+  businessId: string;
+  assignedToId: string | null;
+  leadName: string;
+  scheduledAt: Date;
+  timeZone: string;
+};
+
+/** Every booked call starting within the next half hour, where it isn't night. */
+export async function findCallsSoon(now: Date = new Date()): Promise<CallSoon[]> {
+  const rows = await prisma.booking.findMany({
+    where: { status: "confirmed", scheduledAt: { gt: now, lte: new Date(now.getTime() + CALL_SOON_MINUTES * 60_000) } },
+    select: {
+      id: true,
+      leadId: true,
+      businessId: true,
+      scheduledAt: true,
+      lead: { select: { name: true, assignedToId: true, stage: true } },
+      business: { select: { timezone: true } },
+    },
+  });
+  const out: CallSoon[] = [];
+  for (const r of rows) {
+    if (!callSoonDue(r.scheduledAt, now)) continue;
+    if (r.lead.stage === "WON" || r.lead.stage === "LOST") continue;
+    const timeZone = r.business.timezone || "America/New_York";
+    if (inQuietHours(now, timeZone)) continue;
+    out.push({
+      bookingId: r.id,
+      leadId: r.leadId,
+      businessId: r.businessId,
+      assignedToId: r.lead.assignedToId,
+      leadName: r.lead.name,
+      scheduledAt: r.scheduledAt,
+      timeZone,
+    });
+  }
+  return out;
+}
+
+/** "Call with Aisha at 2:00 PM" · "What to talk about is ready." Opens their page, where the note is at the top. */
+export function callSoonPush(c: CallSoon): PushPayload {
+  const { first } = whoIs(c.leadName);
+  return {
+    title: `Call with ${first} at ${clockTime(c.scheduledAt, c.timeZone)}`,
+    body: "What to talk about is ready.",
+    url: `/leads/${c.leadId}`,
+    tag: `call-${c.bookingId}`,
+  };
+}
+
+/** Buzzes one person about their calls starting soon. */
+async function alertCallsSoon(user: Recipient, calls: CallSoon[], result: AlertRunResult): Promise<void> {
+  const mine = calls.filter((c) => c.businessId === user.businessId);
+  for (const c of mine) {
+    let rowId: string;
+    try {
+      const row = await prisma.ownerAlert.create({
+        data: { userId: user.id, businessId: c.businessId, leadId: c.leadId, waitStartedAt: c.scheduledAt, kind: "call_soon" },
+        select: { id: true },
+      });
+      rowId = row.id;
+    } catch (err) {
+      if (!isUniqueViolation(err)) console.error(`Call alert claim failed for booking ${c.bookingId}:`, err);
+      continue;
+    }
+    const r = await sendPushToUser(user.id, callSoonPush(c));
+    result.pushes += r.delivered;
+    if (r.delivered > 0) {
+      await prisma.ownerAlert.update({ where: { id: rowId }, data: { pushedAt: new Date() } });
+      result.callsSoon += 1;
+    } else {
+      // Nothing reached a phone: released, so the next tick tries again while the call is still ahead.
+      await prisma.ownerAlert.deleteMany({ where: { id: rowId, emailedAt: null, pushedAt: null } });
+    }
+  }
+}
+
 export type AlertRunResult = {
   /** Waiting customers found this tick that were news to at least one person. */
   customers: number;
@@ -611,6 +702,8 @@ export type AlertRunResult = {
   summaries: number;
   /** Customers who became ready and someone was told. */
   ready: number;
+  /** Booked calls starting within half an hour that someone's phone was told about (A-268). */
+  callsSoon: number;
   /** Set when neither channel has keys: the run did nothing, on purpose. */
   skipped?: string;
 };
@@ -841,7 +934,7 @@ async function alertReady(
  * (and anything recent arrives as one summary, not a flood).
  */
 export async function runOwnerAlerts(now: Date = new Date()): Promise<AlertRunResult> {
-  const result: AlertRunResult = { customers: 0, emails: 0, pushes: 0, summaries: 0, ready: 0 };
+  const result: AlertRunResult = { customers: 0, emails: 0, pushes: 0, summaries: 0, ready: 0, callsSoon: 0 };
   const channels = { email: isAlertEmailConfigured(), push: isPushConfigured() };
   if (!channels.email && !channels.push) return { ...result, skipped: "no alert channel is configured" };
 
@@ -855,12 +948,23 @@ export async function runOwnerAlerts(now: Date = new Date()): Promise<AlertRunRe
   }
   const readyByUser = ready.length > 0 ? await groupByRecipient(ready) : new Map<string, ReadyCustomer[]>();
 
+  // A call about to start (A-268): only a phone can be told in time.
+  let soon: CallSoon[] = [];
+  if (channels.push) {
+    try {
+      soon = await findCallsSoon(now);
+    } catch (err) {
+      console.error("Owner alerts: could not read the calls about to start:", err);
+    }
+  }
+  const soonByUser = soon.length > 0 ? await groupByRecipient(soon) : new Map<string, CallSoon[]>();
+
   const waiting = await findWaitingCustomers(now);
-  if (waiting.length === 0 && ready.length === 0) return result;
+  if (waiting.length === 0 && ready.length === 0 && soon.length === 0) return result;
 
   const byUser = await groupByRecipient(waiting);
   const users = await prisma.user.findMany({
-    where: { id: { in: [...new Set([...readyByUser.keys(), ...byUser.keys()])] } },
+    where: { id: { in: [...new Set([...readyByUser.keys(), ...soonByUser.keys(), ...byUser.keys()])] } },
     // Only what an alert needs. The business relation is narrowed to its
     // timezone so this never pulls (and decrypts) the channel tokens on
     // the Business row.
@@ -872,6 +976,11 @@ export async function runOwnerAlerts(now: Date = new Date()): Promise<AlertRunRe
       await alertReady(user, readyByUser.get(user.id) ?? [], now, channels, result);
     } catch (err) {
       console.error(`Ready alerts failed for user ${user.id}:`, err);
+    }
+    try {
+      await alertCallsSoon(user, soonByUser.get(user.id) ?? [], result);
+    } catch (err) {
+      console.error(`Call alerts failed for user ${user.id}:`, err);
     }
     try {
       await alertOne(user, byUser.get(user.id) ?? [], now, channels, result);

@@ -35,40 +35,40 @@ export function greeting(now: Date, timeZone: string, name: string | null | unde
   return first ? `${part}, ${first}.` : `${part}.`;
 }
 
-/** The line under the greeting: who to start with, or that the day is clear. */
-export function dayLine(startWith: string | null, anythingToDo: boolean): string {
-  if (startWith) return `Here is your day. Start with ${startWith}.`;
-  return anythingToDo ? "Here is your day." : "Nothing needs you right now.";
+/** "a, b and c". */
+function andList(items: string[]): string {
+  if (items.length <= 1) return items[0] ?? "";
+  return `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
 }
 
 /**
- * What the day is made of, in one line under its count (A-250): "4 replies to
- * send · 2 calls to make · 1 booked call at 3:00 PM". A kind with none is left
- * out rather than said as a zero; with replies only, the line still says there
- * are no calls or bookings, so the owner knows without looking (R-114: "How
- * many calls do I need to do?"). `nextBookedAt` is the next booked call's time
- * today on the owner's clock, or null when none is still to come.
+ * The day in one sentence under the greeting (A-266, 2026-10-16; was a box with a count, a bar and a line, A-250):
+ * "4 people are waiting for your reply. Start with Karan." Calls to make and booked calls join it when there are
+ * any ("…, and you have 2 calls to make and 1 booked call at 3:00 PM."); a kind with none is left out, never said as
+ * a zero. A call to look back on (A-263) is a row below, and is only said here when it is all there is.
  */
-export function dayParts(n: { replies: number; calls: number; booked: number; nextBookedAt: string | null; lookBack?: number }): string | null {
-  const parts: string[] = [];
-  // A call that is over and not yet answered "How did it go?" (A-263) comes first: it is the quickest thing in the day.
-  if (n.lookBack && n.lookBack > 0) parts.push(`${n.lookBack} ${n.lookBack === 1 ? "call" : "calls"} to look back on`);
-  if (n.replies > 0) parts.push(`${n.replies} ${n.replies === 1 ? "reply" : "replies"} to send`);
-  if (n.calls > 0) parts.push(`${n.calls} ${n.calls === 1 ? "call" : "calls"} to make`);
-  if (n.booked === 1) parts.push(`1 booked call${n.nextBookedAt ? ` at ${n.nextBookedAt}` : ""}`);
-  if (n.booked > 1) parts.push(`${n.booked} booked calls${n.nextBookedAt ? `, the next at ${n.nextBookedAt}` : ""}`);
-  if (parts.length === 0) return null;
-  if (n.calls === 0 && n.booked === 0) return `${parts.join(" · ")}. ${n.lookBack ? "Nothing else booked today." : "No calls or bookings today."}`;
-  return parts.join(" · ");
-}
-
-/** "3 of 11 done today": nothing to show when there is nothing at all in the day. */
-export function dayProgress(done: number, toGo: number): { done: number; total: number; toGo: number; pct: number } | null {
-  const d = Math.max(0, done);
-  const left = Math.max(0, toGo);
-  const total = d + left;
-  if (total === 0) return null;
-  return { done: d, total, toGo: left, pct: Math.round((d / total) * 100) };
+export function daySentence(n: {
+  people: number;
+  calls: number;
+  booked: number;
+  /** The next booked call's time today, "3:00 PM", or null when none is still to come. */
+  nextBookedAt: string | null;
+  lookBack?: number;
+  startWith: string | null;
+}): string {
+  const extra: string[] = [];
+  if (n.calls > 0) extra.push(`${n.calls} ${n.calls === 1 ? "call" : "calls"} to make`);
+  if (n.booked === 1) extra.push(`1 booked call${n.nextBookedAt ? ` at ${n.nextBookedAt}` : ""}`);
+  if (n.booked > 1) extra.push(`${n.booked} booked calls${n.nextBookedAt ? `, the next at ${n.nextBookedAt}` : ""}`);
+  const waiting = n.people > 0 ? `${n.people === 1 ? "1 person is" : `${n.people} people are`} waiting for your reply` : null;
+  let said: string;
+  if (waiting && extra.length > 0) said = `${waiting}, and you have ${andList(extra)}.`;
+  else if (waiting) said = `${waiting}.`;
+  else if (extra.length > 0) said = `You have ${andList(extra)} today.`;
+  else if (n.lookBack && n.lookBack > 0) said = `You have ${n.lookBack === 1 ? "a call" : `${n.lookBack} calls`} to look back on.`;
+  else return "Nothing needs you right now.";
+  said = said.charAt(0).toUpperCase() + said.slice(1);
+  return n.startWith ? `${said} Start with ${n.startWith}.` : said;
 }
 
 /** Which of the owner's days a time falls on: 0 today, 1 tomorrow, anything else is neither. */

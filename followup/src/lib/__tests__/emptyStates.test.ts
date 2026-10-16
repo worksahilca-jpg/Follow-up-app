@@ -64,11 +64,11 @@ describe("the dashboard on a brand-new account", () => {
 
   it("still gives an account that has worked its day", () => {
     // The fix must not overcorrect: an owner with customers gets their day
-    // (A-244): a greeting on their own clock, then who to start with, and
-    // the day in numbers. Only a brand-new account gets the sentence.
+    // (A-244): a greeting on their own clock, then the day in one sentence
+    // with who to start with (A-266). Only a brand-new account gets "No customers yet."
     expect(source).toContain("greeting(now, timezone, me?.name)");
-    expect(source).toContain("dayLine(firstUpName");
-    expect(source).toContain("<DayNumbers");
+    expect(source).toContain("startWith: firstUpName");
+    expect(source).toContain("{dayWords}");
   });
 });
 

@@ -13638,3 +13638,27 @@ answered on a Windows laptop, the whole page, and "yes, make it lighter" for the
   the real test is the founder's own laptop after the merge. The first screen still runs about 30 always-on
   animations; if it still stutters there, the next step is fewer, not faster. Settings' own list still asks for the
   Instagram, Facebook and WhatsApp status separately from the Connected apps page (3 repeated small requests).
+
+## 2026-10-16 — Built: Today and Customers, simpler and friendlier (A-266, A-267)
+
+Founder: *"today page still lacks alot bro i want to make it as simple and as friendly i can make"* and Customers
+*"feels too complex"*. Drawn inside the real app (now next to proposed, phone and computer), then *"yes"*.
+- **Today.** The day's box (count, "0 done", bar, line) is gone: one sentence under the greeting says it
+  (`daySentence`: "5 people are waiting for your reply. Start with Karan.", calls and booked calls joined in when there
+  are any). The card has the customer's initials and name with "Emailed you 2 days ago" under it, no "Do this first"
+  label, and "If it looks right, press **Send**." "Next" became "Then": one row per customer record with their initials
+  and a plain sentence ("Emailed you 3 days ago. Your reply is ready."). "How did it go?" (A-263) is a row there that
+  opens the same four answers in place; "Stopped replying" is the list's last row. Tomorrow and Done today became
+  "Later", one line each, plus "FollowUp checks in" when it has check-ins tomorrow.
+- **Customers.** One list, no boxes or counts: reply ready first (orange dot, "Your reply is ready"), then ready to
+  book (green, with Call), then everyone else newest first, each with a status in words. The + button holds Add a
+  customer, Log a call, Import CSV and Clean up. The `?show=` lists still open for links from elsewhere. Capped at 50
+  rows, then "Show everyone".
+- **Checked** on a local production build, phone 390×844 and laptop 1440×900: the call row opens its answers; the +
+  menu opens; no console errors; nothing scrolls sideways; the name on the card and the Call pill have 44 px tap bands.
+  Types, lint, 4,061 tests.
+- **Weak spots, said plainly:** the sample business has two customer records named Raj Malhotra and two named Omar
+  Haddad, so both lists show those names twice (rows are never merged by name; two people can share one). "Done today"
+  joins its sentences into one line, which grows on a busy day. Customers no longer shows counts at a glance ("7 waiting
+  for their reply"); the status words carry it. A day with calls or bookings tomorrow wasn't in the sample data, so the
+  "Tomorrow" line with a booking was not seen on screen.

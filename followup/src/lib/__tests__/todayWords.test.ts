@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clockTime, dayLine, dayOffset, dayParts, dayProgress, doneLines, greeting, todaysInstruction, whoIsNext } from "@/lib/todayWords";
+import { clockTime, dayOffset, daySentence, doneLines, greeting, todaysInstruction, whoIsNext } from "@/lib/todayWords";
 
 const TZ = "America/Toronto";
 
@@ -46,30 +46,19 @@ describe("the whole day (A-244, R-114)", () => {
     expect(greeting(new Date("2026-10-14T17:00:00Z"), TZ, null)).toBe("Good afternoon.");
   });
 
-  it("says who to start with, or that nothing needs the owner", () => {
-    expect(dayLine("Raj", true)).toBe("Here is your day. Start with Raj.");
-    expect(dayLine(null, true)).toBe("Here is your day.");
-    expect(dayLine(null, false)).toBe("Nothing needs you right now.");
-  });
-
-  it("says what the day is made of once, leaving out what there is none of (A-250)", () => {
-    expect(dayParts({ replies: 4, calls: 0, booked: 0, nextBookedAt: null })).toBe("4 replies to send. No calls or bookings today.");
-    expect(dayParts({ replies: 1, calls: 0, booked: 0, nextBookedAt: null })).toBe("1 reply to send. No calls or bookings today.");
-    // A call to look back on (A-263) comes first and keeps the replies in the line.
-    expect(dayParts({ replies: 5, calls: 0, booked: 0, nextBookedAt: null, lookBack: 1 })).toBe("1 call to look back on · 5 replies to send. Nothing else booked today.");
-    expect(dayParts({ replies: 0, calls: 1, booked: 0, nextBookedAt: null, lookBack: 2 })).toBe("2 calls to look back on · 1 call to make");
-    expect(dayParts({ replies: 4, calls: 2, booked: 1, nextBookedAt: "3:00 PM" })).toBe("4 replies to send · 2 calls to make · 1 booked call at 3:00 PM");
-    expect(dayParts({ replies: 0, calls: 1, booked: 0, nextBookedAt: null })).toBe("1 call to make");
-    expect(dayParts({ replies: 0, calls: 0, booked: 3, nextBookedAt: "11:30 AM" })).toBe("3 booked calls, the next at 11:30 AM");
-    // A booked call already over today keeps its count but not a time.
-    expect(dayParts({ replies: 2, calls: 0, booked: 1, nextBookedAt: null })).toBe("2 replies to send · 1 booked call");
-    expect(dayParts({ replies: 0, calls: 0, booked: 0, nextBookedAt: null })).toBeNull();
-  });
-
-  it("counts the day's progress, and shows none for an empty day", () => {
-    expect(dayProgress(3, 8)).toEqual({ done: 3, total: 11, toGo: 8, pct: 27 });
-    expect(dayProgress(0, 0)).toBeNull();
-    expect(dayProgress(2, 0)).toEqual({ done: 2, total: 2, toGo: 0, pct: 100 });
+  it("says the day in one sentence, leaving out what there is none of (A-266)", () => {
+    const n = { calls: 0, booked: 0, nextBookedAt: null, startWith: null };
+    expect(daySentence({ ...n, people: 4, startWith: "Karan" })).toBe("4 people are waiting for your reply. Start with Karan.");
+    expect(daySentence({ ...n, people: 1, startWith: "Karan" })).toBe("1 person is waiting for your reply. Start with Karan.");
+    expect(daySentence({ ...n, people: 4, calls: 2, booked: 1, nextBookedAt: "3:00 PM", startWith: "Karan" })).toBe(
+      "4 people are waiting for your reply, and you have 2 calls to make and 1 booked call at 3:00 PM. Start with Karan."
+    );
+    expect(daySentence({ ...n, people: 0, calls: 1, startWith: "Mei" })).toBe("You have 1 call to make today. Start with Mei.");
+    expect(daySentence({ ...n, people: 0, booked: 3, nextBookedAt: "11:30 AM" })).toBe("You have 3 booked calls, the next at 11:30 AM today.");
+    // A call to look back on (A-263) is said only when it is all there is: it is a row below.
+    expect(daySentence({ ...n, people: 2, lookBack: 1, startWith: "Omar" })).toBe("2 people are waiting for your reply. Start with Omar.");
+    expect(daySentence({ ...n, people: 0, lookBack: 1, startWith: "Daniel" })).toBe("You have a call to look back on. Start with Daniel.");
+    expect(daySentence({ ...n, people: 0 })).toBe("Nothing needs you right now.");
   });
 
   it("puts a time on the owner's today or tomorrow, by their own calendar", () => {

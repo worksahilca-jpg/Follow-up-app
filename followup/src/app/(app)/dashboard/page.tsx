@@ -32,15 +32,14 @@ import DailyQuestion from "@/components/DailyQuestion";
 import { AlertsCard } from "@/components/app/AlertsSetup";
 import InstallCard from "@/components/app/InstallCard";
 import ReplyForMeCard from "@/components/app/ReplyForMeCard";
-import { GoingQuietRow } from "@/components/app/TodayRows";
-import { DayDone, DayNumbers, DayTomorrow, type TodayRow } from "@/components/app/TodayDay";
-import { clockTime, dayLine, dayOffset, dayProgress, doneLines, greeting, whoIsNext } from "@/lib/todayWords";
+import { DayLater, type LaterLine, type TodayRow } from "@/components/app/TodayDay";
+import { clockTime, dayOffset, daySentence, doneLines, greeting } from "@/lib/todayWords";
 import { oneQueue } from "@/lib/approvalGroups";
 import { replyForMeOffer } from "@/lib/replyForMeOffer";
 import { todaysQuestion } from "@/lib/dailyQuestionData";
 import { planLine } from "@/lib/comingUp";
 import { findHabitSuggestion } from "@/lib/habits";
-import MeetingOutcomeCard, { type MeetingToLookBackOn } from "@/components/app/MeetingOutcomeCard";
+import type { MeetingToLookBackOn } from "@/components/app/MeetingOutcomeCard";
 import ScrollTitle from "@/components/app/ScrollTitle";
 import { LOOK_BACK_DAYS, endedMeetings, isMeetingOutcome, meetingWhen } from "@/lib/meetingOutcome";
 import { PLAN_NAMES, choosePlan, readFollowUpPlans } from "@/lib/followUpPlans";
@@ -321,8 +320,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const bookingRow = (b: (typeof nearBookings)[number]): TodayRow => ({
     key: `booking-${b.id}`,
     kind: "booking",
-    title: `Call with ${b.lead.name}`,
-    sub: `Booked through your booking link · ${b.durationMinutes} min`,
+    title: b.lead.name,
+    person: b.lead.name,
+    sub: `Booked a ${b.durationMinutes}-minute call with you.`,
     time: clockTime(b.scheduledAt, timezone),
     href: `/leads/${b.leadId}`,
   });
@@ -332,31 +332,14 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const callRows: TodayRow[] = callCards.map((c) => ({
     key: `call-${c.leadId}`,
     kind: "call",
-    title: `Call ${c.name}`,
-    sub: c.last ?? "Nobody has called yet.",
+    title: c.name,
+    person: c.name,
+    sub: `Time for a call. ${c.last ?? "Nobody has called yet."}`,
     time: null,
     href: `/leads/${c.leadId}`,
   }));
-  // FollowUp's own check-ins tomorrow (A-046's coming up), as one row: nothing for the owner to do.
+  // FollowUp's own check-ins tomorrow (A-046's coming up): nothing for the owner to do, said in "Later" (A-266).
   const checkInsTomorrow = comingUp?.groups.find((g) => g.day === "Tomorrow")?.items ?? [];
-  const tomorrowRows: TodayRow[] = [
-    ...bookingsTomorrow.map(bookingRow),
-    ...(checkInsTomorrow.length > 0
-      ? [
-          {
-            key: "checkins",
-            kind: "checkin" as const,
-            title: `FollowUp checks in with ${checkInsTomorrow.length} ${checkInsTomorrow.length === 1 ? "customer" : "customers"}`,
-            sub: `${whoIsNext(checkInsTomorrow.map((c) => c.name))}. Nothing for you to do.`,
-            time: null,
-            href: "/coming-up",
-          },
-        ]
-      : []),
-  ];
-  const tomorrowDate = new Intl.DateTimeFormat("en-US", { timeZone: timezone, weekday: "long", month: "short", day: "numeric" }).format(
-    new Date(dayStart.getTime() + 36 * 60 * 60 * 1000)
-  );
   const bookedWhen = (at: Date) => {
     const day = dayOffset(at, now, timezone);
     const time = clockTime(at, timezone);
@@ -369,22 +352,43 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     wroteFor: wroteForToday.length,
     booked: bookedToday.map((b) => ({ name: b.lead.name, when: bookedWhen(b.scheduledAt) })),
   });
-  const progress = dayProgress(handledToday, approvalItems.length + callCards.length + bookingsToday.length + lookBacks.length);
-  // Who to start with: a call to look back on (one tap), else the first reply in Today's order (A-230), else the first call.
-  const firstUp = lookBacks[0]?.lead.name ?? oneQueue(approvalItems).flatMap((g) => g.needsYou)[0]?.leadName ?? callCards[0]?.name ?? null;
+  // Who to start with: the first reply in Today's order (A-230), which is the card that opens (A-266); else the first
+  // call; else a call to look back on.
+  const firstUp = oneQueue(approvalItems).flatMap((g) => g.needsYou)[0]?.leadName ?? callCards[0]?.name ?? lookBacks[0]?.lead.name ?? null;
   const firstUpName = firstUp ? firstUp.split(" ")[0] || firstUp : null;
   // The next booked call still to come today, for "1 booked call at 3:00 PM" (A-250).
   const nextBooked = bookingsToday.filter((b) => b.scheduledAt >= now).sort((a, b) => a.scheduledAt.getTime() - b.scheduledAt.getTime())[0];
-  const numbers = (
-    <DayNumbers
-      replies={approvalItems.length}
-      calls={callCards.length}
-      booked={bookingsToday.length}
-      nextBookedAt={nextBooked ? clockTime(nextBooked.scheduledAt, timezone) : null}
-      lookBack={lookBacks.length}
-      progress={progress}
-    />
-  );
+  const dayWords = daySentence({
+    people: approvalItems.length,
+    calls: callCards.length,
+    booked: bookingsToday.length,
+    nextBookedAt: nextBooked ? clockTime(nextBooked.scheduledAt, timezone) : null,
+    lookBack: lookBacks.length,
+    startWith: firstUpName,
+  });
+  // "Later" (A-266): tomorrow, what's done, and what FollowUp does by itself, one line each.
+  const firstTomorrow = bookingsTomorrow[0];
+  const later: LaterLine[] = [
+    {
+      label: "Tomorrow",
+      value: firstTomorrow
+        ? bookingsTomorrow.length === 1
+          ? `Call with ${firstTomorrow.lead.name.split(" ")[0]} at ${clockTime(firstTomorrow.scheduledAt, timezone)}`
+          : `${bookingsTomorrow.length} booked calls, the first at ${clockTime(firstTomorrow.scheduledAt, timezone)}`
+        : "Nothing booked yet",
+      href: firstTomorrow ? `/leads/${firstTomorrow.leadId}` : null,
+    },
+    { label: "Done today", value: done.length > 0 ? done.join(" ") : "Nothing yet", href: done.length > 0 ? "/activity" : null },
+    ...(checkInsTomorrow.length > 0
+      ? [
+          {
+            label: "FollowUp checks in",
+            value: `With ${checkInsTomorrow.length} ${checkInsTomorrow.length === 1 ? "person" : "people"} tomorrow, on its own`,
+            href: "/coming-up",
+          },
+        ]
+      : []),
+  ];
 
   return (
     <div>
@@ -401,7 +405,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       ) : (
         <>
           <h1 className="title-serif mt-0.5 text-[28px] leading-[1.15] sm:text-[32px]">{greeting(now, timezone, me?.name)}</h1>
-          <p className="mt-1.5 text-[16px] leading-snug text-ink-soft">{dayLine(firstUpName, needYou + bookingsToday.length + lookBacks.length > 0)}</p>
+          {/* The day in one sentence (A-266), in place of the day's box. */}
+          <p className="mt-1.5 text-[16px] leading-snug text-ink-soft">{dayWords}</p>
         </>
       )}
 
@@ -414,7 +419,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         <CantSendNotice reconnectEmail={"needsReconnect" in gmail && gmail.needsReconnect ? (gmail.email ?? "your inbox") : null} />
       )}
       {firstValue && <FirstValueNote title={firstValue.title} body={firstValue.body} />}
-      {leads.length > 0 && progress && <div className="mt-5 lg:hidden">{numbers}</div>}
       <div className={leads.length > 0 ? "mt-5 lg:grid lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] lg:items-start lg:gap-8" : "mt-3.5 sm:mt-5"}>
       <div className="min-w-0">
       {/* A buzz on the owner's phone when a customer needs them (A-216): shown
@@ -422,12 +426,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           that asks the one-time question below: one question at a time.
           Not above a waiting customer either (A-243), except on the visit
           the phone link opened, which is for alerts. */}
-      {/* "How did it go?" after a call (A-263): the quickest thing in the day, so it comes first. */}
-      {meetingCards.map((m) => (
-        <div key={m.bookingId} className="mb-4">
-          <MeetingOutcomeCard meeting={m} />
-        </div>
-      ))}
+      {/* "How did it go?" after a call (A-263) is a row in Then now (A-266), opening its four answers in place. */}
       {!offer && (needYou === 0 || alertsOpen) && <div className="mb-4"><AlertsCard open={alertsOpen} /></div>}
       {/* Do this first, then everything still to do today (A-244). With no
           customers at all, the box below says what FollowUp checked. */}
@@ -442,6 +441,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             sendLocked={sendLocked}
             handledToday={handledToday}
             holdAll={holdAll}
+            meetings={meetingCards}
+            quiet={atRisk.length > 0 ? { id: atRisk[0].id, name: atRisk[0].name, total: lost.total } : null}
           />
         );
         return offer ? (
@@ -453,8 +454,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         );
       })()}
 
-      {/* Going quiet, as one row. Anyone already waiting above is left out (A-046, once each). */}
-      {atRisk.length > 0 && <GoingQuietRow first={{ id: atRisk[0].id, name: atRisk[0].name, reason: atRisk[0].rescue.reason }} total={lost.total} />}
+      {/* Going quiet is the last row of Then (A-266). Anyone already waiting above is left out (A-046, once each). */}
 
       {isAdmin && needYou === 0 && <HabitQuestion suggestion={habitSuggestion} />}
       {isAdmin && <DailyQuestion question={dailyQuestion} />}
@@ -612,9 +612,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       </div>
       {leads.length > 0 && (
         <div className="mt-9 flex flex-col gap-8 lg:mt-0">
-          {progress && <div className="hidden lg:block">{numbers}</div>}
-          <DayTomorrow date={tomorrowDate} rows={tomorrowRows} />
-          <DayDone lines={done} />
+          <DayLater lines={later} />
         </div>
       )}
       {/* One tap to install, on phones whose browser can (A-265): at the foot of the day, below every customer.

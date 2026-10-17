@@ -13832,3 +13832,11 @@ work it is making more work for them"*. Recorded as he said it:
   chasing; the stage goes into the CRM when the CRM is the owner's main tool, and FollowUp remembers "booked" itself.
 - Built with no new screen: the existing hold line and send error carry the reason ("Owen is marked do not contact in
   your CRM.", "Your CRM shows Owen as closed, so FollowUp stopped following up."). The stage picker is drawn first.
+
+### 2026-10-17 — The stage row (A-275) and real logos (A-276)
+
+- Stage row drawn in the real app and approved ("yes, build it"). Built into the CRM window.
+- Real logos at the founder's ask. Checked on the phone: Connected apps shows Gmail's M, Instagram's gradient,
+  Facebook's f, WhatsApp's phone bubble. "Use HubSpot or Follow Up Boss?" became "Use a CRM?" (GoHighLevel was
+  missing from it; R-121, fewest words).
+- Weak: Gmail's mark is the one-colour M, not Google's four-colour M; the four-colour file isn't in the CC0 set.

@@ -226,23 +226,23 @@ export default function Connections({
       <div className={BOX}>
         {showGmail &&
           (gmail.connected ? (
-            <ConnectionRow glyph="email" name="Gmail" sub={gmail.email} first onOpen={() => show("gmail")} mark={<ConnectedMark />} />
+            <ConnectionRow glyph="gmail" name="Gmail" sub={gmail.email} first onOpen={() => show("gmail")} mark={<ConnectedMark />} />
           ) : gmailNeedsReconnect ? (
             <ConnectionRow
-              glyph="email"
+              glyph="gmail"
               name="Gmail"
               sub="Stopped working. Connect it again."
               first
               action={isAdmin ? <a href="/api/integrations/gmail/connect" className={PILL}>Reconnect</a> : <NeedsMark word="Stopped" />}
             />
           ) : (
-            <ConnectionRow glyph="email" name="Gmail" first action={connect("/api/integrations/gmail/connect")} />
+            <ConnectionRow glyph="gmail" name="Gmail" first action={connect("/api/integrations/gmail/connect")} />
           ))}
         {showOutlook &&
           (outlook.connected ? (
-            <ConnectionRow glyph="email" name="Outlook" sub={outlook.email} first={!showGmail} onOpen={() => show("outlook")} mark={<ConnectedMark />} />
+            <ConnectionRow glyph="outlook" name="Outlook" sub={outlook.email} first={!showGmail} onOpen={() => show("outlook")} mark={<ConnectedMark />} />
           ) : (
-            <ConnectionRow glyph="email" name="Outlook" first={!showGmail} action={connect("/api/integrations/outlook/connect")} />
+            <ConnectionRow glyph="outlook" name="Outlook" first={!showGmail} action={connect("/api/integrations/outlook/connect")} />
           ))}
         {instagram.connected ? (
           <ConnectionRow
@@ -257,14 +257,14 @@ export default function Connections({
         )}
         {facebook.connected ? (
           <ConnectionRow
-            glyph="messenger"
+            glyph="facebook"
             name="Facebook"
             sub={facebook.name}
             onOpen={() => show("facebook")}
             mark={facebook.receiving ? <ConnectedMark /> : <NeedsMark word="Fix" />}
           />
         ) : (
-          <ConnectionRow glyph="messenger" name="Facebook" action={connect("/api/facebook/oauth/start", facebook.oauthAvailable)} />
+          <ConnectionRow glyph="facebook" name="Facebook" action={connect("/api/facebook/oauth/start", facebook.oauthAvailable)} />
         )}
         {signup.connected ? (
           <ConnectionRow glyph="whatsapp" name="WhatsApp" sub={signup.displayNumber} onOpen={() => show("whatsapp")} mark={<ConnectedMark />} />
@@ -297,13 +297,13 @@ export default function Connections({
       </div>
       {!isAdmin && <p className="text-[14px] text-ink-soft">Only an admin can connect or disconnect these.</p>}
 
-      <p className="mt-4 text-[14px] text-ink-faint">Use HubSpot or Follow Up Boss?</p>
+      <p className="mt-4 text-[14px] text-ink-faint">Use a CRM?</p>
       <CrmConfig />
 
       {open === "gmail" && (
         <ConnectionSheet
           label="Gmail"
-          glyph="email"
+          glyph="gmail"
           title="Gmail"
           status={<ConnectedAs who={gmail.email} />}
           onClose={close}
@@ -319,7 +319,7 @@ export default function Connections({
       {open === "outlook" && (
         <ConnectionSheet
           label="Outlook"
-          glyph="email"
+          glyph="outlook"
           title="Outlook"
           status={<ConnectedAs who={outlook.email} />}
           onClose={close}
@@ -365,7 +365,7 @@ export default function Connections({
       {open === "facebook" && (
         <ConnectionSheet
           label="Facebook"
-          glyph="messenger"
+          glyph="facebook"
           title="Facebook"
           status={pages ? undefined : facebook.connected ? <ConnectedAs who={facebook.name} /> : undefined}
           onClose={close}

@@ -1,25 +1,21 @@
-import { ClipboardList, Globe, Mail, MessageCircle, Phone } from "lucide-react";
+import { Globe, Mail, Phone } from "lucide-react";
+import { BrandMark } from "@/components/brandLogos";
 import { LEAD_FORM } from "@/lib/displayChannel";
 
 /**
  * The small channel glyph the canvas rows draw after a name or before a
- * channel's name. lucide has no brand icons, so Instagram is drawn here as
- * the canvas draws it (a rounded square and a circle).
+ * channel's name: the app's own logo where there is one (brandLogos.tsx).
  */
 export function ChannelIcon({ channel, className = "h-3.5 w-3.5 shrink-0 text-ink-faint" }: { channel: string | null | undefined; className?: string }) {
   if (channel === "email") return <Mail className={className} strokeWidth={1.8} aria-label="Email" />;
   if (channel === "call" || channel === "text") return <Phone className={className} strokeWidth={1.8} aria-label={channel === "call" ? "Phone" : "Text"} />;
   if (channel === "web") return <Globe className={className} strokeWidth={1.8} aria-label="Website form" />;
-  if (channel === LEAD_FORM) return <ClipboardList className={className} strokeWidth={1.8} aria-label="Facebook lead form" />;
-  if (channel === "instagram")
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-label="Instagram" role="img">
-        <rect x="3" y="3" width="18" height="18" rx="5" />
-        <circle cx="12" cy="12" r="4" />
-      </svg>
-    );
-  if (channel === "whatsapp" || channel === "messenger")
-    return <MessageCircle className={className} strokeWidth={1.8} aria-label={channel === "whatsapp" ? "WhatsApp" : "Messenger"} />;
+  // The apps' own logos, in their own colours (founder 2026-10-17, A-276). Email stays a plain envelope: it can be
+  // Gmail or Outlook, and the row doesn't say which.
+  if (channel === LEAD_FORM) return <BrandMark brand="facebook" className={className} />;
+  if (channel === "instagram") return <BrandMark brand="instagram" className={className} />;
+  if (channel === "whatsapp") return <BrandMark brand="whatsapp" className={className} />;
+  if (channel === "messenger") return <BrandMark brand="messenger" className={className} />;
   return null;
 }
 

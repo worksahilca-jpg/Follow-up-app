@@ -110,3 +110,6 @@ export default async function ComingUpPage() {
     </div>
   );
 }
+
+// Each view names itself in the browser tab (WCAG 2.4.2); the root template adds " — FollowUp".
+export const metadata = { title: "Coming up" };

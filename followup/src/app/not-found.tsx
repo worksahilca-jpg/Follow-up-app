@@ -25,3 +25,5 @@ export default function NotFound() {
     </main>
   );
 }
+
+export const metadata = { title: "Page not found" };

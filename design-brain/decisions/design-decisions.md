@@ -13893,3 +13893,19 @@ Black and white (R-123) and the website's cream/forest/mint (R-124) were both re
 he is confused. Decision proposed: stop drawing from adjectives. The live app stays as it is. The next round starts
 only from 2–3 screenshots of real app screens the founder likes, and follows the dated plan (testers first until
 Oct 31).
+
+## 2026-10-17 — Page walk: small mistakes fixed
+
+**Founder, verbatim:** *"find mistakes in landing page and the app"*, then *"fix all"*.
+
+Every page walked on a phone (390) and a computer (1280). Fixed:
+- Each app page names itself in the browser tab (Today, Customers, Customer, Activity, Results, Settings,
+  Follow-up plans, Coming up, Teach FollowUp, Page not found). Before, all said the homepage's pitch.
+- Booking page: times from 5 PM sit under "Evening"; 9 PM was listed under "Afternoon".
+- Customer page on the phone: the name is the page heading.
+- Taps at 44 px: "Got it" on Today, the "Today" link in Activity, the landing demo's example questions,
+  the security page's jump links, logo and footer links, the privacy and terms header and footer links.
+- Nothing under 12 px: 23 landing labels (10–11.5 px) and the security page's small capitals.
+
+Checked and already fine (hit areas larger than they look): switches, Call on Customers, the customer name on
+Today, Replay and Auto / Ask me on the landing demo.

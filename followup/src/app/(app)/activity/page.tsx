@@ -113,7 +113,7 @@ export default async function ActivityPage() {
       </p>
       <p className="mt-1.5 text-[14px] text-ink-faint">
         Replies waiting for your OK are on{" "}
-        <Link href="/dashboard" className="text-ink underline underline-offset-[3px]">
+        <Link href="/dashboard" className="relative text-ink underline underline-offset-[3px] before:absolute before:-inset-x-2 before:-inset-y-3.5 before:content-['']">
           Today
         </Link>
         .
@@ -154,3 +154,6 @@ export default async function ActivityPage() {
     </div>
   );
 }
+
+// Each view names itself in the browser tab (WCAG 2.4.2); the root template adds " — FollowUp".
+export const metadata = { title: "Activity" };

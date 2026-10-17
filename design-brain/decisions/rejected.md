@@ -1596,3 +1596,14 @@ includes the ones your website and ads send there…").
 words; the fewest words that are still true.
 **Do not propose again:** question-style headings that describe the customer's behaviour ("where do customers
 write…"), or two-sentence explanations where one short line does.
+
+## R-122 — The app's current look: "feels like a fake app or a 90s app" ^R-122
+
+**Date:** 2026-10-17. **Founder, verbatim:** *"we need a stronger design for our app bro it still fells like a fake app
+or just a 90s app"*.
+**What was rejected:** the app's overall look as it stands after A-264 (Apple feel) and A-273 (iOS sizes): not one
+screen, the whole impression.
+**Principle (inferred, not yet confirmed; asked which screens and what exactly):** the app must look as solid and
+current as the apps the owner already trusts on their phone. A plain, careful look still reads as unfinished when it
+has no depth, no real content and no confident visual identity. Calm must not mean bare.
+**Do not propose again:** more "flatter and plainer" passes as the answer to this feedback.

@@ -28,4 +28,12 @@ export interface CrmClient {
    * `person` is their phone and email in FollowUp, for a CRM that looks for the same person saved twice.
    */
   lastContactedAt(apiKey: string, externalId: string, person?: { phone: string | null; email: string | null }): Promise<{ known: boolean; at: Date | null }>;
+  /**
+   * Where the owner left this person in their CRM (founder, 2026-10-17): "never" is a bad ending, marked do not
+   * contact or thrown out, so FollowUp never messages them; "done" is a good ending, closed or a past client, so
+   * FollowUp stops chasing them. null when neither, or the CRM couldn't say. Never throws.
+   */
+  standing(apiKey: string, externalId: string): Promise<CrmStanding>;
 }
+
+export type CrmStanding = "never" | "done" | null;

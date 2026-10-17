@@ -102,4 +102,25 @@ export const hubspotClient: CrmClient = {
       return { known: false, at: null };
     }
   },
+
+  // "Unsubscribed from all email" (`hs_email_optout`) and lead status "Unqualified" are bad endings; lifecycle stage
+  // "customer" is a good one (grade C: property names from HubSpot's knowledge base and community, not a live response).
+  async standing(token, externalId) {
+    try {
+      const q = "properties=hs_email_optout,hs_lead_status,lifecyclestage";
+      const res = await fetch(`${BASE}/crm/v3/objects/contacts/${encodeURIComponent(externalId)}?${q}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        signal: AbortSignal.timeout(CRM_TIMEOUT_MS),
+      });
+      if (!res.ok) return null;
+      const data = (await res.json().catch(() => null)) as { properties?: Record<string, unknown> } | null;
+      const p = data?.properties ?? {};
+      if (String(p.hs_email_optout ?? "").toLowerCase() === "true") return "never";
+      if (String(p.hs_lead_status ?? "").toUpperCase() === "UNQUALIFIED") return "never";
+      if (String(p.lifecyclestage ?? "").toLowerCase() === "customer") return "done";
+      return null;
+    } catch {
+      return null;
+    }
+  },
 };

@@ -13822,3 +13822,10 @@ work it is making more work for them"*. Recorded as he said it:
   - When GoHighLevel refuses a send, the reason and the fix in one line (unregistered number, empty wallet, no
     working number, Do Not Disturb), never a bare status code. GHL users' pain #4, research 2026-10-17.
 - **Principle:** when FollowUp steps back, it names whose setting made it do so and where to change it.
+
+### 2026-10-17 — The CRM's endings (A-274)
+
+- Three questions open since 2026-10-14, answered: do not contact is a bad ending (never message); closed stops the
+  chasing; the stage goes into the CRM when the CRM is the owner's main tool, and FollowUp remembers "booked" itself.
+- Built with no new screen: the existing hold line and send error carry the reason ("Owen is marked do not contact in
+  your CRM.", "Your CRM shows Owen as closed, so FollowUp stopped following up."). The stage picker is drawn first.

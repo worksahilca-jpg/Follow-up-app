@@ -601,6 +601,7 @@ export default function ApprovalQueue({
   weekResults = null,
   plan = null,
   next = null,
+  later = null,
   meetings = [],
   calls = [],
   quiet = null,
@@ -630,6 +631,8 @@ export default function ApprovalQueue({
   weekResults?: string | null;
   /** "Next: your call with Raj at 3:00 PM." (A-283): the owner's own next thing, once their replies are done. */
   next?: string | null;
+  /** Tomorrow and done today (A-266): under the list on a computer (A-284), at the foot on a phone. */
+  later?: React.ReactNode;
   /** "Next: FollowUp checks on Priya on Thursday…" (research round 2, #2): the plan, on a quiet Today. */
   plan?: string | null;
 }) {
@@ -807,7 +810,11 @@ export default function ApprovalQueue({
   ) : null;
 
   return (
-    <div>
+    // On a computer, two columns like Mail (A-284; founder: "yes build the laptop layout"): who is waiting on the
+    // left, the open reply on the right, held in view while the list scrolls. On a phone, one column as before:
+    // the open reply, then Then, then Later.
+    <div className="lg:grid lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)] lg:items-start lg:gap-x-8">
+      <div className="min-w-0 lg:sticky lg:top-6 lg:col-start-2 lg:row-span-2 lg:row-start-1">
       {/* Said once, above everything, rather than 48 times on 48 cards. */}
       {summary.fromBeforePermission > 0 && (
         <p className="mb-3 px-1 text-[12.5px] leading-relaxed text-ink-soft">
@@ -852,10 +859,26 @@ export default function ApprovalQueue({
       {/* Then (A-266; was "Next", A-244): every other person, one row each with their initials and one plain
           sentence; calls and booked times; a call to look back on, which opens its four answers in place; and who
           stopped replying. A reply row brings that person up into the card. No box around the rows. */}
-      {stillToDo > 0 && (
-        <section aria-label={selected ? "Then" : "Still to do today"} className="mt-7">
-          <DayHeading title={selected ? "Then" : "Still to do today"} />
+      </div>
+
+      <div className="min-w-0 lg:col-start-1 lg:row-start-1">
+      {(stillToDo > 0 || selected) && (
+        <section aria-label={selected ? "Then" : "Still to do today"} className={"mt-7 lg:mt-0" + (stillToDo > 0 ? "" : " hidden lg:block")}>
+          {/* On a computer the list holds everyone, the open one first and marked, so it reads "who is waiting". */}
+          <div className={selected ? "lg:hidden" : ""}>
+            <DayHeading title={selected ? "Then" : "Still to do today"} />
+          </div>
+          {selected && (
+            <div className="hidden lg:block">
+              <DayHeading title="Waiting for you" aside={String(queue.length)} />
+            </div>
+          )}
           <div className="-mx-3">
+            {selected && (
+              <div className="hidden rounded-[12px] lg:block" style={{ background: "var(--nav-on)" }} aria-current="true">
+                <DayRow row={replyRow(selected)} first />
+              </div>
+            )}
             {/* A call starting within the hour comes first (A-283, after A-268): it happens at a time, and its note is
                 what to read before. Later calls follow the replies, in time order, each with its time on the right. */}
             {soonCalls.map((c, n) => callRow(c, n === 0))}
@@ -909,6 +932,8 @@ export default function ApprovalQueue({
           </div>
         </section>
       )}
+      </div>
+      {later && <div className="mt-9 lg:col-start-1 lg:row-start-2 lg:mt-8">{later}</div>}
     </div>
   );
 }

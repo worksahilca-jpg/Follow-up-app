@@ -13920,3 +13920,17 @@ the books and all th stuff you can gather from intrnet and all bro all the lawas
 green Send) was drawn and parked unshown: it answers colour questions, and the founder asked for the whole experience.
 Next: deep research on every UX law and the psychology behind design, then a complete redesign of the app and the
 landing page, screen by screen, drawn before anything is built. Quality over the Tuesday date ("take time").
+
+## 2026-10-17 — Drawn: whole-app redesign v1 (from reports/UX laws and design psychology.md)
+
+**Founder:** *"yes start drawing the full design"*. Drawn on the live app (phone 390×844), Now vs New, three boards:
+- **Shared look:** soft grey ground (#F2F2F5) with white raised surfaces instead of thin grey lines (touches A-090,
+  needs his yes); faces tinted from existing tokens with a small badge for the app they wrote on; see-through top and
+  tab bars; lists as one white grouped surface; mono labels in the body sans.
+- **Today:** reason line names what they asked; a "Sent to Karan from your Gmail · Undo" state with what happens next;
+  a calm "You're all caught up" end of day.
+- **Customer:** an About sheet with "Always ask me first for Raj" and "Keep following up with Raj" (behaviour, needs yes).
+- **Results:** "You sent 4 of your last 5 as FollowUp wrote them" (example numbers; needs yes, A-102 placed the track
+  record in Settings).
+- **Settings:** rows name what is missing ("Gmail · Instagram not set up").
+Not yet drawn: notifications, setup, landing, motion (Send press, card fold, swipe hint). Waiting for his reaction.

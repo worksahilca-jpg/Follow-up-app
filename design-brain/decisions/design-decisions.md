@@ -13858,3 +13858,11 @@ The founder's accuracy run (Oct 17): replies 17 of 20, qualifying 718 of 720.
   gone; the card links to Vercel.
 - **Not fixed here:** the two remaining qualifying misses (a seller's home visit, and "selling to buy" as the reason)
   are the reader missing a fact, not a wrong label. Watch them in the next run.
+
+## 2026-10-17 — Fixed: a DM whose only problem is its buttons goes without them
+
+Same accuracy run, after the "I'll check" fix: "I'll check whether the Danforth semi can be seen this weekend. Which
+day would suit you best?" still failed, because the chips under it named Saturday and Sunday and the customer only said
+"this weekend". The shape check reads buttons with the body, so the whole reply was held. Buttons are optional: when the
+reply passes on its own, it now goes without them, with no second AI call (src/lib/dmDrafting.ts). A reply whose own
+words break a rule is still retried, then held.

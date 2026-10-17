@@ -772,3 +772,31 @@ before 2026-10-10, 306 replies waited for an OK and owners sent 13. The product 
 **Two rules:**
 1. Nothing new is built unless a real tester needs it.
 2. Every Monday, three numbers: customers answered, bookings, active testers. If they didn't go up, fix why first.
+
+### The dated plan (founder, 2026-10-17)
+
+> "We got to make a plan with the deadlines so that we are not just creating a loop for ourselves … I'll be
+> following all the deadlines too."
+
+Where things stood on 2026-10-17: the product works (67 changes merged since Oct 10; accuracy tests: emails 122/122, qualifying
+717/720 with every label right, replies 18/20), but in the last 7 days 3 customers wrote in and 1 was answered. The
+stages above stand; these are their dates. **Anything not on this list waits until after 2026-10-31, unless a tester
+is blocked by it.**
+
+| By | What | Who |
+|---|---|---|
+| Sat Oct 17 | Friend messages the test Facebook page; WhatsApp test message to the connected number | Founder |
+| Sun Oct 18 | Record the Meta review video (Claude writes the script) | Founder + Claude |
+| Sat–Sun Oct 18–19 | GoHighLevel free-trial dry run; Claude fixes what breaks | Founder + Claude |
+| Mon Oct 19 | Message the 5 testers; first Monday numbers | Founder; Claude (numbers) |
+| Tue Oct 20 | Realtor's real GoHighLevel test. If Meta access verification is still "in review", open a Meta support ticket | Founder + Claude |
+| Fri Oct 24 | 3 testers connected | Founder |
+| Sat Oct 25 | Messenger + Lead Ads submitted to Meta review | Founder |
+| Tue Oct 28 | YC application first draft (real numbers) | Claude |
+| Fri Oct 31 | **Stage 1 done:** 5 testers daily, 20+ customers answered a week. Business name, city and refund rule decided | Founder |
+| Sun Nov 2 | YC application submitted | Founder |
+| Sun Nov 15 | Google security check (CASA) booked | Founder |
+| Mon Nov 30 | **Stage 2 done:** testers get bookings and come back in week 2; 10–20 testers | Founder + Claude |
+| Mon Jan 4, 2027 | **Stage 3 done:** Google verification + CASA passed; first paying customer | Founder + Claude |
+
+A date that slips is moved here, with the reason, not dropped.

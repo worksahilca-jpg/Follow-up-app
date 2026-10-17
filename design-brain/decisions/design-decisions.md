@@ -13934,3 +13934,13 @@ landing page, screen by screen, drawn before anything is built. Quality over the
   record in Settings).
 - **Settings:** rows name what is missing ("Gmail · Instagram not set up").
 Not yet drawn: notifications, setup, landing, motion (Send press, card fold, swipe hint). Waiting for his reaction.
+
+## 2026-10-17 — Drawn: round 2, every screen copies a proven pattern (A-277)
+
+After R-125 (*"dont make anything from your side copy the craetivity that is already working"*) and his pick of
+Apple + Wispr: Today = Wispr's home (greeting, a few true numbers) over a Messages reply (their grey bubble, the draft
+in the message box, the round arrow sends); Customers = the Messages list (dot = reply ready); one customer = a Messages
+chat with one "Ready to view · Call" line on top; Activity = Wispr's history (day, time column, one line); Results =
+Screen Time (big number, a bar per day, grouped list); Settings = iPhone Settings (name on top, coloured icons, the
+choice on the right); setup = Wispr's onboarding (one step per screen, progress bar, one action, "I'll do this later").
+Drawn as static phone screens in the app's own font; Activity lines are examples. Waiting for his reaction.

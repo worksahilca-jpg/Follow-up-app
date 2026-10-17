@@ -724,7 +724,7 @@ export default function ApprovalQueue({
   // "Do this first" (A-244), open from the start (A-250, 2026-10-14): their
   // words, FollowUp's reply and Send (A-243's card), with no tap before it.
   const focus = selected ? (
-    <section ref={focusRef} aria-label="Do this first" className="scroll-mt-20 rounded-[18px] lg:scroll-mt-6 bg-card p-4 sm:p-5" style={{ border: "1.5px solid var(--ink)" }}>
+    <section ref={focusRef} aria-label="Do this first" className="scroll-mt-20 rounded-[22px] lg:scroll-mt-6 p-4 sm:p-5" style={{ border: "1px solid var(--line-strong)", background: "var(--wash)" }}>
       {/* No label over the card (A-266): the sentence under the greeting already says who to start with. What the
           last press did is said here for a moment. */}
       {justDone && (

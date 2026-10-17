@@ -16,10 +16,10 @@ export function WhatFollowUpDid({ items }: { items: DidToday[] }) {
     <section className="mt-6 max-w-[640px] px-1">
       <Eyebrow>What FollowUp did today</Eyebrow>
       <ul className="mt-2">
-        {items.map((d, i) => {
+        {items.map((d) => {
           const Icon = ICON[d.kind];
           return (
-            <li key={d.id} className={"flex items-start gap-3 py-2.5" + (i ? " border-t border-line" : "")}>
+            <li key={d.id} className="flex items-start gap-3 py-2.5">
               <span aria-hidden="true" className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-card-2 text-ink-soft">
                 <Icon className="h-[15px] w-[15px]" strokeWidth={1.8} />
               </span>

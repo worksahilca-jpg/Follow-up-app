@@ -13997,3 +13997,12 @@ whole window (sidebar only a touch darker); no lines between rows, space does th
 rounded fill; the one box that matters (our reply box) is see-through with a thin border, not a raised card. Redrawn
 light and dark this way and shown next to the previous charcoal version. Waiting for his reaction.
 **Approved (A-282):** *"yes go with the new one"*.
+
+## 2026-10-17 — Calm look built (A-282); sidebar Search removed (R-129)
+
+Built: new light and dark tokens (charcoal, no colour, see-through lines), no lines between list rows (a soft rounded
+fill on hover), Today's main box and the "Needs you" notice see-through with a thin border, the "your turn" dot charcoal.
+Sidebar Search removed at the founder's question; Customers keeps its search box. **Not built yet, honestly:** the
+three-column laptop layout from the drawings (Today still shows one open card with "Then" under it); the founder asked
+for research on how big apps design their Today page first. **Weak:** the green "Ready to book" words remain (status
+colour for good news, allowed by A-281); the old `/api/customers/search` route is now unused and should be removed.

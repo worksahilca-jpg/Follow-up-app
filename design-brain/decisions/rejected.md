@@ -1670,3 +1670,11 @@ black (or white) button, almost no colour at all.
 neutral too. Best reading: what looked bad was our *stark, cheap-looking* black and white (heavy shadows, warm tints,
 coloured faces, orange boxes), not neutral as such. Refined neutral greys, thin lines and calm type are the direction.
 **Do not propose again:** an accent colour as the fix for the look.
+
+## R-129 — A Search row at the top of the laptop sidebar ^R-129
+
+**Date:** 2026-10-17. **Founder, verbatim:** *"why there is search button on the top of today we dont eed it right ?"*
+**What was rejected:** the "Search" row above Today in the laptop sidebar (a window to find a customer, ⌘K).
+**Principle (inferred):** don't repeat a tool in two places. Finding a person is what Customers' own search box is for;
+the sidebar holds only the places. Removed with the calm look (A-282).
+**Do not propose again:** a global Search row in the sidebar.

@@ -22,18 +22,18 @@ glassmorphism, rounded-card soup, sparkle icons, "AI-powered" badges, fake urgen
 "blast" affordances, startup-template looks. AI is an invisible capability, never a
 personality: every automated action says what happened, why, and what the owner can do.
 
-## Tokens (light only; the app ground stays white, A-090)
+## Tokens (A-282 calm look: light and dark, following the device, A-281; no colour, R-128)
 
 | Token | Value | Use |
 |---|---|---|
-| `--paper` | `#fdfcfc` | Page |
-| `--card` / `--card-2` | `#ffffff` / `#f5f3f1` | Boxes / quiet fills |
-| `--ink` | `#0a0a0a` | Text, and the accent (the system is monochrome: black is the action colour) |
-| `--ink-soft` / `--ink-faint` | `#57534e` / `#736e68` | Secondary text / meta |
-| `--line` | `#e7e5e2` | Borders, dividers |
+| `--paper` | `#fafaf9` (dark `#202020`) | Page; the sidebar is a touch darker (`#f3f3f2` / `#1a1a1a`) |
+| `--card` / `--card-2` | `#ffffff` / `#f3f3f2` | Menus, dialogs / quiet fills. The main reply box is see-through (`--wash` + `--line-strong`, 22px) |
+| `--ink` / `--accent` | `#1c1c1f` / `#2a2a2e` (dark `#ececec`) | Text / the action colour: charcoal, never sharp black |
+| `--ink-soft` / `--ink-faint` | `#57575c` / `#6b6b70` | Secondary text / meta |
+| `--line` | `rgba(0,0,0,.08)` | Borders. No lines between list rows: space separates them (A-282) |
 | `--coral` (+ `-soft`) | `#b32a44` | Errors, something broken |
 | `--sage` (+ `-soft`) | `#0d6e3c` | Done, fine |
-| `--state-needs` | `#c96a1b` | The "your turn" **dot only** (3.7:1, never text) |
+| `--state-needs` | `#2a2a2e` (dark `#ececec`) | The "your turn" **dot only**, charcoal (A-282); the words carry the meaning |
 | `--radius-box` | `16px` | Boxes; buttons and chips are full pills |
 | `--bubble-them` / `--bubble-you` | `#eef0ee` / `#1b1d1f` | Chat bubbles, the same values as the landing page (A-261); never pure black, never a near-twin of each other |
 

@@ -4838,3 +4838,13 @@ instead of thin grey outlines, see-through top and tab bars, lists as one white 
 includes the tinted faces; not confirmed.
 **Supersedes:** A-090's "the app ground stays white" (SUPERSEDED 2026-10-17 for the app's ground, by this entry).
 **Next:** combine this depth with the proven layouts of A-277 (round 3).
+
+## A-279 — "Tell FollowUp what to change": rewrite a reply from your own words (2026-10-17) ^A-279
+
+**Founder, verbatim:** *"yes add it"* (asked: instead of editing a reply yourself, type or say "make it warmer" or
+"mention Saturday", and FollowUp rewrites it; like Wispr, talk instead of type).
+**What's approved (behaviour):** inside Change it, one box where the owner types an instruction (the phone keyboard's
+own microphone gives voice for free); FollowUp rewrites the reply and it still waits for the owner's Send. Builds on
+the existing rewrite (Shorter · Warmer · More formal · In their language, A-043, `/api/leads/[id]/rewrite`).
+Same rules as every draft: no made-up prices or dates, the sales-pressure check, the AI allowance.
+**When:** on the list for after 2026-10-31 (the dated plan), unless the founder says sooner. Its look is drawn first.

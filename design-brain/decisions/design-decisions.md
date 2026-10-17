@@ -14025,3 +14025,10 @@ already chosen). A one-line sentence under the choices says what the current one
 ("Sure?") unless the account holds every reply. The old three-way control under Details is gone
 (`LeadAutomationToggle` removed). Checked on the local database: changed to "Don't write to Linda" and back, on both
 sizes; it saved each time.
+
+## 2026-10-17 — Laptop Today built as two columns (A-284)
+
+Built and checked on the local database at 1440×900, light and dark: the list on the left (340px) with the open person
+marked, the reply on the right (sticky), Later under the list. Picking Lucía moved her reply to the right. Phone at
+390×844 unchanged. **Weak, honestly:** the right side shows the reply card (their message, the draft, Send), not the
+whole conversation as the drawing did; the full thread is still one tap away on the customer's page.

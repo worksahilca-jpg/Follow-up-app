@@ -106,12 +106,23 @@ import { ghlChannelOf, ghlConversationMessages, ghlConversationsSince, mapGhlMes
 describe("a GoHighLevel message", () => {
   const base = { id: "m1", conversationId: "c1", contactId: "ct1", messageType: "TYPE_SMS", direction: "inbound", body: "Is it still for sale?", dateAdded: "2026-10-16T20:00:00.000Z" };
 
-  it("reads a text and an email, and leaves calls and DMs alone", () => {
+  it("reads texts, emails, Facebook, Instagram and WhatsApp, and leaves calls and the rest alone", () => {
     expect(ghlChannelOf("TYPE_SMS")).toBe("text");
     expect(ghlChannelOf("TYPE_EMAIL")).toBe("email");
+    expect(ghlChannelOf("TYPE_FACEBOOK")).toBe("messenger");
+    expect(ghlChannelOf("TYPE_INSTAGRAM")).toBe("instagram");
+    expect(ghlChannelOf("TYPE_WHATSAPP")).toBe("whatsapp");
     expect(ghlChannelOf("TYPE_CALL")).toBeNull();
-    expect(ghlChannelOf("TYPE_INSTAGRAM")).toBeNull();
+    expect(ghlChannelOf("TYPE_GMB")).toBeNull();
     expect(ghlChannelOf(undefined)).toBeNull();
+  });
+
+  it("sends Facebook, Instagram and WhatsApp replies with GoHighLevel's own type names", async () => {
+    fetchMock.mockResolvedValue(reply(201, { messageId: "x" }));
+    for (const [channel, type] of [["messenger", "FB"], ["instagram", "IG"], ["whatsapp", "WhatsApp"]] as const) {
+      await sendGhlMessage(KEY, { channel, contactId: "ct1", body: "Hi" });
+      expect(JSON.parse(fetchMock.mock.calls.at(-1)![1].body)).toEqual({ type, contactId: "ct1", message: "Hi" });
+    }
   });
 
   it("keeps the words, the side and the time", () => {
@@ -205,5 +216,23 @@ describe("replying through GoHighLevel", () => {
     expect(r.success ? "" : r.message).toContain("Connect it again");
     fetchMock.mockResolvedValue(reply(503, {}));
     expect(await sendGhlMessage(KEY, { channel: "text", contactId: "ct1", body: "x" })).toMatchObject({ success: false, status: 503 });
+  });
+});
+
+describe("connect checks what the key can read", () => {
+  it("says which permission is missing, in words, before saving", async () => {
+    fetchMock.mockImplementation(async (url: string) =>
+      url.includes("/conversations/") ? reply(403, {}) : reply(200, { location: { name: "Priya Sharma Realty" }, contacts: [] })
+    );
+    const r = await goHighLevelClient.testConnection(KEY);
+    expect(r.ok).toBe(false);
+    expect(r.message).toContain("conversations");
+    expect(r.message).not.toContain("contacts or");
+  });
+
+  it("connects when both can be read", async () => {
+    fetchMock.mockResolvedValue(reply(200, { location: { name: "Priya Sharma Realty" } }));
+    expect(await goHighLevelClient.testConnection(KEY)).toEqual({ ok: true, accountLabel: "Priya Sharma Realty" });
+    expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 });

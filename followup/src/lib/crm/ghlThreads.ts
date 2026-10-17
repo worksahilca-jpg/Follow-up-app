@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import type { GhlChannel } from "./gohighlevel";
+import { isGhlChannel, type GhlChannel } from "./gohighlevel";
 
 /**
  * Which FollowUp conversations live in GoHighLevel (GHL 2). Kept apart from the Gmail, Outlook and Twilio threads
@@ -43,17 +43,14 @@ export async function findOrCreateGhlConversation(leadId: string, ghlConversatio
  * and which FollowUp conversation to record it in. Null for everyone else, who is answered exactly as before.
  * Without `channel` it asks about the newest message on any channel; with one, about the newest on that channel.
  */
-export async function ghlReplyRoute(
-  leadId: string,
-  channel?: "email" | "text"
-): Promise<{ channel: GhlChannel; conversationId: string } | null> {
+export async function ghlReplyRoute(leadId: string, channel?: GhlChannel): Promise<{ channel: GhlChannel; conversationId: string } | null> {
   const last = await prisma.message.findFirst({
     where: { direction: "inbound", conversation: { leadId, ...(channel ? { channel } : {}) } },
     orderBy: { sentAt: "desc" },
     select: { conversation: { select: { id: true, channel: true, externalId: true } } },
   });
-  if (!last || !isGhlConversationKey(last.conversation.externalId)) return null;
+  if (!last?.conversation || !isGhlConversationKey(last.conversation.externalId)) return null;
   const c = last.conversation.channel;
-  if (c !== "email" && c !== "text") return null;
+  if (!isGhlChannel(c)) return null;
   return { channel: c, conversationId: last.conversation.id };
 }

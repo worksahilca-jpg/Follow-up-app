@@ -119,9 +119,10 @@ const BUSINESS_CAN_SEND: Record<Exclude<SendChannel, "email">, Prisma.BusinessWh
  * reconnect is picked up on the next pass without anyone doing anything.
  */
 export async function canSendOn(businessId: string, channel: SendChannel): Promise<boolean> {
-  // Coarse in the same way as the email case below: a business with GoHighLevel connected can text and email
-  // through it, and the send itself still takes a customer who wrote somewhere else the way they wrote.
-  if ((channel === "email" || channel === "text") && (await ghlCanSend(businessId))) return true;
+  // Coarse in the same way as the email case below: a business with GoHighLevel connected can text, email, and
+  // answer Facebook, Instagram and WhatsApp through it, and the send itself still takes a customer who wrote
+  // somewhere else the way they wrote.
+  if (await ghlCanSend(businessId)) return true;
   if (channel === "email") {
     const inbox = await prisma.integration.findFirst({
       where: { status: "connected", provider: { in: ["gmail", "outlook"] }, user: { businessId } },

@@ -378,3 +378,16 @@ that doesn't make sense, you have to remove all of that part. You have to do it 
 *"We dont have to use complex words anywhere, be as simple and minimal as we can."* Every line in the app is the
 fewest everyday words that are still true. Name the thing ("Connect your apps"), not the behaviour behind it ("Where
 do customers write to you?"). One short line beats two sentences. See R-121.
+
+## People should love using it, the way they love Wispr (founder, 2026-10-17)
+
+**Founder, verbatim:** *"i want people to love the app like wisper there is no point of using its app but i love
+exloping and all because i love using it right so people should love using it it should not be complex like gohighlevel
+and all right"*.
+
+- The bar is not "works" or "clean": an owner should *enjoy* opening FollowUp, even when nothing needs them, the way the
+  founder enjoys opening Wispr when he has no reason to.
+- Never complex like GoHighLevel: no menus of features, no setup maze, no dashboard of numbers to learn. Every screen
+  stays one clear thing.
+- Joy comes from how it feels to use (speed, feel, small rewarding moments, real content), never from gimmicks,
+  streaks or AI personality (CLAUDE.md standing rules still hold).

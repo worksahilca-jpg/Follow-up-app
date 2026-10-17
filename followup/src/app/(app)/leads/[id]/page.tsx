@@ -4,7 +4,7 @@ import { getFreeTierStatus } from "@/lib/billing";
 import { formatCurrency, formatDate, PIPELINE_STAGES } from "@/lib/demo-data";
 import PriorityPill from "@/components/PriorityPill";
 import StageSelector from "@/components/StageSelector";
-import LeadAutomationToggle from "@/components/LeadAutomationToggle";
+import CustomerChoiceRow from "@/components/app/CustomerChoiceRow";
 import LeadWorkflowEnrollment from "@/components/LeadWorkflowEnrollment";
 import LeadAssignmentSelect from "@/components/LeadAssignmentSelect";
 import DeleteLeadButton from "@/components/DeleteLeadButton";
@@ -307,15 +307,16 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
           ) : null}
         </div>
 
+        {/* How FollowUp treats this one person, as one plain row (A-280), out of Details where nobody found it. */}
+        <CustomerChoiceRow
+          leadId={lead.id}
+          name={lead.name}
+          initialTier={lead.automationTier}
+          autonomousAllowed={autonomousAllowed}
+          holdAllForApproval={freeTierStatus?.holdAllForApproval ?? false}
+        />
+
         <DetailsFold>
-          <CollapsibleSection row title={`How it handles ${firstName}`} status={TIER_WORDS[lead.automationTier] ?? undefined}>
-            <LeadAutomationToggle
-              leadId={lead.id}
-              initialTier={lead.automationTier}
-              autonomousAllowed={autonomousAllowed}
-              holdAllForApproval={freeTierStatus?.holdAllForApproval ?? false}
-            />
-          </CollapsibleSection>
           <CollapsibleSection row title={`Why it may write to ${firstName}`} status={lead.optedOutAt ? "Opted out of texts" : consentLabel(lead.source)}>
             <LeadTrustPanel part="why" source={lead.source} optedOutAt={lead.optedOutAt} auditTrail={auditTrail} languageRead={lead.languageRead as LeadLanguage | null} />
           </CollapsibleSection>
@@ -375,7 +376,6 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
 const PILL = "inline-flex h-[38px] items-center rounded-full border border-line bg-card px-3.5 text-[14px] font-medium hover:bg-card-2";
 
 /** The per-customer setting in the same words as the control itself. */
-const TIER_WORDS: Record<string, string> = { off: "You do it", assisted: "Ask if risky", autonomous: "Handle it all" };
 
 /**
  * The three facts (A-080): why it's here (or the state when nothing

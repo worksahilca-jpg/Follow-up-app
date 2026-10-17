@@ -398,3 +398,6 @@ and all right"*.
 - Every drawing shows the computer (1280 wide) **and** the phone (390), side by side. Never phone-only.
 - The computer is not a stretched phone: it uses the room (sidebar, the customer and their details side by side).
 - "Phone first" (design-brain rules) still means the phone must work; it never means the computer comes second.
+- **Update (founder, 2026-10-17, later):** *"laptop is priortiy"*. The computer now comes **first** in design work: draw
+  and check the computer screen first, then make sure the phone still works. The phone is not dropped (owners still
+  answer on it between jobs); it is checked second.

@@ -2,6 +2,7 @@ import Link from "next/link";
 import ScrollTitle from "@/components/app/ScrollTitle";
 import TeamPerformanceSection from "@/components/TeamPerformanceSection";
 import { Eyebrow } from "@/components/app/canvasBits";
+import { GROUP } from "@/components/app/IosList";
 import { getAnalytics } from "@/lib/analytics-data";
 import { getLeads } from "@/lib/leads-data";
 import { getSessionContext } from "@/lib/session";
@@ -173,13 +174,16 @@ export default async function NumbersPage() {
           </figure>
         </section>
 
+        {/* An iOS grouped list (A-273): the label on the left, the value in grey on the right. */}
         <section>
-          <h2 className="text-[15px]">Everything else</h2>
-          <dl className="mt-1.5">
-            {rest.map(([k, v]) => (
-              <div key={k} className="flex justify-between border-b border-line-2 py-[11px] text-sm">
-                <dt className="text-ink-soft">{k}</dt>
-                <dd className="tabular-nums">{v}</dd>
+          <h2 className="ios-footnote px-4 uppercase tracking-[0.02em] text-ink-faint">Everything else</h2>
+          <dl className={GROUP + " mt-1.5"}>
+            {rest.map(([k, v], i) => (
+              <div key={k} className="flex items-center pl-4">
+                <div className={"flex min-h-[44px] flex-1 items-center justify-between gap-3 pr-4" + (i ? " border-t border-line-2" : "")}>
+                  <dt className="ios-subhead text-ink">{k}</dt>
+                  <dd className="ios-subhead tabular-nums text-ink-faint">{v}</dd>
+                </div>
               </div>
             ))}
           </dl>

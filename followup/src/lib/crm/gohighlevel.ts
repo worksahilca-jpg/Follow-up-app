@@ -52,6 +52,21 @@ export function mapGhlContact(c: Record<string, unknown>): CrmPerson | null {
   return { externalId: id, name, email: str(c.email), phone: str(c.phone), createdAt: added && !Number.isNaN(Date.parse(added)) ? new Date(added) : new Date() };
 }
 
+/** Which of the two things FollowUp reads the key isn't allowed to (401/403). Anything else is not a permission question. */
+async function missingPermissions(k: { locationId: string; token: string }): Promise<string[]> {
+  const checks: Array<[string, string]> = [
+    ["contacts", `${BASE}/contacts/?${new URLSearchParams({ locationId: k.locationId, limit: "1" })}`],
+    ["conversations", `${BASE}/conversations/search?${new URLSearchParams({ locationId: k.locationId, limit: "1" })}`],
+  ];
+  const results = await Promise.all(
+    checks.map(async ([name, url]) => {
+      const res = await fetch(url, { headers: headers(k.token), signal: AbortSignal.timeout(CRM_TIMEOUT_MS) }).catch(() => null);
+      return res && (res.status === 401 || res.status === 403) ? name : null;
+    })
+  );
+  return results.filter((r): r is string => r !== null);
+}
+
 export const goHighLevelClient: CrmClient = {
   async testConnection(apiKey) {
     const k = parseGhlKey(apiKey);
@@ -64,6 +79,16 @@ export const goHighLevelClient: CrmClient = {
       if (!res.ok) return { ok: false, message: `GoHighLevel returned ${res.status}. Try again in a minute.` };
       const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
       const loc = (data.location ?? data) as Record<string, unknown>;
+      // The key can open the location but still lack what FollowUp needs (a Private Integration is given its
+      // permissions one by one). Asked here, so a missing one is said at connect, in words, not found later as a
+      // silent empty Today. One small read of each; nothing is changed.
+      const missing = await missingPermissions(k);
+      if (missing.length) {
+        return {
+          ok: false,
+          message: `This key can't read ${missing.join(" or ")}. In GoHighLevel, open the Private Integration, turn on ${missing.join(" and ")} (read and write), save, and paste the key again.`,
+        };
+      }
       return { ok: true, accountLabel: str(loc.name) ?? undefined };
     } catch (err) {
       console.error("GoHighLevel connect check failed:", err instanceof Error ? err.message : err);
@@ -141,20 +166,42 @@ export const goHighLevelClient: CrmClient = {
 // POST /conversations/messages { type, contactId, message, subject, html } → { conversationId, messageId }, and a
 // message's id, messageType, direction, body, dateAdded, contactId, conversationId.
 //
-// NOT confirmed (grade C, check on a real account): the messageType strings for a text and an email ("TYPE_SMS",
-// "TYPE_EMAIL"); whether the messages list comes back wrapped in a second `messages` object (both are read); and
+// NOT confirmed (grade C, check on a real account): the messageType strings ("TYPE_SMS", "TYPE_EMAIL",
+// "TYPE_FACEBOOK", "TYPE_INSTAGRAM", "TYPE_WHATSAPP") and the send types ("SMS", "Email", "FB", "IG", "WhatsApp"); whether the messages list comes back wrapped in a second `messages` object (both are read); and
 // whether an email's body comes back as HTML (tags are taken out either way).
 // ---------------------------------------------------------------------------
 
-/** The two GoHighLevel channels FollowUp reads and answers. Calls, Facebook, Instagram and the rest are left alone. */
-export type GhlChannel = "text" | "email";
+/**
+ * The GoHighLevel channels FollowUp reads and answers: texts and emails, and the Facebook, Instagram and WhatsApp
+ * messages that land in GoHighLevel's inbox (founder, 2026-10-17: "fix the weak points"). Calls, reviews, live chat
+ * and the rest are left alone. FollowUp's own channel names, so everything downstream treats them as it treats the
+ * same channel connected directly.
+ */
+export type GhlChannel = "text" | "email" | "messenger" | "instagram" | "whatsapp";
+
+const READ_AS: Record<string, GhlChannel> = {
+  TYPE_SMS: "text",
+  SMS: "text",
+  TYPE_EMAIL: "email",
+  EMAIL: "email",
+  TYPE_FACEBOOK: "messenger",
+  FB: "messenger",
+  TYPE_INSTAGRAM: "instagram",
+  IG: "instagram",
+  TYPE_WHATSAPP: "whatsapp",
+  WHATSAPP: "whatsapp",
+};
+
+/** What POST /conversations/messages calls each channel (the `type` field). */
+const SEND_AS: Record<GhlChannel, string> = { text: "SMS", email: "Email", messenger: "FB", instagram: "IG", whatsapp: "WhatsApp" };
 
 export function ghlChannelOf(messageType: unknown): GhlChannel | null {
   if (typeof messageType !== "string") return null;
-  const t = messageType.toUpperCase();
-  if (t === "TYPE_SMS" || t === "SMS") return "text";
-  if (t === "TYPE_EMAIL" || t === "EMAIL") return "email";
-  return null;
+  return READ_AS[messageType.toUpperCase()] ?? null;
+}
+
+export function isGhlChannel(channel: string): channel is GhlChannel {
+  return channel in SEND_AS;
 }
 
 export interface GhlMessage {
@@ -275,7 +322,7 @@ export async function sendGhlMessage(
   const payload =
     msg.channel === "email"
       ? { type: "Email", contactId: msg.contactId, subject: msg.subject, message: msg.body, html: escapeHtml(msg.body).replace(/\n/g, "<br>") }
-      : { type: "SMS", contactId: msg.contactId, message: msg.body };
+      : { type: SEND_AS[msg.channel], contactId: msg.contactId, message: msg.body };
   const res = await fetch(`${BASE}/conversations/messages`, {
     method: "POST",
     headers: headers(k.token, true),

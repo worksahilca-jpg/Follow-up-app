@@ -505,3 +505,12 @@ Mobbin were unreachable, so this is from search summaries (grade C). FollowUp al
 with an old skeleton that no longer matches it, and no button has a pressed state (a tap on a phone shows nothing
 until the server answers). Both built the same day (A-254). A third claimed gap, a customer opening as a whole new
 page on the computer, was wrong: the panel over the list already exists. → [[references/crm/2026-10-15-hubspot-workflow-and-feel]]
+
+**2026-10-17: GoHighLevel's bad reviews, and what FollowUp can do about them.** Founder: *"read ghl bad reviews too
+that what is the pain point of users and if we can help them."* Web pages could not be opened (DNS errors, Reddit
+blocked), so every quote is a search excerpt (grade C). Top complaints: hard setup, slow support, surprise bills, text
+blocks (A2P), missed alerts, follow-up built by hand that breaks, a noisy inbox, spam folders, duplicate contacts
+texted twice, not built for realtors. FollowUp helps fully with setup, hand-built follow-up and the noisy inbox; partly
+with six; not with A2P blocks (we send through the owner's GHL number). Biggest risks for us: adding to their GHL bill,
+getting their number blocked by too many nudges, and texting someone a GHL workflow already texted.
+→ [[competitors/2026-10-17-gohighlevel-pain-points]]

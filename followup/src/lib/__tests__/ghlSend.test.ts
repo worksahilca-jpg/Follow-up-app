@@ -23,8 +23,11 @@ vi.mock("@/lib/instagram", () => ({ sendInstagramMessage: vi.fn() }));
 vi.mock("@/lib/facebook", () => ({ sendMessengerMessage: vi.fn() }));
 vi.mock("@/lib/crm", () => ({ CRM_PROVIDERS: {}, isCrmProvider: vi.fn(() => true) }));
 vi.mock("@/lib/crm/notes", () => ({ pushCrmNote: vi.fn(async () => {}) }));
-vi.mock("@/lib/crm/ghlThreads", () => ({ ghlReplyRoute: vi.fn() }));
-vi.mock("@/lib/crm/gohighlevel", () => ({ sendGhlMessage: vi.fn() }));
+vi.mock("@/lib/crm/ghlThreads", () => ({ ghlReplyRoute: vi.fn(), isGhlConversationKey: (id: string | null) => !!id && id.startsWith("ghl:") }));
+vi.mock("@/lib/crm/gohighlevel", () => ({
+  sendGhlMessage: vi.fn(),
+  isGhlChannel: (c: string) => ["text", "email", "messenger", "instagram", "whatsapp"].includes(c),
+}));
 vi.mock("@/lib/audit", () => ({ recordAudit: vi.fn(async () => {}) }));
 vi.mock("@/lib/sendCaps", () => ({ checkSendCap: vi.fn(async () => ({ allowed: true, used: 0, cap: 50 })) }));
 vi.mock("@/lib/suppression", async (importOriginal) => ({
@@ -123,5 +126,18 @@ describe("everyone else", () => {
     expect(result.success).toBe(true);
     expect(send).toHaveBeenCalled();
     expect(ghlSend).not.toHaveBeenCalled();
+  });
+});
+
+describe("a customer who wrote to GoHighLevel on Instagram", () => {
+  it("is answered on Instagram, through GoHighLevel, not by text or email", async () => {
+    route.mockResolvedValue({ channel: "instagram", conversationId: "ghl-ig" });
+    // Meta's window: they wrote just now.
+    p.message.findFirst.mockResolvedValue({ sentAt: new Date() });
+    const result = await sendFollowUpToLead("lead1", "Yes, it's still available.");
+    expect(result.success).toBe(true);
+    expect(ghlSend).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ channel: "instagram", contactId: "contact9" }));
+    expect(sendSms).not.toHaveBeenCalled();
+    expect(sendEmail).not.toHaveBeenCalled();
   });
 });

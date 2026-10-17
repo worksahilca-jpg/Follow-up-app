@@ -1712,6 +1712,8 @@ sends as results.
 
 ## A-090 — The app's ground stays white (colour A) ^A-090
 
+**SUPERSEDED (2026-10-17)** for the app's ground by [A-278](#^A-278): the founder liked a soft grey ground with white raised surfaces.
+
 **SUPERSEDED IN PART (2026-10-09) by [A-209](#^A-209):** the reply card's gradient. Written replies are soft green (R-058). The white ground stays.
 
 
@@ -4827,3 +4829,12 @@ platforms."*
 screens and lists (Customers like Messages, one customer like a Messages chat, Settings like iPhone Settings, Results
 like Screen Time, Today's list like Mail), Wispr for the feel, the home screen, setup and the landing page.
 We copy how they work and Apple's standard building blocks; never a logo, name or brand look (R-092, R-097).
+
+## A-278 — Depth from redesign v1: grey ground, white raised surfaces (2026-10-17) ^A-278
+
+**Founder, verbatim:** *"the dept and stuff you added was good"* (about redesign v1, after rejecting round 2).
+**What was liked:** v1's shared look: a soft grey ground (#F2F2F5) with white surfaces raised by a soft two-layer shadow
+instead of thin grey outlines, see-through top and tab bars, lists as one white grouped surface. "and stuff" probably
+includes the tinted faces; not confirmed.
+**Supersedes:** A-090's "the app ground stays white" (SUPERSEDED 2026-10-17 for the app's ground, by this entry).
+**Next:** combine this depth with the proven layouts of A-277 (round 3).

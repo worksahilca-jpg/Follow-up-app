@@ -26,6 +26,8 @@ vi.mock("@/lib/crm/notes", () => ({ pushCrmNote: vi.fn(async () => {}) }));
 vi.mock("@/lib/crm/ghlThreads", () => ({ ghlReplyRoute: vi.fn(), isGhlConversationKey: (id: string | null) => !!id && id.startsWith("ghl:") }));
 vi.mock("@/lib/crm/gohighlevel", () => ({
   sendGhlMessage: vi.fn(),
+  ghlDoNotDisturb: vi.fn(async () => false),
+  ghlUpcomingMeeting: vi.fn(async () => null),
   isGhlChannel: (c: string) => ["text", "email", "messenger", "instagram", "whatsapp"].includes(c),
 }));
 vi.mock("@/lib/audit", () => ({ recordAudit: vi.fn(async () => {}) }));
@@ -41,7 +43,7 @@ import { sendSms } from "@/lib/twilio";
 import { sendEmail } from "@/lib/integrations/gmail";
 import { pushCrmNote } from "@/lib/crm/notes";
 import { ghlReplyRoute } from "@/lib/crm/ghlThreads";
-import { sendGhlMessage } from "@/lib/crm/gohighlevel";
+import { ghlDoNotDisturb, ghlUpcomingMeeting, sendGhlMessage } from "@/lib/crm/gohighlevel";
 import { sendFollowUpToLead } from "@/lib/sending";
 import { crmIsFollowingUp } from "@/lib/crm/oneBoss";
 
@@ -172,5 +174,36 @@ describe("never two messages", () => {
     const result = await sendFollowUpToLead("lead1", "Saturday at 11 works.");
     expect(result.success).toBe(true);
     expect(following).not.toHaveBeenCalled();
+  });
+});
+
+describe("working alongside GoHighLevel", () => {
+  const dnd = ghlDoNotDisturb as unknown as ReturnType<typeof vi.fn>;
+  const meeting = ghlUpcomingMeeting as unknown as ReturnType<typeof vi.fn>;
+
+  it("never sends to someone marked Do Not Disturb there, not even the owner's own send", async () => {
+    dnd.mockResolvedValue(true);
+    const result = await sendFollowUpToLead("lead1", "Saturday at 11 works.");
+    expect(result).toMatchObject({ success: false, failure: "refused" });
+    expect(result.message).toContain("Nadia is marked Do Not Disturb in GoHighLevel");
+    expect(dnd).toHaveBeenCalledWith(expect.any(String), "contact9", "text");
+    expect(ghlSend).not.toHaveBeenCalled();
+    expect(sendSms).not.toHaveBeenCalled();
+    dnd.mockResolvedValue(false);
+  });
+
+  it("doesn't follow up on its own with someone who booked a meeting there", async () => {
+    meeting.mockResolvedValue(new Date("2026-10-20T15:00:00Z"));
+    const result = await sendFollowUpToLead("lead1", "Just checking in.", { automated: true, trigger: "silence" });
+    expect(result.message).toContain("already has a meeting booked in GoHighLevel");
+    expect(ghlSend).not.toHaveBeenCalled();
+  });
+
+  it("but the owner can still write to someone who booked", async () => {
+    meeting.mockResolvedValue(new Date("2026-10-20T15:00:00Z"));
+    const result = await sendFollowUpToLead("lead1", "See you Monday at 11.");
+    expect(result.success).toBe(true);
+    expect(meeting).not.toHaveBeenCalled();
+    meeting.mockResolvedValue(null);
   });
 });

@@ -14,7 +14,7 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllGlobals());
 
-const reply = (status: number, body: unknown) => ({ ok: status >= 200 && status < 300, status, json: async () => body });
+const reply = (status: number, body: unknown) => ({ ok: status >= 200 && status < 300, status, json: async () => body, text: async () => JSON.stringify(body) });
 
 describe("the pasted key", () => {
   it("keeps the Location ID and the key together and reads them back", () => {
@@ -149,7 +149,7 @@ describe("notes and the one-boss rule", () => {
 });
 
 // GHL 2: reading texts and emails, and replying through GoHighLevel.
-import { ghlChannelOf, ghlConversationMessages, ghlConversationsSince, mapGhlMessage, sendGhlMessage } from "@/lib/crm/gohighlevel";
+import { ghlChannelOf, ghlConversationMessages, ghlConversationsSince, ghlDoNotDisturb, ghlUpcomingMeeting, mapGhlMessage, sendGhlMessage } from "@/lib/crm/gohighlevel";
 
 describe("a GoHighLevel message", () => {
   const base = { id: "m1", conversationId: "c1", contactId: "ct1", messageType: "TYPE_SMS", direction: "inbound", body: "Is it still for sale?", dateAdded: "2026-10-16T20:00:00.000Z" };
@@ -264,6 +264,58 @@ describe("replying through GoHighLevel", () => {
     expect(r.success ? "" : r.message).toContain("Connect it again");
     fetchMock.mockResolvedValue(reply(503, {}));
     expect(await sendGhlMessage(KEY, { channel: "text", contactId: "ct1", body: "x" })).toMatchObject({ success: false, status: 503 });
+  });
+
+  it("says why GoHighLevel didn't send it, in words, with what to do", async () => {
+    const why = async (status: number, message: string, channel: "text" | "email" = "text") => {
+      fetchMock.mockResolvedValue(reply(status, { message }));
+      const r = await sendGhlMessage(KEY, { channel, contactId: "ct1", body: "x", subject: "s" });
+      return r.success ? "" : r.message;
+    };
+    expect(await why(400, "Contact is in DND for SMS")).toContain("Do Not Disturb");
+    expect(await why(422, "Number is not registered for A2P 10DLC")).toContain("isn't registered for business texting");
+    expect(await why(400, "Insufficient wallet balance")).toContain("out of credit");
+    expect(await why(400, "Invalid phone number")).toContain("doesn't have a working number");
+    expect(await why(400, "Invalid email", "email")).toContain("working email address");
+    expect(await why(400, "Something else")).toContain("didn't say why");
+    expect(await why(503, "")).toContain("try again shortly");
+  });
+});
+
+describe("working alongside GoHighLevel", () => {
+  it("reads Do Not Disturb for everything, or for one channel", async () => {
+    fetchMock.mockResolvedValue(reply(200, { contact: { dnd: true } }));
+    expect(await ghlDoNotDisturb(KEY, "c1", "email")).toBe(true);
+    fetchMock.mockResolvedValue(reply(200, { contact: { dnd: false, dndSettings: { SMS: { status: "active" }, Email: { status: "inactive" } } } }));
+    expect(await ghlDoNotDisturb(KEY, "c1", "text")).toBe(true);
+    expect(await ghlDoNotDisturb(KEY, "c1", "email")).toBe(false);
+    expect(await ghlDoNotDisturb(KEY, "c1")).toBe(true);
+    // Instagram goes with Facebook's setting.
+    fetchMock.mockResolvedValue(reply(200, { contact: { dndSettings: { FB: { status: "permanent" } } } }));
+    expect(await ghlDoNotDisturb(KEY, "c1", "instagram")).toBe(true);
+    // Can't tell reads as no.
+    fetchMock.mockResolvedValue(reply(500, {}));
+    expect(await ghlDoNotDisturb(KEY, "c1", "text")).toBe(false);
+  });
+
+  it("finds their next meeting still to come, never a cancelled or past one", async () => {
+    const now = new Date("2026-10-17T12:00:00Z");
+    fetchMock.mockResolvedValue(
+      reply(200, {
+        events: [
+          { startTime: "2026-10-16T15:00:00Z", appointmentStatus: "confirmed" },
+          { startTime: "2026-10-18T15:00:00Z", appointmentStatus: "cancelled" },
+          { startTime: "2026-10-20T15:00:00Z", appointmentStatus: "confirmed" },
+          { startTime: "2026-10-19T15:00:00Z", appointmentStatus: "new" },
+        ],
+      })
+    );
+    expect(await ghlUpcomingMeeting(KEY, "c1", now)).toEqual(new Date("2026-10-19T15:00:00Z"));
+    expect(new URL(fetchMock.mock.calls[0][0]).pathname).toBe("/contacts/c1/appointments");
+    fetchMock.mockResolvedValue(reply(200, { events: [{ startTime: "2026-10-18T15:00:00Z", appointmentStatus: "noshow" }] }));
+    expect(await ghlUpcomingMeeting(KEY, "c1", now)).toBeNull();
+    fetchMock.mockResolvedValue(reply(403, {}));
+    expect(await ghlUpcomingMeeting(KEY, "c1", now)).toBeNull();
   });
 });
 

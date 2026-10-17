@@ -6,7 +6,8 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-const h = vi.hoisted(() => ({ conn: vi.fn(), lastContactedAt: vi.fn() }));
+const h = vi.hoisted(() => ({ conn: vi.fn(), lastContactedAt: vi.fn(), dnd: vi.fn(), meeting: vi.fn() }));
+vi.mock("@/lib/crm/gohighlevel", () => ({ ghlDoNotDisturb: h.dnd, ghlUpcomingMeeting: h.meeting }));
 
 vi.mock("@/lib/db", () => ({ prisma: { crmConnection: { findUnique: h.conn } } }));
 vi.mock("@/lib/crm", () => ({
@@ -17,7 +18,8 @@ vi.mock("@/lib/crm", () => ({
   },
 }));
 
-import { crmIsFollowingUp, ourLastSendAt } from "@/lib/crm/oneBoss";
+import { crmIsFollowingUp, ghlHoldReason, ourLastSendAt } from "@/lib/crm/oneBoss";
+import { CRM_BOOKED_REASON, CRM_DND_REASON } from "@/lib/holdReasons";
 import { followUpBossClient } from "@/lib/crm/followupboss";
 import { hubspotClient } from "@/lib/crm/hubspot";
 
@@ -114,5 +116,27 @@ describe("ourLastSendAt", () => {
       ])
     ).toEqual(new Date("2026-10-10T10:00:00Z"));
     expect(ourLastSendAt([{ direction: "outbound", date: "2026-10-12T10:00:00Z", source: "instagram_direct" }])).toBeNull();
+  });
+});
+
+describe("ghlHoldReason", () => {
+  const ghl = { businessId: "biz1", crmProvider: "gohighlevel", crmId: "c1" };
+  beforeEach(() => h.conn.mockResolvedValue({ provider: "gohighlevel", apiKey: "key" }));
+
+  it("steps back from someone marked Do Not Disturb there, then from someone with a meeting booked", async () => {
+    h.dnd.mockResolvedValue(true);
+    expect(await ghlHoldReason(ghl)).toBe(CRM_DND_REASON);
+    h.dnd.mockResolvedValue(false);
+    h.meeting.mockResolvedValue(new Date("2026-10-20T15:00:00Z"));
+    expect(await ghlHoldReason(ghl)).toBe(CRM_BOOKED_REASON);
+    h.meeting.mockResolvedValue(null);
+    expect(await ghlHoldReason(ghl)).toBeNull();
+  });
+
+  it("asks nothing for a customer on another CRM, or when GoHighLevel isn't connected", async () => {
+    expect(await ghlHoldReason(lead)).toBeNull();
+    h.conn.mockResolvedValue(null);
+    expect(await ghlHoldReason(ghl)).toBeNull();
+    expect(h.dnd).not.toHaveBeenCalled();
   });
 });

@@ -4848,3 +4848,12 @@ own microphone gives voice for free); FollowUp rewrites the reply and it still w
 the existing rewrite (Shorter · Warmer · More formal · In their language, A-043, `/api/leads/[id]/rewrite`).
 Same rules as every draft: no made-up prices or dates, the sales-pressure check, the AI allowance.
 **When:** on the list for after 2026-10-31 (the dated plan), unless the founder says sooner. Its look is drawn first.
+
+## A-280 — Per-customer choice as one plain row: "FollowUp and {name} · Ask me first" (2026-10-17) ^A-280
+
+**Founder, verbatim:** *"yes fix all"* (answering "Do I build it this way?" for the drawn row).
+**What's approved:** the existing per-customer tier (`Lead.automationTier`, hidden under Details as "How it handles
+{name}") moves to one row in the About sheet (phone) and the customer's side panel (computer): "FollowUp and {name}",
+value on the right. Tapping opens a pick list with a tick (phone) or a small pop-up menu (computer): **Ask me first**
+(default) · **Don't write to {name}**. Sending by itself appears as a third choice only where the account allows it.
+Supersedes the R-127 switches. Words: plain, as drawn.

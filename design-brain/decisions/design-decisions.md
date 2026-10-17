@@ -13960,3 +13960,10 @@ customer page's Details as "How it handles {name}" with three tiers (I'll do it 
 first", which opens an iPhone-style pick list with a tick: **Ask me first** (default) · **Don't write to {name}**
 (the third tier only where sending by itself is allowed). No new feature, no switches; wording and place only.
 Waiting for his yes.
+
+## 2026-10-17 — Laptop drawn: three columns like Mail on a Mac; four accent colours shown
+
+**Founder:** *"my laptop iterface means a lot"*, *"i want a best design fro my windows or macs screen"*, then *"this white
+black lokks bad what other comapnies use bro ??"*. Drawn: Today and a customer at 1280×800 as three columns (sidebar ·
+list · open conversation, plus an About column on the customer page), A-278 depth. Then the same Today screen in four
+single accents (blue, indigo, green, orange), each named with well-known brands that use that colour. Waiting for his pick.

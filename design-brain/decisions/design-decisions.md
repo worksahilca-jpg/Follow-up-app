@@ -13944,3 +13944,10 @@ chat with one "Ready to view · Call" line on top; Activity = Wispr's history (d
 Screen Time (big number, a bar per day, grouped list); Settings = iPhone Settings (name on top, coloured icons, the
 choice on the right); setup = Wispr's onboarding (one step per screen, progress bar, one action, "I'll do this later").
 Drawn as static phone screens in the app's own font; Activity lines are examples. Waiting for his reaction.
+
+## 2026-10-17 — Round 3 drawn (A-277 layouts + A-278 depth); visual design paused, organise first
+
+Round 3 combined round 2's proven layouts with v1's depth and tinted faces (drawings in the session scratchpad,
+not shown). **Founder, verbatim:** *"oksy lets jut keep organising every thing we will design and chose the colour
+later"*. Decision: visual design and colour wait; next is organising the whole app (where every feature lives, what
+is on the surface, one tap away, in Settings, or in the back), refreshing `components/app-map.md`, and the feature list.

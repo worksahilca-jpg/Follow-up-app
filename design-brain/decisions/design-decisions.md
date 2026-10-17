@@ -13996,3 +13996,4 @@ with a thin light border and big round corners. **Principles taken (not the scre
 whole window (sidebar only a touch darker); no lines between rows, space does the separating; the selected row is a soft
 rounded fill; the one box that matters (our reply box) is see-through with a thin border, not a raised card. Redrawn
 light and dark this way and shown next to the previous charcoal version. Waiting for his reaction.
+**Approved (A-282):** *"yes go with the new one"*.

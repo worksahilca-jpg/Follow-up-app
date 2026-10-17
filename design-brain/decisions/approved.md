@@ -4867,3 +4867,16 @@ apps, ElevenLabs and Macro do. Light: white, pale grey sidebar, hairlines, grey 
 near-black, grey rows, one white button. No accent colour in either (R-128); status colours only where something is
 broken or done.
 **Supersedes:** "light only" (the skill's token note and A-090's white ground) for the app. Landing page not decided.
+
+## A-282 — The calm look: one charcoal ground, no row lines, a see-through reply box ^A-282
+
+**Date:** 2026-10-17. **Founder, verbatim:** *"yes go with the new one"* (after seeing it next to the previous charcoal
+version; his reference was the Claude desktop app's see-through typing bar, "looks premium").
+**What specifically was approved (laptop Today, light and dark, following the device per A-281):**
+- No colour (R-128). Charcoal instead of sharp black (#2a2a2e for the light button and your bubbles; dark ground #202020
+  with the sidebar #1a1a1a).
+- One calm ground for the whole window; the sidebar only a touch darker (light #fafaf9, sidebar #f3f3f2).
+- No lines between rows or under headers; space separates. The selected row is a soft rounded fill (4–6% black/white).
+- The reply box is see-through (3–70% fill) with a thin border and 22px corners, not a raised card. The notice box the same.
+- Their bubbles are a faint see-through grey; the button is charcoal on light, soft white on dark.
+**Supersedes:** A-278's raised white cards on grey for the app (depth now comes from see-through layers, not shadows).

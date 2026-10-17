@@ -1647,3 +1647,11 @@ history and onboarding), drawn in our current black and white.
 **Principle (inferred, asked to confirm):** most likely the black-and-white again (R-123 said "this balck white looks
 bad"): copying the layouts was not enough while the colour stayed monochrome. Asked whether it is the colours, the
 layout, or both, and for screenshots of apps he loves.
+
+## R-127 — Per-customer switches ("Always ask me first for Raj", "Stop following up Raj") ^R-127
+
+**Date:** 2026-10-17. **Founder, verbatim:** *"but the button sounds complex and i didnt got the feature"*.
+**What was rejected:** two switches on a customer's page to change how FollowUp treats that one person.
+**Principle (his words):** if the founder can't get a feature from a one-line explanation, owners won't either.
+Extra switches read as complexity; the app decides well by default instead. Explained twice, still unclear: dropped.
+**Do not propose again:** per-person control switches.

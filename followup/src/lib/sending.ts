@@ -24,6 +24,8 @@ import { sendSms, sendWhatsApp } from "@/lib/twilio";
 import { getWhatsAppCloudConnection, sendWhatsAppCloud } from "@/lib/whatsappCloud";
 import { recordAudit } from "@/lib/audit";
 import { findOrCreateConversation } from "@/lib/conversations";
+import { ghlReplyRoute } from "@/lib/crm/ghlThreads";
+import { sendGhlMessage } from "@/lib/crm/gohighlevel";
 import { sendInstagramMessage } from "@/lib/instagram";
 import { instagramRecipientId, isInstagramLeadId, isMessengerLeadId, messengerRecipientId } from "@/lib/instagramId";
 import { sendMessengerMessage } from "@/lib/facebook";
@@ -446,6 +448,9 @@ export async function sendFollowUpToLead(
     // A DM customer who answered FollowUp's email (A-238): their reply is
     // by email, so the owner's answer goes back the same way.
     (!lead.email && lead.dmEmail && (await lastInboundChannel(lead.id)) === "email" ? "email" : null) ??
+    // A customer who wrote to the owner's GoHighLevel (src/lib/ghlPoll.ts): answered the way they wrote, a text
+    // with a text, even when an email is on file.
+    (lead.crmProvider === "gohighlevel" ? ((await ghlReplyRoute(lead.id))?.channel ?? null) : null) ??
     (lead.email
       ? "email"
       : isInstagramLeadId(lead.phone)
@@ -773,12 +778,36 @@ export async function sendFollowUpToLead(
     // `sentTemplate` is set only when WhatsApp's 24-hour window had closed
     // and the business's approved template went out INSTEAD of `body`.
     // The caller records what the lead actually received, never the draft.
-    | { ok: true; externalId?: string; emailProvider?: "gmail" | "outlook"; sentTemplate?: string }
+    | { ok: true; externalId?: string; emailProvider?: "gmail" | "outlook"; sentTemplate?: string; ghlConversationId?: string }
     | { ok: false; message: string; failure: SendFailureKind }
   > => {
     let externalId: string | undefined;
     let emailProvider: "gmail" | "outlook" | undefined;
     let sentTemplate: string | undefined;
+    // The customer wrote to the owner's GoHighLevel (src/lib/ghlPoll.ts): the reply goes back through it, from the
+    // same number or email, and is recorded in that same conversation. Never from Twilio or Gmail instead: if
+    // GoHighLevel is no longer connected, it doesn't go at all and the owner is told why.
+    if ((channel === "email" || channel === "text") && lead.crmProvider === "gohighlevel" && lead.crmId) {
+      const route = await ghlReplyRoute(lead.id, channel);
+      if (route) {
+        const conn = await prisma.crmConnection.findUnique({ where: { businessId: lead.businessId }, select: { provider: true, apiKey: true } });
+        if (conn?.provider !== "gohighlevel" || !conn.apiKey) {
+          return {
+            ok: false,
+            message: `${lead.name.split(" ")[0]} wrote to you in GoHighLevel, and it isn't connected any more. Connect it again in Settings, then send.`,
+            failure: "refused",
+          };
+        }
+        const result = await sendGhlMessage(conn.apiKey, {
+          channel,
+          contactId: lead.crmId,
+          body,
+          subject: options.subject ?? `Following up on your inquiry, ${lead.name.split(" ")[0]}`,
+        });
+        if (!result.success) return providerFailure(result, "GoHighLevel didn't confirm this message sent.");
+        return { ok: true, externalId: result.messageId, ghlConversationId: route.conversationId };
+      }
+    }
     if (channel === "email") {
       if (!emailTo) return { ok: false, message: "This lead has no email address on file.", failure: "refused" };
 
@@ -1088,7 +1117,9 @@ export async function sendFollowUpToLead(
       },
     });
 
-    const conversation = await findOrCreateConversation(lead.id, channel, emailProvider ? { emailProvider } : {});
+    const conversation = sent.ghlConversationId
+      ? { id: sent.ghlConversationId }
+      : await findOrCreateConversation(lead.id, channel, emailProvider ? { emailProvider } : {});
 
     // The draft itself is kept only where the business said yes to
     // improving FollowUp (Settings → Your data). A failed lookup means no,
@@ -1178,7 +1209,8 @@ export async function sendFollowUpToLead(
 
   // Push a note to the CRM this lead came from — best-effort, never lets
   // a CRM hiccup fail a send that already succeeded. See src/lib/crmSync.ts.
-  if (lead.crmProvider && lead.crmId && isCrmProvider(lead.crmProvider)) {
+  // Not when it went out through GoHighLevel: it is already in that conversation, and a note would say it twice.
+  if (lead.crmProvider && lead.crmId && isCrmProvider(lead.crmProvider) && !sent.ghlConversationId) {
     void pushCrmNote({ id: lead.id, businessId: lead.businessId, crmProvider: lead.crmProvider, crmId: lead.crmId }, `FollowUp sent:\n\n${body}`);
   }
 

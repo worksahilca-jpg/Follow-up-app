@@ -13755,3 +13755,18 @@ work it is making more work for them"*. Recorded as he said it:
 - **Supersedes** "GoHighLevel stays Soon until 3 or more prospects or testers say they use it" (A-253): the founder
   said *"lets build ghl too"* on 2026-10-16, with a realtor who uses it meeting him on Tuesday. FollowUp sends through
   the owner's own GoHighLevel (*"yes"*, same day).
+
+### 2026-10-16 — GoHighLevel built (A-271)
+
+- **What:** connect by Private Integration key + Location ID (contacts in every 10 minutes, notes on their record,
+  the one-boss rule read from their conversations), then texts and emails read every 2 minutes and replies sent back
+  through GoHighLevel.
+- **No instant "thanks, I'll get back to you"** for a GoHighLevel message: the owner's GoHighLevel may already send
+  one, and two is the thing never to do. Drafts go to Today as for anyone else.
+- **No note after a reply sent through GoHighLevel:** it is already in the conversation there.
+- **Weak spots, honestly:** nothing has been tried on a real GoHighLevel account. The message type names
+  ("TYPE_SMS", "TYPE_EMAIL"), the shape of the messages list and how an email body comes back are read from the SDK
+  and marked unconfirmed in the code. The UI menu paths are unverified. Check all of it with the realtor on Tuesday,
+  on his screen, before he relies on it.
+- Also fixed in passing: a reply sent from the WhatsApp Business app read "Sent from Instagram directly"; it now says
+  WhatsApp.

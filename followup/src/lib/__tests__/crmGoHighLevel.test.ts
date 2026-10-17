@@ -99,3 +99,111 @@ describe("notes and the one-boss rule", () => {
     expect(await goHighLevelClient.lastContactedAt(KEY, "c1")).toEqual({ known: false, at: null });
   });
 });
+
+// GHL 2: reading texts and emails, and replying through GoHighLevel.
+import { ghlChannelOf, ghlConversationMessages, ghlConversationsSince, mapGhlMessage, sendGhlMessage } from "@/lib/crm/gohighlevel";
+
+describe("a GoHighLevel message", () => {
+  const base = { id: "m1", conversationId: "c1", contactId: "ct1", messageType: "TYPE_SMS", direction: "inbound", body: "Is it still for sale?", dateAdded: "2026-10-16T20:00:00.000Z" };
+
+  it("reads a text and an email, and leaves calls and DMs alone", () => {
+    expect(ghlChannelOf("TYPE_SMS")).toBe("text");
+    expect(ghlChannelOf("TYPE_EMAIL")).toBe("email");
+    expect(ghlChannelOf("TYPE_CALL")).toBeNull();
+    expect(ghlChannelOf("TYPE_INSTAGRAM")).toBeNull();
+    expect(ghlChannelOf(undefined)).toBeNull();
+  });
+
+  it("keeps the words, the side and the time", () => {
+    expect(mapGhlMessage(base)).toEqual({
+      id: "m1",
+      conversationId: "c1",
+      contactId: "ct1",
+      channel: "text",
+      direction: "inbound",
+      body: "Is it still for sale?",
+      at: new Date("2026-10-16T20:00:00.000Z"),
+    });
+  });
+
+  it("takes the tags out of an email that comes back as HTML", () => {
+    const m = mapGhlMessage({ ...base, messageType: "TYPE_EMAIL", body: "<p>Hi Priya,</p><p>Can we see it Saturday?&nbsp;Thanks</p>" });
+    expect(m?.body).toBe("Hi Priya,\nCan we see it Saturday? Thanks");
+  });
+
+  it("skips anything it can't place: no words, no time, no side", () => {
+    expect(mapGhlMessage({ ...base, body: "" })).toBeNull();
+    expect(mapGhlMessage({ ...base, dateAdded: "not a date" })).toBeNull();
+    expect(mapGhlMessage({ ...base, direction: "sideways" })).toBeNull();
+    expect(mapGhlMessage({ ...base, messageType: "TYPE_CALL" })).toBeNull();
+  });
+});
+
+describe("reading conversations", () => {
+  it("asks for the newest first and keeps only those with something new (or no readable date)", async () => {
+    const since = new Date("2026-10-16T20:00:00.000Z");
+    fetchMock.mockResolvedValue(
+      reply(200, {
+        conversations: [
+          { id: "new", contactId: "a", lastMessageDate: Date.parse("2026-10-16T20:05:00.000Z") },
+          { id: "unknown", contactId: "b" },
+          { id: "old", contactId: "c", lastMessageDate: Date.parse("2026-10-16T19:00:00.000Z") },
+          { id: "no-contact" },
+        ],
+      })
+    );
+    expect(await ghlConversationsSince(KEY, since, 25)).toEqual([
+      { id: "new", contactId: "a" },
+      { id: "unknown", contactId: "b" },
+    ]);
+    const url = new URL(fetchMock.mock.calls[0][0]);
+    expect(url.pathname).toBe("/conversations/search");
+    expect(Object.fromEntries(url.searchParams)).toEqual({ locationId: "loc123ABC", sortBy: "last_message_date", sort: "desc", limit: "25" });
+  });
+
+  it("reads messages whether GoHighLevel wraps the list or not", async () => {
+    const msg = { id: "m1", contactId: "ct1", messageType: "TYPE_SMS", direction: "inbound", body: "Hi", dateAdded: "2026-10-16T20:00:00.000Z" };
+    fetchMock.mockResolvedValueOnce(reply(200, { messages: { lastMessageId: "m1", nextPage: false, messages: [msg] } }));
+    fetchMock.mockResolvedValueOnce(reply(200, { messages: [msg] }));
+    expect((await ghlConversationMessages(KEY, "c1", 20)).map((m) => m.conversationId)).toEqual(["c1"]);
+    expect((await ghlConversationMessages(KEY, "c1", 20)).map((m) => m.id)).toEqual(["m1"]);
+    expect(fetchMock.mock.calls[0][0]).toBe("https://services.leadconnectorhq.com/conversations/c1/messages?limit=20");
+  });
+
+  it("says so when GoHighLevel refuses, so the tick doesn't count it as nothing new", async () => {
+    fetchMock.mockResolvedValue(reply(401, {}));
+    await expect(ghlConversationsSince(KEY, new Date(), 25)).rejects.toThrow("401");
+  });
+});
+
+describe("replying through GoHighLevel", () => {
+  it("sends a text as SMS to the contact", async () => {
+    fetchMock.mockResolvedValue(reply(201, { conversationId: "c1", messageId: "sent1" }));
+    expect(await sendGhlMessage(KEY, { channel: "text", contactId: "ct1", body: "Saturday works." })).toEqual({ success: true, messageId: "sent1" });
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("https://services.leadconnectorhq.com/conversations/messages");
+    expect(init.method).toBe("POST");
+    expect(JSON.parse(init.body)).toEqual({ type: "SMS", contactId: "ct1", message: "Saturday works." });
+  });
+
+  it("sends an email with a subject and safe HTML", async () => {
+    fetchMock.mockResolvedValue(reply(201, { messageId: "sent2" }));
+    await sendGhlMessage(KEY, { channel: "email", contactId: "ct1", body: "Hi <Nadia>\nSee you Saturday.", subject: "Saturday" });
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
+      type: "Email",
+      contactId: "ct1",
+      subject: "Saturday",
+      message: "Hi <Nadia>\nSee you Saturday.",
+      html: "Hi &lt;Nadia&gt;<br>See you Saturday.",
+    });
+  });
+
+  it("passes the status back, and says what to do when the key is refused", async () => {
+    fetchMock.mockResolvedValue(reply(401, {}));
+    const r = await sendGhlMessage(KEY, { channel: "text", contactId: "ct1", body: "x" });
+    expect(r).toMatchObject({ success: false, status: 401 });
+    expect(r.success ? "" : r.message).toContain("Connect it again");
+    fetchMock.mockResolvedValue(reply(503, {}));
+    expect(await sendGhlMessage(KEY, { channel: "text", contactId: "ct1", body: "x" })).toMatchObject({ success: false, status: 503 });
+  });
+});

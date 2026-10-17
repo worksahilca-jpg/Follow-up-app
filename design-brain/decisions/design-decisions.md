@@ -13837,3 +13837,21 @@ work it is making more work for them"*. Recorded as he said it:
   Facebook's f, WhatsApp's phone bubble. "Use HubSpot or Follow Up Boss?" became "Use a CRM?" (GoHighLevel was
   missing from it; R-121, fewest words).
 - Weak: Gmail's mark is the one-colour M, not Google's four-colour M; the four-colour file isn't in the CC0 set.
+
+## 2026-10-17 — Fixed: replies say "I'll check", and "when" is counted, not guessed
+
+The founder's accuracy run (Oct 17): replies 17 of 20, qualifying 718 of 720.
+
+- **Replies.** All three weak DM replies leaned on "confirm": "I'll confirm the Danforth semi for this weekend"
+  reads as already booked, and "I can confirm the area details for you" was refused as vouching. A DM now says what
+  it will *check* ("I'll check whether the Danforth semi can be seen this weekend"), never "I'll confirm X for
+  <day>" or "I can confirm". The customer's "this weekend" still never lets a reply name or offer Saturday or
+  Sunday. The retry notes say the same.
+- **When.** On October 1, "June 2027" and "By September 2027" came back as 3–6 months away, and "In about 2
+  months" as 3–6 months. When the customer's words name one month, or a number of days, weeks or months, FollowUp
+  now counts the bucket itself (src/lib/timingBucket.ts). Seasons, "next year", ranges and two different months are
+  still left to the reader.
+- **Admin card.** "Website visits" said "Starts counting once Analytics is switched on" after it was on. The line is
+  gone; the card links to Vercel.
+- **Not fixed here:** the two remaining qualifying misses (a seller's home visit, and "selling to buy" as the reason)
+  are the reader missing a fact, not a wrong label. Watch them in the next run.

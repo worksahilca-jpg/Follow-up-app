@@ -13909,3 +13909,14 @@ Every page walked on a phone (390) and a computer (1280). Fixed:
 
 Checked and already fine (hit areas larger than they look): switches, Call on Customers, the customer name on
 Today, Replay and Auto / Ask me on the landing demo.
+
+## 2026-10-17 — Founder: the whole UI/UX, not colour tweaks
+
+**Founder, verbatim, in order:** *"the whole app even the landing page before tuesday"*; *"do the research bro read all
+the books and all th stuff you can gather from intrnet and all bro all the lawas and phycological plays to design bro"*;
+*"i want the whole ui ux not just changing clour take time but i want the best"*.
+
+**What this means:** a one-change A/B board (outlines vs shadows, grey vs tinted faces, white vs grey ground, black vs
+green Send) was drawn and parked unshown: it answers colour questions, and the founder asked for the whole experience.
+Next: deep research on every UX law and the psychology behind design, then a complete redesign of the app and the
+landing page, screen by screen, drawn before anything is built. Quality over the Tuesday date ("take time").

@@ -123,4 +123,32 @@ export const hubspotClient: CrmClient = {
       return null;
     }
   },
+
+  // The lead status options (`hs_lead_status`, grade C): each account can change them, so FollowUp reads the owner's own.
+  async listStages(token) {
+    try {
+      const res = await fetch(`${BASE}/crm/v3/properties/contacts/hs_lead_status`, { headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(CRM_TIMEOUT_MS) });
+      if (!res.ok) return [];
+      const data = (await res.json().catch(() => null)) as { options?: Array<Record<string, unknown>> } | null;
+      return (data?.options ?? [])
+        .filter((o) => o.hidden !== true && typeof o.value === "string" && typeof o.label === "string")
+        .map((o) => ({ id: String(o.value), name: String(o.label) }));
+    } catch {
+      return [];
+    }
+  },
+
+  async moveToStage(token, externalId, stageId) {
+    try {
+      const res = await fetch(`${BASE}/crm/v3/objects/contacts/${encodeURIComponent(externalId)}`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ properties: { hs_lead_status: stageId } }),
+        signal: AbortSignal.timeout(CRM_TIMEOUT_MS),
+      });
+      return res.ok ? { ok: true } : { ok: false, message: `HubSpot returned ${res.status}.` };
+    } catch (err) {
+      return { ok: false, message: err instanceof Error ? err.message : "stage move failed" };
+    }
+  },
 };

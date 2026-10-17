@@ -16,6 +16,7 @@ import { prisma } from "@/lib/db";
 import { createCalendarEvent, getGoogleCalendarBusyTimes } from "@/lib/integrations/gmail";
 import { SLOT_MINUTES, bookingHoursOf, type BookingHours } from "@/lib/bookingHours";
 import { isUniqueViolation } from "@/lib/uniqueViolation";
+import { moveBookedLead } from "@/lib/crm/stages";
 import type { Prisma } from "@prisma/client";
 import { bookingWhen, isReady, mergeQualification, readQualification, templateFor } from "@/lib/qualification";
 
@@ -174,6 +175,8 @@ export async function createBooking(leadId: string, scheduledAtIso: string): Pro
       name: true,
       email: true,
       businessId: true,
+      crmProvider: true,
+      crmId: true,
       business: { select: { name: true, timezone: true, bookingCalendarSource: true, bookingDays: true, bookingStartMinute: true, bookingEndMinute: true } },
     },
   });
@@ -281,6 +284,9 @@ export async function createBooking(leadId: string, scheduledAtIso: string): Pro
     // duplicate booking and a no-show.
     console.error(`Booking ${booking.id} committed but post-booking steps failed:`, err);
   }
+
+  // In the owner's CRM too, when it's their main tool: moved to the stage they chose for a booking (A-275).
+  await moveBookedLead(lead);
 
   // A booked call is the next step the realtor's checklist waits for
   // (src/lib/qualification.ts), so it can be what makes a customer ready.

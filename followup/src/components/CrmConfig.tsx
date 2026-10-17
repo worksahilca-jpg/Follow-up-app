@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Check } from "lucide-react";
 import AppWindow from "@/components/app/AppWindow";
 import Switch from "@/components/Switch";
 import { ListRow, LetterTile, GROUP } from "@/components/app/IosList";
@@ -127,7 +128,31 @@ export default function CrmConfig({ setup }: { setup?: { onConnected: (name: str
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
+  // "When they book a meeting, move them to" (A-275): the owner's stages there, read when the window opens.
+  const [stages, setStages] = useState<StageChoice | null>(null);
+  const [picking, setPicking] = useState(false);
   const now = new Date();
+
+  async function loadStages() {
+    try {
+      const data = (await (await fetch("/api/crm/stages")).json()) as { success: boolean } & StageChoice;
+      setStages(data.success ? data : { stages: [], chosen: null, dontMove: false });
+    } catch {
+      setStages({ stages: [], chosen: null, dontMove: false });
+    }
+  }
+
+  async function chooseStage(stageId: string | null) {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/crm/stages", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ stageId }) });
+      const data = (await res.json()) as { success: boolean; chosen: { id: string; name: string } | null; dontMove: boolean };
+      if (data.success) setStages((s) => (s ? { ...s, chosen: data.chosen, dontMove: data.dontMove } : s));
+      setPicking(false);
+    } finally {
+      setSaving(false);
+    }
+  }
 
   async function load() {
     try {
@@ -205,6 +230,7 @@ export default function CrmConfig({ setup }: { setup?: { onConnected: (name: str
   const items = config.record?.items ?? [];
   const shown = showAll ? items : items.slice(0, 5);
   const close = () => {
+    setPicking(false);
     setStep(null);
     setSaveError(null);
     setShowAll(false);
@@ -235,7 +261,11 @@ export default function CrmConfig({ setup }: { setup?: { onConnected: (name: str
             name={crm.name}
             sub={config.record ? `${config.record.broughtIn} customers brought in` : null}
             first
-            onOpen={() => setStep("connected")}
+            onOpen={() => {
+              setStep("connected");
+              // The stage row reads the owner's own stages once, when the window first opens (A-275).
+              if (config.isAdmin && !stages) void loadStages();
+            }}
             mark={refused ? <NeedsMark word="New key" /> : config.writesPaused ? <span className="shrink-0 text-[15px] text-ink-faint">Paused</span> : <ConnectedMark />}
           />
         ) : (
@@ -355,6 +385,10 @@ export default function CrmConfig({ setup }: { setup?: { onConnected: (name: str
           disconnectLabel={`Disconnect ${crm.name}`}
           busy={saving}
         >
+          {picking && stages ? (
+            <StagePicker crm={crm.name} stages={stages} busy={saving} onBack={() => setPicking(false)} onChoose={chooseStage} />
+          ) : (
+          <>
           <p className="mt-4 text-[15px] text-ink-soft">
             {config.record ? `${config.record.broughtIn} customers brought in` : "Customers come in from it every 10 minutes"}
             {config.lastSyncedAt ? ` · checked ${agoWords(config.lastSyncedAt, now)}` : " · first check within 10 minutes"}
@@ -374,6 +408,7 @@ export default function CrmConfig({ setup }: { setup?: { onConnected: (name: str
           {config.writesPaused && (
             <p className="mt-2 text-[14px] text-ink-soft">Paused. FollowUp still brings customers in, but writes nothing in {crm.name}.</p>
           )}
+          {config.isAdmin && <BookedStage crm={crm.name} stages={stages} onOpen={() => (stages ? setPicking(true) : undefined)} />}
           {config.record && (
             <div className="mt-5">
               <p className="text-[15px] font-semibold">What FollowUp wrote there this week</p>
@@ -420,8 +455,66 @@ export default function CrmConfig({ setup }: { setup?: { onConnected: (name: str
               )}
             </div>
           )}
+          </>
+          )}
         </ConnectionSheet>
       )}
     </>
   );
 }
+
+type StageChoice = { stages: { id: string; name: string }[]; chosen: { id: string; name: string } | null; dontMove: boolean };
+
+/**
+ * "When they book a meeting → Move them to [stage] ›" (A-275, as drawn and approved 2026-10-17). FollowUp remembers the
+ * booking either way; this is where they go in the owner's CRM.
+ */
+function BookedStage({ crm, stages, onOpen }: { crm: string; stages: StageChoice | null; onOpen: () => void }) {
+  const value = !stages ? "…" : stages.dontMove ? "Don't move them" : stages.chosen ? stages.chosen.name : stages.stages.length ? "Choose" : "Not available";
+  return (
+    <>
+      <p className="ios-footnote mt-6 px-4 uppercase tracking-[0.02em] text-ink-faint">When they book a meeting</p>
+      <div className={GROUP + " mt-1.5"}>
+        <ListRow label="Move them to" value={value} first onClick={stages && stages.stages.length ? onOpen : undefined} chevron={!!stages?.stages.length} />
+      </div>
+      <p className="ios-footnote mt-1.5 px-4 text-ink-soft">
+        {stages?.dontMove
+          ? `FollowUp leaves them where they are in ${crm}, and remembers they booked, so it never texts them again.`
+          : `FollowUp moves them there in ${crm}, and remembers it too, so it never texts them again.`}
+      </p>
+    </>
+  );
+}
+
+/** Their own stages, one ticked; "Don't move them" on its own. */
+function StagePicker({ crm, stages, busy, onBack, onChoose }: { crm: string; stages: StageChoice; busy: boolean; onBack: () => void; onChoose: (id: string | null) => void }) {
+  const tick = <Check aria-label="Chosen" className="h-[18px] w-[18px] shrink-0 text-ink" strokeWidth={2.6} />;
+  return (
+    <div className="mt-2">
+      <button type="button" onClick={onBack} className="ios-body inline-flex min-h-11 items-center text-ink">
+        ‹ {crm}
+      </button>
+      <p className="ios-title3 mt-1">When they book</p>
+      <p className="ios-subhead mt-1 text-ink-soft">Pick where they go in {crm}.</p>
+      <p className="ios-footnote mt-6 px-4 uppercase tracking-[0.02em] text-ink-faint">Your stages</p>
+      <div className={GROUP + " mt-1.5"}>
+        {stages.stages.map((s, i) => (
+          <ListRow
+            key={s.id}
+            label={s.name}
+            first={i === 0}
+            chevron={false}
+            disabled={busy}
+            onClick={() => onChoose(s.id)}
+            trailing={!stages.dontMove && stages.chosen?.id === s.id ? tick : undefined}
+          />
+        ))}
+      </div>
+      <div className={GROUP + " mt-6"}>
+        <ListRow label="Don't move them" first chevron={false} disabled={busy} onClick={() => onChoose(null)} trailing={stages.dontMove ? tick : undefined} />
+      </div>
+      <p className="ios-footnote mt-1.5 px-4 text-ink-soft">FollowUp still remembers they booked, either way.</p>
+    </div>
+  );
+}
+

@@ -13967,3 +13967,11 @@ Waiting for his yes.
 black lokks bad what other comapnies use bro ??"*. Drawn: Today and a customer at 1280×800 as three columns (sidebar ·
 list · open conversation, plus an About column on the customer page), A-278 depth. Then the same Today screen in four
 single accents (blue, indigo, green, orange), each named with well-known brands that use that colour. Waiting for his pick.
+
+## 2026-10-17 — Colour: none. Minimal like ElevenLabs and Macro; light and dark drawn
+
+**Founder:** *"why we using all these colours bro i want simple as minimal not colourful"*, *"look how simple is
+elevenlabs and marco is"*. Accent board rejected (R-128). Redrawn the laptop Today twice with no colour at all: (1) light,
+ElevenLabs-like: white, a pale grey sidebar, hairline lines, grey initials, small black dots, one black button; (2) dark,
+Macro-like: near-black, grey rows, one white button. Same layout as before (three columns). Waiting for his pick: 1 or 2.
+Weak, honestly: the "Outlook needs reconnecting" notice now has no colour, so it relies on its words and position only.

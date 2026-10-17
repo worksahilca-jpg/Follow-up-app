@@ -1658,3 +1658,15 @@ the two switches stay rejected. A simpler form is proposed (one plain choice, se
 **Principle (his words):** if the founder can't get a feature from a one-line explanation, owners won't either.
 Extra switches read as complexity; the app decides well by default instead. Explained twice, still unclear: dropped.
 **Do not propose again:** per-person control switches.
+
+## R-128 — Four accent colours (blue, indigo, green, orange) on the laptop Today ^R-128
+
+**Date:** 2026-10-17. **Founder, verbatim:** *"why we using all these colours bro i want simple as minimal not colourful"*,
+then *"look how simple is elevenlabs and marco is"* (ElevenLabs and Macro).
+**What was rejected:** the colour board, the same laptop Today in four single accents (send button, selected row, nav).
+**Principle (his words):** minimal, not colourful. The look he points to is neutral: white or near-black, greys, one
+black (or white) button, almost no colour at all.
+**Note on R-123 / R-126 (inferred, not confirmed):** those said black and white "looks bad", yet ElevenLabs and Macro are
+neutral too. Best reading: what looked bad was our *stark, cheap-looking* black and white (heavy shadows, warm tints,
+coloured faces, orange boxes), not neutral as such. Refined neutral greys, thin lines and calm type are the direction.
+**Do not propose again:** an accent colour as the fix for the look.

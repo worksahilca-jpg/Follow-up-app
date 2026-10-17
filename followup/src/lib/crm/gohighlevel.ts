@@ -157,6 +157,82 @@ export const goHighLevelClient: CrmClient = {
       return { known: false, at: null };
     }
   },
+
+  // Do Not Disturb on everything is the owner's "never". One channel only, and a meeting booked, are handled where
+  // FollowUp sends (sending.ts) and holds (oneBoss.ts).
+  async standing(apiKey, externalId) {
+    const k = parseGhlKey(apiKey);
+    if (!k) return null;
+    try {
+      const res = await fetch(`${BASE}/contacts/${encodeURIComponent(externalId)}`, { headers: headers(k.token), signal: AbortSignal.timeout(CRM_TIMEOUT_MS) });
+      if (!res.ok) return null;
+      const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+      const c = (data.contact ?? data) as Record<string, unknown>;
+      return c.dnd === true ? "never" : null;
+    } catch {
+      return null;
+    }
+  },
+
+  // Pipelines and their stages (GET /opportunities/pipelines, from the SDK, grade B). A stage is kept as
+  // "pipelineId:stageId"; with more than one pipeline its name says which.
+  async listStages(apiKey) {
+    const k = parseGhlKey(apiKey);
+    if (!k) return [];
+    try {
+      const q = new URLSearchParams({ locationId: k.locationId });
+      const res = await fetch(`${BASE}/opportunities/pipelines?${q.toString()}`, { headers: headers(k.token), signal: AbortSignal.timeout(CRM_TIMEOUT_MS) });
+      if (!res.ok) return [];
+      const data = (await res.json().catch(() => ({}))) as { pipelines?: Array<Record<string, unknown>> };
+      const pipelines = data.pipelines ?? [];
+      const out: { id: string; name: string }[] = [];
+      for (const p of pipelines) {
+        const stages = (Array.isArray(p.stages) ? p.stages.flat() : []) as Array<Record<string, unknown>>;
+        for (const s of stages) {
+          const pid = str(p.id);
+          const sid = str(s?.id);
+          const sname = str(s?.name);
+          if (!pid || !sid || !sname) continue;
+          out.push({ id: `${pid}:${sid}`, name: pipelines.length > 1 ? `${str(p.name) ?? "Pipeline"} · ${sname}` : sname });
+        }
+      }
+      return out;
+    } catch {
+      return [];
+    }
+  },
+
+  // Their opportunity in that pipeline moves to the stage; with none yet, one is made there for them
+  // (GET /opportunities/search, PUT /opportunities/{id}, POST /opportunities/, from the SDK, grade B).
+  async moveToStage(apiKey, externalId, stageId, name) {
+    const k = parseGhlKey(apiKey);
+    if (!k) return { ok: false, message: "GoHighLevel key is not in the expected shape." };
+    const [pipelineId, pipelineStageId] = stageId.split(":");
+    if (!pipelineId || !pipelineStageId) return { ok: false, message: "That stage isn't in GoHighLevel any more." };
+    try {
+      const q = new URLSearchParams({ location_id: k.locationId, contact_id: externalId, pipeline_id: pipelineId, limit: "1" });
+      const found = await fetch(`${BASE}/opportunities/search?${q.toString()}`, { headers: headers(k.token), signal: AbortSignal.timeout(CRM_TIMEOUT_MS) });
+      if (!found.ok) return { ok: false, message: `GoHighLevel returned ${found.status}.` };
+      const data = (await found.json().catch(() => ({}))) as { opportunities?: Array<Record<string, unknown>> };
+      const existing = str(data.opportunities?.[0]?.id);
+      const res = existing
+        ? await fetch(`${BASE}/opportunities/${encodeURIComponent(existing)}`, {
+            method: "PUT",
+            headers: headers(k.token, true),
+            body: JSON.stringify({ pipelineId, pipelineStageId }),
+            signal: AbortSignal.timeout(CRM_TIMEOUT_MS),
+          })
+        : await fetch(`${BASE}/opportunities/`, {
+            method: "POST",
+            headers: headers(k.token, true),
+            body: JSON.stringify({ pipelineId, locationId: k.locationId, name, pipelineStageId, status: "open", contactId: externalId }),
+            signal: AbortSignal.timeout(CRM_TIMEOUT_MS),
+          });
+      return res.ok ? { ok: true } : { ok: false, message: `GoHighLevel returned ${res.status}.` };
+    } catch (err) {
+      return { ok: false, message: err instanceof Error ? err.message : "stage move failed" };
+    }
+  },
 };
 
 async function lastFromBusiness(k: { token: string; locationId: string }, contactId: string): Promise<{ known: boolean; at: Date | null }> {

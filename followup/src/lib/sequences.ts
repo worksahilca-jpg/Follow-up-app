@@ -43,7 +43,7 @@ import { isWithinSendWindow } from "@/lib/sendWindow";
 import type { AutomationTier, Prisma, SequenceAction, PipelineStage } from "@prisma/client";
 import type { Message } from "@/lib/types";
 import { HOLD_ALL_SEQUENCE_REASON, RISK_CHECK_FAILED_REASON, UNGROUNDED_DRAFT_REASONS, ASKED_IF_PERSON_REASON, IN_CRM_REASON } from "@/lib/holdReasons";
-import { crmIsFollowingUp, ghlHoldReason, ourLastSendAt } from "@/lib/crm/oneBoss";
+import { crmIsFollowingUp, crmHoldReason, ourLastSendAt } from "@/lib/crm/oneBoss";
 import { emailGreetingOf } from "@/lib/dmDrafts";
 import { checkUnreviewedDraft } from "@/lib/unreviewedDraftCheck";
 import { draftingContext, getBusinessFacts } from "@/lib/businessFacts";
@@ -927,7 +927,7 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
         // waits for the owner, like any other follow-up, so they never get two messages. Asked only when nothing
         // above already holds it.
         if (!holdAll && risk.riskLevel === "low" && lead.crmProvider && lead.crmId) {
-          const crmHold = (await ghlHoldReason(lead)) ?? ((await crmIsFollowingUp(lead, ourLastSendAt(conversation))) ? IN_CRM_REASON : null);
+          const crmHold = (await crmHoldReason(lead)) ?? ((await crmIsFollowingUp(lead, ourLastSendAt(conversation))) ? IN_CRM_REASON : null);
           if (crmHold) risk = { riskLevel: "medium", reason: crmHold };
         }
         if (holdAll || risk.riskLevel !== "low") {

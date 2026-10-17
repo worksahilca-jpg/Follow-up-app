@@ -4781,3 +4781,42 @@ all"*, then, shown both side by side, *"1 and the design and style too"*.
   (A-258) are the one open question: to be shown both ways before changing.
 - **Then, founder:** *"format and all too"*: iOS layout as well as type: inset grouped lists, large-title page tops,
   sheets, plain rows with a grey value on the right, not a card per row.
+
+## A-274 — The CRM's endings: a bad one is never, a good one stops the chasing ^A-274
+
+**Approved 2026-10-17** (founder's answers to the three open CRM questions, research 2026-10-14).
+
+- **"Do not contact" = a bad ending.** Founder, verbatim: *"A bad ending should be stated as 'never message them
+  again.' If it's a good ending, like, 'Okay, we'll have a look again after some time,' … we'll be messaging them with
+  our offers, right? That is our strategy."* So a CRM's do-not-contact (Follow Up Boss "Trash", HubSpot "Unsubscribed
+  from all email" or "Unqualified", GoHighLevel Do Not Disturb) stops every message, the owner's Send too, with the
+  reason in one line. A good ending is never marked that way; it is Stay in touch (A-260).
+- **Closed = stop chasing** ("Yes, stop"). Follow Up Boss "Closed" or "Past Client", HubSpot lifecycle "customer":
+  FollowUp's own follow-ups stop; the owner can still write, and Stay in touch stays the owner's call.
+- **Stages.** Founder, verbatim: *"If the CRM is his main thing and he does all those things in his CRM, we got to move
+  it in his CRM. Plus, we'll say 'booked' in our memory too, so that we don't text him."* With no CRM, FollowUp keeps
+  the stage itself (it already does). Writing the stage into the CRM needs one small choice (which of the owner's stages
+  means "booked"): **to be drawn first**, not built yet.
+- Field names are grade C (search summaries, not live responses): confirmed on the first real account.
+
+## A-275 — CRM stage on booking: one row, their own stages ^A-275
+
+**Approved 2026-10-17**, founder: *"yes, build it"*, on the drawing in the real app (scratchpad
+`stage-board-phone.png`): in the CRM window, a group "When they book a meeting" with one row "Move them to
+[Appointment Set] ›"; under it, "FollowUp moves them there in Follow Up Boss, and remembers it too, so it never texts
+them again." Tapping opens "When they book" with the owner's own stages as a list with a check, and "Don't move them"
+in its own group ("FollowUp still remembers they booked, either way"). FollowUp preselects the stage whose name reads
+like a meeting, so most owners never touch it. Same row for every CRM (GoHighLevel: its pipeline stages). Follows
+A-274's third answer.
+
+## A-276 — Each app's own logo ^A-276
+
+**Approved 2026-10-17**, founder, verbatim: *"we will be using the actual logos of the sources that we are stating in
+our app … For Instagram, Instagram's logo for our app, right? We don't have to make our own made-up logo for all these
+platforms."*
+- Gmail, Instagram, Facebook, Messenger, WhatsApp and HubSpot show their own logo (Simple Icons' drawings of each
+  brand's mark, CC0 data), in the brand's own colour, on a 29px tile shaped like the app's icon (A-273): Gmail's red M
+  on white, Instagram on its gradient, the rest white on their colour. Small channel marks in rows use the same logos.
+- Shown only to say which app is connected, unchanged, as the brands' guidelines allow.
+- Outlook, GoHighLevel and Follow Up Boss keep their tile until their own logo files are added (not in that set).
+- Supersedes the drawn glyphs on coloured tiles from A-273 for these apps; the website form keeps its globe.

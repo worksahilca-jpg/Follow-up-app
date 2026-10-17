@@ -136,6 +136,12 @@ export const IN_CRM_REASON =
 /** GoHighLevel says not to contact them (its Do Not Disturb), so nothing goes out on FollowUp's own. */
 export const CRM_DND_REASON = "they're marked Do Not Disturb in GoHighLevel, so FollowUp won't follow up with them on its own";
 
+/** A bad ending in the owner's CRM (marked do not contact, thrown out, unsubscribed): FollowUp never messages them. */
+export const CRM_NEVER_REASON = "your CRM says not to contact them, so FollowUp won't message them";
+
+/** A good ending in the owner's CRM (closed, a past client): the chasing is over. Stay in touch is the owner's call. */
+export const CRM_DONE_REASON = "your CRM shows them as closed, so FollowUp stopped following up";
+
 /** They already booked a meeting in GoHighLevel: the follow-up has done its job, so FollowUp stops. */
 export const CRM_BOOKED_REASON = "they already have a meeting booked in GoHighLevel, so FollowUp isn't following up";
 
@@ -286,6 +292,8 @@ const PLAIN_BY_REASON: Record<string, (first: string) => string> = {
   [FORM_SPAM_CHECK_REASON]: () => "This might be spam. Make sure it's a real customer before you reply.",
   [IN_CRM_REASON]: () => "They're also in your CRM, which may send its own follow-up.",
   [CRM_DND_REASON]: (first) => `${first} is marked Do Not Disturb in GoHighLevel.`,
+  [CRM_NEVER_REASON]: (first) => `${first} is marked do not contact in your CRM.`,
+  [CRM_DONE_REASON]: (first) => `Your CRM shows ${first} as closed, so FollowUp stopped following up.`,
   [CRM_BOOKED_REASON]: (first) => `${first} already has a meeting booked in GoHighLevel.`,
   [RISK_CHECK_FAILED_REASON]: () => "FollowUp couldn't check this one, so it's waiting to be safe.",
   [NO_ANSWER_REASON]: (first) => `No answer when you called. This asks ${first} for a good time to talk.`,

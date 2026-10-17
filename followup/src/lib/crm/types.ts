@@ -28,4 +28,22 @@ export interface CrmClient {
    * `person` is their phone and email in FollowUp, for a CRM that looks for the same person saved twice.
    */
   lastContactedAt(apiKey: string, externalId: string, person?: { phone: string | null; email: string | null }): Promise<{ known: boolean; at: Date | null }>;
+  /**
+   * Where the owner left this person in their CRM (founder, 2026-10-17): "never" is a bad ending, marked do not
+   * contact or thrown out, so FollowUp never messages them; "done" is a good ending, closed or a past client, so
+   * FollowUp stops chasing them. null when neither, or the CRM couldn't say. Never throws.
+   */
+  standing(apiKey: string, externalId: string): Promise<CrmStanding>;
+  /** The owner's own stages, in the CRM's order (A-275). [] when the CRM couldn't say. Never throws. */
+  listStages(apiKey: string): Promise<CrmStage[]>;
+  /** Moves this person to one of those stages (A-275). `name` is theirs, for a CRM that needs one to make a record. */
+  moveToStage(apiKey: string, externalId: string, stageId: string, name: string): Promise<{ ok: boolean; message?: string }>;
 }
+
+/** A stage in the owner's CRM: its id there, and its name as the owner sees it. */
+export interface CrmStage {
+  id: string;
+  name: string;
+}
+
+export type CrmStanding = "never" | "done" | null;

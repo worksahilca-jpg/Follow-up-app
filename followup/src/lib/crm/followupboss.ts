@@ -113,4 +113,53 @@ export const followUpBossClient: CrmClient = {
       return { known: false, at: null };
     }
   },
+
+  // The person's stage (grade C: `stage` is the stage's name, seen in their docs' summaries, not on a live response).
+  // "Trash" is the owner's "no longer working with them"; "Closed" and "Past Client" are deals done. Accounts can
+  // rename stages; a name FollowUp doesn't know reads as neither.
+  async standing(apiKey, externalId) {
+    try {
+      const res = await fetch(`${BASE}/people/${encodeURIComponent(externalId)}`, {
+        headers: { Authorization: authHeader(apiKey) },
+        signal: AbortSignal.timeout(CRM_TIMEOUT_MS),
+      });
+      if (!res.ok) return null;
+      const data = (await res.json().catch(() => null)) as Record<string, unknown> | null;
+      const stage = typeof data?.stage === "string" ? data.stage.trim().toLowerCase() : "";
+      if (stage === "trash") return "never";
+      if (stage === "closed" || stage === "past client") return "done";
+      return null;
+    } catch {
+      return null;
+    }
+  },
+
+  // GET /v1/stages and the person's `stage`, by name (grade C, from summaries of their reference; the id FollowUp keeps
+  // is the stage's name, which is what a person's record holds).
+  async listStages(apiKey) {
+    try {
+      const res = await fetch(`${BASE}/stages?limit=100`, { headers: { Authorization: authHeader(apiKey) }, signal: AbortSignal.timeout(CRM_TIMEOUT_MS) });
+      if (!res.ok) return [];
+      const data = (await res.json().catch(() => null)) as { stages?: Array<Record<string, unknown>> } | null;
+      return (data?.stages ?? [])
+        .map((s) => (typeof s.name === "string" && s.name.trim() ? { id: s.name.trim(), name: s.name.trim() } : null))
+        .filter((s): s is { id: string; name: string } => s !== null);
+    } catch {
+      return [];
+    }
+  },
+
+  async moveToStage(apiKey, externalId, stageId) {
+    try {
+      const res = await fetch(`${BASE}/people/${encodeURIComponent(externalId)}`, {
+        method: "PUT",
+        headers: { Authorization: authHeader(apiKey), "Content-Type": "application/json" },
+        body: JSON.stringify({ stage: stageId }),
+        signal: AbortSignal.timeout(CRM_TIMEOUT_MS),
+      });
+      return res.ok ? { ok: true } : { ok: false, message: `Follow Up Boss returned ${res.status}.` };
+    } catch (err) {
+      return { ok: false, message: err instanceof Error ? err.message : "stage move failed" };
+    }
+  },
 };

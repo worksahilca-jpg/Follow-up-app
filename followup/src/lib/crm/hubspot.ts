@@ -102,4 +102,53 @@ export const hubspotClient: CrmClient = {
       return { known: false, at: null };
     }
   },
+
+  // "Unsubscribed from all email" (`hs_email_optout`) and lead status "Unqualified" are bad endings; lifecycle stage
+  // "customer" is a good one (grade C: property names from HubSpot's knowledge base and community, not a live response).
+  async standing(token, externalId) {
+    try {
+      const q = "properties=hs_email_optout,hs_lead_status,lifecyclestage";
+      const res = await fetch(`${BASE}/crm/v3/objects/contacts/${encodeURIComponent(externalId)}?${q}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        signal: AbortSignal.timeout(CRM_TIMEOUT_MS),
+      });
+      if (!res.ok) return null;
+      const data = (await res.json().catch(() => null)) as { properties?: Record<string, unknown> } | null;
+      const p = data?.properties ?? {};
+      if (String(p.hs_email_optout ?? "").toLowerCase() === "true") return "never";
+      if (String(p.hs_lead_status ?? "").toUpperCase() === "UNQUALIFIED") return "never";
+      if (String(p.lifecyclestage ?? "").toLowerCase() === "customer") return "done";
+      return null;
+    } catch {
+      return null;
+    }
+  },
+
+  // The lead status options (`hs_lead_status`, grade C): each account can change them, so FollowUp reads the owner's own.
+  async listStages(token) {
+    try {
+      const res = await fetch(`${BASE}/crm/v3/properties/contacts/hs_lead_status`, { headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(CRM_TIMEOUT_MS) });
+      if (!res.ok) return [];
+      const data = (await res.json().catch(() => null)) as { options?: Array<Record<string, unknown>> } | null;
+      return (data?.options ?? [])
+        .filter((o) => o.hidden !== true && typeof o.value === "string" && typeof o.label === "string")
+        .map((o) => ({ id: String(o.value), name: String(o.label) }));
+    } catch {
+      return [];
+    }
+  },
+
+  async moveToStage(token, externalId, stageId) {
+    try {
+      const res = await fetch(`${BASE}/crm/v3/objects/contacts/${encodeURIComponent(externalId)}`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ properties: { hs_lead_status: stageId } }),
+        signal: AbortSignal.timeout(CRM_TIMEOUT_MS),
+      });
+      return res.ok ? { ok: true } : { ok: false, message: `HubSpot returned ${res.status}.` };
+    } catch (err) {
+      return { ok: false, message: err instanceof Error ? err.message : "stage move failed" };
+    }
+  },
 };

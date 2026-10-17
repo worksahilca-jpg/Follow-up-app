@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import { CRM_PROVIDERS, isCrmProvider } from "@/lib/crm";
 import { ghlDoNotDisturb, ghlUpcomingMeeting } from "@/lib/crm/gohighlevel";
-import { CRM_BOOKED_REASON, CRM_DND_REASON } from "@/lib/holdReasons";
+import { CRM_BOOKED_REASON, CRM_DND_REASON, CRM_DONE_REASON, CRM_NEVER_REASON } from "@/lib/holdReasons";
 
 /**
  * One boss per customer (founder, 2026-10-12, A-237): when a customer is
@@ -68,18 +68,23 @@ export function ourLastSendAt(conversation: { direction: string; date: string; s
 }
 
 /**
- * GoHighLevel's own reasons for FollowUp to step back from someone, before it follows up on its own: the owner
- * marked them Do Not Disturb there, or they already booked a meeting there (founder 2026-10-17, "the
- * coordination"). The hold reason, or null. Anything GoHighLevel can't answer is null: the one-boss check after it
- * still applies.
+ * The CRM's own reasons for FollowUp to step back from someone, before it follows up on its own (founder 2026-10-17):
+ * a bad ending there (do not contact, thrown out: never message), a good one (closed, a past client: stop chasing),
+ * and in GoHighLevel, Do Not Disturb or a meeting already booked. The hold reason, or null. Anything the CRM can't
+ * answer is null: the one-boss check after it still applies.
  */
-export async function ghlHoldReason(lead: { businessId: string; crmProvider: string | null; crmId: string | null }, now: Date = new Date()): Promise<string | null> {
-  if (lead.crmProvider !== "gohighlevel" || !lead.crmId) return null;
+export async function crmHoldReason(lead: { businessId: string; crmProvider: string | null; crmId: string | null }, now: Date = new Date()): Promise<string | null> {
+  if (!lead.crmProvider || !lead.crmId || !isCrmProvider(lead.crmProvider)) return null;
   try {
     const conn = await prisma.crmConnection.findUnique({ where: { businessId: lead.businessId }, select: { provider: true, apiKey: true } });
-    if (conn?.provider !== "gohighlevel" || !conn.apiKey) return null;
-    if (await ghlDoNotDisturb(conn.apiKey, lead.crmId)) return CRM_DND_REASON;
-    if (await ghlUpcomingMeeting(conn.apiKey, lead.crmId, now)) return CRM_BOOKED_REASON;
+    if (conn?.provider !== lead.crmProvider || !conn.apiKey) return null;
+    if (lead.crmProvider === "gohighlevel") {
+      if (await ghlDoNotDisturb(conn.apiKey, lead.crmId)) return CRM_DND_REASON;
+      if (await ghlUpcomingMeeting(conn.apiKey, lead.crmId, now)) return CRM_BOOKED_REASON;
+      return null;
+    }
+    const standing = await CRM_PROVIDERS[lead.crmProvider].client.standing(conn.apiKey, lead.crmId);
+    return standing === "never" ? CRM_NEVER_REASON : standing === "done" ? CRM_DONE_REASON : null;
   } catch {
     // Not asked: the one-boss check still is.
   }

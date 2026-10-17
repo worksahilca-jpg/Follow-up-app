@@ -21,7 +21,8 @@ vi.mock("@/lib/integrations/outlook", () => ({ getOutlookStatus: vi.fn(async () 
 vi.mock("@/lib/twilio", () => ({ sendSms: vi.fn(), sendWhatsApp: vi.fn() }));
 vi.mock("@/lib/instagram", () => ({ sendInstagramMessage: vi.fn() }));
 vi.mock("@/lib/facebook", () => ({ sendMessengerMessage: vi.fn() }));
-vi.mock("@/lib/crm", () => ({ CRM_PROVIDERS: {}, isCrmProvider: vi.fn(() => true) }));
+const fub = vi.hoisted(() => ({ standing: vi.fn(async () => null as "never" | "done" | null) }));
+vi.mock("@/lib/crm", () => ({ CRM_PROVIDERS: { followupboss: { label: "Follow Up Boss", client: { standing: fub.standing } } }, isCrmProvider: vi.fn(() => true) }));
 vi.mock("@/lib/crm/notes", () => ({ pushCrmNote: vi.fn(async () => {}) }));
 vi.mock("@/lib/crm/ghlThreads", () => ({ ghlReplyRoute: vi.fn(), isGhlConversationKey: (id: string | null) => !!id && id.startsWith("ghl:") }));
 vi.mock("@/lib/crm/gohighlevel", () => ({
@@ -205,5 +206,31 @@ describe("working alongside GoHighLevel", () => {
     expect(result.success).toBe(true);
     expect(meeting).not.toHaveBeenCalled();
     meeting.mockResolvedValue(null);
+  });
+});
+
+describe("where the owner left them in Follow Up Boss", () => {
+  beforeEach(() => {
+    p.lead.findUnique.mockResolvedValue({ id: "lead2", businessId: "biz1", name: "Owen Park", email: "owen@example.com", phone: null, optedOutAt: null, crmProvider: "followupboss", crmId: "77" });
+    p.crmConnection.findUnique.mockResolvedValue({ provider: "followupboss", apiKey: "fubkey" });
+    route.mockResolvedValue(null);
+  });
+
+  it("a bad ending (do not contact, thrown out) stops every send, the owner's own too", async () => {
+    fub.standing.mockResolvedValue("never");
+    const result = await sendFollowUpToLead("lead2", "Hi Owen");
+    expect(result).toMatchObject({ success: false, failure: "refused" });
+    expect(result.message).toContain("Owen is marked do not contact in your Follow Up Boss");
+    expect(fub.standing).toHaveBeenCalledWith("fubkey", "77");
+    expect(sendEmail).not.toHaveBeenCalled();
+  });
+
+  it("a good ending (closed, past client) stops FollowUp's own follow-ups, not the owner", async () => {
+    fub.standing.mockResolvedValue("done");
+    const auto = await sendFollowUpToLead("lead2", "Just checking in.", { automated: true, trigger: "silence" });
+    expect(auto.message).toContain("shows Owen as closed");
+    const own = await sendFollowUpToLead("lead2", "Congrats on the new place!");
+    expect(own.message ?? "").not.toContain("closed");
+    fub.standing.mockResolvedValue(null);
   });
 });

@@ -2016,6 +2016,12 @@ model CrmConnection {
   // writes to the CRM. Nothing is written meanwhile; writes already waiting
   // keep waiting and land once writing is back on (src/lib/crm/writes.ts).
   writesPausedAt DateTime?
+
+  // "When they book a meeting, move them to" (A-275): the owner's own stage in this CRM, by its id there (Follow Up
+  // Boss: the stage's name; HubSpot: the lead status value; GoHighLevel: "pipelineId:stageId"), and its name as shown.
+  // null: not chosen yet, so FollowUp uses the stage whose name reads like a meeting. "": "Don't move them".
+  bookedStage      String?
+  bookedStageLabel String?
 }
 
 /**

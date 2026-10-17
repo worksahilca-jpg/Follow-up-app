@@ -133,6 +133,12 @@ export function isUnconfirmedSpamSource(source: string | null | undefined): bool
 export const IN_CRM_REASON =
   "they're also in your CRM, which may send its own follow-ups, so FollowUp waits for you rather than risk a second message";
 
+/** GoHighLevel says not to contact them (its Do Not Disturb), so nothing goes out on FollowUp's own. */
+export const CRM_DND_REASON = "they're marked Do Not Disturb in GoHighLevel, so FollowUp won't follow up with them on its own";
+
+/** They already booked a meeting in GoHighLevel: the follow-up has done its job, so FollowUp stops. */
+export const CRM_BOOKED_REASON = "they already have a meeting booked in GoHighLevel, so FollowUp isn't following up";
+
 /**
  * The customer's newest message asked whether they're talking to a real
  * person (Lead.askedIfPersonAt, situations audit 2026-10-06). The draft can
@@ -279,6 +285,8 @@ const PLAIN_BY_REASON: Record<string, (first: string) => string> = {
   [FOUND_IN_SPAM_REASON]: () => "This came from your spam folder. Make sure it's a real customer.",
   [FORM_SPAM_CHECK_REASON]: () => "This might be spam. Make sure it's a real customer before you reply.",
   [IN_CRM_REASON]: () => "They're also in your CRM, which may send its own follow-up.",
+  [CRM_DND_REASON]: (first) => `${first} is marked Do Not Disturb in GoHighLevel.`,
+  [CRM_BOOKED_REASON]: (first) => `${first} already has a meeting booked in GoHighLevel.`,
   [RISK_CHECK_FAILED_REASON]: () => "FollowUp couldn't check this one, so it's waiting to be safe.",
   [NO_ANSWER_REASON]: (first) => `No answer when you called. This asks ${first} for a good time to talk.`,
   [MEETING_MISSED_REASON]: (first) => `The call didn't happen. This offers ${first} a new time from your free hours.`,

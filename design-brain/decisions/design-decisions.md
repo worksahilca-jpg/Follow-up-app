@@ -13808,3 +13808,17 @@ work it is making more work for them"*. Recorded as he said it:
 - **Then, founder:** *"anything else should suggested by us that they should connect this too so that they dont miss
   any lead"*. Screen 2 is FollowUp's suggestion, not a question: "Connect these too" / "GoHighLevel doesn't get these.
   Connect them so you don't miss a lead." Board with both type sizes: `scratchpad/setup-ios-board.png`.
+
+### 2026-10-17 — Working alongside GoHighLevel: the words when FollowUp steps back (founder)
+
+- **Founder, verbatim:** *"lets fix all the weak points and the cordination"*, after *"we have to coordinate with them.
+  Our main goal is to convert the lead by replying or following up, or booking the meeting or booking the call."*
+- **No new screens.** Three lines, in the existing hold line on Today and the existing send error:
+  - Do Not Disturb in GoHighLevel stops every send on that channel, the owner's own too: "Nadia is marked Do Not
+    Disturb in GoHighLevel, so FollowUp won't send this. If they asked to hear from you, turn it off in GoHighLevel
+    first." On Today: "Nadia is marked Do Not Disturb in GoHighLevel."
+  - A meeting booked in GoHighLevel stops FollowUp's own follow-ups, never the owner's: "Nadia already has a meeting
+    booked in GoHighLevel."
+  - When GoHighLevel refuses a send, the reason and the fix in one line (unregistered number, empty wallet, no
+    working number, Do Not Disturb), never a bare status code. GHL users' pain #4, research 2026-10-17.
+- **Principle:** when FollowUp steps back, it names whose setting made it do so and where to change it.

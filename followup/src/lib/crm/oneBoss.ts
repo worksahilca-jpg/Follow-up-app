@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/db";
 import { CRM_PROVIDERS, isCrmProvider } from "@/lib/crm";
+import { ghlDoNotDisturb, ghlUpcomingMeeting } from "@/lib/crm/gohighlevel";
+import { CRM_BOOKED_REASON, CRM_DND_REASON } from "@/lib/holdReasons";
 
 /**
  * One boss per customer (founder, 2026-10-12, A-237): when a customer is
@@ -63,4 +65,23 @@ export async function crmIsFollowingUp(
 export function ourLastSendAt(conversation: { direction: string; date: string; source?: string }[]): Date | null {
   const times = conversation.filter((m) => m.direction === "outbound" && !m.source).map((m) => new Date(m.date).getTime());
   return times.length ? new Date(Math.max(...times)) : null;
+}
+
+/**
+ * GoHighLevel's own reasons for FollowUp to step back from someone, before it follows up on its own: the owner
+ * marked them Do Not Disturb there, or they already booked a meeting there (founder 2026-10-17, "the
+ * coordination"). The hold reason, or null. Anything GoHighLevel can't answer is null: the one-boss check after it
+ * still applies.
+ */
+export async function ghlHoldReason(lead: { businessId: string; crmProvider: string | null; crmId: string | null }, now: Date = new Date()): Promise<string | null> {
+  if (lead.crmProvider !== "gohighlevel" || !lead.crmId) return null;
+  try {
+    const conn = await prisma.crmConnection.findUnique({ where: { businessId: lead.businessId }, select: { provider: true, apiKey: true } });
+    if (conn?.provider !== "gohighlevel" || !conn.apiKey) return null;
+    if (await ghlDoNotDisturb(conn.apiKey, lead.crmId)) return CRM_DND_REASON;
+    if (await ghlUpcomingMeeting(conn.apiKey, lead.crmId, now)) return CRM_BOOKED_REASON;
+  } catch {
+    // Not asked: the one-boss check still is.
+  }
+  return null;
 }

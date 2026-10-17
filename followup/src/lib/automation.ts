@@ -42,7 +42,7 @@ import { isExitPayload, toQuickReplies, type StoredQuickReplies } from "@/lib/qu
 import { Prisma } from "@prisma/client";
 import { composeFollowUpEmail, latestInboundText } from "@/lib/sender";
 import { sendFollowUpToLead, detectAutomatedReplyChannel } from "@/lib/sending";
-import { crmIsFollowingUp, ourLastSendAt } from "@/lib/crm/oneBoss";
+import { crmIsFollowingUp, ghlHoldReason, ourLastSendAt } from "@/lib/crm/oneBoss";
 import { requireActiveBilling, checkAiEligibility } from "@/lib/billing";
 import { leadLanguageOf } from "@/lib/leadLanguage";
 import { canSendOn, hasAnySendChannel } from "@/lib/sendChannels";
@@ -1658,11 +1658,12 @@ export async function runAutomationForBusiness(
         // queue, same draft. When the CRM isn't following up, FollowUp does.
         // Asked only when nothing above already holds the reply, so a held
         // lead costs no CRM call; an answer it can't get counts as "following up".
-        const inCrm =
-          !!lead.crmProvider &&
-          !!lead.crmId &&
-          !(risk.riskLevel !== "low" || isCold || isBackfilled || isUntouched || phoneNeverWrote || unconfirmedSpam) &&
-          (await crmIsFollowingUp(lead, ourLastSendAt(conversation)));
+        // GoHighLevel's own reasons come first (Do Not Disturb, a meeting already booked there), each with its words.
+        const crmHold =
+          !!lead.crmProvider && !!lead.crmId && !(risk.riskLevel !== "low" || isCold || isBackfilled || isUntouched || phoneNeverWrote || unconfirmedSpam)
+            ? ((await ghlHoldReason(lead)) ?? ((await crmIsFollowingUp(lead, ourLastSendAt(conversation))) ? IN_CRM_REASON : null))
+            : null;
+        const inCrm = crmHold !== null;
         if (holdAll || autonomousBacklog || autoSendBacklog || risk.riskLevel !== "low" || isCold || isBackfilled || isUntouched || phoneNeverWrote || unconfirmedSpam || inCrm) {
           // Persist whatever was just written, so the stale draft doesn't
           // linger as what the owner sees waiting for approval — and stamp
@@ -1752,8 +1753,8 @@ export async function runAutomationForBusiness(
                 ? lead.source === FORM_SPAM_CHECK_SOURCE
                   ? FORM_SPAM_CHECK_REASON
                   : FOUND_IN_SPAM_REASON
-              : inCrm
-                ? IN_CRM_REASON
+              : crmHold
+                ? crmHold
               : holdAll
                 ? HOLD_ALL_AUTOMATION_REASON
               : // Below holdAll on purpose. While the hold is on, THAT is

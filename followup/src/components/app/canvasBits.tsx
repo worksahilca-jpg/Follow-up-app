@@ -48,7 +48,8 @@ export function GroupLabel({ children }: { children: React.ReactNode }) {
 /** A small mono label. `green` is the written reply's own label, on its soft green (A-221). */
 export function Eyebrow({ children, green = false }: { children: React.ReactNode; green?: boolean }) {
   return (
-    <span className={"font-mono text-[12px] font-medium uppercase tracking-[0.1em] " + (green ? "text-green-ink" : "text-ink-faint")}>
+    // iOS section-header style (A-273): the sans face, 13px, uppercase, a little tracking. It was IBM Plex Mono.
+    <span className={"text-[13px] font-medium uppercase tracking-[0.02em] " + (green ? "text-green-ink" : "text-ink-faint")}>
       {children}
     </span>
   );

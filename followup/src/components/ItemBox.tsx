@@ -155,7 +155,7 @@ export function ItemBoxList({ children, className = "" }: { children: ReactNode;
 export function ItemBoxLabel({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
     <p
-      className={"font-mono text-xs uppercase tracking-wider text-ink-soft " + className}
+      className={"text-[13px] font-medium uppercase tracking-[0.02em] text-ink-soft " + className}
       style={{ letterSpacing: "0.08em" }}
     >
       {children}

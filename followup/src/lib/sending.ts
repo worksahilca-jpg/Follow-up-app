@@ -24,8 +24,8 @@ import { sendSms, sendWhatsApp } from "@/lib/twilio";
 import { getWhatsAppCloudConnection, sendWhatsAppCloud } from "@/lib/whatsappCloud";
 import { recordAudit } from "@/lib/audit";
 import { findOrCreateConversation } from "@/lib/conversations";
-import { ghlReplyRoute } from "@/lib/crm/ghlThreads";
-import { sendGhlMessage } from "@/lib/crm/gohighlevel";
+import { ghlReplyRoute, isGhlConversationKey } from "@/lib/crm/ghlThreads";
+import { isGhlChannel, sendGhlMessage } from "@/lib/crm/gohighlevel";
 import { sendInstagramMessage } from "@/lib/instagram";
 import { instagramRecipientId, isInstagramLeadId, isMessengerLeadId, messengerRecipientId } from "@/lib/instagramId";
 import { sendMessengerMessage } from "@/lib/facebook";
@@ -176,7 +176,12 @@ export async function detectAutomatedReplyChannel(lead: {
   businessId?: string;
   dmEmail?: string | null;
 }): Promise<"email" | "text" | "whatsapp" | "instagram" | "messenger" | null> {
-  const lastChannel = await lastInboundChannel(lead.id);
+  const last = await lastInbound(lead.id);
+  // A customer who wrote to the owner's GoHighLevel is answered the way they wrote, through it (ghlPoll.ts), even
+  // on Instagram or Facebook, where their FollowUp record holds a phone number rather than a Meta id. Read off the
+  // same query as the channel, so nothing else changes for anyone else.
+  if (last && isGhlConversationKey(last.externalId) && isGhlChannel(last.channel)) return last.channel;
+  const lastChannel = last?.channel;
   // A DM customer who answered FollowUp's email is answered by email.
   if (lastChannel === "email" && (lead.email || (await usableDmEmail(lead)))) return "email";
   if (lastChannel === "text" && lead.phone) return "text";
@@ -192,6 +197,15 @@ export async function detectAutomatedReplyChannel(lead: {
   if (isMessengerLeadId(lead.phone)) return "messenger";
   if (lead.phone) return detectPhoneChannel(lead.id);
   return null;
+}
+
+async function lastInbound(leadId: string): Promise<{ channel: string; externalId: string | null } | null> {
+  const lastInbound = await prisma.message.findFirst({
+    where: { conversation: { leadId }, direction: "inbound" },
+    orderBy: { sentAt: "desc" },
+    select: { conversation: { select: { channel: true, externalId: true } } },
+  });
+  return lastInbound?.conversation ? { channel: lastInbound.conversation.channel, externalId: lastInbound.conversation.externalId ?? null } : null;
 }
 
 async function lastInboundChannel(leadId: string): Promise<string | undefined> {
@@ -787,7 +801,7 @@ export async function sendFollowUpToLead(
     // The customer wrote to the owner's GoHighLevel (src/lib/ghlPoll.ts): the reply goes back through it, from the
     // same number or email, and is recorded in that same conversation. Never from Twilio or Gmail instead: if
     // GoHighLevel is no longer connected, it doesn't go at all and the owner is told why.
-    if ((channel === "email" || channel === "text") && lead.crmProvider === "gohighlevel" && lead.crmId) {
+    if (isGhlChannel(channel) && lead.crmProvider === "gohighlevel" && lead.crmId) {
       const route = await ghlReplyRoute(lead.id, channel);
       if (route) {
         const conn = await prisma.crmConnection.findUnique({ where: { businessId: lead.businessId }, select: { provider: true, apiKey: true } });

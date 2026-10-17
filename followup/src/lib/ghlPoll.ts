@@ -91,8 +91,10 @@ export async function processGhlMessage(businessId: string, apiKey: string, m: G
 
   const isNew = await createInboundMessageIfNew(conversation.id, m.body, m.at, m.id);
 
-  // STOP/START on a text, before anything else, exactly as on a Twilio text (src/lib/inbound/twilioMessage.ts).
-  if (m.channel === "text") {
+  // STOP/START on a text or WhatsApp, before anything else, exactly as on Twilio (src/lib/inbound/twilioMessage.ts).
+  // Facebook and Instagram STOPs are GoHighLevel's own to honour (its DND); FollowUp's Meta suppression is keyed
+  // on Meta ids these customers don't have here.
+  if (m.channel === "text" || m.channel === "whatsapp") {
     const optingOut = isOptOutMessage(m.body);
     const optingIn = isOptInMessage(m.body);
     if (optingOut || optingIn) {
@@ -100,7 +102,7 @@ export async function processGhlMessage(businessId: string, apiKey: string, m: G
       void recordAudit({ businessId, userId: null }, optingOut ? "lead.opt_out" : "lead.opt_in", {
         targetType: "lead",
         targetId: lead.id,
-        meta: { channel: "text", via: "keyword", provider: "gohighlevel" },
+        meta: { channel: m.channel, via: "keyword", provider: "gohighlevel" },
       });
     }
   }

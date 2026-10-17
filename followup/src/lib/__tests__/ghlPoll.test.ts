@@ -69,6 +69,16 @@ describe("a customer's message", () => {
     expect(p.lead.update).toHaveBeenCalledWith({ where: { id: "lead1" }, data: { optedOutAt: expect.any(Date) } });
   });
 
+  it("STOP on WhatsApp stops them too", async () => {
+    await processGhlMessage("biz1", KEY, msg({ body: "STOP", channel: "whatsapp" }));
+    expect(p.lead.update).toHaveBeenCalledWith({ where: { id: "lead1" }, data: { optedOutAt: expect.any(Date) } });
+  });
+
+  it("STOP on Instagram is left to GoHighLevel's own do-not-contact", async () => {
+    await processGhlMessage("biz1", KEY, msg({ body: "STOP", channel: "instagram" }));
+    expect(p.lead.update).not.toHaveBeenCalledWith({ where: { id: "lead1" }, data: { optedOutAt: expect.any(Date) } });
+  });
+
   it("from someone the contact sync hasn't brought in yet: brought in now", async () => {
     p.lead.findUnique.mockResolvedValueOnce(null).mockResolvedValueOnce(LEAD);
     (ghlContact as ReturnType<typeof vi.fn>).mockResolvedValue({ externalId: "ct1", name: "Nadia Khan", email: null, phone: "+14165550199", createdAt: new Date() });

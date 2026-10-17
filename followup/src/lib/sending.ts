@@ -26,7 +26,7 @@ import { recordAudit } from "@/lib/audit";
 import { findOrCreateConversation } from "@/lib/conversations";
 import { ghlReplyRoute, isGhlConversationKey } from "@/lib/crm/ghlThreads";
 import { crmIsFollowingUp } from "@/lib/crm/oneBoss";
-import { isGhlChannel, sendGhlMessage } from "@/lib/crm/gohighlevel";
+import { ghlDoNotDisturb, ghlUpcomingMeeting, isGhlChannel, sendGhlMessage } from "@/lib/crm/gohighlevel";
 import { sendInstagramMessage } from "@/lib/instagram";
 import { instagramRecipientId, isInstagramLeadId, isMessengerLeadId, messengerRecipientId } from "@/lib/instagramId";
 import { sendMessengerMessage } from "@/lib/facebook";
@@ -516,6 +516,30 @@ export async function sendFollowUpToLead(
   // someone in the owner's GoHighLevel, it asks GoHighLevel once more, right now, whether it has been in touch with
   // them, on this contact or the same person saved twice (src/lib/crm/oneBoss.ts). A workflow that started after
   // FollowUp last looked would otherwise text them in the same minute. The owner's own send is untouched.
+  if (lead.crmProvider === "gohighlevel" && lead.crmId && isGhlChannel(channel)) {
+    // Do Not Disturb in GoHighLevel is the owner's own "don't contact them": nothing goes out on that channel, from
+    // FollowUp or the owner's Send here, by any route. Turned off in GoHighLevel, it's gone here too.
+    const conn = await prisma.crmConnection.findUnique({ where: { businessId: lead.businessId }, select: { provider: true, apiKey: true } });
+    if (conn?.provider === "gohighlevel" && conn.apiKey) {
+      const firstName = lead.name.split(" ")[0];
+      if (await ghlDoNotDisturb(conn.apiKey, lead.crmId, channel)) {
+        return {
+          success: false,
+          message: `${firstName} is marked Do Not Disturb in GoHighLevel, so FollowUp won't send this. If they asked to hear from you, turn it off in GoHighLevel first.`,
+          failure: "refused",
+        };
+      }
+      // They booked a meeting there: FollowUp's follow-up has done its job. The owner can still write to them.
+      const meeting = options.automated ? await ghlUpcomingMeeting(conn.apiKey, lead.crmId) : null;
+      if (meeting) {
+        return {
+          success: false,
+          message: `${firstName} already has a meeting booked in GoHighLevel, so FollowUp isn't following up.`,
+          failure: "refused",
+        };
+      }
+    }
+  }
   if (options.automated && lead.crmProvider === "gohighlevel" && lead.crmId) {
     const ours = await prisma.message.findFirst({
       where: { conversation: { leadId: lead.id }, direction: "outbound", source: null },

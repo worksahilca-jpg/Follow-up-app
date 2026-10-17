@@ -384,7 +384,90 @@ export async function sendGhlMessage(
   });
   if (res.status === 401 || res.status === 403)
     return { success: false, status: res.status, message: "GoHighLevel didn't accept the key. Connect it again in Settings with a key that can send messages." };
-  if (!res.ok) return { success: false, status: res.status, message: `GoHighLevel didn't send it (${res.status}).` };
+  if (!res.ok) {
+    const said = await res.text().catch(() => "");
+    return { success: false, status: res.status, message: ghlSendRefusal(res.status, said, msg.channel) };
+  }
   const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
   return { success: true, messageId: str(data.messageId) ?? undefined };
+}
+
+// ---------------------------------------------------------------------------
+// Working alongside GoHighLevel (founder 2026-10-17: "fix … the coordination").
+// From the SDK (grade B, not yet called on a real account): a contact's `dnd` (everything) and `dndSettings` per
+// channel ({ status: "active" | "inactive" | "permanent" }), and GET /contacts/{id}/appointments → { events:
+// [{ startTime, appointmentStatus }] }. Facebook's setting stands for Instagram too (grade C).
+// ---------------------------------------------------------------------------
+
+const DND_AS: Record<GhlChannel, string> = { text: "SMS", email: "Email", whatsapp: "WhatsApp", messenger: "FB", instagram: "FB" };
+
+/**
+ * Whether the owner marked this person Do Not Disturb in GoHighLevel: for this channel, or for everything when no
+ * channel is given. Can't tell (GoHighLevel didn't answer) reads as no: GoHighLevel refuses its own sends to them
+ * anyway, and one slow answer shouldn't stop every reply.
+ */
+export async function ghlDoNotDisturb(apiKey: string, contactId: string, channel?: GhlChannel): Promise<boolean> {
+  const k = parseGhlKey(apiKey);
+  if (!k) return false;
+  try {
+    const res = await fetch(`${BASE}/contacts/${encodeURIComponent(contactId)}`, { headers: headers(k.token), signal: AbortSignal.timeout(CRM_TIMEOUT_MS) });
+    if (!res.ok) return false;
+    const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+    const c = (data.contact ?? data) as Record<string, unknown>;
+    if (c.dnd === true) return true;
+    const settings = (c.dndSettings ?? {}) as Record<string, { status?: unknown } | undefined>;
+    const on = (key: string) => {
+      const status = settings[key]?.status;
+      return status === "active" || status === "permanent";
+    };
+    return channel ? on(DND_AS[channel]) : Object.keys(settings).some(on);
+  } catch {
+    return false;
+  }
+}
+
+/** Appointment states that are not a meeting still to come. */
+const NOT_A_MEETING = new Set(["cancelled", "canceled", "invalid", "noshow", "no_show", "showed"]);
+
+/** Their next meeting booked in GoHighLevel, if any. Can't tell reads as none, as before this existed. */
+export async function ghlUpcomingMeeting(apiKey: string, contactId: string, now: Date = new Date()): Promise<Date | null> {
+  const k = parseGhlKey(apiKey);
+  if (!k) return null;
+  try {
+    const res = await fetch(`${BASE}/contacts/${encodeURIComponent(contactId)}/appointments`, { headers: headers(k.token), signal: AbortSignal.timeout(CRM_TIMEOUT_MS) });
+    if (!res.ok) return null;
+    const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+    const events = Array.isArray(data.events) ? (data.events as Array<Record<string, unknown>>) : [];
+    let next: Date | null = null;
+    for (const e of events) {
+      const status = String(e.appointmentStatus ?? e.status ?? "").toLowerCase();
+      if (NOT_A_MEETING.has(status)) continue;
+      const at = typeof e.startTime === "string" || typeof e.startTime === "number" ? new Date(e.startTime) : null;
+      if (!at || Number.isNaN(at.getTime()) || at <= now) continue;
+      if (!next || at < next) next = at;
+    }
+    return next;
+  } catch {
+    return null;
+  }
+}
+
+const SAYS_CHANNEL: Record<GhlChannel, string> = { text: "text", email: "email", whatsapp: "WhatsApp", messenger: "Facebook message", instagram: "Instagram message" };
+
+/**
+ * Why GoHighLevel didn't send it, in the owner's words, with what to do (GHL pain #4: "nobody tells you why").
+ * Read from what GoHighLevel said back; anything it didn't explain says so plainly.
+ */
+export function ghlSendRefusal(status: number, said: string, channel: GhlChannel): string {
+  const t = said.toLowerCase();
+  const what = SAYS_CHANNEL[channel];
+  if (/\bdnd\b|do not disturb/.test(t)) return `GoHighLevel didn't send this ${what}: they're marked Do Not Disturb there.`;
+  if (/10dlc|a2p|not registered|registration|brand|campaign/.test(t))
+    return "GoHighLevel didn't send this text: your number isn't registered for business texting yet. Finish that in GoHighLevel, or reply by email for now.";
+  if (/balance|wallet|credit|insufficient|funds/.test(t)) return `GoHighLevel didn't send this ${what}: your GoHighLevel wallet is out of credit. Top it up there, then send again.`;
+  if (/phone|number/.test(t) && channel !== "email") return `GoHighLevel didn't send this ${what}: it doesn't have a working number for them.`;
+  if (/email/.test(t) && channel === "email") return "GoHighLevel didn't send this email: it doesn't have a working email address for them.";
+  if (status === 429) return `GoHighLevel is busy right now and didn't send this ${what}. FollowUp will try again shortly.`;
+  if (status >= 500) return `GoHighLevel had a problem on its side and didn't send this ${what}. FollowUp will try again shortly.`;
+  return `GoHighLevel didn't send this ${what}, and didn't say why. Check the conversation in GoHighLevel.`;
 }

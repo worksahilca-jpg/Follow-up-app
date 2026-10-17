@@ -13886,3 +13886,10 @@ and no depth; one plain font with no character; generic thin icons; empty space 
 - A blue-accent version (Apple blue for actions) was drawn too and dropped on the founder's word above: colours stay ours.
 
 **Open:** the founder's pick; a new font (Inter) needs his explicit yes before it ships.
+
+## 2026-10-17 — Both answers to R-122 rejected; redesign paused
+
+Black and white (R-123) and the website's cream/forest/mint (R-124) were both rejected the same day. The founder said
+he is confused. Decision proposed: stop drawing from adjectives. The live app stays as it is. The next round starts
+only from 2–3 screenshots of real app screens the founder likes, and follows the dated plan (testers first until
+Oct 31).

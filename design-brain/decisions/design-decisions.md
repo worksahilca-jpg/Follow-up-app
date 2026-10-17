@@ -13866,3 +13866,26 @@ day would suit you best?" still failed, because the chips under it named Saturda
 "this weekend". The shape check reads buttons with the body, so the whole reply was held. Buttons are optional: when the
 reply passes on its own, it now goes without them, with no second AI call (src/lib/dmDrafting.ts). A reply whose own
 words break a rule is still retried, then held.
+
+## 2026-10-17 — Drawn: Today in the Mac look, our colours kept (answer to R-122)
+
+**Founder, verbatim, in order:** *"we need a stronger design for our app… it still fells like a fake app or just a 90s
+app"*; *"when i compare this with others i feel like we lack alot"*; references *"wisper apple and mabe macro"*;
+*"i want fonts and sie designes all dot same like mac"*; *"colours should be like wisper bro i mean donnt change whate we
+use"*.
+
+**Gaps named against Wispr, Apple and Macro:** grey initials that read as placeholders; flat boxes with thin outlines
+and no depth; one plain font with no character; generic thin icons; empty space on the computer.
+
+**Drawn (injected into the live Today, phone 390×844 and computer 1280):**
+- Apple's system font (SF on Apple devices; Inter, its closest open match, everywhere else), on the iOS type sizes
+  A-273 already set.
+- Cards: white, no outline, a soft two-layer shadow, 14–16 px corners. No glow, no shine (R-036).
+- Faces: each person's initials on a soft tint from **our existing tokens** (sage, gold, coral, green wash, slate),
+  letters in the matching deep tone. No new colour.
+- Buttons: black Send (unchanged); "Change it" as a filled soft button; quiet links without underlines.
+- Phone top and tab bars: a near-solid frosted bar; the active tab in ink.
+- Ground: our `--sidebar` warm white, so the white cards lift off it.
+- A blue-accent version (Apple blue for actions) was drawn too and dropped on the founder's word above: colours stay ours.
+
+**Open:** the founder's pick; a new font (Inter) needs his explicit yes before it ships.

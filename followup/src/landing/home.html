@@ -73,7 +73,7 @@ body { margin: 0; background: var(--night); color: var(--moon); font-family: var
 a { color: inherit }
 .wrap { max-width: 1280px; margin: 0 auto; padding-inline: var(--gut) }
 .mono { font-family: var(--mono) }
-.eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint) }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint) }
 :focus-visible { outline: 2px solid var(--dot); outline-offset: 3px; border-radius: 6px }
 h1, h2, h3 { font-weight: 400; margin: 0; text-wrap: balance }
 em { font-style: italic }
@@ -121,7 +121,7 @@ em { font-style: italic }
 .right { border-left: 1px solid var(--line); padding: 28px 24px; display: flex; flex-direction: column; gap: 22px; background: #fbfaf9 }
 .cu { margin-top: 10px; display: flex; flex-direction: column; gap: 12px }
 .cu div { font-size: 13.5px; line-height: 1.45 }
-.cu .mono { display: block; font-size: 11px; color: var(--ink-faint); margin-bottom: 2px }
+.cu .mono { display: block; font-size: 12px; color: var(--ink-faint); margin-bottom: 2px }
 .small { margin: 8px 0 0; font-size: 12.5px; line-height: 1.45; color: var(--ink-faint) }
 .is-hidden { opacity: 0; transform: translateY(12px) }
 .gone { display: none }
@@ -205,12 +205,12 @@ footer a:hover { color: var(--moon) }
 .fl-go { font: inherit; flex: none; display: inline-flex; align-items: center; gap: 8px; min-height: 52px; padding: 0 22px 0 18px; border: 0; border-radius: 999px; background: var(--fl-btn); color: var(--fl-btn-fg); font-weight: 600; font-size: 15.5px; cursor: pointer }
 .fl-hint { margin: 12px 0 0; text-align: center; font-size: 14.5px; color: var(--ink-faint) }
 .fl-river { position: relative; margin-top: clamp(22px, 3.4vh, 34px); height: 404px; border-radius: 32px; overflow: hidden; background: var(--fl-river-bg); box-shadow: var(--fl-river-shadow) }
-.fl-zone { position: absolute; top: 22px; z-index: 3; display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--fl-zone-fg) }
+.fl-zone { position: absolute; top: 22px; z-index: 3; display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--fl-zone-fg) }
 .fl-zone.is-l { left: 28px } .fl-zone.is-r { right: 28px }
 .fl-zone b { display: inline-block; font-weight: 500; color: var(--fl-zone-strong); font-variant-numeric: tabular-nums }
 .fl-zone i { width: 26px; height: 1px; background: currentColor; opacity: .5 }
 .fl-avs { display: none; gap: 4px }
-.fl-avs span { width: 22px; height: 22px; border-radius: 999px; display: grid; place-items: center; background: var(--fl-avs-bg); font-family: var(--sans); font-size: 10.5px; font-weight: 650; letter-spacing: 0; color: var(--fl-avs-fg) }
+.fl-avs span { width: 22px; height: 22px; border-radius: 999px; display: grid; place-items: center; background: var(--fl-avs-bg); font-family: var(--sans); font-size: 12px; font-weight: 650; letter-spacing: 0; color: var(--fl-avs-fg) }
 .fl-track { position: absolute; inset: 0; -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 9%, #000 91%, transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 9%, #000 91%, transparent 100%) }
 .fl-slot { position: absolute; top: 92px; left: 0; width: var(--fl-slot); transform-origin: 50% 0; transition: transform 1s var(--fl-out), opacity .8s ease; will-change: transform }
 .fl-slot .fl-q { box-shadow: 0 0 0 1px rgba(10,10,10,.04), 0 18px 32px -22px rgba(10,10,10,.4) }
@@ -218,7 +218,7 @@ footer a:hover { color: var(--moon) }
 .fl-slot.is-instant { transition: none }
 .fl-meta { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--fl-meta); white-space: nowrap; overflow: hidden }
 .fl-meta b { color: var(--fl-meta-b); font-weight: 650 }
-.fl-meta .mono { font-family: var(--mono); font-size: 11.5px; color: var(--fl-meta-faint) }
+.fl-meta .mono { font-family: var(--mono); font-size: 12px; color: var(--fl-meta-faint) }
 .fl-lens .fl-meta { color: var(--ink-soft) } .fl-lens .fl-meta b { color: var(--ink) } .fl-lens .fl-meta .mono { color: var(--ink-faint) }
 .fl-q { margin-top: 8px; padding: 12px 15px; border-radius: 18px 18px 18px 6px; background: var(--fl-q-bg); color: var(--fl-q-fg); font-size: 15px; line-height: 1.38; box-shadow: 0 0 0 1px rgba(10,10,10,.05); overflow-wrap: anywhere }
 .fl-q.is-quiet { background: rgba(255,255,255,.55); color: var(--ink-soft); box-shadow: 0 0 0 1px rgba(10,10,10,.08) inset }
@@ -264,13 +264,13 @@ footer a:hover { color: var(--moon) }
 .fl-next b { color: var(--ink); font-weight: 600 }
 .fl-cta { display: inline-flex; align-items: center; min-height: 50px; padding: 0 24px; border-radius: 999px; background: var(--fl-btn); color: var(--fl-btn-fg); font-weight: 600; font-size: 15.5px; text-decoration: none }
 .fl-side { display: flex; align-items: center; gap: 14px; margin-left: auto }
-.fl-ex { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint) }
+.fl-ex { font-family: var(--mono); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint) }
 .fl-ctl { font: inherit; font-family: var(--mono); font-size: 12px; letter-spacing: .06em; color: var(--ink-soft); background: none; border: 1px solid #d8d3cd; border-radius: 999px; min-height: 36px; padding: 0 14px; cursor: pointer }
 .fl-ctl:hover { color: var(--ink); border-color: var(--ink-faint) }
 @media (max-width: 640px) {
   .fl-hero { --fl-slot: 210px; --fl-gap: 14px; --fl-lens: min(calc(100vw - 2 * var(--gut) - 24px), 420px) }
   .fl-ask { min-height: 60px; padding: 6px 6px 6px 8px }
-  .fl-you { width: 38px; height: 38px; font-size: 11px }
+  .fl-you { width: 38px; height: 38px; font-size: 12px }
   .fl-go { min-height: 46px; padding: 0 14px }
   .fl-go span { display: none }
   .fl-river { height: 440px; border-radius: 24px }
@@ -327,7 +327,7 @@ html[data-lay="3"] .fl-try { padding-top: 64px }
 .fl-fact { border-radius: 28px; padding: 30px 30px 26px; display: flex; flex-direction: column; justify-content: space-between; gap: 20px; color: var(--fl-fact-fg); background: var(--fl-fact-bg); box-shadow: 0 30px 60px -40px rgba(10,10,10,.45) }
 .fl-fact b { display: block; font-family: var(--serif); font-weight: 400; font-size: clamp(88px, 10vw, 150px); line-height: .8; letter-spacing: -.05em }
 .fl-fact p { margin: 0; font-size: 17px; line-height: 1.45 }
-.fl-fact cite { font-style: normal; font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--fl-fact-soft) }
+.fl-fact cite { font-style: normal; font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--fl-fact-soft) }
 .fl-fact, .fl-hi { transition: opacity .8s ease, transform .9s var(--fl-out); transition-delay: var(--d, 0ms) }
 .fl-help .is-pre { opacity: 0; transform: translateY(30px) }
 @media (prefers-reduced-motion: reduce) { .fl-fact, .fl-hi { transition: none } }
@@ -440,7 +440,7 @@ html[data-col="f"] .fl-fact b { color: inherit }
 .env { position: relative; border-radius: 26px; padding: 28px 26px 26px; min-height: 290px; display: flex; flex-direction: column; justify-content: flex-end; gap: 8px;
   background: linear-gradient(180deg, #FFFFFF 0%, #F6F2EA 100%); box-shadow: 0 0 0 1px #E6E1D8, 0 26px 50px -34px rgba(14,14,12,.35); transition: opacity .8s ease, transform .9s var(--fl-out); transition-delay: var(--d, 0ms) }
 .env::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 120px; border-radius: 26px 26px 0 0; background: linear-gradient(to bottom right, transparent calc(50% - 1px), rgba(14,14,12,.12) 50%, transparent calc(50% + 1px)) left / 50.5% 100% no-repeat, linear-gradient(to bottom left, transparent calc(50% - 1px), rgba(14,14,12,.12) 50%, transparent calc(50% + 1px)) right / 50.5% 100% no-repeat }
-.env .how { font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-faint) }
+.env .how { font-family: var(--mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-faint) }
 .env .big { font-family: var(--serif); font-size: clamp(40px, 4.4vw, 60px); line-height: .95; letter-spacing: -.03em }
 .env p { margin: 0; font-size: 15.5px; line-height: 1.45; color: var(--ink-soft) }
 .env .pm { position: absolute; top: 18px; right: 18px; color: rgba(14,14,12,.55); transform: rotate(-10deg) }
@@ -543,7 +543,7 @@ html[data-pal] .close { background: url("data:image/svg+xml;utf8,%3Csvg xmlns='h
 
 /* ---- v18: the journey of your question, in the middle card and on the rail under the demo ---- */
 .fl-lbody.is-journey { max-height: 232px; overflow: hidden; -webkit-mask-image: linear-gradient(transparent 0, #000 26px); mask-image: linear-gradient(transparent 0, #000 26px) }
-.fl-jdiv { margin: 14px 0 2px; text-align: center; font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint) }
+.fl-jdiv { margin: 14px 0 2px; text-align: center; font-family: var(--mono); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint) }
 .fl-lens .fl-ja { min-height: 0; margin-top: 8px }
 .fl-lens .fl-jq { margin-top: 6px; margin-right: 44px }
 .fl-jchip { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; padding: 9px 12px; border-radius: 12px; background: #F2F1EE; color: var(--ink); font-size: 14.5px; font-weight: 600 }
@@ -567,7 +567,7 @@ html[data-lay="3"] .fl-head > * { transform: translateY(calc(var(--tr-p, 0) * -4
 
 
 /* ---- v19: the language a customer wrote in, named on their message ---- */
-.fl-lang { flex: none; padding: 1px 7px; border-radius: 999px; background: rgba(255,255,255,.16); color: var(--fl-meta-b, #fff); font-size: 11px; font-weight: 600; letter-spacing: .01em }
+.fl-lang { flex: none; padding: 1px 7px; border-radius: 999px; background: rgba(255,255,255,.16); color: var(--fl-meta-b, #fff); font-size: 12px; font-weight: 600; letter-spacing: .01em }
 .fl-lens .fl-lang { background: #E3F2E8; color: #0D6E3C }
 
 
@@ -596,7 +596,7 @@ html[data-pal] .fl-river {
 .fl-railnote.is-in { animation: fl-notein .45s cubic-bezier(.22,1,.36,1) }
 @keyframes fl-ring { 0% { transform: scale(.85); opacity: .9 } 100% { transform: scale(1.7); opacity: 0 } }
 @keyframes fl-notein { from { opacity: 0; transform: translateY(4px) } to { opacity: 1; transform: none } }
-@media (max-width: 700px) { .fl-rail { padding: 14px 2px 10px } .fl-rail::before, .fl-rail::after { top: 25px } .fl-raildot { top: 21px } .fl-rail li.is-now span { display: inline-block; font-size: 11px } }
+@media (max-width: 700px) { .fl-rail { padding: 14px 2px 10px } .fl-rail::before, .fl-rail::after { top: 25px } .fl-raildot { top: 21px } .fl-rail li.is-now span { display: inline-block; font-size: 12px } }
 @media (prefers-reduced-motion: reduce) { .fl-rail li.is-now i::after, .fl-railnote.is-in { animation: none } .fl-raildot { transition: none } }
 
 
@@ -607,7 +607,7 @@ html[data-pal] .fl-river {
 /* ---- v25: where messages come from, and what happened next ---- */
 .fl-srcs { position: absolute; z-index: 3; top: 15px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 4px; padding: 4px 6px 4px 12px; border-radius: 999px;
   background: rgba(255,255,255,.08); box-shadow: inset 0 0 0 1px rgba(255,255,255,.12) }
-.fl-srcs-l { margin-right: 4px; font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,.7) }
+.fl-srcs-l { margin-right: 4px; font-family: var(--mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,.7) }
 .fl-srcs i { position: relative; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 999px; color: rgba(255,255,255,.78); transition: background .3s ease, color .3s ease }
 .fl-srcs i.is-ping { animation: fl-src 1.4s ease-out }
 @keyframes fl-src { 0% { background: #fff; color: #0F3A29; transform: scale(1.12) } 60% { background: #fff; color: #0F3A29; transform: none } 100% { background: transparent; color: rgba(255,255,255,.78) } }
@@ -615,7 +615,7 @@ html[data-pal] .fl-river {
 .fl-nx { list-style: none; margin: 0; padding: 0 }
 .fl-nx-i { display: flex; align-items: center; gap: 10px; padding: 9px 2px; border-bottom: 1px solid #F0EEE9; font-size: 15px; color: var(--ink) }
 .fl-nx-i:last-child { border-bottom: 0 }
-.fl-nx-i .w { flex: none; min-width: 88px; font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-faint) }
+.fl-nx-i .w { flex: none; min-width: 88px; font-family: var(--mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-faint) }
 .fl-nx-i .t { flex: 1; min-width: 0 } .fl-nx-i svg { flex: none; color: #0D6E3C }
 .fl-nx-i.is-won { margin-top: 4px; padding: 10px 12px; border: 0; border-radius: 12px; background: #E3F2E8; color: #0D6E3C; font-weight: 600 } .fl-nx-i.is-won .w { color: #3E7A57 }
 .fl-nx-i.is-stop .t { color: var(--ink-soft) }
@@ -667,7 +667,7 @@ html[data-pal] .fl-hero { --fl-tilt: 0 }
 /* ---- v30: one-tap questions under the box ---- */
 .fl-chips { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; margin-top: 12px }
 .fl-chips span { font-size: 13.5px; color: rgba(255,255,255,.75) }
-.fl-chip { min-height: 36px; padding: 0 14px; border: 0; border-radius: 999px; background: rgba(255,255,255,.12); color: #fff; font: inherit; font-size: 14px; cursor: pointer;
+.fl-chip { min-height: 44px; padding: 0 14px; border: 0; border-radius: 999px; background: rgba(255,255,255,.12); color: #fff; font: inherit; font-size: 14px; cursor: pointer;
   box-shadow: inset 0 0 0 1px rgba(255,255,255,.22); transition: background .2s ease, transform .2s cubic-bezier(.34,1.56,.64,1) }
 .fl-chip:hover { background: rgba(255,255,255,.2); transform: translateY(-1px) }
 .fl-chip:focus-visible { outline: 2px solid #fff; outline-offset: 2px }
@@ -711,7 +711,7 @@ html[data-pro] .stage .row, html[data-pro] .stage .rows { color: rgba(255,255,25
 .fl-srcs-l::after { vertical-align: 0 }
 .fl-srcs i { position: relative; width: auto; height: auto; display: flex; flex-direction: column; align-items: center; gap: 3px; font-style: normal }
 .fl-srcs i svg { width: 20px; height: 20px }
-.fl-srcs i .fl-lab { position: static; width: auto; height: auto; margin: 0; clip: auto; clip-path: none; overflow: visible; white-space: nowrap; font-family: var(--sans); font-size: 10px; line-height: 1.1; color: rgba(255,255,255,.82) }
+.fl-srcs i .fl-lab { position: static; width: auto; height: auto; margin: 0; clip: auto; clip-path: none; overflow: visible; white-space: nowrap; font-family: var(--sans); font-size: 12px; line-height: 1.1; color: rgba(255,255,255,.82) }
 @media (max-width: 700px) { .fl-srcs i .fl-lab { display: none } .fl-srcs { align-items: center; padding: 6px 10px } }
 .fl-srcs i.is-new { animation: fl-new 1.4s cubic-bezier(.34,1.56,.64,1) }
 .fl-srcs i.is-new::before { content: ""; position: absolute; top: -3px; right: -4px; width: 9px; height: 9px; border-radius: 999px; background: #FF3B30; box-shadow: 0 0 0 2px rgba(20,40,30,.9); animation: fl-dot 1.4s ease forwards }
@@ -746,7 +746,7 @@ html[data-pro] .stage .row, html[data-pro] .stage .rows { color: rgba(255,255,25
 
 /* ---- You stay in charge ---- */
 .ctl2 .own { margin-top: 40px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 20px; align-items: stretch }
-.own-k { align-self: flex-start; font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; padding: 4px 10px; border-radius: 999px; background: #8FD3A8; color: #0B2A1C }
+.own-k { align-self: flex-start; font-family: var(--mono); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; padding: 4px 10px; border-radius: 999px; background: #8FD3A8; color: #0B2A1C }
 @media (max-width: 900px) { .ctl2 .own { grid-template-columns: minmax(0, 1fr) } }
 
 /* ---- It gets better every week ---- */
@@ -888,7 +888,7 @@ html[data-pal] .fl-note-pill i, html[data-pro] .fl-note-pill i { background: #74
 .nb-h b { font-size: 14px; font-weight: 600; letter-spacing: -.01em }
 .nb-h time { margin-left: auto; font-size: 12px; color: #8A8F8B; white-space: nowrap; font-family: inherit }
 .nb-m { font-size: 13.5px; line-height: 1.3; color: #2B2F2C; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
-.nb-s { justify-self: start; margin-top: 5px; font-size: 11.5px; font-weight: 600; padding: 2px 8px; border-radius: 999px; transition: opacity .4s ease, transform .4s cubic-bezier(.34,1.56,.64,1) }
+.nb-s { justify-self: start; margin-top: 5px; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; transition: opacity .4s ease, transform .4s cubic-bezier(.34,1.56,.64,1) }
 .nb-s.is-ok { background: #DCF5E5; color: #0D6E3C }
 .nb-s.is-wait { background: #F1F3F1; color: #3F4642; display: inline-flex; align-items: center; gap: 6px }
 .nb-s.is-wait::before { content: ""; width: 6px; height: 6px; border-radius: 999px; background: #C96A1B }
@@ -927,7 +927,7 @@ html body .nav-links a:hover, html body .nav-links a.is-here { opacity: 1 }
 
 /* ---- the From bar: icons as on a home screen, names in the device's own font ---- */
 html body .fl-srcs i svg.fu-tile { width: 28px; height: 28px; filter: drop-shadow(0 2px 3px rgba(0,0,0,.28)) }
-html body .fl-srcs i .fl-lab { font-family: var(--apple); font-size: 10.5px; letter-spacing: 0 }
+html body .fl-srcs i .fl-lab { font-family: var(--apple); font-size: 12px; letter-spacing: 0 }
 @media (max-width: 700px) { .fl-srcs i svg.fu-tile { width: 22px; height: 22px } }
 
 /* ---- the catch: a phone notification ---- */
@@ -1117,14 +1117,14 @@ html[data-lay] body .fl-h1 { translate: 0 calc(var(--fu-p, 0) * -40px) }
   /* the inboxes: the From bar becomes the sidebar list */
   /* FollowUp's own rows */
   /* the conversation list */
-  .mw-sec { padding: 10px 16px 4px; font-size: 11px; font-weight: 600; color: #8E8E93 }
+  .mw-sec { padding: 10px 16px 4px; font-size: 12px; font-weight: 600; color: #8E8E93 }
   .mw-row { position: relative; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; margin: 2px 8px; padding: 8px 10px 9px 14px; border-radius: 8px; transition: background .3s ease }
   .mw-row + .mw-row::before { content: ""; position: absolute; left: 54px; right: 10px; top: -2px; height: .5px; background: rgba(0,0,0,.1) }
   .mw-ic { color: #8E8E93 } .mw-ic svg { display: block; width: 30px; height: 30px }
   .mw-l1 { display: flex; align-items: baseline; gap: 8px } .mw-l1 b { font-size: 13px; font-weight: 600; color: #1D1D1F; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
-  .mw-l1 time { margin-left: auto; font-size: 11.5px; color: #86868B; white-space: nowrap }
+  .mw-l1 time { margin-left: auto; font-size: 12px; color: #86868B; white-space: nowrap }
   .mw-l2 { margin-top: 1px; font-size: 12.5px; line-height: 1.3; color: #3A3A3C; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden }
-  .mw-l3 { margin-top: 2px; font-size: 11.5px; color: #86868B }
+  .mw-l3 { margin-top: 2px; font-size: 12px; color: #86868B }
   .mw-row.is-wait::after { content: ""; position: absolute; left: 4px; top: 15px; width: 7px; height: 7px; border-radius: 99px; background: #0A84FF }
   .mw-row.is-now { background: #E4F3EA } .mw-row.is-now + .mw-row::before, .mw-row.is-now::before { display: none }
   /* the conversation */
@@ -1185,7 +1185,7 @@ html body #bigcta.is-wait { visibility: hidden }
 
 /* ---- v70 the messages at every width; the result as a strip ---- */
 @media (max-width: 1179px) { html body .fl-missed { display: block; position: absolute; inset: 0; pointer-events: none; z-index: 0 } }
-@media (max-width: 1000px) { html body .fl-missed .fm:nth-child(n+30) { display: none } html body .fl-missed .fm { max-width: 200px; font-size: 11.5px } }
+@media (max-width: 1000px) { html body .fl-missed .fm:nth-child(n+30) { display: none } html body .fl-missed .fm { max-width: 200px; font-size: 12px } }
 @media (max-width: 640px) { html body .fl-missed .fm:nth-child(n+16) { display: none }
   html body .fl-missed.is-mess { -webkit-mask-image: linear-gradient(180deg, #000 0, #000 12%, transparent 22%, transparent 90%, #000 100%); mask-image: linear-gradient(180deg, #000 0, #000 12%, transparent 22%, transparent 90%, #000 100%) } }
 .fu-strip { position: relative; z-index: 4; margin: 22px auto 0; max-width: 880px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 16px 10px 12px; border-radius: 22px;
@@ -1372,7 +1372,7 @@ html body .fl-missed.is-mess.is-flow2 .fm.fl-lead { width: 214px; max-width: non
   box-shadow: 0 0 0 1px rgba(14,30,22,.05), 0 8px 20px -14px rgba(14,30,22,.3); animation-name: fu-out; transform: none }
 @keyframes fu-out { 0% { opacity: 0; transform: translate3d(0, 0, 0) } 14% { opacity: .5 } 78% { opacity: .5 } 100% { opacity: 0; transform: translate3d(var(--run, 300px), 0, 0) } }
 html body .fl-missed .fl-lead span { flex: 1; min-width: 0 }
-html body .fl-missed .fl-lead em { flex: none; margin-left: 6px; padding: 2px 8px; border-radius: 99px; font: 600 11.5px/1.4 var(--apple); font-style: normal; background: #EEF0EE; color: #3E4541 }
+html body .fl-missed .fl-lead em { flex: none; margin-left: 6px; padding: 2px 8px; border-radius: 99px; font: 600 12px/1.4 var(--apple); font-style: normal; background: #EEF0EE; color: #3E4541 }
 html body .fl-missed .fl-lead em.is-ok { background: #E3F6D6; color: #1F5C3A }
 @media (prefers-reduced-motion: reduce) { html body .fl-missed.is-flow2 .fm { animation: none !important; opacity: .45 } }
 /* v96: the v93 white try-card is withdrawn (founder, thread da6c7a35); the older try box is the default again */
@@ -1829,7 +1829,7 @@ html body section#how { display: none !important }
 #story .m6 small { padding: 0 6px; font-size: 13px; color: #5F6661 }
 #story .m6.is-day { align-self: center } #story .m6.is-day span { color: #5F6661 }
 #story .m6.is-fu { flex-direction: column; gap: 8px; align-self: stretch; margin: 2px 6%; padding: 12px 14px; border-radius: 16px; background: #F6F8F5; box-shadow: inset 0 0 0 1px rgba(31,107,71,.14) }
-#story .fu6-k { font-size: 11.5px; color: #1F6B47 }
+#story .fu6-k { font-size: 12px; color: #1F6B47 }
 #story .fu6-t { font: 600 15.5px/1.3 var(--apple) }
 #story .fu6-chips { display: flex; flex-wrap: wrap; gap: 6px } #story .fu6-chips span { padding: 5px 10px; border-radius: 99px; background: #fff; box-shadow: inset 0 0 0 1px rgba(31,107,71,.18); font: 600 13px/1.3 var(--apple); color: #1F5C3A }
 #story .fu6-used { padding: 3px 10px; border-radius: 99px; background: #E3F6D6; color: #1F5C3A; font: 600 12.5px/1.3 var(--apple) }

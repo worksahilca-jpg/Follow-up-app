@@ -231,3 +231,6 @@ function WeekDots({ days }: { days: { day: string; n: number }[] }) {
     </div>
   );
 }
+
+// Each view names itself in the browser tab (WCAG 2.4.2); the root template adds " — FollowUp".
+export const metadata = { title: "Results" };

@@ -1596,3 +1596,33 @@ includes the ones your website and ads send there…").
 words; the fewest words that are still true.
 **Do not propose again:** question-style headings that describe the customer's behaviour ("where do customers
 write…"), or two-sentence explanations where one short line does.
+
+## R-122 — The app's current look: "feels like a fake app or a 90s app" ^R-122
+
+**Date:** 2026-10-17. **Founder, verbatim:** *"we need a stronger design for our app bro it still fells like a fake app
+or just a 90s app"*.
+**What was rejected:** the app's overall look as it stands after A-264 (Apple feel) and A-273 (iOS sizes): not one
+screen, the whole impression.
+**Principle (inferred, not yet confirmed; asked which screens and what exactly):** the app must look as solid and
+current as the apps the owner already trusts on their phone. A plain, careful look still reads as unfinished when it
+has no depth, no real content and no confident visual identity. Calm must not mean bare.
+**Do not propose again:** more "flatter and plainer" passes as the answer to this feedback.
+
+## R-123 — Today in black and white on the Mac look ^R-123
+
+**Date:** 2026-10-17. **Founder, verbatim:** *"this balck white looks bad use wispers"*.
+**What was rejected:** the first answer to R-122: warm-white ground, white shadowed cards, black Send, ink tabs, Inter.
+**Principle (inferred, not confirmed):** black on white alone reads as cold and unfinished to the founder; the app
+needs colour that belongs to FollowUp.
+**Do not propose again:** a black-and-white Today as the fix for R-122.
+
+## R-124 — Today in the website's colours (cream, forest, mint) ^R-124
+
+**Date:** 2026-10-17. **Founder, verbatim:** *"looks bad bro lets use something esle man i am coooked confused"*.
+**What was rejected:** the second answer to R-122: cream ground (#F8F6F1), forest green accent (#145A3E), mint reply
+bubble and Send (#E4F8EB / #CDEFD9), apricot/sky/mint initials, Inter, iOS sizes. Both the forest Send and mint Send
+versions.
+**Principle (inferred, not confirmed):** copying another product's palette onto our screens does not give the app its
+own identity. Three looks in one day left the founder confused: guessing from words is not working. Next round starts
+from screenshots of apps the founder likes, not from adjectives.
+**Do not propose again:** the cream/forest/mint website palette on the app.

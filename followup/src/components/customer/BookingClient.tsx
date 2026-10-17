@@ -97,7 +97,9 @@ export default function BookingClient({ leadId }: { leadId: string }) {
   const days = useMemo(() => toDays(data?.slots ?? [], data?.bookingDays), [data]);
   const day = days.find((d) => d.key === dayKeyPicked) ?? days.find((d) => d.slots.length > 0) ?? null;
   const morning = day ? day.slots.filter((iso) => new Date(iso).getHours() < 12) : [];
-  const afternoon = day ? day.slots.filter((iso) => new Date(iso).getHours() >= 12) : [];
+  // 5 PM on is "Evening": a 9 PM time under "Afternoon" read as a mistake.
+  const afternoon = day ? day.slots.filter((iso) => new Date(iso).getHours() >= 12 && new Date(iso).getHours() < 17) : [];
+  const evening = day ? day.slots.filter((iso) => new Date(iso).getHours() >= 17) : [];
   const minutes = data?.durationMinutes ?? 30;
   const business = data?.businessName ?? "";
   const first = data?.leadName?.split(" ")[0] ?? "";
@@ -261,6 +263,12 @@ export default function BookingClient({ leadId }: { leadId: string }) {
                 <div className={s.timeGroup}>
                   <div className={s.mono}>Afternoon</div>
                   <div className={s.times}>{afternoon.map(timeButton)}</div>
+                </div>
+              )}
+              {evening.length > 0 && (
+                <div className={s.timeGroup}>
+                  <div className={s.mono}>Evening</div>
+                  <div className={s.times}>{evening.map(timeButton)}</div>
                 </div>
               )}
               {bookError && (

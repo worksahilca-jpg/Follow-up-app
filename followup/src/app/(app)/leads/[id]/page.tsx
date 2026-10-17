@@ -487,3 +487,6 @@ function newestInboundAt(messages: { direction: string; date: string }[]): strin
   }
   return newest === undefined ? undefined : new Date(newest).toISOString();
 }
+
+// Each view names itself in the browser tab (WCAG 2.4.2); the root template adds " — FollowUp".
+export const metadata = { title: "Customer" };

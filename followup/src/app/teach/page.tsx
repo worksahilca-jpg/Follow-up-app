@@ -24,3 +24,6 @@ export default async function TeachPage() {
   const questions = teachQuestions(business?.industry, facts.map((f) => f.label));
   return <TeachFlow questions={questions} known={facts} />;
 }
+
+// Its own tab title (WCAG 2.4.2); the root template adds " — FollowUp".
+export const metadata = { title: "Teach FollowUp" };

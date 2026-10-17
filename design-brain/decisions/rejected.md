@@ -1626,3 +1626,55 @@ versions.
 own identity. Three looks in one day left the founder confused: guessing from words is not working. Next round starts
 from screenshots of apps the founder likes, not from adjectives.
 **Do not propose again:** the cream/forest/mint website palette on the app.
+
+## R-125 — Redesign v1 built from our own ideas ^R-125
+
+**Date:** 2026-10-17. **Founder, verbatim:** *"dont make anything from your side copy the craetivity that is already
+working"*.
+**What was rejected:** the approach behind redesign v1 (grey ground, tinted faces with app badges, custom sent and
+"all caught up" cards, an invented About sheet): new design invented by us, even when research-backed.
+**Principle (inferred from his words, not confirmed in detail):** build each screen from patterns already proven in
+apps people use every day (Apple's own apps first: Messages, Mail, Settings, Reminders, Health; then Wispr), not from
+new inventions. Familiar beats novel (Jakob's law). We take how proven apps work and Apple's standard building
+blocks, never another company's logo, name or brand look (R-092, R-097 still stand).
+**Do not propose again:** screens whose look or flow we invented when a proven everyday pattern exists.
+
+## R-126 — Round 2: proven Apple/Wispr patterns, still in black and white ^R-126
+
+**Date:** 2026-10-17. **Founder, verbatim:** *"i do know looks still very bad"*.
+**What was rejected:** round 2 (A-277 patterns: Messages list and chat, iPhone Settings, Screen Time, Wispr home,
+history and onboarding), drawn in our current black and white.
+**Principle (inferred, asked to confirm):** most likely the black-and-white again (R-123 said "this balck white looks
+bad"): copying the layouts was not enough while the colour stayed monochrome. Asked whether it is the colours, the
+layout, or both, and for screenshots of apps he loves.
+
+## R-127 — Per-customer switches ("Always ask me first for Raj", "Stop following up Raj") ^R-127
+
+**SUPERSEDED (2026-10-17)** in part: the founder then said *"but we need this feature make it simple"*. The need stays;
+the two switches stay rejected. A simpler form is proposed (one plain choice, see design-decisions 2026-10-17).
+
+**Date:** 2026-10-17. **Founder, verbatim:** *"but the button sounds complex and i didnt got the feature"*.
+**What was rejected:** two switches on a customer's page to change how FollowUp treats that one person.
+**Principle (his words):** if the founder can't get a feature from a one-line explanation, owners won't either.
+Extra switches read as complexity; the app decides well by default instead. Explained twice, still unclear: dropped.
+**Do not propose again:** per-person control switches.
+
+## R-128 — Four accent colours (blue, indigo, green, orange) on the laptop Today ^R-128
+
+**Date:** 2026-10-17. **Founder, verbatim:** *"why we using all these colours bro i want simple as minimal not colourful"*,
+then *"look how simple is elevenlabs and marco is"* (ElevenLabs and Macro).
+**What was rejected:** the colour board, the same laptop Today in four single accents (send button, selected row, nav).
+**Principle (his words):** minimal, not colourful. The look he points to is neutral: white or near-black, greys, one
+black (or white) button, almost no colour at all.
+**Note on R-123 / R-126 (inferred, not confirmed):** those said black and white "looks bad", yet ElevenLabs and Macro are
+neutral too. Best reading: what looked bad was our *stark, cheap-looking* black and white (heavy shadows, warm tints,
+coloured faces, orange boxes), not neutral as such. Refined neutral greys, thin lines and calm type are the direction.
+**Do not propose again:** an accent colour as the fix for the look.
+
+## R-129 — A Search row at the top of the laptop sidebar ^R-129
+
+**Date:** 2026-10-17. **Founder, verbatim:** *"why there is search button on the top of today we dont eed it right ?"*
+**What was rejected:** the "Search" row above Today in the laptop sidebar (a window to find a customer, ⌘K).
+**Principle (inferred):** don't repeat a tool in two places. Finding a person is what Customers' own search box is for;
+the sidebar holds only the places. Removed with the calm look (A-282).
+**Do not propose again:** a global Search row in the sidebar.

@@ -1,6 +1,12 @@
 @import "tailwindcss";
 
 /* ------------------------------------------------------------------
+   2026-10-17, A-282 (founder: "yes go with the new one"): the calm look.
+   No colour (R-128); charcoal, never sharp black; one calm ground with the
+   sidebar a touch darker; lines are see-through so layers read as depth.
+   Light and dark both, following the device (A-281). Green, amber and red
+   stay only for "done", "careful" and "broken", always with their words.
+
    FollowUp app-wide tokens: the sketched canvas system.
 
    2026-09-27. The founder: "just the landing page is live … lets
@@ -26,31 +32,31 @@
 
   /* Ground and surfaces (canvas: #fdfcfc page, #fff card, #f5f3f1 fill,
      #f9f8f6 the sidebar). */
-  --paper: #fdfcfc;
+  --paper: #fafaf9;
   --card: #ffffff;
-  --card-2: #f5f3f1;
-  --sidebar: #f9f8f6;
+  --card-2: #f3f3f2;
+  --sidebar: #f3f3f2;
 
   /* Text. --ink-soft is the canvas's secondary grey (7.4:1 on white),
      --ink-faint its quiet meta grey (5.0:1 on white). */
-  --ink: #0a0a0a;
-  --ink-soft: #57534e;
-  --ink-faint: #736e68;
-  --line: #e7e5e2;
-  --line-2: #f0eeeb;
-  --line-strong: rgba(10, 10, 10, 0.18);
+  --ink: #1c1c1f;
+  --ink-soft: #57575c;
+  --ink-faint: #6b6b70;
+  --line: rgba(0, 0, 0, 0.08);
+  --line-2: rgba(0, 0, 0, 0.05);
+  --line-strong: rgba(0, 0, 0, 0.16);
 
   /* The accent is black: buttons, links, the active nav item, focus. */
-  --accent: #0a0a0a;
-  --accent-deep: #27272a;
-  --accent-soft: #f1eeea;
+  --accent: #2a2a2e;
+  --accent-deep: #1c1c1f;
+  --accent-soft: rgba(0, 0, 0, 0.05);
   --on-accent: #ffffff;
   /* Historical alias, same value as --accent, never a second hue. */
   --rust: var(--accent);
   --rust-soft: var(--accent-soft);
 
-  --slate: #57534e;
-  --slate-soft: #f5f3f1;
+  --slate: #57575c;
+  --slate-soft: #f3f3f2;
 
   --sage: #0d6e3c;
   --sage-soft: #dcf5e5;
@@ -76,12 +82,12 @@
      every canvas board. Lifted surfaces (a dialog, a menu) keep a soft
      shadow, because they float above the page. */
   /* State dots (A-029): the only colour on a state pill; the word always says the state. */
-  --state-needs: #c96a1b; /* clearer orange, founder 2026-10-05 (A-091): "your turn", never an error. A dot only: 3.7:1 on white, not for text. */
-  --state-quiet: #b8892b;
-  --state-waiting: #7a8699;
+  --state-needs: #2a2a2e; /* "your turn", a charcoal dot (A-282 / R-128: no colour; supersedes A-091's orange). The words beside it carry the meaning. */
+  --state-quiet: #8e8e93;
+  --state-waiting: #8e8e93;
   --state-sent: #4f7a5a;
-  --state-checked: #a8a29e;
-  --state-done: #d6d3d1;
+  --state-checked: #a1a1a6;
+  --state-done: #d4d4d8;
 
   --radius-box: 16px;
   --shadow-box: 0 0 0 1px var(--line);
@@ -96,15 +102,15 @@
      labels it and colours a title's italic phrase, a soft glass field on
      it, and the scrim behind a dialog: tokens so the dark theme can redraw
      them. */
-  --wash: #f3f8f4;
-  --wash-edge: #dcebe1;
-  --green-ink: #2a5a47;
+  --wash: rgba(255, 255, 255, 0.7);
+  --wash-edge: rgba(0, 0, 0, 0.09);
+  --green-ink: #3f3f46;
   --glass: rgba(255, 255, 255, 0.55);
   --glass-strong: rgba(255, 255, 255, 0.6);
   --scrim: rgba(0, 0, 0, 0.4);
   /* A-211/A-213: the page behind a window, and the place you're in on the sidebar. */
   --win-dim: rgba(14, 14, 12, 0.32);
-  --nav-on: #ebe9e4;
+  --nav-on: rgba(0, 0, 0, 0.055);
   --tint-bad: rgba(217, 95, 79, 0.08);
   --tint-good: rgba(122, 157, 127, 0.08);
 }
@@ -122,22 +128,22 @@
   .theme-auto,
   html:has(.theme-auto) {
     color-scheme: dark;
-    --paper: #121110;
-    --card: #1b1a19;
-    --card-2: #232120;
-    --sidebar: #161514;
-    --ink: #f3f1ee;
-    --ink-soft: #b8b2ab;
-    --ink-faint: #958f88;
-    --line: #2e2c2a;
-    --line-2: #262422;
-    --line-strong: rgba(243, 241, 238, 0.22);
-    --accent: #f3f1ee;
-    --accent-deep: #d6d2cc;
-    --accent-soft: #2a2826;
-    --on-accent: #121110;
-    --slate: #b8b2ab;
-    --slate-soft: #232120;
+    --paper: #202020;
+    --card: #262626;
+    --card-2: #2a2a2a;
+    --sidebar: #1a1a1a;
+    --ink: #ececec;
+    --ink-soft: #a6a6a6;
+    --ink-faint: #8f8f8f;
+    --line: rgba(255, 255, 255, 0.08);
+    --line-2: rgba(255, 255, 255, 0.05);
+    --line-strong: rgba(255, 255, 255, 0.18);
+    --accent: #ececec;
+    --accent-deep: #d4d4d4;
+    --accent-soft: rgba(255, 255, 255, 0.06);
+    --on-accent: #202020;
+    --slate: #a6a6a6;
+    --slate-soft: #2a2a2a;
     --sage: #7fcf9f;
     --sage-soft: #16291e;
     --gold: #e3a95a;
@@ -145,22 +151,25 @@
     --coral: #f08a9c;
     --coral-soft: #2e1519;
     --coral-fill: #c43c56;
-    --state-needs: #e0893d;
-    --state-quiet: #d0a24a;
-    --state-waiting: #93a0b4;
+    --state-needs: #ececec;
+    --state-quiet: #8f8f8f;
+    --state-waiting: #8f8f8f;
     --state-sent: #7fa98a;
-    --state-checked: #8a847d;
-    --state-done: #4a4642;
+    --state-checked: #8a8a8a;
+    --state-done: #4a4a4a;
     --shadow-box-lift: 0 0 0 1px var(--line), 0 24px 48px -24px rgba(0, 0, 0, 0.6);
-    --wash: #1a231f;
-    --wash-edge: rgba(143, 195, 168, 0.18);
-    --green-ink: #8fc3a8;
+    --wash: rgba(255, 255, 255, 0.035);
+    --wash-edge: rgba(255, 255, 255, 0.1);
+    --green-ink: #c8c8c8;
     --glass: rgba(255, 255, 255, 0.06);
     --glass-strong: rgba(255, 255, 255, 0.08);
     --scrim: rgba(0, 0, 0, 0.6);
     --win-dim: rgba(0, 0, 0, 0.55);
-    --nav-on: #23211f;
+    --nav-on: rgba(255, 255, 255, 0.07);
     --tint-bad: rgba(240, 138, 156, 0.1);
+    --bubble-them: #2e2e2e;
+    --bubble-you: #e6e6e6;
+    --on-bubble-you: #1c1c1f;
     --tint-good: rgba(127, 207, 159, 0.1);
   }
   html:has(.theme-auto) body {
@@ -774,20 +783,18 @@ main[data-swipe="leaving"] {
   transition: translate 0.24s var(--ease-in);
 }
 
-/* iOS lists: the hairline between rows starts where the words start, not
-   at the edge (A-264). `--sep-inset` is the row's own left padding plus its
-   leading icon, set by the row. */
+/* List rows. Until 2026-10-17 a hairline ran between rows (A-264); the calm
+   look (A-282) drops it: space separates rows, and a row you point at gets
+   a soft rounded fill. The class stays so every list changes in one place. */
 .ios-sep {
   position: relative;
+  border-radius: 12px;
 }
-.ios-sep::before {
-  content: "";
-  position: absolute;
-  left: var(--sep-inset, 16px);
-  right: 0;
-  top: 0;
-  height: 1px;
-  background: var(--line);
+@media (hover: hover) {
+  a.ios-sep:hover,
+  button.ios-sep:hover {
+    background: var(--nav-on);
+  }
 }
 
 /* The page's title moves into the phone's top bar once it scrolls away

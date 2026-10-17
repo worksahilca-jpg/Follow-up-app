@@ -34,6 +34,16 @@ export interface CrmClient {
    * FollowUp stops chasing them. null when neither, or the CRM couldn't say. Never throws.
    */
   standing(apiKey: string, externalId: string): Promise<CrmStanding>;
+  /** The owner's own stages, in the CRM's order (A-275). [] when the CRM couldn't say. Never throws. */
+  listStages(apiKey: string): Promise<CrmStage[]>;
+  /** Moves this person to one of those stages (A-275). `name` is theirs, for a CRM that needs one to make a record. */
+  moveToStage(apiKey: string, externalId: string, stageId: string, name: string): Promise<{ ok: boolean; message?: string }>;
+}
+
+/** A stage in the owner's CRM: its id there, and its name as the owner sees it. */
+export interface CrmStage {
+  id: string;
+  name: string;
 }
 
 export type CrmStanding = "never" | "done" | null;

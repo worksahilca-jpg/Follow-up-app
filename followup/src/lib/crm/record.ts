@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { readStageWrite } from "@/lib/crm/stages";
 
 /**
  * "What FollowUp wrote in Follow Up Boss" (A-252): the week's writes from
@@ -44,6 +45,11 @@ function clip(s: string): string {
  * ("FollowUp: Nadia Khan looks ready to talk.", src/lib/crm/notes.ts).
  */
 export function describeWrite(kind: string, text: string, name: string): { title: string; quote: string | null } {
+  // A booked customer moved to the owner's chosen stage (A-275).
+  if (kind === "stage") {
+    const w = readStageWrite(text);
+    return { title: w ? `Moved ${name} to ${w.label}` : `Moved ${name}`, quote: null };
+  }
   const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
   if (kind === "note" && lines[0] === "FollowUp sent:") {
     const body = lines.slice(1).join(" ");

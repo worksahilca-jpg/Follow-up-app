@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { CRM_PROVIDERS, isCrmProvider } from "@/lib/crm";
+import { readStageWrite } from "@/lib/crm/stages";
 
 /**
  * Every write FollowUp makes in the owner's CRM, on record (A-252): a note
@@ -14,7 +15,7 @@ import { CRM_PROVIDERS, isCrmProvider } from "@/lib/crm";
  * asked for the write.
  */
 
-export type CrmWriteKind = "note";
+export type CrmWriteKind = "note" | "stage";
 export type CrmWriteStatus = "trying" | "done" | "waiting" | "failed";
 
 /** The waits before each next try: 5 min, 15 min, 1 h, 6 h. After the last, it stops. */
@@ -56,6 +57,12 @@ async function attempt(apiKey: string, provider: string, crmId: string, kind: Cr
     switch (kind) {
       case "note":
         return await CRM_PROVIDERS[provider].client.pushNote(apiKey, crmId, text);
+      case "stage": {
+        // A booked customer moved to the owner's chosen stage (A-275, src/lib/crm/stages.ts).
+        const w = readStageWrite(text);
+        if (!w) return { ok: false, message: "The stage move was unreadable." };
+        return await CRM_PROVIDERS[provider].client.moveToStage(apiKey, crmId, w.stageId, w.name);
+      }
     }
   } catch (err) {
     return { ok: false, message: err instanceof Error ? err.message : "The write failed." };

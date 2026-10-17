@@ -800,3 +800,10 @@ is blocked by it.**
 | Mon Jan 4, 2027 | **Stage 3 done:** Google verification + CASA passed; first paying customer | Founder + Claude |
 
 A date that slips is moved here, with the reason, not dropped.
+
+**Waiting for November (founder, 2026-10-17: "add it to november list").** Not started before Nov 1:
+- Landing page: smoother animations (still uneven on the founder's Windows laptop).
+- Landing page: real tester quotes (needs testers first).
+- Landing page: the founder's social links, and the business name and city, in the footer (needs them from the founder).
+- Landing page: count taps on the sign-up button, not only visits.
+- Landing page: open sign-up at launch (invite-only until then).

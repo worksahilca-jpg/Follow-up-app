@@ -117,6 +117,11 @@ export async function draftDm(
     // the exact shortcut the founder rejected on the WhatsApp filter.
     const shape = checkDmDraftShape({ body: draft.body, buttons }, text, leadLanguage?.language, saidByBusiness);
     if (shape.ok) return { body: draft.body, quickReplies: { question: situation.id, buttons }, shapeFailed: null };
+    // Only the buttons broke a rule (the accuracy test, 2026-10-17: "Which day would suit you best?" with Saturday
+    // and Sunday chips, when the customer only said "this weekend"). Buttons are optional; the reply goes without them.
+    if (buttons.length > 0 && checkDmDraftShape({ body: draft.body, buttons: [] }, text, leadLanguage?.language, saidByBusiness).ok) {
+      return { body: draft.body, quickReplies: { question: situation.id, buttons: [] }, shapeFailed: null };
+    }
     lastRule = shape.rule;
     if (attempt === 1) return { body: draft.body, quickReplies: { question: situation.id, buttons: [] }, shapeFailed: lastRule };
     ask = { ...situation, hint: `${situation.hint}\n\n${retryNote(shape.rule)}` };

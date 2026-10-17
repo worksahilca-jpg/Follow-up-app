@@ -35,7 +35,7 @@ import { AlertsCard } from "@/components/app/AlertsSetup";
 import InstallCard from "@/components/app/InstallCard";
 import ReplyForMeCard from "@/components/app/ReplyForMeCard";
 import { DayLater, type LaterLine, type TodayRow } from "@/components/app/TodayDay";
-import { clockTime, dayOffset, daySentence, doneLines, greeting } from "@/lib/todayWords";
+import { clockTime, dayOffset, daySentence, doneLines, greeting, nextForYouLine } from "@/lib/todayWords";
 import { oneQueue } from "@/lib/approvalGroups";
 import { replyForMeOffer } from "@/lib/replyForMeOffer";
 import { todaysQuestion } from "@/lib/dailyQuestionData";
@@ -43,7 +43,7 @@ import { planLine } from "@/lib/comingUp";
 import { findHabitSuggestion } from "@/lib/habits";
 import type { MeetingToLookBackOn } from "@/components/app/MeetingOutcomeCard";
 import type { CallToPrepare } from "@/components/app/CallBriefCard";
-import { callNotOver, readCallBrief } from "@/lib/callBrief";
+import { callIsSoon, callNotOver, readCallBrief } from "@/lib/callBrief";
 import ScrollTitle from "@/components/app/ScrollTitle";
 import { LOOK_BACK_DAYS, endedMeetings, isMeetingOutcome, meetingWhen } from "@/lib/meetingOutcome";
 import { PLAN_NAMES, choosePlan, readFollowUpPlans } from "@/lib/followUpPlans";
@@ -338,12 +338,18 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     name: b.lead.name,
     first: b.lead.name.trim().split(/\s+/)[0] || b.lead.name,
     time: clockTime(b.scheduledAt, timezone),
+    soon: callIsSoon(b.scheduledAt, now),
     durationMinutes: b.durationMinutes,
     phone: b.lead.phone ?? null,
     // The stored note shows at once; the card asks again in the background in case a message came since.
     brief: readCallBrief(b.brief),
   }));
   const bookingsTomorrow = nearBookings.filter((b) => dayOffset(b.scheduledAt, now, timezone) === 1);
+  // The owner's next booked call, today first, else tomorrow: named when their replies are done (A-283).
+  const nextCallBooking = bookingsToday[0] ?? bookingsTomorrow[0] ?? null;
+  const nextCallForYou = nextCallBooking
+    ? { name: nextCallBooking.lead.name, time: clockTime(nextCallBooking.scheduledAt, timezone), tomorrow: !bookingsToday[0] }
+    : null;
   // Calls to make (A-103) as rows: the customer's page has the call and its buttons.
   const callRows: TodayRow[] = callCards.map((c) => ({
     key: `call-${c.leadId}`,
@@ -454,6 +460,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             rows={callRows}
             calls={callsToPrepare}
             plan={approvalItems.length === 0 && comingUp ? planLine(comingUp.groups) : null}
+            next={nextForYouLine(nextCallForYou)}
             weekResults={weekResults}
             answeredForYou={rescue?.answeredForYou ?? 0}
             sendLocked={sendLocked}

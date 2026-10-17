@@ -4820,3 +4820,74 @@ platforms."*
 - Shown only to say which app is connected, unchanged, as the brands' guidelines allow.
 - Outlook, GoHighLevel and Follow Up Boss keep their tile until their own logo files are added (not in that set).
 - Supersedes the drawn glyphs on coloured tiles from A-273 for these apps; the website form keeps its globe.
+
+## A-277 — Copy proven patterns: Apple's apps for screens, Wispr for feel and setup (2026-10-17) ^A-277
+
+**Founder:** after R-125, asked which apps to copy from, he picked *"Mix: Apple + Wispr"*: Apple's own apps for the
+screens and lists (Customers like Messages, one customer like a Messages chat, Settings like iPhone Settings, Results
+like Screen Time, Today's list like Mail), Wispr for the feel, the home screen, setup and the landing page.
+We copy how they work and Apple's standard building blocks; never a logo, name or brand look (R-092, R-097).
+
+## A-278 — Depth from redesign v1: grey ground, white raised surfaces (2026-10-17) ^A-278
+
+**Founder, verbatim:** *"the dept and stuff you added was good"* (about redesign v1, after rejecting round 2).
+**What was liked:** v1's shared look: a soft grey ground (#F2F2F5) with white surfaces raised by a soft two-layer shadow
+instead of thin grey outlines, see-through top and tab bars, lists as one white grouped surface. "and stuff" probably
+includes the tinted faces; not confirmed.
+**Supersedes:** A-090's "the app ground stays white" (SUPERSEDED 2026-10-17 for the app's ground, by this entry).
+**Next:** combine this depth with the proven layouts of A-277 (round 3).
+
+## A-279 — "Tell FollowUp what to change": rewrite a reply from your own words (2026-10-17) ^A-279
+
+**Founder, verbatim:** *"yes add it"* (asked: instead of editing a reply yourself, type or say "make it warmer" or
+"mention Saturday", and FollowUp rewrites it; like Wispr, talk instead of type).
+**What's approved (behaviour):** inside Change it, one box where the owner types an instruction (the phone keyboard's
+own microphone gives voice for free); FollowUp rewrites the reply and it still waits for the owner's Send. Builds on
+the existing rewrite (Shorter · Warmer · More formal · In their language, A-043, `/api/leads/[id]/rewrite`).
+Same rules as every draft: no made-up prices or dates, the sales-pressure check, the AI allowance.
+**When:** on the list for after 2026-10-31 (the dated plan), unless the founder says sooner. Its look is drawn first.
+
+## A-280 — Per-customer choice as one plain row: "FollowUp and {name} · Ask me first" (2026-10-17) ^A-280
+
+**Founder, verbatim:** *"yes fix all"* (answering "Do I build it this way?" for the drawn row).
+**What's approved:** the existing per-customer tier (`Lead.automationTier`, hidden under Details as "How it handles
+{name}") moves to one row in the About sheet (phone) and the customer's side panel (computer): "FollowUp and {name}",
+value on the right. Tapping opens a pick list with a tick (phone) or a small pop-up menu (computer): **Ask me first**
+(default) · **Don't write to {name}**. Sending by itself appears as a third choice only where the account allows it.
+Supersedes the R-127 switches. Words: plain, as drawn.
+
+## A-281 — Minimal, no colour, light and dark both: the app follows the device ^A-281
+
+**Date:** 2026-10-17. **Founder, verbatim:** *"for light theme it should go ligh and for dark it should go dark right ?"*
+(after the minimal light and dark drawings, R-128).
+**What:** both minimal looks ship. The app follows the phone's or computer's own Light/Dark setting, the way Apple's
+apps, ElevenLabs and Macro do. Light: white, pale grey sidebar, hairlines, grey initials, one black button. Dark:
+near-black, grey rows, one white button. No accent colour in either (R-128); status colours only where something is
+broken or done.
+**Supersedes:** "light only" (the skill's token note and A-090's white ground) for the app. Landing page not decided.
+
+## A-282 — The calm look: one charcoal ground, no row lines, a see-through reply box ^A-282
+
+**Date:** 2026-10-17. **Founder, verbatim:** *"yes go with the new one"* (after seeing it next to the previous charcoal
+version; his reference was the Claude desktop app's see-through typing bar, "looks premium").
+**What specifically was approved (laptop Today, light and dark, following the device per A-281):**
+- No colour (R-128). Charcoal instead of sharp black (#2a2a2e for the light button and your bubbles; dark ground #202020
+  with the sidebar #1a1a1a).
+- One calm ground for the whole window; the sidebar only a touch darker (light #fafaf9, sidebar #f3f3f2).
+- No lines between rows or under headers; space separates. The selected row is a soft rounded fill (4–6% black/white).
+- The reply box is see-through (3–70% fill) with a thin border and 22px corners, not a raised card. The notice box the same.
+- Their bubbles are a faint see-through grey; the button is charcoal on light, soft white on dark.
+**Supersedes:** A-278's raised white cards on grey for the app (depth now comes from see-through layers, not shadows).
+
+## A-283 — Today, three small changes from the big-apps study ^A-283
+
+**Date:** 2026-10-17. **Founder, verbatim:** *"yes do all 3"* (after `reports/How big apps design their Today page.md`).
+**What specifically was approved:**
+1. **Today's count on the phone tab:** a small charcoal badge on the Today icon ("5"), as the laptop sidebar already shows.
+   Screen readers hear "Today, 5 waiting".
+2. **A booked call's time on its row**, on the right like a calendar. A call starting within the hour (or under way) is
+   first in Then and says "Starting soon"; later calls follow the replies, in time order. **Supersedes** A-268's "every
+   booked call first in Then" and that part of A-230's order.
+3. **The done message names the owner's next thing:** "Next: your call with Raj at 3:00 PM." (or "tomorrow at …"),
+   above FollowUp's own plan line. Only booked calls count.
+**Not taken from the study:** the "on its own" line removal and two kinds of empty message (not asked for).

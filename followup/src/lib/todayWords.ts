@@ -90,3 +90,14 @@ export function doneLines(input: { handled: number; wroteFor: number; booked: { 
   for (const b of input.booked) lines.push(`${b.name} booked a call for ${b.when}.`);
   return lines;
 }
+
+/**
+ * The owner's own next thing, said when their replies are done (A-283, after Todoist's "Upcoming" and Granola's next
+ * meeting): "Next: your call with Raj at 3:00 PM." or "… tomorrow at 10:00 AM." Only a booked call counts, because it
+ * is the one thing with a time the owner must keep; FollowUp's own check-ins have their own line.
+ */
+export function nextForYouLine(next: { name: string; time: string; tomorrow: boolean } | null): string | null {
+  if (!next) return null;
+  const first = next.name.trim().split(/\s+/)[0] || next.name;
+  return `Next: your call with ${first} ${next.tomorrow ? "tomorrow " : ""}at ${next.time}.`;
+}

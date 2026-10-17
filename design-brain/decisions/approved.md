@@ -4738,3 +4738,19 @@ said *"yes both"* and *"go for the activity thing too"*. Drawing before the rese
   once, gone once fixed (the inbox connected and checked since) or when "Got it" is pressed. Today's own "Replies
   and check-ins can't go out" box still covers a lost Gmail, so it isn't said twice.
 - **Empty:** "Quiet so far. When FollowUp answers someone or stops a check-in on its own, it shows here."
+
+## A-271 — GoHighLevel: connect with two pasted things; replies go back through it ^A-271
+
+**Date:** 2026-10-16. **Founder:** *"ok go with A"* (a Private Integration key, not a Marketplace app), then, shown
+the connect window on the phone, *"yes go ahead"*. Drawing: `prototypes/ghl-connect/`.
+- **One more row in the same CRM window**, beside Follow Up Boss and HubSpot: "Follow Up Boss, HubSpot or
+  GoHighLevel" → "Which one do you use?" → GoHighLevel. Same promise box ("It never deletes or changes anything
+  there. It only adds notes.") and the same one-boss line.
+- **Two boxes, each with where to find it, in GoHighLevel's own words:** "Your Location ID" (Settings → Business
+  Profile) and "Your Private Integration key" (Settings → Private Integrations → Create new). The menu paths are read
+  from HighLevel's docs and SDK, not seen live: check them on the first real account.
+- **A customer who writes to the owner's GoHighLevel is answered through GoHighLevel**, the way they wrote: a text
+  with a text from the owner's GoHighLevel number, an email by email. Never from Twilio or Gmail instead; if
+  GoHighLevel is no longer connected, the reply doesn't go and the owner is told why in one sentence.
+- **A reply typed in GoHighLevel shows in the thread** as "Sent from GoHighLevel directly, not through FollowUp", and
+  FollowUp doesn't answer that customer again.

@@ -38,7 +38,11 @@ const { state, businessFindFirst, integrationFindFirst } = vi.hoisted(() => {
   };
 });
 vi.mock("@/lib/db", () => ({
-  prisma: { business: { findFirst: businessFindFirst }, integration: { findFirst: integrationFindFirst } },
+  prisma: {
+    business: { findFirst: businessFindFirst },
+    integration: { findFirst: integrationFindFirst },
+    crmConnection: { findFirst: vi.fn(async () => null) },
+  },
 }));
 
 import { canSendOn } from "@/lib/sendChannels";
@@ -129,5 +133,17 @@ describe("canSendOn — the business's own credentials", () => {
     await canSendOn("biz1", "text");
     await canSendOn("biz1", "whatsapp");
     for (const [args] of businessFindFirst.mock.calls) expect(args.select).toEqual({ id: true });
+  });
+});
+
+// GHL 2: a connected GoHighLevel texts and emails for the customers who wrote to it.
+describe("with GoHighLevel connected", () => {
+  it("can text and email, and is asked without reading the key", async () => {
+    const { prisma } = await import("@/lib/db");
+    const crm = prisma.crmConnection.findFirst as unknown as ReturnType<typeof vi.fn>;
+    crm.mockResolvedValueOnce({ id: "c1" }).mockResolvedValueOnce({ id: "c1" });
+    expect(await canSendOn("biz1", "text")).toBe(true);
+    expect(await canSendOn("biz1", "email")).toBe(true);
+    expect(crm).toHaveBeenCalledWith({ where: { businessId: "biz1", provider: "gohighlevel", apiKey: { not: null } }, select: { id: true } });
   });
 });

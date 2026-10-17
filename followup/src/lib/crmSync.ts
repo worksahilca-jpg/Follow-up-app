@@ -135,7 +135,7 @@ export function normalizeCrmPhone(phone: string | null): string | null {
   return `+${digits}`;
 }
 
-async function upsertCrmLead(businessId: string, provider: string, raw: CrmPerson): Promise<"imported" | "touched" | "skipped"> {
+export async function upsertCrmLead(businessId: string, provider: string, raw: CrmPerson): Promise<"imported" | "touched" | "skipped"> {
   const person: CrmPerson = { ...raw, email: normalizeCrmEmail(raw.email), phone: normalizeCrmPhone(raw.phone) };
   if (!person.email && !person.phone) return "skipped"; // nothing to reach them on
   const existing = await prisma.lead.findUnique({

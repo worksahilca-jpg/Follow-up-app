@@ -21,7 +21,7 @@ import type { Prisma } from "@prisma/client";
  * case where nothing at all can go out, cheaply, before any lead is loaded.
  */
 export async function hasAnySendChannel(businessId: string): Promise<boolean> {
-  const [business, inbox] = await Promise.all([
+  const [business, inbox, ghl] = await Promise.all([
     // The same four questions as before, asked in the WHERE clause, with
     // only the id selected. src/lib/db.ts decrypts every token column that
     // comes back in a row, so selecting four real credentials to test them
@@ -53,8 +53,18 @@ export async function hasAnySendChannel(businessId: string): Promise<boolean> {
       where: { status: "connected", provider: { in: ["gmail", "outlook"] }, user: { businessId } },
       select: { id: true },
     }),
+    ghlCanSend(businessId),
   ]);
-  return !!inbox || !!business;
+  return !!inbox || !!business || ghl;
+}
+
+/**
+ * A connected GoHighLevel sends texts and emails for the customers who wrote to it (src/lib/sending.ts, GHL 2).
+ * Asked in the WHERE clause, so the key is never decrypted to answer it.
+ */
+async function ghlCanSend(businessId: string): Promise<boolean> {
+  const conn = await prisma.crmConnection.findFirst({ where: { businessId, provider: "gohighlevel", apiKey: STORED }, select: { id: true } });
+  return conn != null;
 }
 
 export type SendChannel = "email" | "text" | "whatsapp" | "instagram" | "messenger";
@@ -109,6 +119,9 @@ const BUSINESS_CAN_SEND: Record<Exclude<SendChannel, "email">, Prisma.BusinessWh
  * reconnect is picked up on the next pass without anyone doing anything.
  */
 export async function canSendOn(businessId: string, channel: SendChannel): Promise<boolean> {
+  // Coarse in the same way as the email case below: a business with GoHighLevel connected can text and email
+  // through it, and the send itself still takes a customer who wrote somewhere else the way they wrote.
+  if ((channel === "email" || channel === "text") && (await ghlCanSend(businessId))) return true;
   if (channel === "email") {
     const inbox = await prisma.integration.findFirst({
       where: { status: "connected", provider: { in: ["gmail", "outlook"] }, user: { businessId } },

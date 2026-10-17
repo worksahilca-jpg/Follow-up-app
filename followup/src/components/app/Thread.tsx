@@ -11,6 +11,9 @@ import type { Message } from "@/lib/types";
  * Rendered on the server in the business's time zone, so the times read
  * the same for everyone on the team.
  */
+/** Where a reply that didn't go through FollowUp was sent from (Message.source, "<where>_direct"). */
+const DIRECT_FROM: Record<string, string> = { instagram: "Instagram", messenger: "Messenger", whatsapp: "WhatsApp", gohighlevel: "GoHighLevel" };
+
 const TRIGGER_LABEL: Record<string, string> = {
   instant_ack: "welcome message",
   holding: "“let me check” message",
@@ -92,7 +95,7 @@ export default function Thread({
               );
             }
             const who = m.source?.endsWith("_direct")
-              ? `Sent from ${m.source.startsWith("messenger") ? "Messenger" : "Instagram"} directly, not through FollowUp`
+              ? `Sent from ${DIRECT_FROM[m.source.split("_")[0]] ?? "Instagram"} directly, not through FollowUp`
               : m.trigger && TRIGGER_LABEL[m.trigger]
                 ? `Sent by FollowUp · ${TRIGGER_LABEL[m.trigger]}`
                 : "You";

@@ -45,6 +45,10 @@
       "schedule": "*/3 * * * *"
     },
     {
+      "path": "/api/cron/ghl-poll",
+      "schedule": "*/2 * * * *"
+    },
+    {
       "path": "/api/cron/owner-alerts",
       "schedule": "* * * * *"
     },

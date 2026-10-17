@@ -1,0 +1,290 @@
+import { CRM_TIMEOUT_MS, type CrmClient, type CrmPerson } from "./types";
+import { readWhen } from "./dates";
+
+/**
+ * GoHighLevel (founder, 2026-10-16: "lets build ghl too", then "ok go with A"): the owner makes a Private
+ * Integration in their own GoHighLevel sub-account and pastes its key here with the sub-account's Location ID. No
+ * Marketplace app, no OAuth (that is option B, later).
+ *
+ * Confirmed from HighLevel's own SDK (@gohighlevel/api-client 3.1.1, read 2026-10-16; marketplace.gohighlevel.com
+ * doesn't load here): base URL https://services.leadconnectorhq.com, a Bearer token, a `Version` header (the SDK's
+ * default is 2023-02-21), GET /locations/{locationId}, GET /contacts/ with locationId, limit, startAfterId and
+ * startAfter (marked deprecated in favour of a search endpoint whose body the SDK doesn't type), POST
+ * /contacts/{contactId}/notes with { body }, GET /conversations/search with locationId and contactId.
+ *
+ * NOT confirmed: the exact fields on a contact (the SDK's types leave out name and phone) and on a conversation
+ * (lastMessageDate, lastMessageDirection). Everything is read defensively; a field that isn't there is "unknown",
+ * never a guess.
+ */
+const BASE = "https://services.leadconnectorhq.com";
+const VERSION = "2023-02-21";
+const PAGE_SIZE = 100;
+
+/** What the owner pastes: the Location ID and the key, kept together (encrypted as one, src/lib/db.ts). */
+export function packGhlKey(locationId: string, token: string): string {
+  return `${locationId.trim()}|${token.trim()}`;
+}
+
+export function parseGhlKey(apiKey: string): { locationId: string; token: string } | null {
+  const i = apiKey.indexOf("|");
+  if (i <= 0 || i === apiKey.length - 1) return null;
+  const locationId = apiKey.slice(0, i).trim();
+  const token = apiKey.slice(i + 1).trim();
+  if (!/^[A-Za-z0-9_-]{6,64}$/.test(locationId) || token.length < 10) return null;
+  return { locationId, token };
+}
+
+function headers(token: string, json = false): Record<string, string> {
+  return { Authorization: `Bearer ${token}`, Version: VERSION, Accept: "application/json", ...(json ? { "Content-Type": "application/json" } : {}) };
+}
+
+const str = (v: unknown): string | null => (typeof v === "string" && v.trim() ? v.trim() : null);
+
+export function mapGhlContact(c: Record<string, unknown>): CrmPerson | null {
+  const id = str(c.id);
+  if (!id) return null;
+  const name =
+    str(c.contactName) ??
+    ([str(c.firstName), str(c.lastName)].filter(Boolean).join(" ").trim() || null) ??
+    str(c.name) ??
+    "GoHighLevel contact";
+  const added = str(c.dateAdded);
+  return { externalId: id, name, email: str(c.email), phone: str(c.phone), createdAt: added && !Number.isNaN(Date.parse(added)) ? new Date(added) : new Date() };
+}
+
+export const goHighLevelClient: CrmClient = {
+  async testConnection(apiKey) {
+    const k = parseGhlKey(apiKey);
+    if (!k) return { ok: false, message: "Paste both the Location ID and the key." };
+    try {
+      const res = await fetch(`${BASE}/locations/${encodeURIComponent(k.locationId)}`, { headers: headers(k.token), signal: AbortSignal.timeout(CRM_TIMEOUT_MS) });
+      if (res.status === 401 || res.status === 403)
+        return { ok: false, message: "GoHighLevel didn't accept that key for this Location ID. Check both, and that the key can read contacts and conversations." };
+      if (res.status === 404 || res.status === 400) return { ok: false, message: "GoHighLevel doesn't know that Location ID. Copy it again from Settings → Business Profile." };
+      if (!res.ok) return { ok: false, message: `GoHighLevel returned ${res.status}. Try again in a minute.` };
+      const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+      const loc = (data.location ?? data) as Record<string, unknown>;
+      return { ok: true, accountLabel: str(loc.name) ?? undefined };
+    } catch (err) {
+      console.error("GoHighLevel connect check failed:", err instanceof Error ? err.message : err);
+      return { ok: false, message: "Couldn't reach GoHighLevel. Try again in a minute." };
+    }
+  },
+
+  // Newest pages are not promised by this endpoint; it pages with startAfterId/startAfter from the response's meta.
+  // The cursor is those two, joined. Re-seeing a known contact is a no-op (Lead's crm unique key, src/lib/crmSync.ts).
+  async fetchPage(apiKey, cursor) {
+    const k = parseGhlKey(apiKey);
+    if (!k) throw new Error("GoHighLevel key is not in the expected shape.");
+    const q = new URLSearchParams({ locationId: k.locationId, limit: String(PAGE_SIZE) });
+    if (cursor) {
+      const [afterId, after] = cursor.split("|");
+      if (afterId) q.set("startAfterId", afterId);
+      if (after) q.set("startAfter", after);
+    }
+    const res = await fetch(`${BASE}/contacts/?${q.toString()}`, { headers: headers(k.token), signal: AbortSignal.timeout(CRM_TIMEOUT_MS) });
+    if (!res.ok) throw new Error(`GoHighLevel returned ${res.status} fetching contacts.`);
+    const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+    const rows = Array.isArray(data.contacts) ? (data.contacts as Array<Record<string, unknown>>) : [];
+    const people = rows.map(mapGhlContact).filter((p): p is CrmPerson => p !== null);
+    const meta = (data.meta ?? {}) as Record<string, unknown>;
+    const afterId = str(meta.startAfterId);
+    const after = typeof meta.startAfter === "number" ? String(meta.startAfter) : null;
+    const hasMore = rows.length === PAGE_SIZE && Boolean(afterId || after);
+    return { people, nextCursor: hasMore ? `${afterId ?? ""}|${after ?? ""}` : null, hasMore };
+  },
+
+  async pushNote(apiKey, externalId, text) {
+    const k = parseGhlKey(apiKey);
+    if (!k) return { ok: false, message: "GoHighLevel key is not in the expected shape." };
+    try {
+      const res = await fetch(`${BASE}/contacts/${encodeURIComponent(externalId)}/notes`, {
+        method: "POST",
+        headers: headers(k.token, true),
+        body: JSON.stringify({ body: text }),
+        signal: AbortSignal.timeout(CRM_TIMEOUT_MS),
+      });
+      if (!res.ok) return { ok: false, message: `GoHighLevel returned ${res.status}.` };
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, message: err instanceof Error ? err.message : "note push failed" };
+    }
+  },
+
+  // The one-boss rule (A-237): when GoHighLevel last wrote to this person. Read from their conversation's last
+  // message, counted only when it says it went out from the business; anything else is "unknown", which keeps
+  // FollowUp waiting for the owner.
+  async lastContactedAt(apiKey, externalId) {
+    const k = parseGhlKey(apiKey);
+    if (!k) return { known: false, at: null };
+    try {
+      const q = new URLSearchParams({ locationId: k.locationId, contactId: externalId, limit: "1" });
+      const res = await fetch(`${BASE}/conversations/search?${q.toString()}`, { headers: headers(k.token), signal: AbortSignal.timeout(CRM_TIMEOUT_MS) });
+      if (!res.ok) return { known: false, at: null };
+      const data = (await res.json().catch(() => null)) as Record<string, unknown> | null;
+      const convo = Array.isArray(data?.conversations) ? (data!.conversations as Array<Record<string, unknown>>)[0] : undefined;
+      if (!data || !Array.isArray(data.conversations)) return { known: false, at: null };
+      if (!convo) return { known: true, at: null };
+      if (convo.lastMessageDirection !== "outbound" || !("lastMessageDate" in convo)) return { known: false, at: null };
+      return readWhen(convo.lastMessageDate);
+    } catch {
+      return { known: false, at: null };
+    }
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Messages (GHL 2, founder 2026-10-16 "yes go ahead"): FollowUp reads the customers' texts and emails that arrive in
+// GoHighLevel, and its replies go out through GoHighLevel, from the owner's own number and email there.
+//
+// From the SDK: GET /conversations/search (locationId, sortBy, sort, limit), GET /conversations/{id}/messages (limit),
+// POST /conversations/messages { type, contactId, message, subject, html } → { conversationId, messageId }, and a
+// message's id, messageType, direction, body, dateAdded, contactId, conversationId.
+//
+// NOT confirmed (grade C, check on a real account): the messageType strings for a text and an email ("TYPE_SMS",
+// "TYPE_EMAIL"); whether the messages list comes back wrapped in a second `messages` object (both are read); and
+// whether an email's body comes back as HTML (tags are taken out either way).
+// ---------------------------------------------------------------------------
+
+/** The two GoHighLevel channels FollowUp reads and answers. Calls, Facebook, Instagram and the rest are left alone. */
+export type GhlChannel = "text" | "email";
+
+export function ghlChannelOf(messageType: unknown): GhlChannel | null {
+  if (typeof messageType !== "string") return null;
+  const t = messageType.toUpperCase();
+  if (t === "TYPE_SMS" || t === "SMS") return "text";
+  if (t === "TYPE_EMAIL" || t === "EMAIL") return "email";
+  return null;
+}
+
+export interface GhlMessage {
+  id: string;
+  conversationId: string;
+  contactId: string;
+  channel: GhlChannel;
+  direction: "inbound" | "outbound";
+  body: string;
+  at: Date;
+}
+
+function plainText(raw: string): string {
+  if (!/<[a-z][\s\S]*>/i.test(raw)) return raw.trim();
+  return raw
+    .replace(/<(br|\/p|\/div)\s*\/?>/gi, "\n")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&quot;/gi, '"')
+    .split("\n")
+    .map((line) => line.replace(/[ \t]+/g, " ").trim())
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+/** One GoHighLevel message as FollowUp keeps it, or null for anything it doesn't read (a call, a DM, no text). */
+export function mapGhlMessage(m: Record<string, unknown>): GhlMessage | null {
+  const id = str(m.id);
+  const conversationId = str(m.conversationId);
+  const contactId = str(m.contactId);
+  const channel = ghlChannelOf(m.messageType);
+  const direction = m.direction === "inbound" || m.direction === "outbound" ? m.direction : null;
+  const added = str(m.dateAdded);
+  const at = added && !Number.isNaN(Date.parse(added)) ? new Date(added) : null;
+  const body = typeof m.body === "string" ? plainText(m.body).slice(0, 5000) : "";
+  if (!id || !conversationId || !contactId || !channel || !direction || !at || !body) return null;
+  return { id, conversationId, contactId, channel, direction, body, at };
+}
+
+/** When a conversation's newest message landed (GoHighLevel writes milliseconds; a date string reads too). */
+function lastMessageAt(c: Record<string, unknown>): Date | null {
+  const r = readWhen(c.lastMessageDate);
+  return r.known ? r.at : null;
+}
+
+/**
+ * The conversations with something newer than `since`, newest first, at most `limit`. A conversation whose date
+ * can't be read is kept: reading it again costs one request, missing a customer costs the customer.
+ */
+export async function ghlConversationsSince(apiKey: string, since: Date, limit: number): Promise<Array<{ id: string; contactId: string }>> {
+  const k = parseGhlKey(apiKey);
+  if (!k) throw new Error("GoHighLevel key is not in the expected shape.");
+  const q = new URLSearchParams({ locationId: k.locationId, sortBy: "last_message_date", sort: "desc", limit: String(limit) });
+  const res = await fetch(`${BASE}/conversations/search?${q.toString()}`, { headers: headers(k.token), signal: AbortSignal.timeout(CRM_TIMEOUT_MS) });
+  if (!res.ok) throw new Error(`GoHighLevel returned ${res.status} listing conversations.`);
+  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  const rows = Array.isArray(data.conversations) ? (data.conversations as Array<Record<string, unknown>>) : [];
+  const out: Array<{ id: string; contactId: string }> = [];
+  for (const c of rows) {
+    const id = str(c.id);
+    const contactId = str(c.contactId);
+    if (!id || !contactId) continue;
+    const at = lastMessageAt(c);
+    if (at && at < since) continue;
+    out.push({ id, contactId });
+  }
+  return out;
+}
+
+/** The newest messages in one conversation (texts and emails only). */
+export async function ghlConversationMessages(apiKey: string, conversationId: string, limit: number): Promise<GhlMessage[]> {
+  const k = parseGhlKey(apiKey);
+  if (!k) throw new Error("GoHighLevel key is not in the expected shape.");
+  const res = await fetch(`${BASE}/conversations/${encodeURIComponent(conversationId)}/messages?limit=${limit}`, {
+    headers: headers(k.token),
+    signal: AbortSignal.timeout(CRM_TIMEOUT_MS),
+  });
+  if (!res.ok) throw new Error(`GoHighLevel returned ${res.status} reading a conversation.`);
+  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  const inner = data.messages && !Array.isArray(data.messages) ? (data.messages as Record<string, unknown>).messages : data.messages;
+  const rows = Array.isArray(inner) ? (inner as Array<Record<string, unknown>>) : [];
+  return rows
+    .map((m) => mapGhlMessage({ conversationId, ...m }))
+    .filter((m): m is GhlMessage => m !== null);
+}
+
+/** One contact, for a customer who writes before the contact sync has brought them in. */
+export async function ghlContact(apiKey: string, contactId: string): Promise<CrmPerson | null> {
+  const k = parseGhlKey(apiKey);
+  if (!k) return null;
+  const res = await fetch(`${BASE}/contacts/${encodeURIComponent(contactId)}`, { headers: headers(k.token), signal: AbortSignal.timeout(CRM_TIMEOUT_MS) });
+  if (!res.ok) return null;
+  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  const c = (data.contact ?? data) as Record<string, unknown>;
+  return mapGhlContact(c);
+}
+
+function escapeHtml(text: string): string {
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+/**
+ * A reply, sent through GoHighLevel from the owner's own number or email there. Returns the message id GoHighLevel
+ * gave it, so the poller's read-back of the same message lands on the row FollowUp already wrote. `status` carries
+ * the HTTP status so the caller can tell a bad moment (429, 5xx) from a refusal.
+ */
+export async function sendGhlMessage(
+  apiKey: string,
+  msg: { channel: GhlChannel; contactId: string; body: string; subject?: string }
+): Promise<{ success: true; messageId?: string } | { success: false; message: string; status?: number }> {
+  const k = parseGhlKey(apiKey);
+  if (!k) return { success: false, message: "GoHighLevel isn't connected the right way. Connect it again in Settings." };
+  const payload =
+    msg.channel === "email"
+      ? { type: "Email", contactId: msg.contactId, subject: msg.subject, message: msg.body, html: escapeHtml(msg.body).replace(/\n/g, "<br>") }
+      : { type: "SMS", contactId: msg.contactId, message: msg.body };
+  const res = await fetch(`${BASE}/conversations/messages`, {
+    method: "POST",
+    headers: headers(k.token, true),
+    body: JSON.stringify(payload),
+    signal: AbortSignal.timeout(CRM_TIMEOUT_MS),
+  });
+  if (res.status === 401 || res.status === 403)
+    return { success: false, status: res.status, message: "GoHighLevel didn't accept the key. Connect it again in Settings with a key that can send messages." };
+  if (!res.ok) return { success: false, status: res.status, message: `GoHighLevel didn't send it (${res.status}).` };
+  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  return { success: true, messageId: str(data.messageId) ?? undefined };
+}

@@ -1626,3 +1626,15 @@ versions.
 own identity. Three looks in one day left the founder confused: guessing from words is not working. Next round starts
 from screenshots of apps the founder likes, not from adjectives.
 **Do not propose again:** the cream/forest/mint website palette on the app.
+
+## R-125 — Redesign v1 built from our own ideas ^R-125
+
+**Date:** 2026-10-17. **Founder, verbatim:** *"dont make anything from your side copy the craetivity that is already
+working"*.
+**What was rejected:** the approach behind redesign v1 (grey ground, tinted faces with app badges, custom sent and
+"all caught up" cards, an invented About sheet): new design invented by us, even when research-backed.
+**Principle (inferred from his words, not confirmed in detail):** build each screen from patterns already proven in
+apps people use every day (Apple's own apps first: Messages, Mail, Settings, Reminders, Health; then Wispr), not from
+new inventions. Familiar beats novel (Jakob's law). We take how proven apps work and Apple's standard building
+blocks, never another company's logo, name or brand look (R-092, R-097 still stand).
+**Do not propose again:** screens whose look or flow we invented when a proven everyday pattern exists.

@@ -391,3 +391,10 @@ and all right"*.
   stays one clear thing.
 - Joy comes from how it feels to use (speed, feel, small rewarding moments, real content), never from gimmicks,
   streaks or AI personality (CLAUDE.md standing rules still hold).
+
+## The computer matters as much as the phone (founder, 2026-10-17)
+
+**Founder, verbatim:** *"my laptop iterface means a lot dont just keep focusing on phone desighn bro"*.
+- Every drawing shows the computer (1280 wide) **and** the phone (390), side by side. Never phone-only.
+- The computer is not a stretched phone: it uses the room (sidebar, the customer and their details side by side).
+- "Phone first" (design-brain rules) still means the phone must work; it never means the computer comes second.

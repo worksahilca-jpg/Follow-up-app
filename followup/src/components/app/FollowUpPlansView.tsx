@@ -344,7 +344,7 @@ export function PlanEditor({
       <button type="button" onClick={onCancel} className="inline-flex min-h-11 items-center text-[13px] text-ink-faint hover:text-ink">
         ← Follow-up plans
       </button>
-      <h1 className="title-serif mt-1 text-[30px] leading-[1.12] lg:text-[34px]">{which === "own" ? "My own plan" : `${PLAN_NAMES[which]} plan`}</h1>
+      <h1 className="title-serif ios-title1 mt-1">{which === "own" ? "My own plan" : `${PLAN_NAMES[which]} plan`}</h1>
       <p className="mt-2 text-[15px] leading-relaxed text-ink-soft">{intro}</p>
 
       <p className="mb-2.5 mt-[22px] text-[13.5px] text-ink-soft">Days after they go quiet</p>

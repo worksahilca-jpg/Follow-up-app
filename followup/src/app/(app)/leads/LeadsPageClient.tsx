@@ -379,7 +379,7 @@ export default function LeadsPageClient({
         </Link>
         <div className="flex items-baseline justify-between gap-3">
           <ScrollTitle title={TITLE[show]} />
-          <h1 className="title-serif text-[26px] leading-tight">{TITLE[show]}</h1>
+          <h1 className="title-serif ios-title1">{TITLE[show]}</h1>
           <span className="text-[14px] font-semibold text-ink-soft tabular-nums">{inGroup.length}</span>
         </div>
         {SUB[show] && <p className="mt-0.5 text-[13px] text-ink-faint">{SUB[show]}</p>}
@@ -513,7 +513,7 @@ export default function LeadsPageClient({
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
           <ScrollTitle title="Customers" />
-          <h1 className="title-serif text-[28px] leading-tight">Customers</h1>
+          <h1 className="title-serif ios-title1">Customers</h1>
         </div>
         <LeadsMoreMenu onAdd={() => setShowAddLead(true)} onLogCall={() => setShowLogCall(true)} onImport={() => setShowImport(true)} />
       </div>

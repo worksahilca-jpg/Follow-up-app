@@ -567,13 +567,13 @@ function SettingsPageInner() {
         // Phone: Settings' five rows, or the group a row stepped into. Desk: the group the side list has open.
         <div>
           {!groupOpen && <ScrollTitle title="Settings" />}
-          <h1 className={"title-serif text-[32px] leading-[1.1] lg:hidden" + (groupOpen ? " hidden" : "")}>Settings</h1>
+          <h1 className={"title-serif ios-title1 lg:hidden" + (groupOpen ? " hidden" : "")}>Settings</h1>
           <div className={groupOpen ? "" : "hidden lg:block"}>
             <button type="button" onClick={() => back("", () => openMore(null))} className="min-h-11 text-[13px] text-ink-faint hover:text-ink lg:hidden">
               ← Settings
             </button>
             <Path trail={["Settings"]} />
-            <h1 className="title-serif text-[30px] leading-[1.12] lg:mt-2 lg:text-[28px]">{navGroup}</h1>
+            <h1 className="title-serif ios-title1 lg:mt-2">{navGroup}</h1>
             <p className="mt-1 text-[14px] text-ink-faint">{GROUP_WHY[navGroup]}</p>
           </div>
           <div className="mt-6 lg:mt-5">
@@ -608,7 +608,7 @@ function SettingsPageInner() {
             ← {parentPage ? PAGES[parentPage].title : pageGroup && !GROUP_PAGE[pageGroup] ? pageGroup : "Settings"}
           </button>
           <Path trail={["Settings", ...(parentPage ? [PAGES[parentPage].title] : pageGroup && !GROUP_PAGE[pageGroup] ? [pageGroup] : [])]} />
-          <h1 className="title-serif mt-1 text-[30px] leading-[1.12] lg:mt-2 lg:text-[28px]">{page.title}</h1>
+          <h1 className="title-serif ios-title1 mt-1 lg:mt-2">{page.title}</h1>
           {page.lede && <p className="mt-2 text-[15px] leading-relaxed text-ink-soft">{page.lede}</p>}
         </div>
       )}

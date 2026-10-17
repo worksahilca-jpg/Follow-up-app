@@ -5,6 +5,7 @@ import { signOut, useSession } from "next-auth/react";
 import { Bell, ChevronRight, CircleHelp, Ellipsis, Inbox, Send, Store, type LucideIcon } from "lucide-react";
 import { readPushState } from "@/lib/pushDevice";
 import FeedbackDialog from "@/components/FeedbackDialog";
+import { IconTile, ListRow } from "@/components/app/IosList";
 import type { StateKey } from "./canvasBits";
 import { GROUP_PAGE, type SettingsGroup } from "@/lib/settingsGroups";
 
@@ -155,11 +156,12 @@ export default function SettingsList({
   ].filter(Boolean);
   const where: Pick<Row, "status" | "state"> =
     socialRow.state === "needs" ? socialRow : connected.length ? { status: andList(connected) } : social ? { status: "Nothing connected yet", state: "needs" } : { status: "" };
-  const home: { g: SettingsGroup; icon: LucideIcon; status: string; state?: StateKey }[] = [
-    { g: "Connected apps", icon: Inbox, status: where.status ?? "", state: where.state },
-    { g: "Sending replies", icon: Send, status: paused ? "Paused" : holdAll ? "Every reply waits for your OK" : "FollowUp replies for you", state: paused ? "needs" : undefined },
-    { g: "Alerts", icon: Bell, status: alerts },
-    { g: "Your business", icon: Store, status: businessName ?? "" },
+  // Each row's tile has its own colour, like iOS Settings (A-273).
+  const home: { g: SettingsGroup; icon: LucideIcon; bg: string; status: string; state?: StateKey }[] = [
+    { g: "Connected apps", icon: Inbox, bg: "#2f6fe0", status: where.status ?? "", state: where.state },
+    { g: "Sending replies", icon: Send, bg: "#0d6e3c", status: paused ? "Paused" : holdAll ? "Every reply waits for your OK" : "FollowUp replies for you", state: paused ? "needs" : undefined },
+    { g: "Alerts", icon: Bell, bg: "#d93a3f", status: alerts },
+    { g: "Your business", icon: Store, bg: "#d9731e", status: businessName ?? "" },
   ];
   const open = (g: SettingsGroup) => {
     const page = GROUP_PAGE[g];
@@ -189,20 +191,20 @@ export default function SettingsList({
       <div className={(groupOpen ? "hidden" : "grid") + " gap-2.5 lg:hidden"}>
         <div className={BOX}>
           {home.map((h, i) => (
-            <HomeRow key={h.g} name={h.g} icon={h.icon} status={h.status} state={h.state} first={!i} onClick={() => open(h.g)} />
+            <HomeRow key={h.g} name={h.g} icon={h.icon} bg={h.bg} status={h.status} state={h.state} first={!i} onClick={() => open(h.g)} />
           ))}
         </div>
         <div className={BOX}>
-          <HomeRow name="Account" icon={Ellipsis} status="Team, billing, your data" first onClick={() => onGroup("Account")} />
+          <HomeRow name="Account" icon={Ellipsis} bg="#7a7672" status="Team, billing, your data" first onClick={() => onGroup("Account")} />
         </div>
         <div className="mt-2 grid justify-items-start px-1">
-          <FeedbackDialog label="Help" icon={CircleHelp} className="flex min-h-11 items-center gap-2.5 text-[15px] text-ink" />
-          <button type="button" onClick={() => signOut({ callbackUrl: "/" })} className="min-h-11 text-[15px] text-ink-soft">
+          <FeedbackDialog label="Help" icon={CircleHelp} className="ios-body flex min-h-11 items-center gap-2.5 text-ink" />
+          <button type="button" onClick={() => signOut({ callbackUrl: "/" })} className="ios-body min-h-11" style={{ color: "var(--coral)" }}>
             Sign out
           </button>
         </div>
         {signedInAs && (
-          <p className="break-all px-1 text-[13.5px] text-ink-faint">
+          <p className="ios-footnote break-all px-1 text-ink-faint">
             Signed in as <span className="text-ink-soft">{signedInAs}</span>
           </p>
         )}
@@ -218,14 +220,14 @@ export default function SettingsList({
                 type="button"
                 onClick={() => onOpen(r.page)}
                 className={
-                  "group flex min-h-[50px] w-full items-center gap-3 px-4 text-left hover:bg-card-2 lg:min-h-[60px] lg:hover:bg-transparent " +
+                  "group flex min-h-[48px] w-full items-center gap-3 px-4 text-left hover:bg-card-2 lg:min-h-[60px] lg:hover:bg-transparent " +
                   (i ? "border-t border-line-2 lg:border-t-0" : "")
                 }
               >
                 {/* Phone: the name, then the status on the right and a chevron. Desk (Wispr): the
                     name over the status, and a "Change" button on the right. */}
                 <span className="min-w-0 shrink-0 lg:flex-1 lg:shrink">
-                  <span className="block text-[15px] lg:text-[14.5px] lg:font-medium">{r.name}</span>
+                  <span className="ios-body block lg:text-[14.5px] lg:font-medium">{r.name}</span>
                   {r.status && (
                     <span className="mt-0.5 hidden items-center gap-1.5 text-[13.5px] text-ink-faint lg:flex">
                       {r.state && <span className="h-[7px] w-[7px] shrink-0 rounded-full" style={{ background: `var(--state-${r.state})` }} aria-hidden />}
@@ -233,11 +235,11 @@ export default function SettingsList({
                     </span>
                   )}
                 </span>
-                <span className="inline-flex min-w-0 flex-1 items-center justify-end gap-2 text-[14px] text-ink-faint lg:hidden">
+                <span className="ios-subhead inline-flex min-w-0 flex-1 items-center justify-end gap-2 text-ink-faint lg:hidden">
                   {r.state && <span className="h-[7px] w-[7px] shrink-0 rounded-full" style={{ background: `var(--state-${r.state})` }} aria-hidden />}
                   {r.status && <span className="truncate">{r.status}</span>}
                 </span>
-                <ChevronRight className="h-4 w-4 shrink-0 text-ink-faint lg:hidden" />
+                <ChevronRight className="h-[15px] w-[15px] shrink-0 text-ink-faint opacity-70 lg:hidden" strokeWidth={2.5} />
                 <span className={CTA + " hidden lg:inline-flex"} aria-hidden>
                   {ctaOf(r)}
                 </span>
@@ -256,24 +258,27 @@ export default function SettingsList({
   );
 }
 
-/** A home row (the approved drawing): the group's icon on a soft tile, its name over one line of what's set. */
-function HomeRow({ name, icon: Icon, status, state, first, onClick }: { name: string; icon: LucideIcon; status: string; state?: StateKey; first: boolean; onClick: () => void }) {
+/** A home row, iOS Settings style (A-273): a coloured tile, the group's name, one grey line of what's set. */
+function HomeRow({ name, icon: Icon, bg, status, state, first, onClick }: { name: string; icon: LucideIcon; bg: string; status: string; state?: StateKey; first: boolean; onClick: () => void }) {
   return (
-    <button type="button" onClick={onClick} className={"flex min-h-[62px] w-full items-center gap-3 px-3.5 py-2.5 text-left hover:bg-card-2 " + (first ? "" : "border-t border-line-2")}>
-      <span className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-[9px] bg-card-2 text-ink" aria-hidden>
-        <Icon className="h-[18px] w-[18px]" strokeWidth={1.8} />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-[15.5px] font-medium">{name}</span>
-        {status && (
-          <span className="mt-0.5 flex items-center gap-1.5 text-[13.5px] text-ink-faint">
+    <ListRow
+      icon={
+        <IconTile bg={bg}>
+          <Icon className="h-[17px] w-[17px]" strokeWidth={2.1} />
+        </IconTile>
+      }
+      label={name}
+      sub={
+        status ? (
+          <span className="flex items-center gap-1.5">
             {state && <span className="h-[7px] w-[7px] shrink-0 rounded-full" style={{ background: `var(--state-${state})` }} aria-hidden />}
             <span className="truncate">{status}</span>
           </span>
-        )}
-      </span>
-      <ChevronRight className="h-4 w-4 shrink-0 text-ink-faint" aria-hidden />
-    </button>
+        ) : undefined
+      }
+      first={first}
+      onClick={onClick}
+    />
   );
 }
 
@@ -282,8 +287,8 @@ function andList(xs: string[]): string {
   return xs.length < 2 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`;
 }
 
-/** A group's box: white with a line on the phone; soft grey, no line, on the desk (Wispr). */
-const BOX = "overflow-hidden rounded-[14px] border border-line bg-card lg:rounded-[12px] lg:border-0 lg:bg-card-2";
+/** A group's box: iOS inset grouped on the phone (A-273); soft grey, no line, on the desk (Wispr). */
+const BOX = "overflow-hidden rounded-[12px] border border-line bg-card lg:border-0 lg:bg-card-2";
 /** The desk row's button look ("Change"); the whole row is the button. */
 const CTA =
   "h-8 shrink-0 items-center rounded-lg bg-paper px-3.5 text-[13px] font-medium text-ink shadow-[0_0_0_1px_var(--line)] group-hover:shadow-[0_0_0_1px_var(--line-strong)] hover:shadow-[0_0_0_1px_var(--line-strong)]";

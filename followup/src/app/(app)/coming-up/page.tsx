@@ -39,7 +39,7 @@ export default async function ComingUpPage() {
         ← Today
       </Link>
       <ScrollTitle title="Coming up" />
-      <h1 className="title-serif mt-3 text-[30px] leading-[1.12] lg:text-[34px]">Coming up</h1>
+      <h1 className="title-serif ios-title1 mt-3">Coming up</h1>
       <p className="mt-2 max-w-[640px] text-[15px] leading-relaxed text-ink-soft">
         {groups.length === 0
           ? "Nothing planned for the next seven days."

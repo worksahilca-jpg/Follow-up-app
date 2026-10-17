@@ -8,11 +8,13 @@ import OnboardingForm from "@/components/OnboardingForm";
 
 export const dynamic = "force-dynamic";
 
+const CRM_NAMES: Record<string, string> = { followupboss: "Follow Up Boss", hubspot: "HubSpot", gohighlevel: "GoHighLevel" };
+
 export default async function OnboardingPage() {
   const ctx = await getSessionContext();
   if (!ctx) redirect("/signin");
 
-  const [business, gmail, outlook, instagram] = await Promise.all([
+  const [business, gmail, outlook, instagram, crm] = await Promise.all([
     prisma.business.findUnique({
       where: { id: ctx.businessId },
       select: { onboarded: true },
@@ -24,6 +26,8 @@ export default async function OnboardingPage() {
     prisma.business.count({
       where: { id: ctx.businessId, instagramUserId: { not: null }, instagramAccessToken: { not: null } },
     }),
+    // A connected CRM (A-272). Only the provider: the key column is never selected.
+    prisma.crmConnection.findFirst({ where: { businessId: ctx.businessId, apiKey: { not: null } }, select: { provider: true } }),
   ]);
   if (business?.onboarded) redirect("/dashboard");
 
@@ -41,6 +45,7 @@ export default async function OnboardingPage() {
         inboxProvider: gmail.connected ? "gmail" : outlook.connected ? "outlook" : null,
         instagramConnected: instagram > 0,
         instagramAvailable: instagramOAuthAvailable(),
+        crmName: crm ? (CRM_NAMES[crm.provider] ?? "Your CRM") : null,
       }}
     />
   );

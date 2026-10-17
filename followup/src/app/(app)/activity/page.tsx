@@ -107,7 +107,7 @@ export default async function ActivityPage() {
   return (
     <div className="lg:max-w-[720px]">
       <ScrollTitle title="Activity" />
-      <h1 className="title-serif text-[30px] leading-[1.12] lg:text-[34px]">Activity</h1>
+      <h1 className="title-serif ios-title1">Activity</h1>
       <p className="mt-2 text-[15.5px] leading-relaxed text-ink-soft">
         What FollowUp did on its own.{weekParts.length > 0 && ` This week it ${weekParts.join(" and ")}.`}
       </p>

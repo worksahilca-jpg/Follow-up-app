@@ -417,10 +417,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         {new Intl.DateTimeFormat(undefined, { timeZone: timezone, weekday: "long", month: "long", day: "numeric" }).format(now)}
       </div>
       {sentence ? (
-        <h1 className="title-serif mt-1 text-[28px] leading-[1.15] sm:text-[32px]">{sentence}</h1>
+        <h1 className="title-serif ios-title2 mt-1">{sentence}</h1>
       ) : (
         <>
-          <h1 className="title-serif mt-0.5 text-[28px] leading-[1.15] sm:text-[32px]">{greeting(now, timezone, me?.name)}</h1>
+          <h1 className="title-serif ios-title1 mt-0.5">{greeting(now, timezone, me?.name)}</h1>
           {/* The day in one sentence (A-266), in place of the day's box. */}
           <p className="mt-1.5 text-[16px] leading-snug text-ink-soft">{dayWords}</p>
         </>

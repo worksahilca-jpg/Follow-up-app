@@ -372,3 +372,9 @@ that doesn't make sense, you have to remove all of that part. You have to do it 
   in the back with good defaults.
 - **Only something broken asks for attention,** in one line with the fix ("Gmail stopped. Reconnect").
 - **Test:** could an owner go through Settings without reading a sentence?
+
+## Fewest, simplest words (founder, 2026-10-17)
+
+*"We dont have to use complex words anywhere, be as simple and minimal as we can."* Every line in the app is the
+fewest everyday words that are still true. Name the thing ("Connect your apps"), not the behaviour behind it ("Where
+do customers write to you?"). One short line beats two sentences. See R-121.

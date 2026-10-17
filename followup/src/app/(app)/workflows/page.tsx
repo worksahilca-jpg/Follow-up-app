@@ -177,7 +177,7 @@ export default function WorkflowsPage() {
         <span className="text-ink-soft">Sending replies</span>
       </p>
       <ScrollTitle title="Follow-up plans" />
-      <h1 className="title-serif mt-2 text-[30px] leading-[1.12] lg:text-[34px]">Follow-up plans</h1>
+      <h1 className="title-serif ios-title1 mt-2">Follow-up plans</h1>
       {/* The follow-up plans (A-245, as drawn): FollowUp picks, the owner
           can change it for everyone here or for one customer on their page.
           The stop-on-reply guarantee (PRODUCT_DIRECTION Rule 3) is the

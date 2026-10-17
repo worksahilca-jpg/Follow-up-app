@@ -280,13 +280,13 @@ function Facts() {
   );
 }
 
-const H1 = "title-serif text-[30px] leading-[1.1]";
+const H1 = "title-serif ios-title1";
 const LEDE = "mt-2.5 text-[15.5px] leading-relaxed text-ink-soft";
 const PRIMARY = "flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full px-6 text-base font-medium disabled:opacity-60";
 const PRIMARY_STYLE = { backgroundColor: "var(--ink)", color: "var(--on-accent)" } as const;
 const QUIET =
   "inline-flex min-h-11 w-full items-center justify-center text-[15px] text-ink-soft underline underline-offset-[3px] transition-colors hover:text-ink disabled:opacity-60";
-const EXAMPLE_LABEL = "mt-5 font-mono text-[12px] font-medium uppercase tracking-[0.08em] text-ink-faint";
+const EXAMPLE_LABEL = "mt-5 text-[13px] font-medium uppercase tracking-[0.02em] text-ink-faint";
 
 function ErrorLine({ text }: { text: string | null }) {
   if (!text) return null;

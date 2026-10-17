@@ -139,7 +139,7 @@ export default function CustomerSide({ name, line, children }: { name: string; l
           <ChevronLeft className="h-6 w-6" strokeWidth={2} aria-hidden="true" />
         </Link>
         <div className="min-w-0 flex-1">
-          <p className="title-serif truncate text-[19px] leading-tight">{name}</p>
+          <p className="title-serif ios-headline truncate">{name}</p>
           <p className="flex min-w-0 items-center gap-1.5 text-[12px] text-ink-faint">{line}</p>
         </div>
         <button
@@ -155,7 +155,7 @@ export default function CustomerSide({ name, line, children }: { name: string; l
 
       {inSheet ? (
         <AppWindow label={`About ${first}`} size="small" onClose={() => setOpen(false)}>
-          <h2 className="title-serif text-[22px] leading-tight">About {first}</h2>
+          <h2 className="title-serif ios-title2">About {first}</h2>
           <div className="mt-4 grid min-w-0 gap-[18px]">{children}</div>
         </AppWindow>
       ) : (

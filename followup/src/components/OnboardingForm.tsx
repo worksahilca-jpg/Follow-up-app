@@ -2,7 +2,7 @@
 
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowRight, Check, ChevronRight, Loader2 } from "lucide-react";
+import { ArrowRight, Check, Loader2 } from "lucide-react";
 import LogoMark from "@/components/LogoMark";
 import ImproveFollowUpToggle from "@/components/ImproveFollowUpToggle";
 import { WARM_CARD } from "@/components/app/ReplyCard";
@@ -11,13 +11,15 @@ import { useUndoableSend } from "@/components/useUndoableSend";
 import UndoLine from "@/components/UndoLine";
 import { safeBannerText } from "@/lib/bannerText";
 import { AlertsSetupStep } from "@/components/app/AlertsSetup";
-import { ChannelIcon } from "@/components/app/ChannelIcon";
+import CrmConfig from "@/components/CrmConfig";
+import { GROUP, ListRow } from "@/components/app/IosList";
+import { GlyphTile } from "@/components/settings/connectionBits";
 
 /** The one full-width black button at the foot of each setup step. */
 const PRIMARY =
   "flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full px-6 text-base font-medium disabled:opacity-60";
 const PRIMARY_STYLE = { backgroundColor: "var(--ink)", color: "var(--on-accent)" } as const;
-const H1 = "title-serif text-[30px] leading-[1.1]";
+const H1 = "title-serif ios-title1";
 const LEDE = "mt-2.5 text-[15.5px] leading-relaxed text-ink-soft";
 
 /**
@@ -59,6 +61,8 @@ export interface OnboardingSourceState {
   instagramConnected: boolean;
   /** Instagram sign-in is configured for this deployment. */
   instagramAvailable: boolean;
+  /** The connected CRM's name, or null (A-272). */
+  crmName: string | null;
 }
 
 interface OnboardingFormProps {
@@ -84,9 +88,13 @@ function OnboardingFormInner({ sources }: OnboardingFormProps) {
   const inboxConnected = sources.gmailConnected || sources.outlookConnected;
   // Either way in counts as connected (A-241): an owner who runs on
   // Instagram DMs has no inbox to connect and must not be sent back to step 1.
-  const connected = inboxConnected || sources.instagramConnected;
-  const connectedName = sources.gmailConnected ? "Gmail" : sources.outlookConnected ? "Outlook" : "Instagram";
+  // A CRM counts too (A-272): an owner on GoHighLevel alone has everything coming in through it.
+  const [crmName, setCrmName] = useState<string | null>(sources.crmName);
+  const connected = inboxConnected || sources.instagramConnected || crmName !== null;
+  const connectedName = sources.gmailConnected ? "Gmail" : sources.outlookConnected ? "Outlook" : sources.instagramConnected ? "Instagram" : (crmName ?? "");
   const [step, setStep] = useState<Step>(connected ? 2 : 1);
+  // Step 1's screen (A-272): the CRM question; after a CRM connects, what it doesn't get; with no CRM, the apps.
+  const [first, setFirst] = useState<"crm" | "suggest" | "apps">("crm");
   const [finishing, setFinishing] = useState(false);
 
   // Fires once, right when a connected inbox first renders — pulls the
@@ -194,8 +202,23 @@ function OnboardingFormInner({ sources }: OnboardingFormProps) {
         </header>
 
         <main className="flex flex-1 flex-col pt-5">
-          {step === 1 && (
-            <ChooseWhere instagramAvailable={sources.instagramAvailable} outlookAvailable={sources.outlookAvailable} error={connectError} />
+          {step === 1 && first === "crm" && !connectError && (
+            <UseACrm
+              onConnected={(name) => {
+                setCrmName(name);
+                setFirst("suggest");
+              }}
+              onNone={() => setFirst("apps")}
+            />
+          )}
+          {step === 1 && (first !== "crm" || connectError) && (
+            <ChooseWhere
+              crmName={first === "suggest" ? crmName : null}
+              instagramAvailable={sources.instagramAvailable}
+              outlookAvailable={sources.outlookAvailable}
+              error={connectError}
+              onDone={() => setStep(2)}
+            />
           )}
           {step === 2 && <HowItShouldWork reading={autoSyncState === "syncing"} sentFrom={connectedName} onChosen={() => setStep(3)} />}
           {step === 3 && (
@@ -209,80 +232,106 @@ function OnboardingFormInner({ sources }: OnboardingFormProps) {
 }
 
 /**
- * Step 1 — where customers write (A-241). Instagram and Gmail are the two
- * ways in, as rows rather than buttons: the row IS the choice, so there is
- * no black button on this screen. Outlook stays the quiet link it was.
- *
- * The three lines are the promises that hold for both, at the moment the
- * owner hands over access, so they have to be exactly true: FollowUp reads
- * customers' messages and the owner's replies, keeps personal chat and
- * newsletters out of the customer list (the "is this a customer?" check),
- * and sends nothing on its own unless the owner turns that on.
- * No AI language anywhere on this screen, deliberately (S-13).
+ * Step 1, first screen (A-272, founder 2026-10-17: "ask first do they use a CRM… then suggest the other sources so
+ * they don't lose leads", "keep onboarding as short as we can"). The CRMs are the answers; one tap opens the same
+ * key window Settings uses. "No CRM" goes straight to the apps.
  */
-function ChooseWhere({ instagramAvailable, outlookAvailable, error }: { instagramAvailable: boolean; outlookAvailable: boolean; error: string | null }) {
+function UseACrm({ onConnected, onNone }: { onConnected: (name: string) => void; onNone: () => void }) {
+  return (
+    <div className="flex flex-1 flex-col">
+      <h1 className={H1}>Do you use a CRM?</h1>
+      <CrmConfig setup={{ onConnected }} />
+      <button type="button" onClick={onNone} className="ios-subhead mt-4 inline-flex min-h-11 w-full items-center justify-center text-ink-soft hover:text-ink">
+        No CRM
+      </button>
+    </div>
+  );
+}
+
+/**
+ * Step 1, the apps (A-272, A-273). After a CRM: FollowUp suggests the apps the CRM doesn't bring in, "Connect these
+ * too", and Done moves on; nothing is forced. With no CRM: "Connect your apps", and the row is the choice. Words as
+ * plain as R-121; iOS rows (A-273). The promises from A-241 stay, shorter, because they are what the owner is
+ * agreeing to as they hand over access, and they hold for every way in.
+ */
+function ChooseWhere({
+  crmName,
+  instagramAvailable,
+  outlookAvailable,
+  error,
+  onDone,
+}: {
+  crmName: string | null;
+  instagramAvailable: boolean;
+  outlookAvailable: boolean;
+  error: string | null;
+  onDone: () => void;
+}) {
   const lines: Array<{ ok: boolean; text: string }> = [
-    { ok: true, text: "Reads messages from customers, and your replies to them" },
-    { ok: true, text: "Keeps friends, family and newsletters out of your customers" },
-    { ok: false, text: "Never sends anything without your OK, unless you turn that on" },
+    { ok: true, text: "Reads messages from customers" },
+    { ok: true, text: "Skips friends and family" },
+    { ok: false, text: "Sends nothing without your OK" },
   ];
   const ways = [
     ...(instagramAvailable
-      ? [{ channel: "instagram", title: "Instagram", line: "DMs to your business account", href: "/api/instagram/oauth/start?next=onboarding" }]
+      ? [{ glyph: "instagram" as const, title: "Instagram", value: "DMs", href: "/api/instagram/oauth/start?next=onboarding" }]
       : []),
-    { channel: "email", title: "Gmail", line: "Emails from customers", href: "/api/integrations/gmail/connect?next=onboarding" },
+    { glyph: "email" as const, title: "Gmail", value: "Email", href: "/api/integrations/gmail/connect?next=onboarding" },
   ];
   return (
     <div className="flex flex-1 flex-col">
-      <h1 className={H1}>Where do customers write to you?</h1>
-      <p className={LEDE}>Start with the one you use most. You can add the other any time in Settings.</p>
+      {crmName && (
+        <p className="ios-subhead flex items-center gap-1.5" style={{ color: "var(--sage)" }}>
+          <Check className="h-4 w-4" aria-hidden="true" />
+          {crmName} connected
+        </p>
+      )}
+      <h1 className={H1 + (crmName ? " mt-2" : "")}>{crmName ? "Connect these too" : "Connect your apps"}</h1>
+      <p className="ios-subhead mt-1.5 text-ink-soft">
+        {crmName ? `${crmName} doesn't get these. Connect them so you don't miss a lead.` : "Pick what you use."}
+      </p>
 
-      <div className="mt-5 flex flex-col gap-3">
-        {ways.map((w) => (
-          <a
-            key={w.title}
-            href={w.href}
-            className="flex min-h-[72px] items-center gap-3.5 rounded-2xl border border-line bg-card px-4 py-3.5 text-ink transition-colors hover:border-ink-faint"
-          >
-            <span aria-hidden="true" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-card-2">
-              <ChannelIcon channel={w.channel} className="h-[22px] w-[22px] shrink-0 text-ink" />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-[17px] font-semibold">{w.title}</span>
-              <span className="mt-0.5 block text-[14.5px] text-ink-soft">{w.line}</span>
-            </span>
-            <ChevronRight className="h-[18px] w-[18px] shrink-0 text-ink-faint" aria-hidden="true" />
-          </a>
+      <div className={GROUP + " mt-5"}>
+        {ways.map((w, i) => (
+          <ListRow key={w.title} icon={<GlyphTile glyph={w.glyph} />} label={w.title} value={w.value} href={w.href} first={i === 0} />
         ))}
       </div>
       {outlookAvailable && (
         <a
           href="/api/integrations/outlook/connect?next=onboarding"
-          className="mt-1 inline-flex min-h-11 w-full items-center justify-center text-[15px] text-ink-soft underline underline-offset-[3px] transition-colors hover:text-ink"
+          className="ios-subhead mt-1 inline-flex min-h-11 w-full items-center justify-center text-ink-soft hover:text-ink"
         >
           I use Outlook
         </a>
       )}
 
       {error && (
-        <p role="alert" className="mt-3 text-sm" style={{ color: "var(--coral)" }}>
+        <p role="alert" className="ios-subhead mt-3" style={{ color: "var(--coral)" }}>
           {error}
         </p>
       )}
 
-      <ul className={(outlookAvailable ? "mt-2.5" : "mt-5") + " overflow-hidden rounded-[14px] border border-line bg-card"}>
-        {lines.map((l, i) => (
-          <li key={l.text} className={"flex gap-3 px-4 py-3 text-[14.5px] leading-snug" + (i ? " border-t border-line-2" : "")}>
-            <span aria-hidden="true" className="w-4 shrink-0" style={{ color: l.ok ? "var(--sage)" : "var(--ink-faint)" }}>
-              {l.ok ? "✓" : "✕"}
-            </span>
-            <span>{l.text}</span>
-          </li>
-        ))}
-      </ul>
+      {!crmName && (
+        <ul className={GROUP + (outlookAvailable ? " mt-2.5" : " mt-5")}>
+          {lines.map((l, i) => (
+            <li key={l.text} className="flex items-center gap-3 pl-4">
+              <span aria-hidden="true" className="w-4 shrink-0 text-center" style={{ color: l.ok ? "var(--sage)" : "var(--ink-faint)" }}>
+                {l.ok ? "✓" : "✕"}
+              </span>
+              <span className={"ios-subhead flex min-h-[44px] flex-1 items-center pr-4" + (i ? " border-t border-line-2" : "")}>{l.text}</span>
+            </li>
+          ))}
+        </ul>
+      )}
 
       <div className="mt-auto pb-7 pt-6">
-        <p className="text-center text-[13px] leading-relaxed text-ink-faint">You can disconnect any time in Settings. Access ends the moment you do.</p>
+        {crmName ? (
+          <button type="button" onClick={onDone} className={PRIMARY} style={PRIMARY_STYLE}>
+            Done
+          </button>
+        ) : (
+          <p className="ios-footnote text-center text-ink-faint">Disconnect any time.</p>
+        )}
       </div>
     </div>
   );
@@ -423,14 +472,14 @@ function HowItShouldWork({ reading, sentFrom, onChosen }: { reading: boolean; se
                 </span>
                 <span className="text-lg" style={{ fontWeight: on ? 600 : 500 }}>{o.title}</span>
                 {o.badge && (
-                  <span className="ml-auto font-mono text-[12px] font-medium uppercase tracking-[0.1em] text-ink-soft">{o.badge}</span>
+                  <span className="ml-auto text-[13px] font-medium uppercase tracking-[0.02em] text-ink-soft">{o.badge}</span>
                 )}
               </span>
               <span className="mt-2.5 block pl-[34px] text-[15px] leading-relaxed text-ink-soft">{o.body}</span>
               {/* One example of what Automatic sends, marked as an example (OnbChoose). */}
               {o.id === "automatic" && on && (
                 <span className="mt-3.5 ml-[34px] block rounded-[14px] px-3.5 py-3" style={WARM_CARD}>
-                  <span className="block font-mono text-[12px] font-medium uppercase tracking-[0.08em] text-ink-soft">Sent on its own · example</span>
+                  <span className="block text-[13px] font-medium uppercase tracking-[0.02em] text-ink-soft">Sent on its own · example</span>
                   <span className="mt-1 block text-sm leading-snug">Thanks! Happy to quote that. Could you send a photo of your current tap?</span>
                 </span>
               )}
@@ -621,7 +670,7 @@ function WaitingCustomers({
       <p className={LEDE}>From the last 90 days. A reply is written for each. Nothing has been sent. Open any to read it, or skip it.</p>
 
       <div className="mt-[18px] overflow-hidden rounded-[20px] border border-line bg-card">
-        <p className="px-4 pb-2.5 pt-3.5 font-mono text-[12px] font-medium uppercase tracking-[0.1em] text-ink-faint">
+        <p className="px-4 pb-2.5 pt-3.5 text-[13px] font-medium uppercase tracking-[0.02em] text-ink-faint">
           Ready to send · {count}
         </p>
         {preview.map((p, i) => {

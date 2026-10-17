@@ -1,8 +1,8 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { ChevronRight } from "lucide-react";
 import AppWindow from "@/components/app/AppWindow";
+import { GROUP, IconTile, ListRow } from "@/components/app/IosList";
 
 /**
  * The pieces of "Where customers write" (A-253): one row per place, each
@@ -13,9 +13,9 @@ import AppWindow from "@/components/app/AppWindow";
 
 export type Glyph = "email" | "instagram" | "messenger" | "whatsapp" | "web" | "crm";
 
-/** Monochrome, in the app's ink, as drawn on the approved board (22px). */
+/** The glyph, in currentColor (17px, white on its tile, A-273). */
 export function ConnectionGlyph({ glyph }: { glyph: Glyph }) {
-  const common = { viewBox: "0 0 24 24", width: 22, height: 22, fill: "none", stroke: "currentColor", strokeWidth: 1.8, "aria-hidden": true } as const;
+  const common = { viewBox: "0 0 24 24", width: 17, height: 17, fill: "none", stroke: "currentColor", strokeWidth: 2.1, "aria-hidden": true } as const;
   switch (glyph) {
     case "email":
       return (
@@ -63,16 +63,26 @@ export function ConnectionGlyph({ glyph }: { glyph: Glyph }) {
   }
 }
 
+/** Each place's own colour on its tile, like an iOS Settings row (A-273). Dark enough for a white glyph. */
+export const GLYPH_BG: Record<Glyph, string> = {
+  email: "#2f6fe0",
+  instagram: "#c13584",
+  messenger: "#1d6ff2",
+  whatsapp: "#1e8e3e",
+  web: "#5f6670",
+  crm: "#0d6e3c",
+};
+
 export function GlyphTile({ glyph }: { glyph: Glyph }) {
   return (
-    <span aria-hidden className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-card-2 text-ink">
+    <IconTile bg={GLYPH_BG[glyph]}>
       <ConnectionGlyph glyph={glyph} />
-    </span>
+    </IconTile>
   );
 }
 
-/** The group of rows: one white box, rows split by a hairline. */
-export const BOX = "overflow-hidden rounded-[16px] border border-line bg-card";
+/** The group of rows: one white box, rows split by a hairline (iOS inset grouped, A-273). */
+export const BOX = GROUP;
 
 /** Connect / Add / Reconnect: outlined, never black, because a page can hold several (A-253). 44px tall. */
 export const PILL =
@@ -80,29 +90,18 @@ export const PILL =
 
 /** "✓ Connected", in the green the app uses for done. */
 export function ConnectedMark() {
-  return <span className="inline-flex shrink-0 items-center whitespace-nowrap text-[15px] font-semibold text-sage">✓ Connected</span>;
+  return <span className="ios-subhead inline-flex shrink-0 items-center whitespace-nowrap text-sage">✓ Connected</span>;
 }
 
 /** Something stopped and needs the owner: the orange dot and one word, never colour alone (A-253). */
 export function NeedsMark({ word }: { word: string }) {
   return (
-    <span className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap text-[15px] font-semibold">
+    <span className="ios-subhead inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap">
       <span aria-hidden className="h-2 w-2 rounded-full" style={{ background: "var(--state-needs)" }} />
       {word}
     </span>
   );
 }
-
-function RowText({ name, sub }: { name: string; sub?: string | null }) {
-  return (
-    <span className="min-w-0 flex-1">
-      <span className="block text-[17px] font-semibold text-ink">{name}</span>
-      {sub && <span className="mt-0.5 block truncate text-[14px] text-ink-soft">{sub}</span>}
-    </span>
-  );
-}
-
-const ROW = "flex min-h-[72px] w-full items-center gap-3.5 px-4 py-3 text-left";
 
 /**
  * One place customers write. A row that opens its window is one button
@@ -129,23 +128,10 @@ export function ConnectionRow({
   /** The row's own action when there is no window yet: a Connect link, an Add button, "Soon". */
   action?: ReactNode;
 }) {
-  const edge = first ? "" : " border-t border-line-2";
-  if (onOpen) {
-    return (
-      <button type="button" onClick={onOpen} className={ROW + " hover:bg-card-2" + edge}>
-        <GlyphTile glyph={glyph} />
-        <RowText name={name} sub={sub} />
-        {mark}
-        <ChevronRight aria-hidden className="h-[18px] w-[18px] shrink-0 text-ink-faint" />
-      </button>
-    );
-  }
-  return (
-    <div className={ROW + edge}>
-      <GlyphTile glyph={glyph} />
-      <RowText name={name} sub={sub} />
-      {action}
-    </div>
+  return onOpen ? (
+    <ListRow icon={<GlyphTile glyph={glyph} />} label={name} sub={sub} first={first} onClick={onOpen} trailing={mark} />
+  ) : (
+    <ListRow icon={<GlyphTile glyph={glyph} />} label={name} sub={sub} first={first} trailing={action} />
   );
 }
 

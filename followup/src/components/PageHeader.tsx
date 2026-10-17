@@ -57,7 +57,7 @@ export function PageHeader({ title, subtitle, back, actions, primary, className 
         <div className="min-w-0">
           {/* Once the title scrolls away on a phone, the top bar shows it small (A-264). */}
           {typeof title === "string" && <ScrollTitle title={title} />}
-          <h1 className="title-serif text-[32px] leading-[1.1]">{title}</h1>
+          <h1 className="title-serif ios-title1">{title}</h1>
           {subtitle && <p className="text-ink-soft mt-1 max-w-xl">{subtitle}</p>}
         </div>
 

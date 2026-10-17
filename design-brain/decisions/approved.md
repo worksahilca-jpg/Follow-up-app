@@ -4754,3 +4754,30 @@ the connect window on the phone, *"yes go ahead"*. Drawing: `prototypes/ghl-conn
   GoHighLevel is no longer connected, the reply doesn't go and the owner is told why in one sentence.
 - **A reply typed in GoHighLevel shows in the thread** as "Sent from GoHighLevel directly, not through FollowUp", and
   FollowUp doesn't answer that customer again.
+
+## A-272 — Setup: CRM first, then FollowUp suggests what the CRM misses ^A-272
+
+**Date:** 2026-10-17. **Founder:** shown `prototypes/setup-crm/setup-ios-board.png`, chose *"1"* (iOS sizes, whole app)
+*"and the design and style too"*. Built from his own steps the same day (design-decisions, 2026-10-17).
+- **Screen 1, "Do you use a CRM?"** The answers are the CRMs themselves (GoHighLevel, Follow Up Boss, HubSpot) in one
+  grouped list; tapping one connects it. A quiet "No CRM" goes straight to the apps.
+- **Screen 2, "Connect these too"** (only after a CRM connects): FollowUp suggests the apps the CRM doesn't bring in,
+  "GoHighLevel doesn't get these. Connect them so you don't miss a lead." Instagram, Gmail, "I use Outlook", then Done.
+  Suggested, never forced.
+- Words as simple as R-121. Supersedes A-241's step 1 ("Where do customers write to you?").
+
+## A-273 — iOS sizes, design and style across the whole app ^A-273
+
+**Date:** 2026-10-17. **Founder:** *"i noticed all the designs have big fonts… look how ios uses the style and size and
+all"*, then, shown both side by side, *"1 and the design and style too"*.
+- **Type:** iOS text styles (Apple HIG): large title 34 bold on a page top, Title 1 28 bold for a setup or sheet
+  question, Title 2 22, Title 3 20, Headline 17 semibold, Body 17, Callout 16, Subheadline 15, Footnote 13, Caption 12.
+  Titles in the sans face, bold and tightly tracked, not the serif display face.
+- **Lists:** inset grouped, like iOS Settings: one rounded box per group, rows about 44–48 pt, hairline dividers that
+  start after the icon, 29 pt coloured icon tiles, a small grey chevron, the value in grey on the right.
+- **Density:** smaller than before everywhere; nothing a decision depends on below 15, meta 13.
+- **Principle, not a copy (R-077):** iOS's sizes, spacing and list style; never an iOS screen, its chrome or its icons.
+- Supersedes the serif page titles ("FU Display") and the 72 px card-per-row lists. Customer messages in Newsreader
+  (A-258) are the one open question: to be shown both ways before changing.
+- **Then, founder:** *"format and all too"*: iOS layout as well as type: inset grouped lists, large-title page tops,
+  sheets, plain rows with a grey value on the right, not a card per row.

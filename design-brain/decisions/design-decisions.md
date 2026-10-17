@@ -13773,3 +13773,41 @@ work it is making more work for them"*. Recorded as he said it:
   on his screen, before he relies on it.
 - Also fixed in passing: a reply sent from the WhatsApp Business app read "Sent from Instagram directly"; it now says
   WhatsApp.
+
+### 2026-10-17 — Setup asks where customers write; a CRM covers what it already brings in (founder principle)
+
+- **Founder, verbatim:** *"we can ask them the sources what they want to connect like if they use ghl or any other
+  sources right they dont need to connect the sources that ghl is fetching the leads from but they can do it we dont
+  mind right so we have to confirm them so they dont just connect everything"*.
+- **Principle:** setup asks which places the owner's customers write to and connects only those. When the owner picks
+  a CRM (GoHighLevel), FollowUp says plainly that the CRM already brings in the customers it collects, so connecting
+  those same places again isn't needed. Allowed, never pushed. Nobody is walked through connecting everything.
+- **Status:** to be drawn on the real setup screen for the founder's yes before any code (extends A-241's step 1).
+
+### 2026-10-17 — Setup order: CRM first, then what the CRM misses (founder)
+
+- **Founder, verbatim:** *"no we need to ask first right do they use crm if yes they can connect it and then if any
+  other sources they want to connect that is not connected with crm or whatever we can suggest them to connect it so
+  that they dont lose leads anywhere"*.
+- **Rejected:** one screen listing Instagram, Gmail and GoHighLevel side by side ("Connect your apps", drawn the same
+  day). **Inferred reason:** it mixes a CRM with single apps, so the owner can't tell what overlaps.
+- **Flow to draw:** 1) "Do you use a CRM?" Yes / No. 2) Yes → which one → connect it. 3) "Anything else?" suggests the
+  apps the CRM doesn't bring in, so no customer is missed; skipping is fine. No → straight to the apps.
+- Words stay as simple as R-121 and the 2026-10-17 brand principle ask.
+- **Then (same day), founder:** *"we need to keep onboarding as short as we can"*. Redrawn as 2 screens: "Do you use a
+  CRM?" lists the three CRMs as the answers, with a quiet "No CRM" link (the Yes/No screen and "Which one?" become one);
+  then "Anything else?" with Instagram and Gmail. "No CRM" goes straight to the apps. Board:
+  `scratchpad/setup-crm-board2.png` (copied into `prototypes/setup-crm/` when built). Waiting for his yes.
+
+### 2026-10-17 — "Big fonts": size and style like iOS (founder)
+
+- **Founder, verbatim:** *"i noticed all the designs have big fonts and all bro look how ios uses the style and size and
+  all copy bro"*.
+- **Read as:** take iOS's type sizes and density (the Human Interface Guidelines' text styles: Title 1 28 bold, Body 17,
+  Subheadline 15, Footnote 13; list rows about 44 pt with 29 pt icons, grouped in one box), not iOS's screens (R-077:
+  the familiar feel comes from details, never a borrowed screen).
+- **Status:** drawn on the setup screens first for his yes; if yes, it becomes the app-wide type scale (a token change
+  that needs his explicit OK, per CLAUDE.md).
+- **Then, founder:** *"anything else should suggested by us that they should connect this too so that they dont miss
+  any lead"*. Screen 2 is FollowUp's suggestion, not a question: "Connect these too" / "GoHighLevel doesn't get these.
+  Connect them so you don't miss a lead." Board with both type sizes: `scratchpad/setup-ios-board.png`.

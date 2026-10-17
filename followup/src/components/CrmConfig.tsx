@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import AppWindow from "@/components/app/AppWindow";
 import Switch from "@/components/Switch";
+import { ListRow, LetterTile, GROUP } from "@/components/app/IosList";
 import { BOX, PILL, ConnectedAs, ConnectedMark, ConnectionRow, ConnectionSheet, NeedsMark } from "@/components/settings/connectionBits";
 
 type Provider = "followupboss" | "hubspot" | "gohighlevel";
@@ -30,22 +31,10 @@ type Config = {
 };
 
 /**
- * The CRMs FollowUp works beside (A-252). The tiles are the drawing's: each
- * CRM's own colour, soft, so the row reads as theirs at a glance.
+ * The CRMs FollowUp works beside (A-252). Each tile is the CRM's own colour,
+ * solid with white letters, like an iOS Settings row (A-273).
  */
-const CRMS: { id: Provider; name: string; tile: string; bg: string; fg: string; keyLabel: string; where: string }[] = [
-  { id: "followupboss", name: "Follow Up Boss", tile: "FB", bg: "#e8eefc", fg: "#2c4fb5", keyLabel: "API key", where: "Admin → API in Follow Up Boss" },
-  {
-    id: "hubspot",
-    name: "HubSpot",
-    tile: "Hs",
-    bg: "#fdece4",
-    fg: "#c2451d",
-    // New HubSpot accounts can't make private apps any more; they get a service key, which FollowUp sends the
-    // same way (founder's HubSpot test, 2026-10-15). An older account's private app token still works.
-    keyLabel: "service key",
-    where: "In HubSpot, search Settings for “service key” and create one that can read and write contacts. An older private app token works too",
-  },
+const CRMS: { id: Provider; name: string; tile: string; bg: string; keyLabel: string; where: string }[] = [
   {
     // Option A (founder, 2026-10-16): a Private Integration key and the sub-account's Location ID, pasted once. Where
     // they live in GoHighLevel's screens is from HighLevel's own SDK docs and common setup guides; confirm with the
@@ -53,21 +42,27 @@ const CRMS: { id: Provider; name: string; tile: string; bg: string; fg: string; 
     id: "gohighlevel",
     name: "GoHighLevel",
     tile: "GH",
-    bg: "#e9f3ee",
-    fg: "#1f6b47",
+    bg: "#0d6e3c",
     keyLabel: "Private Integration key",
     where: "In GoHighLevel, Settings → Private Integrations → Create new. Let it read and write contacts and conversations, then copy the key",
+  },
+  { id: "followupboss", name: "Follow Up Boss", tile: "FB", bg: "#2a5cdb", keyLabel: "API key", where: "Admin → API in Follow Up Boss" },
+  {
+    id: "hubspot",
+    name: "HubSpot",
+    tile: "Hs",
+    bg: "#d9531e",
+    // New HubSpot accounts can't make private apps any more; they get a service key, which FollowUp sends the
+    // same way (founder's HubSpot test, 2026-10-15). An older account's private app token still works.
+    keyLabel: "service key",
+    where: "In HubSpot, search Settings for “service key” and create one that can read and write contacts. An older private app token works too",
   },
 ];
 /** GoHighLevel's second box: which sub-account (src/lib/crm/gohighlevel.ts). */
 const GHL_LOCATION_WHERE = "In GoHighLevel, Settings → Business Profile. It's a short code of letters and numbers";
 
-function Tile({ text, bg, fg }: { text: string; bg: string; fg: string }) {
-  return (
-    <span aria-hidden className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] text-[12.5px] font-bold" style={{ background: bg, color: fg }}>
-      {text}
-    </span>
-  );
+function Tile({ text, bg }: { text: string; bg: string }) {
+  return <LetterTile text={text} bg={bg} />;
 }
 
 function Dot({ color }: { color: string }) {
@@ -119,7 +114,7 @@ function syncProblem(raw: string, name: string): string {
  * of every note FollowUp wrote, the pause and Disconnect sit in the connected
  * window.
  */
-export default function CrmConfig() {
+export default function CrmConfig({ setup }: { setup?: { onConnected: (name: string) => void } } = {}) {
   const [loading, setLoading] = useState(true);
   const [config, setConfig] = useState<Config | null>(null);
   // null: no window. "pick": which CRM. A provider: its key.
@@ -159,7 +154,11 @@ export default function CrmConfig() {
         setKeyDraft("");
         setLocationDraft("");
         await load();
-        setStep("connected");
+        // Setup (A-272) moves on to "Connect these too"; Settings shows what is connected.
+        if (setup) {
+          setStep(null);
+          setup.onConnected(CRMS.find((c) => c.id === provider)?.name ?? "Your CRM");
+        } else setStep("connected");
       } else {
         setSaveError(data.message ?? "That didn't connect. Check the key and try again.");
       }
@@ -209,8 +208,23 @@ export default function CrmConfig() {
   };
   const refused = !!config.lastSyncError && /\b(401|403)\b/.test(config.lastSyncError);
 
+  const openKey = (id: Provider) => {
+    setStep(id);
+    setKeyDraft("");
+    setLocationDraft("");
+    setSaveError(null);
+  };
+
   return (
     <>
+      {setup ? (
+        // Setup, "Do you use a CRM?" (A-272): the CRMs are the answers, one tap opens the key window.
+        <div className={GROUP + " mt-5"}>
+          {CRMS.map((c, i) => (
+            <ListRow key={c.id} icon={<Tile text={c.tile} bg={c.bg} />} label={c.name} first={i === 0} onClick={() => openKey(c.id)} />
+          ))}
+        </div>
+      ) : (
       <div className={BOX}>
         {connected && crm ? (
           <ConnectionRow
@@ -236,30 +250,16 @@ export default function CrmConfig() {
           />
         )}
       </div>
-      {!connected && !config.isAdmin && <p className="text-[14px] text-ink-soft">Only an admin can connect a CRM.</p>}
+      )}
+      {!setup && !connected && !config.isAdmin && <p className="text-[14px] text-ink-soft">Only an admin can connect a CRM.</p>}
 
       {step === "pick" && (
         <AppWindow label="Connect your CRM" size="small" onClose={close}>
           <div className="p-6">
-            <p className="pr-8 text-[20px] font-semibold leading-tight">Which one do you use?</p>
-            <div className={BOX + " mt-4"}>
+            <p className="ios-title3 pr-8">Which one do you use?</p>
+            <div className={GROUP + " mt-4"}>
               {CRMS.map((c, i) => (
-                <div key={c.id} className={"flex min-h-[60px] items-center gap-3 px-4 py-2" + (i ? " border-t border-line-2" : "")}>
-                  <Tile text={c.tile} bg={c.bg} fg={c.fg} />
-                  <span className="min-w-0 flex-1 text-[16px] font-semibold">{c.name}</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setStep(c.id);
-                      setKeyDraft("");
-                      setLocationDraft("");
-                      setSaveError(null);
-                    }}
-                    className={PILL}
-                  >
-                    Connect
-                  </button>
-                </div>
+                <ListRow key={c.id} icon={<Tile text={c.tile} bg={c.bg} />} label={c.name} first={i === 0} onClick={() => openKey(c.id)} />
               ))}
             </div>
           </div>
@@ -270,7 +270,7 @@ export default function CrmConfig() {
         <AppWindow label={`Connect ${opening.name}`} size="small" onClose={close}>
           <div className="p-6">
             <div className="flex items-center gap-3 pr-8">
-              <Tile text={opening.tile} bg={opening.bg} fg={opening.fg} />
+              <Tile text={opening.tile} bg={opening.bg} />
               <p className="text-[18px] font-semibold">Connect {opening.name}</p>
             </div>
             <p className="mt-4 text-[14px] text-ink-soft">FollowUp will:</p>
@@ -333,7 +333,7 @@ export default function CrmConfig() {
               >
                 {saving ? "Connecting…" : `Connect ${opening.name}`}
               </button>
-              <button type="button" onClick={() => setStep("pick")} className={quietLink}>
+              <button type="button" onClick={() => (setup ? close() : setStep("pick"))} className={quietLink}>
                 Back
               </button>
             </div>

@@ -200,7 +200,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
         <div className="mt-0.5 hidden items-center gap-2.5 lg:flex">
           <Initials name={lead.name} size={38} />
           <div className="min-w-0">
-            <h1 className="title-serif truncate text-[23px] leading-tight sm:text-[26px]">{lead.name}</h1>
+            <h1 className="title-serif ios-title2 truncate">{lead.name}</h1>
             <p className="flex min-w-0 items-center gap-1.5 text-[12.5px] text-ink-faint">
               <ChannelIcon channel={channelId} className="h-3.5 w-3.5 shrink-0" />
               <span className="truncate">{[channel, firstWrote ? `first wrote ${firstWrote}` : null].filter(Boolean).join(" · ")}</span>

@@ -1584,3 +1584,15 @@ the owner's bubble must not cost that. The founder's reference is the landing pa
 theme, not a new one.
 **Together with [R-119](#^R-119):** not pure black (too sharp), not a near-twin of the customer's bubble (can't tell
 them apart). The landing page's message style is the direction; drawn next.
+
+## R-121 — "Where do customers write to you?" and other wordy setup lines ^R-121
+
+**Date:** 2026-10-17. **Founder, verbatim:** *"the thing where does customers writes is complex we dont have to use
+complex words anywhere be as simple and minimal as we can"*.
+**What was rejected:** setup's question "Where do customers write to you?" and the long lines drawn under it ("Pick
+only the places your customers write to…", "Customers who text or email you in GoHighLevel now come to FollowUp. That
+includes the ones your website and ads send there…").
+**Principle (founder's own words, not inferred):** as simple and minimal as possible, everywhere. Short, everyday
+words; the fewest words that are still true.
+**Do not propose again:** question-style headings that describe the customer's behaviour ("where do customers
+write…"), or two-sentence explanations where one short line does.

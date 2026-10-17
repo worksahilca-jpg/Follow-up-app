@@ -206,7 +206,10 @@
   --font-mono: var(--font-plex-mono), "IBM Plex Mono", ui-monospace, monospace;
   /* The words you read (A-258): the customer's message and the reply, set
      like a letter in Newsreader. Sizes stay with each place. */
-  --font-read: var(--font-newsreader), "Newsreader", Georgia, "Times New Roman", serif;
+  /* The words you read (messages, replies). The sans face since A-273 (iOS style, 2026-10-17); it was Newsreader
+     (A-258). To bring the letter-like serif back for messages only, restore:
+     var(--font-newsreader), "Newsreader", Georgia, "Times New Roman", serif */
+  --font-read: var(--font-public-sans), "Public Sans", ui-sans-serif, system-ui, sans-serif;
 }
 
 body {
@@ -517,17 +520,30 @@ input::placeholder, textarea::placeholder {
   font-weight: 100 900;
   font-display: swap;
 }
-/* Every page title in the app (A-221): the homepage's display face, and
-   its one italic phrase in the deep green ("15 customers need you"). */
+/* Every page title in the app. iOS style (A-273, 2026-10-17; was the
+   homepage's serif display face, A-221): the sans face, bold and tightly
+   tracked, like an iOS title. The class keeps its old name so every title
+   changes in one place. A phrase in <em> stays the deep green, upright. */
 .title-serif {
-  font-family: "FU Display", Georgia, "Times New Roman", serif;
-  font-weight: 400;
-  letter-spacing: -0.015em;
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.022em;
 }
 .title-serif em {
-  font-style: italic;
+  font-style: normal;
   color: var(--green-ink);
 }
+
+/* iOS text styles (Apple HIG, A-273): size / line height / tracking. */
+.ios-large-title { font-size: 34px; line-height: 41px; font-weight: 700; letter-spacing: -0.022em; }
+.ios-title1 { font-size: 28px; line-height: 34px; font-weight: 700; letter-spacing: -0.021em; }
+.ios-title2 { font-size: 22px; line-height: 28px; font-weight: 700; letter-spacing: -0.017em; }
+.ios-title3 { font-size: 20px; line-height: 25px; font-weight: 600; letter-spacing: -0.016em; }
+.ios-headline { font-size: 17px; line-height: 22px; font-weight: 600; letter-spacing: -0.024em; }
+.ios-body { font-size: 17px; line-height: 22px; letter-spacing: -0.024em; }
+.ios-callout { font-size: 16px; line-height: 21px; letter-spacing: -0.02em; }
+.ios-subhead { font-size: 15px; line-height: 20px; letter-spacing: -0.015em; }
+.ios-footnote { font-size: 13px; line-height: 18px; letter-spacing: -0.005em; }
 /* Desk: the sheet starts a hair below the top and runs off the right and
    bottom edges, with one rounded corner by the sidebar (Wispr's frame;
    founder 2026-10-10: "simplify, copy Wispr if you want"). */

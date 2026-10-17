@@ -248,7 +248,7 @@ function AlwaysSheet({ kind, count, onDone }: { kind: NotCustomerReason; count: 
         style={{ paddingBottom: "calc(20px + env(safe-area-inset-bottom, 0px))" }}
       >
         <div className="mx-auto mb-3.5 h-1 w-9 rounded-full bg-line lg:hidden" aria-hidden="true" />
-        <p id="always-title" className="title-serif text-[24px] leading-tight">
+        <p id="always-title" className="title-serif ios-title2">
           Set these aside from now on?
         </p>
         <p className="mt-2 text-[15px] leading-snug text-ink-soft">

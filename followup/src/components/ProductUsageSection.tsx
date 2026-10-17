@@ -111,9 +111,7 @@ export default function ProductUsageSection({ usage }: { usage: ProductUsage }) 
             How many people open the site, which pages they read, and how many reach sign-in. No cookies, no personal
             data, and your own visits to this admin page aren&apos;t counted.
           </p>
-          <p className="mt-3 rounded-[12px] px-3 py-2 text-sm text-ink-soft" style={{ backgroundColor: "var(--line)" }}>
-            Starts counting once Analytics is switched on in Vercel.
-          </p>
+          {/* Analytics is on (founder's check, 2026-10-17); the numbers live in Vercel, so the card only points there. */}
           <a
             href={VERCEL_ANALYTICS_URL}
             target="_blank"

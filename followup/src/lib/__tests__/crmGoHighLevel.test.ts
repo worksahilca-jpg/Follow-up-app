@@ -98,6 +98,54 @@ describe("notes and the one-boss rule", () => {
     fetchMock.mockResolvedValue(reply(500, {}));
     expect(await goHighLevelClient.lastContactedAt(KEY, "c1")).toEqual({ known: false, at: null });
   });
+
+  it("asks for their newest conversation", async () => {
+    fetchMock.mockResolvedValue(reply(200, { conversations: [] }));
+    await goHighLevelClient.lastContactedAt(KEY, "c1");
+    const url = new URL(fetchMock.mock.calls[0][0]);
+    expect(url.searchParams.get("sortBy")).toBe("last_message_date");
+    expect(url.searchParams.get("sort")).toBe("desc");
+  });
+
+  // The same person saved twice: a workflow on the other contact texts them all the same.
+  const route = (byContact: Record<string, unknown>, contacts: unknown[]) =>
+    fetchMock.mockImplementation(async (u: string) => {
+      const url = new URL(u);
+      if (url.pathname === "/contacts/") return reply(200, { contacts });
+      const id = url.searchParams.get("contactId")!;
+      return reply(200, { conversations: byContact[id] ? [byContact[id]] : [] });
+    });
+
+  it("counts a text to the same person saved as another contact", async () => {
+    route(
+      { c2: { lastMessageDirection: "outbound", lastMessageDate: "2026-10-16T09:00:00Z" } },
+      [{ id: "c1", phone: "+1 (416) 555-0100" }, { id: "c2", phone: "+14165550100" }, { id: "c3", phone: "+14165550199" }]
+    );
+    expect(await goHighLevelClient.lastContactedAt(KEY, "c1", { phone: "+14165550100", email: null })).toEqual({
+      known: true,
+      at: new Date("2026-10-16T09:00:00Z"),
+    });
+    // c3 only looked alike; it was never asked about.
+    expect(fetchMock.mock.calls.some(([u]) => new URL(u).searchParams.get("contactId") === "c3")).toBe(false);
+  });
+
+  it("matches by email too, whatever its case", async () => {
+    route({ c9: { lastMessageDirection: "outbound", lastMessageDate: "2026-10-16T09:00:00Z" } }, [{ id: "c9", email: "Priya@Example.com" }]);
+    expect((await goHighLevelClient.lastContactedAt(KEY, "c1", { phone: null, email: "priya@example.com" })).at).toEqual(new Date("2026-10-16T09:00:00Z"));
+  });
+
+  it("an Instagram id in the phone field matches nobody", async () => {
+    route({}, []);
+    await goHighLevelClient.lastContactedAt(KEY, "c1", { phone: "ig:12345678", email: null });
+    expect(fetchMock.mock.calls.every(([u]) => new URL(u).pathname !== "/contacts/")).toBe(true);
+  });
+
+  it("if the search for the same person fails, the contact itself still answers", async () => {
+    fetchMock.mockImplementation(async (u: string) =>
+      new URL(u).pathname === "/contacts/" ? reply(422, {}) : reply(200, { conversations: [{ lastMessageDirection: "outbound", lastMessageDate: "2026-10-15T10:00:00Z" }] })
+    );
+    expect(await goHighLevelClient.lastContactedAt(KEY, "c1", { phone: "+14165550100", email: null })).toEqual({ known: true, at: new Date("2026-10-15T10:00:00Z") });
+  });
 });
 
 // GHL 2: reading texts and emails, and replying through GoHighLevel.

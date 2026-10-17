@@ -10,7 +10,7 @@ vi.mock("@/lib/db", () => ({
     conversation: { findFirst: vi.fn(), create: vi.fn() },
     sendClaim: { create: vi.fn(), updateMany: vi.fn(async () => ({ count: 0 })), deleteMany: vi.fn() },
     message: { create: vi.fn(), updateMany: vi.fn(), findFirst: vi.fn(), count: vi.fn(async () => 1) },
-    followUp: { create: vi.fn() },
+    followUp: { create: vi.fn(), findFirst: vi.fn(async () => null) },
     business: { findUnique: vi.fn(async () => ({ allowModelTraining: false })) },
     outboundSend: { findFirst: vi.fn(), create: vi.fn() },
     crmConnection: { findUnique: vi.fn() },
@@ -29,6 +29,7 @@ vi.mock("@/lib/crm/gohighlevel", () => ({
   isGhlChannel: (c: string) => ["text", "email", "messenger", "instagram", "whatsapp"].includes(c),
 }));
 vi.mock("@/lib/audit", () => ({ recordAudit: vi.fn(async () => {}) }));
+vi.mock("@/lib/crm/oneBoss", () => ({ crmIsFollowingUp: vi.fn(async () => false) }));
 vi.mock("@/lib/sendCaps", () => ({ checkSendCap: vi.fn(async () => ({ allowed: true, used: 0, cap: 50 })) }));
 vi.mock("@/lib/suppression", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/suppression")>()),
@@ -42,6 +43,7 @@ import { pushCrmNote } from "@/lib/crm/notes";
 import { ghlReplyRoute } from "@/lib/crm/ghlThreads";
 import { sendGhlMessage } from "@/lib/crm/gohighlevel";
 import { sendFollowUpToLead } from "@/lib/sending";
+import { crmIsFollowingUp } from "@/lib/crm/oneBoss";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const p = prisma as any;
@@ -139,5 +141,36 @@ describe("a customer who wrote to GoHighLevel on Instagram", () => {
     expect(ghlSend).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ channel: "instagram", contactId: "contact9" }));
     expect(sendSms).not.toHaveBeenCalled();
     expect(sendEmail).not.toHaveBeenCalled();
+  });
+});
+
+describe("never two messages", () => {
+  const following = crmIsFollowingUp as unknown as ReturnType<typeof vi.fn>;
+
+  it("asks GoHighLevel once more right before an automatic send, and doesn't send if it's in touch with them", async () => {
+    following.mockResolvedValue(true);
+    p.message.findFirst.mockResolvedValue({ sentAt: new Date("2026-10-10T10:00:00Z") });
+    const result = await sendFollowUpToLead("lead1", "Just checking in.", { automated: true, trigger: "silence" });
+    expect(result).toMatchObject({ success: false, failure: "refused" });
+    expect(result.message).toContain("GoHighLevel is already in touch with Nadia");
+    expect(ghlSend).not.toHaveBeenCalled();
+    // "Ours" is only what FollowUp itself sent: a message with a source is the owner's or their CRM's.
+    expect(p.message.findFirst).toHaveBeenCalledWith(expect.objectContaining({ where: expect.objectContaining({ source: null }) }));
+    expect(following).toHaveBeenCalledWith(expect.objectContaining({ crmId: "contact9" }), new Date("2026-10-10T10:00:00Z"));
+  });
+
+  it("sends when GoHighLevel isn't in touch with them", async () => {
+    following.mockResolvedValue(false);
+    const result = await sendFollowUpToLead("lead1", "Just checking in.", { automated: true, trigger: "silence" });
+    expect(result.message).toBeUndefined();
+    expect(result.success).toBe(true);
+    expect(ghlSend).toHaveBeenCalled();
+  });
+
+  it("never stops the owner's own send", async () => {
+    following.mockResolvedValue(true);
+    const result = await sendFollowUpToLead("lead1", "Saturday at 11 works.");
+    expect(result.success).toBe(true);
+    expect(following).not.toHaveBeenCalled();
   });
 });

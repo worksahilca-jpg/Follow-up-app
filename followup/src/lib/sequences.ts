@@ -42,7 +42,8 @@ import { recordAudit } from "@/lib/audit";
 import { isWithinSendWindow } from "@/lib/sendWindow";
 import type { AutomationTier, Prisma, SequenceAction, PipelineStage } from "@prisma/client";
 import type { Message } from "@/lib/types";
-import { HOLD_ALL_SEQUENCE_REASON, RISK_CHECK_FAILED_REASON, UNGROUNDED_DRAFT_REASONS, ASKED_IF_PERSON_REASON } from "@/lib/holdReasons";
+import { HOLD_ALL_SEQUENCE_REASON, RISK_CHECK_FAILED_REASON, UNGROUNDED_DRAFT_REASONS, ASKED_IF_PERSON_REASON, IN_CRM_REASON } from "@/lib/holdReasons";
+import { crmIsFollowingUp, ourLastSendAt } from "@/lib/crm/oneBoss";
 import { emailGreetingOf } from "@/lib/dmDrafts";
 import { checkUnreviewedDraft } from "@/lib/unreviewedDraftCheck";
 import { draftingContext, getBusinessFacts } from "@/lib/businessFacts";
@@ -740,6 +741,8 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
             body: m.body,
             date: m.sentAt.toISOString(),
             opened: m.opened,
+            // Who sent an outbound: the owner in their CRM or a Meta app (set), or FollowUp (unset).
+            source: m.source ?? undefined,
             // Who wrote each outbound: the grounding check below counts only
             // what a person at the business said (businessText, dmDrafts.ts).
             trigger: m.trigger ?? undefined,
@@ -920,6 +923,12 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
 
         // They asked if they're talking to a real person: a person answers.
         if (lead.askedIfPersonAt) risk = { riskLevel: "high", reason: ASKED_IF_PERSON_REASON };
+        // One boss per customer (A-237), which plans never checked: while their CRM is in touch with them, the step
+        // waits for the owner, like any other follow-up, so they never get two messages. Asked only when nothing
+        // above already holds it.
+        if (!holdAll && risk.riskLevel === "low" && lead.crmProvider && lead.crmId && (await crmIsFollowingUp(lead, ourLastSendAt(conversation)))) {
+          risk = { riskLevel: "medium", reason: IN_CRM_REASON };
+        }
         if (holdAll || risk.riskLevel !== "low") {
           // Unenrolled rather than left "stuck" on this step: the normal
           // approval-queue send (POST /api/leads/[id]/send) knows nothing

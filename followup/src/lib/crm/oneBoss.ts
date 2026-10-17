@@ -31,7 +31,7 @@ export const OWN_ACTIVITY_MINUTES = 15;
  * connected to it.
  */
 export async function crmIsFollowingUp(
-  lead: { businessId: string; crmProvider: string | null; crmId: string | null },
+  lead: { businessId: string; crmProvider: string | null; crmId: string | null; phone?: string | null; email?: string | null },
   ourLastSentAt: Date | null,
   now: Date = new Date()
 ): Promise<boolean> {
@@ -40,7 +40,7 @@ export async function crmIsFollowingUp(
   try {
     const conn = await prisma.crmConnection.findUnique({ where: { businessId: lead.businessId }, select: { provider: true, apiKey: true } });
     if (!conn?.apiKey || conn.provider !== lead.crmProvider) return true;
-    answer = await CRM_PROVIDERS[lead.crmProvider].client.lastContactedAt(conn.apiKey, lead.crmId);
+    answer = await CRM_PROVIDERS[lead.crmProvider].client.lastContactedAt(conn.apiKey, lead.crmId, { phone: lead.phone ?? null, email: lead.email ?? null });
   } catch {
     return true;
   }
@@ -53,4 +53,14 @@ export async function crmIsFollowingUp(
     if (sinceOurs >= 0 && sinceOurs <= OWN_ACTIVITY_MINUTES * 60_000) return false;
   }
   return true;
+}
+
+/**
+ * FollowUp's own last send to them, for `ourLastSentAt` above. A message the owner or their CRM sent and FollowUp
+ * only read back (`source` set: "gohighlevel_direct", "instagram_direct", …) is not FollowUp's. Counting it as ours
+ * made a GoHighLevel workflow's own text look like FollowUp's, so FollowUp followed up on top of it (2026-10-17).
+ */
+export function ourLastSendAt(conversation: { direction: string; date: string; source?: string }[]): Date | null {
+  const times = conversation.filter((m) => m.direction === "outbound" && !m.source).map((m) => new Date(m.date).getTime());
+  return times.length ? new Date(Math.max(...times)) : null;
 }

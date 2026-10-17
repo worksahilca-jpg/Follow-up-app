@@ -17,7 +17,7 @@ vi.mock("@/lib/crm", () => ({
   },
 }));
 
-import { crmIsFollowingUp } from "@/lib/crm/oneBoss";
+import { crmIsFollowingUp, ourLastSendAt } from "@/lib/crm/oneBoss";
 import { followUpBossClient } from "@/lib/crm/followupboss";
 import { hubspotClient } from "@/lib/crm/hubspot";
 
@@ -34,7 +34,7 @@ describe("crmIsFollowingUp", () => {
   it("is following up when the CRM contacted them in the last two weeks", async () => {
     h.lastContactedAt.mockResolvedValue({ known: true, at: daysAgo(3) });
     expect(await crmIsFollowingUp(lead, null, now)).toBe(true);
-    expect(h.lastContactedAt).toHaveBeenCalledWith("key", "fub-1");
+    expect(h.lastContactedAt).toHaveBeenCalledWith("key", "fub-1", { phone: null, email: null });
   });
 
   it("is not when the CRM last contacted them over two weeks ago, or never", async () => {
@@ -99,5 +99,20 @@ describe("asking each CRM", () => {
     expect(await hubspotClient.lastContactedAt("tok", "9")).toEqual({ known: true, at: null });
     fetchMock.mockRejectedValueOnce(new Error("offline"));
     expect(await hubspotClient.lastContactedAt("tok", "9")).toEqual({ known: false, at: null });
+  });
+});
+
+describe("ourLastSendAt", () => {
+  it("is FollowUp's own last send, never a message the owner or their CRM sent", () => {
+    const at = (iso: string) => iso;
+    expect(
+      ourLastSendAt([
+        { direction: "outbound", date: at("2026-10-10T10:00:00Z") },
+        { direction: "inbound", date: at("2026-10-11T10:00:00Z") },
+        // A GoHighLevel workflow's text, read back: not FollowUp's.
+        { direction: "outbound", date: at("2026-10-12T10:00:00Z"), source: "gohighlevel_direct" },
+      ])
+    ).toEqual(new Date("2026-10-10T10:00:00Z"));
+    expect(ourLastSendAt([{ direction: "outbound", date: "2026-10-12T10:00:00Z", source: "instagram_direct" }])).toBeNull();
   });
 });

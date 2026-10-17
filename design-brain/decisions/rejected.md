@@ -1650,6 +1650,9 @@ layout, or both, and for screenshots of apps he loves.
 
 ## R-127 — Per-customer switches ("Always ask me first for Raj", "Stop following up Raj") ^R-127
 
+**SUPERSEDED (2026-10-17)** in part: the founder then said *"but we need this feature make it simple"*. The need stays;
+the two switches stay rejected. A simpler form is proposed (one plain choice, see design-decisions 2026-10-17).
+
 **Date:** 2026-10-17. **Founder, verbatim:** *"but the button sounds complex and i didnt got the feature"*.
 **What was rejected:** two switches on a customer's page to change how FollowUp treats that one person.
 **Principle (his words):** if the founder can't get a feature from a one-line explanation, owners won't either.

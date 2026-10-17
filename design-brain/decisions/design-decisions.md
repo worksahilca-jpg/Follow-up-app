@@ -13951,3 +13951,12 @@ Round 3 combined round 2's proven layouts with v1's depth and tinted faces (draw
 not shown). **Founder, verbatim:** *"oksy lets jut keep organising every thing we will design and chose the colour
 later"*. Decision: visual design and colour wait; next is organising the whole app (where every feature lives, what
 is on the surface, one tap away, in Settings, or in the back), refreshing `components/app-map.md`, and the feature list.
+
+## 2026-10-17 — Per-customer control: already built, hidden; proposed in one plain row
+
+**Founder:** *"but we need this feature make it simple"* (after R-127). Found: it already exists, folded under the
+customer page's Details as "How it handles {name}" with three tiers (I'll do it · Ask if risky · Handle it all,
+`LeadAutomationToggle`, `Lead.automationTier`). Proposed: one row in the About sheet, "FollowUp and {name}: Ask me
+first", which opens an iPhone-style pick list with a tick: **Ask me first** (default) · **Don't write to {name}**
+(the third tier only where sending by itself is allowed). No new feature, no switches; wording and place only.
+Waiting for his yes.

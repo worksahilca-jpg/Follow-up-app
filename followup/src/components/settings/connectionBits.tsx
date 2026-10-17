@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import AppWindow from "@/components/app/AppWindow";
 import { GROUP, IconTile, ListRow } from "@/components/app/IosList";
+import { BRAND, BrandTile, type Brand } from "@/components/brandLogos";
 
 /**
  * The pieces of "Where customers write" (A-253): one row per place, each
@@ -11,13 +12,15 @@ import { GROUP, IconTile, ListRow } from "@/components/app/IosList";
  * (CrmConfig.tsx) so every row reads the same.
  */
 
-export type Glyph = "email" | "instagram" | "messenger" | "whatsapp" | "web" | "crm";
+export type Glyph = "email" | "gmail" | "outlook" | "instagram" | "messenger" | "facebook" | "whatsapp" | "web" | "crm";
 
 /** The glyph, in currentColor (17px, white on its tile, A-273). */
 export function ConnectionGlyph({ glyph }: { glyph: Glyph }) {
   const common = { viewBox: "0 0 24 24", width: 17, height: 17, fill: "none", stroke: "currentColor", strokeWidth: 2.1, "aria-hidden": true } as const;
   switch (glyph) {
     case "email":
+    case "gmail":
+    case "outlook":
       return (
         <svg {...common} strokeLinejoin="round">
           <rect x="3" y="5" width="18" height="14" rx="2.5" />
@@ -33,6 +36,7 @@ export function ConnectionGlyph({ glyph }: { glyph: Glyph }) {
         </svg>
       );
     case "messenger":
+    case "facebook":
       return (
         <svg {...common} strokeLinejoin="round">
           <path d="M12 3C7 3 3 6.7 3 11.4c0 2.6 1.2 4.9 3.2 6.4V21l3-1.6c.9.3 1.8.4 2.8.4 5 0 9-3.7 9-8.4S17 3 12 3Z" />
@@ -66,6 +70,10 @@ export function ConnectionGlyph({ glyph }: { glyph: Glyph }) {
 /** Each place's own colour on its tile, like an iOS Settings row (A-273). Dark enough for a white glyph. */
 export const GLYPH_BG: Record<Glyph, string> = {
   email: "#2f6fe0",
+  gmail: "#2f6fe0",
+  // Outlook's blue, under the envelope, until Microsoft's own Outlook logo file is added (brandLogos.tsx).
+  outlook: "#0078d4",
+  facebook: "#1d6ff2",
   instagram: "#c13584",
   messenger: "#1d6ff2",
   whatsapp: "#1e8e3e",
@@ -74,6 +82,8 @@ export const GLYPH_BG: Record<Glyph, string> = {
 };
 
 export function GlyphTile({ glyph }: { glyph: Glyph }) {
+  // The place's own logo wherever there is one (founder 2026-10-17, A-276).
+  if (glyph in BRAND) return <BrandTile brand={glyph as Brand} />;
   return (
     <IconTile bg={GLYPH_BG[glyph]}>
       <ConnectionGlyph glyph={glyph} />

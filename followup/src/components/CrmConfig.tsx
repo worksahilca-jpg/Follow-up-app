@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import AppWindow from "@/components/app/AppWindow";
 import Switch from "@/components/Switch";
 import { ListRow, LetterTile, GROUP } from "@/components/app/IosList";
+import { BrandTile } from "@/components/brandLogos";
 import { BOX, PILL, ConnectedAs, ConnectedMark, ConnectionRow, ConnectionSheet, NeedsMark } from "@/components/settings/connectionBits";
 
 type Provider = "followupboss" | "hubspot" | "gohighlevel";
@@ -61,7 +62,9 @@ const CRMS: { id: Provider; name: string; tile: string; bg: string; keyLabel: st
 /** GoHighLevel's second box: which sub-account (src/lib/crm/gohighlevel.ts). */
 const GHL_LOCATION_WHERE = "In GoHighLevel, Settings → Business Profile. It's a short code of letters and numbers";
 
-function Tile({ text, bg }: { text: string; bg: string }) {
+function Tile({ text, bg, id }: { text: string; bg: string; id?: Provider }) {
+  // HubSpot's own logo (A-276); GoHighLevel and Follow Up Boss keep their letters until their logo files are added.
+  if (id === "hubspot") return <BrandTile brand="hubspot" />;
   return <LetterTile text={text} bg={bg} />;
 }
 
@@ -221,7 +224,7 @@ export default function CrmConfig({ setup }: { setup?: { onConnected: (name: str
         // Setup, "Do you use a CRM?" (A-272): the CRMs are the answers, one tap opens the key window.
         <div className={GROUP + " mt-5"}>
           {CRMS.map((c, i) => (
-            <ListRow key={c.id} icon={<Tile text={c.tile} bg={c.bg} />} label={c.name} first={i === 0} onClick={() => openKey(c.id)} />
+            <ListRow key={c.id} icon={<Tile text={c.tile} bg={c.bg} id={c.id} />} label={c.name} first={i === 0} onClick={() => openKey(c.id)} />
           ))}
         </div>
       ) : (
@@ -259,7 +262,7 @@ export default function CrmConfig({ setup }: { setup?: { onConnected: (name: str
             <p className="ios-title3 pr-8">Which one do you use?</p>
             <div className={GROUP + " mt-4"}>
               {CRMS.map((c, i) => (
-                <ListRow key={c.id} icon={<Tile text={c.tile} bg={c.bg} />} label={c.name} first={i === 0} onClick={() => openKey(c.id)} />
+                <ListRow key={c.id} icon={<Tile text={c.tile} bg={c.bg} id={c.id} />} label={c.name} first={i === 0} onClick={() => openKey(c.id)} />
               ))}
             </div>
           </div>

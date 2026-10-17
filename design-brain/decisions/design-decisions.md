@@ -13980,3 +13980,10 @@ Weak, honestly: the "Outlook needs reconnecting" notice now has no colour, so it
 
 The founder asked that light mode stay light and dark mode go dark. Agreed and recorded as A-281: the app follows the
 device's own setting; nothing new to choose in Settings. Build waits until the whole look is redrawn in both.
+
+## 2026-10-17 — Charcoal and see-through black instead of sharp black (founder idea), drawn
+
+**Founder:** *"rather than sharp black we can use transparent black or charchol right create depht"*. Drawn both looks
+again: light uses charcoal (#2a2a2e) for the button, your bubbles and dots, layers made with see-through black lines and
+soft shadows; dark uses a charcoal ground (#161618) with layers of see-through white (6–8%) instead of pure black, a
+lifted reply box with a soft shadow, and an off-white button. Waiting for his reaction.

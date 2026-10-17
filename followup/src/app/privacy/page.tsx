@@ -23,12 +23,12 @@ export default function PrivacyPage() {
   return (
     <div>
       <header className="border-b border-line">
-        <div className="max-w-3xl mx-auto px-6 py-5 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
+        <div className="max-w-3xl mx-auto px-6 py-3 flex items-center justify-between">
+          <Link href="/" className="flex min-h-11 items-center gap-2">
             <LogoMark height={20} />
             <span className="font-display text-lg">FollowUp</span>
           </Link>
-          <Link href="/" className="text-sm text-ink-soft">
+          <Link href="/" className="inline-flex min-h-11 items-center text-sm text-ink-soft">
             Back home
           </Link>
         </div>
@@ -45,7 +45,7 @@ export default function PrivacyPage() {
               FollowUp (&quot;FollowUp&quot;, &quot;we&quot;, &quot;us&quot;) helps businesses reply to their own
               customers on time. This policy explains what data we collect, why, and how you can control it.
               Contact us at{" "}
-              <a href="mailto:contact@followupbase.io" className="underline">
+              <a href="mailto:contact@followupbase.io" className="inline-flex min-h-11 items-center underline">
                 contact@followupbase.io
               </a>{" "}
               with any questions.
@@ -252,7 +252,7 @@ export default function PrivacyPage() {
               its full conversation history) at any time from that lead&apos;s page. You can export all of
               your data, or delete your entire account and all associated data, yourself from Settings → Your
               data. You can also email{" "}
-              <a href="mailto:contact@followupbase.io" className="underline">
+              <a href="mailto:contact@followupbase.io" className="inline-flex min-h-11 items-center underline">
                 contact@followupbase.io
               </a>{" "}
               and we&apos;ll confirm deletion within 2 business days. Revoking FollowUp&apos;s Gmail access at{" "}
@@ -325,7 +325,7 @@ export default function PrivacyPage() {
             <p className="mt-2">
               Depending on where you live, you may have rights to access, correct, export, or delete your
               personal data, and to object to certain processing. To exercise any of these, contact{" "}
-              <a href="mailto:contact@followupbase.io" className="underline">
+              <a href="mailto:contact@followupbase.io" className="inline-flex min-h-11 items-center underline">
                 contact@followupbase.io
               </a>
               .
@@ -342,12 +342,12 @@ export default function PrivacyPage() {
         </div>
       </main>
 
-      <footer className="border-t border-line py-8 text-center text-xs text-ink-soft">
-        <Link href="/" className="underline">
+      <footer className="border-t border-line py-6 text-center text-[13px] text-ink-soft">
+        <Link href="/" className="inline-flex min-h-11 items-center underline">
           FollowUp
         </Link>{" "}
         ·{" "}
-        <Link href="/terms" className="underline">
+        <Link href="/terms" className="inline-flex min-h-11 items-center underline">
           Terms of Service
         </Link>
       </footer>

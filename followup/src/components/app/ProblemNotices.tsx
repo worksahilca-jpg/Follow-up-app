@@ -34,7 +34,7 @@ export default function ProblemNotices({ problems }: { problems: OpenProblem[] }
                   {p.action.label}
                 </Link>
               )}
-              <button type="button" onClick={() => dismiss(p.id)} className="inline-flex min-h-11 items-center text-[14.5px] text-ink-soft hover:text-ink">
+              <button type="button" onClick={() => dismiss(p.id)} className="inline-flex min-h-11 min-w-11 items-center justify-center text-[14.5px] text-ink-soft hover:text-ink">
                 Got it
               </button>
             </div>

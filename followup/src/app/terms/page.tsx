@@ -12,12 +12,12 @@ export default function TermsPage() {
   return (
     <div>
       <header className="border-b border-line">
-        <div className="max-w-3xl mx-auto px-6 py-5 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
+        <div className="max-w-3xl mx-auto px-6 py-3 flex items-center justify-between">
+          <Link href="/" className="flex min-h-11 items-center gap-2">
             <LogoMark height={20} />
             <span className="font-display text-lg">FollowUp</span>
           </Link>
-          <Link href="/" className="text-sm text-ink-soft">
+          <Link href="/" className="inline-flex min-h-11 items-center text-sm text-ink-soft">
             Back home
           </Link>
         </div>
@@ -45,7 +45,7 @@ export default function TermsPage() {
               replies. By default, messages are only sent with your approval. If you turn on sending without
               asking (for your account or for a specific lead), FollowUp sends simple, low-risk follow-ups for
               you — see our{" "}
-              <Link href="/privacy" className="underline">
+              <Link href="/privacy" className="inline-flex min-h-11 items-center underline">
                 Privacy Policy
               </Link>{" "}
               for details on how that works and what data is involved.
@@ -121,7 +121,7 @@ export default function TermsPage() {
             <h2 className="font-display text-xl text-ink">10. Contact</h2>
             <p className="mt-2">
               Questions about these terms:{" "}
-              <a href="mailto:contact@followupbase.io" className="underline">
+              <a href="mailto:contact@followupbase.io" className="inline-flex min-h-11 items-center underline">
                 contact@followupbase.io
               </a>
               .
@@ -130,12 +130,12 @@ export default function TermsPage() {
         </div>
       </main>
 
-      <footer className="border-t border-line py-8 text-center text-xs text-ink-soft">
-        <Link href="/" className="underline">
+      <footer className="border-t border-line py-6 text-center text-[13px] text-ink-soft">
+        <Link href="/" className="inline-flex min-h-11 items-center underline">
           FollowUp
         </Link>{" "}
         ·{" "}
-        <Link href="/privacy" className="underline">
+        <Link href="/privacy" className="inline-flex min-h-11 items-center underline">
           Privacy Policy
         </Link>
       </footer>

@@ -139,7 +139,8 @@ export default function CustomerSide({ name, line, children }: { name: string; l
           <ChevronLeft className="h-6 w-6" strokeWidth={2} aria-hidden="true" />
         </Link>
         <div className="min-w-0 flex-1">
-          <p className="title-serif ios-headline truncate">{name}</p>
+          {/* The page heading on the phone; the computer's own h1 is hidden here, so there is only ever one. */}
+          <h1 className="title-serif ios-headline truncate">{name}</h1>
           <p className="flex min-w-0 items-center gap-1.5 text-[12px] text-ink-faint">{line}</p>
         </div>
         <button

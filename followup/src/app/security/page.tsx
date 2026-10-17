@@ -249,7 +249,7 @@ export default function SecurityPage() {
             <div className={s.box}>
               <div className={styles.mono}>Your customer</div>
               <div className={s.reply}>Hi Sarah, happy to help. Which day suits you?</div>
-              <div className={styles.mono} style={{ marginTop: 8, fontSize: 10.5, letterSpacing: "0.08em" }}>
+              <div className={styles.mono} style={{ marginTop: 8, letterSpacing: "0.08em" }}>
                 From your own address
               </div>
             </div>

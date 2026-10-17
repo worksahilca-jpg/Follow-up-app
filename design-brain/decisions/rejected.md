@@ -1638,3 +1638,12 @@ apps people use every day (Apple's own apps first: Messages, Mail, Settings, Rem
 new inventions. Familiar beats novel (Jakob's law). We take how proven apps work and Apple's standard building
 blocks, never another company's logo, name or brand look (R-092, R-097 still stand).
 **Do not propose again:** screens whose look or flow we invented when a proven everyday pattern exists.
+
+## R-126 — Round 2: proven Apple/Wispr patterns, still in black and white ^R-126
+
+**Date:** 2026-10-17. **Founder, verbatim:** *"i do know looks still very bad"*.
+**What was rejected:** round 2 (A-277 patterns: Messages list and chat, iPhone Settings, Screen Time, Wispr home,
+history and onboarding), drawn in our current black and white.
+**Principle (inferred, asked to confirm):** most likely the black-and-white again (R-123 said "this balck white looks
+bad"): copying the layouts was not enough while the colour stayed monochrome. Asked whether it is the colours, the
+layout, or both, and for screenshots of apps he loves.

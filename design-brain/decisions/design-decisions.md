@@ -13975,3 +13975,8 @@ elevenlabs and marco is"*. Accent board rejected (R-128). Redrawn the laptop Tod
 ElevenLabs-like: white, a pale grey sidebar, hairline lines, grey initials, small black dots, one black button; (2) dark,
 Macro-like: near-black, grey rows, one white button. Same layout as before (three columns). Waiting for his pick: 1 or 2.
 Weak, honestly: the "Outlook needs reconnecting" notice now has no colour, so it relies on its words and position only.
+
+## 2026-10-17 — Light and dark both, following the device (A-281)
+
+The founder asked that light mode stay light and dark mode go dark. Agreed and recorded as A-281: the app follows the
+device's own setting; nothing new to choose in Settings. Build waits until the whole look is redrawn in both.

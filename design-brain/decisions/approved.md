@@ -4857,3 +4857,13 @@ Same rules as every draft: no made-up prices or dates, the sales-pressure check,
 value on the right. Tapping opens a pick list with a tick (phone) or a small pop-up menu (computer): **Ask me first**
 (default) · **Don't write to {name}**. Sending by itself appears as a third choice only where the account allows it.
 Supersedes the R-127 switches. Words: plain, as drawn.
+
+## A-281 — Minimal, no colour, light and dark both: the app follows the device ^A-281
+
+**Date:** 2026-10-17. **Founder, verbatim:** *"for light theme it should go ligh and for dark it should go dark right ?"*
+(after the minimal light and dark drawings, R-128).
+**What:** both minimal looks ship. The app follows the phone's or computer's own Light/Dark setting, the way Apple's
+apps, ElevenLabs and Macro do. Light: white, pale grey sidebar, hairlines, grey initials, one black button. Dark:
+near-black, grey rows, one white button. No accent colour in either (R-128); status colours only where something is
+broken or done.
+**Supersedes:** "light only" (the skill's token note and A-090's white ground) for the app. Landing page not decided.

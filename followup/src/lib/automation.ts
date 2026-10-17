@@ -42,7 +42,7 @@ import { isExitPayload, toQuickReplies, type StoredQuickReplies } from "@/lib/qu
 import { Prisma } from "@prisma/client";
 import { composeFollowUpEmail, latestInboundText } from "@/lib/sender";
 import { sendFollowUpToLead, detectAutomatedReplyChannel } from "@/lib/sending";
-import { crmIsFollowingUp } from "@/lib/crm/oneBoss";
+import { crmIsFollowingUp, ourLastSendAt } from "@/lib/crm/oneBoss";
 import { requireActiveBilling, checkAiEligibility } from "@/lib/billing";
 import { leadLanguageOf } from "@/lib/leadLanguage";
 import { canSendOn, hasAnySendChannel } from "@/lib/sendChannels";
@@ -1662,7 +1662,7 @@ export async function runAutomationForBusiness(
           !!lead.crmProvider &&
           !!lead.crmId &&
           !(risk.riskLevel !== "low" || isCold || isBackfilled || isUntouched || phoneNeverWrote || unconfirmedSpam) &&
-          (await crmIsFollowingUp(lead, lastOutboundAt(conversation)));
+          (await crmIsFollowingUp(lead, ourLastSendAt(conversation)));
         if (holdAll || autonomousBacklog || autoSendBacklog || risk.riskLevel !== "low" || isCold || isBackfilled || isUntouched || phoneNeverWrote || unconfirmedSpam || inCrm) {
           // Persist whatever was just written, so the stale draft doesn't
           // linger as what the owner sees waiting for approval — and stamp
@@ -2313,10 +2313,4 @@ export async function runFreshRepliesForAllBusinesses(): Promise<AutomationResul
     totals.heldReasons.push(...result.heldReasons);
   }
   return totals;
-}
-
-/** When the business last wrote to them, for telling FollowUp's own CRM notes from the CRM's follow-ups. */
-function lastOutboundAt(conversation: Message[]): Date | null {
-  const times = conversation.filter((m) => m.direction === "outbound").map((m) => new Date(m.date).getTime());
-  return times.length ? new Date(Math.max(...times)) : null;
 }

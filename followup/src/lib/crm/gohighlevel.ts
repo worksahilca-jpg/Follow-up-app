@@ -136,27 +136,80 @@ export const goHighLevelClient: CrmClient = {
     }
   },
 
-  // The one-boss rule (A-237): when GoHighLevel last wrote to this person. Read from their conversation's last
+  // The one-boss rule (A-237): when GoHighLevel last wrote to this person. Read from their newest conversation's last
   // message, counted only when it says it went out from the business; anything else is "unknown", which keeps
-  // FollowUp waiting for the owner.
-  async lastContactedAt(apiKey, externalId) {
+  // FollowUp waiting for the owner. The same person is often saved twice in GoHighLevel (a form and a text make two
+  // contacts), and a workflow on the other one texts them all the same, so every contact with their phone or email
+  // is asked too, and the latest answer counts (GHL pain #9, research 2026-10-17).
+  async lastContactedAt(apiKey, externalId, person) {
     const k = parseGhlKey(apiKey);
     if (!k) return { known: false, at: null };
     try {
-      const q = new URLSearchParams({ locationId: k.locationId, contactId: externalId, limit: "1" });
-      const res = await fetch(`${BASE}/conversations/search?${q.toString()}`, { headers: headers(k.token), signal: AbortSignal.timeout(CRM_TIMEOUT_MS) });
-      if (!res.ok) return { known: false, at: null };
-      const data = (await res.json().catch(() => null)) as Record<string, unknown> | null;
-      const convo = Array.isArray(data?.conversations) ? (data!.conversations as Array<Record<string, unknown>>)[0] : undefined;
-      if (!data || !Array.isArray(data.conversations)) return { known: false, at: null };
-      if (!convo) return { known: true, at: null };
-      if (convo.lastMessageDirection !== "outbound" || !("lastMessageDate" in convo)) return { known: false, at: null };
-      return readWhen(convo.lastMessageDate);
+      const ids = [externalId, ...(await samePersonIds(k, externalId, person))];
+      let latest: Date | null = null;
+      for (const id of ids) {
+        const one = await lastFromBusiness(k, id);
+        if (!one.known) return { known: false, at: null };
+        if (one.at && (!latest || one.at > latest)) latest = one.at;
+      }
+      return { known: true, at: latest };
     } catch {
       return { known: false, at: null };
     }
   },
 };
+
+async function lastFromBusiness(k: { token: string; locationId: string }, contactId: string): Promise<{ known: boolean; at: Date | null }> {
+  const q = new URLSearchParams({ locationId: k.locationId, contactId, sortBy: "last_message_date", sort: "desc", limit: "1" });
+  const res = await fetch(`${BASE}/conversations/search?${q.toString()}`, { headers: headers(k.token), signal: AbortSignal.timeout(CRM_TIMEOUT_MS) });
+  if (!res.ok) return { known: false, at: null };
+  const data = (await res.json().catch(() => null)) as Record<string, unknown> | null;
+  if (!data || !Array.isArray(data.conversations)) return { known: false, at: null };
+  const convo = (data.conversations as Array<Record<string, unknown>>)[0];
+  if (!convo) return { known: true, at: null };
+  if (convo.lastMessageDirection !== "outbound" || !("lastMessageDate" in convo)) return { known: false, at: null };
+  return readWhen(convo.lastMessageDate);
+}
+
+/** At most this many other contacts are asked about, so one check stays a handful of calls. */
+const MAX_DUPLICATES = 4;
+
+const digitsOf = (phone: string) => phone.replace(/\D/g, "").slice(-10);
+
+/**
+ * Other GoHighLevel contacts with this person's phone or email. Found with the contacts list's `query` (grade C: in
+ * the SDK, not yet seen on a real account). If GoHighLevel can't be asked, it's the one contact, as before.
+ */
+async function samePersonIds(
+  k: { token: string; locationId: string },
+  externalId: string,
+  person: { phone: string | null; email: string | null } | undefined
+): Promise<string[]> {
+  // A real phone number only: an Instagram or Messenger id in the phone field (ig:…, fb:…) matches nobody here.
+  const phone = person?.phone && /^\+?[\d\s().-]{7,}$/.test(person.phone) && digitsOf(person.phone).length >= 7 ? digitsOf(person.phone) : null;
+  const email = person?.email?.trim().toLowerCase() || null;
+  const found = new Set<string>();
+  for (const term of [phone, email]) {
+    if (!term) continue;
+    try {
+      const q = new URLSearchParams({ locationId: k.locationId, query: term, limit: "10" });
+      const res = await fetch(`${BASE}/contacts/?${q.toString()}`, { headers: headers(k.token), signal: AbortSignal.timeout(CRM_TIMEOUT_MS) });
+      if (!res.ok) continue;
+      const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+      const rows = Array.isArray(data.contacts) ? (data.contacts as Array<Record<string, unknown>>) : [];
+      for (const c of rows.map(mapGhlContact)) {
+        if (!c || c.externalId === externalId) continue;
+        // The search is loose; only an exact phone or email counts as the same person.
+        const samePhone = phone && c.phone && digitsOf(c.phone) === phone;
+        const sameEmail = email && c.email && c.email.trim().toLowerCase() === email;
+        if (samePhone || sameEmail) found.add(c.externalId);
+      }
+    } catch {
+      // Not asked: the contact itself still is.
+    }
+  }
+  return [...found].slice(0, MAX_DUPLICATES);
+}
 
 // ---------------------------------------------------------------------------
 // Messages (GHL 2, founder 2026-10-16 "yes go ahead"): FollowUp reads the customers' texts and emails that arrive in

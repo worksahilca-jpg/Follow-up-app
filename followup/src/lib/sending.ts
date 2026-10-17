@@ -25,6 +25,7 @@ import { getWhatsAppCloudConnection, sendWhatsAppCloud } from "@/lib/whatsappClo
 import { recordAudit } from "@/lib/audit";
 import { findOrCreateConversation } from "@/lib/conversations";
 import { ghlReplyRoute, isGhlConversationKey } from "@/lib/crm/ghlThreads";
+import { crmIsFollowingUp } from "@/lib/crm/oneBoss";
 import { isGhlChannel, sendGhlMessage } from "@/lib/crm/gohighlevel";
 import { sendInstagramMessage } from "@/lib/instagram";
 import { instagramRecipientId, isInstagramLeadId, isMessengerLeadId, messengerRecipientId } from "@/lib/instagramId";
@@ -506,6 +507,26 @@ export async function sendFollowUpToLead(
       return {
         success: false,
         message: `${firstName} hasn't messaged you yet, so FollowUp won't text or WhatsApp them on its own. The first message is yours to send.`,
+        failure: "refused",
+      };
+    }
+  }
+
+  // Never two messages (GHL pain #9, founder 2026-10-17 "yes build 1"): before anything FollowUp sends on its own to
+  // someone in the owner's GoHighLevel, it asks GoHighLevel once more, right now, whether it has been in touch with
+  // them, on this contact or the same person saved twice (src/lib/crm/oneBoss.ts). A workflow that started after
+  // FollowUp last looked would otherwise text them in the same minute. The owner's own send is untouched.
+  if (options.automated && lead.crmProvider === "gohighlevel" && lead.crmId) {
+    const ours = await prisma.message.findFirst({
+      where: { conversation: { leadId: lead.id }, direction: "outbound", source: null },
+      orderBy: { sentAt: "desc" },
+      select: { sentAt: true },
+    });
+    if (await crmIsFollowingUp(lead, ours?.sentAt ?? null)) {
+      const firstName = lead.name.split(" ")[0];
+      return {
+        success: false,
+        message: `GoHighLevel is already in touch with ${firstName}, so FollowUp didn't send this. They won't get two messages. It's yours to send.`,
         failure: "refused",
       };
     }

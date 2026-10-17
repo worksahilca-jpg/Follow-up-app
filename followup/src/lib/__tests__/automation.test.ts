@@ -51,7 +51,7 @@ vi.mock("@/lib/audit", () => ({ recordAudit: vi.fn(async () => {}) }));
 // the dedicated describe block below overrides this to false to exercise
 // the deferral path itself.
 vi.mock("@/lib/sendWindow", () => ({ isWithinSendWindow: vi.fn(() => true) }));
-vi.mock("@/lib/crm/oneBoss", () => ({ crmIsFollowingUp: vi.fn(async () => true) }));
+vi.mock("@/lib/crm/oneBoss", async (orig) => ({ ...(await orig<typeof import("@/lib/crm/oneBoss")>()), crmIsFollowingUp: vi.fn(async () => true) }));
 
 import { prisma } from "@/lib/db";
 import { assessSendRisk, generateFollowUpMessage } from "@/lib/integrations/openai";

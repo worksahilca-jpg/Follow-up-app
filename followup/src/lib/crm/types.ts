@@ -25,6 +25,7 @@ export interface CrmClient {
    * When the CRM last contacted this person, for the one-boss rule
    * (src/lib/crm/oneBoss.ts, A-237). `known: false` when the CRM couldn't
    * be asked or didn't say; `at: null` when it said "never". Never throws.
+   * `person` is their phone and email in FollowUp, for a CRM that looks for the same person saved twice.
    */
-  lastContactedAt(apiKey: string, externalId: string): Promise<{ known: boolean; at: Date | null }>;
+  lastContactedAt(apiKey: string, externalId: string, person?: { phone: string | null; email: string | null }): Promise<{ known: boolean; at: Date | null }>;
 }

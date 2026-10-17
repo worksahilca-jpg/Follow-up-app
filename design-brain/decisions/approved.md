@@ -4781,3 +4781,20 @@ all"*, then, shown both side by side, *"1 and the design and style too"*.
   (A-258) are the one open question: to be shown both ways before changing.
 - **Then, founder:** *"format and all too"*: iOS layout as well as type: inset grouped lists, large-title page tops,
   sheets, plain rows with a grey value on the right, not a card per row.
+
+## A-274 — The CRM's endings: a bad one is never, a good one stops the chasing ^A-274
+
+**Approved 2026-10-17** (founder's answers to the three open CRM questions, research 2026-10-14).
+
+- **"Do not contact" = a bad ending.** Founder, verbatim: *"A bad ending should be stated as 'never message them
+  again.' If it's a good ending, like, 'Okay, we'll have a look again after some time,' … we'll be messaging them with
+  our offers, right? That is our strategy."* So a CRM's do-not-contact (Follow Up Boss "Trash", HubSpot "Unsubscribed
+  from all email" or "Unqualified", GoHighLevel Do Not Disturb) stops every message, the owner's Send too, with the
+  reason in one line. A good ending is never marked that way; it is Stay in touch (A-260).
+- **Closed = stop chasing** ("Yes, stop"). Follow Up Boss "Closed" or "Past Client", HubSpot lifecycle "customer":
+  FollowUp's own follow-ups stop; the owner can still write, and Stay in touch stays the owner's call.
+- **Stages.** Founder, verbatim: *"If the CRM is his main thing and he does all those things in his CRM, we got to move
+  it in his CRM. Plus, we'll say 'booked' in our memory too, so that we don't text him."* With no CRM, FollowUp keeps
+  the stage itself (it already does). Writing the stage into the CRM needs one small choice (which of the owner's stages
+  means "booked"): **to be drawn first**, not built yet.
+- Field names are grade C (search summaries, not live responses): confirmed on the first real account.

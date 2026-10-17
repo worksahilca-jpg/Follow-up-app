@@ -6,20 +6,21 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-const h = vi.hoisted(() => ({ conn: vi.fn(), lastContactedAt: vi.fn(), dnd: vi.fn(), meeting: vi.fn() }));
+const h = vi.hoisted(() => ({ conn: vi.fn(), lastContactedAt: vi.fn(), dnd: vi.fn(), meeting: vi.fn(), standing: vi.fn() }));
 vi.mock("@/lib/crm/gohighlevel", () => ({ ghlDoNotDisturb: h.dnd, ghlUpcomingMeeting: h.meeting }));
 
 vi.mock("@/lib/db", () => ({ prisma: { crmConnection: { findUnique: h.conn } } }));
 vi.mock("@/lib/crm", () => ({
-  isCrmProvider: (v: string) => v === "followupboss" || v === "hubspot",
+  isCrmProvider: (v: string) => v === "followupboss" || v === "hubspot" || v === "gohighlevel",
   CRM_PROVIDERS: {
-    followupboss: { label: "Follow Up Boss", client: { lastContactedAt: h.lastContactedAt } },
-    hubspot: { label: "HubSpot", client: { lastContactedAt: h.lastContactedAt } },
+    followupboss: { label: "Follow Up Boss", client: { lastContactedAt: h.lastContactedAt, standing: h.standing } },
+    hubspot: { label: "HubSpot", client: { lastContactedAt: h.lastContactedAt, standing: h.standing } },
+    gohighlevel: { label: "GoHighLevel", client: { lastContactedAt: h.lastContactedAt, standing: h.standing } },
   },
 }));
 
-import { crmIsFollowingUp, ghlHoldReason, ourLastSendAt } from "@/lib/crm/oneBoss";
-import { CRM_BOOKED_REASON, CRM_DND_REASON } from "@/lib/holdReasons";
+import { crmIsFollowingUp, crmHoldReason, ourLastSendAt } from "@/lib/crm/oneBoss";
+import { CRM_BOOKED_REASON, CRM_DND_REASON, CRM_DONE_REASON, CRM_NEVER_REASON } from "@/lib/holdReasons";
 import { followUpBossClient } from "@/lib/crm/followupboss";
 import { hubspotClient } from "@/lib/crm/hubspot";
 
@@ -119,24 +120,62 @@ describe("ourLastSendAt", () => {
   });
 });
 
-describe("ghlHoldReason", () => {
+describe("crmHoldReason", () => {
   const ghl = { businessId: "biz1", crmProvider: "gohighlevel", crmId: "c1" };
   beforeEach(() => h.conn.mockResolvedValue({ provider: "gohighlevel", apiKey: "key" }));
 
   it("steps back from someone marked Do Not Disturb there, then from someone with a meeting booked", async () => {
     h.dnd.mockResolvedValue(true);
-    expect(await ghlHoldReason(ghl)).toBe(CRM_DND_REASON);
+    expect(await crmHoldReason(ghl)).toBe(CRM_DND_REASON);
     h.dnd.mockResolvedValue(false);
     h.meeting.mockResolvedValue(new Date("2026-10-20T15:00:00Z"));
-    expect(await ghlHoldReason(ghl)).toBe(CRM_BOOKED_REASON);
+    expect(await crmHoldReason(ghl)).toBe(CRM_BOOKED_REASON);
     h.meeting.mockResolvedValue(null);
-    expect(await ghlHoldReason(ghl)).toBeNull();
+    expect(await crmHoldReason(ghl)).toBeNull();
   });
 
-  it("asks nothing for a customer on another CRM, or when GoHighLevel isn't connected", async () => {
-    expect(await ghlHoldReason(lead)).toBeNull();
+  it("asks nothing when the CRM isn't connected", async () => {
     h.conn.mockResolvedValue(null);
-    expect(await ghlHoldReason(ghl)).toBeNull();
+    expect(await crmHoldReason(ghl)).toBeNull();
     expect(h.dnd).not.toHaveBeenCalled();
+  });
+
+  it("in Follow Up Boss or HubSpot: a bad ending is never, a good one stops the chasing", async () => {
+    h.conn.mockResolvedValue({ provider: "followupboss", apiKey: "key" });
+    h.standing.mockResolvedValue("never");
+    expect(await crmHoldReason(lead)).toBe(CRM_NEVER_REASON);
+    h.standing.mockResolvedValue("done");
+    expect(await crmHoldReason(lead)).toBe(CRM_DONE_REASON);
+    h.standing.mockResolvedValue(null);
+    expect(await crmHoldReason(lead)).toBeNull();
+    expect(h.standing).toHaveBeenCalledWith("key", "fub-1");
+  });
+});
+
+describe("where the owner left them in their CRM", () => {
+  const fetchMock = vi.fn();
+  beforeEach(() => vi.stubGlobal("fetch", fetchMock));
+  afterEach(() => vi.unstubAllGlobals());
+  const json = (body: unknown) => ({ ok: true, status: 200, json: async () => body });
+
+  it("Follow Up Boss: Trash is never, Closed and Past Client are done, anything else is neither", async () => {
+    for (const [stage, want] of [["Trash", "never"], ["Closed", "done"], ["Past Client", "done"], ["Lead", null], ["Nurture", null]] as const) {
+      fetchMock.mockResolvedValueOnce(json({ stage }));
+      expect(await followUpBossClient.standing("key", "1")).toBe(want);
+    }
+    fetchMock.mockResolvedValueOnce({ ok: false, status: 500, json: async () => ({}) });
+    expect(await followUpBossClient.standing("key", "1")).toBeNull();
+  });
+
+  it("HubSpot: unsubscribed or unqualified is never, a customer is done", async () => {
+    fetchMock.mockResolvedValueOnce(json({ properties: { hs_email_optout: "true" } }));
+    expect(await hubspotClient.standing("tok", "9")).toBe("never");
+    fetchMock.mockResolvedValueOnce(json({ properties: { hs_lead_status: "UNQUALIFIED" } }));
+    expect(await hubspotClient.standing("tok", "9")).toBe("never");
+    fetchMock.mockResolvedValueOnce(json({ properties: { lifecyclestage: "customer" } }));
+    expect(await hubspotClient.standing("tok", "9")).toBe("done");
+    fetchMock.mockResolvedValueOnce(json({ properties: { lifecyclestage: "lead", hs_email_optout: "false" } }));
+    expect(await hubspotClient.standing("tok", "9")).toBeNull();
+    expect(String(fetchMock.mock.calls[0][0])).toContain("properties=hs_email_optout,hs_lead_status,lifecyclestage");
   });
 });

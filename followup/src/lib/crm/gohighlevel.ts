@@ -157,6 +157,22 @@ export const goHighLevelClient: CrmClient = {
       return { known: false, at: null };
     }
   },
+
+  // Do Not Disturb on everything is the owner's "never". One channel only, and a meeting booked, are handled where
+  // FollowUp sends (sending.ts) and holds (oneBoss.ts).
+  async standing(apiKey, externalId) {
+    const k = parseGhlKey(apiKey);
+    if (!k) return null;
+    try {
+      const res = await fetch(`${BASE}/contacts/${encodeURIComponent(externalId)}`, { headers: headers(k.token), signal: AbortSignal.timeout(CRM_TIMEOUT_MS) });
+      if (!res.ok) return null;
+      const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+      const c = (data.contact ?? data) as Record<string, unknown>;
+      return c.dnd === true ? "never" : null;
+    } catch {
+      return null;
+    }
+  },
 };
 
 async function lastFromBusiness(k: { token: string; locationId: string }, contactId: string): Promise<{ known: boolean; at: Date | null }> {

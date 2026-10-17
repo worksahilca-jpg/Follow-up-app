@@ -32,7 +32,7 @@ import { instagramRecipientId, isInstagramLeadId, isMessengerLeadId, messengerRe
 import { sendMessengerMessage } from "@/lib/facebook";
 import type { QuickReply } from "@/lib/quickReplies";
 import { META_DM_WINDOW_HOURS, META_HUMAN_AGENT_MAX_HOURS } from "@/lib/metaWindow";
-import { isCrmProvider } from "@/lib/crm";
+import { CRM_PROVIDERS, isCrmProvider } from "@/lib/crm";
 import { pushCrmNote } from "@/lib/crm/notes";
 import { isTransientError } from "@/lib/transientError";
 import { requireActiveBilling } from "@/lib/billing";
@@ -537,6 +537,25 @@ export async function sendFollowUpToLead(
           message: `${firstName} already has a meeting booked in GoHighLevel, so FollowUp isn't following up.`,
           failure: "refused",
         };
+      }
+    }
+  }
+  // Where the owner left them in their CRM (founder 2026-10-17): a bad ending (do not contact, thrown out) stops every
+  // send, the owner's own too; a good one (closed, a past client) stops FollowUp's own follow-ups.
+  if (lead.crmProvider && lead.crmId && isCrmProvider(lead.crmProvider) && lead.crmProvider !== "gohighlevel") {
+    const conn = await prisma.crmConnection.findUnique({ where: { businessId: lead.businessId }, select: { provider: true, apiKey: true } });
+    if (conn?.provider === lead.crmProvider && conn.apiKey) {
+      const standing = await CRM_PROVIDERS[lead.crmProvider].client.standing(conn.apiKey, lead.crmId);
+      const firstName = lead.name.split(" ")[0];
+      if (standing === "never") {
+        return {
+          success: false,
+          message: `${firstName} is marked do not contact in your ${CRM_PROVIDERS[lead.crmProvider].label}, so FollowUp won't send this. If they asked to hear from you, change it there first.`,
+          failure: "refused",
+        };
+      }
+      if (standing === "done" && options.automated) {
+        return { success: false, message: `Your ${CRM_PROVIDERS[lead.crmProvider].label} shows ${firstName} as closed, so FollowUp stopped following up.`, failure: "refused" };
       }
     }
   }

@@ -42,7 +42,7 @@ import { isExitPayload, toQuickReplies, type StoredQuickReplies } from "@/lib/qu
 import { Prisma } from "@prisma/client";
 import { composeFollowUpEmail, latestInboundText } from "@/lib/sender";
 import { sendFollowUpToLead, detectAutomatedReplyChannel } from "@/lib/sending";
-import { crmIsFollowingUp, ghlHoldReason, ourLastSendAt } from "@/lib/crm/oneBoss";
+import { crmIsFollowingUp, crmHoldReason, ourLastSendAt } from "@/lib/crm/oneBoss";
 import { requireActiveBilling, checkAiEligibility } from "@/lib/billing";
 import { leadLanguageOf } from "@/lib/leadLanguage";
 import { canSendOn, hasAnySendChannel } from "@/lib/sendChannels";
@@ -1658,10 +1658,10 @@ export async function runAutomationForBusiness(
         // queue, same draft. When the CRM isn't following up, FollowUp does.
         // Asked only when nothing above already holds the reply, so a held
         // lead costs no CRM call; an answer it can't get counts as "following up".
-        // GoHighLevel's own reasons come first (Do Not Disturb, a meeting already booked there), each with its words.
+        // The CRM's own reasons come first (do not contact, closed, Do Not Disturb, a meeting booked), each in its words.
         const crmHold =
           !!lead.crmProvider && !!lead.crmId && !(risk.riskLevel !== "low" || isCold || isBackfilled || isUntouched || phoneNeverWrote || unconfirmedSpam)
-            ? ((await ghlHoldReason(lead)) ?? ((await crmIsFollowingUp(lead, ourLastSendAt(conversation))) ? IN_CRM_REASON : null))
+            ? ((await crmHoldReason(lead)) ?? ((await crmIsFollowingUp(lead, ourLastSendAt(conversation))) ? IN_CRM_REASON : null))
             : null;
         const inCrm = crmHold !== null;
         if (holdAll || autonomousBacklog || autoSendBacklog || risk.riskLevel !== "low" || isCold || isBackfilled || isUntouched || phoneNeverWrote || unconfirmedSpam || inCrm) {

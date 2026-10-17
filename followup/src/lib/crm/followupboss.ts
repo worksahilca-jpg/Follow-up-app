@@ -113,4 +113,24 @@ export const followUpBossClient: CrmClient = {
       return { known: false, at: null };
     }
   },
+
+  // The person's stage (grade C: `stage` is the stage's name, seen in their docs' summaries, not on a live response).
+  // "Trash" is the owner's "no longer working with them"; "Closed" and "Past Client" are deals done. Accounts can
+  // rename stages; a name FollowUp doesn't know reads as neither.
+  async standing(apiKey, externalId) {
+    try {
+      const res = await fetch(`${BASE}/people/${encodeURIComponent(externalId)}`, {
+        headers: { Authorization: authHeader(apiKey) },
+        signal: AbortSignal.timeout(CRM_TIMEOUT_MS),
+      });
+      if (!res.ok) return null;
+      const data = (await res.json().catch(() => null)) as Record<string, unknown> | null;
+      const stage = typeof data?.stage === "string" ? data.stage.trim().toLowerCase() : "";
+      if (stage === "trash") return "never";
+      if (stage === "closed" || stage === "past client") return "done";
+      return null;
+    } catch {
+      return null;
+    }
+  },
 };

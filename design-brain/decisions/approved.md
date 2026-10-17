@@ -4820,3 +4820,10 @@ platforms."*
 - Shown only to say which app is connected, unchanged, as the brands' guidelines allow.
 - Outlook, GoHighLevel and Follow Up Boss keep their tile until their own logo files are added (not in that set).
 - Supersedes the drawn glyphs on coloured tiles from A-273 for these apps; the website form keeps its globe.
+
+## A-277 — Copy proven patterns: Apple's apps for screens, Wispr for feel and setup (2026-10-17) ^A-277
+
+**Founder:** after R-125, asked which apps to copy from, he picked *"Mix: Apple + Wispr"*: Apple's own apps for the
+screens and lists (Customers like Messages, one customer like a Messages chat, Settings like iPhone Settings, Results
+like Screen Time, Today's list like Mail), Wispr for the feel, the home screen, setup and the landing page.
+We copy how they work and Apple's standard building blocks; never a logo, name or brand look (R-092, R-097).

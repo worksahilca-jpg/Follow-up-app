@@ -192,6 +192,20 @@ export function callRowSub(time: string): string {
 }
 
 /**
+ * Today's row for a booked call (A-283): the time sits on the right of the row, like a calendar, so the sentence
+ * doesn't repeat it. A call starting within the hour says so.
+ */
+export function callRowWords(soon: boolean): string {
+  return soon ? "Starting soon. What to talk about is ready." : "What to talk about is ready.";
+}
+
+/** A call that starts within the next hour (or has started and isn't over): it goes to the top of Then (A-283). */
+export const SOON_MINUTES = 60;
+export function callIsSoon(scheduledAt: Date, now: Date, minutes = SOON_MINUTES): boolean {
+  return scheduledAt.getTime() - now.getTime() <= minutes * 60_000;
+}
+
+/**
  * Is the call still to come, or under way? The note shows on Today from the start of the call's day (the caller
  * picks today's bookings) until the call has ended; after that the row asks how it went (A-263).
  */

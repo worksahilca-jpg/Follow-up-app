@@ -99,17 +99,32 @@ export default function Sidebar({ businessName = "", counts = {} }: { businessNa
           className="lg:hidden fixed bottom-0 inset-x-0 z-30 grid grid-cols-4 border-t border-line bg-paper px-2 pt-1.5"
           style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 10px)" }}
         >
-          {places.map(({ href, label, icon: Icon }) => {
+          {places.map(({ href, label, icon: Icon, count }) => {
             const active = isActive(pathname, href);
+            // Today's count on its tab, as the desk column already shows it (A-283; founder: "yes do all 3").
+            // A small charcoal badge on the icon, like an iPhone app's: no colour (R-128).
+            const n = count ? counts[count] : undefined;
             return (
               <Link
                 key={href}
                 href={href}
                 aria-current={active ? "page" : undefined}
+                aria-label={n ? `${label}, ${n} waiting` : undefined}
                 className="flex min-h-12 flex-col items-center justify-center gap-1 text-[12px]"
                 style={{ color: active ? "var(--ink)" : "var(--state-checked)", fontWeight: active ? 600 : 500 }}
               >
-                <Icon className="h-6 w-6" strokeWidth={1.8} />
+                <span className="relative">
+                  <Icon className="h-6 w-6" strokeWidth={1.8} />
+                  {n ? (
+                    <span
+                      aria-hidden="true"
+                      className="absolute -right-2.5 -top-1.5 flex h-[19px] min-w-[19px] items-center justify-center rounded-full px-1 text-[12px] font-semibold tabular-nums"
+                      style={{ background: "var(--accent)", color: "var(--on-accent)", boxShadow: "0 0 0 2px var(--paper)" }}
+                    >
+                      {n > 99 ? "99+" : n}
+                    </span>
+                  ) : null}
+                </span>
                 {label}
               </Link>
             );

@@ -15,7 +15,7 @@ import { DayHeading, DayRow, type TodayRow } from "@/components/app/TodayDay";
 import { Initials } from "@/components/app/canvasBits";
 import MeetingOutcomeCard, { type MeetingToLookBackOn } from "@/components/app/MeetingOutcomeCard";
 import CallBriefCard, { type CallToPrepare } from "@/components/app/CallBriefCard";
-import { callRowSub } from "@/lib/callBrief";
+import { callRowWords } from "@/lib/callBrief";
 import { outcomeWords } from "@/lib/meetingOutcome";
 import { useUndoableSend } from "@/components/useUndoableSend";
 import SiteReplyCard from "@/components/app/SiteReplyCard";
@@ -600,6 +600,7 @@ export default function ApprovalQueue({
   holdAll = false,
   weekResults = null,
   plan = null,
+  next = null,
   meetings = [],
   calls = [],
   quiet = null,
@@ -627,6 +628,8 @@ export default function ApprovalQueue({
   holdAll?: boolean;
   /** "This week: 11 customers answered · 2 came back…" (A-088): what came of it, said at the end of the day. */
   weekResults?: string | null;
+  /** "Next: your call with Raj at 3:00 PM." (A-283): the owner's own next thing, once their replies are done. */
+  next?: string | null;
   /** "Next: FollowUp checks on Priya on Thursday…" (research round 2, #2): the plan, on a quiet Today. */
   plan?: string | null;
 }) {
@@ -718,6 +721,24 @@ export default function ApprovalQueue({
   const [openMeeting, setOpenMeeting] = useState<string | null>(null);
   const [openCall, setOpenCall] = useState<string | null>(null);
   const stillToDo = calls.length + others.length + rows.length + meetings.length + (quiet ? 1 : 0);
+  // Booked calls in time order: one starting within the hour leads Then; the rest come after the replies (A-283).
+  const soonCalls = calls.filter((c) => c.soon);
+  const laterCalls = calls.filter((c) => !c.soon);
+  const callRow = (c: CallToPrepare, first: boolean) => (
+    <Fragment key={c.bookingId}>
+      <DayRow
+        row={callPrepRow(c)}
+        first={first}
+        expanded={openCall === c.bookingId}
+        onClick={() => setOpenCall((o) => (o === c.bookingId ? null : c.bookingId))}
+      />
+      {openCall === c.bookingId && (
+        <div className="px-3 pb-3">
+          <CallBriefCard call={c} />
+        </div>
+      )}
+    </Fragment>
+  );
   // Calls to make, booked calls and calls to get ready for: the rest of the day, below the empty state.
   const dayAhead = rows.length + calls.length;
 
@@ -766,7 +787,7 @@ export default function ApprovalQueue({
       </p>
       <p className="mt-0.5 text-[13.5px] leading-normal text-ink-soft">
         {dayAhead > 0
-          ? "Your calls and booked times for today are below."
+          ? (calls.length > 0 && next ? next : "Your calls and booked times for today are below.")
           : handled > 0
             ? `You handled ${handled} ${handled === 1 ? "person" : "people"} today. FollowUp keeps watching, and will tell you when someone writes.`
             : holdAll
@@ -776,6 +797,8 @@ export default function ApprovalQueue({
           ` It answered ${answeredForYou} ${answeredForYou === 1 ? "customer" : "customers"} on its own this week.`}
       </p>
       {/* What happens next, by name (research round 2, #2): a plan for what is left quiets it as much as finishing it does. */}
+      {/* The owner's own next thing first (A-283): a booked call tomorrow, by name and time. */}
+      {dayAhead === 0 && next && <p className="mt-2 text-[14.5px] font-medium leading-normal text-ink">{next}</p>}
       {dayAhead === 0 && plan && <p className="mt-2 text-[13.5px] leading-normal text-ink">{plan}</p>}
       {/* The end of the day is what the owner remembers (peak-end, A-088): real
           outcomes only, nothing when they are all zero. */}
@@ -833,24 +856,11 @@ export default function ApprovalQueue({
         <section aria-label={selected ? "Then" : "Still to do today"} className="mt-7">
           <DayHeading title={selected ? "Then" : "Still to do today"} />
           <div className="-mx-3">
-            {/* A call booked for today comes first (A-268): it happens at a time, and its note is what to read before. */}
-            {calls.map((c, n) => (
-              <Fragment key={c.bookingId}>
-                <DayRow
-                  row={callPrepRow(c)}
-                  first={n === 0}
-                  expanded={openCall === c.bookingId}
-                  onClick={() => setOpenCall((o) => (o === c.bookingId ? null : c.bookingId))}
-                />
-                {openCall === c.bookingId && (
-                  <div className="px-3 pb-3">
-                    <CallBriefCard call={c} />
-                  </div>
-                )}
-              </Fragment>
-            ))}
+            {/* A call starting within the hour comes first (A-283, after A-268): it happens at a time, and its note is
+                what to read before. Later calls follow the replies, in time order, each with its time on the right. */}
+            {soonCalls.map((c, n) => callRow(c, n === 0))}
             {shown.map((i, n) => (
-              <DayRow key={i.leadId} first={calls.length === 0 && n === 0} row={replyRow(i)} onClick={() => pick(i.leadId)} />
+              <DayRow key={i.leadId} first={soonCalls.length === 0 && n === 0} row={replyRow(i)} onClick={() => pick(i.leadId)} />
             ))}
             {hidden > 0 && (
               <button
@@ -863,6 +873,7 @@ export default function ApprovalQueue({
                 Show {hidden} more {hidden === 1 ? "person" : "people"}
               </button>
             )}
+            {laterCalls.map((c, n) => callRow(c, soonCalls.length === 0 && shown.length === 0 && n === 0))}
             {rows.map((r, n) => (
               <DayRow key={r.key} row={r} first={calls.length === 0 && shown.length === 0 && n === 0} />
             ))}
@@ -917,9 +928,10 @@ function replyRow(item: ApprovalItem): TodayRow {
   return { ...base, sub: `${how} Your reply is ready.` };
 }
 
-/** A call booked for today (A-268) as a row: when it is, and that the note to read before it is ready. */
+/** A call booked for today (A-268) as a row: its time on the right, like a calendar (A-283), and that the note to
+ * read before it is ready. The row opens the note in place, so the time stands where a chevron would. */
 function callPrepRow(c: CallToPrepare): TodayRow {
-  return { key: `prep-${c.bookingId}`, kind: "booking", title: c.name, person: c.name, sub: callRowSub(c.time), time: null, href: null };
+  return { key: `prep-${c.bookingId}`, kind: "booking", title: c.name, person: c.name, sub: callRowWords(!!c.soon), time: c.time, href: null };
 }
 
 /** A call to look back on (A-263) as a row: the question until it is answered, then what was said. */

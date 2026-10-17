@@ -4880,3 +4880,16 @@ version; his reference was the Claude desktop app's see-through typing bar, "loo
 - The reply box is see-through (3–70% fill) with a thin border and 22px corners, not a raised card. The notice box the same.
 - Their bubbles are a faint see-through grey; the button is charcoal on light, soft white on dark.
 **Supersedes:** A-278's raised white cards on grey for the app (depth now comes from see-through layers, not shadows).
+
+## A-283 — Today, three small changes from the big-apps study ^A-283
+
+**Date:** 2026-10-17. **Founder, verbatim:** *"yes do all 3"* (after `reports/How big apps design their Today page.md`).
+**What specifically was approved:**
+1. **Today's count on the phone tab:** a small charcoal badge on the Today icon ("5"), as the laptop sidebar already shows.
+   Screen readers hear "Today, 5 waiting".
+2. **A booked call's time on its row**, on the right like a calendar. A call starting within the hour (or under way) is
+   first in Then and says "Starting soon"; later calls follow the replies, in time order. **Supersedes** A-268's "every
+   booked call first in Then" and that part of A-230's order.
+3. **The done message names the owner's next thing:** "Next: your call with Raj at 3:00 PM." (or "tomorrow at …"),
+   above FollowUp's own plan line. Only booked calls count.
+**Not taken from the study:** the "on its own" line removal and two kinds of empty message (not asked for).

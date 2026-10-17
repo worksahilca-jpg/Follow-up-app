@@ -14006,3 +14006,12 @@ Sidebar Search removed at the founder's question; Customers keeps its search box
 three-column laptop layout from the drawings (Today still shows one open card with "Then" under it); the founder asked
 for research on how big apps design their Today page first. **Weak:** the green "Ready to book" words remain (status
 colour for good news, allowed by A-281); the old `/api/customers/search` route is now unused and should be removed.
+
+## 2026-10-17 — Big-apps Today study; three changes built (A-283)
+
+Research (`reports/How big apps design their Today page.md`, 30 products, evidence medium: company pages were blocked,
+read through search summaries) said: keep Today as it is, an inbox with a bit of agenda; add small things only. The
+founder said *"yes do all 3"*: Today count on the phone tab, call times on rows with a call in the next hour first, and
+the done message naming the next call. Built in the same PR as the calm look (#544). Checked on the local database with
+two made-up calls (one in 25 minutes, one in 2.5 hours): the soon one leads Then with its time, the later one follows
+the replies.

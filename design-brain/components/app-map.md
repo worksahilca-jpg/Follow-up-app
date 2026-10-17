@@ -1,5 +1,74 @@
 # The app map: what lives where, and where new features go
 
+**Refreshed 2026-10-17** (founder: *"lets jut keep organising every thing we will design and chose the colour later"*).
+The section **"The app today (2026-10-17)"** below is the current truth. Older sections further down are kept for
+history; where they disagree, this first section wins.
+
+## The app today (2026-10-17)
+
+FollowUp is organised like big software, simple on top (reports/UX laws and design psychology.md): **4 places**, **a
+customer page**, **Settings with 5 groups**, **sheets and small windows** for single tasks, and **the back room** the
+owner never sees.
+
+### 1. The four places (tabs on the phone, sidebar on the computer)
+
+| Place | What it holds, top to bottom | Decisions |
+|---|---|---|
+| **Today** | The day in one sentence · **Needs you** box, only when something broke (A-270) · the **first reply, open** (their words, the reply, Send / Change it / Skip) · **Then** rows: other replies ready, calls to make, "How did your call go?", before-your-call notes, their-moment notes, stay-in-touch notes, the practice customer · **Later** lines: tomorrow, done today, coming up, what FollowUp did on its own · one question a day · Home Screen and alerts cards until done | A-244, A-266, A-268, A-270 |
+| **Customers** | Search · **one list** (reply ready first, then ready to book, then newest) with status words and Call on ready-to-book rows · **+ menu**: add a customer, log a call, import CSV, clean up · swipe left = Later | A-267, A-095 |
+| **Activity** | One sentence ("This week it answered N people") · what FollowUp did **on its own**, by day; a day's sends fold into one line · link to Today for replies waiting | A-256, A-270 |
+| **Results** | **Your week**: customers answered (one big true number), booked, first reply, won · "See everything FollowUp did" · everything else (customers, came back, on a plan, sent as written, plans finished) | A-220 (build 5), A-226 |
+
+### 2. A customer (opens from Today, Customers, Activity)
+
+Header (name, where they wrote, when) · **one box on top**: Before your call, or where they stand / Ready to view with
+Call (A-269) · the **conversation** · FollowUp's reply waiting, Send / Change it · **About {name}** sheet: what
+FollowUp knows about them, their follow-up plan, their moment, the CRM block and stage picker (A-275), "I already
+talked to them", "Not a customer", details, delete.
+
+### 3. Settings (top-right on the phone; bottom of the sidebar on the computer): 5 groups, one level per screen
+
+| Group | What's inside |
+|---|---|
+| **Connected apps** | Email (Gmail, Outlook) · Instagram, Messenger, WhatsApp · Facebook Lead Ads · website form · your CRM (HubSpot, GoHighLevel, Follow Up Boss) · each row ends in its state ("Connected", "Set up") |
+| **Sending replies** | Who sends (ask me / send by itself after your yes) · stop all sending · **When to check in** (follow-up plans, `/workflows`) · **Your free hours** (booking link and calendar) · team-only switches (only admins send, your team calls) |
+| **Alerts** | Phone buzz, email, quiet hours, bursts become one |
+| **Your business** | Business profile · **What FollowUp knows** (facts; "Teach FollowUp", `/teach`) · who isn't a customer · write like me · help improve FollowUp |
+| **Account** | Team · Your plan · Sign-ins · Your data (download, delete) |
+| *(hidden)* Advanced | Webhooks in and out, phone number, lead routing: no row leads here (A-253); a direct link still works |
+
+### 4. Single tasks (small window on the computer, sheet on the phone)
+
+Add a customer · log a call · import CSV · clean up · mark won · change it (edit in place) · why FollowUp thinks this ·
+not a customer (2×2 answers) · invite a teammate · connect a channel · help / something broke.
+
+### 5. Outside the app
+
+Landing page `/` · privacy, terms, security · sign in · setup `/onboarding` (CRM first, then the apps the CRM misses;
+ends on a real or practice customer) · customer-facing **booking page** `/book/[id]` and **website form** `/embed/[id]` ·
+founder-only `/admin` and `/admin/office`.
+
+### 6. Old addresses (kept so old links work, never linked in the app)
+
+`/inbox` → Customers · `/pipeline` → Customers (all) · `/waiting` → Customers (waiting for their reply) ·
+`/coming-up` is still its own page, reached from Today's "Later" line (candidate to fold into Customers as a filter).
+
+### 7. The back room (never on screen)
+
+Tokens, webhooks, signing secrets, retries, spam and friend checks, plan numbers, AI limits. Defaults decide; only
+something broken reaches the owner, as one line with the fix in **Needs you**.
+
+### Where a new feature goes (unchanged rule, see "The seven slots" below)
+
+Name its slot first: Today (a decision now) · the customer page (about one person) · Customers (find or sort) ·
+Results (value delivered, true numbers) · Settings (how FollowUp works, connections) · a small window (one task) · an
+alert (something happened). A fifth place needs one removed.
+
+---
+
+# History (2026-10-10 version, kept for the record)
+
+
 **Why this exists:** the founder, 2026-10-10: *"we have to arrange a lot of things right, so we have to keep the plan
 in mind while building, because we have to fit new features too."* This is that plan. Read it **before** designing or
 building any feature. Every new feature names its slot here first; a feature that fits no slot is a design question

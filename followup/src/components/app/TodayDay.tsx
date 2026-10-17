@@ -92,14 +92,14 @@ export function DayLater({ lines }: { lines: LaterLine[] }) {
     <section aria-label="Later">
       <DayHeading title="Later" />
       <ul className="px-1">
-        {lines.map((l, n) => {
+        {lines.map((l) => {
           const inner = (
             <>
               <span className="shrink-0 text-[15px]">{l.label}</span>
               <span className="min-w-0 text-right text-[14.5px] leading-snug text-ink-soft">{l.value}</span>
             </>
           );
-          const cls = "flex min-h-[52px] items-center justify-between gap-4 py-3" + (n ? " border-t border-line" : "");
+          const cls = "flex min-h-[52px] items-center justify-between gap-4 py-3";
           return (
             <li key={l.label}>
               {l.href ? (

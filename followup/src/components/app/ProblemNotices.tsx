@@ -19,11 +19,11 @@ export default function ProblemNotices({ problems }: { problems: OpenProblem[] }
   };
 
   return (
-    <section aria-label="Needs you" className="box mt-5 px-4 py-3.5 sm:px-5">
+    <section aria-label="Needs you" className="mt-5 rounded-[18px] px-4 py-3.5 sm:px-5" style={{ border: "1px solid var(--line)", background: "var(--wash)" }}>
       <p className="text-[13px] text-ink-soft">Needs you</p>
       <ul className="mt-1">
         {shown.map((p, i) => (
-          <li key={p.id} className={i ? "mt-2 border-t border-line pt-2" : ""}>
+          <li key={p.id} className={i ? "mt-2" : ""}>
             <p className="flex items-baseline gap-2.5 text-[15px] leading-snug">
               <span aria-hidden="true" className="h-2 w-2 shrink-0 -translate-y-px rounded-full" style={{ background: "var(--state-needs)" }} />
               <span>{p.line}</span>

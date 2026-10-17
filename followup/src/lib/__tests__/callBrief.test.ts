@@ -9,6 +9,8 @@ import {
   callNoteDue,
   callNotOver,
   callRowSub,
+  callIsSoon,
+  callRowWords,
   callSoonDue,
   checkBrief,
   isBriefCurrent,
@@ -219,5 +221,21 @@ describe("the note by email (A-268)", () => {
       { label: "What Aisha wants", lines: ["In by March."] },
       { label: "A next step to offer", lines: ["A Saturday viewing."] },
     ]);
+  });
+});
+
+describe("callIsSoon / callRowWords (A-283)", () => {
+  const now = new Date("2026-10-17T14:00:00Z");
+  it("a call within the hour, or already started, is soon", () => {
+    expect(callIsSoon(new Date("2026-10-17T14:45:00Z"), now)).toBe(true);
+    expect(callIsSoon(new Date("2026-10-17T15:00:00Z"), now)).toBe(true);
+    expect(callIsSoon(new Date("2026-10-17T13:50:00Z"), now)).toBe(true);
+  });
+  it("a call more than an hour away is not", () => {
+    expect(callIsSoon(new Date("2026-10-17T15:01:00Z"), now)).toBe(false);
+  });
+  it("the row words don't repeat the time, which sits on the right", () => {
+    expect(callRowWords(true)).toBe("Starting soon. What to talk about is ready.");
+    expect(callRowWords(false)).toBe("What to talk about is ready.");
   });
 });

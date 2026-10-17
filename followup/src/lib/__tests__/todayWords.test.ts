@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clockTime, dayOffset, daySentence, doneLines, greeting, todaysInstruction, whoIsNext } from "@/lib/todayWords";
+import { clockTime, dayOffset, daySentence, doneLines, greeting, todaysInstruction, whoIsNext, nextForYouLine } from "@/lib/todayWords";
 
 const TZ = "America/Toronto";
 
@@ -75,5 +75,17 @@ describe("the whole day (A-244, R-114)", () => {
       "FollowUp wrote to 2 customers for you.",
       "Jen Park booked a call for tomorrow at 2:00 PM.",
     ]);
+  });
+});
+
+describe("nextForYouLine (A-283)", () => {
+  it("names the next call today by first name and time", () => {
+    expect(nextForYouLine({ name: "Raj Malhotra", time: "3:00 PM", tomorrow: false })).toBe("Next: your call with Raj at 3:00 PM.");
+  });
+  it("says tomorrow when the next call is tomorrow", () => {
+    expect(nextForYouLine({ name: "Aisha", time: "10:00 AM", tomorrow: true })).toBe("Next: your call with Aisha tomorrow at 10:00 AM.");
+  });
+  it("says nothing when no call is booked", () => {
+    expect(nextForYouLine(null)).toBeNull();
   });
 });

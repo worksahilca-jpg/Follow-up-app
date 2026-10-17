@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { Sun, Users, History, ChartColumn, Settings, CircleHelp, ChevronsUpDown, LogOut, ArrowLeft, ChevronRight } from "lucide-react";
-import SidebarSearch from "@/components/app/SidebarSearch";
 import { BarTitle } from "@/components/app/ScrollTitle";
 import FeedbackDialog from "./FeedbackDialog";
 import LogoMark from "@/components/LogoMark";
@@ -17,12 +16,14 @@ import { SETTINGS_BRANCHES, SETTINGS_GROUPS, SETTINGS_MOVED, groupHref, settings
  * map is design-brain/components/app-map.md). Simplified after the founder,
  * 2026-10-10: "simplify, copy Wispr if you want".
  *
- * Desk, like Wispr's sidebar: the brand at the top, then plain rows:
- * Search, and the four places (Today, Customers, Activity, Results).
+ * Desk, like Wispr's sidebar: the brand at the top, then the four places
+ * (Today, Customers, Activity, Results). No Search row (founder 2026-10-17:
+ * "why there is search button on the top of today we dont eed it right ?"):
+ * finding a person is what Customers' own search box is for.
  * Only Today keeps a count, because that's who needs you. Settings and Help
  * sit at the foot, and under them the account: the business name, which
- * opens your email, plan, team and Sign out. Search and Settings open as
- * windows over the page (src/app/(app)/@modal).
+ * opens your email, plan, team and Sign out. Settings opens as
+ * a window over the page (src/app/(app)/@modal).
  *
  * Phone: four tabs at the bottom (Today, Customers, Activity, Results),
  * and Settings, with its word, at the top right.
@@ -98,17 +99,32 @@ export default function Sidebar({ businessName = "", counts = {} }: { businessNa
           className="lg:hidden fixed bottom-0 inset-x-0 z-30 grid grid-cols-4 border-t border-line bg-paper px-2 pt-1.5"
           style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 10px)" }}
         >
-          {places.map(({ href, label, icon: Icon }) => {
+          {places.map(({ href, label, icon: Icon, count }) => {
             const active = isActive(pathname, href);
+            // Today's count on its tab, as the desk column already shows it (A-283; founder: "yes do all 3").
+            // A small charcoal badge on the icon, like an iPhone app's: no colour (R-128).
+            const n = count ? counts[count] : undefined;
             return (
               <Link
                 key={href}
                 href={href}
                 aria-current={active ? "page" : undefined}
+                aria-label={n ? `${label}, ${n} waiting` : undefined}
                 className="flex min-h-12 flex-col items-center justify-center gap-1 text-[12px]"
                 style={{ color: active ? "var(--ink)" : "var(--state-checked)", fontWeight: active ? 600 : 500 }}
               >
-                <Icon className="h-6 w-6" strokeWidth={1.8} />
+                <span className="relative">
+                  <Icon className="h-6 w-6" strokeWidth={1.8} />
+                  {n ? (
+                    <span
+                      aria-hidden="true"
+                      className="absolute -right-2.5 -top-1.5 flex h-[19px] min-w-[19px] items-center justify-center rounded-full px-1 text-[12px] font-semibold tabular-nums"
+                      style={{ background: "var(--accent)", color: "var(--on-accent)", boxShadow: "0 0 0 2px var(--paper)" }}
+                    >
+                      {n > 99 ? "99+" : n}
+                    </span>
+                  ) : null}
+                </span>
                 {label}
               </Link>
             );
@@ -129,8 +145,6 @@ export default function Sidebar({ businessName = "", counts = {} }: { businessNa
           <SettingsTree pathname={pathname ?? ""} />
         ) : (
         <nav aria-label="Main" className="mt-5 flex flex-col gap-0.5">
-          <SidebarSearch className={rowClass + " text-left"} style={rowStyle(false)} />
-          <div className="h-2" aria-hidden />
           {places.map(({ href, label, icon: Icon, count }) => {
             const active = isActive(pathname, href);
             const n = count ? counts[count] : undefined;

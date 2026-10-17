@@ -13909,3 +13909,109 @@ Every page walked on a phone (390) and a computer (1280). Fixed:
 
 Checked and already fine (hit areas larger than they look): switches, Call on Customers, the customer name on
 Today, Replay and Auto / Ask me on the landing demo.
+
+## 2026-10-17 — Founder: the whole UI/UX, not colour tweaks
+
+**Founder, verbatim, in order:** *"the whole app even the landing page before tuesday"*; *"do the research bro read all
+the books and all th stuff you can gather from intrnet and all bro all the lawas and phycological plays to design bro"*;
+*"i want the whole ui ux not just changing clour take time but i want the best"*.
+
+**What this means:** a one-change A/B board (outlines vs shadows, grey vs tinted faces, white vs grey ground, black vs
+green Send) was drawn and parked unshown: it answers colour questions, and the founder asked for the whole experience.
+Next: deep research on every UX law and the psychology behind design, then a complete redesign of the app and the
+landing page, screen by screen, drawn before anything is built. Quality over the Tuesday date ("take time").
+
+## 2026-10-17 — Drawn: whole-app redesign v1 (from reports/UX laws and design psychology.md)
+
+**Founder:** *"yes start drawing the full design"*. Drawn on the live app (phone 390×844), Now vs New, three boards:
+- **Shared look:** soft grey ground (#F2F2F5) with white raised surfaces instead of thin grey lines (touches A-090,
+  needs his yes); faces tinted from existing tokens with a small badge for the app they wrote on; see-through top and
+  tab bars; lists as one white grouped surface; mono labels in the body sans.
+- **Today:** reason line names what they asked; a "Sent to Karan from your Gmail · Undo" state with what happens next;
+  a calm "You're all caught up" end of day.
+- **Customer:** an About sheet with "Always ask me first for Raj" and "Keep following up with Raj" (behaviour, needs yes).
+- **Results:** "You sent 4 of your last 5 as FollowUp wrote them" (example numbers; needs yes, A-102 placed the track
+  record in Settings).
+- **Settings:** rows name what is missing ("Gmail · Instagram not set up").
+Not yet drawn: notifications, setup, landing, motion (Send press, card fold, swipe hint). Waiting for his reaction.
+
+## 2026-10-17 — Drawn: round 2, every screen copies a proven pattern (A-277)
+
+After R-125 (*"dont make anything from your side copy the craetivity that is already working"*) and his pick of
+Apple + Wispr: Today = Wispr's home (greeting, a few true numbers) over a Messages reply (their grey bubble, the draft
+in the message box, the round arrow sends); Customers = the Messages list (dot = reply ready); one customer = a Messages
+chat with one "Ready to view · Call" line on top; Activity = Wispr's history (day, time column, one line); Results =
+Screen Time (big number, a bar per day, grouped list); Settings = iPhone Settings (name on top, coloured icons, the
+choice on the right); setup = Wispr's onboarding (one step per screen, progress bar, one action, "I'll do this later").
+Drawn as static phone screens in the app's own font; Activity lines are examples. Waiting for his reaction.
+
+## 2026-10-17 — Round 3 drawn (A-277 layouts + A-278 depth); visual design paused, organise first
+
+Round 3 combined round 2's proven layouts with v1's depth and tinted faces (drawings in the session scratchpad,
+not shown). **Founder, verbatim:** *"oksy lets jut keep organising every thing we will design and chose the colour
+later"*. Decision: visual design and colour wait; next is organising the whole app (where every feature lives, what
+is on the surface, one tap away, in Settings, or in the back), refreshing `components/app-map.md`, and the feature list.
+
+## 2026-10-17 — Per-customer control: already built, hidden; proposed in one plain row
+
+**Founder:** *"but we need this feature make it simple"* (after R-127). Found: it already exists, folded under the
+customer page's Details as "How it handles {name}" with three tiers (I'll do it · Ask if risky · Handle it all,
+`LeadAutomationToggle`, `Lead.automationTier`). Proposed: one row in the About sheet, "FollowUp and {name}: Ask me
+first", which opens an iPhone-style pick list with a tick: **Ask me first** (default) · **Don't write to {name}**
+(the third tier only where sending by itself is allowed). No new feature, no switches; wording and place only.
+Waiting for his yes.
+
+## 2026-10-17 — Laptop drawn: three columns like Mail on a Mac; four accent colours shown
+
+**Founder:** *"my laptop iterface means a lot"*, *"i want a best design fro my windows or macs screen"*, then *"this white
+black lokks bad what other comapnies use bro ??"*. Drawn: Today and a customer at 1280×800 as three columns (sidebar ·
+list · open conversation, plus an About column on the customer page), A-278 depth. Then the same Today screen in four
+single accents (blue, indigo, green, orange), each named with well-known brands that use that colour. Waiting for his pick.
+
+## 2026-10-17 — Colour: none. Minimal like ElevenLabs and Macro; light and dark drawn
+
+**Founder:** *"why we using all these colours bro i want simple as minimal not colourful"*, *"look how simple is
+elevenlabs and marco is"*. Accent board rejected (R-128). Redrawn the laptop Today twice with no colour at all: (1) light,
+ElevenLabs-like: white, a pale grey sidebar, hairline lines, grey initials, small black dots, one black button; (2) dark,
+Macro-like: near-black, grey rows, one white button. Same layout as before (three columns). Waiting for his pick: 1 or 2.
+Weak, honestly: the "Outlook needs reconnecting" notice now has no colour, so it relies on its words and position only.
+
+## 2026-10-17 — Light and dark both, following the device (A-281)
+
+The founder asked that light mode stay light and dark mode go dark. Agreed and recorded as A-281: the app follows the
+device's own setting; nothing new to choose in Settings. Build waits until the whole look is redrawn in both.
+
+## 2026-10-17 — Charcoal and see-through black instead of sharp black (founder idea), drawn
+
+**Founder:** *"rather than sharp black we can use transparent black or charchol right create depht"*. Drawn both looks
+again: light uses charcoal (#2a2a2e) for the button, your bubbles and dots, layers made with see-through black lines and
+soft shadows; dark uses a charcoal ground (#161618) with layers of see-through white (6–8%) instead of pure black, a
+lifted reply box with a soft shadow, and an off-white button. Waiting for his reaction.
+
+## 2026-10-17 — Founder's reference: the Claude desktop app in dark ("looks premium")
+
+**Founder** (screenshot of the Claude desktop app, dark): *"look how this looks right the typing bar looks lil transparet
+right look how this looks perimium right compar enow"*. **What he points at:** the typing bar, a faint see-through fill
+with a thin light border and big round corners. **Principles taken (not the screen):** one calm charcoal ground for the
+whole window (sidebar only a touch darker); no lines between rows, space does the separating; the selected row is a soft
+rounded fill; the one box that matters (our reply box) is see-through with a thin border, not a raised card. Redrawn
+light and dark this way and shown next to the previous charcoal version. Waiting for his reaction.
+**Approved (A-282):** *"yes go with the new one"*.
+
+## 2026-10-17 — Calm look built (A-282); sidebar Search removed (R-129)
+
+Built: new light and dark tokens (charcoal, no colour, see-through lines), no lines between list rows (a soft rounded
+fill on hover), Today's main box and the "Needs you" notice see-through with a thin border, the "your turn" dot charcoal.
+Sidebar Search removed at the founder's question; Customers keeps its search box. **Not built yet, honestly:** the
+three-column laptop layout from the drawings (Today still shows one open card with "Then" under it); the founder asked
+for research on how big apps design their Today page first. **Weak:** the green "Ready to book" words remain (status
+colour for good news, allowed by A-281); the old `/api/customers/search` route is now unused and should be removed.
+
+## 2026-10-17 — Big-apps Today study; three changes built (A-283)
+
+Research (`reports/How big apps design their Today page.md`, 30 products, evidence medium: company pages were blocked,
+read through search summaries) said: keep Today as it is, an inbox with a bit of agenda; add small things only. The
+founder said *"yes do all 3"*: Today count on the phone tab, call times on rows with a call in the next hour first, and
+the done message naming the next call. Built in the same PR as the calm look (#544). Checked on the local database with
+two made-up calls (one in 25 minutes, one in 2.5 hours): the soon one leads Then with its time, the later one follows
+the replies.

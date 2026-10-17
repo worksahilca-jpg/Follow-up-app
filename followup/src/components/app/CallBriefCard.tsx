@@ -13,6 +13,8 @@ export type CallToPrepare = {
   first: string;
   /** "2:00 PM", on the owner's clock. */
   time: string;
+  /** Starts within the hour (or is under way): first in Today's Then; later calls follow the replies (A-283). */
+  soon?: boolean;
   /** "Fri, Oct 18" when the call isn't today (the customer's page); null on Today. */
   day?: string | null;
   durationMinutes: number;

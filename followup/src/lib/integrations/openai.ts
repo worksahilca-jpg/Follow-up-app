@@ -13,6 +13,7 @@ import { DM_MAX_BUTTONS, type DmButton } from "@/lib/quickReplies";
 import { registerInstruction, type LeadLanguage } from "@/lib/leadLanguage";
 import { answerSlotFor, PRICE_SLOT, slotOf, slotReason } from "@/lib/priceSlot";
 import { ungroundedSpecifics, unconfirmedClaim } from "@/lib/grounding";
+import { timingBucketFromWords } from "@/lib/timingBucket";
 // The client and model name live in their own leaf module so this file
 // and leadLanguage.ts don't import each other — see openaiClient.ts.
 import { MODEL, TRANSCRIBE_MODEL, getClient } from "@/lib/integrations/openaiClient";
@@ -1484,9 +1485,17 @@ export async function generateFollowUpMessage(
       // he meant, and nothing about either thing he asked. The email had
       // this rule since 2026-10-05; the DM never did.
       " Whatever the hint says, their questions come first. If their most recent message asked anything, the " +
-      "first sentence answers it, or says plainly that you'll confirm that specific thing. If it asked more than " +
+      "first sentence answers it, or says plainly that you'll check that specific thing. If it asked more than " +
       "one thing (what you charge and whether you're free, say), cover every one, briefly and in the order asked, " +
       "before your own question; skipping one tells them nobody read it. " +
+      // The accuracy test, 2026-10-17: "Can I see the Danforth semi this
+      // weekend?" got "I'll confirm the Danforth semi for this weekend",
+      // which reads as booked, and "I can confirm the area details for you"
+      // was refused as vouching. Checking is the honest verb for a DM.
+      "When you don't know yet, say what you'll check, in plain words: \"I'll check whether the Danforth semi can " +
+      "be seen this weekend\". Never \"I'll confirm the Danforth semi for this weekend\" or \"I can confirm\": " +
+      "those read as already booked or already true. Their \"this weekend\" doesn't let you name or offer " +
+      "Saturday or Sunday, in the text or a button. " +
       // The same test, second reply: "Looking in Etobicoke works." A
       // person says something back; a form says "accepted".
       // The accuracy test, 2026-10-13: "How long have you been a realtor?"
@@ -2428,7 +2437,11 @@ export async function extractQualificationFacts(
     const i = it as Record<string, unknown>;
     if (!keys.includes(i.key as CriterionKey)) return [];
     if (typeof i.known !== "boolean" || typeof i.value !== "string" || typeof i.quote !== "string") return [];
-    const bucket = typeof i.bucket === "string" ? i.bucket.trim() : "";
+    let bucket = typeof i.bucket === "string" ? i.bucket.trim() : "";
+    // A named month or "in 2 months" is counted here, not trusted to the model (src/lib/timingBucket.ts).
+    if (i.key === "timing" && i.known && bucket) {
+      bucket = timingBucketFromWords(i.value, today) ?? timingBucketFromWords(i.quote, today) ?? bucket;
+    }
     return [{ key: i.key as CriterionKey, known: i.known, value: i.value, quote: i.quote, ...(bucket ? { bucket } : {}) }];
   });
 }

@@ -11,7 +11,11 @@ const { businessFindUnique, integrationFindFirst } = vi.hoisted(() => ({
   integrationFindFirst: vi.fn(),
 }));
 vi.mock("@/lib/db", () => ({
-  prisma: { business: { findUnique: businessFindUnique }, integration: { findFirst: integrationFindFirst } },
+  prisma: {
+    business: { findUnique: businessFindUnique },
+    integration: { findFirst: integrationFindFirst },
+    crmConnection: { findFirst: vi.fn(async () => null) },
+  },
 }));
 
 import { hasAnySendChannel } from "@/lib/sendChannels";
@@ -119,5 +123,16 @@ describe("hasAnySendChannel never reads a credential (audit 2026-09-25 F12)", ()
     await hasAnySendChannel("biz1");
     const args = businessFindUnique.mock.calls[0][0] as { where: { id: string } };
     expect(args.where.id).toBe("biz1");
+  });
+});
+
+// GHL 2: GoHighLevel alone is a way to send.
+describe("with only GoHighLevel connected", () => {
+  it("has a way to send", async () => {
+    const { prisma } = await import("@/lib/db");
+    (prisma.crmConnection.findFirst as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ id: "c1" });
+    businessFindUnique.mockResolvedValueOnce(null);
+    integrationFindFirst.mockResolvedValueOnce(null);
+    expect(await hasAnySendChannel("biz1")).toBe(true);
   });
 });

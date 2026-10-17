@@ -13987,3 +13987,12 @@ device's own setting; nothing new to choose in Settings. Build waits until the w
 again: light uses charcoal (#2a2a2e) for the button, your bubbles and dots, layers made with see-through black lines and
 soft shadows; dark uses a charcoal ground (#161618) with layers of see-through white (6–8%) instead of pure black, a
 lifted reply box with a soft shadow, and an off-white button. Waiting for his reaction.
+
+## 2026-10-17 — Founder's reference: the Claude desktop app in dark ("looks premium")
+
+**Founder** (screenshot of the Claude desktop app, dark): *"look how this looks right the typing bar looks lil transparet
+right look how this looks perimium right compar enow"*. **What he points at:** the typing bar, a faint see-through fill
+with a thin light border and big round corners. **Principles taken (not the screen):** one calm charcoal ground for the
+whole window (sidebar only a touch darker); no lines between rows, space does the separating; the selected row is a soft
+rounded fill; the one box that matters (our reply box) is see-through with a thin border, not a raised card. Redrawn
+light and dark this way and shown next to the previous charcoal version. Waiting for his reaction.

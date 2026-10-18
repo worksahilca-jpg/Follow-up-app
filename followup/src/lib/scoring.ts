@@ -271,8 +271,8 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
   let suggestedSubject: string | null;
   let suggestedQuickReplies: Prisma.InputJsonValue | typeof Prisma.JsonNull;
   if (dmChannel) {
-    const { trade, facts } = await draftingContext(lead.businessId);
-    const dm = await draftDm(lead.name, conversation, voiceSamples, undefined, undefined, leadLanguage, facts, askContact ? DM_CONTACT_ASK : qualify, trade);
+    const { trade, facts, examples } = await draftingContext(lead.businessId);
+    const dm = await draftDm(lead.name, conversation, voiceSamples, undefined, undefined, leadLanguage, facts, askContact ? DM_CONTACT_ASK : qualify, trade, examples);
     suggestedMessage = dm.body;
     suggestedSubject = null;
     // Buttons only when the draft passed the shape check — an owner may

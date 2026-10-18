@@ -27,6 +27,8 @@
  *    a model (same line as src/lib/pastReplies.ts).
  */
 
+import { getOwnerExamples } from "@/lib/ownerExamples";
+import type { OwnerExampleLine } from "@/lib/ownerExampleLines";
 import { prisma } from "@/lib/db";
 import { getClient, MODEL } from "@/lib/integrations/openaiClient";
 import { deidentifyText, leadIdentifiers } from "@/lib/deidentify";
@@ -89,10 +91,12 @@ export async function getBusinessAbout(businessId: string): Promise<string | nul
   }
 }
 
-/** The draft's context for one business: its trade's playbook and what it has told customers. */
-export async function draftingContext(businessId: string): Promise<{ trade: string | null; facts: FactLine[] }> {
-  const [trade, facts] = await Promise.all([businessTrade(businessId), getBusinessFacts(businessId)]);
-  return { trade, facts };
+/** The draft's context for one business: its trade's playbook, what it has told customers, and how the owner answers (A-290). */
+export async function draftingContext(
+  businessId: string
+): Promise<{ trade: string | null; facts: FactLine[]; examples: OwnerExampleLine[] }> {
+  const [trade, facts, examples] = await Promise.all([businessTrade(businessId), getBusinessFacts(businessId), getOwnerExamples(businessId)]);
+  return { trade, facts, examples };
 }
 
 const FACTS_SCHEMA = {

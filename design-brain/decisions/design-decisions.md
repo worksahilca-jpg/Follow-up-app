@@ -14090,3 +14090,13 @@ FollowUp's written reply, and one line saying why it waits ("it sets a date", "i
 on its own is one quiet line at the bottom ("FollowUp answered 6 people on its own today. See Activity"). Same
 list-plus-open-item layout as the earlier drawing. The counts (4 decisions, 6 answered) and Raj's reply are examples;
 the side bar badge in the drawing still shows the old count of 5. Waiting for the founder.
+
+## 2026-10-18 — Today with fuller information per person (after R-132; waiting)
+
+Founder: *"design is good but the info part looks weak"*, then *"yes draw it"* to: who they are, how ready, what
+happened, what is next. Drawn on the real app with the local test data's real qualification answers (no invented
+facts): each row has the name (+ a quiet "Ready" pill when the checklist is complete), one line of what they want and
+one of how ready they are, saying "not known yet" where nothing is known. The open person shows "Where Raj stands"
+(Looking for, Money, Moving, Agent, Viewing, from his own words), "So far" (three timeline lines), then "Next: confirm
+a Saturday viewing" with the reply box, why it waits, and Send. Same layout (R-131 template). Weak spots: Raj's reply
+text is still an example; the timeline wording is hand-written for the drawing; long open pages scroll on the phone.

@@ -14179,3 +14179,23 @@ leads"*. Renamed in the same PR: Settings box and page title **How FollowUp talk
 yourself**, box line "Write as a customer and see how it replies. Nothing is sent." "Customers", not "leads" (house
 rule). Next, proposed and agreed in principle: a "Customer writes from: Email · Instagram · Messenger · Text" choice so
 each channel answers in its own real format (drawn first, separate PR).
+
+## 2026-10-18 — "Your customer writes from" choice (drawn, waiting)
+
+Founder: *"choose the source … if someone emails us so this is the format … if it's on Instagram or any other forms or
+CRM"*. Drawn on the "How FollowUp talks to your customers" page, under the lede: **Your customer writes from** with three
+pills, **Email · Instagram · Messenger** (chosen = charcoal), and one faint line "Website forms and your CRM answer like
+Email." Instagram/Messenger answers are the real DM shape: short, no "Hi …, Best, …" frame, tap buttons under the reply
+(tapping one sends it as the customer), the one-time email/mobile ask; the input reads "Write as a customer on
+Instagram…". Email keeps today's framed reply. Only three choices because the real app has only two reply shapes today
+(scoring.ts: Instagram/Messenger get a DM, everyone else the framed email). Found while drawing: texts and WhatsApp
+replies currently get the email frame too; whether they should get their own short shape is a product call for the
+founder. Board: scratchpad simple/ch/channel-board.png.
+
+## 2026-10-18 — "Your customer writes from" built (A-289)
+
+Built as drawn. practiceReply.ts takes the channel and follows scoring.ts's DM branch for Instagram/Messenger (draftDm,
+DM_CONTACT_ASK once, shape-check hold) and acknowledge.ts's DM instant reply. Checked on laptop and phone with stand-in
+answers (no AI key locally): switching channel clears the chat, buttons show only under the newest reply and a tap sends
+it as the customer. Weak, honestly: not yet run with real AI; the email/mobile ask memory lives in the page like the
+qualifying memory; Text/WhatsApp still missing because the real app has no short text shape.

@@ -14079,3 +14079,14 @@ with no outer card: their words as plain text, the reply in the one see-through 
 other thing for that person as a plain "Also for Raj" line below. Phone: the same list, tap a person, their screen
 with "‹ Today". Weak spots: the open side is still short on the laptop when the reply is short; the "2 things" wording
 is a guess. Raj's note text in the drawing is an example. Waiting for the founder.
+
+## 2026-10-18 — Concept: "FollowUp does the following up; you make the decisions" (Today drawn, waiting)
+
+Founder: *"we need to use that design and stuff but we gotta propose it according to our product's direction"*, then
+*"go"* to the concept. From PRODUCT_DIRECTION ("only decisions go to the owner", "the measure is deals closed"):
+Today's list is the owner's **decisions**, one row per person with the reason in plain words ("Ready to view · pick a
+time", "Asks what his place would sell for"), ordered closest-to-booking first; the open person shows their words,
+FollowUp's written reply, and one line saying why it waits ("it sets a date", "it is about price"); what FollowUp did
+on its own is one quiet line at the bottom ("FollowUp answered 6 people on its own today. See Activity"). Same
+list-plus-open-item layout as the earlier drawing. The counts (4 decisions, 6 answered) and Raj's reply are examples;
+the side bar badge in the drawing still shows the old count of 5. Waiting for the founder.

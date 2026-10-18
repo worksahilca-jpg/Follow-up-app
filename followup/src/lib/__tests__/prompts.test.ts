@@ -65,6 +65,12 @@ describe("no-invention drafting", () => {
     expect(system).toMatch(/End with at most one easy next step they can take or ignore/);
     expect(system).toMatch(/A message whose only point is that you are still there is never acceptable/);
     expect(system).toMatch(/write only a short,\s+warm close/);
+    // Founder's Instagram test, 2026-10-18.
+    expect(system).toMatch(/Once they have said no anywhere in this conversation/);
+    expect(system).toMatch(/not sure or haven't decided, take the pressure off/);
+    expect(system).toMatch(/Never repeat a sentence, or the same opening/);
+    expect(system).toMatch(/Never say you have answered, covered or sorted something/);
+    expect(system).toMatch(/polite form of 'you'/);
     expect(system).toContain("great question");
     expect(system).toMatch(/No emoji, and never more than one exclamation mark/);
   });

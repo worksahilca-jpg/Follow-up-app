@@ -206,7 +206,7 @@ const REALTOR: Criterion[] = [
       "a specific day or time they agreed to, or proposed, for seeing a property. Known only when THEY said yes to a time or named one; an offer of times that they have not answered is not a viewing",
     // "Weekday or weekend?" is still picking for them, and it is the exact
     // question a real lead answered with "What do you mean" (2026-09-20).
-    ask: "whether they would like to see the home, as an open question; never suggest a day, a time, or weekday versus weekend yourself",
+    ask: "whether they would like to see the home or have a quick call about it, as an open question; never suggest a day, a time, or weekday versus weekend yourself",
   },
   {
     key: "home",
@@ -230,7 +230,7 @@ const REALTOR: Criterion[] = [
     key: "price",
     label: "Price in mind",
     find: "the price they hope to sell for or a number they have in mind. It needs an amount",
-    ask: "whether they have a price in mind, and offer to come by and give them a real number",
+    ask: "whether they have a price in mind",
   },
   {
     key: "visit",
@@ -252,9 +252,12 @@ const TEMPLATES: Record<string, Template> = {
     id: "realtor",
     criteria: REALTOR,
     rounds: {
-      buy: [["area", "timing"], ["financing", "budget"], ["agent", "viewing"]],
-      rent: [["area", "timing"], ["budget"], ["agent", "viewing"]],
-      sell: [["home", "timing"], ["why", "condition"], ["price", "visit"]],
+      // Founder, 2026-10-18: "narrow down the conversation and let them towards booking a call … ask two questions
+      // that make sense at a time". The meeting (a viewing or a call; a seller's visit) is offered in the second
+      // round, not the third; the rest is learned after, or on the call.
+      buy: [["area", "timing"], ["financing", "viewing"], ["budget", "agent"]],
+      rent: [["area", "timing"], ["budget", "viewing"], ["agent"]],
+      sell: [["home", "timing"], ["why", "visit"], ["condition", "price"]],
     },
   },
 };
@@ -490,8 +493,9 @@ export function nextToAsk(template: Template, q: Qualification | null): Criterio
   const same = q && q.template === template.id ? q : null;
   if (same?.tier === "agent") return [];
   const open = (k: CriterionKey) => !knows(same, k) && !asked(same, k);
+  // Two at once from the first question (founder, 2026-10-18): what they are after, and when.
   if (!sideOf(same) && open("side") && !knows(same, "area") && !knows(same, "home")) {
-    return [criterionOf(template, "side")!];
+    return open("timing") ? [criterionOf(template, "side")!, criterionOf(template, "timing")!] : [criterionOf(template, "side")!];
   }
   for (const round of roundsFor(template, same)) {
     const missing = round.filter(open);
@@ -531,8 +535,9 @@ export function qualifyPromptBlock(next: Pick<Criterion, "ask"> | null): string 
   return (
     "\n\nWHAT TO LEARN NEXT. This business finds out a few things from each customer before handing them to the " +
     "owner, a little at a time and only in the natural course of the conversation. After you have fully answered " +
-    `everything they asked, you may end with one short, friendly sentence asking about ${next.ask}. When that is ` +
-    "two things, ask them together in that one sentence with a single question mark (for example \"Which area are " +
+    `everything they asked, end with one short, friendly sentence asking about ${next.ask}. When that is ` +
+    "two things, ask about BOTH, together in that one sentence with a single question mark, never only one of them " +
+    "(for example \"Which area are " +
     "you looking in, and roughly when are you hoping to move?\"), never as a list and never as two questions. Frame " +
     "it as helping them, never as screening them, and never say you are qualifying them; tie it to something they " +
     "said, so it reads as a question from someone who read their message. Ask it only when the " +

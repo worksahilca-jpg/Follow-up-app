@@ -223,15 +223,15 @@ describe("where the customer stands (A-246)", () => {
 });
 
 describe("what to ask next: three rounds, at most two things, each once", () => {
-  it("asks buying or selling first when nothing says which", () => {
-    expect(nextToAsk(realtor, null).map((c) => c.key)).toEqual(["side"]);
+  it("asks buying or selling, and when, first when nothing says which (two at once, founder 2026-10-18)", () => {
+    expect(nextToAsk(realtor, null).map((c) => c.key)).toEqual(["side", "timing"]);
   });
 
-  it("a buyer: where and when, then money, then agent and viewing, skipping what is known", () => {
+  it("a buyer: where and when, then money and the meeting, then budget and agent, skipping what is known", () => {
     expect(nextToAsk(realtor, q([SIDE])).map((c) => c.key)).toEqual(["area", "timing"]);
     expect(nextToAsk(realtor, q([SIDE, AREA])).map((c) => c.key)).toEqual(["timing"]);
-    expect(nextToAsk(realtor, q([SIDE, AREA, SOON])).map((c) => c.key)).toEqual(["financing", "budget"]);
-    expect(nextToAsk(realtor, q([SIDE, AREA, SOON, SORTED, BUDGET])).map((c) => c.key)).toEqual(["agent", "viewing"]);
+    expect(nextToAsk(realtor, q([SIDE, AREA, SOON])).map((c) => c.key)).toEqual(["financing", "viewing"]);
+    expect(nextToAsk(realtor, q([SIDE, AREA, SOON, SORTED], { offered: ["viewing"] })).map((c) => c.key)).toEqual(["budget", "agent"]);
     expect(nextToAsk(realtor, q(RAJ))).toEqual([]);
   });
 
@@ -244,7 +244,7 @@ describe("what to ask next: three rounds, at most two things, each once", () => 
       rounds.push(next.map((x) => x.key));
       c = markOffered(mergeQualification(realtor, c, null, texts), ...next.map((x) => x.key));
     }
-    expect(rounds).toEqual([["area", "timing"], ["financing", "budget"], ["agent", "viewing"]]);
+    expect(rounds).toEqual([["area", "timing"], ["financing", "viewing"], ["budget", "agent"]]);
   });
 
   it("a buyer 6+ months out is asked what kind of home, and nothing about money, agents or viewings", () => {
@@ -253,14 +253,14 @@ describe("what to ask next: three rounds, at most two things, each once", () => 
     expect(nextToAsk(realtor, markOffered(far, "kind"))).toEqual([]);
   });
 
-  it("a seller: the home and when, then why and condition, then price and a visit", () => {
+  it("a seller: the home and when, then why and a visit, then condition and price", () => {
     const st = ["We want to sell 48 Birch Ave"];
     const sell = known("side", "Selling", "We want to sell 48 Birch Ave", "sell");
     const home = known("home", "48 Birch Ave", "48 Birch Ave");
     expect(nextToAsk(realtor, q([sell], {}, st)).map((c) => c.key)).toEqual(["home", "timing"]);
     expect(nextToAsk(realtor, q([sell, home], {}, st)).map((c) => c.key)).toEqual(["timing"]);
-    expect(nextToAsk(realtor, q([sell, home], { offered: ["timing"] }, st)).map((c) => c.key)).toEqual(["why", "condition"]);
-    expect(nextToAsk(realtor, q([sell, home], { offered: ["timing", "why", "condition"] }, st)).map((c) => c.key)).toEqual(["price", "visit"]);
+    expect(nextToAsk(realtor, q([sell, home], { offered: ["timing"] }, st)).map((c) => c.key)).toEqual(["why", "visit"]);
+    expect(nextToAsk(realtor, q([sell, home], { offered: ["timing", "why", "visit"] }, st)).map((c) => c.key)).toEqual(["condition", "price"]);
   });
 
   it("asks nothing more of someone who has an agent", () => {
@@ -302,7 +302,7 @@ describe("what the owner reads", () => {
   it("shows the side's items in asking order, never the side itself, and says what is still missing", () => {
     const partial = q([SIDE, AREA, SOON]);
     expect(shownItems(realtor, partial).map((r) => r.criterion.key)).toEqual(["area", "timing"]);
-    expect(stillToLearn(realtor, partial).map((c) => c.key)).toEqual(["financing", "budget", "agent", "viewing"]);
+    expect(stillToLearn(realtor, partial).map((c) => c.key)).toEqual(["financing", "viewing", "budget", "agent"]);
     expect(glanceFacts(partial)).toEqual([
       ["Area", "Mississauga"],
       ["When", "In about 2 months"],

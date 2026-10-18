@@ -9,8 +9,8 @@ import { MAX_EXAMPLE_TEXT } from "@/lib/ownerExampleLines";
  * Nothing raw is ever kept: the route reads the paste, and only what leaves this file is saved.
  */
 
-export type TrainingChannel = "email" | "instagram" | "whatsapp" | "text";
-export const TRAINING_CHANNELS: readonly TrainingChannel[] = ["email", "instagram", "whatsapp", "text"];
+export type TrainingChannel = "email" | "instagram" | "messenger" | "whatsapp" | "text";
+export const TRAINING_CHANNELS: readonly TrainingChannel[] = ["email", "instagram", "messenger", "whatsapp", "text"];
 
 export type ParsedLine = { speaker: string; text: string };
 export type TrainingTurn = { from: "customer" | "agent"; text: string };

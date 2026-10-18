@@ -14290,3 +14290,12 @@ answers with the real reply writer (as that kind of business), and under each an
 **Teach a better reply** (an in-place box, "What it should say", Save · Cancel). A kept or taught reply becomes an
 example for every business of that kind, with Undo. Reuses "Try it yourself" (A-288) and "Write it better" (A-290); the
 difference is that this teaches a whole kind of business, not one owner.
+
+## 2026-10-18 — "Talk to it" built (A-294)
+
+Built as drawn. Taught and kept moments go into the same examples as pasted conversations, already judged, so the
+scorecard counts them too. Checked on laptop and phone against the local database (Good → "same", taught → "agent",
+Undo removes it); FollowUp's answers were stubbed in that check because the local copy has no AI key, so the real
+answers are first seen live. Weak: what the founder types as the customer is only scrubbed for emails, numbers,
+addresses and links, not names (he's making the customer up); the newest three examples of a kind are used, not the
+most similar.

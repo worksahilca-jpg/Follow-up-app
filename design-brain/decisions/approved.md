@@ -5041,3 +5041,14 @@ with different replies and different strategies"*. Train is for every kind of bu
 conversation says what kind of business it came from (the same list as setup: Real estate, Mortgage, Home services,
 Clinic, Legal, Marketing, Something else); its examples reach only businesses of that kind; the scorecard answers as
 that kind. Words say "business", never "realtor" (R-134).
+
+## A-294 — Train → "Talk to it": teach FollowUp by playing the customer ^A-294
+
+**Approved:** 2026-10-18, founder: *"Yes build it"* to the drawing (asked: *"Add a section where I will be talking to
+follow up, and I will be teaching it what to reply"*).
+**What specifically:** the first tab in Train. Kind of business + where the customer writes from (Instagram, Messenger,
+Email); the founder writes as the customer; FollowUp answers with the real reply writer as that kind of business. Under
+each answer: **Good** (kept as an example, scored "Same") or **Teach a better reply** (in-place "What it should say",
+Save · Cancel; kept as an example, scored "Business better", and it replaces the answer in the chat so the conversation
+carries on from it). One line after: "Kept…/Taught. <Kind> businesses answer like this now. Undo". Changing the kind
+or the channel starts the chat over.

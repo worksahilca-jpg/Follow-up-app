@@ -132,7 +132,7 @@ describe("the draft's instructions", () => {
 
   it("come with the trade, read for this business only", async () => {
     p.businessFact.findMany.mockResolvedValue([{ label: "Commission", value: "2.5%" }]);
-    expect(await draftingContext("biz1")).toEqual({ trade: "Real estate", facts: [{ label: "Commission", value: "2.5%" }] });
+    expect(await draftingContext("biz1")).toEqual({ trade: "Real estate", facts: [{ label: "Commission", value: "2.5%" }], examples: [] });
     expect(p.businessFact.findMany.mock.calls[0][0].where).toEqual({ businessId: "biz1" });
   });
 

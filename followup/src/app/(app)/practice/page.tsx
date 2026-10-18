@@ -6,13 +6,23 @@
  * happen to it. Nothing is stored or sent; the conversation lives in this page and "Start over" clears it.
  * "Your customer writes from" (A-289) picks the channel: Instagram and Messenger answer as short DMs with tap buttons,
  * Email as an email. Changing it starts the conversation over, because a real one happens in one place.
+ * "Write it better" (A-290) under any FollowUp reply: the owner writes what they would really say, it replaces the
+ * reply here, and it is kept as an example every later draft for this business follows (src/lib/ownerExamples.ts).
  */
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import ScrollTitle from "@/components/app/ScrollTitle";
 
-type Turn = { from: "customer" | "followup"; text: string; sends?: boolean; reason?: string | null; buttons?: string[] };
+type Turn = {
+  from: "customer" | "followup";
+  text: string;
+  sends?: boolean;
+  reason?: string | null;
+  buttons?: string[];
+  /** Set once the owner wrote it better: the saved example's id, and FollowUp's own reply for Undo. */
+  taught?: { id: string; original: string };
+};
 type Channel = "email" | "instagram" | "messenger";
 
 /** The route reads at most this many turns (MAX_TURNS there); a longer chat sends its most recent ones. */
@@ -32,6 +42,10 @@ export default function PracticePage() {
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // "Write it better": which FollowUp reply is open for the owner's version, and what they've typed.
+  const [teaching, setTeaching] = useState<number | null>(null);
+  const [better, setBetter] = useState("");
+  const [teachError, setTeachError] = useState<string | null>(null);
   const end = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -67,8 +81,47 @@ export default function PracticePage() {
     }
   }
 
+  async function saveBetter(i: number) {
+    const reply = better.trim();
+    const customerSaid = [...turns.slice(0, i)].reverse().find((t) => t.from === "customer")?.text ?? "";
+    if (!reply || busy) return;
+    setBusy(true);
+    setTeachError(null);
+    try {
+      const res = await fetch("/api/practice/teach", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ channel, customerSaid, reply }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) throw new Error(data.message ?? "Couldn't save that. Try again.");
+      setTurns((all) => all.map((t, n) => (n === i ? { ...t, text: reply, buttons: [], taught: { id: data.id, original: t.text } } : t)));
+      setTeaching(null);
+      setBetter("");
+    } catch (err) {
+      setTeachError(err instanceof Error ? err.message : "Couldn't save that. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function undoBetter(i: number) {
+    const t = turns[i];
+    if (!t?.taught || busy) return;
+    setBusy(true);
+    try {
+      await fetch(`/api/practice/teach?id=${encodeURIComponent(t.taught.id)}`, { method: "DELETE" });
+      setTurns((all) => all.map((x, n) => (n === i && x.taught ? { ...x, text: x.taught.original, taught: undefined } : x)));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   function startOver() {
     setTurns([]);
+    setTeaching(null);
+    setBetter("");
+    setTeachError(null);
     setQualification(null);
     setContactAsked(false);
     setDraft("");
@@ -153,10 +206,68 @@ export default function PracticePage() {
                   ))}
                 </div>
               )}
-              <p className="mt-1.5 flex items-center gap-1.5 px-1 text-[13.5px] text-ink-soft">
-                <span aria-hidden className="inline-block h-[7px] w-[7px] shrink-0 rounded-full" style={{ background: t.sends ? "var(--ink)" : "var(--state-needs)" }} />
-                {t.sends ? "Would go out by itself" : `Would wait for you: ${t.reason ?? "you check it first"}`}
-              </p>
+              {t.taught ? (
+                <p className="mt-1.5 px-1 text-[13.5px] text-ink-soft">
+                  Your version. FollowUp will answer like this from now on.{" "}
+                  <button type="button" disabled={busy} onClick={() => void undoBetter(i)} className="underline underline-offset-[3px] disabled:opacity-50">
+                    Undo
+                  </button>
+                </p>
+              ) : teaching === i ? (
+                <div className="mt-2 w-full max-w-[88%]">
+                  <label htmlFor={`practice-better-${i}`} className="mb-1 block px-1 text-[13.5px] text-ink-soft">
+                    What would you say?
+                  </label>
+                  <textarea
+                    id={`practice-better-${i}`}
+                    value={better}
+                    onChange={(e) => setBetter(e.target.value)}
+                    maxLength={1500}
+                    rows={3}
+                    autoFocus
+                    className="w-full resize-y rounded-[14px] border bg-card px-3.5 py-2.5 text-[16px] leading-normal outline-none"
+                    style={{ borderColor: "var(--line-strong)" }}
+                  />
+                  <div className="mt-1.5 flex items-center gap-4">
+                    <button
+                      type="button"
+                      disabled={busy || !better.trim()}
+                      onClick={() => void saveBetter(i)}
+                      className="min-h-11 rounded-full border px-[18px] text-[15px] font-medium disabled:opacity-50"
+                      style={{ borderColor: "var(--line-strong)" }}
+                    >
+                      Save
+                    </button>
+                    <button type="button" onClick={() => setTeaching(null)} className="min-h-11 text-[14px] text-ink-soft underline underline-offset-[3px]">
+                      Cancel
+                    </button>
+                  </div>
+                  {teachError && (
+                    <p role="alert" className="mt-1 px-1 text-[14px]" style={{ color: "var(--coral)" }}>
+                      {teachError}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="mt-1.5 flex flex-wrap items-center gap-x-3 px-1 text-[13.5px] text-ink-soft">
+                  <p className="flex items-center gap-1.5">
+                    <span aria-hidden className="inline-block h-[7px] w-[7px] shrink-0 rounded-full" style={{ background: t.sends ? "var(--ink)" : "var(--state-needs)" }} />
+                    {t.sends ? "Would go out by itself" : `Would wait for you: ${t.reason ?? "you check it first"}`}
+                  </p>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => {
+                      setTeaching(i);
+                      setBetter(t.text);
+                      setTeachError(null);
+                    }}
+                    className="min-h-11 underline underline-offset-[3px] disabled:opacity-50"
+                  >
+                    Write it better
+                  </button>
+                </div>
+              )}
             </div>
           ),
         )}

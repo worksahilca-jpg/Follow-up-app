@@ -14219,3 +14219,11 @@ DM): a no anywhere in the thread keeps every later reply a short warm close; "no
 the same question again; never repeat a sentence or opening; never claim an answer that isn't in the thread; always
 the polite "you" (aap). Also: the page sends only the last 24 messages, so a long chat no longer shows "turns: Too
 big". Principle: FollowUp must read the room like a good agent, not run a script.
+
+## 2026-10-18 — "Write it better" built (A-290)
+
+Built in "Try it yourself" with a new OwnerExample table (RLS on, erased and exported with the business), a
+/api/practice/teach route (save, undo, 100 a day) and the examples block in the reply writer (email and DM, via
+draftingContext). Checked on laptop and phone against the local database: save stores the row, Undo deletes it.
+Weak, honestly: the examples are the newest 6, not the most similar to the moment; a teammate can teach too (no
+admin gate); and the effect on real AI replies is not yet seen (no AI key locally).

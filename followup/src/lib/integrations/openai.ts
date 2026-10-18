@@ -19,6 +19,7 @@ import { timingBucketFromWords } from "@/lib/timingBucket";
 import { MODEL, TRANSCRIBE_MODEL, getClient } from "@/lib/integrations/openaiClient";
 import { playbookFor } from "@/lib/tradePlaybooks";
 import { factsPromptBlock, factsText, type FactLine } from "@/lib/factLines";
+import { examplesPromptBlock, type OwnerExampleLine } from "@/lib/ownerExampleLines";
 import { customerGreetingName } from "@/lib/leadName";
 import { qualifyPromptBlock, type Criterion, type CriterionKey, type ExtractedItem } from "@/lib/qualification";
 import { BRIEF_SECTIONS, type BriefSection, type ProposedLine } from "@/lib/callBrief";
@@ -1392,6 +1393,8 @@ export async function generateFollowUpMessage(
     qualify?: Pick<Criterion, "ask"> | null;
     /** They said yes to meeting (A-263, src/lib/bookingOffer.ts): their booking page, for this reply's one job. */
     bookingLink?: string | null;
+    /** How the owner answers, by example ("Write it better", A-290, src/lib/ownerExamples.ts). */
+    examples?: readonly OwnerExampleLine[];
   },
   voiceSamples: string[] = [],
   messageHint?: string,
@@ -1705,6 +1708,7 @@ export async function generateFollowUpMessage(
           (playbookFor(lead.trade) ? "\n\n" + playbookFor(lead.trade) : "") +
           (lead.bookingLink ? bookingLinkPromptBlock(lead.bookingLink) : qualifyPromptBlock(lead.qualify ?? null)) +
           factsPromptBlock(lead.facts ?? []) +
+          examplesPromptBlock(lead.examples ?? []) +
           languageDecisionBlock +
           voiceBlock +
           hintBlock,

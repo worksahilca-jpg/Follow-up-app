@@ -4987,3 +4987,18 @@ Instagram …"*, then *"Yes"* to the drawing (scratchpad simple/ch/channel-board
   Instagram…".
 - Email is unchanged.
 **Not in it:** Text/WhatsApp. The real app has no short text shape yet (they get the framed email); founder to decide.
+
+## A-290 — "Write it better": the owner teaches FollowUp by example ^A-290
+
+**Approved:** 2026-10-18. Founder: *"lets make a model and lets train it … i will make owners to train this model"*,
+then, on the proposal, *"Solve this what feels okay to you"* (decision delegated).
+**What specifically:**
+- In "Try it yourself", under every FollowUp reply, beside the verdict line: a quiet underlined **Write it better**.
+- Tapping opens the reply in place: "What would you say?" over a text box prefilled with FollowUp's reply, an
+  outlined **Save** pill and a **Cancel** link. Save replaces the bubble with the owner's version and shows "Your
+  version. FollowUp will answer like this from now on. Undo".
+- Saved as an example (what the customer said → what the owner would say). Every later draft for this business, on
+  every channel, reads the newest 6 as "how this owner answers": approach, never facts (a price or date in an
+  example is not grounded, so a draft that copies one is held). Newest 50 kept; Undo deletes it.
+- Not a trained model: examples work from the first one and cost nothing to change; the rows are what a trained
+  model would need later.

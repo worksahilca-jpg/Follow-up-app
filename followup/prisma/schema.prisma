@@ -298,6 +298,8 @@ model Business {
   senderVerdicts       SenderVerdict[]
   // What FollowUp knows about this business (src/lib/businessFacts.ts).
   facts                BusinessFact[]
+  // How the owner wants replies to go, shown by example ("Write it better", src/lib/ownerExamples.ts).
+  ownerExamples        OwnerExample[]
   // One question a day on Today (A-101, src/lib/dailyQuestion.ts): no
   // question before this time, and the questions the owner said "Not now"
   // to, which are then left for when a real customer asks.
@@ -2336,6 +2338,26 @@ model StayInTouchNews {
   text       String
   fits       Int      @default(0)
   createdAt  DateTime @default(now())
+
+  @@index([businessId, createdAt])
+}
+
+// "Write it better" (A-290, founder 2026-10-18: "we need to train this guy"). In "Try it yourself" the owner writes
+// what they would really say in place of a FollowUp reply; every later draft for this business reads the newest few
+// as examples of how this owner handles such a moment (src/lib/ownerExampleLines.ts). Typed by the owner, never by
+// the model; this business only, never shared, never used to train a model. At most MAX_KEPT per business.
+model OwnerExample {
+  id           String   @id @default(cuid())
+  business     Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  businessId   String
+  // Who taught it. Plain id, no relation: an example outlives a teammate who leaves.
+  userId       String?
+  // "email", "instagram" or "messenger": the shape the owner was answering in.
+  channel      String
+  // The customer's message the reply answers, as the owner typed it playing the customer.
+  customerSaid String
+  reply        String
+  createdAt    DateTime @default(now())
 
   @@index([businessId, createdAt])
 }

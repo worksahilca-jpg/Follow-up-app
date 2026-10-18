@@ -13,6 +13,7 @@ import type { StoredQuickReplies } from "@/lib/quickReplies";
 import type { Message } from "@/lib/types";
 import { factsText, type FactLine } from "@/lib/factLines";
 import type { Criterion } from "@/lib/qualification";
+import type { OwnerExampleLine } from "@/lib/ownerExampleLines";
 
 /** Lead.suggestedQuickReplies as stored, or null for anything that isn't the shape. */
 export function readStoredQuickReplies(value: unknown): StoredQuickReplies | null {
@@ -101,7 +102,10 @@ export async function draftDm(
   // DMs went without it until 2026-10-11: the founder's Instagram test asked
   // "how much do you charge" and got asked for a listing link, because
   // nothing told the drafter a realtor's fee is a question about the agent.
-  trade: string | null = null
+  trade: string | null = null,
+  // How the owner answers, by example ("Write it better", A-290). Approach only: an example's numbers or dates are
+  // not counted as the business's words by the shape check below, so a draft that copies one is held.
+  examples: readonly OwnerExampleLine[] = []
 ): Promise<{ body: string; quickReplies: StoredQuickReplies; shapeFailed: string | null }> {
   const situation = pickDmSituation(conversation, touch);
   const known = factsText(facts);
@@ -110,7 +114,7 @@ export async function draftDm(
   let lastRule: string | null = null;
   let ask = situation;
   for (let attempt = 0; attempt < 2; attempt++) {
-    const draft = await generateFollowUpMessage({ name: leadName, conversation, facts, qualify, trade }, voiceSamples, messageHint, ask, leadLanguage);
+    const draft = await generateFollowUpMessage({ name: leadName, conversation, facts, qualify, trade, examples }, voiceSamples, messageHint, ask, leadLanguage);
     const buttons = draft.buttons ?? [];
     // The draft is written in the lead's language, so the calendar rule
     // has to read it in that language — an English-only day list would be

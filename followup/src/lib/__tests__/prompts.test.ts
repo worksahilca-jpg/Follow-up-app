@@ -399,6 +399,17 @@ describe("send-risk gate", () => {
   });
 });
 
+describe("owner examples in the reply writer (A-290)", () => {
+  it("puts the owner's examples into the follow-up instructions, and leaves the prompt alone without any", async () => {
+    create.mockResolvedValue({ choices: [{ message: { content: JSON.stringify({ subject: "s", body: "b" }) } }] });
+    await generateFollowUpMessage({ name: "Young", conversation: [], examples: [{ customerSaid: "not sure bro", reply: "No rush at all." }] });
+    expect(create.mock.calls[0][0].messages[0].content as string).toContain("Owner: No rush at all.");
+    create.mockClear();
+    await generateFollowUpMessage({ name: "Young", conversation: [] });
+    expect(create.mock.calls[0][0].messages[0].content as string).not.toContain("<owner_examples>");
+  });
+});
+
 describe("instant reply (generateInstantReply)", () => {
   it("instructs the model to only answer from what the lead themselves said and never invent a business fact", async () => {
     create.mockResolvedValue({ choices: [{ message: { content: JSON.stringify({ reply: "Got it, I'll confirm the price for you." }) } }] });

@@ -82,8 +82,8 @@ export async function writeRuleExample(
   const voiceSamples = await getVoiceSamples(businessId);
   const lastInbound = [...lead.conversation].reverse().find((m) => m.direction === "inbound");
   if (lastInbound && (lastInbound.channel === "instagram" || lastInbound.channel === "messenger")) {
-    const { trade, facts } = await draftingContext(businessId);
-    const dm = await draftDm(lead.name, lead.conversation, voiceSamples, hint, undefined, language, facts, null, trade);
+    const { trade, facts, examples } = await draftingContext(businessId);
+    const dm = await draftDm(lead.name, lead.conversation, voiceSamples, hint, undefined, language, facts, null, trade, examples);
     return { text: dm.body, what };
   }
   const draft = await generateFollowUpMessage({ name: lead.name, conversation: lead.conversation, ...(await draftingContext(businessId)) }, voiceSamples, hint, undefined, language);

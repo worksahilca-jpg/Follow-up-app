@@ -121,7 +121,7 @@ export async function practiceReply(
   const contactAsked = contactAskedBefore || askContact;
 
   if (dm) {
-    const written = await draftDm(customerName, conversation, voiceSamples, undefined, undefined, detected, context.facts, askContact ? DM_CONTACT_ASK : qualify, context.trade);
+    const written = await draftDm(customerName, conversation, voiceSamples, undefined, undefined, detected, context.facts, askContact ? DM_CONTACT_ASK : qualify, context.trade, context.examples);
     let verdict: PracticeVerdict;
     if (written.shapeFailed) {
       // The send pass holds a DM that failed its shape check, in the same words (automation.ts).

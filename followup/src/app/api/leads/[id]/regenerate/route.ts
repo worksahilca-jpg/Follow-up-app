@@ -100,12 +100,12 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
     let newSubject: string | null;
     let newQuickReplies: Prisma.InputJsonValue | typeof Prisma.JsonNull;
     if (dmChannel) {
-      const { trade, facts } = await draftingContext(lead.businessId);
+      const { trade, facts, examples } = await draftingContext(lead.businessId);
       // In the language and register already decided for this customer
       // (src/lib/leadLanguage.ts), the same as every automatic draft: a new
       // draft asked for by hand used to come back in whatever the model
       // guessed (app analysis, 2026-10-14).
-      const dm = await draftDm(lead.name, conversation, voiceSamples, undefined, undefined, language, facts, null, trade);
+      const dm = await draftDm(lead.name, conversation, voiceSamples, undefined, undefined, language, facts, null, trade, examples);
       newMessage = dm.body;
       newSubject = null;
       newQuickReplies = (dm.shapeFailed ? { question: dm.quickReplies.question, buttons: [] } : dm.quickReplies) as unknown as Prisma.InputJsonValue;

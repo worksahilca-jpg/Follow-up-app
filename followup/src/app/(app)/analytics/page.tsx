@@ -1,7 +1,7 @@
 import Link from "next/link";
 import ScrollTitle from "@/components/app/ScrollTitle";
 import TeamPerformanceSection from "@/components/TeamPerformanceSection";
-import { Eyebrow } from "@/components/app/canvasBits";
+import { ChevronRight } from "lucide-react";
 import { GROUP } from "@/components/app/IosList";
 import { getAnalytics } from "@/lib/analytics-data";
 import { getLeads } from "@/lib/leads-data";
@@ -21,7 +21,7 @@ const DAY = 24 * 60 * 60 * 1000;
 const WEEKS = 8;
 
 /**
- * Results (A-220, the phone redesign, build 5): one number for the week,
+ * Results (A-220, the phone redesign, build 5; laid out like a Mac app, A-285): one number for the week,
  * customers answered, beside last week; then Booked, First reply and Won;
  * then a way to see everything FollowUp did. Below, as before (A-066): eight
  * weeks of customers answered on the desk, and everything else as a quiet
@@ -87,106 +87,111 @@ export default async function NumbersPage() {
   ];
 
   return (
-    <div>
+    <div className="lg:max-w-[1120px]">
       {/* Results is a place in the menu now (A-209), not a page under Settings: no way "back" to show. */}
-      {/* Your week (A-226): the one number on the green wash, beside last week, and a dot for each customer on the
-          day they first got an answer. */}
       <ScrollTitle title="Results" />
-      <section className="rounded-[22px] border border-[var(--wash-edge)] bg-[var(--wash)] px-[18px] py-5 lg:px-8 lg:py-7">
-        <Eyebrow green>
-          This week · {fmtDay(weekStart)} to {fmtDay(now)}
-        </Eyebrow>
-        <h1 className="title-serif mt-1.5 flex items-baseline gap-2.5">
-          <span className="text-[44px] leading-none tabular-nums lg:text-[56px]">{answered}</span>
-          <span className="text-[22px] leading-tight lg:text-[28px]">
-            {answered === 1 ? "customer" : "customers"} <em>answered</em>
-          </span>
-        </h1>
-        <p className={"mt-1.5 text-[14px] " + (diff > 0 ? "font-medium text-sage" : "text-ink-faint")}>
-          {diff > 0 ? `${diff} more than last week` : diff < 0 ? `${-diff} fewer than last week` : answered > 0 ? "The same as last week" : "Nobody to answer yet this week"}
-        </p>
-        {answered > 0 && <WeekDots days={byDay} />}
-      </section>
-
-      {data.totalLeads === 0 && (
-        <p className="mt-6 text-[15px] text-ink-soft">
-          No customers yet. Connect where customers write to you in{" "}
-          <Link href="/settings" className="underline underline-offset-[3px]">
-            Settings
-          </Link>
-          : your inbox, website form, DMs or CRM. Your numbers fill in from there.
-        </p>
-      )}
-
-      {/* Booked, First reply, Won: rows on the phone, three columns on the desk. */}
-      <div className="mt-5 overflow-hidden rounded-[18px] border border-line bg-card lg:grid lg:grid-cols-3">
-        {three.map((t, i) => (
-          <div
-            key={t.label}
-            className={
-              "flex items-center justify-between gap-4 px-[18px] py-3.5 lg:flex-col lg:items-start lg:justify-start lg:px-6 lg:py-5 " +
-              (i ? "border-t border-line-2 lg:border-l lg:border-t-0" : "")
-            }
-          >
-            <div className="min-w-0">
-              <div className="text-[15.5px] font-medium lg:text-sm lg:font-normal lg:text-ink-soft">{t.label}</div>
-              <div className="mt-0.5 text-[13px] text-ink-faint lg:hidden">{t.note}</div>
+      <h1 className="title-serif ios-title1">Results</h1>
+      {/* Laid out like a Mac app (A-285; founder: "I dont feel mac desing in this", then "keep building"): small grey
+          headings over white grouped panels, hairlines inside, charcoal only. The week on the left with the eight
+          weeks under it; everything else on the right. On the phone it is one column, the eight weeks left out (R-015). */}
+      <div className="mt-5 grid gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] lg:items-start lg:gap-x-6">
+        <div className="flex min-w-0 flex-col gap-6">
+          <section>
+            <h2 className={HEAD}>Customers answered</h2>
+            <div className={GROUP + " mt-1.5 px-[18px] pb-4 pt-3.5"}>
+              <div className="text-[13px] text-ink-faint">
+                This week · {fmtDay(weekStart)} to {fmtDay(now)}
+              </div>
+              <p className="mt-0.5 flex items-baseline gap-2">
+                <span className="text-[34px] font-semibold leading-tight tracking-[-0.02em] tabular-nums">{answered}</span>
+                <span className="text-[15px] font-medium text-ink-soft">{answered === 1 ? "customer" : "customers"}</span>
+              </p>
+              <p className={"text-[13px] " + (diff > 0 ? "font-medium text-ink" : "text-ink-faint")}>
+                {diff > 0 ? `${diff} more than last week` : diff < 0 ? `${-diff} fewer than last week` : answered > 0 ? "The same as last week" : "Nobody to answer yet this week"}
+              </p>
+              {answered > 0 && <WeekBars days={byDay} />}
             </div>
-            <div className="shrink-0 text-[26px] font-light leading-none tracking-[-0.03em] tabular-nums lg:mt-1.5 lg:text-[44px]">{t.value}</div>
-            <div className="mt-2 hidden text-[13px] text-ink-faint lg:block">{t.note}</div>
+          </section>
+
+          {data.totalLeads === 0 && (
+            <p className="-mt-2 px-4 text-[15px] text-ink-soft">
+              No customers yet. Connect where customers write to you in{" "}
+              <Link href="/settings" className="underline underline-offset-[3px]">
+                Settings
+              </Link>
+              : your inbox, website form, DMs or CRM. Your numbers fill in from there.
+            </p>
+          )}
+
+          {/* Booked, First reply, Won: rows on the phone, three columns on the desk. */}
+          <div className={GROUP + " lg:grid lg:grid-cols-3"}>
+            {three.map((t, i) => (
+              <div
+                key={t.label}
+                className={
+                  "flex items-center justify-between gap-4 px-[18px] py-3 lg:flex-col lg:items-start lg:justify-start lg:gap-0 lg:py-3.5 " +
+                  (i ? "border-t border-line-2 lg:border-l lg:border-t-0" : "")
+                }
+              >
+                <div className="min-w-0">
+                  <div className="text-[15px] lg:text-[13px] lg:text-ink-faint">{t.label}</div>
+                  <div className="mt-0.5 text-[13px] text-ink-faint lg:hidden">{t.note}</div>
+                </div>
+                <div className="shrink-0 text-[22px] font-semibold leading-tight tracking-[-0.02em] tabular-nums lg:mt-0.5 lg:text-[24px]">{t.value}</div>
+                <div className="mt-0.5 hidden text-[12px] text-ink-faint lg:block">{t.note}</div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-      <Link href="/activity" className="mt-3.5 inline-flex min-h-11 items-center text-[14px] text-ink-soft underline underline-offset-[3px] hover:text-ink">
-        See everything FollowUp did
-      </Link>
 
-      <div className="mt-5 grid gap-10 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:items-start">
-        {/* Eight weeks, as bars. Hidden on the phone (R-015). */}
-        <section className="hidden lg:block">
-          <h2 className="text-[15px]">Customers answered, by week</h2>
-          <figure className="mt-3.5 rounded-[18px] border border-line bg-card px-5 pb-3.5 pt-4">
-            <div
-              role="img"
-              aria-label={`Customers answered each week for eight weeks: ${weeks.map((w) => `${fmtDay(w.start)} ${w.n}`).join(", ")}.`}
-              className="grid grid-cols-8 gap-2"
-            >
-              {weeks.map((w, i) => {
-                const current = i === WEEKS - 1;
-                return (
-                  <div key={i} className="flex min-w-0 flex-col items-center gap-2">
-                    <div className="flex h-[150px] w-full flex-col items-center justify-end gap-1.5">
-                      <span className={"text-[12.5px] tabular-nums " + (current ? "font-semibold text-ink" : "text-ink-faint")}>{w.n}</span>
-                      <span
-                        className="block w-9 rounded-t-[6px] rounded-b-[2px]"
-                        style={{
-                          height: `${Math.round((w.n / max) * 120)}px`,
-                          minHeight: w.n > 0 ? 3 : 0,
-                          background: current ? "var(--ink)" : "var(--line)",
-                        }}
-                      />
+          {/* Eight weeks, as bars. Hidden on the phone (R-015). */}
+          <section className="hidden lg:block">
+            <h2 className={HEAD}>By week</h2>
+            <figure className={GROUP + " mt-1.5 px-[18px] pb-3 pt-4"}>
+              <div
+                role="img"
+                aria-label={`Customers answered each week for eight weeks: ${weeks.map((w) => `${fmtDay(w.start)} ${w.n}`).join(", ")}.`}
+                className="grid grid-cols-8 gap-2.5"
+              >
+                {weeks.map((w, i) => {
+                  const current = i === WEEKS - 1;
+                  return (
+                    <div key={i} className="flex min-w-0 flex-col items-center gap-1.5">
+                      <div className="flex h-[124px] w-full flex-col items-center justify-end gap-1">
+                        {w.n > 0 && <span className={"text-[12px] tabular-nums " + (current ? "font-semibold text-ink" : "text-ink-faint")}>{w.n}</span>}
+                        <span
+                          className="block w-full max-w-[28px] rounded-[4px]"
+                          style={{
+                            height: w.n > 0 ? `${Math.max(4, Math.round((w.n / max) * 96))}px` : "3px",
+                            background: w.n === 0 ? "var(--line)" : current ? "var(--ink)" : "var(--ink-faint)",
+                          }}
+                        />
+                      </div>
+                      <span className="whitespace-nowrap text-[12px] text-ink-faint">{fmtDay(w.start)}</span>
                     </div>
-                    <span className="whitespace-nowrap text-xs text-ink-faint">{fmtDay(w.start)}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </figure>
-        </section>
+                  );
+                })}
+              </div>
+            </figure>
+          </section>
+        </div>
 
         {/* An iOS grouped list (A-273): the label on the left, the value in grey on the right. */}
-        <section>
-          <h2 className="ios-footnote px-4 uppercase tracking-[0.02em] text-ink-faint">Everything else</h2>
+        <section className="min-w-0">
+          <h2 className={HEAD}>Everything else</h2>
           <dl className={GROUP + " mt-1.5"}>
             {rest.map(([k, v], i) => (
               <div key={k} className="flex items-center pl-4">
-                <div className={"flex min-h-[44px] flex-1 items-center justify-between gap-3 pr-4" + (i ? " border-t border-line-2" : "")}>
-                  <dt className="ios-subhead text-ink">{k}</dt>
-                  <dd className="ios-subhead tabular-nums text-ink-faint">{v}</dd>
+                <div className={"flex min-h-[44px] flex-1 items-center justify-between gap-3 pr-4 lg:min-h-[38px]" + (i ? " border-t border-line-2" : "")}>
+                  <dt className="ios-subhead text-ink lg:text-[14px]">{k}</dt>
+                  <dd className="ios-subhead tabular-nums text-ink-faint lg:text-[14px]">{v}</dd>
                 </div>
               </div>
             ))}
           </dl>
+          <Link href="/activity" className="ml-4 mt-1 inline-flex min-h-11 items-center gap-1 text-[14px] text-ink-soft hover:text-ink">
+            See everything FollowUp did
+            <ChevronRight className="h-4 w-4" aria-hidden="true" />
+          </Link>
         </section>
       </div>
 
@@ -203,28 +208,29 @@ export default async function NumbersPage() {
   );
 }
 
-/** Up to this many dots in a day; a busier day shows its number above them. */
-const MAX_DOTS = 6;
+/** The small grey heading over each group, as Mac and iPhone settings put it (A-285). */
+const HEAD = "px-4 text-[12px] font-semibold uppercase tracking-[0.03em] text-ink-faint";
 
-/** One dot per customer answered, on the day they first heard back (A-226). One column per day, today last. */
-function WeekDots({ days }: { days: { day: string; n: number }[] }) {
+/** One bar per day for this week's customers answered (A-285 replaces A-226's dots), today last. */
+function WeekBars({ days }: { days: { day: string; n: number }[] }) {
+  const most = Math.max(1, ...days.map((d) => d.n));
   return (
     <div
       role="img"
       aria-label={`Customers answered each day: ${days.map((d) => `${d.day} ${d.n}`).join(", ")}.`}
-      className="mt-4 grid max-w-[300px] grid-cols-7 items-end gap-x-1.5 gap-y-1.5 lg:mt-5 lg:max-w-[360px]"
+      className="mt-3.5 grid max-w-[360px] grid-cols-7 gap-x-2"
     >
-      {/* The dots stand on one line, as tall as the busiest day; the letters sit in a row under them. */}
       {days.map((d, i) => (
-        <div key={i} className="flex flex-col-reverse items-center gap-0.5">
-          {Array.from({ length: Math.min(d.n, MAX_DOTS) }, (_, k) => (
-            <span key={k} className="h-[7px] w-[7px] rounded-full bg-[var(--green-ink)]" />
-          ))}
-          {d.n > MAX_DOTS && <span className="text-xs font-medium leading-none text-[var(--green-ink)] tabular-nums">{d.n}</span>}
+        <div key={i} className="flex h-[76px] flex-col items-center justify-end gap-1">
+          {d.n > 0 && <span className="text-[12px] leading-none text-ink-faint tabular-nums">{d.n}</span>}
+          <span
+            className="block w-full max-w-[26px] rounded-[4px]"
+            style={{ height: d.n > 0 ? `${Math.max(4, Math.round((d.n / most) * 56))}px` : "3px", background: d.n > 0 ? "var(--ink)" : "var(--line)" }}
+          />
         </div>
       ))}
       {days.map((d, i) => (
-        <span key={`l${i}`} className="text-center text-xs text-ink-faint">
+        <span key={`l${i}`} className="mt-1.5 text-center text-[12px] text-ink-faint">
           {d.day}
         </span>
       ))}

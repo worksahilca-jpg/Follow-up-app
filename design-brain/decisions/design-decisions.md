@@ -14047,3 +14047,11 @@ Grey window (#f5f5f7 / #1e1e1e), a soft sidebar, a toolbar with the page title, 
 week as small bars, charcoal only (no blue link, no green). Same content as A-226. The drawing uses Inter as a stand-in
 for Apple's own font; in the app the Mac look would come from the computer's own system font (no new font to add).
 Waiting for the founder.
+
+## 2026-10-18 — Results built Mac-style (A-285)
+
+Built in `followup/src/app/(app)/analytics/page.tsx` with the existing panel style (`GROUP` from IosList), the A-282
+tokens and the app's own fonts. Checked at 1440×900 and 390×844, light and dark. Weak spots, honestly: the "By week"
+panel is mostly empty for a new account (seven flat lines, one bar), and the drawing's toolbar title is a plain page
+title because the app has no window toolbar. Today, Customers and Settings were not changed; whether they should get
+the same grouped-panel look is a question for the founder (A-282 removed boxes; R-130 asked for Mac feel).

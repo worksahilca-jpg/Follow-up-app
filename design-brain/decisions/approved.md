@@ -3786,6 +3786,9 @@ me"*.
 
 ## A-226 — Results looks like "Your week" ^A-226
 
+> **PARTLY SUPERSEDED (2026-10-18)** by [A-285](#^A-285): the green wash and the dots are gone (charcoal bars per day,
+> white grouped panels). The content, its order and how the week is counted still stand.
+
 **Approved:** 2026-10-10, founder. He was shown three looks for Results on phone and computer (A · Your week, B ·
 Then and now, C · The week in words) and chose *"A · Your week"*.
 
@@ -4903,3 +4906,18 @@ with the open person first on a soft fill, then everyone else (calls with their 
 the open reply card, held in view while the list scrolls. Tapping a person on the left opens them on the right. The
 phone is unchanged (one column: the open reply, Then, Later). **Supersedes** A-244's computer layout (work left, Later
 right).
+
+## A-285 — Results laid out like a Mac app ^A-285
+
+**Date:** 2026-10-18. **Founder, verbatim:** *"I dont feel mac desing in this !!"* about the no-box drawing (R-130),
+then *"Keep building let me know if you need help"* after the Mac-style drawing (`mac-board.png`, light and dark).
+Read as a go-ahead; the reaction was not a word-by-word yes, so his reaction to the built page is the real check.
+**What specifically:**
+- A plain "Results" title, then small grey uppercase headings over white grouped panels with hairlines inside, like
+  Mac System Settings and Screen Time: "Customers answered", (Booked · First reply · Won), "By week", "Everything else".
+- The week's number in its panel with the date line and "N more than last week"; under it one charcoal bar per day
+  with its count (replaces A-226's green dots). Empty days are a faint line.
+- On a laptop: two columns, the week, the three and the eight weeks on the left; Everything else and "See everything
+  FollowUp did ›" on the right. On the phone: one column, eight weeks left out (R-015).
+- Charcoal only, no green, no blue link (A-282, R-128). The app's existing fonts stay; no new font.
+**Supersedes:** part of A-226 (see there).

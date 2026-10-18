@@ -39,7 +39,7 @@ export default function TesterHealthSection({ report }: { report: TesterHealthRe
       </p>
 
       {report.testers.length === 0 ? (
-        <div className="mt-4 box p-5 text-sm text-ink-soft">No testers yet. This fills as you add them below.</div>
+        <div className="mt-4 box p-5 text-sm text-ink-soft">No testers yet. This fills as you add them.</div>
       ) : (
         <>
           <p className="mt-4 text-base sm:text-lg max-w-3xl">{report.summary}</p>

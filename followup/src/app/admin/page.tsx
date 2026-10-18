@@ -1,217 +1,77 @@
 import Link from "next/link";
-import { Building2, Inbox, Radio, MoonStar, DollarSign, ArrowRight } from "lucide-react";
-import StatCard from "@/components/StatCard";
-import AccessRequestList from "@/components/AccessRequestList";
-import AdminCharts from "@/components/AdminCharts";
+import { PageHeader } from "@/components/PageHeader";
 import { getPlatformAdminData } from "@/lib/admin-data";
-import { getProductUsage } from "@/lib/admin-usage";
-import ProductUsageSection from "@/components/ProductUsageSection";
-import ActivationSection from "@/components/ActivationSection";
-import { getActivation } from "@/lib/activation-data";
-import TesterHealthSection from "@/components/TesterHealthSection";
-import { getTesterHealth } from "@/lib/testerHealth";
+import { countWaitingForOk } from "@/lib/admin-usage";
+import { getDecisions } from "@/lib/adminDecisionsData";
 import { formatCurrency } from "@/lib/demo-data";
-import AccuracyTests from "@/components/AccuracyTests";
-import { getNotCustomerStats, NOT_CUSTOMER_CHANNELS, type NotCustomerAnswer } from "@/lib/notCustomerStats";
-
-/** The answers to "Who is this?" as the founder reads them (A-259). */
-const ANSWER_LABEL: Record<NotCustomerAnswer, string> = {
-  friend: "A friend or family",
-  work: "Someone they work with",
-  selling: "Selling them something",
-  spam: "Spam",
-  none: "No answer",
-};
+import { requirePlatformAdmin } from "@/lib/platformAdmin";
 
 export const dynamic = "force-dynamic";
 
-function formatFullDate(d: Date): string {
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-}
+/**
+ * /admin → Decide (founder, 2026-10-18: "organise the admin page so that I
+ * can make decisions"). Four numbers, then one line per decision: what
+ * happened, and the one thing to do. The detail lives in the other places.
+ * Numbers only, across every business; no customer's words.
+ */
+export default async function DecidePage() {
+  await requirePlatformAdmin();
+  const [data, waiting, decisions] = await Promise.all([getPlatformAdminData(), countWaitingForOk(), getDecisions()]);
 
-function channelLabel(provider: string): string {
-  return provider.charAt(0).toUpperCase() + provider.slice(1);
-}
-
-// One definition of the signups table's column tracks. It was written out
-// twice — once in the header row, once in the body row — and two copies of a
-// layout contract diverge the first time a column is added.
-// `_` (space), not a comma, between grid tracks — see the note on this same
-// pattern in TeamPerformanceSection.tsx.
-const SIGNUP_GRID = "grid-cols-[minmax(0,1.5fr)_auto_minmax(0,1.5fr)_auto]";
-
-export default async function AdminPage() {
-  const [data, usage, activation, health, notCustomer] = await Promise.all([
-    getPlatformAdminData(),
-    getProductUsage(),
-    getActivation(),
-    getTesterHealth(),
-    getNotCustomerStats(30),
-  ]);
+  const numbers = [
+    { value: String(data.totalBusinesses), label: data.totalBusinesses === 1 ? "business" : "businesses" },
+    { value: String(data.activeBusinessCount), label: "active" },
+    { value: String(waiting), label: waiting === 1 ? "reply waiting for an OK" : "replies waiting for an OK" },
+    { value: formatCurrency(data.estimatedMonthlyRevenueUsd), label: "a month" },
+  ];
 
   return (
-    <div>
-      <h1 className="font-display text-3xl">Platform admin</h1>
-      <p className="text-ink-soft mt-1">
-        Cross-tenant view across every business on FollowUp — visible only to the founder, and to no one on any
-        individual business&apos;s own team.
-      </p>
-      <Link href="/dashboard" className="inline-flex items-center gap-1.5 text-sm text-ink-soft hover:text-ink transition-colors mt-3">
-        &larr; Back to FollowUp
-      </Link>
-      <Link href="/admin/office" className="inline-flex items-center gap-1.5 text-sm mt-3 ml-4" style={{ color: "var(--rust)" }}>
-        The office — what the agents did while you weren&apos;t watching
-        <ArrowRight className="h-4 w-4" aria-hidden />
-      </Link>
+    <div className="max-w-3xl">
+      <PageHeader title="Decide" subtitle="What needs a decision from you. Numbers only, no customer's messages." />
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mt-6">
-        <StatCard label="Businesses signed up" value={String(data.totalBusinesses)} icon={Building2} accent="var(--slate)" accentSoft="var(--slate-soft)" />
-        <StatCard label="Leads captured (all businesses)" value={String(data.totalLeadsPlatformWide)} icon={Inbox} accent="var(--slate)" accentSoft="var(--slate-soft)" />
-        <StatCard label="Active businesses" value={String(data.activeBusinessCount)} icon={Radio} accent="var(--sage)" accentSoft="var(--sage-soft)" />
-        <StatCard label="Dormant businesses" value={String(data.dormantBusinessCount)} icon={MoonStar} accent="var(--slate)" accentSoft="var(--slate-soft)" />
-        <StatCard label="Estimated MRR" value={formatCurrency(data.estimatedMonthlyRevenueUsd)} icon={DollarSign} />
-      </div>
-      <p className="text-xs text-ink-soft mt-3">
-        {data.activeBusinessCount} of {data.totalBusinesses} businesses have captured at least one lead or connected
-        an integration (Gmail, Outlook, Instagram, or Facebook); the rest are dormant. MRR is a rough estimate —
-        paid-tier businesses with a currently active or trialing subscription, times that tier&apos;s list price.
-      </p>
-
-      <ActivationSection activation={activation} />
-
-      <TesterHealthSection report={health} />
-
-      <ProductUsageSection usage={usage} />
-
-      <AccuracyTests />
-
-      <div className="mt-10">
-        <AdminCharts
-          signupsPerWeek={data.signupsPerWeek}
-          channelBreakdown={data.channelBreakdown}
-          tierBreakdown={data.tierBreakdown}
-        />
-      </div>
-
-      <section className="mt-10">
-        <h2 className="font-display text-xl">Beta testers</h2>
-        <p className="text-sm text-ink-soft mt-1">
-          The only way in. Add a Google email and that person can sign in on their next try — no settings change, no
-          redeploy. Nobody can ask from the site.
-        </p>
-        <div className="mt-4">
-          <AccessRequestList requests={data.accessRequests} />
-        </div>
-      </section>
-
-      <section className="mt-10">
-        <h2 className="font-display text-xl">What testers changed this week</h2>
-        <p className="text-sm text-ink-soft mt-1">
-          How many of FollowUp&apos;s replies each business sent this week, and how many they changed first.
-          Numbers only: no message is shown here, so no one reads a customer&apos;s email.
-        </p>
-        <div className="mt-4 flex flex-col gap-3">
-          {data.draftChanges.length === 0 ? (
-            <div className="box p-5 text-sm text-ink-soft">
-              Nothing yet. This fills as testers send FollowUp&apos;s replies.
-            </div>
-          ) : (
-            <div className="box overflow-hidden">
-              {data.draftChanges.map((c) => (
-                <div key={c.businessName} className="flex items-center justify-between gap-4 border-t border-line-2 px-5 py-3 text-sm first:border-t-0">
-                  <span className="min-w-0 truncate">{c.businessName}</span>
-                  <span className="shrink-0 tabular-nums text-ink-soft">
-                    {c.sent - c.edited} of {c.sent} sent unchanged
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
-
-      <section className="mt-10">
-        <h2 className="font-display text-xl">&ldquo;Not a customer&rdquo;, and why</h2>
-        <p className="text-sm text-ink-soft mt-1">
-          Every time an owner told FollowUp someone wasn&apos;t a customer in the last {notCustomer.days} days, by their
-          answer and the channel it came in on. Numbers only. Where these pile up is where FollowUp lets the wrong
-          people through.
-        </p>
-        <div className="mt-4 box overflow-hidden overflow-x-auto">
-          {notCustomer.total === 0 ? (
-            <p className="p-5 text-sm text-ink-soft">None yet.</p>
-          ) : (
-            <table className="w-full min-w-[480px] text-sm">
-              <thead>
-                <tr className="text-left text-ink-soft">
-                  <th className="px-5 py-3 font-normal">Answer</th>
-                  {NOT_CUSTOMER_CHANNELS.map((c) => (
-                    <th key={c} className="px-3 py-3 text-right font-normal">{channelLabel(c)}</th>
-                  ))}
-                  <th className="px-5 py-3 text-right font-normal">All</th>
-                </tr>
-              </thead>
-              <tbody className="tabular-nums">
-                {(Object.keys(ANSWER_LABEL) as NotCustomerAnswer[]).map((a) => {
-                  const row = notCustomer.table[a];
-                  const all = NOT_CUSTOMER_CHANNELS.reduce((n, c) => n + row[c], 0);
-                  return (
-                    <tr key={a} className="border-t border-line-2">
-                      <td className="px-5 py-3">{ANSWER_LABEL[a]}</td>
-                      {NOT_CUSTOMER_CHANNELS.map((c) => (
-                        <td key={c} className="px-3 py-3 text-right">{row[c]}</td>
-                      ))}
-                      <td className="px-5 py-3 text-right font-medium">{all}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          )}
-        </div>
-      </section>
-
-      <section className="mt-10">
-        <h2 className="font-display text-xl">Recent signups</h2>
-        <p className="text-sm text-ink-soft mt-1">The most recently created businesses, newest first.</p>
-        <div className="mt-4 box overflow-hidden overflow-x-auto">
-          {/* `_` (space), not a comma, between grid tracks — see the note
-              on this same pattern in TeamPerformanceSection.tsx. */}
-          <div className={`grid ${SIGNUP_GRID} gap-4 px-5 py-3 border-b border-line text-xs font-medium text-ink-soft`}>
-            <span>Business</span>
-            <span>Signed up</span>
-            <span>Connected channels</span>
-            <span className="text-right">Leads</span>
+      <div className="mt-6 grid grid-cols-2 overflow-hidden rounded-2xl border border-line sm:grid-cols-4">
+        {numbers.map((n, i) => (
+          <div
+            key={n.label}
+            className={`px-4 py-4 sm:px-5 ${i % 2 === 1 ? "border-l border-line" : ""} ${i >= 2 ? "border-t border-line sm:border-t-0 sm:border-l" : ""}`}
+          >
+            <p className="text-2xl font-semibold tracking-[-0.02em] tabular-nums">{n.value}</p>
+            <p className="mt-0.5 text-sm text-ink-soft">{n.label}</p>
           </div>
-          {data.recentSignups.length === 0 ? (
-            <p className="px-5 py-6 text-sm text-ink-soft">No businesses have signed up yet.</p>
-          ) : (
-            data.recentSignups.map((b) => (
-              <div
-                key={b.id}
-                className={`grid ${SIGNUP_GRID} gap-4 px-5 py-3 border-b border-line last:border-0 items-center`}
+        ))}
+      </div>
+      <p className="mt-2 text-xs text-ink-soft">
+        Active: captured a customer or connected an app. Money is a rough estimate from paid plans.
+      </p>
+
+      <section className="mt-10">
+        <h2 className="ios-title3">Needs you</h2>
+        {decisions.length === 0 ? (
+          <p className="mt-3 rounded-2xl border border-line px-5 py-4 text-ink-soft">Nothing needs you right now.</p>
+        ) : (
+          <ul className="mt-3 overflow-hidden rounded-2xl border border-line">
+            {decisions.map((d) => (
+              <li
+                key={d.key}
+                className="flex flex-col gap-3 border-t border-line px-5 py-4 first:border-t-0 sm:flex-row sm:items-center sm:gap-4"
               >
-                <span className="text-sm font-medium truncate">{b.name}</span>
-                <span className="text-sm text-ink-soft whitespace-nowrap">{formatFullDate(b.createdAt)}</span>
-                <span className="flex flex-wrap gap-1.5">
-                  {b.connectedChannels.length === 0 ? (
-                    <span className="text-sm text-ink-soft">—</span>
-                  ) : (
-                    b.connectedChannels.map((c) => (
-                      <span
-                        key={c}
-                        className="text-xs rounded-full border border-line px-2 py-0.5 text-ink-soft whitespace-nowrap"
-                      >
-                        {channelLabel(c)}
-                      </span>
-                    ))
-                  )}
-                </span>
-                <span className="text-sm text-right tabular-nums">{b.leadCount}</span>
-              </div>
-            ))
-          )}
-        </div>
+                <div className="flex min-w-0 flex-1 gap-3">
+                  <span aria-hidden className="mt-2 h-2 w-2 shrink-0 rounded-full" style={{ background: "var(--state-needs)" }} />
+                  <div className="min-w-0">
+                    <p className="font-semibold">{d.title}</p>
+                    <p className="mt-0.5 text-sm text-ink-soft">{d.why}</p>
+                  </div>
+                </div>
+                <Link
+                  href={d.action.href}
+                  className="ml-5 inline-flex min-h-11 shrink-0 items-center self-start rounded-full border border-line-strong px-4 text-sm font-medium sm:ml-0 sm:self-center"
+                >
+                  {d.action.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
     </div>
   );

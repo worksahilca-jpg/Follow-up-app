@@ -14129,3 +14129,17 @@ Founder: *"yes build it"*. Built and checked on laptop and phone, light and dark
 Weak, named honestly: people without qualification answers still get the old sentence, so the list mixes two kinds of
 line; on a phone there is a little empty space between the top bar and "‹ Today"; the local test data has two leads
 with the same name, which reads like a duplicate on screen (real accounts merge same-person leads).
+
+## 2026-10-18 — "Try it on me first" (drawn, waiting)
+
+Founder wanted to try FollowUp sending on its own without messaging every customer: *"i dont want to send messages to
+every one"*, *"Is it possible to reply just my id"*, then *"yes"* to drawing it. The two-account route (reviewer account,
+/admin tester, second Gmail) was too many steps (*"bro got complex"*). Inferred principle: trying a risky switch must be
+one tap and must never touch a real customer.
+
+Drawn in Settings → Sending replies, as one box under "Who sends your replies?": **Try it on me first** · "FollowUp
+writes to you like a customer, then answers you by itself. Nobody else gets anything." · an outlined **Try it** pill.
+After the tap the box says "Sent to you. Check [owner email] in a minute. A practice customer wrote to you, and FollowUp
+answered on its own. Your real customers still wait for your OK." It reuses the practice customer that "See it work"
+already makes (source "Test lead", A-093), but its reply goes out by itself even while the account holds every reply.
+The email address in the drawing is a placeholder. Waiting for the founder.

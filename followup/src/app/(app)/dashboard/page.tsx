@@ -433,16 +433,16 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       )}
 
       {/* On a phone one column, the cards a little wider than the text (12px
-          from the edge, A-220). On a computer two columns (A-244): the work
-          on the left; the day in numbers, tomorrow and what's done on the right. */}
-      <div className={`-mx-2 sm:mx-0 ${leads.length > 0 ? "lg:max-w-[1040px]" : "sm:max-w-[640px]"}`}>
+          from the edge, A-220). On a computer two columns like Mail (A-284): who
+          is waiting and Later on the left, the open reply on the right. */}
+      <div className={`-mx-2 sm:mx-0 ${leads.length > 0 ? "lg:max-w-[1120px]" : "sm:max-w-[640px]"}`}>
       {sendingPaused && <SendingPausedBanner canResume={isAdmin} />}
       {cantSend && (
         <CantSendNotice reconnectEmail={"needsReconnect" in gmail && gmail.needsReconnect ? (gmail.email ?? "your inbox") : null} />
       )}
       <ProblemNotices problems={problems} />
       {firstValue && <FirstValueNote title={firstValue.title} body={firstValue.body} />}
-      <div className={leads.length > 0 ? "mt-5 lg:grid lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] lg:items-start lg:gap-8" : "mt-3.5 sm:mt-5"}>
+      <div className={leads.length > 0 ? "mt-5" : "mt-3.5 sm:mt-5"}>
       <div className="min-w-0">
       {/* A buzz on the owner's phone when a customer needs them (A-216): shown
           until this device has alerts on, or "Not now". Not on the visit
@@ -461,6 +461,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             calls={callsToPrepare}
             plan={approvalItems.length === 0 && comingUp ? planLine(comingUp.groups) : null}
             next={nextForYouLine(nextCallForYou)}
+            later={<DayLater lines={later} />}
             weekResults={weekResults}
             answeredForYou={rescue?.answeredForYou ?? 0}
             sendLocked={sendLocked}
@@ -635,11 +636,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         </>
       )}
       </div>
-      {leads.length > 0 && (
-        <div className="mt-9 flex flex-col gap-8 lg:mt-0">
-          <DayLater lines={later} />
-        </div>
-      )}
       {/* One tap to install, on phones whose browser can (A-265): at the foot of the day, below every customer.
           It hides itself while the alerts card above is asking (one ask at a time). */}
       <div className="mt-8 empty:hidden lg:hidden">

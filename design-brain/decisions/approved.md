@@ -4893,3 +4893,13 @@ version; his reference was the Claude desktop app's see-through typing bar, "loo
 3. **The done message names the owner's next thing:** "Next: your call with Raj at 3:00 PM." (or "tomorrow at …"),
    above FollowUp's own plan line. Only booked calls count.
 **Not taken from the study:** the "on its own" line removal and two kinds of empty message (not asked for).
+
+## A-284 — Today on a computer: who is waiting on the left, the open reply on the right ^A-284
+
+**Date:** 2026-10-17. **Founder, verbatim:** *"yes build the laptop layout"* (after A-282's drawings, which showed Today
+as a list beside the open conversation, and *"my laptop iterface means a lot"*).
+**What:** at 1024px and up, Today is two columns inside the app's sidebar, like Mail: on the left "Waiting for you · 5"
+with the open person first on a soft fill, then everyone else (calls with their times, A-283), then Later; on the right
+the open reply card, held in view while the list scrolls. Tapping a person on the left opens them on the right. The
+phone is unchanged (one column: the open reply, Then, Later). **Supersedes** A-244's computer layout (work left, Later
+right).

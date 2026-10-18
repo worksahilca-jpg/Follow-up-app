@@ -14015,3 +14015,20 @@ founder said *"yes do all 3"*: Today count on the phone tab, call times on rows 
 the done message naming the next call. Built in the same PR as the calm look (#544). Checked on the local database with
 two made-up calls (one in 25 minutes, one in 2.5 hours): the soon one leads Then with its time, the later one follows
 the replies.
+
+## 2026-10-17 — Per-customer row built (A-280)
+
+Built as approved: one row under the customer's facts, "FollowUp and Linda · Ask me first", in the phone's About sheet
+and the computer's side column. Tap it: on a phone the choices open as a list under the row with a tick; on a computer
+as a small pop-up menu. Choices: Ask me first · Don't write to {name} · Handle it all (only where the plan allows it, or
+already chosen). A one-line sentence under the choices says what the current one means; Handle it all asks once
+("Sure?") unless the account holds every reply. The old three-way control under Details is gone
+(`LeadAutomationToggle` removed). Checked on the local database: changed to "Don't write to Linda" and back, on both
+sizes; it saved each time.
+
+## 2026-10-17 — Laptop Today built as two columns (A-284)
+
+Built and checked on the local database at 1440×900, light and dark: the list on the left (340px) with the open person
+marked, the reply on the right (sticky), Later under the list. Picking Lucía moved her reply to the right. Phone at
+390×844 unchanged. **Weak, honestly:** the right side shows the reply card (their message, the draft, Send), not the
+whole conversation as the drawing did; the full thread is still one tap away on the customer's page.

@@ -14152,3 +14152,13 @@ reply. The hold lifts only when the lead is a practice customer ("Test lead") at
 sending isn't stopped; tests cover a real customer, someone else's address and "Stop all sending". The older "See it
 work" button on an empty Today still holds like any customer. Weak, honestly: only the email channel can be tried, and
 the practice message is always the same price-and-availability question.
+
+## 2026-10-18 — "Practise with FollowUp" (drawn, waiting)
+
+Founder, after A-287 went live: *"i want a interface where user will become customer and followup will do its job, not
+a email sending system"*. Drawn in Settings → Sending replies: the "Try it on me first" box becomes **Practise with
+FollowUp** · "Write as a customer and see how FollowUp answers. Nothing is sent." · **Start**. Start opens a chat page:
+title, a "Nothing is sent" pill, one line of why; the owner's messages on the right ("You, as a customer"), FollowUp's
+replies on the left with one quiet line under each saying what would really happen ("Would go out by itself" / "Would
+wait for you: it's about price"); a "Write as a customer…" box with Send; "Start over". The conversation in the drawing
+is an example. Inferred principle: owners trust what they can watch, and a conversation shows more than one email.

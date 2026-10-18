@@ -4921,3 +4921,18 @@ Read as a go-ahead; the reaction was not a word-by-word yes, so his reaction to 
   FollowUp did ›" on the right. On the phone: one column, eight weeks left out (R-015).
 - Charcoal only, no green, no blue link (A-282, R-128). The app's existing fonts stay; no new font.
 **Supersedes:** part of A-226 (see there).
+
+## A-286 — Today: one line per person, three facts, one button ^A-286
+
+**Date:** 2026-10-18. **Founder, verbatim:** *"yes build it"*, after `today-simple-info-board.png` (and before it:
+*"design is good but the info part looks weak"*, *"how can we make it simple"*).
+**What specifically:**
+- The same layout as A-284 (list on the left, the open person on the right; on a phone the list, then tap a person),
+  with no box around the open person and no box around their words: the reply is the one box (R-131).
+- **Each row: name, a quiet "Ready" tag when FollowUp knows everything it needs, and ONE line** of who they are from
+  their own words ("Buying · Mississauga · Pre-approved up to $900k"); a row with nothing known keeps its sentence.
+- **The open person:** a one-line subtitle, **at most three facts** (the card's glance facts, known ones only), "More
+  about <name>" and "FollowUp has replied N times" as links to their page, their last message as plain text, then
+  the reply box, why it waits, and Send. Nothing is guessed; what isn't known isn't shown.
+- **A problem is one line** under the sentence (A-270's box becomes a line), with its one action and "Got it".
+**Supersedes:** A-270's "Needs you" box (now a line); the box around the open reply (A-282's wash card) on Today.

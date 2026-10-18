@@ -618,3 +618,30 @@ export function glanceFacts(q: Qualification | null): [string, string | null][] 
       : ["Money", itemOf(q, "financing")?.value ?? itemOf(q, "budget")?.value ?? null];
   return [["Area", itemOf(q, "area")?.value ?? null], ["When", itemOf(q, "timing")?.value ?? null], third];
 }
+
+/** The one-word side for a person's line on Today. */
+const SIDE_WORD: Record<Side, string> = { buy: "Buying", rent: "Renting", sell: "Selling", both: "Selling and buying" };
+
+/**
+ * One line about a person for Today's list (A-286): which way they are going, where, and the one thing that matters
+ * most next: an agent they already have, else the money, else when. "Buying · Mississauga · Pre-approved up to
+ * $900k". Only what they said; null when FollowUp knows nothing yet, so the row keeps its own sentence.
+ */
+export function personLine(q: Qualification | null): string | null {
+  if (!q) return null;
+  const side = sideOf(q);
+  const place = isSeller(q) ? valueOf(q, "home") : valueOf(q, "area");
+  const third =
+    bucketOf(q, "agent") === "has"
+      ? "Has an agent"
+      : isSeller(q)
+        ? valueOf(q, "timing")
+        : valueOf(q, "financing") ?? valueOf(q, "budget") ?? valueOf(q, "timing");
+  const parts = [side ? SIDE_WORD[side] : null, place, third].filter((p): p is string => Boolean(p));
+  return parts.length > 0 ? parts.join(" · ") : null;
+}
+
+/** The facts the open person shows on Today (A-286): the card's three, leaving out any not known yet. */
+export function knownGlanceFacts(q: Qualification | null): [string, string][] {
+  return glanceFacts(q).filter((f): f is [string, string] => Boolean(f[1]));
+}

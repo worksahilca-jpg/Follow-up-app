@@ -47,7 +47,7 @@ import { callIsSoon, callNotOver, readCallBrief } from "@/lib/callBrief";
 import ScrollTitle from "@/components/app/ScrollTitle";
 import { LOOK_BACK_DAYS, endedMeetings, isMeetingOutcome, meetingWhen } from "@/lib/meetingOutcome";
 import { PLAN_NAMES, choosePlan, readFollowUpPlans } from "@/lib/followUpPlans";
-import { readQualification } from "@/lib/qualification";
+import { knownGlanceFacts, personLine, readQualification } from "@/lib/qualification";
 
 // "last checked 2 minutes ago" — deliberately coarse (minutes/hours/days,
 // no seconds) since this is a status line, not a live clock.
@@ -165,8 +165,28 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       last: tried ? `Last call ${tried}: no answer.${c.texted ? ` Your text asked for a good time. No reply yet.` : ""}` : null,
     };
   });
+  // Who each waiting person is, from their own words (A-286): one line for the row, up to three facts for the open
+  // person, and how many times FollowUp or the owner has written to them. Scoped to this business.
+  const waitingIds = withBasisItems.map((a) => a.leadId);
+  const [waitingQuals, waitingConvs] =
+    ctx && waitingIds.length > 0
+      ? await Promise.all([
+          prisma.lead.findMany({ where: { id: { in: waitingIds }, businessId: ctx.businessId }, select: { id: true, qualification: true } }),
+          prisma.conversation.findMany({
+            where: { leadId: { in: waitingIds }, lead: { businessId: ctx.businessId } },
+            select: { leadId: true, _count: { select: { messages: { where: { direction: "outbound" } } } } },
+          }),
+        ])
+      : [[], []];
+  const qualOf = new Map(waitingQuals.map((l) => [l.id, readQualification(l.qualification)]));
+  const repliesTo = new Map<string, number>();
+  for (const c of waitingConvs) repliesTo.set(c.leadId, (repliesTo.get(c.leadId) ?? 0) + c._count.messages);
   const approvalItems: ApprovalItem[] = withBasisItems.map((a) => ({
     ...a,
+    line: personLine(qualOf.get(a.leadId) ?? null),
+    ready: qualOf.get(a.leadId)?.tier === "ready",
+    facts: knownGlanceFacts(qualOf.get(a.leadId) ?? null),
+    replies: repliesTo.get(a.leadId) ?? 0,
     wait: describeWait(a, now),
     waitClause: describeWaitClause(a, now),
     // Today's order and the reason a ready customer is on top (A-230), once, here.
@@ -419,6 +439,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           (#301): "No customers yet." */}
       {/* Once the greeting scrolls away on a phone, the top bar says "Today" (A-264). */}
       <ScrollTitle title="Today" />
+      {/* data-today-head: hidden on a phone while one person is open (A-286, globals.css). */}
+      <div data-today-head>
       <div className="text-[12.5px] text-ink-faint">
         {new Intl.DateTimeFormat(undefined, { timeZone: timezone, weekday: "long", month: "long", day: "numeric" }).format(now)}
       </div>
@@ -431,6 +453,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           <p className="mt-1.5 text-[16px] leading-snug text-ink-soft">{dayWords}</p>
         </>
       )}
+      </div>
 
       {/* On a phone one column, the cards a little wider than the text (12px
           from the edge, A-220). On a computer two columns like Mail (A-284): who
@@ -440,7 +463,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       {cantSend && (
         <CantSendNotice reconnectEmail={"needsReconnect" in gmail && gmail.needsReconnect ? (gmail.email ?? "your inbox") : null} />
       )}
-      <ProblemNotices problems={problems} />
+      <div data-today-head>
+        <ProblemNotices problems={problems} />
+      </div>
       {firstValue && <FirstValueNote title={firstValue.title} body={firstValue.body} />}
       <div className={leads.length > 0 ? "mt-5" : "mt-3.5 sm:mt-5"}>
       <div className="min-w-0">

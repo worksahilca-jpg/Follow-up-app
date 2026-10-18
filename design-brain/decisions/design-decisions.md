@@ -14032,3 +14032,100 @@ Built and checked on the local database at 1440×900, light and dark: the list o
 marked, the reply on the right (sticky), Later under the list. Picking Lucía moved her reply to the right. Phone at
 390×844 unchanged. **Weak, honestly:** the right side shows the reply card (their message, the draft, Send), not the
 whole conversation as the drawing did; the full thread is still one tap away on the customer's page.
+
+## 2026-10-18 — Results on a laptop, drawn in the calm look (waiting)
+
+Laptop walk after A-284: Customers, Activity and Settings already read calm; Results still looked old (boxes in boxes,
+tiles, a green line). Drawn on the real page, same content and order as A-226 (the week's number and its dots; Booked,
+First reply, Won; the eight-week bars; Everything else), with every box, border and line removed, the dots and
+"11 more than last week" in charcoal/grey instead of green. Light and dark. Waiting for the founder's yes.
+
+## 2026-10-18 — Results redrawn as a Mac app would lay it out (after R-130)
+
+Grey window (#f5f5f7 / #1e1e1e), a soft sidebar, a toolbar with the page title, small grey group headings
+("CUSTOMERS ANSWERED", "BY WEEK", "EVERYTHING ELSE"), white rounded panels with hairline separators, 13px type, the
+week as small bars, charcoal only (no blue link, no green). Same content as A-226. The drawing uses Inter as a stand-in
+for Apple's own font; in the app the Mac look would come from the computer's own system font (no new font to add).
+Waiting for the founder.
+
+## 2026-10-18 — Results built Mac-style (A-285)
+
+Built in `followup/src/app/(app)/analytics/page.tsx` with the existing panel style (`GROUP` from IosList), the A-282
+tokens and the app's own fonts. Checked at 1440×900 and 390×844, light and dark. Weak spots, honestly: the "By week"
+panel is mostly empty for a new account (seven flat lines, one bar), and the drawing's toolbar title is a plain page
+title because the app has no window toolbar. Today, Customers and Settings were not changed; whether they should get
+the same grouped-panel look is a question for the founder (A-282 removed boxes; R-130 asked for Mac feel).
+
+## 2026-10-18 — Founder: "we got the new designs all wrong bro for today and all"
+
+Said after A-282/A-283/A-284 (Today) and A-285 (Results) were built. No reason given yet; asked. A walk of every page
+on a laptop and a phone found these (inferred, not yet confirmed by the founder):
+1. **Three different looks at once:** Results and Settings use Mac-style white grouped panels (A-285); Today uses big
+   see-through rounded cards (A-282); Customers and Activity have no panels at all. Nothing reads as one app.
+2. **Today repeats people:** the heading says 5 waiting but the list shows 7 rows, with one person twice and another
+   three times (a reply, a call question and a check-in each get their own row).
+3. **Boxes inside boxes on Today:** the reply card holds a message box and a draft box; the "Needs you" box sits on top.
+4. **Half the laptop screen is empty** on Customers and Activity (one narrow column), and under the reply on Today.
+5. **Colour still leaks in:** green "Ready to book" on Customers and green "Connected" in Settings (R-128).
+6. **On the phone, Send is below the first screen** on Today.
+Waiting for the founder to say which of these is the problem before anything is redrawn.
+
+## 2026-10-18 — Today redrawn in the one-template layout (waiting)
+
+After R-131 and `reports/Simple app structure for FollowUp.md`. Drawn on the real app (laptop light and dark, phone):
+title, one sentence, the problem as one line under it with Reconnect (no box); then the list on the left with **one row
+per person** ("Raj Malhotra · 2 things · a note and a question"), "Later today" under it; the open person on the right
+with no outer card: their words as plain text, the reply in the one see-through box, Send / Change it / Skip, and any
+other thing for that person as a plain "Also for Raj" line below. Phone: the same list, tap a person, their screen
+with "‹ Today". Weak spots: the open side is still short on the laptop when the reply is short; the "2 things" wording
+is a guess. Raj's note text in the drawing is an example. Waiting for the founder.
+
+## 2026-10-18 — Concept: "FollowUp does the following up; you make the decisions" (Today drawn, waiting)
+
+Founder: *"we need to use that design and stuff but we gotta propose it according to our product's direction"*, then
+*"go"* to the concept. From PRODUCT_DIRECTION ("only decisions go to the owner", "the measure is deals closed"):
+Today's list is the owner's **decisions**, one row per person with the reason in plain words ("Ready to view · pick a
+time", "Asks what his place would sell for"), ordered closest-to-booking first; the open person shows their words,
+FollowUp's written reply, and one line saying why it waits ("it sets a date", "it is about price"); what FollowUp did
+on its own is one quiet line at the bottom ("FollowUp answered 6 people on its own today. See Activity"). Same
+list-plus-open-item layout as the earlier drawing. The counts (4 decisions, 6 answered) and Raj's reply are examples;
+the side bar badge in the drawing still shows the old count of 5. Waiting for the founder.
+
+## 2026-10-18 — Today with fuller information per person (after R-132; waiting)
+
+Founder: *"design is good but the info part looks weak"*, then *"yes draw it"* to: who they are, how ready, what
+happened, what is next. Drawn on the real app with the local test data's real qualification answers (no invented
+facts): each row has the name (+ a quiet "Ready" pill when the checklist is complete), one line of what they want and
+one of how ready they are, saying "not known yet" where nothing is known. The open person shows "Where Raj stands"
+(Looking for, Money, Moving, Agent, Viewing, from his own words), "So far" (three timeline lines), then "Next: confirm
+a Saturday viewing" with the reply box, why it waits, and Send. Same layout (R-131 template). Weak spots: Raj's reply
+text is still an example; the timeline wording is hand-written for the drawing; long open pages scroll on the phone.
+
+## 2026-10-18 — Today: "one line per person, three facts, one button" (waiting)
+
+Founder: *"how can we make it simple"*, then *"yes redraw it"*. Rule proposed: show a little, keep the rest one tap
+away. Rows: name (+ "Ready" pill) and ONE line ("Buying in Mississauga · pre-approved $900k"). Open person: a one-line
+subtitle, three facts only (Money, Moving, Agent), "More about Raj" and "FollowUp has talked with Raj 3 times · Show"
+as links, their last message, "Next: confirm a Saturday viewing" with the reply box, why it waits, Send. The problem
+line and "Later today" appear only when they have something. Facts are the local test data's real answers; the reply
+is an example. Waiting for the founder.
+
+## 2026-10-18 — Today "one line, three facts, one button" built (A-286)
+
+Founder: *"yes build it"*. Built and checked on laptop and phone, light and dark:
+- **Rows:** one per person. A qualified person's row says one line from their own answers (`personLine`: "Buying ·
+  Mississauga · Pre-approved up to $900k") and a quiet "Ready" pill when the checklist is complete. Everyone else keeps
+  the plain sentence ("Emailed you 4 days ago. Your reply is ready."). A booked-call question for someone already in
+  the list moves into their open view ("Also for Raj"), not a second row.
+- **The list keeps its order** when someone is opened, so going back finds every row where it was. The open person is
+  marked on a laptop only.
+- **Open person:** name with the one line under it, up to three known facts as plain hairline rows (no box), "More
+  about Raj" and "3 messages sent to Raj so far", their words as plain text, then FollowUp's note, why it waits, Send.
+- **Phone:** the list first; a tap opens the person full screen with "‹ Today" (and the phone's Back) returning to the
+  list. The greeting and notices step aside while a person is open.
+- **Laptop:** list left, person right; a click never scrolls the page unless the person is off screen.
+- **Problems:** one line each with a dot, the fix as a link, and "Got it" (no box).
+
+Weak, named honestly: people without qualification answers still get the old sentence, so the list mixes two kinds of
+line; on a phone there is a little empty space between the top bar and "‹ Today"; the local test data has two leads
+with the same name, which reads like a duplicate on screen (real accounts merge same-person leads).

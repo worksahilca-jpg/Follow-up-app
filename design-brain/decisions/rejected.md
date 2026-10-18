@@ -1678,3 +1678,33 @@ coloured faces, orange boxes), not neutral as such. Refined neutral greys, thin 
 **Principle (inferred):** don't repeat a tool in two places. Finding a person is what Customers' own search box is for;
 the sidebar holds only the places. Removed with the calm look (A-282).
 **Do not propose again:** a global Search row in the sidebar.
+
+## R-130 — Results with every box removed ("calm", no panels) ^R-130
+
+**Date:** 2026-10-18. **Founder, verbatim:** *"I dont feel mac desing in this !!"*
+**What was rejected:** the laptop Results drawn with no boxes, borders or lines (numbers floating on the page).
+**Principle (inferred, not confirmed):** on the laptop he wants it to feel like a Mac app. Mac apps (System Settings,
+Screen Time, Mail) don't float numbers on a blank page: they put things in grouped, rounded white panels on a soft grey
+window, with small, crisp type, a toolbar title at the top, and thin separators inside a group. "Calm" for him is Mac
+calm, not empty. Redrawn that way (2026-10-18). **Do not propose again:** laptop screens with all grouping removed.
+
+## R-131 — The app's structure is too complex (the look is fine) ^R-131
+
+**Date:** 2026-10-18. **Founder, verbatim:** *"look is good but the interface the format or the templete is complex so do
+propper research first"* (after "we got the new designs all wrong bro for today and all", and the page walk that found
+three different page layouts, Today repeating people, boxes inside boxes and half-empty laptop screens).
+**What is rejected:** the current page structure, not the colours or type. Each page invents its own layout; Today
+stacks a problem box, a list and a card with boxes inside it; the same person can appear several times.
+**Principle (founder's words plus inference):** keep the calm look (A-282, A-285). Fix the *skeleton*: fewer parts per
+page, one layout pattern used everywhere, decided from research, not invented page by page. Inferred, to confirm with
+the research.
+
+## R-132 — Today as "your decisions" (list of people + open person + reason line) ^R-132
+
+**Date:** 2026-10-18. **Founder, verbatim:** *"i dont like it bro"*, after the "your decisions" Today drawing
+(`today-decisions-board.png`) and the proposal that on the phone Today opens straight into the first person.
+**Clarified the same minute:** *"i mean design is good but the info part looks weak"*. So the layout and look are
+kept (list on the left, open person on the right, one box). **What is rejected is the information:** a row that says
+only "Ready to view · pick a time" and an open person that shows only their last message and a draft is too thin to
+decide on. **Principle:** the owner should understand who this person is and where they are in the deal without
+opening anything else. Do not ship rows or open items that carry less than that.

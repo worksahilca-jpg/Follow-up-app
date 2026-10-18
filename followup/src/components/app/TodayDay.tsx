@@ -21,6 +21,8 @@ export type TodayRow = {
   href: string | null;
   /** The customer's name: the row shows their initials instead of an icon (A-266, friendlier than a symbol). */
   person?: string | null;
+  /** A quiet word beside the name, "Ready" (A-286): an outline, no colour. */
+  tag?: string | null;
 };
 
 const ICON = { reply: MessageCircle, call: Phone, booking: CalendarDays, checkin: MessageCircle } as const;
@@ -48,7 +50,14 @@ export function DayRow({ row, first, onClick, expanded }: { row: TodayRow; first
         </span>
       )}
       <span className="min-w-0 flex-1">
-        <span className="block text-[15.5px] font-semibold leading-snug">{row.title}</span>
+        <span className="flex items-baseline gap-2">
+          <span className="truncate text-[15.5px] font-semibold leading-snug">{row.title}</span>
+          {row.tag && (
+            <span className="shrink-0 rounded-full border px-[7px] text-[12px] font-semibold leading-[18px]" style={{ borderColor: "var(--line-strong)" }}>
+              {row.tag}
+            </span>
+          )}
+        </span>
         {row.sub && <span className="mt-0.5 block text-[13.5px] leading-snug text-ink-soft">{row.sub}</span>}
       </span>
       {row.time ? (

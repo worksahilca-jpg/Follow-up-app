@@ -14234,3 +14234,50 @@ Founder after training in "Try it yourself": one-question-at-a-time felt irritat
 Rounds reordered in src/lib/qualification.ts (meeting moved from round 3 to round 2; the first ask now pairs side +
 timing) and the qualify instruction now requires both questions. A-246's tiers unchanged: Ready still needs the agent
 question asked, which now comes in round 3, so the ready alert may come after a booking rather than before it.
+
+## 2026-10-18 — "Train FollowUp" drawn, waiting for the founder's yes
+
+Founder: training by sending screenshots one at a time is too slow; he and realtors will share real conversations in
+bulk. Drawn on the real app (laptop + phone), not built. An admin-only page with three tabs: Add a conversation
+(channel pills, paste or upload a WhatsApp export, a permission checkbox that also says names, numbers, emails and
+addresses are removed before saving; "Read it" splits the thread into Customer / Realtor turns and keeps each good
+realtor reply as an example; "Save N examples"), Scorecard (one big "34 of 50" line for how often FollowUp matched or
+beat the realtor, a three-part bar, then one message at a time with the realtor's reply and FollowUp's side by side and
+three outlined pills: FollowUp better · Same · Realtor better, plus Write it better · Skip), and Examples (the library).
+Founder-level examples apply to every business; an owner's own "Write it better" stays theirs. Weak, honestly: on the
+phone "Add a conversation" wraps onto two lines (use "Add"); the realtor/FollowUp boxes inside the message box are a
+box in a box; the numbers on the drawing are made up for the picture. Open: get a lawyer's view before collecting other
+businesses' customer conversations.
+
+## 2026-10-18 — Organised admin drawn, waiting (Train approved as A-292)
+
+Founder: *"organise the admin page so that I can make decisions, train the model and all"*. Today /admin is one 4,300px
+scroll with 12 sections. Drawn: a left list like Settings (Decide · Train · Accuracy tests · Testers · Usage · The
+office · Back to FollowUp; chips across the top on the phone). Decide opens first: four numbers (businesses, active
+this week, replies waiting for an OK, money a month), then "Needs you": one row per decision, each saying what happened
+and the one thing to do with one button (run the test after a reply-rule change, see testers when nobody pressed Send,
+see why when sellers got through, add a conversation when nothing is trained), then "Done lately". Every existing
+section moves, none is dropped: accuracy tests to their own place; first value, is it working, what testers changed,
+add a tester, recent signups to Testers; usage, charts, not-a-customer, website visits to Usage. Weak, honestly: on
+the phone the button sits beside the text and squeezes it (put it under); "Done lately" needs a source (merged PRs
+aren't in the database), so it may be dropped; the decision rules are a first guess.
+
+## 2026-10-18 — Organised admin (A-293) and Train FollowUp (A-292) built
+
+Built as drawn, with these changes, honestly: the decisions are only ones the data can back (no testers; testers not
+set up; replies written but no owner pressed Send this week; three or more sellers or spam let through on one channel).
+"Replies scored 10 of 20" from the drawing is not a decision because test scores aren't stored. The scorecard has no
+"Skip" or "Write it better" (the realtor's reply already is the example). Train stores only scrubbed text; the
+scorecard replays each moment through the real reply writer as a real estate business (the founder's own business is
+not set to real estate, checked read-only), with that example kept out of its own prompt. WhatsApp and text moments
+replay in the email shape because that is what FollowUp sends there today, so FollowUp will look worse on them until
+the short-reply question is decided. Weak: the AI side of the scorecard could not run locally (no AI key); the
+examples used are the newest three, not the most similar; the founder's own business facts can show up in scorecard
+replies.
+
+## 2026-10-18 — Train sorted by kind of business (R-134)
+
+Founder corrected the realtor-only build before it went live. Each conversation now carries its kind of business
+(src/lib/industries.ts, required before Save); examples reach only drafts of businesses of that same kind (none for a
+business that hasn't said what it is); the scorecard answers as the example's kind; every label says "business".
+Weak: "Something else" lumps every unlisted trade together, so their examples mix.

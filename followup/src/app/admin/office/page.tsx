@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { ArrowLeft, Users, Clock, Receipt, ShieldCheck } from "lucide-react";
+import { Users, Clock, Receipt, ShieldCheck } from "lucide-react";
 import { syncRoles } from "@/lib/office/roles";
 import { getFloor, type DeskView, type RunView } from "@/lib/office/floor";
 import StatCard from "@/components/StatCard";
@@ -175,11 +174,7 @@ export default async function OfficePage() {
 
   return (
     <div>
-      <Link href="/admin" className="inline-flex items-center gap-1.5 text-sm text-ink-soft">
-        <ArrowLeft className="h-4 w-4" aria-hidden /> Platform admin
-      </Link>
-
-      <h1 className="font-display text-3xl mt-4">The office</h1>
+      <h1 className="title-serif ios-title1">The office</h1>
       <p className="text-ink-soft mt-1 max-w-2xl">
         Five lanes live in <code>.claude/agents/</code>, but until now they only existed while you had a session open.
         This is the part that keeps working when you close the laptop: who is on staff, what they did while you

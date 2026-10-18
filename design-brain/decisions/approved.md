@@ -5014,3 +5014,30 @@ questions that makes sense at a time"*.
 - The meeting comes in round 2: buyer = money + "would you like to see it or have a quick call"; renter = budget +
   viewing; seller = why + "would you like me to come by and give you a real number". Round 3 picks up the rest
   (buyer: budget + agent; renter: agent; seller: condition + price), or the call covers it.
+
+## A-292 — "Train FollowUp": real conversations in bulk, with a scorecard ^A-292
+
+**Approved:** 2026-10-18, founder: *"Yes"* to the drawing (after: *"I'll be asking Realtor and other owner to share
+their conversations with me … make something that we can train. Not just I have to send screenshots every time"*).
+**What specifically:** a founder-only page. Add a conversation (channel, paste or WhatsApp export, permission box,
+names/numbers/emails/addresses removed before saving, "Read it" splits Customer / Realtor turns, "Save N examples").
+Scorecard: one "N of 50 matched or beat the realtor" line, then one customer message at a time with the realtor's
+reply and FollowUp's side by side and FollowUp better · Same · Realtor better. Examples: the library. Founder
+examples apply to every business; an owner's "Write it better" (A-290) stays theirs. Layout: inside the organised
+admin (drawn same day, waiting).
+
+## A-293 — The admin, organised into places, Decide first ^A-293
+
+**Approved:** 2026-10-18, founder: *"Okay"* to the drawing, after *"organise the admin page so that i can make
+desicions train the model and all"*.
+**What specifically:** /admin is no longer one 4,300px scroll. A left list like the app's (chips on the phone):
+Decide · Train · Accuracy tests · Testers · Usage · The office · Back to FollowUp. Decide opens first: four numbers
+(businesses, active, replies waiting for an OK, money a month) and "Needs you", one row per decision with what
+happened and one outlined button. Every old section moved, none dropped. "Done lately" from the drawing was not
+built: nothing in the database records it.
+
+**A-292 amended (2026-10-18), founder:** *"No do not aswee as a raltor always we will be training different businesses
+with different replies and different strategies"*. Train is for every kind of business, not realtors: each
+conversation says what kind of business it came from (the same list as setup: Real estate, Mortgage, Home services,
+Clinic, Legal, Marketing, Something else); its examples reach only businesses of that kind; the scorecard answers as
+that kind. Words say "business", never "realtor" (R-134).

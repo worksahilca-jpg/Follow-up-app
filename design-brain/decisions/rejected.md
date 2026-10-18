@@ -1717,3 +1717,11 @@ opening anything else. Do not ship rows or open items that carry less than that.
 **Principle (inferred from his words):** the owner isn't practising anything; FollowUp is *showing* them how it talks to
 their customers. Name a feature for what the owner sees and gets, not for an exercise they do. Replaced by "How FollowUp
 talks to your customers" · **Try it yourself** (A-288, amended the same day). "Customer", not "lead", in the app.
+
+## R-134 — Training that assumes every business is a realtor
+
+**Rejected:** 2026-10-18, founder: *"No do not aswee as a raltor always we will be training different businesses with
+different replies and different strategies"*. What was rejected: Train FollowUp (A-292) as first built, with realtor
+words on every label, examples shared with real estate businesses only, and the scorecard always answering as a
+realtor. **Principle:** FollowUp serves many kinds of business, each with its own replies and strategy; anything that
+teaches it is sorted by kind of business, and the screens name "the business", never one trade.

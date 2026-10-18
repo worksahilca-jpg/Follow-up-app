@@ -58,7 +58,7 @@ export default function ActivationSection({ activation: a }: { activation: Activ
       </p>
 
       {a.testers === 0 ? (
-        <div className="mt-4 box p-5 text-sm text-ink-soft">No testers yet. This fills as you add them below.</div>
+        <div className="mt-4 box p-5 text-sm text-ink-soft">No testers yet. This fills as you add them.</div>
       ) : (
         <>
           <p className="mt-4 text-lg sm:hidden">

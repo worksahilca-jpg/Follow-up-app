@@ -69,7 +69,10 @@ export async function practiceReply(
   turns: readonly PracticeTurn[],
   previous: unknown,
   channel: PracticeChannel = "email",
-  contactAskedBefore = false
+  contactAskedBefore = false,
+  // The Train scorecard (A-292) replays a moment from another business: it answers as that kind of business, and that
+  // example must not be in its own prompt.
+  opts: { excludeTrainingId?: string; industry?: string } = {}
 ): Promise<PracticeReply> {
   const conversation = practiceConversation(turns, new Date(), channel);
   const dm = channel !== "email";
@@ -100,13 +103,14 @@ export async function practiceReply(
   const askContact = dm && !contactAskedBefore && !conversation.some((m) => m.direction === "inbound" && findEmail(m.body));
 
   // Every later message: the reply FollowUp writes for a real customer (scoreAndDraftForLead, email branch).
-  const template = templateFor(business?.industry);
+  const industry = opts.industry ?? business?.industry;
+  const template = templateFor(industry);
   const detecting = detectLeadLanguage(latest);
   const [voiceSamples, detected, extracted, context] = await Promise.all([
     detecting.then((d) => getVoiceSamples(businessId, d ?? undefined)),
     detecting,
     template ? extractQualificationFacts(conversation, template.criteria).catch(() => null) : Promise.resolve(null),
-    draftingContext(businessId),
+    draftingContext(businessId, { excludeTrainingId: opts.excludeTrainingId, trade: opts.industry }),
   ]);
 
   let qualification: Qualification | null = null;

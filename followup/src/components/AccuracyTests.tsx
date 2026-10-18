@@ -189,19 +189,13 @@ function TestRow({ test }: { test: Test }) {
   );
 }
 
+/** The tests as one list; /admin/tests gives it its title and the sentence about what it does. */
 export default function AccuracyTests() {
   return (
-    <section className="mt-10">
-      <h2 className="font-display text-xl">Accuracy tests</h2>
-      <p className="text-sm text-ink-soft mt-1">
-        Runs FollowUp&apos;s real AI on made-up examples with known right answers, and scores it. No customer&apos;s data is
-        used. Run one after any change to how FollowUp judges, qualifies or replies.
-      </p>
-      <div className="box mt-4 overflow-hidden">
-        {TESTS.map((t) => (
-          <TestRow key={t.id} test={t} />
-        ))}
-      </div>
-    </section>
+    <div className="box overflow-hidden">
+      {TESTS.map((t) => (
+        <TestRow key={t.id} test={t} />
+      ))}
+    </div>
   );
 }

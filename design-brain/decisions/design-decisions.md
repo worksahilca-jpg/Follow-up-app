@@ -14152,3 +14152,30 @@ reply. The hold lifts only when the lead is a practice customer ("Test lead") at
 sending isn't stopped; tests cover a real customer, someone else's address and "Stop all sending". The older "See it
 work" button on an empty Today still holds like any customer. Weak, honestly: only the email channel can be tried, and
 the practice message is always the same price-and-availability question.
+
+## 2026-10-18 — "Practise with FollowUp" (drawn, waiting)
+
+Founder, after A-287 went live: *"i want a interface where user will become customer and followup will do its job, not
+a email sending system"*. Drawn in Settings → Sending replies: the "Try it on me first" box becomes **Practise with
+FollowUp** · "Write as a customer and see how FollowUp answers. Nothing is sent." · **Start**. Start opens a chat page:
+title, a "Nothing is sent" pill, one line of why; the owner's messages on the right ("You, as a customer"), FollowUp's
+replies on the left with one quiet line under each saying what would really happen ("Would go out by itself" / "Would
+wait for you: it's about price"); a "Write as a customer…" box with Send; "Start over". The conversation in the drawing
+is an example. Inferred principle: owners trust what they can watch, and a conversation shows more than one email.
+
+## 2026-10-18 — "Practise with FollowUp" built (A-288)
+
+Built as drawn. The chat page is /practice, shown with Settings' tree under Sending replies. The server path
+(src/lib/practiceReply.ts) calls the real parts in the real order; keep it in step with scoreAndDraftForLead's email
+branch. Checked on laptop and phone with stand-in answers (the local copy has no AI key); the real answers come from the
+same functions real customers get. Weak, honestly: it practises email only, not Instagram/WhatsApp DMs; FollowUp's
+answers show the email's "Hi …, Best, …" frame, which reads long in a chat; the qualifying memory lives in the page, so
+"Start over" or leaving resets it.
+
+## 2026-10-18 — A-288 renamed: "How FollowUp talks to your customers" (R-133)
+
+Founder before merging: *"don't say practice with FollowUp. It's like showing them … Try yourself … How we talk to your
+leads"*. Renamed in the same PR: Settings box and page title **How FollowUp talks to your customers**, button **Try it
+yourself**, box line "Write as a customer and see how it replies. Nothing is sent." "Customers", not "leads" (house
+rule). Next, proposed and agreed in principle: a "Customer writes from: Email · Instagram · Messenger · Text" choice so
+each channel answers in its own real format (drawn first, separate PR).

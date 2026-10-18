@@ -322,7 +322,7 @@ type AckLine = { line: string; source: "generated" | "fallback"; reason: string 
  *  2. assessAckRisk — a first-touch-specific model judge, skipped only
  *     for AUTONOMOUS leads, same as every other automated send path.
  */
-async function buildAckLine(input: {
+export async function buildAckLine(input: {
   leadFirstName: string;
   ownerFirstName: string;
   businessName: string;

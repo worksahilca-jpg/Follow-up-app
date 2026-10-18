@@ -1708,3 +1708,12 @@ kept (list on the left, open person on the right, one box). **What is rejected i
 only "Ready to view · pick a time" and an open person that shows only their last message and a draft is too thin to
 decide on. **Principle:** the owner should understand who this person is and where they are in the deal without
 opening anything else. Do not ship rows or open items that carry less than that.
+
+## R-133 — Calling it "Practise with FollowUp" ^R-133
+
+**Date:** 2026-10-18. **Founder, verbatim:** *"don't say practice with FollowUp. It's like showing them … Try yourself
+… We handle the reply. How we talk to your leads"*.
+**What is rejected:** the name "Practise with FollowUp" and the button "Start" for A-288's chat page.
+**Principle (inferred from his words):** the owner isn't practising anything; FollowUp is *showing* them how it talks to
+their customers. Name a feature for what the owner sees and gets, not for an exercise they do. Replaced by "How FollowUp
+talks to your customers" · **Try it yourself** (A-288, amended the same day). "Customer", not "lead", in the app.

@@ -671,19 +671,19 @@ function SettingsPageInner() {
           />
         </div>
         {!isAdmin && <p className="mt-2 text-[14px] text-ink-soft">Only an admin can change who sends.</p>}
-        {/* Practise with FollowUp (A-288, after A-287): write as a customer and watch how it answers. Nothing is sent. */}
+        {/* How FollowUp talks to your customers (A-288, after A-287; named by the founder 2026-10-18): write as a customer and watch how it answers. Nothing is sent. */}
         <div className={BOX + " mt-3"}>
           <div className="flex items-center gap-3.5 px-4 py-3.5">
             <div className="min-w-0 flex-1">
-              <p className="text-[16px] font-semibold">Practise with FollowUp</p>
-              <p className="mt-0.5 text-[14px] leading-snug text-ink-soft">Write as a customer and see how FollowUp answers. Nothing is sent.</p>
+              <p className="text-[16px] font-semibold">How FollowUp talks to your customers</p>
+              <p className="mt-0.5 text-[14px] leading-snug text-ink-soft">Write as a customer and see how it replies. Nothing is sent.</p>
             </div>
             <Link
               href="/practice"
               className="inline-flex min-h-11 shrink-0 items-center rounded-full border px-[18px] text-[15px] font-medium"
               style={{ borderColor: "var(--line-strong)" }}
             >
-              Start
+              Try it yourself
             </Link>
           </div>
         </div>

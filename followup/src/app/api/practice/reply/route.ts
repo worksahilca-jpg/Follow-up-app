@@ -21,7 +21,7 @@ const bodySchema = z.object({
 });
 
 /**
- * POST /api/practice/reply — "Practise with FollowUp" (A-288). The owner writes as a customer; this returns what
+ * POST /api/practice/reply — "How FollowUp talks to your customers" (A-288). The owner writes as a customer; this returns what
  * FollowUp would answer and whether it would go out by itself, using the real reply path (src/lib/practiceReply.ts).
  * Stores nothing and sends nothing.
  */
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: false, message: await billingLockedMessage(ctx.businessId) }, { status: 402 });
   }
   if (!process.env.OPENAI_API_KEY) {
-    return NextResponse.json({ success: false, message: "Practice isn't available right now." }, { status: 503 });
+    return NextResponse.json({ success: false, message: "This isn't available right now." }, { status: 503 });
   }
 
   const parsed = await parseJsonBody(request, bodySchema);

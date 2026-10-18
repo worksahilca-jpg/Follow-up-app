@@ -1,5 +1,5 @@
 /**
- * "Practise with FollowUp" (A-288) answers with the real reply path and stores nothing (src/lib/practiceReply.ts).
+ * "How FollowUp talks to your customers" (A-288) answers with the real reply path and stores nothing (src/lib/practiceReply.ts).
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 

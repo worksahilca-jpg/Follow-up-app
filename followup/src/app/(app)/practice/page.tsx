@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * "Practise with FollowUp" (A-288). The owner writes as a customer and FollowUp answers here, the way it would answer
+ * "How FollowUp talks to your customers" (A-288). The owner writes as a customer and FollowUp answers here, the way it would answer
  * a real one (POST /api/practice/reply runs the real reply path). Under each answer, one line says what would really
  * happen to it. Nothing is stored or sent; the conversation lives in this page and "Start over" clears it.
  */
@@ -61,12 +61,12 @@ export default function PracticePage() {
 
   return (
     <div className="max-w-[640px] pb-10">
-      <ScrollTitle title="Practise" />
+      <ScrollTitle title="Try it yourself" />
       <Link href="/settings#replies-out" className="inline-flex min-h-11 items-center text-[14px] text-ink-faint hover:text-ink">
         ‹ Sending replies
       </Link>
       <div className="flex items-start justify-between gap-3">
-        <h1 className="title-serif ios-title1">Practise with FollowUp</h1>
+        <h1 className="title-serif ios-title1">How FollowUp talks to your customers</h1>
         <span className="mt-2 shrink-0 whitespace-nowrap rounded-full border px-[9px] text-[12px] font-semibold leading-[22px] text-ink-soft" style={{ borderColor: "var(--line-strong)" }}>
           Nothing is sent
         </span>

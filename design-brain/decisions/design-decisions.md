@@ -14171,3 +14171,11 @@ branch. Checked on laptop and phone with stand-in answers (the local copy has no
 same functions real customers get. Weak, honestly: it practises email only, not Instagram/WhatsApp DMs; FollowUp's
 answers show the email's "Hi …, Best, …" frame, which reads long in a chat; the qualifying memory lives in the page, so
 "Start over" or leaving resets it.
+
+## 2026-10-18 — A-288 renamed: "How FollowUp talks to your customers" (R-133)
+
+Founder before merging: *"don't say practice with FollowUp. It's like showing them … Try yourself … How we talk to your
+leads"*. Renamed in the same PR: Settings box and page title **How FollowUp talks to your customers**, button **Try it
+yourself**, box line "Write as a customer and see how it replies. Nothing is sent." "Customers", not "leads" (house
+rule). Next, proposed and agreed in principle: a "Customer writes from: Email · Instagram · Messenger · Text" choice so
+each channel answers in its own real format (drawn first, separate PR).

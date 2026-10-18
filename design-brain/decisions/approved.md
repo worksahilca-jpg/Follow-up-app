@@ -4969,3 +4969,6 @@ not a email sending system"*, then *"it should use all the rules and strategies 
   they say yes to meeting. The verdict is the real send check, and a reply carrying the booking link always waits.
 - Nothing is stored or sent. 60 practice messages per business per day.
 **Supersedes, in part:** A-287's Settings box (the email practice).
+**Amended (2026-10-18, R-133):** renamed. The box and the page are titled **How FollowUp talks to your customers**;
+the box line is "Write as a customer and see how it replies. Nothing is sent."; the button is **Try it yourself** (also
+the page's short title). Founder: *"don't say practice with FollowUp … Try yourself … How we talk to your leads"*.

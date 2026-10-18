@@ -11,7 +11,7 @@ import { appUrl } from "@/lib/stripe";
 import type { Message } from "@/lib/types";
 
 /**
- * "Practise with FollowUp" (A-288, founder 2026-10-18: "it should use all the rules and strategies … that we use for
+ * "How FollowUp talks to your customers" (A-288, founder 2026-10-18: "it should use all the rules and strategies … that we use for
  * our actual app"). The owner writes as a customer and FollowUp answers on screen. Nothing is stored and nothing is
  * sent: no Lead, no Message, no audit row.
  *

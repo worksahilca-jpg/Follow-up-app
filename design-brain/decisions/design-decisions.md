@@ -14234,3 +14234,17 @@ Founder after training in "Try it yourself": one-question-at-a-time felt irritat
 Rounds reordered in src/lib/qualification.ts (meeting moved from round 3 to round 2; the first ask now pairs side +
 timing) and the qualify instruction now requires both questions. A-246's tiers unchanged: Ready still needs the agent
 question asked, which now comes in round 3, so the ready alert may come after a booking rather than before it.
+
+## 2026-10-18 — "Train FollowUp" drawn, waiting for the founder's yes
+
+Founder: training by sending screenshots one at a time is too slow; he and realtors will share real conversations in
+bulk. Drawn on the real app (laptop + phone), not built. An admin-only page with three tabs: Add a conversation
+(channel pills, paste or upload a WhatsApp export, a permission checkbox that also says names, numbers, emails and
+addresses are removed before saving; "Read it" splits the thread into Customer / Realtor turns and keeps each good
+realtor reply as an example; "Save N examples"), Scorecard (one big "34 of 50" line for how often FollowUp matched or
+beat the realtor, a three-part bar, then one message at a time with the realtor's reply and FollowUp's side by side and
+three outlined pills: FollowUp better · Same · Realtor better, plus Write it better · Skip), and Examples (the library).
+Founder-level examples apply to every business; an owner's own "Write it better" stays theirs. Weak, honestly: on the
+phone "Add a conversation" wraps onto two lines (use "Add"); the realtor/FollowUp boxes inside the message box are a
+box in a box; the numbers on the drawing are made up for the picture. Open: get a lawyer's view before collecting other
+businesses' customer conversations.

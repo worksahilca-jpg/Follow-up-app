@@ -14055,3 +14055,17 @@ tokens and the app's own fonts. Checked at 1440×900 and 390×844, light and dar
 panel is mostly empty for a new account (seven flat lines, one bar), and the drawing's toolbar title is a plain page
 title because the app has no window toolbar. Today, Customers and Settings were not changed; whether they should get
 the same grouped-panel look is a question for the founder (A-282 removed boxes; R-130 asked for Mac feel).
+
+## 2026-10-18 — Founder: "we got the new designs all wrong bro for today and all"
+
+Said after A-282/A-283/A-284 (Today) and A-285 (Results) were built. No reason given yet; asked. A walk of every page
+on a laptop and a phone found these (inferred, not yet confirmed by the founder):
+1. **Three different looks at once:** Results and Settings use Mac-style white grouped panels (A-285); Today uses big
+   see-through rounded cards (A-282); Customers and Activity have no panels at all. Nothing reads as one app.
+2. **Today repeats people:** the heading says 5 waiting but the list shows 7 rows, with one person twice and another
+   three times (a reply, a call question and a check-in each get their own row).
+3. **Boxes inside boxes on Today:** the reply card holds a message box and a draft box; the "Needs you" box sits on top.
+4. **Half the laptop screen is empty** on Customers and Activity (one narrow column), and under the reply on Today.
+5. **Colour still leaks in:** green "Ready to book" on Customers and green "Connected" in Settings (R-128).
+6. **On the phone, Send is below the first screen** on Today.
+Waiting for the founder to say which of these is the problem before anything is redrawn.

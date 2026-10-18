@@ -5002,3 +5002,15 @@ then, on the proposal, *"Solve this what feels okay to you"* (decision delegated
   example is not grounded, so a draft that copies one is held). Newest 50 kept; Undo deletes it.
 - Not a trained model: examples work from the first one and cost nothing to change; the rows are what a trained
   model would need later.
+
+## A-291 — Qualifying: two questions every time, the meeting offered in round 2 ^A-291
+
+**Approved:** 2026-10-18, founder: *"narrow down the conversation and let them towards booking a call or book a meeting
+with the business owner … we are just asking one question at a time … it is irritating, so let's just ask two
+questions that makes sense at a time"*.
+**What specifically (amends A-246's rounds; its tiers and Ready/Warm/Later stay):**
+- Every qualifying ask is two things in one sentence, and the reply must ask both (the instruction said "may").
+- The very first ask pairs buy/sell/rent with when ("Are you looking to buy or sell, and roughly when?").
+- The meeting comes in round 2: buyer = money + "would you like to see it or have a quick call"; renter = budget +
+  viewing; seller = why + "would you like me to come by and give you a real number". Round 3 picks up the rest
+  (buyer: budget + agent; renter: agent; seller: condition + price), or the call covers it.

@@ -137,12 +137,12 @@ beforeEach(() => {
 });
 
 describe("a realtor's customer who just wrote", () => {
-  it("is read, saved with their words, and the reply may ask the next round — money, in one sentence — once", async () => {
+  it("is read, saved with their words, and the reply asks the next round — money and the meeting, in one sentence — once", async () => {
     setLead();
     expect(await scoreAndDraftForLead("lead1")).toBe(true);
     expect(h.extract).toHaveBeenCalledTimes(1);
     expect(h.generate.mock.calls[0][0].qualify.ask).toBe(
-      "whether they have been pre-approved yet (or are buying with cash), and what price range to keep an eye on"
+      "whether they have been pre-approved yet (or are buying with cash), and whether they would like to see the home or have a quick call about it, as an open question; never suggest a day, a time, or weekday versus weekend yourself"
     );
     expect(updateData().qualification).toEqual({
       v: 2,
@@ -152,7 +152,7 @@ describe("a realtor's customer who just wrote", () => {
         { key: "area", value: "Elm St", quote: "the 3 bed on Elm St" },
         { key: "timing", value: "In about 2 months", quote: "move in about 2 months", bucket: "soon" },
       ],
-      offered: ["financing", "budget"],
+      offered: ["financing", "viewing"],
     });
     expect(updateData().saidNoAt).toBeNull();
     expect(h.updateMany).not.toHaveBeenCalledWith(expect.objectContaining({ data: { qualifiedAt: expect.any(Date) } }));
@@ -191,9 +191,9 @@ describe("a realtor's customer who just wrote", () => {
         'Area: Elm St ("the 3 bed on Elm St")',
         'When: In about 2 months ("move in about 2 months")',
         'Money: Pre-approved up to $900k ("pre-approved up to 900k")',
+        'Viewing: Saturday morning ("Saturday morning works")',
         'Price range: Up to $900k ("pre-approved up to 900k")',
         'Agent: No agent yet ("No agent.")',
-        'Viewing: Saturday morning ("Saturday morning works")',
       ].join("\n")
     );
 
@@ -245,7 +245,7 @@ describe("a realtor's customer who just wrote", () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     expect(await scoreAndDraftForLead("lead1")).toBe(true);
     expect(updateData().suggestedMessage).toBe("Yes, it's available.");
-    expect(h.generate.mock.calls[0][0].qualify.ask).toBe("whether they are looking to buy, sell, or both");
+    expect(h.generate.mock.calls[0][0].qualify.ask).toBe("whether they are looking to buy, sell, or both, and roughly when they are hoping to move");
   });
 
   it("counts a booked call as the viewing", async () => {
@@ -287,7 +287,7 @@ describe("asking a DM customer how to reach them", () => {
     message("inbound", "Maybe, we're moving in March", 3),
   ];
   const dmAsk = () => h.draftDm.mock.calls[0][7] as { ask: string } | null;
-  const QUALIFYING = "whether they are looking to buy, sell, or both";
+  const QUALIFYING = "whether they are looking to buy, sell, or both, and roughly when they are hoping to move";
 
   beforeEach(() => {
     h.draftDm.mockResolvedValue({ body: "Great. What's the best email and mobile to reach you?", quickReplies: { question: "reply", buttons: [] }, shapeFailed: null });

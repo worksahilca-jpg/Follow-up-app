@@ -14227,3 +14227,10 @@ Built in "Try it yourself" with a new OwnerExample table (RLS on, erased and exp
 draftingContext). Checked on laptop and phone against the local database: save stores the row, Undo deletes it.
 Weak, honestly: the examples are the newest 6, not the most similar to the moment; a teammate can teach too (no
 admin gate); and the effect on real AI replies is not yet seen (no AI key locally).
+
+## 2026-10-18 — Qualifying reordered toward the call (A-291)
+
+Founder after training in "Try it yourself": one-question-at-a-time felt irritating and the call came too late.
+Rounds reordered in src/lib/qualification.ts (meeting moved from round 3 to round 2; the first ask now pairs side +
+timing) and the qualify instruction now requires both questions. A-246's tiers unchanged: Ready still needs the agent
+question asked, which now comes in round 3, so the ready alert may come after a booking rather than before it.

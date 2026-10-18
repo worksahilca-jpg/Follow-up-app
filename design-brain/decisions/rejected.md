@@ -1703,6 +1703,8 @@ the research.
 
 **Date:** 2026-10-18. **Founder, verbatim:** *"i dont like it bro"*, after the "your decisions" Today drawing
 (`today-decisions-board.png`) and the proposal that on the phone Today opens straight into the first person.
-**What was rejected:** that drawing and/or the phone idea; which one is not yet clear (asked). **Reason:** not given yet.
-Inferred, unconfirmed: the list-plus-open-person page still did not feel simple to him. Do not re-propose this drawing
-unchanged.
+**Clarified the same minute:** *"i mean design is good but the info part looks weak"*. So the layout and look are
+kept (list on the left, open person on the right, one box). **What is rejected is the information:** a row that says
+only "Ready to view · pick a time" and an open person that shows only their last message and a draft is too thin to
+decide on. **Principle:** the owner should understand who this person is and where they are in the deal without
+opening anything else. Do not ship rows or open items that carry less than that.

@@ -14248,3 +14248,16 @@ Founder-level examples apply to every business; an owner's own "Write it better"
 phone "Add a conversation" wraps onto two lines (use "Add"); the realtor/FollowUp boxes inside the message box are a
 box in a box; the numbers on the drawing are made up for the picture. Open: get a lawyer's view before collecting other
 businesses' customer conversations.
+
+## 2026-10-18 — Organised admin drawn, waiting (Train approved as A-292)
+
+Founder: *"organise the admin page so that I can make decisions, train the model and all"*. Today /admin is one 4,300px
+scroll with 12 sections. Drawn: a left list like Settings (Decide · Train · Accuracy tests · Testers · Usage · The
+office · Back to FollowUp; chips across the top on the phone). Decide opens first: four numbers (businesses, active
+this week, replies waiting for an OK, money a month), then "Needs you": one row per decision, each saying what happened
+and the one thing to do with one button (run the test after a reply-rule change, see testers when nobody pressed Send,
+see why when sellers got through, add a conversation when nothing is trained), then "Done lately". Every existing
+section moves, none is dropped: accuracy tests to their own place; first value, is it working, what testers changed,
+add a tester, recent signups to Testers; usage, charts, not-a-customer, website visits to Usage. Weak, honestly: on
+the phone the button sits beside the text and squeezes it (put it under); "Done lately" needs a source (merged PRs
+aren't in the database), so it may be dropped; the decision rules are a first guess.

@@ -14308,3 +14308,13 @@ and the same rules and checks, tried on the Scorecard before going live, falling
 fails, one switch per kind. Drawn on Train: a box above the tabs, one row per kind with a thin charcoal bar and "N of
 500", the closest kind named at the top. Weak: the bars don't line up because the count column changes width (fix with
 a fixed column); the box pushes "Talk to it" down the page, so it may belong in the Scorecard tab instead.
+
+## 2026-10-18 — Reply plans for every kind of business drawn, waiting
+
+Founder rejected today's replies (R-135) and asked: *"Yes draw the plan for every kind of business"*. Drawn as one page
+(artifact "Reply Plans by Business"): what went wrong in his two test replies, six fixes for the one reply writer (a
+real welcome on "hi", "I'll check" only when asked, one human line first, always two questions, the call or visit by
+reply 2, every kind has a plan), then one plan per kind (Real estate, Mortgage, Home services, Clinic, Legal, Marketing,
+Something else): the goal meeting, three replies of two questions each, what it never does, and a hand-written sample
+chat. Weak: the sample replies are targets written by hand, not FollowUp's output, so the real test is Talk to it after
+the build; the clinic, legal and mortgage "never" lists are common sense, not checked with a professional in each trade.

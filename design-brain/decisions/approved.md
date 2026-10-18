@@ -5052,3 +5052,13 @@ each answer: **Good** (kept as an example, scored "Same") or **Teach a better re
 Save · Cancel; kept as an example, scored "Business better", and it replaces the answer in the chat so the conversation
 carries on from it). One line after: "Kept…/Taught. <Kind> businesses answer like this now. Undo". Changing the kind
 or the channel starts the chat over.
+
+## A-295 — Each kind's own model: progress on the Scorecard tab ^A-295
+
+**Approved:** 2026-10-18, founder: *"Yes build it on the scorecard tab"* (after *"I want different models to be
+trained for different niches"*).
+**What specifically:** at the top of Train → Scorecard, a box "Each kind's own model": one row per kind of business
+(the setup list), a thin charcoal bar and "N of 500" good examples (ones a draft can use), and the closest kind named.
+At 500 a kind gets a fine-tuned model of its own, tried on the Scorecard before answering real customers, falling back
+to the general model if it fails, one switch per kind (the plan as agreed in chat; the models themselves are not built
+yet).

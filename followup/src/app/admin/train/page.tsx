@@ -4,8 +4,9 @@ import TrainAdd from "@/components/admin/TrainAdd";
 import TrainTalk from "@/components/admin/TrainTalk";
 import TrainScorecard from "@/components/admin/TrainScorecard";
 import TrainRemove from "@/components/admin/TrainRemove";
+import TrainProgress from "@/components/admin/TrainProgress";
 import { requirePlatformAdmin } from "@/lib/platformAdmin";
-import { getTrainingSummary, listExamples } from "@/lib/training";
+import { getTrainingSummary, goodExamplesByTrade, listExamples } from "@/lib/training";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +29,11 @@ export default async function TrainPage({ searchParams }: { searchParams: Promis
   await requirePlatformAdmin();
   const { tab: asked } = await searchParams;
   const tab: Tab = TABS.some((t) => t.key === asked) ? (asked as Tab) : "talk";
-  const [summary, examples] = await Promise.all([getTrainingSummary(), tab === "examples" ? listExamples(100) : Promise.resolve([])]);
+  const [summary, examples, byTrade] = await Promise.all([
+    getTrainingSummary(),
+    tab === "examples" ? listExamples(100) : Promise.resolve([]),
+    tab === "score" ? goodExamplesByTrade() : Promise.resolve({} as Record<string, number>),
+  ]);
   const perConversation = new Map<string, number>();
   for (const e of examples) perConversation.set(e.conversationId, (perConversation.get(e.conversationId) ?? 0) + 1);
 
@@ -60,7 +65,12 @@ export default async function TrainPage({ searchParams }: { searchParams: Promis
 
       {tab === "talk" && <TrainTalk />}
       {tab === "add" && <TrainAdd />}
-      {tab === "score" && <TrainScorecard scored={summary.scored} total={summary.examples} />}
+      {tab === "score" && (
+        <>
+          <TrainProgress counts={byTrade} />
+          <TrainScorecard scored={summary.scored} total={summary.examples} />
+        </>
+      )}
       {tab === "examples" &&
         (examples.length === 0 ? (
           <p className="mt-6 text-ink-soft">No examples yet. Add a conversation to start.</p>

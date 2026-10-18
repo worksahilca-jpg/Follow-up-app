@@ -233,3 +233,21 @@ export async function deleteExample(id: string): Promise<boolean> {
   const { count } = await prisma.trainingExample.deleteMany({ where: { id } });
   return count > 0;
 }
+
+/** Good examples a kind of business needs before it gets a model of its own (founder, 2026-10-18). */
+export const OWN_MODEL_AT = 500;
+
+/**
+ * How close each kind of business is to its own model: its good examples, the ones a draft can use (never one where
+ * FollowUp's own answer was judged better).
+ */
+export async function goodExamplesByTrade(): Promise<Record<string, number>> {
+  const groups = await prisma.trainingExample.groupBy({
+    by: ["trade"],
+    where: { OR: [{ verdict: null }, { verdict: { not: "followup" } }] },
+    _count: { _all: true },
+  });
+  const out: Record<string, number> = {};
+  for (const g of groups) out[g.trade] = g._count._all;
+  return out;
+}

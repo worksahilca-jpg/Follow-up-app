@@ -5,14 +5,14 @@ const { prisma } = vi.hoisted(() => ({
     business: { findUnique: vi.fn() },
     businessFact: { findMany: vi.fn().mockResolvedValue([]) },
     ownerExample: { findMany: vi.fn() },
-    trainingExample: { findMany: vi.fn(), updateMany: vi.fn() },
-    trainingConversation: { create: vi.fn() },
+    trainingExample: { findMany: vi.fn(), updateMany: vi.fn(), create: vi.fn() },
+    trainingConversation: { create: vi.fn(), findUnique: vi.fn() },
   },
 }));
 vi.mock("@/lib/db", () => ({ prisma }));
 
 import { draftingContext } from "@/lib/businessFacts";
-import { getTrainingExamples, saveConversation } from "@/lib/training";
+import { getTrainingExamples, saveConversation, saveTalkExample } from "@/lib/training";
 
 const own = (n: number) => Array.from({ length: n }, (_, i) => ({ customerSaid: `c${i}`, reply: `own${i}` }));
 const shared = [{ customerSaid: "is it free?", reply: "realtor answer" }];
@@ -90,5 +90,36 @@ describe("saveConversation", () => {
 
   it("refuses a realtor who isn't in the conversation", async () => {
     await expect(saveConversation({ trade: "Legal", channel: "text", raw: "A: hi\nB: hello", agent: "C" }, null)).rejects.toThrow("agent-not-found");
+  });
+});
+
+describe("saveTalkExample (Talk to it)", () => {
+  beforeEach(() => {
+    prisma.trainingConversation.create.mockResolvedValue({ id: "c1" });
+    prisma.trainingExample.create.mockResolvedValue({ id: "e1" });
+  });
+
+  it("a taught reply is the example, judged Business better, with FollowUp's answer kept", async () => {
+    const out = await saveTalkExample(
+      { trade: "Legal", channel: "messenger", context: [], customerSaid: "call me 416-555-0199", followUpReply: "Sure.", taught: "Happy to. What's a good time?" },
+      "u1"
+    );
+    expect(out).toEqual({ id: "e1", conversationId: "c1" });
+    const data = prisma.trainingExample.create.mock.calls[0][0].data;
+    expect(data).toMatchObject({ trade: "Legal", reply: "Happy to. What's a good time?", followUpReply: "Sure.", verdict: "agent" });
+    expect(data.customerSaid).not.toContain("555");
+  });
+
+  it("a Good answer is kept as Same, in the chat's existing conversation", async () => {
+    prisma.trainingConversation.findUnique.mockResolvedValue({ trade: "Legal" });
+    await saveTalkExample({ conversationId: "c9", trade: "Legal", channel: "email", context: [], customerSaid: "hi", followUpReply: "Hello!", taught: null }, null);
+    expect(prisma.trainingConversation.create).not.toHaveBeenCalled();
+    expect(prisma.trainingExample.create.mock.calls[0][0].data).toMatchObject({ conversationId: "c9", reply: "Hello!", verdict: "same" });
+  });
+
+  it("starts a new conversation when the chat's one is for another kind of business", async () => {
+    prisma.trainingConversation.findUnique.mockResolvedValue({ trade: "Real estate" });
+    await saveTalkExample({ conversationId: "c9", trade: "Legal", channel: "email", context: [], customerSaid: "hi", followUpReply: "Hello!", taught: null }, null);
+    expect(prisma.trainingConversation.create).toHaveBeenCalled();
   });
 });

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/PageHeader";
 import TrainAdd from "@/components/admin/TrainAdd";
+import TrainTalk from "@/components/admin/TrainTalk";
 import TrainScorecard from "@/components/admin/TrainScorecard";
 import TrainRemove from "@/components/admin/TrainRemove";
 import { requirePlatformAdmin } from "@/lib/platformAdmin";
@@ -9,6 +10,7 @@ import { getTrainingSummary, listExamples } from "@/lib/training";
 export const dynamic = "force-dynamic";
 
 const TABS = [
+  { key: "talk", label: "Talk to it" },
   { key: "add", label: "Add a conversation" },
   { key: "score", label: "Scorecard" },
   { key: "examples", label: "Examples" },
@@ -16,7 +18,7 @@ const TABS = [
 type Tab = (typeof TABS)[number]["key"];
 
 const VERDICT_LABEL: Record<string, string> = { followup: "FollowUp better", same: "Same", agent: "Business better" };
-const CHANNEL: Record<string, string> = { email: "Email", instagram: "Instagram", whatsapp: "WhatsApp", text: "Text" };
+const CHANNEL: Record<string, string> = { email: "Email", instagram: "Instagram", messenger: "Messenger", whatsapp: "WhatsApp", text: "Text" };
 
 /**
  * /admin/train — "Train FollowUp" (A-292). Real conversations from businesses teach the drafts of businesses of the
@@ -25,7 +27,7 @@ const CHANNEL: Record<string, string> = { email: "Email", instagram: "Instagram"
 export default async function TrainPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   await requirePlatformAdmin();
   const { tab: asked } = await searchParams;
-  const tab: Tab = TABS.some((t) => t.key === asked) ? (asked as Tab) : "add";
+  const tab: Tab = TABS.some((t) => t.key === asked) ? (asked as Tab) : "talk";
   const [summary, examples] = await Promise.all([getTrainingSummary(), tab === "examples" ? listExamples(100) : Promise.resolve([])]);
   const perConversation = new Map<string, number>();
   for (const e of examples) perConversation.set(e.conversationId, (perConversation.get(e.conversationId) ?? 0) + 1);
@@ -56,6 +58,7 @@ export default async function TrainPage({ searchParams }: { searchParams: Promis
         ))}
       </nav>
 
+      {tab === "talk" && <TrainTalk />}
       {tab === "add" && <TrainAdd />}
       {tab === "score" && <TrainScorecard scored={summary.scored} total={summary.examples} />}
       {tab === "examples" &&

@@ -5,14 +5,17 @@ import { getSessionContext } from "@/lib/session";
 import { parseJsonBody } from "@/lib/validation";
 import { tooManyRecentActions } from "@/lib/rateLimit";
 import { MAX_PASTE, TRAINING_CHANNELS, type TrainingChannel } from "@/lib/trainingParse";
+import { cleanedText } from "@/lib/validation";
 import {
   clearVerdicts,
   deleteConversation,
+  deleteExample,
   getExample,
   nextToScore,
   readConversation,
   saveConversation,
   saveFollowUpReply,
+  saveTalkExample,
   setVerdict,
   VERDICTS,
 } from "@/lib/training";
@@ -25,9 +28,19 @@ export const maxDuration = 60;
 /** Each scorecard step is a few paid model calls; this keeps a stuck page from running up the bill. */
 const SCORES_PER_DAY = 300;
 const SAVES_PER_DAY = 100;
+/** "Talk to it" (A-294): each customer message is a few paid model calls; teaching is a write only. */
+const TALKS_PER_DAY = 300;
+const TEACHES_PER_DAY = 300;
+/** One "Talk to it" chat: long enough to reach a booking, short enough to stay cheap (as in "Try it yourself"). */
+const MAX_TALK_TURNS = 24;
+
+const talkTurns = z
+  .array(z.object({ from: z.enum(["customer", "followup"]), text: cleanedText(1500) }))
+  .max(MAX_TALK_TURNS);
+const talkChannel = z.enum(["email", "instagram", "messenger"]);
 
 /** Where the scorecard replays a moment: the shape FollowUp really uses there today. WhatsApp and text get the email shape. */
-const REPLAY_AS: Record<TrainingChannel, PracticeChannel> = { email: "email", instagram: "instagram", whatsapp: "email", text: "email" };
+const REPLAY_AS: Record<TrainingChannel, PracticeChannel> = { email: "email", instagram: "instagram", messenger: "messenger", whatsapp: "email", text: "email" };
 
 const bodySchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("read"), raw: z.string().max(MAX_PASTE), agent: z.string().max(80).nullish() }),
@@ -42,6 +55,27 @@ const bodySchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("score"), id: z.string().max(64).nullish() }),
   z.object({ action: z.literal("vote"), id: z.string().min(1).max(64), verdict: z.enum(VERDICTS as ["followup", "same", "agent"]) }),
   z.object({ action: z.literal("reset") }),
+  z.object({
+    action: z.literal("talk"),
+    trade: z.enum(INDUSTRIES),
+    channel: talkChannel,
+    turns: talkTurns.min(1),
+    qualification: z.unknown().optional(),
+    contactAsked: z.boolean().optional(),
+  }),
+  z.object({
+    action: z.literal("teach"),
+    conversationId: z.string().max(64).nullish(),
+    trade: z.enum(INDUSTRIES),
+    channel: talkChannel,
+    // The turns before the customer's message, then what the customer said, what FollowUp answered, and (when the
+    // founder wrote one) what it should have said. Null keeps FollowUp's own answer as a good one.
+    context: talkTurns,
+    customerSaid: cleanedText(1500),
+    followUpReply: cleanedText(1500),
+    taught: cleanedText(1500).nullish(),
+  }),
+  z.object({ action: z.literal("untrain"), id: z.string().min(1).max(64) }),
 ]);
 
 function fromAnotherSite(request: NextRequest): boolean {
@@ -60,9 +94,11 @@ async function founder(request: NextRequest) {
 }
 
 /**
- * POST /api/admin/train — "Train FollowUp" (A-292), founder only. One route, five steps:
+ * POST /api/admin/train — "Train FollowUp" (A-292), founder only. One route:
  * read (split and scrub a paste, nothing saved), save (keep the scrubbed examples), score (FollowUp's reply for the
- * next moment), vote (which was better), reset (clear every verdict to score again).
+ * next moment), vote (which was better), reset (clear every verdict to score again), and "Talk to it" (A-294):
+ * talk (FollowUp answers the founder playing a customer, as the chosen kind of business), teach (keep that answer, or
+ * what it should have said, as an example), untrain (undo one).
  */
 export async function POST(request: NextRequest) {
   const { ctx, error } = await founder(request);
@@ -127,6 +163,55 @@ export async function POST(request: NextRequest) {
 
     case "vote": {
       const ok = await setVerdict(body.id, body.verdict);
+      return NextResponse.json({ success: ok }, { status: ok ? 200 : 404 });
+    }
+
+    case "talk": {
+      const last = body.turns[body.turns.length - 1];
+      if (last.from !== "customer" || !last.text) {
+        return NextResponse.json({ success: false, message: "Write something as the customer first." }, { status: 400 });
+      }
+      if (!process.env.OPENAI_API_KEY) {
+        return NextResponse.json({ success: false, message: "FollowUp can't write replies on this copy of the app." }, { status: 503 });
+      }
+      if (await tooManyRecentActions(ctx.businessId, "admin.train.talk", { windowMinutes: 24 * 60, max: TALKS_PER_DAY })) {
+        return NextResponse.json({ success: false, message: "That's a lot for one day. Try again tomorrow." }, { status: 429 });
+      }
+      try {
+        const result = await practiceReply(ctx.businessId, "there", body.turns, body.qualification, body.channel, body.contactAsked ?? false, {
+          industry: body.trade,
+        });
+        return NextResponse.json({ success: true, ...result });
+      } catch {
+        return NextResponse.json({ success: false, message: "FollowUp couldn't answer just now. Try again." }, { status: 502 });
+      }
+    }
+
+    case "teach": {
+      const taught = body.taught?.trim() ? body.taught : null;
+      if (!body.customerSaid || !body.followUpReply || (body.taught !== undefined && body.taught !== null && !taught)) {
+        return NextResponse.json({ success: false, message: "Write what it should say first." }, { status: 400 });
+      }
+      if (await tooManyRecentActions(ctx.businessId, "admin.train.teach", { windowMinutes: 24 * 60, max: TEACHES_PER_DAY })) {
+        return NextResponse.json({ success: false, message: "That's a lot for one day. Try again tomorrow." }, { status: 429 });
+      }
+      const saved = await saveTalkExample(
+        {
+          conversationId: body.conversationId,
+          trade: body.trade,
+          channel: body.channel,
+          context: body.context.map((t) => ({ from: t.from === "followup" ? ("agent" as const) : ("customer" as const), text: t.text })),
+          customerSaid: body.customerSaid,
+          followUpReply: body.followUpReply,
+          taught,
+        },
+        ctx.userId
+      );
+      return NextResponse.json({ success: true, ...saved });
+    }
+
+    case "untrain": {
+      const ok = await deleteExample(body.id);
       return NextResponse.json({ success: ok }, { status: ok ? 200 : 404 });
     }
 

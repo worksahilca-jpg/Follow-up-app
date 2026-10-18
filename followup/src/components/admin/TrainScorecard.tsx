@@ -14,7 +14,7 @@ type Turn = { from: "customer" | "agent"; text: string };
 type Example = { id: string; trade: string; channel: string; context: Turn[]; customerSaid: string; reply: string; followUpReply: string | null };
 type Scored = Record<Verdict, number>;
 
-const CHANNEL: Record<string, string> = { email: "Email", instagram: "Instagram", whatsapp: "WhatsApp", text: "Text" };
+const CHANNEL: Record<string, string> = { email: "Email", instagram: "Instagram", messenger: "Messenger", whatsapp: "WhatsApp", text: "Text" };
 
 async function post(body: unknown): Promise<{ ok: boolean; data: Record<string, unknown> }> {
   try {

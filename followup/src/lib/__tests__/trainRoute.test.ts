@@ -13,6 +13,8 @@ const { getSessionContext, practiceReply, training } = vi.hoisted(() => ({
     saveFollowUpReply: vi.fn(),
     setVerdict: vi.fn(),
     clearVerdicts: vi.fn(),
+    saveTalkExample: vi.fn<(input: unknown, userId: unknown) => Promise<{ id: string; conversationId: string }>>(async () => ({ id: "e1", conversationId: "c1" })),
+    deleteExample: vi.fn(async () => true),
     VERDICTS: ["followup", "same", "agent"],
   },
 }));
@@ -85,5 +87,63 @@ describe("POST /api/admin/train", () => {
     expect(opts).toEqual({ excludeTrainingId: "ex1", industry: "Legal" });
     expect(training.saveFollowUpReply).toHaveBeenCalledWith("ex1", "FollowUp's answer");
     delete process.env.OPENAI_API_KEY;
+  });
+
+  it("talk: FollowUp answers as the chosen kind of business", async () => {
+    process.env.OPENAI_API_KEY = "test";
+    practiceReply.mockResolvedValue({ reply: "Hi! Yes it is.", verdict: { sends: true, reason: null }, qualification: null, buttons: [], contactAsked: false });
+    const { POST } = await import("@/app/api/admin/train/route");
+    const res = await POST(req({ action: "talk", trade: "Legal", channel: "messenger", turns: [{ from: "customer", text: "Do you do wills?" }] }));
+    expect(res.status).toBe(200);
+    const [, , turns, , channel, , opts] = practiceReply.mock.calls[0];
+    expect(turns).toEqual([{ from: "customer", text: "Do you do wills?" }]);
+    expect(channel).toBe("messenger");
+    expect(opts).toEqual({ industry: "Legal" });
+    delete process.env.OPENAI_API_KEY;
+  });
+
+  it("talk: refuses when the last message isn't the customer's", async () => {
+    process.env.OPENAI_API_KEY = "test";
+    const { POST } = await import("@/app/api/admin/train/route");
+    const res = await POST(req({ action: "talk", trade: "Legal", channel: "email", turns: [{ from: "followup", text: "Hi" }] }));
+    expect(res.status).toBe(400);
+    expect(practiceReply).not.toHaveBeenCalled();
+    delete process.env.OPENAI_API_KEY;
+  });
+
+  it("teach: keeps a taught reply with FollowUp's own answer beside it", async () => {
+    const { POST } = await import("@/app/api/admin/train/route");
+    const res = await POST(
+      req({
+        action: "teach",
+        trade: "Real estate",
+        channel: "instagram",
+        context: [{ from: "customer", text: "hi" }, { from: "followup", text: "hello" }],
+        customerSaid: "not sure yet",
+        followUpReply: "When can we call?",
+        taught: "No rush at all.",
+      })
+    );
+    expect(res.status).toBe(200);
+    const [input, userId] = training.saveTalkExample.mock.calls[0] as [{ context: { from: string }[]; taught: string; followUpReply: string }, string];
+    expect(input.context.map((t: { from: string }) => t.from)).toEqual(["customer", "agent"]);
+    expect(input.taught).toBe("No rush at all.");
+    expect(input.followUpReply).toBe("When can we call?");
+    expect(userId).toBe("u");
+  });
+
+  it("teach: an empty taught reply is refused, not saved as Good", async () => {
+    const { POST } = await import("@/app/api/admin/train/route");
+    const res = await POST(
+      req({ action: "teach", trade: "Legal", channel: "email", context: [], customerSaid: "hi", followUpReply: "hello", taught: "   " })
+    );
+    expect(res.status).toBe(400);
+    expect(training.saveTalkExample).not.toHaveBeenCalled();
+  });
+
+  it("untrain removes one example", async () => {
+    const { POST } = await import("@/app/api/admin/train/route");
+    expect((await POST(req({ action: "untrain", id: "e1" }))).status).toBe(200);
+    expect(training.deleteExample).toHaveBeenCalledWith("e1");
   });
 });

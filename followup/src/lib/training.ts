@@ -1,8 +1,10 @@
 import { prisma } from "@/lib/db";
 import type { OwnerExampleLine } from "@/lib/ownerExampleLines";
+import { MAX_EXAMPLE_TEXT } from "@/lib/ownerExampleLines";
 import {
   guessAgent,
   parseConversation,
+  scrub,
   toExamples,
   toTurns,
   type TrainingChannel,
@@ -174,4 +176,60 @@ export async function getTrainingExamples(trade: string | null, take: number, ex
   } catch {
     return [];
   }
+}
+
+/**
+ * "Talk to it" (A-294): the founder plays the customer and keeps FollowUp's answer ("Good") or writes what it should
+ * have said. Either way the moment becomes an example for that kind of business, already judged: a kept answer counts
+ * as "Same", a taught one as "Business better", with FollowUp's own answer kept beside it for the scorecard. One
+ * conversation row per chat, created with its first example. Emails, phone numbers, addresses and links are taken out;
+ * the founder is making the customer up, so there are no speakers' names to look for.
+ */
+export async function saveTalkExample(
+  input: {
+    conversationId?: string | null;
+    trade: string;
+    channel: TrainingChannel;
+    context: TrainingTurn[];
+    customerSaid: string;
+    followUpReply: string;
+    taught: string | null;
+  },
+  addedById: string | null
+): Promise<{ id: string; conversationId: string }> {
+  const clean = (t: string) => scrub(t, [], "").trim().slice(0, MAX_EXAMPLE_TEXT);
+  let conversationId = input.conversationId ?? null;
+  if (conversationId) {
+    const found = await prisma.trainingConversation.findUnique({ where: { id: conversationId }, select: { trade: true } });
+    if (!found || found.trade !== input.trade) conversationId = null;
+  }
+  if (!conversationId) {
+    const row = await prisma.trainingConversation.create({
+      data: { trade: input.trade, channel: input.channel, addedById, turnCount: input.context.length + 2 },
+      select: { id: true },
+    });
+    conversationId = row.id;
+  }
+  const followUpReply = clean(input.followUpReply);
+  const example = await prisma.trainingExample.create({
+    data: {
+      conversationId,
+      trade: input.trade,
+      channel: input.channel,
+      context: input.context.map((t) => ({ from: t.from, text: clean(t.text) })),
+      customerSaid: clean(input.customerSaid),
+      reply: input.taught ? clean(input.taught) : followUpReply,
+      followUpReply,
+      verdict: input.taught ? "agent" : "same",
+      scoredAt: new Date(),
+    },
+    select: { id: true },
+  });
+  return { id: example.id, conversationId };
+}
+
+/** Undo one taught or kept moment. */
+export async function deleteExample(id: string): Promise<boolean> {
+  const { count } = await prisma.trainingExample.deleteMany({ where: { id } });
+  return count > 0;
 }

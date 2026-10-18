@@ -14299,3 +14299,12 @@ Undo removes it); FollowUp's answers were stubbed in that check because the loca
 answers are first seen live. Weak: what the founder types as the customer is only scrubbed for emails, numbers,
 addresses and links, not names (he's making the customer up); the newest three examples of a kind are used, not the
 most similar.
+
+## 2026-10-18 — "Each kind's own model" progress drawn, waiting
+
+Founder: *"I want different models to be trained for different niches … interconnected too, but they should not mess
+up"*. Plan agreed in chat: one fine-tuned model per kind of business at about 500 good examples, sharing the same base
+and the same rules and checks, tried on the Scorecard before going live, falling back to the general model if it
+fails, one switch per kind. Drawn on Train: a box above the tabs, one row per kind with a thin charcoal bar and "N of
+500", the closest kind named at the top. Weak: the bars don't line up because the count column changes width (fix with
+a fixed column); the box pushes "Talk to it" down the page, so it may belong in the Scorecard tab instead.

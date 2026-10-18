@@ -14109,3 +14109,23 @@ subtitle, three facts only (Money, Moving, Agent), "More about Raj" and "FollowU
 as links, their last message, "Next: confirm a Saturday viewing" with the reply box, why it waits, Send. The problem
 line and "Later today" appear only when they have something. Facts are the local test data's real answers; the reply
 is an example. Waiting for the founder.
+
+## 2026-10-18 — Today "one line, three facts, one button" built (A-286)
+
+Founder: *"yes build it"*. Built and checked on laptop and phone, light and dark:
+- **Rows:** one per person. A qualified person's row says one line from their own answers (`personLine`: "Buying ·
+  Mississauga · Pre-approved up to $900k") and a quiet "Ready" pill when the checklist is complete. Everyone else keeps
+  the plain sentence ("Emailed you 4 days ago. Your reply is ready."). A booked-call question for someone already in
+  the list moves into their open view ("Also for Raj"), not a second row.
+- **The list keeps its order** when someone is opened, so going back finds every row where it was. The open person is
+  marked on a laptop only.
+- **Open person:** name with the one line under it, up to three known facts as plain hairline rows (no box), "More
+  about Raj" and "3 messages sent to Raj so far", their words as plain text, then FollowUp's note, why it waits, Send.
+- **Phone:** the list first; a tap opens the person full screen with "‹ Today" (and the phone's Back) returning to the
+  list. The greeting and notices step aside while a person is open.
+- **Laptop:** list left, person right; a click never scrolls the page unless the person is off screen.
+- **Problems:** one line each with a dot, the fix as a link, and "Got it" (no box).
+
+Weak, named honestly: people without qualification answers still get the old sentence, so the list mixes two kinds of
+line; on a phone there is a little empty space between the top bar and "‹ Today"; the local test data has two leads
+with the same name, which reads like a duplicate on screen (real accounts merge same-person leads).

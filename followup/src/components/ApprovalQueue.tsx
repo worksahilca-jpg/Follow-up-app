@@ -89,6 +89,14 @@ export type ApprovalItem = PendingApproval & {
   why?: string | null;
   /** When they last wrote, "2 days ago", worked out on the server so both sides say the same (A-243). */
   asked?: string | null;
+  /** Who they are in one line, from their own words (A-286): "Buying · Mississauga · Pre-approved up to $900k". */
+  line?: string | null;
+  /** FollowUp knows everything it needs: a quiet "Ready" on their row (A-286). */
+  ready?: boolean;
+  /** Up to three known facts for the open person (A-286). */
+  facts?: [string, string][];
+  /** How many messages FollowUp or the owner has sent them (A-286): "FollowUp has replied 3 times". */
+  replies?: number;
 };
 
 /** How they reached you, in one plain verb (A-255): "Omar Haddad emailed you 4 days ago:". */
@@ -291,8 +299,12 @@ function ApprovalCard({
               {item.leadName}
             </Link>
             <p className="text-[13.5px] leading-snug text-ink-faint">
-              {did.charAt(0).toUpperCase() + did.slice(1)}
-              {when && ` ${when}`}
+              {item.line ?? (
+                <>
+                  {did.charAt(0).toUpperCase() + did.slice(1)}
+                  {when && ` ${when}`}
+                </>
+              )}
             </p>
           </div>
         </div>
@@ -307,12 +319,43 @@ function ApprovalCard({
         </p>
       )}
 
+      {/* Who they are, at a glance (A-286): at most three facts from their own words, known ones only, then the way to
+          everything else. No box: hairlines, like a Mac settings list. */}
+      {bare && item.facts && item.facts.length > 0 && (
+        <dl className="mt-4 border-b border-line-2">
+          {item.facts.map(([label, value]) => (
+            <div key={label} className="flex min-h-[38px] items-center gap-4 border-t border-line-2 py-1.5 text-[14.5px] leading-snug">
+              <dt className="w-[88px] shrink-0 text-ink-faint">{label}</dt>
+              <dd className="min-w-0 text-ink">{value}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+      {bare && (
+        <p className="mt-1 flex flex-wrap items-center gap-x-4 text-[13.5px] text-ink-soft">
+          <Link href={`/leads/${item.leadId}`} data-nav="push" className="inline-flex min-h-11 items-center underline underline-offset-[3px] hover:text-ink">
+            More about {firstName}
+          </Link>
+          {(item.replies ?? 0) > 0 && (
+            <span>
+              {item.replies} {item.replies === 1 ? "message" : "messages"} sent to {firstName} so far
+            </span>
+          )}
+        </p>
+      )}
+
       {/* What they actually said, before what we're about to reply with:
           judging a reply needs the customer's own words, not FollowUp's
-          summary of them. Their words are the biggest text on the card. */}
+          summary of them. Their words are the biggest text on the card, as plain text (A-286: the reply is the one box). */}
       {quoted && (
-        <div className="mt-2.5">
-          <p className="whitespace-pre-wrap rounded-[16px] bg-card-2 px-4 py-3.5 font-read text-[17px] leading-[1.5] text-ink">{quoted}</p>
+        <div className={bare ? "mt-4" : "mt-2.5"}>
+          {bare && item.line && (
+            <p className="mb-1 text-[13px] text-ink-faint">
+              {firstName} {did}
+              {when && ` ${when}`}
+            </p>
+          )}
+          <p className={"whitespace-pre-wrap font-read text-[17px] leading-[1.5] text-ink" + (bare ? "" : " rounded-[16px] bg-card-2 px-4 py-3.5")}>{quoted}</p>
           {/* The 30-minute holding message went (A-060): the customer is not
               waiting in silence, and the owner should know that before
               deciding how fast this one has to be. */}
@@ -683,10 +726,6 @@ export default function ApprovalQueue({
     setPicked(null);
     setSkipped((prev) => [...prev.filter((id) => id !== leadId), leadId]);
   }, []);
-  const pick = (leadId: string) => {
-    setPicked(leadId);
-    focusRef.current?.scrollIntoView({ block: "start" });
-  };
 
   // An empty queue is the state the owner most wants to be in, so it is
   // said out loud, with what FollowUp did instead of asking. Handled here
@@ -713,17 +752,56 @@ export default function ApprovalQueue({
     ...skipped.map((id) => waiting.find((i) => i.leadId === id)).filter((i): i is ApprovalItem => Boolean(i)),
   ];
   const selected = (picked && queue.find((i) => i.leadId === picked)) || queue[0] || null;
+  // One row per person (A-286): a call to look back on for someone already waiting goes with them, not in the list.
+  const queuedIds = new Set(queue.map((i) => i.leadId));
+  const listMeetings = meetings.filter((m) => !queuedIds.has(m.leadId));
+  const alsoMeeting = selected ? meetings.find((m) => m.leadId === selected.leadId) ?? null : null;
+  // On a phone, the list comes first and a tap opens the person (A-286); a computer shows both side by side.
+  const [openOnPhone, setOpenOnPhone] = useState(false);
+  const pushedOpen = useRef(false);
+  useEffect(() => {
+    if (!openOnPhone) return;
+    const onPop = () => {
+      pushedOpen.current = false;
+      setOpenOnPhone(false);
+    };
+    window.addEventListener("popstate", onPop);
+    // The greeting and notices step aside while one person is open on a phone (globals.css).
+    document.documentElement.dataset.personOpen = "";
+    return () => {
+      window.removeEventListener("popstate", onPop);
+      delete document.documentElement.dataset.personOpen;
+    };
+  }, [openOnPhone]);
+  const openPerson = (leadId: string) => {
+    setPicked(leadId);
+    if (!openOnPhone && window.matchMedia("(max-width: 1023px)").matches) {
+      window.history.pushState({ todayOpen: leadId }, "");
+      pushedOpen.current = true;
+      setOpenOnPhone(true);
+      window.scrollTo({ top: 0 });
+      return;
+    }
+    // On a computer the person is already beside the list; scroll only if it is off screen.
+    const top = focusRef.current?.getBoundingClientRect().top ?? 0;
+    if (top < 0 || top > window.innerHeight) focusRef.current?.scrollIntoView({ block: "start" });
+  };
+  const backToList = () => {
+    if (pushedOpen.current) window.history.back();
+    else setOpenOnPhone(false);
+  };
   const selectedFirst = selected ? selected.leadName.split(" ")[0] || selected.leadName : null;
   // The card Today opens with simply is; the next one fades in after a send or skip (A-048).
   const [firstCard] = useState(selected?.leadId ?? null);
   // What the last press did, said for a moment before it goes (A-048).
   const justDone = Object.values(leaving).at(-1) ?? null;
   const others = queue.filter((i) => i.leadId !== selected?.leadId);
-  const shown = showAll ? others : others.slice(0, REPLY_ROWS);
-  const hidden = others.length - shown.length;
+  // The list keeps its order when someone is opened, so coming back finds every row where it was (A-286).
+  const shown = showAll ? queue : queue.slice(0, REPLY_ROWS + 1);
+  const hidden = queue.length - shown.length;
   const [openMeeting, setOpenMeeting] = useState<string | null>(null);
   const [openCall, setOpenCall] = useState<string | null>(null);
-  const stillToDo = calls.length + others.length + rows.length + meetings.length + (quiet ? 1 : 0);
+  const stillToDo = calls.length + others.length + rows.length + listMeetings.length + (quiet ? 1 : 0);
   // Booked calls in time order: one starting within the hour leads Then; the rest come after the replies (A-283).
   const soonCalls = calls.filter((c) => c.soon);
   const laterCalls = calls.filter((c) => !c.soon);
@@ -748,7 +826,11 @@ export default function ApprovalQueue({
   // "Do this first" (A-244), open from the start (A-250, 2026-10-14): their
   // words, FollowUp's reply and Send (A-243's card), with no tap before it.
   const focus = selected ? (
-    <section ref={focusRef} aria-label="Do this first" className="scroll-mt-20 rounded-[22px] lg:scroll-mt-6 p-4 sm:p-5" style={{ border: "1px solid var(--line-strong)", background: "var(--wash)" }}>
+    <section ref={focusRef} aria-label="Do this first" className="scroll-mt-20 px-2 sm:px-0 lg:scroll-mt-6">
+      {/* Back to the list on a phone (A-286). */}
+      <button type="button" onClick={backToList} className="-ml-1 mb-3 inline-flex min-h-11 items-center gap-1 text-[16px] text-ink lg:hidden">
+        <span aria-hidden="true">‹</span> Today
+      </button>
       {/* No label over the card (A-266): the sentence under the greeting already says who to start with. What the
           last press did is said here for a moment. */}
       {justDone && (
@@ -770,6 +852,21 @@ export default function ApprovalQueue({
           onSkip={queue.length > 1 ? () => skip(selected.leadId) : undefined}
         />
       </motion.div>
+      {/* Anything else waiting for the same person sits with them, not as another row (A-286). */}
+      {alsoMeeting && (
+        <div className="mt-7 border-t border-line pt-3">
+          <p className="px-1 text-[13px] text-ink-faint">Also for {selectedFirst}</p>
+          <div className="-mx-3">
+            <DayRow
+              row={meetingRow(alsoMeeting)}
+              first
+              expanded={openMeeting === alsoMeeting.bookingId}
+              onClick={() => setOpenMeeting((o) => (o === alsoMeeting.bookingId ? null : alsoMeeting.bookingId))}
+            />
+          </div>
+          {openMeeting === alsoMeeting.bookingId && <MeetingOutcomeCard meeting={alsoMeeting} />}
+        </div>
+      )}
     </section>
   ) : visible.length === 0 || dayAhead > 0 ? (
     // A finish line, not a blank (A-046, the Todoist study): said calmly,
@@ -813,8 +910,10 @@ export default function ApprovalQueue({
     // On a computer, two columns like Mail (A-284; founder: "yes build the laptop layout"): who is waiting on the
     // left, the open reply on the right, held in view while the list scrolls. On a phone, one column as before:
     // the open reply, then Then, then Later.
-    <div className="lg:grid lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)] lg:items-start lg:gap-x-8">
-      <div className="min-w-0 lg:sticky lg:top-6 lg:col-start-2 lg:row-span-2 lg:row-start-1">
+    // A-286: on a phone the list comes first and a tap opens the person (with "‹ Today" back); a hairline, not a box,
+    // divides the list from the open person on a computer.
+    <div className="lg:grid lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)] lg:items-start">
+      <div className={"min-w-0 lg:sticky lg:top-6 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:min-h-[420px] lg:border-l lg:border-line lg:pl-9" + (selected && !openOnPhone ? " hidden lg:block" : "")}>
       {/* Said once, above everything, rather than 48 times on 48 cards. */}
       {summary.fromBeforePermission > 0 && (
         <p className="mb-3 px-1 text-[12.5px] leading-relaxed text-ink-soft">
@@ -861,30 +960,24 @@ export default function ApprovalQueue({
           stopped replying. A reply row brings that person up into the card. No box around the rows. */}
       </div>
 
-      <div className="min-w-0 lg:col-start-1 lg:row-start-1">
+      <div className={"min-w-0 lg:col-start-1 lg:row-start-1 lg:pr-7" + (openOnPhone ? " hidden lg:block" : "")}>
       {(stillToDo > 0 || selected) && (
-        <section aria-label={selected ? "Then" : "Still to do today"} className={"mt-7 lg:mt-0" + (stillToDo > 0 ? "" : " hidden lg:block")}>
-          {/* On a computer the list holds everyone, the open one first and marked, so it reads "who is waiting". */}
-          <div className={selected ? "lg:hidden" : ""}>
-            <DayHeading title={selected ? "Then" : "Still to do today"} />
-          </div>
-          {selected && (
-            <div className="hidden lg:block">
-              <DayHeading title="Waiting for you" aside={String(queue.length)} />
-            </div>
-          )}
+        <section aria-label={selected ? "Needs you" : "Still to do today"} className={(selected ? "mt-2" : "mt-7") + " lg:mt-0" + (stillToDo > 0 || selected ? "" : " hidden lg:block")}>
+          {/* Everyone who needs the owner, one row each, the open one marked on a computer (A-286). */}
+          <DayHeading title={selected ? "Needs you" : "Still to do today"} aside={selected ? String(queue.length) : null} />
           <div className="-mx-3">
-            {selected && (
-              <div className="hidden rounded-[12px] lg:block" style={{ background: "var(--nav-on)" }} aria-current="true">
-                <DayRow row={replyRow(selected)} first />
-              </div>
-            )}
             {/* A call starting within the hour comes first (A-283, after A-268): it happens at a time, and its note is
                 what to read before. Later calls follow the replies, in time order, each with its time on the right. */}
             {soonCalls.map((c, n) => callRow(c, n === 0))}
-            {shown.map((i, n) => (
-              <DayRow key={i.leadId} first={soonCalls.length === 0 && n === 0} row={replyRow(i)} onClick={() => pick(i.leadId)} />
-            ))}
+            {shown.map((i, n) =>
+              i.leadId === selected?.leadId ? (
+                <div key={i.leadId} className="rounded-[12px] lg:bg-[var(--nav-on)]" aria-current="true">
+                  <DayRow row={replyRow(i)} first={soonCalls.length === 0 && n === 0} onClick={() => openPerson(i.leadId)} />
+                </div>
+              ) : (
+                <DayRow key={i.leadId} first={soonCalls.length === 0 && n === 0} row={replyRow(i)} onClick={() => openPerson(i.leadId)} />
+              ),
+            )}
             {hidden > 0 && (
               <button
                 type="button"
@@ -900,7 +993,7 @@ export default function ApprovalQueue({
             {rows.map((r, n) => (
               <DayRow key={r.key} row={r} first={calls.length === 0 && shown.length === 0 && n === 0} />
             ))}
-            {meetings.map((m, n) => (
+            {listMeetings.map((m, n) => (
               <Fragment key={m.bookingId}>
                 <DayRow
                   row={meetingRow(m)}
@@ -933,7 +1026,7 @@ export default function ApprovalQueue({
         </section>
       )}
       </div>
-      {later && <div className="mt-9 lg:col-start-1 lg:row-start-2 lg:mt-8">{later}</div>}
+      {later && <div className={"mt-9 lg:col-start-1 lg:row-start-2 lg:mt-8 lg:pr-7" + (openOnPhone ? " hidden lg:block" : "")}>{later}</div>}
     </div>
   );
 }
@@ -943,7 +1036,9 @@ const REPLY_ROWS = 4;
 
 /** One person in Then (A-266): their name, then one plain sentence of what is ready and how long they have waited. */
 function replyRow(item: ApprovalItem): TodayRow {
-  const base = { key: item.leadId, kind: "reply" as const, title: item.leadName, person: item.leadName, time: null, href: null };
+  const base = { key: item.leadId, kind: "reply" as const, title: item.leadName, person: item.leadName, time: null, href: null, tag: item.ready ? "Ready" : null };
+  // Who they are, from their own words (A-286), whenever FollowUp knows; what is waiting is said when they open.
+  if (item.line) return { ...base, sub: item.line };
   // A note to someone staying in touch (A-260) answers nothing: the row says what it is.
   if (item.trigger === STAY_IN_TOUCH_TRIGGER) return { ...base, sub: "Said yes to hearing from you. A short note is ready for your OK." };
   // A note for their moment (A-262): the time they named has come.

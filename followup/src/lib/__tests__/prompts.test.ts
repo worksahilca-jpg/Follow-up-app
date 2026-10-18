@@ -418,6 +418,15 @@ describe("instant reply (generateInstantReply)", () => {
     expect(system).toMatch(/unless you are repeating something the lead themselves wrote/);
   });
 
+  // Founder's test, 2026-10-18: "mujhe questions hai" was answered "I've understood your questions".
+  it("never claims to have understood questions the lead hasn't asked yet, and invites them instead", async () => {
+    create.mockResolvedValue({ choices: [{ message: { content: JSON.stringify({ reply: "reply" }) } }] });
+    await generateInstantReply({ leadFirstName: "Young", ownerFirstName: "Manoj", inboundText: "Is this still available? I have questions" });
+    const system = create.mock.calls[0][0].messages[0].content as string;
+    expect(system).toMatch(/Never say you have read, received or understood questions or details they have not actually written/);
+    expect(system).toMatch(/invite them to send their questions/);
+  });
+
   // This is the only message that goes out with no human review, within a
   // minute, to every new lead — and the allow-list's own shape was working
   // against it: three enumerated permitted acts read as a three-part

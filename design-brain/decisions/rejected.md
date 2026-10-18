@@ -1698,3 +1698,11 @@ stacks a problem box, a list and a card with boxes inside it; the same person ca
 **Principle (founder's words plus inference):** keep the calm look (A-282, A-285). Fix the *skeleton*: fewer parts per
 page, one layout pattern used everywhere, decided from research, not invented page by page. Inferred, to confirm with
 the research.
+
+## R-132 — Today as "your decisions" (list of people + open person + reason line) ^R-132
+
+**Date:** 2026-10-18. **Founder, verbatim:** *"i dont like it bro"*, after the "your decisions" Today drawing
+(`today-decisions-board.png`) and the proposal that on the phone Today opens straight into the first person.
+**What was rejected:** that drawing and/or the phone idea; which one is not yet clear (asked). **Reason:** not given yet.
+Inferred, unconfirmed: the list-plus-open-person page still did not feel simple to him. Do not re-propose this drawing
+unchanged.

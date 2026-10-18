@@ -15,6 +15,9 @@ import ScrollTitle from "@/components/app/ScrollTitle";
 type Turn = { from: "customer" | "followup"; text: string; sends?: boolean; reason?: string | null; buttons?: string[] };
 type Channel = "email" | "instagram" | "messenger";
 
+/** The route reads at most this many turns (MAX_TURNS there); a longer chat sends its most recent ones. */
+const TURNS_SENT = 24;
+
 const CHANNELS: { value: Channel; label: string }[] = [
   { value: "email", label: "Email" },
   { value: "instagram", label: "Instagram" },
@@ -47,7 +50,7 @@ export default function PracticePage() {
       const res = await fetch("/api/practice/reply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ turns: next.map(({ from, text }) => ({ from, text })), qualification, channel, contactAsked }),
+        body: JSON.stringify({ turns: next.slice(-TURNS_SENT).map(({ from, text }) => ({ from, text })), qualification, channel, contactAsked }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.success) throw new Error(data.message ?? "FollowUp couldn't answer just now. Try again.");

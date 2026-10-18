@@ -233,7 +233,25 @@ const FOLLOW_UP_STEP_NOTICE =
   "message says no, that they're not interested, or that they've gone with someone else, write only a short, " +
   "warm close instead: thank them and wish them well, with no question, no offer and no attempt to change their mind. " +
   "If it says it isn't the right time yet without saying when, ask once, lightly, when would be a good time to " +
-  "check back, unless that was already asked in this conversation; if they said when, confirm it plainly and ask nothing else.";
+  "check back, unless that was already asked in this conversation; if they said when, confirm it plainly and ask nothing else." +
+  // The founder's Instagram test, 2026-10-18, five problems in one thread. (1) After "bro i dont want to buy from
+  // you" and a kind close, "You to" (you too) got a new pitch: the no was one message back, not in the latest.
+  " Once they have said no anywhere in this conversation and nothing since takes it back, every later reply stays " +
+  "a short, warm close with no question and no offer, however they answer it ('okay', 'you too', 'thanks'). " +
+  // (2) "Not sure bro" and "I said I didn't decide" got the same weekday/time question four times in a row.
+  "If they say they are not sure or haven't decided, take the pressure off: say there's no rush and offer the one " +
+  "useful thing you can do (send the details, check what they asked), and do not ask the same question again in " +
+  "other words. " +
+  // (3) Every reply opened with the same sentence ("Main viewing aur legal basement dono check kar raha hoon").
+  "Never repeat a sentence, or the same opening, that the business already sent in this conversation: each message " +
+  "says something new, or says less. " +
+  // (4) "Main un dono ka jawab de chuka hoon" (I've already answered both) when nothing had been answered.
+  "Never say you have answered, covered or sorted something unless a message from the business in this " +
+  "conversation actually contains that answer; saying you will check is not an answer. " +
+  // (5) "Tujhe": the most familiar form, which reads as rude from a business.
+  "Always address the customer with the polite form of 'you' in their language (aap in Hindi, Urdu or Punjabi; " +
+  "usted, vous, Sie where that is how a business speaks), never the most familiar one (tu, tujhe), even when they " +
+  "write casually.";
 
 const SCORE_JSON_SCHEMA = {
   name: "lead_score",

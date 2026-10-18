@@ -14208,3 +14208,14 @@ karta hoon."* Founder: *"I didnt asked questions he said i got your questions br
 must never claim to have read what the customer has not written; it names what they did ask (availability) and, when
 they say questions are coming, invites them. Fixed in generateInstantReply's instructions (real path, so every new
 customer gets the fix, not just the practice page).
+
+## 2026-10-18 — Reply rules from the founder's Instagram test (A-289 live)
+
+Founder's thread in "Try it yourself" (Instagram, Hinglish) showed five faults in the real reply writer: the same
+opening sentence in every reply; the same weekday/time question four times after "not sure bro" and "I said I didn't
+decide"; "tujhe" (the most familiar "you"); "I've already answered both" when nothing had been answered; and a new
+pitch after "I don't want to buy from you" once he wrote "you too". Rules added to FOLLOW_UP_STEP_NOTICE (email and
+DM): a no anywhere in the thread keeps every later reply a short warm close; "not sure" takes the pressure off, never
+the same question again; never repeat a sentence or opening; never claim an answer that isn't in the thread; always
+the polite "you" (aap). Also: the page sends only the last 24 messages, so a long chat no longer shows "turns: Too
+big". Principle: FollowUp must read the room like a good agent, not run a script.

@@ -45,7 +45,7 @@ describe("the first reply, when it is held instead of sent", () => {
   const source = read("acknowledge.ts");
 
   it("tells someone, in the same branch that holds it", () => {
-    const branch = source.slice(source.indexOf("if (ackBusiness?.holdAllForApproval)"));
+    const branch = source.slice(source.indexOf("if (holding) {"));
     const body = branch.slice(0, branch.indexOf('return { sent: false, reason: "held for approval" };'));
     // `notifyAckHeld(` with the paren, not the bare name: the comment
     // above the call names it too, so matching the name alone passed
@@ -61,7 +61,7 @@ describe("the first reply, when it is held instead of sent", () => {
     // AuditEvent is "ai.hold"; the notification is how a human hears
     // about it. Losing either leaves the lead waiting — one invisibly,
     // one unmentioned.
-    const branch = source.slice(source.indexOf("if (ackBusiness?.holdAllForApproval)"));
+    const branch = source.slice(source.indexOf("if (holding) {"));
     expect(branch.slice(0, 600)).toContain('"ai.hold"');
   });
 

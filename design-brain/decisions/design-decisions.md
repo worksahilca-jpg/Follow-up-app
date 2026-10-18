@@ -14100,3 +14100,12 @@ one of how ready they are, saying "not known yet" where nothing is known. The op
 (Looking for, Money, Moving, Agent, Viewing, from his own words), "So far" (three timeline lines), then "Next: confirm
 a Saturday viewing" with the reply box, why it waits, and Send. Same layout (R-131 template). Weak spots: Raj's reply
 text is still an example; the timeline wording is hand-written for the drawing; long open pages scroll on the phone.
+
+## 2026-10-18 — Today: "one line per person, three facts, one button" (waiting)
+
+Founder: *"how can we make it simple"*, then *"yes redraw it"*. Rule proposed: show a little, keep the rest one tap
+away. Rows: name (+ "Ready" pill) and ONE line ("Buying in Mississauga · pre-approved $900k"). Open person: a one-line
+subtitle, three facts only (Money, Moving, Agent), "More about Raj" and "FollowUp has talked with Raj 3 times · Show"
+as links, their last message, "Next: confirm a Saturday viewing" with the reply box, why it waits, Send. The problem
+line and "Later today" appear only when they have something. Facts are the local test data's real answers; the reply
+is an example. Waiting for the founder.

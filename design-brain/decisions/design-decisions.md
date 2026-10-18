@@ -14032,3 +14032,10 @@ Built and checked on the local database at 1440×900, light and dark: the list o
 marked, the reply on the right (sticky), Later under the list. Picking Lucía moved her reply to the right. Phone at
 390×844 unchanged. **Weak, honestly:** the right side shows the reply card (their message, the draft, Send), not the
 whole conversation as the drawing did; the full thread is still one tap away on the customer's page.
+
+## 2026-10-18 — Results on a laptop, drawn in the calm look (waiting)
+
+Laptop walk after A-284: Customers, Activity and Settings already read calm; Results still looked old (boxes in boxes,
+tiles, a green line). Drawn on the real page, same content and order as A-226 (the week's number and its dots; Booked,
+First reply, Won; the eight-week bars; Everything else), with every box, border and line removed, the dots and
+"11 more than last week" in charcoal/grey instead of green. Light and dark. Waiting for the founder's yes.

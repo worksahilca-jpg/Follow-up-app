@@ -14069,3 +14069,13 @@ on a laptop and a phone found these (inferred, not yet confirmed by the founder)
 5. **Colour still leaks in:** green "Ready to book" on Customers and green "Connected" in Settings (R-128).
 6. **On the phone, Send is below the first screen** on Today.
 Waiting for the founder to say which of these is the problem before anything is redrawn.
+
+## 2026-10-18 — Today redrawn in the one-template layout (waiting)
+
+After R-131 and `reports/Simple app structure for FollowUp.md`. Drawn on the real app (laptop light and dark, phone):
+title, one sentence, the problem as one line under it with Reconnect (no box); then the list on the left with **one row
+per person** ("Raj Malhotra · 2 things · a note and a question"), "Later today" under it; the open person on the right
+with no outer card: their words as plain text, the reply in the one see-through box, Send / Change it / Skip, and any
+other thing for that person as a plain "Also for Raj" line below. Phone: the same list, tap a person, their screen
+with "‹ Today". Weak spots: the open side is still short on the laptop when the reply is short; the "2 things" wording
+is a guess. Raj's note text in the drawing is an example. Waiting for the founder.

@@ -14039,3 +14039,11 @@ Laptop walk after A-284: Customers, Activity and Settings already read calm; Res
 tiles, a green line). Drawn on the real page, same content and order as A-226 (the week's number and its dots; Booked,
 First reply, Won; the eight-week bars; Everything else), with every box, border and line removed, the dots and
 "11 more than last week" in charcoal/grey instead of green. Light and dark. Waiting for the founder's yes.
+
+## 2026-10-18 — Results redrawn as a Mac app would lay it out (after R-130)
+
+Grey window (#f5f5f7 / #1e1e1e), a soft sidebar, a toolbar with the page title, small grey group headings
+("CUSTOMERS ANSWERED", "BY WEEK", "EVERYTHING ELSE"), white rounded panels with hairline separators, 13px type, the
+week as small bars, charcoal only (no blue link, no green). Same content as A-226. The drawing uses Inter as a stand-in
+for Apple's own font; in the app the Mac look would come from the computer's own system font (no new font to add).
+Waiting for the founder.

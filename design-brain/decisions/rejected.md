@@ -1678,3 +1678,12 @@ coloured faces, orange boxes), not neutral as such. Refined neutral greys, thin 
 **Principle (inferred):** don't repeat a tool in two places. Finding a person is what Customers' own search box is for;
 the sidebar holds only the places. Removed with the calm look (A-282).
 **Do not propose again:** a global Search row in the sidebar.
+
+## R-130 — Results with every box removed ("calm", no panels) ^R-130
+
+**Date:** 2026-10-18. **Founder, verbatim:** *"I dont feel mac desing in this !!"*
+**What was rejected:** the laptop Results drawn with no boxes, borders or lines (numbers floating on the page).
+**Principle (inferred, not confirmed):** on the laptop he wants it to feel like a Mac app. Mac apps (System Settings,
+Screen Time, Mail) don't float numbers on a blank page: they put things in grouped, rounded white panels on a soft grey
+window, with small, crisp type, a toolbar title at the top, and thin separators inside a group. "Calm" for him is Mac
+calm, not empty. Redrawn that way (2026-10-18). **Do not propose again:** laptop screens with all grouping removed.

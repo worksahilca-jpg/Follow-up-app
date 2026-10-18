@@ -1687,3 +1687,14 @@ the sidebar holds only the places. Removed with the calm look (A-282).
 Screen Time, Mail) don't float numbers on a blank page: they put things in grouped, rounded white panels on a soft grey
 window, with small, crisp type, a toolbar title at the top, and thin separators inside a group. "Calm" for him is Mac
 calm, not empty. Redrawn that way (2026-10-18). **Do not propose again:** laptop screens with all grouping removed.
+
+## R-131 — The app's structure is too complex (the look is fine) ^R-131
+
+**Date:** 2026-10-18. **Founder, verbatim:** *"look is good but the interface the format or the templete is complex so do
+propper research first"* (after "we got the new designs all wrong bro for today and all", and the page walk that found
+three different page layouts, Today repeating people, boxes inside boxes and half-empty laptop screens).
+**What is rejected:** the current page structure, not the colours or type. Each page invents its own layout; Today
+stacks a problem box, a list and a card with boxes inside it; the same person can appear several times.
+**Principle (founder's words plus inference):** keep the calm look (A-282, A-285). Fix the *skeleton*: fewer parts per
+page, one layout pattern used everywhere, decided from research, not invented page by page. Inferred, to confirm with
+the research.

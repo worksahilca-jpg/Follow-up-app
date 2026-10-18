@@ -5,14 +5,14 @@ const { prisma } = vi.hoisted(() => ({
     business: { findUnique: vi.fn() },
     businessFact: { findMany: vi.fn().mockResolvedValue([]) },
     ownerExample: { findMany: vi.fn() },
-    trainingExample: { findMany: vi.fn(), updateMany: vi.fn(), create: vi.fn() },
+    trainingExample: { findMany: vi.fn(), updateMany: vi.fn(), create: vi.fn(), groupBy: vi.fn() },
     trainingConversation: { create: vi.fn(), findUnique: vi.fn() },
   },
 }));
 vi.mock("@/lib/db", () => ({ prisma }));
 
 import { draftingContext } from "@/lib/businessFacts";
-import { getTrainingExamples, saveConversation, saveTalkExample } from "@/lib/training";
+import { getTrainingExamples, goodExamplesByTrade, saveConversation, saveTalkExample } from "@/lib/training";
 
 const own = (n: number) => Array.from({ length: n }, (_, i) => ({ customerSaid: `c${i}`, reply: `own${i}` }));
 const shared = [{ customerSaid: "is it free?", reply: "realtor answer" }];
@@ -121,5 +121,16 @@ describe("saveTalkExample (Talk to it)", () => {
     prisma.trainingConversation.findUnique.mockResolvedValue({ trade: "Real estate" });
     await saveTalkExample({ conversationId: "c9", trade: "Legal", channel: "email", context: [], customerSaid: "hi", followUpReply: "Hello!", taught: null }, null);
     expect(prisma.trainingConversation.create).toHaveBeenCalled();
+  });
+});
+
+describe("goodExamplesByTrade", () => {
+  it("counts each kind's usable examples, never ones where FollowUp's answer was better", async () => {
+    prisma.trainingExample.groupBy.mockResolvedValue([
+      { trade: "Real estate", _count: { _all: 12 } },
+      { trade: "Legal", _count: { _all: 3 } },
+    ]);
+    expect(await goodExamplesByTrade()).toEqual({ "Real estate": 12, Legal: 3 });
+    expect(prisma.trainingExample.groupBy.mock.calls[0][0].where).toEqual({ OR: [{ verdict: null }, { verdict: { not: "followup" } }] });
   });
 });

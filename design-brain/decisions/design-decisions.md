@@ -14281,3 +14281,12 @@ Founder corrected the realtor-only build before it went live. Each conversation 
 (src/lib/industries.ts, required before Save); examples reach only drafts of businesses of that same kind (none for a
 business that hasn't said what it is); the scorecard answers as the example's kind; every label says "business".
 Weak: "Something else" lumps every unlisted trade together, so their examples mix.
+
+## 2026-10-18 — Train → "Talk to it" drawn, waiting
+
+Founder: *"Add a section where I will be talking to follow up, and I will be teaching it what to reply."* Drawn as the
+first tab in Train: pick the kind of business and where the customer writes from, write as the customer, FollowUp
+answers with the real reply writer (as that kind of business), and under each answer **Good** (kept as an example) or
+**Teach a better reply** (an in-place box, "What it should say", Save · Cancel). A kept or taught reply becomes an
+example for every business of that kind, with Undo. Reuses "Try it yourself" (A-288) and "Write it better" (A-290); the
+difference is that this teaches a whole kind of business, not one owner.

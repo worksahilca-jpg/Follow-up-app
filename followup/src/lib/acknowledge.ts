@@ -372,6 +372,20 @@ export async function isInstantAckEnabled(businessId: string): Promise<boolean> 
   return row?.enabled ?? true;
 }
 
+/**
+ * Whether this lead is the owner trying FollowUp on themselves (A-287): the practice customer that only
+ * POST /api/leads/test-lead makes (source "Test lead", A-093), at the address of someone on this business's own
+ * team. Both, so neither a real customer named "Test lead" nor a teammate's real conversation qualifies.
+ */
+export async function isOwnerPractice(businessId: string, source: string | null, email: string | null): Promise<boolean> {
+  if (source !== "Test lead" || !email) return false;
+  const member = await prisma.user.findFirst({
+    where: { businessId, email: { equals: email, mode: "insensitive" } },
+    select: { id: true },
+  });
+  return Boolean(member);
+}
+
 export type AckResult = {
   sent: boolean;
   reason?: string;
@@ -399,6 +413,14 @@ export async function acknowledgeNewLead(
      * opt-out refusal above.
      */
     skipGracePeriod?: boolean;
+    /**
+     * "Try it on me first" (A-287): the owner asked to see FollowUp answer
+     * by itself, on themselves. Lets this one reply past the account's
+     * hold, and only when the lead is the owner's own practice customer
+     * (isOwnerPractice above) and sending isn't paused. Every real
+     * customer still waits, whatever a caller passes here.
+     */
+    practiceForOwner?: boolean;
   }
 ): Promise<AckResult> {
   try {
@@ -525,8 +547,12 @@ export async function acknowledgeNewLead(
     // upgrade, rather than being silently marked as handled.
     const ackBusiness = await prisma.business.findUnique({
       where: { id: lead.businessId },
-      select: { tier: true, holdAllForApproval: true },
+      select: { tier: true, holdAllForApproval: true, sendingPausedAt: true },
     });
+    // The owner trying it on themselves (A-287) is the one reply the hold lets through.
+    const practice =
+      input.practiceForOwner === true && !ackBusiness?.sendingPausedAt && (await isOwnerPractice(lead.businessId, lead.source, lead.email));
+    const holding = Boolean(ackBusiness?.holdAllForApproval) && !practice;
 
     /**
      * "Don't send any replies without asking me."
@@ -578,10 +604,10 @@ export async function acknowledgeNewLead(
     // 2026-09-27; the audit found DMs at 10:00, 10:10 and 10:20 made three).
     // The queue is "latest AuditEvent is ai.hold", so the same test says
     // whether this person is already in it.
-    const heldAlready = ackBusiness?.holdAllForApproval ? await alreadyHeld(lead.businessId, lead.id) : false;
+    const heldAlready = holding ? await alreadyHeld(lead.businessId, lead.id) : false;
     if (heldAlready) return { sent: false, reason: "already held for approval" };
 
-    if (ackBusiness?.holdAllForApproval) {
+    if (holding) {
       // Awaited, and tried twice: this row is the queue entry, not a note
       // about it (daily-path sweep 2026-09-25 #5).
       const hold = () =>

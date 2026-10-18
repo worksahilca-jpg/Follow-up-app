@@ -6,6 +6,9 @@ import { requireActiveBilling, billingLockedMessage } from "@/lib/billing";
 import { scoreAndDraftForLead } from "@/lib/scoring";
 import { acknowledgeNewLead } from "@/lib/acknowledge";
 import { tooManyRecentActions } from "@/lib/rateLimit";
+import { parseJsonBody } from "@/lib/validation";
+import { deleteLeadCascade } from "@/lib/leads-admin";
+import { z } from "zod";
 
 // A realistic, generic first inquiry — deliberately asks about price and
 // availability, the exact lead segment research/product/2026-09-10-
@@ -52,7 +55,12 @@ function outcomeMessage(result: { sent: boolean; reason?: string }, email: strin
  * the owner's own address as the "lead" so they see the real reply land
  * in their own inbox.
  */
-export async function POST() {
+// "Try it on me first" (A-287) sends { tryOnMe: true }: a fresh practice customer each time, and its reply goes out
+// by itself even while the account holds every reply (acknowledgeNewLead's practiceForOwner). The older "See it work"
+// button sends no body and keeps holding like any other customer.
+const bodySchema = z.object({ tryOnMe: z.boolean().optional() }).optional();
+
+export async function POST(request: Request) {
   const ctx = await getSessionContext();
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
   if (await tooManyRecentActions(ctx.businessId, "leads.test", { windowMinutes: 10, max: 5 })) {
@@ -62,8 +70,28 @@ export async function POST() {
     return NextResponse.json({ success: false, message: await billingLockedMessage(ctx.businessId) }, { status: 402 });
   }
 
+  const parsed = await parseJsonBody(request, bodySchema);
+  if (!parsed.ok) return parsed.response;
+  const tryOnMe = parsed.data?.tryOnMe === true;
+
   const user = await prisma.user.findUnique({ where: { id: ctx.userId }, select: { email: true, name: true } });
   if (!user?.email) return NextResponse.json({ success: false, message: "Couldn't find your email address." }, { status: 400 });
+
+  if (tryOnMe) {
+    // Each try starts clean: the last practice customer would otherwise count as already answered. Only a
+    // practice customer is ever removed; if the owner's address belongs to a real customer, nothing is touched.
+    const existing = await prisma.lead.findUnique({
+      where: { businessId_email: { businessId: ctx.businessId, email: user.email } },
+      select: { id: true, source: true },
+    });
+    if (existing && existing.source !== "Test lead") {
+      return NextResponse.json(
+        { success: false, message: "Your own email is already one of your customers, so FollowUp can't practise on it." },
+        { status: 409 }
+      );
+    }
+    if (existing) await deleteLeadCascade(existing.id, ctx.businessId);
+  }
 
   const now = new Date();
   const firstName = user.name?.trim().split(" ")[0] || "You";
@@ -74,7 +102,12 @@ export async function POST() {
       data: { conversationId: conversation.id, direction: "inbound", body: TEST_LEAD_MESSAGE, sentAt: now },
     });
     await scoreAndDraftForLead(leadId);
-    const result = await acknowledgeNewLead(leadId, { channel: "email", inboundText: TEST_LEAD_MESSAGE, inboundAt: now });
+    const result = await acknowledgeNewLead(leadId, {
+      channel: "email",
+      inboundText: TEST_LEAD_MESSAGE,
+      inboundAt: now,
+      practiceForOwner: tryOnMe,
+    });
     return result;
   }
 
@@ -95,7 +128,10 @@ export async function POST() {
       success: true,
       leadId: lead.id,
       sent: result.sent,
-      message: outcomeMessage(result, user.email, false),
+      message:
+        tryOnMe && result.sent
+          ? `Check ${user.email} in a minute. A practice customer wrote to you, and FollowUp answered on its own.`
+          : outcomeMessage(result, user.email, false),
     });
   } catch (err) {
     // Re-running this button when a prior test lead is still on file (same

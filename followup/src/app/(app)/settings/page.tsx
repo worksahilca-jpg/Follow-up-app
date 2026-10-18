@@ -19,6 +19,7 @@ import CopyWebhookUrl from "@/components/CopyWebhookUrl";
 import OutboundWebhookConfig from "@/components/OutboundWebhookConfig";
 import TwilioConfig from "@/components/TwilioConfig";
 import Connections from "@/components/settings/Connections";
+import TryOnMe from "@/components/settings/TryOnMe";
 import Switch from "@/components/Switch";
 import BookingCalendarConfig from "@/components/BookingCalendarConfig";
 import DataPrivacySection from "@/components/DataPrivacySection";
@@ -671,6 +672,8 @@ function SettingsPageInner() {
           />
         </div>
         {!isAdmin && <p className="mt-2 text-[14px] text-ink-soft">Only an admin can change who sends.</p>}
+        {/* Before saying yes to sending, the owner can watch it answer them (A-287). Only while every reply waits. */}
+        {holdAllForApproval && !sendingPaused && <TryOnMe box={BOX} />}
 
         <div className={BOX + " mt-6"}>
           <Link href="/workflows" className={ROW + " hover:bg-card-2"}>

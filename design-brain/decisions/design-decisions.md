@@ -14143,3 +14143,12 @@ After the tap the box says "Sent to you. Check [owner email] in a minute. A prac
 answered on its own. Your real customers still wait for your OK." It reuses the practice customer that "See it work"
 already makes (source "Test lead", A-093), but its reply goes out by itself even while the account holds every reply.
 The email address in the drawing is a placeholder. Waiting for the founder.
+
+## 2026-10-18 — "Try it on me first" built (A-287)
+
+Built as drawn, for every owner. One tap makes a fresh practice customer at the owner's own address (the last one is
+removed first, practice customers only) and its first reply goes out by itself even while the account holds every
+reply. The hold lifts only when the lead is a practice customer ("Test lead") at a team member's own address and
+sending isn't stopped; tests cover a real customer, someone else's address and "Stop all sending". The older "See it
+work" button on an empty Today still holds like any customer. Weak, honestly: only the email channel can be tried, and
+the practice message is always the same price-and-availability question.

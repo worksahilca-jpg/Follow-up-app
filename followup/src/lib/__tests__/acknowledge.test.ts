@@ -24,6 +24,7 @@ vi.mock("@/lib/db", () => ({
     automation: { findFirst: vi.fn() },
     business: { findUnique: vi.fn() },
     auditEvent: { findFirst: vi.fn() },
+    user: { findFirst: vi.fn() },
   },
 }));
 vi.mock("@/lib/integrations/openai", () => ({
@@ -822,5 +823,64 @@ describe("a business with no real name is never named to the lead", () => {
     await acknowledgeNewLead("lead1", { channel: "email", inboundText: "" });
 
     expect(send.mock.calls[0][1] as string).toMatch(/MJ Homes/);
+  });
+});
+
+/**
+ * "Try it on me first" (A-287): on an account that holds every reply, the owner can watch FollowUp answer them by
+ * itself. The hold lifts for that one practice customer only, and only when the route asks for it.
+ */
+describe("try it on me first", () => {
+  const practice = { ...baseLead, name: "Test Lead (Sahil)", email: "owner@example.com", source: "Test lead" };
+  beforeEach(() => {
+    p.business.findUnique.mockResolvedValue({
+      name: "MJ Homes",
+      tier: "plus",
+      subscriptionStatus: "active",
+      holdAllForApproval: true,
+      sendingPausedAt: null,
+    });
+    p.lead.findUnique.mockResolvedValue({ ...practice });
+    p.user.findFirst.mockResolvedValue({ id: "owner1" });
+    send.mockClear();
+  });
+
+  it("sends the owner's practice reply by itself, past the hold", async () => {
+    const result = await acknowledgeNewLead("lead1", { channel: "email", inboundText: "Hi", practiceForOwner: true });
+    expect(result.sent).toBe(true);
+    expect(send).toHaveBeenCalledTimes(1);
+  });
+
+  it("still holds the practice customer when the route didn't ask (the older See it work button)", async () => {
+    const result = await acknowledgeNewLead("lead1", { channel: "email", inboundText: "Hi" });
+    expect(result.reason).toBe("held for approval");
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it("never lifts the hold for a real customer, whatever is passed", async () => {
+    p.lead.findUnique.mockResolvedValue({ ...baseLead });
+    const result = await acknowledgeNewLead("lead1", { channel: "email", inboundText: "Hi", practiceForOwner: true });
+    expect(result.reason).toBe("held for approval");
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it("never lifts the hold for a practice customer at someone else's address", async () => {
+    p.user.findFirst.mockResolvedValue(null);
+    const result = await acknowledgeNewLead("lead1", { channel: "email", inboundText: "Hi", practiceForOwner: true });
+    expect(result.reason).toBe("held for approval");
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it("respects Stop all sending", async () => {
+    p.business.findUnique.mockResolvedValue({
+      name: "MJ Homes",
+      tier: "plus",
+      subscriptionStatus: "active",
+      holdAllForApproval: true,
+      sendingPausedAt: new Date(),
+    });
+    const result = await acknowledgeNewLead("lead1", { channel: "email", inboundText: "Hi", practiceForOwner: true });
+    expect(result.reason).toBe("held for approval");
+    expect(send).not.toHaveBeenCalled();
   });
 });

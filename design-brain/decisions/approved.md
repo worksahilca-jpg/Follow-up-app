@@ -4936,3 +4936,17 @@ Read as a go-ahead; the reaction was not a word-by-word yes, so his reaction to 
   the reply box, why it waits, and Send. Nothing is guessed; what isn't known isn't shown.
 - **A problem is one line** under the sentence (A-270's box becomes a line), with its one action and "Got it".
 **Supersedes:** A-270's "Needs you" box (now a line); the box around the open reply (A-282's wash card) on Today.
+
+## A-287 — "Try it on me first" before automatic sending ^A-287
+
+**Approved:** 2026-10-18, founder: *"yes"* to the drawing, then *"let's build it for users too, so that they can try it
+themselves inside the application too before switching to automatic. It will be more trustworthy, right?"*
+**What specifically:**
+- In Settings → Sending replies, under "Who sends your replies?", one box while every reply waits for the owner:
+  **Try it on me first** · "FollowUp writes to you like a customer, then answers you by itself. Nobody else gets
+  anything." · an outlined **Try it** pill.
+- After the tap: "Sent to you. Check [owner's email] in a minute. A practice customer wrote to you, and FollowUp
+  answered on its own. Your real customers still wait for your OK."
+- For every owner, not only the founder. Shown only while the account holds every reply and sending isn't stopped.
+- The rule behind it (trust): a risky switch can be tried on yourself first, in one tap, without touching a real
+  customer. Only the owner's own practice customer is let past the hold; a real customer never is.

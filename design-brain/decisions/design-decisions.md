@@ -14191,3 +14191,11 @@ Instagram…". Email keeps today's framed reply. Only three choices because the 
 (scoring.ts: Instagram/Messenger get a DM, everyone else the framed email). Found while drawing: texts and WhatsApp
 replies currently get the email frame too; whether they should get their own short shape is a product call for the
 founder. Board: scratchpad simple/ch/channel-board.png.
+
+## 2026-10-18 — "Your customer writes from" built (A-289)
+
+Built as drawn. practiceReply.ts takes the channel and follows scoring.ts's DM branch for Instagram/Messenger (draftDm,
+DM_CONTACT_ASK once, shape-check hold) and acknowledge.ts's DM instant reply. Checked on laptop and phone with stand-in
+answers (no AI key locally): switching channel clears the chat, buttons show only under the newest reply and a tap sends
+it as the customer. Weak, honestly: not yet run with real AI; the email/mobile ask memory lives in the page like the
+qualifying memory; Text/WhatsApp still missing because the real app has no short text shape.

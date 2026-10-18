@@ -16,6 +16,14 @@ vi.mock("@/lib/integrations/openai", () => ({
   generateFollowUpMessage: vi.fn(async () => ({ subject: "Elm Street", body: "Happy to help. Are you buying soon?" })),
   assessSendRisk: vi.fn(async () => ({ riskLevel: "low", reason: "", topic: "other" })),
   extractQualificationFacts: vi.fn(async () => null),
+  localizeFixedText: vi.fn(async (t: string) => t),
+}));
+vi.mock("@/lib/dmDrafting", () => ({
+  draftDm: vi.fn(async () => ({
+    body: "Good question. Are you hoping to buy soon?",
+    quickReplies: { question: "reply", buttons: [{ title: "Yes, soon", exit: false }, { title: "Just looking", exit: true }] },
+    shapeFailed: null,
+  })),
 }));
 vi.mock("@/lib/sender", () => ({
   composeFollowUpEmail: vi.fn(async (first: string, _b: string, body: string) => `Hi ${first},\n\n${body}\n\nBest,\nManoj`),
@@ -30,17 +38,21 @@ vi.mock("@/lib/stripe", () => ({ appUrl: () => "https://app.example" }));
 import { prisma } from "@/lib/db";
 import { buildAckLine } from "@/lib/acknowledge";
 import { assessSendRisk, generateFollowUpMessage } from "@/lib/integrations/openai";
+import { draftDm } from "@/lib/dmDrafting";
+import { DM_CONTACT_ASK } from "@/lib/dmContact";
 import { BOOKING_LINK_SHOWN, practiceConversation, practiceReply } from "@/lib/practiceReply";
 
 const ack = buildAckLine as unknown as ReturnType<typeof vi.fn>;
 const draft = generateFollowUpMessage as unknown as ReturnType<typeof vi.fn>;
 const risk = assessSendRisk as unknown as ReturnType<typeof vi.fn>;
+const dm = draftDm as unknown as ReturnType<typeof vi.fn>;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const p = prisma as any;
 
 beforeEach(() => {
   ack.mockClear();
   draft.mockClear();
+  dm.mockClear();
   risk.mockReset();
   risk.mockResolvedValue({ riskLevel: "low", reason: "", topic: "other" });
 });
@@ -113,6 +125,53 @@ describe("practiceReply", () => {
     expect(p.lead.update).not.toHaveBeenCalled();
     expect(p.message.create).not.toHaveBeenCalled();
     expect(p.auditEvent.create).not.toHaveBeenCalled();
+  });
+});
+
+describe("practiceReply on Instagram or Messenger (A-289)", () => {
+  const later = [
+    { from: "customer" as const, text: "Is the 3 bed on Elm Street available?" },
+    { from: "followup" as const, text: "Hi! Thanks for asking about Elm Street." },
+    { from: "customer" as const, text: "Great, what's the price?" },
+  ];
+
+  it("answers the first message as a short DM, not an email", async () => {
+    const r = await practiceReply("biz1", "Sahil", [later[0]], null, "instagram");
+    expect(ack.mock.calls[0][0].channel).toBe("instagram");
+    expect(r.reply).toBe("Hi! Thanks for asking about Elm Street.");
+    expect(r.reply).not.toContain("Best,");
+    expect(r.buttons).toEqual([]);
+  });
+
+  it("writes later replies with the real DM writer and gives its tap buttons", async () => {
+    const r = await practiceReply("biz1", "Sahil", later, null, "messenger");
+    expect(dm).toHaveBeenCalledTimes(1);
+    expect(draft).not.toHaveBeenCalled();
+    expect(r.reply).toBe("Good question. Are you hoping to buy soon?");
+    expect(r.buttons).toEqual(["Yes, soon", "Just looking"]);
+    expect(r.verdict.sends).toBe(true);
+  });
+
+  it("asks once for their email and mobile, then never again", async () => {
+    const first = await practiceReply("biz1", "Sahil", later, null, "instagram", false);
+    expect(dm.mock.calls[0][7]).toBe(DM_CONTACT_ASK);
+    expect(first.contactAsked).toBe(true);
+    const again = await practiceReply("biz1", "Sahil", later, null, "instagram", true);
+    expect(dm.mock.calls[1][7]).not.toBe(DM_CONTACT_ASK);
+    expect(again.contactAsked).toBe(true);
+  });
+
+  it("doesn't ask for an email they already gave", async () => {
+    await practiceReply("biz1", "Sahil", [{ from: "customer", text: "Hi, I'm sam@example.com" }, later[1], later[2]], null, "instagram");
+    expect(dm.mock.calls[0][7]).not.toBe(DM_CONTACT_ASK);
+  });
+
+  it("a DM that fails its shape check waits, without buttons", async () => {
+    dm.mockResolvedValueOnce({ body: "Two questions? Really?", quickReplies: { question: "reply", buttons: [{ title: "Yes", exit: false }] }, shapeFailed: "two_questions" });
+    const r = await practiceReply("biz1", "Sahil", later, null, "instagram");
+    expect(r.verdict.sends).toBe(false);
+    expect(r.buttons).toEqual([]);
+    expect(risk).not.toHaveBeenCalled();
   });
 });
 

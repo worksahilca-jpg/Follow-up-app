@@ -18,6 +18,9 @@ const bodySchema = z.object({
     .min(1)
     .max(MAX_TURNS),
   qualification: z.unknown().optional(),
+  // Where the customer writes from (A-289). Website forms and CRMs answer like email.
+  channel: z.enum(["email", "instagram", "messenger"]).default("email"),
+  contactAsked: z.boolean().optional(),
 });
 
 /**
@@ -37,7 +40,7 @@ export async function POST(request: Request) {
 
   const parsed = await parseJsonBody(request, bodySchema);
   if (!parsed.ok) return parsed.response;
-  const { turns, qualification } = parsed.data;
+  const { turns, qualification, channel, contactAsked } = parsed.data;
   const last = turns[turns.length - 1];
   if (last.from !== "customer" || !last.text) {
     return NextResponse.json({ success: false, message: "Write something as the customer first." }, { status: 400 });
@@ -49,7 +52,7 @@ export async function POST(request: Request) {
 
   const user = await prisma.user.findUnique({ where: { id: ctx.userId }, select: { name: true } });
   try {
-    const result = await practiceReply(ctx.businessId, user?.name || "there", turns, qualification);
+    const result = await practiceReply(ctx.businessId, user?.name || "there", turns, qualification, channel, contactAsked ?? false);
     return NextResponse.json({ success: true, ...result });
   } catch (err) {
     console.error("Practice reply failed:", err);

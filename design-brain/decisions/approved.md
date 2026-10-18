@@ -4972,3 +4972,18 @@ not a email sending system"*, then *"it should use all the rules and strategies 
 **Amended (2026-10-18, R-133):** renamed. The box and the page are titled **How FollowUp talks to your customers**;
 the box line is "Write as a customer and see how it replies. Nothing is sent."; the button is **Try it yourself** (also
 the page's short title). Founder: *"don't say practice with FollowUp … Try yourself … How we talk to your leads"*.
+
+## A-289 — "Your customer writes from": each channel answers in its own real shape ^A-289
+
+**Approved:** 2026-10-18, founder: *"choose the source … if someone emails us so this is the format … if it's on
+Instagram …"*, then *"Yes"* to the drawing (scratchpad simple/ch/channel-board.png).
+**What specifically:**
+- On "How FollowUp talks to your customers", under the lede: **Your customer writes from** with three pills,
+  **Email · Instagram · Messenger** (chosen = charcoal fill), and one faint line "Website forms and your CRM answer like
+  Email." Changing it starts the chat over (a real conversation happens in one place).
+- Instagram/Messenger answer through the real DM path: "Hi! …" instant reply, then the DM writer: short, no email frame,
+  up to three tap buttons under the newest reply (a tap answers as the customer), the one-time email/mobile ask, no links.
+  A DM that fails its shape check would wait, as the real send pass holds it. Input reads "Write as a customer on
+  Instagram…".
+- Email is unchanged.
+**Not in it:** Text/WhatsApp. The real app has no short text shape yet (they get the framed email); founder to decide.

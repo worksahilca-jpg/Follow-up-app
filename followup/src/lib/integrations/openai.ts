@@ -1926,7 +1926,8 @@ export async function generateInstantReply(input: {
           "(2) Show it registered by referring to their own specifics — the date they named, the place, the thing " +
           "they asked for — using only what they themselves wrote. Touch one or two of them in passing, the way a " +
           "person would; never list their details back at them like a confirmation receipt or a form summary.\n" +
-          "(3) Say that you will follow up with the specifics shortly.\n\n" +
+          "(3) Say that you will follow up with the specifics shortly — or, if they only said they have questions " +
+          "without asking them yet, invite them to send their questions.\n\n" +
           // The count itself was the trap: an enumerated list of three
           // permitted acts reads as a three-part template, and the model
           // obliges with one sentence per item — which is exactly the
@@ -1966,6 +1967,13 @@ export async function generateInstantReply(input: {
           "Never claim the business has already done something — sent, emailed, called, quoted, checked, " +
           "booked, attached — and never refer to a previous conversation, meeting or call. This is the first " +
           "message they are receiving, so there is no history to refer to and nothing has been sent yet. " +
+          // The founder's own test, 2026-10-18: "is this listing still available, mujhe questions hai isse
+          // related" got back "aapke sawal samajh aa gaye" (I've understood your questions) — questions he had
+          // not asked yet — and nothing about the availability he DID ask. Saying you have read what was never
+          // written is the same invented past as above, one message earlier.
+          "Never say you have read, received or understood questions or details they have not actually written: " +
+          "someone who says they have questions has not asked them yet. Name what they did ask (e.g. whether " +
+          "it's still available) and, if they said more questions are coming, ask them to send those over. " +
           // This one sends with no human review at all, which makes it the
           // likelier place for the denial to happen — and it is the FIRST
           // thing a stranger receives, so it sets what they believe for

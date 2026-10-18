@@ -14199,3 +14199,12 @@ DM_CONTACT_ASK once, shape-check hold) and acknowledge.ts's DM instant reply. Ch
 answers (no AI key locally): switching channel clears the chat, buttons show only under the newest reply and a tap sends
 it as the customer. Weak, honestly: not yet run with real AI; the email/mobile ask memory lives in the page like the
 qualifying memory; Text/WhatsApp still missing because the real app has no short text shape.
+
+## 2026-10-18 — Instant reply must not "understand" questions nobody asked yet
+
+Founder's first live run of "Try it yourself" on Instagram: *"Hey is this listing is still available mughe questions
+hai isse related ??"* got *"Is listing ke baare mein aapke sawal samajh aa gaye. Main details ke saath shortly follow up
+karta hoon."* Founder: *"I didnt asked questions he said i got your questions bro ?? What is this"*. Principle: a reply
+must never claim to have read what the customer has not written; it names what they did ask (availability) and, when
+they say questions are coming, invites them. Fixed in generateInstantReply's instructions (real path, so every new
+customer gets the fix, not just the practice page).

@@ -1,6 +1,7 @@
--- "Train FollowUp" (A-292): scrubbed conversations from realtors, and the examples taken from them. Additive only: two new tables.
+-- "Train FollowUp" (A-292): scrubbed conversations from businesses of every kind, and the examples taken from them. Additive only: two new tables.
 CREATE TABLE IF NOT EXISTS "TrainingConversation" (
     "id" TEXT NOT NULL,
+    "trade" TEXT NOT NULL,
     "channel" TEXT NOT NULL,
     "addedById" TEXT,
     "turnCount" INTEGER NOT NULL,
@@ -14,6 +15,7 @@ CREATE INDEX IF NOT EXISTS "TrainingConversation_createdAt_idx" ON "TrainingConv
 CREATE TABLE IF NOT EXISTS "TrainingExample" (
     "id" TEXT NOT NULL,
     "conversationId" TEXT NOT NULL,
+    "trade" TEXT NOT NULL,
     "channel" TEXT NOT NULL,
     "context" JSONB NOT NULL,
     "customerSaid" TEXT NOT NULL,
@@ -26,7 +28,7 @@ CREATE TABLE IF NOT EXISTS "TrainingExample" (
     CONSTRAINT "TrainingExample_pkey" PRIMARY KEY ("id")
 );
 
-CREATE INDEX IF NOT EXISTS "TrainingExample_createdAt_idx" ON "TrainingExample"("createdAt");
+CREATE INDEX IF NOT EXISTS "TrainingExample_trade_createdAt_idx" ON "TrainingExample"("trade", "createdAt");
 CREATE INDEX IF NOT EXISTS "TrainingExample_verdict_idx" ON "TrainingExample"("verdict");
 
 DO $$ BEGIN

@@ -12,11 +12,13 @@ import {
 /**
  * "Train FollowUp" (A-292, founder 2026-10-18: "I'll be asking Realtor and other owner to share their conversations
  * with me … make something that we can train. Not just I have to send screenshots every time"). The founder pastes a
- * real conversation on /admin/train; each good agent reply becomes an example; every real estate business's drafts
- * read the newest few, after the owner's own "Write it better" examples (A-290), which always come first.
+ * real conversation on /admin/train and says what kind of business it came from; each good reply from the business
+ * becomes an example; the drafts of every business of that same kind read the newest few, after the owner's own
+ * "Write it better" examples (A-290), which always come first. Founder, same day: "we will be training different
+ * businesses with different replies and different strategies": a realtor's examples never reach a clinic.
  *
- * The scorecard replays each example's moment through the real reply writer and the founder says which answer is
- * better. An example where FollowUp's answer was better stops being used: it is not a good example.
+ * The scorecard replays each example's moment through the real reply writer, as that kind of business, and the
+ * founder says which answer is better. An example where FollowUp's answer was better stops being used.
  *
  * Only scrubbed text is stored (src/lib/trainingParse.ts). The callers are founder-only.
  */
@@ -45,7 +47,7 @@ export function readConversation(raw: string, agent?: string | null): ReadResult
 
 /** Saves the scrubbed conversation and its examples. Reads the paste again here: the browser's copy is never trusted. */
 export async function saveConversation(
-  input: { channel: TrainingChannel; raw: string; agent: string },
+  input: { trade: string; channel: TrainingChannel; raw: string; agent: string },
   addedById: string | null
 ): Promise<{ id: string; examples: number }> {
   const { speakers, lines } = parseConversation(input.raw);
@@ -55,11 +57,12 @@ export async function saveConversation(
   if (examples.length === 0) throw new Error("no-examples");
   const row = await prisma.trainingConversation.create({
     data: {
+      trade: input.trade,
       channel: input.channel,
       addedById,
       turnCount: turns.length,
       examples: {
-        create: examples.map((e) => ({ channel: input.channel, context: e.context, customerSaid: e.customerSaid, reply: e.reply })),
+        create: examples.map((e) => ({ trade: input.trade, channel: input.channel, context: e.context, customerSaid: e.customerSaid, reply: e.reply })),
       },
     },
     select: { id: true },
@@ -91,6 +94,7 @@ export async function getTrainingSummary(): Promise<TrainingSummary> {
 
 export type ExampleToScore = {
   id: string;
+  trade: string;
   channel: TrainingChannel;
   context: TrainingTurn[];
   customerSaid: string;
@@ -110,7 +114,7 @@ export async function nextToScore(): Promise<ExampleToScore | null> {
   const row = await prisma.trainingExample.findFirst({
     where: { verdict: null },
     orderBy: { createdAt: "asc" },
-    select: { id: true, channel: true, context: true, customerSaid: true, reply: true, followUpReply: true },
+    select: { id: true, trade: true, channel: true, context: true, customerSaid: true, reply: true, followUpReply: true },
   });
   return row ? { ...row, channel: row.channel as TrainingChannel, context: readContext(row.context) } : null;
 }
@@ -118,7 +122,7 @@ export async function nextToScore(): Promise<ExampleToScore | null> {
 export async function getExample(id: string): Promise<ExampleToScore | null> {
   const row = await prisma.trainingExample.findUnique({
     where: { id },
-    select: { id: true, channel: true, context: true, customerSaid: true, reply: true, followUpReply: true },
+    select: { id: true, trade: true, channel: true, context: true, customerSaid: true, reply: true, followUpReply: true },
   });
   return row ? { ...row, channel: row.channel as TrainingChannel, context: readContext(row.context) } : null;
 }
@@ -138,25 +142,27 @@ export async function clearVerdicts(): Promise<number> {
   return count;
 }
 
-export type ExampleRow = { id: string; conversationId: string; channel: string; customerSaid: string; reply: string; verdict: string | null };
+export type ExampleRow = { id: string; conversationId: string; trade: string; channel: string; customerSaid: string; reply: string; verdict: string | null };
 
 export async function listExamples(take = 50): Promise<ExampleRow[]> {
   return prisma.trainingExample.findMany({
     orderBy: { createdAt: "desc" },
     take,
-    select: { id: true, conversationId: true, channel: true, customerSaid: true, reply: true, verdict: true },
+    select: { id: true, conversationId: true, trade: true, channel: true, customerSaid: true, reply: true, verdict: true },
   });
 }
 
 /**
- * The newest examples a draft can learn from: never one where FollowUp's own answer was judged better, and never the
- * one being scored (it would be answering with the answer in front of it). Never throws.
+ * The newest examples a draft can learn from, from this kind of business only: never one where FollowUp's own answer
+ * was judged better, and never the one being scored (it would be answering with the answer in front of it).
+ * Never throws.
  */
-export async function getTrainingExamples(take: number, excludeId?: string): Promise<OwnerExampleLine[]> {
-  if (take <= 0) return [];
+export async function getTrainingExamples(trade: string | null, take: number, excludeId?: string): Promise<OwnerExampleLine[]> {
+  if (!trade || take <= 0) return [];
   try {
     const rows = await prisma.trainingExample.findMany({
       where: {
+        trade,
         OR: [{ verdict: null }, { verdict: { not: "followup" } }],
         ...(excludeId ? { id: { not: excludeId } } : {}),
       },

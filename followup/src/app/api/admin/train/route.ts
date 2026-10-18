@@ -17,6 +17,7 @@ import {
   VERDICTS,
 } from "@/lib/training";
 import { practiceReply, type PracticeChannel } from "@/lib/practiceReply";
+import { INDUSTRIES } from "@/lib/industries";
 
 // One FollowUp reply per call: a reply and its send check.
 export const maxDuration = 60;
@@ -34,6 +35,7 @@ const bodySchema = z.discriminatedUnion("action", [
     action: z.literal("save"),
     raw: z.string().max(MAX_PASTE),
     agent: z.string().min(1).max(80),
+    trade: z.enum(INDUSTRIES),
     channel: z.enum(TRAINING_CHANNELS as [TrainingChannel, ...TrainingChannel[]]),
     permission: z.literal(true),
   }),
@@ -86,13 +88,13 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ success: false, message: "That's a lot for one day. Try again tomorrow." }, { status: 429 });
       }
       try {
-        const saved = await saveConversation({ channel: body.channel, raw: body.raw, agent: body.agent }, ctx.userId);
+        const saved = await saveConversation({ trade: body.trade, channel: body.channel, raw: body.raw, agent: body.agent }, ctx.userId);
         return NextResponse.json({ success: true, ...saved });
       } catch (e) {
         const message =
           e instanceof Error && e.message === "no-examples"
-            ? "No realtor reply answers a customer here, so there's nothing to learn from."
-            : "Pick who the realtor is, then save again.";
+            ? "No reply from the business answers a customer here, so there's nothing to learn from."
+            : "Pick who the business is, then save again.";
         return NextResponse.json({ success: false, message }, { status: 400 });
       }
     }
@@ -114,7 +116,7 @@ export async function POST(request: NextRequest) {
       try {
         const written = await practiceReply(ctx.businessId, "there", turns, null, REPLAY_AS[example.channel], false, {
           excludeTrainingId: example.id,
-          industry: "Real estate",
+          industry: example.trade,
         });
         await saveFollowUpReply(example.id, written.reply);
         return NextResponse.json({ success: true, example: { ...example, followUpReply: written.reply } });

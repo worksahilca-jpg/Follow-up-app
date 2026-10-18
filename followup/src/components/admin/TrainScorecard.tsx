@@ -4,14 +4,14 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 /**
- * /admin/train → Scorecard (A-292). One moment at a time: what the customer wrote, what the realtor said, and what
- * FollowUp would say for the same moment (the real reply writer, replayed). The founder picks which is better.
- * The score at the top is how often FollowUp matched or beat the realtor.
+ * /admin/train → Scorecard (A-292). One moment at a time: what the customer wrote, what the business said, and what
+ * FollowUp would say for the same moment as that kind of business (the real reply writer, replayed). The founder picks
+ * which is better. The score at the top is how often FollowUp matched or beat the business.
  */
 
 type Verdict = "followup" | "same" | "agent";
 type Turn = { from: "customer" | "agent"; text: string };
-type Example = { id: string; channel: string; context: Turn[]; customerSaid: string; reply: string; followUpReply: string | null };
+type Example = { id: string; trade: string; channel: string; context: Turn[]; customerSaid: string; reply: string; followUpReply: string | null };
 type Scored = Record<Verdict, number>;
 
 const CHANNEL: Record<string, string> = { email: "Email", instagram: "Instagram", whatsapp: "WhatsApp", text: "Text" };
@@ -88,14 +88,14 @@ export default function TrainScorecard({ scored, total }: { scored: Scored; tota
             <p className="text-[40px] font-semibold leading-none tracking-[-0.02em] tabular-nums">
               {matched} <span className="text-xl font-medium text-ink-soft">of {judged}</span>
             </p>
-            <p className="mt-2 text-sm text-ink-soft">times FollowUp matched or beat the realtor</p>
+            <p className="mt-2 text-sm text-ink-soft">times FollowUp matched or beat the business</p>
             <div className="mt-4 flex h-2 overflow-hidden rounded-full" style={{ background: "var(--card-2)" }} aria-hidden>
               <span style={{ width: `${(scored.followup / judged) * 100}%`, background: "var(--ink)" }} />
               <span style={{ width: `${(scored.same / judged) * 100}%`, background: "var(--ink-faint)" }} />
             </div>
             <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-sm text-ink-soft">
               <span className="tabular-nums">
-                FollowUp better {scored.followup} · Same {scored.same} · Realtor better {scored.agent}
+                FollowUp better {scored.followup} · Same {scored.same} · Business better {scored.agent}
               </span>
               <button type="button" onClick={reset} className="min-h-11 underline underline-offset-4">
                 Score again from the start
@@ -124,7 +124,7 @@ export default function TrainScorecard({ scored, total }: { scored: Scored; tota
         <section>
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h2 className="font-semibold">Moment {judged + 1} of {total}</h2>
-            <span className="text-sm text-ink-soft">{CHANNEL[example.channel] ?? example.channel}</span>
+            <span className="text-sm text-ink-soft">{example.trade} · {CHANNEL[example.channel] ?? example.channel}</span>
           </div>
 
           {example.context.length > 0 && (
@@ -136,7 +136,7 @@ export default function TrainScorecard({ scored, total }: { scored: Scored; tota
             <ol className="mt-1 mb-2">
               {example.context.map((t, i) => (
                 <li key={i} className="flex gap-3 py-1.5 text-sm">
-                  <span className="w-16 shrink-0 text-ink-soft">{t.from === "agent" ? "Realtor" : "Customer"}</span>
+                  <span className="w-16 shrink-0 text-ink-soft">{t.from === "agent" ? "Business" : "Customer"}</span>
                   <span className="min-w-0 whitespace-pre-wrap break-words text-ink-soft">{t.text}</span>
                 </li>
               ))}
@@ -148,7 +148,7 @@ export default function TrainScorecard({ scored, total }: { scored: Scored; tota
 
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <div className="rounded-xl border border-line p-4">
-              <p className="text-sm text-ink-soft">The realtor said</p>
+              <p className="text-sm text-ink-soft">The business said</p>
               <p className="mt-1.5 whitespace-pre-wrap break-words">{example.reply}</p>
             </div>
             <div className="rounded-xl border border-line p-4">
@@ -163,7 +163,7 @@ export default function TrainScorecard({ scored, total }: { scored: Scored; tota
               [
                 ["followup", "FollowUp better"],
                 ["same", "Same"],
-                ["agent", "Realtor better"],
+                ["agent", "Business better"],
               ] as const
             ).map(([v, label]) => (
               <button

@@ -15,12 +15,12 @@ const TABS = [
 ] as const;
 type Tab = (typeof TABS)[number]["key"];
 
-const VERDICT_LABEL: Record<string, string> = { followup: "FollowUp better", same: "Same", agent: "Realtor better" };
+const VERDICT_LABEL: Record<string, string> = { followup: "FollowUp better", same: "Same", agent: "Business better" };
 const CHANNEL: Record<string, string> = { email: "Email", instagram: "Instagram", whatsapp: "WhatsApp", text: "Text" };
 
 /**
- * /admin/train — "Train FollowUp" (A-292). Real conversations from realtors teach every real estate business's
- * drafts; the scorecard shows how close FollowUp gets. Founder only (the layout checks, and so does this page).
+ * /admin/train — "Train FollowUp" (A-292). Real conversations from businesses teach the drafts of businesses of the
+ * same kind; the scorecard shows how close FollowUp gets. Founder only (the layout checks, and so does this page).
  */
 export default async function TrainPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   await requirePlatformAdmin();
@@ -34,11 +34,11 @@ export default async function TrainPage({ searchParams }: { searchParams: Promis
     <div className="max-w-3xl">
       <PageHeader
         title="Train FollowUp"
-        subtitle="Real conversations from realtors teach FollowUp how good agents answer. The scorecard shows how close it gets."
+        subtitle="Real conversations teach FollowUp how each kind of business answers. The scorecard shows how close it gets."
       />
       <p className="mt-3 text-sm text-ink-soft tabular-nums">
         {summary.examples} {summary.examples === 1 ? "example" : "examples"} from {summary.conversations}{" "}
-        {summary.conversations === 1 ? "conversation" : "conversations"}. Real estate businesses&apos; replies use the newest few.
+        {summary.conversations === 1 ? "conversation" : "conversations"}. Each business&apos;s replies use the newest few from its own kind.
       </p>
 
       <nav aria-label="Train" className="mt-5 flex gap-5 overflow-x-auto border-b border-line">
@@ -69,7 +69,7 @@ export default async function TrainPage({ searchParams }: { searchParams: Promis
                 <li key={e.id} className="border-t border-line px-5 py-4 first:border-t-0">
                   <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-ink-soft">
                     <span>
-                      {CHANNEL[e.channel] ?? e.channel}
+                      {e.trade} · {CHANNEL[e.channel] ?? e.channel}
                       {e.verdict ? ` · ${VERDICT_LABEL[e.verdict] ?? e.verdict}` : ""}
                       {e.verdict === "followup" ? " (not used)" : ""}
                     </span>
@@ -77,7 +77,7 @@ export default async function TrainPage({ searchParams }: { searchParams: Promis
                   </div>
                   <p className="mt-1 text-sm text-ink-soft">Customer</p>
                   <p className="whitespace-pre-wrap break-words">{e.customerSaid}</p>
-                  <p className="mt-2 text-sm text-ink-soft">Realtor</p>
+                  <p className="mt-2 text-sm text-ink-soft">Business</p>
                   <p className="whitespace-pre-wrap break-words">{e.reply}</p>
                 </li>
               );

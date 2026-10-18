@@ -2362,12 +2362,14 @@ model OwnerExample {
   @@index([businessId, createdAt])
 }
 
-// "Train FollowUp" (A-292, src/lib/training.ts): real conversations from realtors, shared with their permission
+// "Train FollowUp" (A-292, src/lib/training.ts): real conversations from businesses, shared with their permission
 // and added by the founder on /admin/train. Only the scrubbed turns are kept (names, numbers, emails, links and
-// addresses taken out first); the paste itself is never stored. Belongs to no business: these examples teach
-// every real estate business's drafts.
+// addresses taken out first); the paste itself is never stored. Belongs to no business: these examples teach the
+// drafts of every business of the same kind (`trade`, one of src/lib/industries.ts).
 model TrainingConversation {
   id        String            @id @default(cuid())
+  // The kind of business it came from, as Business.industry says it ("Real estate", "Legal", ...).
+  trade     String
   // "email", "instagram", "whatsapp" or "text": where the conversation happened.
   channel   String
   // Who added it. Plain id, no relation.
@@ -2383,6 +2385,7 @@ model TrainingExample {
   id             String               @id @default(cuid())
   conversation   TrainingConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   conversationId String
+  trade          String
   channel        String
   // The scrubbed turns before this moment, oldest first: [{ from: "customer" | "agent", text }].
   context        Json
@@ -2395,6 +2398,6 @@ model TrainingExample {
   scoredAt       DateTime?
   createdAt      DateTime             @default(now())
 
-  @@index([createdAt])
+  @@index([trade, createdAt])
   @@index([verdict])
 }

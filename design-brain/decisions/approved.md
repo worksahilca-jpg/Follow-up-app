@@ -5035,3 +5035,9 @@ Decide · Train · Accuracy tests · Testers · Usage · The office · Back to F
 (businesses, active, replies waiting for an OK, money a month) and "Needs you", one row per decision with what
 happened and one outlined button. Every old section moved, none dropped. "Done lately" from the drawing was not
 built: nothing in the database records it.
+
+**A-292 amended (2026-10-18), founder:** *"No do not aswee as a raltor always we will be training different businesses
+with different replies and different strategies"*. Train is for every kind of business, not realtors: each
+conversation says what kind of business it came from (the same list as setup: Real estate, Mortgage, Home services,
+Clinic, Legal, Marketing, Something else); its examples reach only businesses of that kind; the scorecard answers as
+that kind. Words say "business", never "realtor" (R-134).

@@ -2,11 +2,13 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { INDUSTRIES, INDUSTRY_SHORT } from "@/lib/industries";
 
 /**
- * /admin/train → Add a conversation (A-292). Paste a real conversation or open a WhatsApp export, "Read it" shows it
- * split into customer and realtor with names, numbers, emails, links and addresses already taken out, and "Save"
- * keeps each realtor reply as an example. Nothing is kept until Save, and then only the scrubbed text.
+ * /admin/train → Add a conversation (A-292). Say what kind of business it's from, paste a real conversation or open a
+ * WhatsApp export, "Read it" shows it split into customer and business with names, numbers, emails, links and
+ * addresses already taken out, and "Save" keeps each reply from the business as an example for businesses of that
+ * kind. Nothing is kept until Save, and then only the scrubbed text.
  */
 
 type Channel = "email" | "instagram" | "whatsapp" | "text";
@@ -38,6 +40,7 @@ async function post(body: unknown): Promise<{ ok: boolean; data: Record<string, 
 
 export default function TrainAdd() {
   const router = useRouter();
+  const [trade, setTrade] = useState<string | null>(null);
   const [channel, setChannel] = useState<Channel>("whatsapp");
   const [raw, setRaw] = useState("");
   const [permission, setPermission] = useState(false);
@@ -63,10 +66,10 @@ export default function TrainAdd() {
   }
 
   async function save() {
-    if (!read?.agent || !permission || busy) return;
+    if (!read?.agent || !trade || !permission || busy) return;
     setBusy(true);
     setError(null);
-    const { ok, data } = await post({ action: "save", raw, agent: read.agent, channel, permission: true });
+    const { ok, data } = await post({ action: "save", raw, agent: read.agent, trade, channel, permission: true });
     setBusy(false);
     if (!ok) {
       setError(String(data.message ?? "FollowUp couldn't save that."));
@@ -93,7 +96,16 @@ export default function TrainAdd() {
   return (
     <div className="mt-6 flex flex-col gap-6">
       <section className="rounded-2xl border border-line p-5">
-        <p className="text-sm text-ink-soft" id="train-channel">Where it happened</p>
+        <p className="text-sm text-ink-soft" id="train-trade">What kind of business</p>
+        <div role="group" aria-labelledby="train-trade" className="mt-2 flex flex-wrap gap-2">
+          {INDUSTRIES.map((t) => (
+            <button key={t} type="button" aria-pressed={trade === t} onClick={() => setTrade(t)} className={pill} style={pillStyle(trade === t)}>
+              {INDUSTRY_SHORT[t]}
+            </button>
+          ))}
+        </div>
+
+        <p className="mt-5 text-sm text-ink-soft" id="train-channel">Where it happened</p>
         <div role="group" aria-labelledby="train-channel" className="mt-2 flex flex-wrap gap-2">
           {CHANNELS.map((c) => (
             <button key={c.value} type="button" aria-pressed={channel === c.value} onClick={() => setChannel(c.value)} className={pill} style={pillStyle(channel === c.value)}>
@@ -134,7 +146,7 @@ export default function TrainAdd() {
         )}
         {saved !== null && (
           <p role="status" className="mt-3 text-sm">
-            Saved {saved} {saved === 1 ? "example" : "examples"}. FollowUp uses them from the next reply on.
+            Saved {saved} {saved === 1 ? "example" : "examples"}. Businesses of this kind use them from the next reply on.
           </p>
         )}
       </section>
@@ -146,7 +158,7 @@ export default function TrainAdd() {
             <p className="text-sm text-ink-soft">Names, numbers, emails and links are already taken out.</p>
           </div>
 
-          <p className="mt-4 text-sm text-ink-soft" id="train-agent">Who is the realtor?</p>
+          <p className="mt-4 text-sm text-ink-soft" id="train-agent">Who is the business?</p>
           <div role="group" aria-labelledby="train-agent" className="mt-2 flex flex-wrap gap-2">
             {read.speakers.map((s) => (
               <button key={s} type="button" aria-pressed={read.agent === s} disabled={busy} onClick={() => readIt(s)} className={pill} style={pillStyle(read.agent === s)}>
@@ -158,7 +170,7 @@ export default function TrainAdd() {
           <ol className="mt-4">
             {read.turns.slice(0, 40).map((t, i) => (
               <li key={i} className="flex gap-3 border-t border-line py-3 first:border-t-0">
-                <span className={`w-20 shrink-0 text-sm ${t.from === "agent" ? "font-semibold" : "text-ink-soft"}`}>{t.from === "agent" ? "Realtor" : "Customer"}</span>
+                <span className={`w-20 shrink-0 text-sm ${t.from === "agent" ? "font-semibold" : "text-ink-soft"}`}>{t.from === "agent" ? "Business" : "Customer"}</span>
                 <span className="min-w-0 whitespace-pre-wrap break-words">{t.text}</span>
               </li>
             ))}
@@ -167,19 +179,21 @@ export default function TrainAdd() {
 
           <label className="mt-4 flex items-start gap-3 text-sm">
             <input type="checkbox" checked={permission} onChange={(e) => setPermission(e.target.checked)} className="mt-0.5 h-5 w-5 shrink-0" />
-            <span>I have the realtor&apos;s permission to use this conversation to teach FollowUp.</span>
+            <span>I have the business&apos;s permission to use this conversation to teach FollowUp.</span>
           </label>
 
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm text-ink-soft">
               {read.examples === 0
-                ? "No realtor reply answers a customer here, so there's nothing to learn from."
-                : `${read.examples} ${read.examples === 1 ? "example" : "examples"}: each realtor reply that answers the customer.`}
+                ? "No reply from the business answers a customer here, so there's nothing to learn from."
+                : !trade
+                  ? "Pick what kind of business this is, at the top, to save."
+                  : `${read.examples} ${read.examples === 1 ? "example" : "examples"}: each reply from the business that answers the customer.`}
             </p>
             <button
               type="button"
               onClick={save}
-              disabled={!permission || read.examples === 0 || busy}
+              disabled={!permission || !trade || read.examples === 0 || busy}
               className="inline-flex min-h-11 items-center rounded-full px-5 text-[15px] font-semibold disabled:opacity-40"
               style={{ background: "var(--accent)", color: "var(--on-accent)" }}
             >

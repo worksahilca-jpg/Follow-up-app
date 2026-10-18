@@ -14274,3 +14274,10 @@ replay in the email shape because that is what FollowUp sends there today, so Fo
 the short-reply question is decided. Weak: the AI side of the scorecard could not run locally (no AI key); the
 examples used are the newest three, not the most similar; the founder's own business facts can show up in scorecard
 replies.
+
+## 2026-10-18 — Train sorted by kind of business (R-134)
+
+Founder corrected the realtor-only build before it went live. Each conversation now carries its kind of business
+(src/lib/industries.ts, required before Save); examples reach only drafts of businesses of that same kind (none for a
+business that hasn't said what it is); the scorecard answers as the example's kind; every label says "business".
+Weak: "Something else" lumps every unlisted trade together, so their examples mix.

@@ -70,8 +70,8 @@ export async function practiceReply(
   previous: unknown,
   channel: PracticeChannel = "email",
   contactAskedBefore = false,
-  // The Train scorecard (A-292) replays a realtor's moment: it answers as a real estate business, and that example
-  // must not be in its own prompt.
+  // The Train scorecard (A-292) replays a moment from another business: it answers as that kind of business, and that
+  // example must not be in its own prompt.
   opts: { excludeTrainingId?: string; industry?: string } = {}
 ): Promise<PracticeReply> {
   const conversation = practiceConversation(turns, new Date(), channel);

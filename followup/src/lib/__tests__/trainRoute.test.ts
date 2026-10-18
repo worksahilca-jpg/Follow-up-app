@@ -50,17 +50,25 @@ describe("POST /api/admin/train", () => {
     expect(training.clearVerdicts).not.toHaveBeenCalled();
   });
 
-  it("will not save without the permission box", async () => {
+  it("will not save without a kind of business it knows", async () => {
     const { POST } = await import("@/app/api/admin/train/route");
-    const res = await POST(req({ action: "save", raw: "A: hi\nB: yo", agent: "B", channel: "text", permission: false }));
+    const res = await POST(req({ action: "save", raw: "A: hi\nB: yo", agent: "B", trade: "Spaceships", channel: "text", permission: true }));
     expect(res.status).toBe(400);
     expect(training.saveConversation).not.toHaveBeenCalled();
   });
 
-  it("replays a moment with that example kept out of its own prompt, WhatsApp in the email shape", async () => {
+  it("will not save without the permission box", async () => {
+    const { POST } = await import("@/app/api/admin/train/route");
+    const res = await POST(req({ action: "save", raw: "A: hi\nB: yo", agent: "B", trade: "Legal", channel: "text", permission: false }));
+    expect(res.status).toBe(400);
+    expect(training.saveConversation).not.toHaveBeenCalled();
+  });
+
+  it("replays a moment as that kind of business, with that example kept out of its own prompt, WhatsApp in the email shape", async () => {
     process.env.OPENAI_API_KEY = "test";
     training.nextToScore.mockResolvedValue({
       id: "ex1",
+      trade: "Legal",
       channel: "whatsapp",
       context: [{ from: "customer", text: "hi" }, { from: "agent", text: "hello" }],
       customerSaid: "price?",
@@ -74,7 +82,7 @@ describe("POST /api/admin/train", () => {
     const [, , turns, , channel, , opts] = practiceReply.mock.calls[0];
     expect(turns.map((t: { from: string }) => t.from)).toEqual(["customer", "followup", "customer"]);
     expect(channel).toBe("email");
-    expect(opts).toEqual({ excludeTrainingId: "ex1", industry: "Real estate" });
+    expect(opts).toEqual({ excludeTrainingId: "ex1", industry: "Legal" });
     expect(training.saveFollowUpReply).toHaveBeenCalledWith("ex1", "FollowUp's answer");
     delete process.env.OPENAI_API_KEY;
   });

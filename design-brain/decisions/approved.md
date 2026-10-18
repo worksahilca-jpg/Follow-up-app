@@ -4950,3 +4950,22 @@ themselves inside the application too before switching to automatic. It will be 
 - For every owner, not only the founder. Shown only while the account holds every reply and sending isn't stopped.
 - The rule behind it (trust): a risky switch can be tried on yourself first, in one tap, without touching a real
   customer. Only the owner's own practice customer is let past the hold; a real customer never is.
+
+## A-288 — "Practise with FollowUp": write as a customer, watch it answer ^A-288
+
+**Approved:** 2026-10-18, founder: *"i want a interface where user will become customer and followup will do its job,
+not a email sending system"*, then *"it should use all the rules and strategies … that we use for our actual app"*, then
+*"Yes"* to building it.
+**What specifically:**
+- Settings → Sending replies has one box under "Who sends your replies?": **Practise with FollowUp** · "Write as a
+  customer and see how FollowUp answers. Nothing is sent." · **Start**. It replaces A-287's email "Try it on me first"
+  box (the server side of A-287 stays).
+- **Start** opens a chat page: title, a "Nothing is sent" pill, one line of why; the owner's messages on the right
+  ("You, as a customer"), FollowUp's on the left, and under each of FollowUp's one quiet line with what would really
+  happen: "Would go out by itself" or "Would wait for you: <the reason the real check gives>". "Write as a customer…"
+  with Send; "Start over".
+- **Same brain as the real app:** the first message gets the real instant reply; every later one gets the real reply
+  writer with the owner's facts, voice, language, the qualifying questions one round at a time, and the booking page once
+  they say yes to meeting. The verdict is the real send check, and a reply carrying the booking link always waits.
+- Nothing is stored or sent. 60 practice messages per business per day.
+**Supersedes, in part:** A-287's Settings box (the email practice).

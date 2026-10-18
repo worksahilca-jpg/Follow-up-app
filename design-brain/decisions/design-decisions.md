@@ -14162,3 +14162,12 @@ title, a "Nothing is sent" pill, one line of why; the owner's messages on the ri
 replies on the left with one quiet line under each saying what would really happen ("Would go out by itself" / "Would
 wait for you: it's about price"); a "Write as a customer…" box with Send; "Start over". The conversation in the drawing
 is an example. Inferred principle: owners trust what they can watch, and a conversation shows more than one email.
+
+## 2026-10-18 — "Practise with FollowUp" built (A-288)
+
+Built as drawn. The chat page is /practice, shown with Settings' tree under Sending replies. The server path
+(src/lib/practiceReply.ts) calls the real parts in the real order; keep it in step with scoreAndDraftForLead's email
+branch. Checked on laptop and phone with stand-in answers (the local copy has no AI key); the real answers come from the
+same functions real customers get. Weak, honestly: it practises email only, not Instagram/WhatsApp DMs; FollowUp's
+answers show the email's "Hi …, Best, …" frame, which reads long in a chat; the qualifying memory lives in the page, so
+"Start over" or leaving resets it.

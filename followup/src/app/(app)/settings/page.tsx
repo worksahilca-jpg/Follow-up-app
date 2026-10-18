@@ -19,7 +19,6 @@ import CopyWebhookUrl from "@/components/CopyWebhookUrl";
 import OutboundWebhookConfig from "@/components/OutboundWebhookConfig";
 import TwilioConfig from "@/components/TwilioConfig";
 import Connections from "@/components/settings/Connections";
-import TryOnMe from "@/components/settings/TryOnMe";
 import Switch from "@/components/Switch";
 import BookingCalendarConfig from "@/components/BookingCalendarConfig";
 import DataPrivacySection from "@/components/DataPrivacySection";
@@ -672,8 +671,22 @@ function SettingsPageInner() {
           />
         </div>
         {!isAdmin && <p className="mt-2 text-[14px] text-ink-soft">Only an admin can change who sends.</p>}
-        {/* Before saying yes to sending, the owner can watch it answer them (A-287). Only while every reply waits. */}
-        {holdAllForApproval && !sendingPaused && <TryOnMe box={BOX} />}
+        {/* Practise with FollowUp (A-288, after A-287): write as a customer and watch how it answers. Nothing is sent. */}
+        <div className={BOX + " mt-3"}>
+          <div className="flex items-center gap-3.5 px-4 py-3.5">
+            <div className="min-w-0 flex-1">
+              <p className="text-[16px] font-semibold">Practise with FollowUp</p>
+              <p className="mt-0.5 text-[14px] leading-snug text-ink-soft">Write as a customer and see how FollowUp answers. Nothing is sent.</p>
+            </div>
+            <Link
+              href="/practice"
+              className="inline-flex min-h-11 shrink-0 items-center rounded-full border px-[18px] text-[15px] font-medium"
+              style={{ borderColor: "var(--line-strong)" }}
+            >
+              Start
+            </Link>
+          </div>
+        </div>
 
         <div className={BOX + " mt-6"}>
           <Link href="/workflows" className={ROW + " hover:bg-card-2"}>

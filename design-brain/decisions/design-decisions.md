@@ -14261,3 +14261,16 @@ section moves, none is dropped: accuracy tests to their own place; first value, 
 add a tester, recent signups to Testers; usage, charts, not-a-customer, website visits to Usage. Weak, honestly: on
 the phone the button sits beside the text and squeezes it (put it under); "Done lately" needs a source (merged PRs
 aren't in the database), so it may be dropped; the decision rules are a first guess.
+
+## 2026-10-18 — Organised admin (A-293) and Train FollowUp (A-292) built
+
+Built as drawn, with these changes, honestly: the decisions are only ones the data can back (no testers; testers not
+set up; replies written but no owner pressed Send this week; three or more sellers or spam let through on one channel).
+"Replies scored 10 of 20" from the drawing is not a decision because test scores aren't stored. The scorecard has no
+"Skip" or "Write it better" (the realtor's reply already is the example). Train stores only scrubbed text; the
+scorecard replays each moment through the real reply writer as a real estate business (the founder's own business is
+not set to real estate, checked read-only), with that example kept out of its own prompt. WhatsApp and text moments
+replay in the email shape because that is what FollowUp sends there today, so FollowUp will look worse on them until
+the short-reply question is decided. Weak: the AI side of the scorecard could not run locally (no AI key); the
+examples used are the newest three, not the most similar; the founder's own business facts can show up in scorecard
+replies.

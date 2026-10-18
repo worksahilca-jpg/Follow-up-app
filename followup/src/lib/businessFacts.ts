@@ -28,6 +28,9 @@
  */
 
 import { getOwnerExamples } from "@/lib/ownerExamples";
+import { getTrainingExamples, TRAINING_IN_PROMPT } from "@/lib/training";
+import { PROMPT_EXAMPLES } from "@/lib/ownerExampleLines";
+import { templateFor } from "@/lib/qualification";
 import type { OwnerExampleLine } from "@/lib/ownerExampleLines";
 import { prisma } from "@/lib/db";
 import { getClient, MODEL } from "@/lib/integrations/openaiClient";
@@ -91,12 +94,24 @@ export async function getBusinessAbout(businessId: string): Promise<string | nul
   }
 }
 
-/** The draft's context for one business: its trade's playbook, what it has told customers, and how the owner answers (A-290). */
+/**
+ * The draft's context for one business: its trade's playbook, what it has told customers, and how the owner answers
+ * (A-290). A real estate business also gets a few examples from real realtors' conversations (A-292, src/lib/training.ts),
+ * after its own, which always come first. `excludeTrainingId` keeps the example being scored out of its own prompt;
+ * `trade` stands in for the business's own (the Train scorecard always answers as a realtor).
+ */
 export async function draftingContext(
-  businessId: string
+  businessId: string,
+  opts: { excludeTrainingId?: string; trade?: string } = {}
 ): Promise<{ trade: string | null; facts: FactLine[]; examples: OwnerExampleLine[] }> {
-  const [trade, facts, examples] = await Promise.all([businessTrade(businessId), getBusinessFacts(businessId), getOwnerExamples(businessId)]);
-  return { trade, facts, examples };
+  const [trade, facts, own] = await Promise.all([
+    opts.trade ?? businessTrade(businessId),
+    getBusinessFacts(businessId),
+    getOwnerExamples(businessId),
+  ]);
+  const room = Math.min(TRAINING_IN_PROMPT, PROMPT_EXAMPLES - own.length);
+  const shared = templateFor(trade)?.id === "realtor" ? await getTrainingExamples(room, opts.excludeTrainingId) : [];
+  return { trade, facts, examples: [...own, ...shared] };
 }
 
 const FACTS_SCHEMA = {

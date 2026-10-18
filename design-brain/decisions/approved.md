@@ -5025,3 +5025,13 @@ Scorecard: one "N of 50 matched or beat the realtor" line, then one customer mes
 reply and FollowUp's side by side and FollowUp better · Same · Realtor better. Examples: the library. Founder
 examples apply to every business; an owner's "Write it better" (A-290) stays theirs. Layout: inside the organised
 admin (drawn same day, waiting).
+
+## A-293 — The admin, organised into places, Decide first ^A-293
+
+**Approved:** 2026-10-18, founder: *"Okay"* to the drawing, after *"organise the admin page so that i can make
+desicions train the model and all"*.
+**What specifically:** /admin is no longer one 4,300px scroll. A left list like the app's (chips on the phone):
+Decide · Train · Accuracy tests · Testers · Usage · The office · Back to FollowUp. Decide opens first: four numbers
+(businesses, active, replies waiting for an OK, money a month) and "Needs you", one row per decision with what
+happened and one outlined button. Every old section moved, none dropped. "Done lately" from the drawing was not
+built: nothing in the database records it.

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, FlaskConical, Users, ChartColumn, Briefcase, ArrowLeft } from "lucide-react";
+import { Home, BookOpen, FlaskConical, Users, ChartColumn, Briefcase, ArrowLeft } from "lucide-react";
 import LogoMark from "@/components/LogoMark";
 
 /**
@@ -13,6 +13,7 @@ import LogoMark from "@/components/LogoMark";
  */
 const places = [
   { href: "/admin", label: "Decide", icon: Home },
+  { href: "/admin/train", label: "Train", icon: BookOpen },
   { href: "/admin/tests", label: "Accuracy tests", icon: FlaskConical },
   { href: "/admin/testers", label: "Testers", icon: Users },
   { href: "/admin/usage", label: "Usage", icon: ChartColumn },

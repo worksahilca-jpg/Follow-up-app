@@ -95,6 +95,7 @@ a booked call or visit; the owner closes.
 - **Paused (not committed, copy in the scratchpad `wip-memory/`):** every kind remembers which plan questions it
   asked, the same checklist real estate has (no decision number yet; the "A-299" it was first called is now the
   playbook above).
+- **Talk to it test (Oct 19) found 5 reply faults, fixed in a PR:** repeat area question, "buy/sell?" after a listing question, weekend vs weekday showing hours, condo-worth reply. Rerun the 6 test messages after merge.
 - **GoHighLevel uses the same reply rules:** ghlPoll → scoreAndDraftForLead. The business type must be "Real estate".
 - **Waiting on Sahil (gave him one Claude in Chrome prompt for 1–4, Oct 19 night):**
   1. Vercel: delete `ANTHROPIC_API_KEY` and `ANTHROPIC_MODEL`.

@@ -136,7 +136,9 @@ const REALTOR: Criterion[] = [
     key: "side",
     label: "Looking to",
     find:
-      "whether they want to buy a home, rent one, or sell a home they own. Asking about a listing for sale, or about finding a home to buy, is buying; asking about a rental is renting; asking what their own home is worth, or about listing it, is selling",
+      "whether they want to buy a home, rent one, or sell a home they own. Asking about a listing for sale, or about finding a home to buy, is buying; asking about a rental is renting; asking what their own home is worth, or about listing it, is selling. " +
+      // A-299 test (2026-10-19): "is this still available?" on a post was left unknown, so the reply asked "buy, sell or both?".
+      "Asking whether a home is still available, what it costs, or to see it, is buying, unless it is a rental",
     ask: "whether they are looking to buy, sell, or both",
     buckets: {
       buy: "they want to buy a home",
@@ -151,7 +153,9 @@ const REALTOR: Criterion[] = [
     // Something specific (accuracy test 2026-10-12: "do you have any
     // listings?" came back as known, which tells the agent nothing).
     find:
-      "the area, neighbourhood or city they want to live in, or the specific listing they asked about, e.g. 'near Liberty Village', 'Mississauga' or '220 King St unit 4'. 'Do you have any listings?' on its own is not this",
+      "the area, neighbourhood or city they want to live in, or the specific listing they asked about, e.g. 'near Liberty Village', 'Mississauga' or '220 King St unit 4'. 'Do you have any listings?' on its own is not this. " +
+      // A-299 test (2026-10-19): "just looking at a few in the area" after asking about a home got "What area?" twice.
+      "After asking about a home they saw, 'a few in the area' or 'around there' is this too: the value is 'Around the home they asked about'",
     ask: "which area they are looking in",
   },
   {

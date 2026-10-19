@@ -19,6 +19,7 @@ vi.mock("@/lib/stripe", () => ({ appUrl: () => "https://app.followup.test" }));
 
 import {
   askFor,
+  criterionOf,
   customerTexts,
   glanceFacts,
   isCustomerQuote,
@@ -151,6 +152,11 @@ describe("merging what was read into what was known", () => {
     expect(seller.items.map((i) => i.key)).toEqual(["side", "home", "price"]);
     // A side learned earlier still guards a later read.
     expect(mergeQualification(realtor, buyer, [known("home", "3 bed on Elm St", "the 3 bed on Elm St")], texts).items.map((i) => i.key)).toEqual(["side", "area"]);
+  });
+
+  it("tells the reader that asking if a home is available is buying, and 'a few in the area' is the area (Oct 19 Talk test)", () => {
+    expect(criterionOf(realtor, "side")?.find).toContain("Asking whether a home is still available");
+    expect(criterionOf(realtor, "area")?.find).toContain("'a few in the area'");
   });
 
   it("caps a long summary", () => {

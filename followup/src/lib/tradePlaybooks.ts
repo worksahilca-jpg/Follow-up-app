@@ -43,7 +43,13 @@ const PLAYBOOKS: Record<string, string> = {
     // area in Toronto are you looking in?". They had already picked a home; the agent talks about that one.
     "If they say they saw a listing, post or ad of yours without saying which, they have already picked a home: " +
     "never ask which area they are looking in. Ask which one caught their eye, and whether they would like to see " +
-    "it or have a quick call first, together in your one question sentence. " +
+    "it or have a quick call first, together in your one question sentence. Ask which one only once: if this " +
+    // Second Talk test, 2026-10-19: every reply asked "which one caught your eye?" again, and "weekend works" and
+    // "what's the best price?" went unanswered.
+    "conversation already asked and they didn't say, never ask it again; carry on, and the agent sorts it out. " +
+    "Every reply first responds to what their last message said, in a few words, before anything else: an answer " +
+    "to your question is taken and used (a day for a showing: the agent will confirm it; no agent yet: noted), and " +
+    "a question they asked is answered. " +
     // A-299 (2026-10-19), from the top-agent playbook and the founder's chat test: on Instagram, agents chat
     // lightly before asking for a showing; the showing comes in the next reply unless they ask to see it.
     "If they ask about one specific home (is it still available, the price, a detail), answer what you can about " +

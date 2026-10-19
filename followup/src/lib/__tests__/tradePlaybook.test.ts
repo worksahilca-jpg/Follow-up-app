@@ -89,6 +89,12 @@ describe("the playbook", () => {
     expect(firstAskFor("Real estate")).toContain("never a value, and never a promise to send one by message");
   });
 
+  it("asks which listing only once, and always answers their last message first (second Talk test)", () => {
+    const p = playbookFor("Real estate");
+    expect(p).toContain("Ask which one only once");
+    expect(p).toContain("Every reply first responds to what their last message said");
+  });
+
   it("gives every other kind its own plan: a goal, three steps of two things, the meeting by step 2", () => {
     const kinds: [string, RegExp, RegExp][] = [
       ["Mortgage brokerage", /A MORTGAGE BROKER/, /Never quote a rate/],

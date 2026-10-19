@@ -3,8 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { INDUSTRIES, INDUSTRY_SHORT } from "@/lib/industries";
-import TrainerPanel from "@/components/admin/TrainerPanel";
-import type { TrainerTurn } from "@/lib/trainer";
 
 /**
  * /admin/train → Talk to it (A-294, founder 2026-10-18: "Add a section where I will be talking to follow up, and I will
@@ -13,9 +11,6 @@ import type { TrainerTurn } from "@/lib/trainer";
  * should say), or Tell FollowUp what's wrong (A-297: say it your way; FollowUp turns it into a rule for that kind of
  * business and writes the answer again with it, the old one crossed out above). Examples and rules have Undo; the
  * kind's rules are listed under the chat with Change the wording and Undo.
- *
- * A-298: Claude sits beside the chat (its own tab on a phone). Once it's set up, "Ask Claude" takes the place of
- * "Tell FollowUp what's wrong": it points Claude at that answer, and the founder talks it through there.
  */
 
 type Channel = "instagram" | "messenger" | "email";
@@ -65,19 +60,8 @@ function day(iso: string): string {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-export default function TrainTalk({
-  rules = [],
-  claudeReady = false,
-  trainer = [],
-}: {
-  rules?: Rule[];
-  claudeReady?: boolean;
-  trainer?: TrainerTurn[];
-}) {
+export default function TrainTalk({ rules = [] }: { rules?: Rule[] }) {
   const router = useRouter();
-  const [view, setView] = useState<"talk" | "claude">("talk");
-  const [focus, setFocus] = useState<number | null>(null);
-  const claudeInput = useRef<HTMLTextAreaElement>(null);
   const [trade, setTrade] = useState<(typeof INDUSTRIES)[number]>("Real estate");
   const [channel, setChannel] = useState<Channel>("instagram");
   const [turns, setTurns] = useState<Turn[]>([]);
@@ -106,7 +90,6 @@ export default function TrainTalk({
     setConversationId(null);
     setTeaching(null);
     setCoaching(null);
-    setFocus(null);
     setError(null);
   }
 
@@ -281,22 +264,6 @@ export default function TrainTalk({
 
   return (
     <div className="mt-6">
-      <div role="group" aria-label="Show" className="mb-5 grid grid-cols-2 rounded-full p-1 text-[15px] lg:hidden" style={{ background: "var(--card-2)" }}>
-        {(["talk", "claude"] as const).map((v) => (
-          <button
-            key={v}
-            type="button"
-            aria-pressed={view === v}
-            onClick={() => setView(v)}
-            className="min-h-10 rounded-full font-medium"
-            style={view === v ? { background: "var(--card)", boxShadow: "0 1px 2px rgba(0,0,0,.08)" } : { color: "var(--ink-soft)" }}
-          >
-            {v === "talk" ? "Talk to it" : "Claude"}
-          </button>
-        ))}
-      </div>
-      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_400px] lg:items-start lg:gap-8">
-      <div className={view === "claude" ? "hidden lg:block" : ""}>
       <p className="text-ink-soft">You write as the customer. Keep the good answers, and tell FollowUp what’s wrong with the rest.</p>
 
       <p className="mt-4 text-sm text-ink-soft" id="talk-trade">Kind of business</p>
@@ -468,36 +435,19 @@ export default function TrainTalk({
                   >
                     Teach a better reply
                   </button>
-                  {claudeReady ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setFocus(i);
-                        setTeaching(null);
-                        setView("claude");
-                        requestAnimationFrame(() => claudeInput.current?.focus());
-                      }}
-                      aria-pressed={focus === i}
-                      className={pill}
-                      style={focus === i ? pillStyle(true) : { borderColor: "var(--ink)" }}
-                    >
-                      Ask Claude
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCoaching(i);
-                        setTeaching(null);
-                        setNote("");
-                      }}
-                      disabled={busy}
-                      className={pill}
-                      style={{ borderColor: "var(--ink)" }}
-                    >
-                      Tell FollowUp what’s wrong
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCoaching(i);
+                      setTeaching(null);
+                      setNote("");
+                    }}
+                    disabled={busy}
+                    className={pill}
+                    style={{ borderColor: "var(--ink)" }}
+                  >
+                    Tell FollowUp what’s wrong
+                  </button>
                 </div>
               ) : null}
             </div>
@@ -599,21 +549,6 @@ export default function TrainTalk({
           </>
         )}
       </section>
-      </div>
-      <div className={view === "talk" ? "hidden lg:block" : ""}>
-        <TrainerPanel
-          ref={claudeInput}
-          ready={claudeReady}
-          initial={trainer}
-          rules={rules}
-          trade={trade}
-          channel={channel}
-          turns={turns.map((t) => ({ from: t.from, text: t.text }))}
-          focus={focus}
-          onClearFocus={() => setFocus(null)}
-        />
-      </div>
-      </div>
     </div>
   );
 }

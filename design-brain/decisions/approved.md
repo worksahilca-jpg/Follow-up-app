@@ -5112,6 +5112,8 @@ production, which this setup does not do; his list of rules on Talk to it is the
 
 ## A-298 — Claude on the Train page: a copy of Claude beside Talk to it ^A-298
 
+**SUPERSEDED (2026-10-19)** by R-136: removed the same day; training moved to the practice room with Claude Code.
+
 **Approved:** 2026-10-19, founder: *"yes draw it with claude"*, then *"yes build it"*, to the "Claude on Train" drawing.
 He asked for it in his own words: *"i want you to be there bro … if your clone is also sitting there with all the rules
 that you know and all the other things you know then its good"*.
@@ -5136,3 +5138,45 @@ Built in `src/lib/trainer.ts` (Anthropic's API through fetch, no new package), `
 Claude.
 **Seen built:** 2026-10-19, founder on the laptop screenshot (Claude column beside Talk to it, the tests card, the
 proposed rule with Save rule): *"This looks good."*
+
+## A-299
+**Realtor replies follow the top-agent playbook (2026-10-19).** The founder said *"yes to all three"* to three changes
+from `reports/FollowUp realtor reply playbook.md`, a synthesis of about 60 sources: YouTube coaching, team
+role-plays, vendor playbooks, and agents' public posts.
+- **A. One question per message,** ending on it, with no sign-off after the question. This replaces two questions per
+  message.
+- **B. Viewing first, money last** when a customer points at a home (listing, post, story, keyword). The reply answers
+  about that home, then offers two real times. Next come other homes for the same trip, what caught their eye, when,
+  agent (asked gently: "with an agent, or just open houses so far?"), then lender. Vague first messages connect first
+  (stage → why → area → when → offer). Sellers start with what's prompting the move, with no value or commission by DM.
+- **C. Follow-up timing:** an instant reply, then one DM nudge inside Meta's 24-hour window. After that, emails on
+  days 1, 3 and 7, each with a reason (never "just checking in"). Then by timeline: weekly (within 3 months), every
+  2 weeks (3–6 months), monthly (6–12 months), stepping up 1–2 months before their date.
+**Status:** being tested by hand in chat (the founder plays the customer) before it's built.
+**Correction from the first test (2026-10-19).** The founder asked how FollowUp could offer showing times without
+asking the owner. **Rule:** FollowUp only offers times the owner has given it (facts, or a calendar later). Otherwise it
+asks the customer when suits them (either/or: "weekdays after work, or the weekend?"), says the agent will confirm,
+and buzzes the owner to pick a time. It never promises a time on its own.
+**Conflict check (2026-10-19, same day, before anything was built):**
+- **A** contradicts A-291, A-296 and [R-135](rejected#^R-135). The founder rejected one question a message twice
+  (*"it is irritating"*). Proposing it again was a mistake. Waiting for his call; recommended: keep two questions in one
+  sentence.
+- **C** overlaps A-245 (built): days 1, 3, 7, 14 and 30, then monthly, at most 1 a day and 3 a week. A same-day DM
+  nudge would break the 1-a-day limit. Recommended: keep A-245, and send day 1 in the DM while Meta's 24-hour window
+  is open (otherwise email, A-148).
+- **B** supersedes A-291's round 2 (money + meeting): money moves to last. A viewing request still buzzes the owner
+  (A-242), so Ready no longer waits on pre-approval being known.
+- "Still looking?" as a revive breaks R-118. It is only allowed as A-245's one close-the-loop message.
+**Resolved (2026-10-19, founder: *"yes go with both"*):**
+- **A is withdrawn.** Two questions in one sentence stays (A-291, A-296).
+- **C is withdrawn.** A-245's plans stay unchanged. The only addition: the day-1 message goes in the Instagram or
+  Messenger chat while Meta's 24-hour window is open, otherwise by email (A-148).
+- What A-299 changes now: **B** (money last; viewing first when a home is named), the times rule, and the playbook's
+  objection and never-do lines that fit the earlier rules.
+**Instagram rule (2026-10-19, founder: *"yes make it the rule"*).** He asked whether top agents really ask for a showing
+straight away. They do for portal and website enquiries (Lazine, King, Jo, Lozano, Ferry), but Instagram coaches
+(Conover, Cedeno) chat lightly first. **Rule:** on Instagram and Messenger, the first reply to a home-specific message
+answers about the home, then asks a light question. Example: *"Is it just this one that caught your eye, or are you
+looking at a few in the area?"* The viewing is offered in the next reply. It comes sooner only if the customer asks
+to see the home (then: when suits them, and buzz the owner, A-242). Email and website enquiries about one home may
+offer the viewing in the first reply.

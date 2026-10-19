@@ -14378,3 +14378,25 @@ the real Claude yet; the first real check is Sahil's, once the key is in. Cost p
 
 Founder, on the laptop screenshot of A-298 as built: *"This looks good."* Keep this layout: Claude as a right-hand
 column beside Talk to it, the tests grouped in one card, the proposed rule as the one solid button.
+
+## 2026-10-19 — Realtor replies follow the top-agent playbook (A-299), trained in chat
+
+- **Research:** about 60 sources: YouTube coaching transcripts and notes, team role-plays, vendor playbooks, and
+  agents' public posts. They were synthesised into a playbook and checked against approved.md and rejected.md before
+  anything was built.
+- **Kept after the founder's call:**
+  - two questions per message (A-291, A-296, R-135);
+  - the A-245 follow-up plans.
+- **Built:**
+  - Buyer rounds: area + when → viewing + agent → lender + range.
+  - A yes to a viewing makes the customer Ready.
+  - Softer agent and lender asks.
+  - On Instagram, light first and the showing next.
+  - Never promise a time.
+  - Price, offers and paperwork go to the agent.
+  - A lender only from the owner's facts.
+  - Never "my listing" unless it is the owner's, and never "I saw you viewed it".
+- **Kept on purpose:** the viewing ask still never suggests "weekday or weekend". A real lead answered that question
+  with "What do you mean" (2026-09-20). The chat test used it; the code keeps the evidence.
+- **Weak, said plainly:** these are prompt rules, so the model can still drift. Checking them means running Train →
+  Talk to it, and the accuracy tests on /admin.

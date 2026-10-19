@@ -70,16 +70,33 @@ a booked call or visit; the owner closes.
 
 **Last updated: 2026-10-19**
 
-- **Just built (PR #559 open, waiting for "merge"):**
-  1. "Tell FollowUp what's wrong" (A-297): his words become a rule per kind of business, saved in the database.
-  2. Claude on the Train page (A-298): a copy of Claude beside Talk to it. It talks bad answers through, proposes
-     rules (saved on his yes), tests replies and catches clashing rules. What it knows lives in
-     `followup/src/lib/trainerBrief.ts`: **when the rules in this file change, update that file too.**
-- **Before that:** every kind of business has a reply plan (A-296, PR #557, live).
+- **Training happens in the practice room** (artifact "FollowUp Practice Room",
+  https://claude.ai/artifact/WSiRYwcnJTD4Y3ZbHBPadR): Sahil plays the customer, it answers as FollowUp (on his Claude
+  plan), and "What's wrong?" turns his words into a rule per kind of business, saved on the page (collections `rules`
+  and `examples`). When he says **"check the practice room"**: read both collections with ArtifactData, put the new
+  rules and good answers into the app in one PR, then mark each `status: "in-app"`. Its brief mirrors the app's reply
+  rules (openai.ts) and plans (tradePlans.ts / qualification.ts): when those change, update the page too.
+- **Removed (R-136):** the paid Claude chat on Admin → Train (A-298). Sahil should delete `ANTHROPIC_API_KEY` and
+  `ANTHROPIC_MODEL` in Vercel and revoke the "FollowUp Train" key at platform.claude.com. The empty `TrainerMessage`
+  table stays. "Tell FollowUp what's wrong" (A-297) still works on Talk to it.
+- **Realtor replies follow the top-agent playbook (A-299, built 2026-10-19):**
+  - The playbook comes from about 60 sources: `reports/FollowUp realtor reply playbook.md`, outside the repo.
+  - Sahil trained it by chat; the rules were checked against the earlier decisions.
+  - A buyer's questions now run: area + when → viewing + agent (asked gently) → lender + price range (money last).
+  - Saying yes to a viewing makes the customer Ready, and the phone buzzes.
+  - On Instagram, a question about one home gets an answer and a light question first; the showing comes in the next
+    reply.
+  - Never promise a time.
+  - Price, offers and paperwork go to the agent.
+  - A lender is offered only if it's in the owner's facts.
+  - Two questions per message and the A-245 plans are unchanged (founder: "yes go with both").
+  - Not built: the day-1 follow-up in the DM before Meta's 24-hour window closes (the plan engine's timing; ask
+    first).
+- **Paused (not committed, copy in the scratchpad `wip-memory/`):** every kind remembers which plan questions it
+  asked, the same checklist real estate has (no decision number yet; the "A-299" it was first called is now the
+  playbook above).
 - **Waiting on Sahil:**
-  1. "merge" for PR #559.
-  2. Make an Anthropic API key, add `ANTHROPIC_API_KEY` and `ANTHROPIC_MODEL` in Vercel (Production), set a spending
-     cap. Until then the old "Tell FollowUp what's wrong" button works.
-  3. Message 5 testers (was due Oct 19).
+  1. Train in the practice room; then say "check the practice room".
+  2. Message 5 testers (was due Oct 19).
 - **Known weak spots:** kinds other than real estate don't remember which questions were asked; the clinic "urgent"
   rule is an instruction only.

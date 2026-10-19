@@ -13,7 +13,8 @@ import type { Message } from "@/lib/types";
  * then sorts the customer:
  *
  *  - Ready: moving within about 3 months with the money sorted (a seller:
- *    within about 3 months, with a reason). The owner's phone buzzes.
+ *    within about 3 months, with a reason), or a buyer or renter who said
+ *    yes to a viewing or named a time for one (A-299). The owner's phone buzzes.
  *  - Warm: 3 to 6 months away, or the money isn't sorted yet.
  *  - Later: 6+ months away, or just looking. No money questions, no push.
  *  - Has an agent: FollowUp stops following up and tells the owner.
@@ -168,7 +169,8 @@ const REALTOR: Criterion[] = [
     label: "Money",
     find:
       "whether they are pre-approved for a mortgage or paying cash, or that they are not pre-approved yet. Known only when they said so: a price range alone says nothing about this",
-    ask: "whether they have been pre-approved yet (or are buying with cash)",
+    // A-299: soft, no numbers ("have you had a chance to talk to a lender yet?").
+    ask: "whether they have had a chance to talk to a lender or get pre-approved yet (or are buying with cash)",
     buckets: {
       sorted: "pre-approved, approved for a mortgage, or paying cash",
       not_yet: "not pre-approved yet, still talking to the bank, or still working out a mortgage",
@@ -193,7 +195,8 @@ const REALTOR: Criterion[] = [
     key: "agent",
     label: "Agent",
     find: "whether they are already working with another real estate agent, or said they are not",
-    ask: "whether they are working with an agent yet",
+    // A-299: gentle, the way the coaches ask it, never "do you have an agent?".
+    ask: "whether they have been seeing homes with an agent so far, or just on their own",
     buckets: {
       has: "they are already working with, or signed with, another agent",
       none: "they said they are not working with an agent",
@@ -255,7 +258,9 @@ const TEMPLATES: Record<string, Template> = {
       // Founder, 2026-10-18: "narrow down the conversation and let them towards booking a call … ask two questions
       // that make sense at a time". The meeting (a viewing or a call; a seller's visit) is offered in the second
       // round, not the third; the rest is learned after, or on the call.
-      buy: [["area", "timing"], ["financing", "viewing"], ["budget", "agent"]],
+      // A-299 (2026-10-19, the top-agent playbook): a buyer's money comes last. Pre-approval is the question
+      // that makes a new customer go quiet, so the viewing and the gentle agent check come first.
+      buy: [["area", "timing"], ["viewing", "agent"], ["financing", "budget"]],
       rent: [["area", "timing"], ["budget", "viewing"], ["agent"]],
       sell: [["home", "timing"], ["why", "visit"], ["condition", "price"]],
     },
@@ -394,6 +399,9 @@ export function roundsFor(template: Template, q: Qualification | null): Criterio
 export function tierOf(template: Template, q: Qualification | null): Tier | null {
   if (!q || q.template !== template.id) return null;
   if (bucketOf(q, "agent") === "has" && !q.keepGoing) return "agent";
+  // A-299: a buyer or renter who said yes to a viewing, or named a time for one, wants the owner now, whatever
+  // is still unknown about money (money is asked last). The owner's phone buzzes.
+  if (!isSeller(q) && knows(q, "viewing")) return "ready";
   const timing = bucketOf(q, "timing");
   if (timing === "later") return "later";
   if (timing === "months") return "warm";

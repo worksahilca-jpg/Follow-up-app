@@ -73,6 +73,11 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
     },
   });
   if (!lead) return false;
+  // Nothing to read, so nothing runs: answered here, before the plan cap and the daily AI-run count below. A CRM
+  // sync calls this for every contact it brings in, and each call used to count as an AI run, so a GoHighLevel
+  // account with 500 contacts spent the business's whole day of AI runs on people with no messages, and its real
+  // customers got no reply until the next day (found 2026-10-19, the night before the first real account).
+  if (lead.conversations.every((c) => c.messages.length === 0)) return false;
 
   // "AI processing pauses past lead #20, and for channels Free doesn't
   // cover" (research/market/2026-09-11-tier-pricing-recommendation.md

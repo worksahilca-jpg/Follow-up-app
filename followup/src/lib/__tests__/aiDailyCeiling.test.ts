@@ -17,7 +17,8 @@ import { scoreAndDraftForLead, AI_RUNS_PER_LEAD_PER_DAY, AI_RUNS_PER_BUSINESS_PE
 beforeEach(() => {
   vi.clearAllMocks();
   process.env.OPENAI_API_KEY = "test";
-  findUnique.mockResolvedValue({ id: "l1", businessId: "b1", name: "Sam", conversations: [], business: { tier: "pro", name: "B" } });
+  const said = { id: "m1", direction: "inbound", body: "Is it still for sale?", sentAt: new Date("2026-10-19T12:00:00Z") };
+  findUnique.mockResolvedValue({ id: "l1", businessId: "b1", name: "Sam", conversations: [{ channel: "email", messages: [said] }], business: { tier: "pro", name: "B" } });
 });
 
 describe("scoreAndDraftForLead daily ceilings", () => {
@@ -33,6 +34,14 @@ describe("scoreAndDraftForLead daily ceilings", () => {
     tooManyRecentActions.mockResolvedValueOnce(false).mockResolvedValueOnce(true);
     expect(await scoreAndDraftForLead("l1")).toBe(false);
     expect(tooManyRecentActions).toHaveBeenLastCalledWith("b1", "ai.run", AI_RUNS_PER_BUSINESS_PER_DAY);
+    expect(scoreLead).not.toHaveBeenCalled();
+  });
+
+  // 2026-10-19: a CRM sync calls this for every contact; one with no messages must not spend the day's AI runs.
+  it("counts nothing, and runs nothing, for a customer with no messages", async () => {
+    findUnique.mockResolvedValueOnce({ id: "l1", businessId: "b1", name: "Sam", conversations: [], business: { tier: "pro", name: "B" } });
+    expect(await scoreAndDraftForLead("l1")).toBe(false);
+    expect(tooManyRecentActions).not.toHaveBeenCalled();
     expect(scoreLead).not.toHaveBeenCalled();
   });
 

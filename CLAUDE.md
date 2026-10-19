@@ -1,5 +1,8 @@
 # FollowUp — repository-level instructions
 
+> **Read `BRAIN.md` first, every session.** It holds how the founder wants to work, where everything is, and where
+> the last session left off. Update its "Where we are" section at the end of every task.
+
 This file governs **every** Claude session in this repository. The app code has its own
 rules in `followup/AGENTS.md` (stack, build commands, file layout); this file governs
 **design and UX**, and it applies on top of them.

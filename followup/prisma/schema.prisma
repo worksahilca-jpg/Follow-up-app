@@ -2419,3 +2419,18 @@ model TrainingRule {
 
   @@index([trade, createdAt])
 }
+
+/// "Claude on the Train page" (A-298): the founder's talk with Claude beside Talk to it, kept so it remembers what he
+/// said before. Founder-only. Emails, phone numbers, addresses and links are taken out of his words before they're kept.
+model TrainerMessage {
+  id        String   @id @default(cuid())
+  // "founder" or "claude".
+  role      String
+  text      String
+  // What Claude showed with its answer: rules it proposed or changed, replies it tested. JSON, read by the panel.
+  cards     Json?
+  userId    String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}

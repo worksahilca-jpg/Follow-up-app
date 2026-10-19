@@ -238,4 +238,12 @@ describe("POST /api/admin/train", () => {
     rules.deleteTrainingRule.mockResolvedValueOnce(false);
     expect((await POST(req({ action: "rule-undo", id: "gone" }))).status).toBe(404);
   });
+
+  it("rule-add saves a rule Claude proposed, for a known kind only", async () => {
+    const { POST } = await import("@/app/api/admin/train/route");
+    const res = await POST(req({ action: "rule-add", trade: "Real estate", text: "Offer a viewing." }));
+    expect(res.status).toBe(200);
+    expect(rules.saveTrainingRule.mock.calls.at(-1)?.[0]).toMatchObject({ trade: "Real estate", text: "Offer a viewing." });
+    expect((await POST(req({ action: "rule-add", trade: "Spaceships", text: "Fly." }))).status).toBe(400);
+  });
 });

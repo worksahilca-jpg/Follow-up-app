@@ -94,6 +94,8 @@ const bodySchema = z.discriminatedUnion("action", [
     qualification: z.unknown().optional(),
     contactAsked: z.boolean().optional(),
   }),
+  // "Claude on the Train page" (A-298): the Save button on a rule Claude proposed.
+  z.object({ action: z.literal("rule-add"), trade: z.enum(INDUSTRIES), text: cleanedText(MAX_RULE_TEXT) }),
   z.object({ action: z.literal("rule-edit"), id: z.string().min(1).max(64), text: cleanedText(MAX_RULE_TEXT) }),
   z.object({ action: z.literal("rule-undo"), id: z.string().min(1).max(64) }),
 ]);
@@ -120,7 +122,7 @@ async function founder(request: NextRequest) {
  * talk (FollowUp answers the founder playing a customer, as the chosen kind of business), teach (keep that answer, or
  * what it should have said, as an example), untrain (undo one); and "Tell FollowUp what's wrong" (A-297): coach (the
  * founder's words become a rule for that kind of business, and the answer is written again with it), rule-edit,
- * rule-undo.
+ * rule-undo; and rule-add, the Save button on a rule Claude proposed (A-298, src/lib/trainer.ts).
  */
 export async function POST(request: NextRequest) {
   const { ctx, error } = await founder(request);
@@ -270,6 +272,15 @@ export async function POST(request: NextRequest) {
       } catch {
         return NextResponse.json({ success: true, rule, reply: null, message: "The rule is saved. FollowUp couldn't write the reply again just now." });
       }
+    }
+
+    case "rule-add": {
+      if (!body.text.trim()) return NextResponse.json({ success: false, message: "The rule is empty." }, { status: 400 });
+      if (await tooManyRecentActions(ctx.businessId, "admin.train.rule", { windowMinutes: 24 * 60, max: TEACHES_PER_DAY })) {
+        return NextResponse.json({ success: false, message: "That's a lot for one day. Try again tomorrow." }, { status: 429 });
+      }
+      const rule = await saveTrainingRule({ trade: body.trade, text: body.text, note: "Proposed by Claude on Train, saved by the founder." }, ctx.userId);
+      return NextResponse.json({ success: true, rule });
     }
 
     case "rule-edit": {

@@ -14362,3 +14362,14 @@ customer or see customer data. Founder-only, with no avatar or typing dots (S-13
 Sahil pastes into Vercel himself, plus a spending cap. Weak: it's a copy with the same notes, not this session, so it
 only knows what is written down. The cost per message is an estimate until a week of real use. It is a new paid
 service and a new dependency, so the build waits for his yes.
+
+## 2026-10-19 — Claude on the Train page built (A-298)
+
+Founder: *"yes build it"*. Built as drawn, with one change: keeping a good answer stays on the Good button. Checked in a
+real browser at 1440 and 390 wide, with the Claude and FollowUp answers stubbed (no keys on this copy). Laptop: two
+columns, cards readable, Save rule is the one solid button. Phone: two tabs, Claude full width, nothing scrolls
+sideways. Fixed while checking: the global focus outline drew a square inside the rounded message box, and the global
+textarea fill showed a white block; both overridden on that box only, with focus shown on the box's border instead.
+Weak, said plainly: what it knows is a summary of BRAIN.md kept in the app's code (the deployed app can't read files
+outside `followup/`), so a change to BRAIN.md's rules has to be copied there too. Its replies have not been run against
+the real Claude yet; the first real check is Sahil's, once the key is in. Cost per message is still an estimate.

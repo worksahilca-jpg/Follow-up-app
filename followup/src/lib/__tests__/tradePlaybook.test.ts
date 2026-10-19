@@ -46,7 +46,7 @@ describe("the playbook", () => {
     const p = playbookFor("Real estate");
     expect(p).toMatch(/ask about the agent's own fee, not a home's price/);
     expect(p).toMatch(/answer with the commission or fee in WHAT THIS BUSINESS HAS TOLD CUSTOMERS/);
-    expect(p).toMatch(/Offer a showing only once they have named a specific home or listing/);
+    expect(p).toMatch(/Offer a showing only once they have named or asked about a specific home or listing/);
   });
 
   // The trust research (A-247): Ontario needs a verifiable basis for a
@@ -93,6 +93,13 @@ describe("the playbook", () => {
     const p = playbookFor("Real estate");
     expect(p).toContain("Ask which one only once");
     expect(p).toContain("Every reply first responds to what their last message said");
+  });
+
+  it("offers a showing for a post they asked about, and never asks which home on a price question (third Talk test)", () => {
+    const p = playbookFor("Real estate");
+    expect(p).toContain("(\"is this still available?\" about a post counts)");
+    expect(p).toContain("never ask which home here: the agent sorts that out");
+    expect(p).not.toContain("ask \" +\n    \"which one)");
   });
 
   it("gives every other kind its own plan: a goal, three steps of two things, the meeting by step 2", () => {

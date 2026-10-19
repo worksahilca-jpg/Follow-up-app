@@ -22,7 +22,7 @@ import { factsPromptBlock, factsText, type FactLine } from "@/lib/factLines";
 import { examplesPromptBlock, type OwnerExampleLine } from "@/lib/ownerExampleLines";
 import { MAX_RULE_TEXT, rulesPromptBlock } from "@/lib/trainingRuleLines";
 import { customerGreetingName } from "@/lib/leadName";
-import { qualifyPromptBlock, type Criterion, type CriterionKey, type ExtractedItem } from "@/lib/qualification";
+import { knownPromptBlock, qualifyPromptBlock, type Criterion, type CriterionKey, type ExtractedItem, type Qualification } from "@/lib/qualification";
 import { BRIEF_SECTIONS, type BriefSection, type ProposedLine } from "@/lib/callBrief";
 import { bookingLinkPromptBlock } from "@/lib/bookingOffer";
 import { checkerPhrase, cleanKinds, standingRuleNotice, type NotCustomerReason, type SetAsideKind } from "@/lib/notCustomerReasons";
@@ -1402,6 +1402,10 @@ export async function generateFollowUpMessage(
     trade?: string | null;
     facts?: readonly FactLine[];
     qualify?: Pick<Criterion, "ask"> | null;
+    /** What the customer has told FollowUp so far, and what was asked and left unanswered (knownPromptBlock). */
+    known?: Qualification | null;
+    /** The checklist has nothing for this reply: it asks nothing of its own and ends with what happens next. */
+    nothingToAsk?: boolean;
     /** They said yes to meeting (A-263, src/lib/bookingOffer.ts): their booking page, for this reply's one job. */
     bookingLink?: string | null;
     /** How the owner answers, by example ("Write it better", A-290, src/lib/ownerExamples.ts). */
@@ -1725,6 +1729,7 @@ export async function generateFollowUpMessage(
           VOICE_AGENT_TRUST_NOTICE +
           (playbookFor(lead.trade) ? "\n\n" + playbookFor(lead.trade) : "") +
           rulesPromptBlock(lead.rules ?? []) +
+          knownPromptBlock(lead.known ?? null, Boolean(lead.nothingToAsk && !lead.bookingLink && !lead.qualify)) +
           (lead.bookingLink ? bookingLinkPromptBlock(lead.bookingLink) : qualifyPromptBlock(lead.qualify ?? null)) +
           factsPromptBlock(lead.facts ?? []) +
           examplesPromptBlock(lead.examples ?? []) +

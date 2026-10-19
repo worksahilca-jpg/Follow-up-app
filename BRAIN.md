@@ -95,7 +95,7 @@ a booked call or visit; the owner closes.
 - **Paused (not committed, copy in the scratchpad `wip-memory/`):** every kind remembers which plan questions it
   asked, the same checklist real estate has (no decision number yet; the "A-299" it was first called is now the
   playbook above).
-- **Talk to it test (Oct 19) found 5 reply faults, fixed in a PR:** repeat area question, "buy/sell?" after a listing question, weekend vs weekday showing hours, condo-worth reply. Rerun the 6 test messages after merge.
+- **Talk to it tests (Oct 19):** the first found 5 reply faults (repeat area question, "buy/sell?" after a listing question, weekend vs weekday showing hours, condo-worth reply), fixed in #565. The second found "which one caught your eye?" in every reply and "weekend works" / price ignored, fixed in #566. The third still asked the area three times: the reply writer never saw the checklist. Fixed next (it is now told what they said, what went unanswered, and to ask nothing when nothing is left). Next: rerun the 6 test messages.
 - **GoHighLevel uses the same reply rules:** ghlPoll → scoreAndDraftForLead. The business type must be "Real estate".
 - **Waiting on Sahil (gave him one Claude in Chrome prompt for 1–4, Oct 19 night):**
   1. Vercel: delete `ANTHROPIC_API_KEY` and `ANTHROPIC_MODEL`.

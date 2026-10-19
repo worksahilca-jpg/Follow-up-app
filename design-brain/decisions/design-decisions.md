@@ -14421,3 +14421,25 @@ After #565 the replies offered a call or showing (good), but every one asked "wh
 ignored "weekend works" and "what's the best price?". Cause: the playbook's "saw a listing without saying which" line
 had no limit, so it won every reply. Fix: ask which one only once; every reply first responds to what their last
 message said (an answer is taken and used; a question is answered).
+
+## 2026-10-19 — Third Talk test: the reply writer now sees what the customer already said
+
+**What happened.** After #566, the founder's third Talk to it test (Instagram, Real estate) still failed: the area
+was asked in three replies running, "which one caught your eye?" came back in reply 5, "weekend works, no agent yet"
+got "I'll keep that in mind", and the best-price question was answered with "which listing?". The condo-worth reply
+passed.
+
+**Why (found in the code, not guessed).** The checklist never asks a thing twice, but the reply writer never saw
+it. On Instagram it is always told to end with "an easy question", so whenever the checklist had nothing for that
+reply, it made one up (the area, again). The price line also told it to ask which home.
+
+**What changed (no product behaviour change; this makes A-299 work as approved).**
+- Every reply for a business with a checklist is now told what the customer already said ("Area: …; When: …;
+  Agent: none yet"), what was asked and not answered (never ask again), and, when the checklist has nothing left,
+  to ask nothing and end with what happens next.
+- The checklist question replaces any other question the DM instructions suggest.
+- "Is this still available?" about a post counts as asking about a specific home, so a showing can be offered.
+- A best-price question never asks which home: the agent sorts that out.
+
+**Honest limit.** These are still instructions to the AI; only the founder's rerun shows how well it follows them.
+

@@ -236,6 +236,9 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
   // once the customer has had the chance to answer it.
   let qualification: Qualification | null = null;
   let qualify: Pick<Criterion, "ask"> | null = null;
+  // What the reply writer is told the customer already said or was asked (knownPromptBlock): the checklist before
+  // this reply's own question is marked. `nothingToAsk`: a reply to them with nothing left on the checklist.
+  let known: { qualification: Qualification | null; nothingToAsk: boolean } | null = null;
   if (template) {
     qualification = mergeQualification(
       template,
@@ -246,6 +249,7 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
     );
     const next = customerJustWrote && !askContact ? nextToAsk(template, qualification) : [];
     qualify = askFor(next);
+    known = { qualification, nothingToAsk: customerJustWrote && !askContact && next.length === 0 };
     if (next.length) qualification = markOffered(qualification, ...next.map((c) => c.key));
   }
   const becameReady = Boolean(template && !lead.qualifiedAt && isReady(template, qualification));
@@ -272,7 +276,7 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
   let suggestedQuickReplies: Prisma.InputJsonValue | typeof Prisma.JsonNull;
   if (dmChannel) {
     const { trade, facts, examples, rules } = await draftingContext(lead.businessId);
-    const dm = await draftDm(lead.name, conversation, voiceSamples, undefined, undefined, leadLanguage, facts, askContact ? DM_CONTACT_ASK : qualify, trade, examples, rules);
+    const dm = await draftDm(lead.name, conversation, voiceSamples, undefined, undefined, leadLanguage, facts, askContact ? DM_CONTACT_ASK : qualify, trade, examples, rules, known);
     suggestedMessage = dm.body;
     suggestedSubject = null;
     // Buttons only when the draft passed the shape check — an owner may
@@ -285,7 +289,7 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
     // a DM refuses every link (src/lib/dmDrafts.ts). The send pass holds a
     // draft that carries it, so the owner always sees it go.
     const bookingLink = customerJustWrote && saidYesToMeeting(conversation) ? `${appUrl()}/book/${lead.id}` : null;
-    const draft = await generateFollowUpMessage({ name: lead.name, conversation, ...(await draftingContext(lead.businessId)), qualify, bookingLink }, voiceSamples, undefined, undefined, leadLanguage);
+    const draft = await generateFollowUpMessage({ name: lead.name, conversation, ...(await draftingContext(lead.businessId)), qualify, bookingLink, known: known?.qualification ?? null, nothingToAsk: known?.nothingToAsk ?? false }, voiceSamples, undefined, undefined, leadLanguage);
     suggestedMessage = await composeFollowUpEmail(lead.name.split(" ")[0], lead.businessId, draft.body, {
       languageSample: latestInboundText(conversation),
       leadLanguage,

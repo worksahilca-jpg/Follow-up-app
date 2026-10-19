@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireCronSecret } from "@/lib/cronAuth";
 import { reportCronFailure } from "@/lib/monitoring";
 import { pollGoHighLevelForAllBusinesses } from "@/lib/ghlPoll";
+import { wakeGhlHistoryForAllBusinesses } from "@/lib/ghlHistory";
 
 // One request per connected GoHighLevel account, plus one per conversation with something new.
 export const maxDuration = 300;
@@ -16,7 +17,13 @@ export async function GET(request: NextRequest) {
 
   try {
     const result = await pollGoHighLevelForAllBusinesses();
-    return NextResponse.json({ success: true, ...result });
+    // Then a few old customers brought back (src/lib/ghlHistory.ts). After the poll, so new messages always come
+    // first, and on its own: a failure here never fails the poll.
+    const wake = await wakeGhlHistoryForAllBusinesses().catch((err) => {
+      reportCronFailure("ghl-poll", err, "wake-up");
+      return { woken: 0, failed: 1 };
+    });
+    return NextResponse.json({ success: true, ...result, woken: wake.woken });
   } catch (err) {
     reportCronFailure("ghl-poll", err);
     const message = err instanceof Error ? err.message : "GoHighLevel poll run failed.";

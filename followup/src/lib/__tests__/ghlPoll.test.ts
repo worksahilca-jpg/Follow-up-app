@@ -127,6 +127,12 @@ describe("where reading starts", () => {
     p.message.findFirst.mockResolvedValue({ sentAt: new Date("2026-10-10T00:00:00.000Z") });
     expect((await ghlReadFrom("biz1", now)).toISOString()).toBe("2026-10-15T21:00:00.000Z");
   });
+
+  it("never counts an old conversation the wake-up brought back as where reading got to", async () => {
+    p.message.findFirst.mockResolvedValue(null);
+    await ghlReadFrom("biz1", now);
+    expect(p.message.findFirst.mock.calls[0][0].where.OR).toEqual([{ source: null }, { source: { not: "gohighlevel_history" } }]);
+  });
 });
 
 describe("a tick", () => {

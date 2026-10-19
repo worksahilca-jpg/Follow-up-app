@@ -14443,3 +14443,25 @@ reply, it made one up (the area, again). The price line also told it to ask whic
 
 **Honest limit.** These are still instructions to the AI; only the founder's rerun shows how well it follows them.
 
+## 2026-10-19 — Wake up old customers on GoHighLevel (A-300)
+
+**Asked:** "build the wake up old customers for gohighlevel", then "build it" to the design. It answers the realtor's
+question: what about the customers already sitting in GoHighLevel?
+
+**Built:** `src/lib/ghlHistory.ts`, run after each GoHighLevel poll. See A-300 for the rules: a 45-day to 6-month
+window, 10 a day, never STOP, Do Not Disturb, said no, closed or FollowUp off. Welcome backs always wait for the
+owner, on Today.
+
+**Found while building, fixed in the same change:**
+- Old GoHighLevel contacts with no conversation got a welcome back drafted from a name only.
+- Those contacts counted toward the monthly customer limit.
+Both would have shown on the first real account the day it connected.
+
+**Not verified yet:**
+- GoHighLevel's date paging (`startAfterDate`) comes from its API reference, not a live account. If it doesn't page,
+  the wake-up stops itself rather than looping.
+- The first real check is the realtor's account.
+
+**Noted, not changed:** on the Free plan GoHighLevel isn't read at all (paid or trial only, by design). The realtor's
+account needs a trial or paid plan.
+

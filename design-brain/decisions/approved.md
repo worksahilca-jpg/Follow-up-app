@@ -5184,3 +5184,24 @@ offer the viewing in the first reply.
 replies said "Yes, it's still available". That was invented. The rule stands, and it is already in the realtor
 playbook: availability, price and details come only from the owner's facts or the conversation. Otherwise FollowUp
 says it will confirm and get back to them, and the owner is asked.
+
+## A-300
+**Wake up old customers on GoHighLevel (2026-10-19).** The founder said *"build it"* to the design proposed the same
+day, before the first realtor GoHighLevel meeting.
+- **What:** GoHighLevel conversations whose last message is between the welcome-back wait (the owner's setting, 45
+  days unless changed) and about 6 months ago come into FollowUp as history. The customer must have written at least
+  once. FollowUp's existing welcome back is then written for them, and it **always waits for the owner** (a quiet
+  customer is cold, and a cold customer's message is never sent on its own).
+- **Pace:** at most 10 customers a day, most recent first, so Today never floods.
+- **Never brought back:** STOP (kept as opted out), Do Not Disturb in GoHighLevel, said no, won or lost, FollowUp
+  switched off, already talking in FollowUp, or the welcome back turned off.
+- **Safe by construction:** nothing is drafted, scored or sent at import, and an old message can never make the poller
+  re-read and answer old conversations.
+- **Two fixes found while building it, needed for the same meeting:**
+  - A CRM contact FollowUp has no conversation with gets no automatic draft. Before, every old GoHighLevel contact got
+    a welcome back written from a name only.
+  - A CRM contact with no conversation doesn't count toward the plan's monthly customer limit until their first
+    message. Before, a sync of a few hundred contacts used up the month's limit (20 on Free), and real new customers
+    after it got no reply.
+- **No new screen.** The welcome backs appear on Today like any other draft that waits for the owner.
+

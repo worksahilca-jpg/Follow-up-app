@@ -157,6 +157,15 @@ describe("human-neglect trigger (lead wrote, nobody answered)", () => {
   // the silence query, then the dead-lead-reactivation query (on by
   // default — see DEAD_LEAD_ACTION), then findUnansweredLeads's own
   // query. Every test in this block cares only about the third.
+  // GoHighLevel wake-up, 2026-10-19: a CRM contact with no conversation got a welcome back written from a name.
+  it("never asks the plan or welcome-back queries for a CRM contact FollowUp has no conversation with", async () => {
+    await runAutomationForBusiness("biz1");
+    const [quiet, dead] = p.lead.findMany.mock.calls.map((c: [{ where: { AND?: unknown[] } }]) => c[0].where.AND);
+    for (const and of [quiet, dead]) {
+      expect(and).toContainEqual({ NOT: { crmProvider: { not: null }, conversations: { none: { messages: { some: {} } } } } });
+    }
+  });
+
   it("picks up a lead whose last message is inbound and older than the window, and tells the owner when held", async () => {
     p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([unansweredLead(30)]);
     risk.mockResolvedValue({ riskLevel: "medium", reason: "answers a factual question" });

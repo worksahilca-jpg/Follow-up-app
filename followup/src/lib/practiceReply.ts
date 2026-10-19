@@ -3,6 +3,7 @@ import { buildAckLine } from "@/lib/acknowledge";
 import { assessSendRisk, extractQualificationFacts, generateFollowUpMessage, localizeFixedText } from "@/lib/integrations/openai";
 import { composeFollowUpEmail, getSenderFirstName, latestInboundText } from "@/lib/sender";
 import { draftingContext } from "@/lib/businessFacts";
+import { getTrainingRules } from "@/lib/trainingRules";
 import { getVoiceSamples } from "@/lib/voice";
 import { detectLeadLanguage } from "@/lib/leadLanguage";
 import { saidYesToMeeting } from "@/lib/bookingOffer";
@@ -90,6 +91,7 @@ export async function practiceReply(
       inboundText: latest,
       channel,
       trade: opts.industry ?? business?.industry ?? null,
+      rules: await getTrainingRules(opts.industry ?? business?.industry),
     });
     // As acknowledgeNewLead sends it: framed on email, "Hi! " and the line on a DM.
     const reply = dm
@@ -126,7 +128,7 @@ export async function practiceReply(
   const contactAsked = contactAskedBefore || askContact;
 
   if (dm) {
-    const written = await draftDm(customerName, conversation, voiceSamples, undefined, undefined, detected, context.facts, askContact ? DM_CONTACT_ASK : qualify, context.trade, context.examples);
+    const written = await draftDm(customerName, conversation, voiceSamples, undefined, undefined, detected, context.facts, askContact ? DM_CONTACT_ASK : qualify, context.trade, context.examples, context.rules);
     let verdict: PracticeVerdict;
     if (written.shapeFailed) {
       // The send pass holds a DM that failed its shape check, in the same words (automation.ts).

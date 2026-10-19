@@ -70,12 +70,16 @@ a booked call or visit; the owner closes.
 
 **Last updated: 2026-10-19**
 
-- **Just shipped:** every kind of business has a reply plan, and every reply moves toward a call (A-296, PR #557,
-  live). Talk to it, Scorecard and per-kind progress are live on Admin → Train.
+- **Just built (PR #559 open, waiting for "merge"):**
+  1. "Tell FollowUp what's wrong" (A-297): his words become a rule per kind of business, saved in the database.
+  2. Claude on the Train page (A-298): a copy of Claude beside Talk to it. It talks bad answers through, proposes
+     rules (saved on his yes), tests replies and catches clashing rules. What it knows lives in
+     `followup/src/lib/trainerBrief.ts`: **when the rules in this file change, update that file too.**
+- **Before that:** every kind of business has a reply plan (A-296, PR #557, live).
 - **Waiting on Sahil:**
-  1. Test the new replies in Admin → Train → Talk to it (Real estate: "hi", then "i saw your listing…").
-  2. Yes or no on "Tell FollowUp what's wrong" (drawn; his feedback becomes a rule per kind of business).
+  1. "merge" for PR #559.
+  2. Make an Anthropic API key, add `ANTHROPIC_API_KEY` and `ANTHROPIC_MODEL` in Vercel (Production), set a spending
+     cap. Until then the old "Tell FollowUp what's wrong" button works.
   3. Message 5 testers (was due Oct 19).
-- **Next build, after his yes:** "Tell FollowUp what's wrong" on Talk to it.
 - **Known weak spots:** kinds other than real estate don't remember which questions were asked; the clinic "urgent"
   rule is an instruction only.

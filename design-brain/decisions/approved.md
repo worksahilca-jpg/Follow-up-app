@@ -5083,3 +5083,56 @@ yet).
   they'd like to see it or have a quick call first, never which area.
 Built in `src/lib/tradePlaybooks.ts` (plans, `firstAskFor`), `generateInstantReply` + `assessAckRisk` and the follow-up
 writer in `src/lib/integrations/openai.ts`, and `DM_SHAPE_RULES` in `src/lib/dmDrafts.ts`.
+
+## A-297 — "Tell FollowUp what's wrong": the founder's words become a rule for that kind of business ^A-297
+
+**Approved:** 2026-10-19, founder: *"yes do it"*, to the "Coach FollowUp" drawing. He asked for it in his own words:
+*"deploy an agent whom I can talk to and help that model to improve … I can't paste everything here and then send you
+screenshots."*
+**What specifically:**
+- **A third choice under every answer** in Admin → Train → Talk to it, after Good and Teach a better reply: "Tell
+  FollowUp what's wrong". It opens a box, "What's wrong with this reply? Say it your way." (short, casual or Hinglish is
+  fine), with one solid "Fix it" and a quiet Cancel.
+- **One rule, then the answer again.** FollowUp turns his words into one general rule for the chosen kind of business
+  (never about this customer; never against the safety rules; merged with an existing rule that covers the same thing)
+  and writes the same answer again from the same point in the chat. The old answer stays above it, crossed out, as
+  "FollowUp, before"; the new one is "FollowUp, with your rule".
+- **The rule shows under it:** "FollowUp's new rule · <kind>", the rule in bold, "Every <kind> business answers this way
+  now. Undo · Change the wording".
+- **"Your rules for <kind>"** under the chat: the count, each rule with its date, Change and Undo.
+- **Live at once, kept for good.** Rules are saved in FollowUp's database (`TrainingRule`), so nothing depends on anyone's
+  memory. The newest 20 for a kind go into every first reply, draft and DM for businesses of that kind, under the safety
+  rules (facts, prices, dates, pressure, a no, honesty about automation always win).
+Built in `src/lib/trainingRules.ts`, `src/lib/trainingRuleLines.ts`, `writeCoachRule` in
+`src/lib/integrations/openai.ts`, the `coach` / `rule-edit` / `rule-undo` actions of `/api/admin/train`, and
+`src/components/admin/TrainTalk.tsx`.
+**Changed from the drawing:** the drawing said rules are "checked every morning and built in". That step is not built:
+a rule works the moment it is saved, and stays until he undoes it. A morning review would mean reading rule text in
+production, which this setup does not do; his list of rules on Talk to it is the place to review them.
+
+## A-298 — Claude on the Train page: a copy of Claude beside Talk to it ^A-298
+
+**Approved:** 2026-10-19, founder: *"yes draw it with claude"*, then *"yes build it"*, to the "Claude on Train" drawing.
+He asked for it in his own words: *"i want you to be there bro … if your clone is also sitting there with all the rules
+that you know and all the other things you know then its good"*.
+**What specifically:**
+- **Beside the chat.** On a laptop, Claude is a column to the right of Talk to it (the page widens for it). On a phone,
+  it gets its own tab ("Talk to it | Claude").
+- **"Ask Claude" under every answer**, in place of "Tell FollowUp what's wrong" once Claude is set up. It points Claude
+  at that answer ("About: …" above the box, with Remove). Before the key is added, the old button stays.
+- **It talks like Claude Code does with him:** short, plain, one recommendation, Hinglish understood.
+- **Cards, not walls of text:** a proposed rule (bold, with "Save rule", or "Save new wording" with the old one crossed
+  out), a saved, changed or removed rule (Undo on saved), and FollowUp's answers in its tests ("FollowUp's answers in
+  N tests": what the customer said, then FollowUp's answer).
+- **Saves only on his yes:** the Save button, or his words ("save", "haan kar do"). It tests up to 6 replies an answer,
+  and spots a rule that clashes with an old one.
+- **It knows:** a summary of BRAIN.md and the reply decisions (`src/lib/trainerBrief.ts`), the kind's reply plan, every
+  saved rule with its id, and the last 30 messages of their talk (kept in `TrainerMessage`).
+- **It can't:** change code, message a customer, or see customer data. No avatar, no typing dots (S-13); a plain line
+  "Claude is working on it" while it works.
+Built in `src/lib/trainer.ts` (Anthropic's API through fetch, no new package), `src/app/api/admin/trainer/route.ts`,
+`src/components/admin/TrainerPanel.tsx` and `TrainTalk.tsx`. Needs `ANTHROPIC_API_KEY` and `ANTHROPIC_MODEL` in Vercel.
+**Changed from the drawing:** "Keep a good answer as an example" stays on the Good button under each answer, not with
+Claude.
+**Seen built:** 2026-10-19, founder on the laptop screenshot (Claude column beside Talk to it, the tests card, the
+proposed rule with Save rule): *"This looks good."*

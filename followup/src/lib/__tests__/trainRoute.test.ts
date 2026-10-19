@@ -1,9 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 
-const { getSessionContext, practiceReply, training } = vi.hoisted(() => ({
+const { getSessionContext, practiceReply, training, writeCoachRule, rules } = vi.hoisted(() => ({
   getSessionContext: vi.fn(),
   practiceReply: vi.fn(),
+  writeCoachRule: vi.fn(),
+  rules: {
+    getTrainingRules: vi.fn(async () => ["Offer a call early."]),
+    saveTrainingRule: vi.fn(async (input: { text: string }) => ({ id: "r1", text: input.text })),
+    updateTrainingRule: vi.fn(async () => true),
+    deleteTrainingRule: vi.fn(async () => true),
+  },
   training: {
     readConversation: vi.fn(() => ({ speakers: ["A", "B"], agent: "B", turns: [], examples: 1 })),
     saveConversation: vi.fn(),
@@ -21,6 +28,8 @@ const { getSessionContext, practiceReply, training } = vi.hoisted(() => ({
 vi.mock("@/lib/session", () => ({ getSessionContext }));
 vi.mock("@/lib/practiceReply", () => ({ practiceReply }));
 vi.mock("@/lib/training", () => training);
+vi.mock("@/lib/integrations/openai", () => ({ writeCoachRule }));
+vi.mock("@/lib/trainingRules", () => rules);
 vi.mock("@/lib/rateLimit", () => ({ tooManyRecentActions: vi.fn().mockResolvedValue(false) }));
 
 process.env.PLATFORM_ADMIN_EMAILS = "founder@example.com";
@@ -145,5 +154,96 @@ describe("POST /api/admin/train", () => {
     const { POST } = await import("@/app/api/admin/train/route");
     expect((await POST(req({ action: "untrain", id: "e1" }))).status).toBe(200);
     expect(training.deleteExample).toHaveBeenCalledWith("e1");
+  });
+
+  // A-297, "Tell FollowUp what's wrong": the founder's words become a rule for that kind, and the answer is written again.
+  const coach = {
+    action: "coach",
+    trade: "Real estate",
+    channel: "instagram",
+    context: [{ from: "customer", text: "hi" }, { from: "followup", text: "Hi! Are you buying or selling?" }],
+    customerSaid: "i saw your listing",
+    followUpReply: "Which area are you looking in?",
+    note: "Ask which listing and offer a viewing.",
+    qualification: null,
+    contactAsked: false,
+  };
+
+  it("coach: turns the founder's words into a rule, then writes the answer again from the same point", async () => {
+    process.env.OPENAI_API_KEY = "test";
+    writeCoachRule.mockResolvedValue("When a customer mentions a listing, ask which one and offer a viewing.");
+    practiceReply.mockResolvedValue({ reply: "Which listing caught your eye? Happy to set up a viewing.", qualification: null, contactAsked: false });
+    const { POST } = await import("@/app/api/admin/train/route");
+    const res = await POST(req(coach));
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.rule).toEqual({ id: "r1", text: "When a customer mentions a listing, ask which one and offer a viewing." });
+    expect(json.reply).toBe("Which listing caught your eye? Happy to set up a viewing.");
+    expect(writeCoachRule.mock.calls[0][0]).toMatchObject({
+      trade: "Real estate",
+      customerSaid: "i saw your listing",
+      followUpReply: "Which area are you looking in?",
+      note: "Ask which listing and offer a viewing.",
+      existing: ["Offer a call early."],
+    });
+    expect(rules.saveTrainingRule).toHaveBeenCalledWith(
+      { trade: "Real estate", text: "When a customer mentions a listing, ask which one and offer a viewing.", note: "Ask which listing and offer a viewing." },
+      "u"
+    );
+    const [, , turns, , channel, , opts] = practiceReply.mock.calls[0];
+    expect(turns.map((t: { text: string }) => t.text)).toEqual(["hi", "Hi! Are you buying or selling?", "i saw your listing"]);
+    expect(channel).toBe("instagram");
+    expect(opts).toEqual({ industry: "Real estate" });
+    delete process.env.OPENAI_API_KEY;
+  });
+
+  it("coach: an empty note is refused and nothing is saved", async () => {
+    process.env.OPENAI_API_KEY = "test";
+    const { POST } = await import("@/app/api/admin/train/route");
+    expect((await POST(req({ ...coach, note: "   " }))).status).toBe(400);
+    expect(writeCoachRule).not.toHaveBeenCalled();
+    expect(rules.saveTrainingRule).not.toHaveBeenCalled();
+    delete process.env.OPENAI_API_KEY;
+  });
+
+  it("coach: a rule that can't be written saves nothing", async () => {
+    process.env.OPENAI_API_KEY = "test";
+    writeCoachRule.mockRejectedValue(new Error("model"));
+    const { POST } = await import("@/app/api/admin/train/route");
+    expect((await POST(req(coach))).status).toBe(502);
+    expect(rules.saveTrainingRule).not.toHaveBeenCalled();
+    expect(practiceReply).not.toHaveBeenCalled();
+    delete process.env.OPENAI_API_KEY;
+  });
+
+  it("coach: the rule stays saved when the answer can't be written again", async () => {
+    process.env.OPENAI_API_KEY = "test";
+    writeCoachRule.mockResolvedValue("Offer a viewing.");
+    practiceReply.mockRejectedValue(new Error("model"));
+    const { POST } = await import("@/app/api/admin/train/route");
+    const res = await POST(req(coach));
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.rule.id).toBe("r1");
+    expect(json.reply).toBeNull();
+    delete process.env.OPENAI_API_KEY;
+  });
+
+  it("rule-edit and rule-undo change or remove one rule, and say when it's gone", async () => {
+    const { POST } = await import("@/app/api/admin/train/route");
+    expect((await POST(req({ action: "rule-edit", id: "r1", text: "Offer a viewing first." }))).status).toBe(200);
+    expect(rules.updateTrainingRule).toHaveBeenCalledWith("r1", "Offer a viewing first.");
+    expect((await POST(req({ action: "rule-undo", id: "r1" }))).status).toBe(200);
+    expect(rules.deleteTrainingRule).toHaveBeenCalledWith("r1");
+    rules.deleteTrainingRule.mockResolvedValueOnce(false);
+    expect((await POST(req({ action: "rule-undo", id: "gone" }))).status).toBe(404);
+  });
+
+  it("rule-add saves a rule Claude proposed, for a known kind only", async () => {
+    const { POST } = await import("@/app/api/admin/train/route");
+    const res = await POST(req({ action: "rule-add", trade: "Real estate", text: "Offer a viewing." }));
+    expect(res.status).toBe(200);
+    expect(rules.saveTrainingRule.mock.calls.at(-1)?.[0]).toMatchObject({ trade: "Real estate", text: "Offer a viewing." });
+    expect((await POST(req({ action: "rule-add", trade: "Spaceships", text: "Fly." }))).status).toBe(400);
   });
 });

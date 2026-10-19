@@ -14338,3 +14338,43 @@ rule for that kind of business, rewrites the reply at once (the old one crossed 
 rules with Undo. Rules are checked every morning and built in for good. Drawn as a page, not on the running app: the
 local test sign-in had expired. Weak: rules written in the moment can contradict each other; the morning check is
 where that gets caught, so it must actually happen.
+
+## 2026-10-19 — "Tell FollowUp what's wrong" built (A-297)
+
+Founder: *"yes do it"*. Built on Talk to it as drawn, with one change: no "checked every morning" step. A rule is live
+the moment it is saved and stays until he undoes it; the list under the chat is where he reviews them. Checked in a
+real browser at 1440 and 390 wide with the answers stubbed (the local admin sign-in has expired, and this copy has no
+AI key): the box, the crossed-out old answer, the new one, the rule block and the list all fit, no sideways scroll.
+Weak, said plainly: rules can still contradict each other; FollowUp merges a new rule into an old one only when it
+notices they cover the same thing, so the list needs his eye now and then. Rules from older sessions only appear in the
+list after the page reloads (it refreshes itself after each change). The real test is his own Talk to it session with
+the live AI.
+
+## 2026-10-19 — "Claude on the Train page" drawn, waiting
+
+Founder, after A-297 was built: *"i want you to be there bro … if your clone is also sitting there with all the rules
+that you know and all the other things you know then its good"*, then *"yes draw it with claude"*. Drawn (artifact
+"Claude on Train"): on a laptop, Claude sits in a right-hand column beside Talk to it; on a phone, it gets its own tab.
+"Tell FollowUp what's wrong" becomes "Ask Claude". It knows BRAIN.md, every kind's reply plan, the saved rules and
+examples, and its past talks with him. It proposes a rule and shows the reply rewritten with it, saves only on his yes,
+tests the fix on five more ways a customer might say it, and catches rules that clash. It can't change code, message a
+customer or see customer data. Founder-only, with no avatar or typing dots (S-13). It needs an Anthropic key, which
+Sahil pastes into Vercel himself, plus a spending cap. Weak: it's a copy with the same notes, not this session, so it
+only knows what is written down. The cost per message is an estimate until a week of real use. It is a new paid
+service and a new dependency, so the build waits for his yes.
+
+## 2026-10-19 — Claude on the Train page built (A-298)
+
+Founder: *"yes build it"*. Built as drawn, with one change: keeping a good answer stays on the Good button. Checked in a
+real browser at 1440 and 390 wide, with the Claude and FollowUp answers stubbed (no keys on this copy). Laptop: two
+columns, cards readable, Save rule is the one solid button. Phone: two tabs, Claude full width, nothing scrolls
+sideways. Fixed while checking: the global focus outline drew a square inside the rounded message box, and the global
+textarea fill showed a white block; both overridden on that box only, with focus shown on the box's border instead.
+Weak, said plainly: what it knows is a summary of BRAIN.md kept in the app's code (the deployed app can't read files
+outside `followup/`), so a change to BRAIN.md's rules has to be copied there too. Its replies have not been run against
+the real Claude yet; the first real check is Sahil's, once the key is in. Cost per message is still an estimate.
+
+## 2026-10-19 — Claude on the Train page: built screen approved
+
+Founder, on the laptop screenshot of A-298 as built: *"This looks good."* Keep this layout: Claude as a right-hand
+column beside Talk to it, the tests grouped in one card, the proposed rule as the one solid button.

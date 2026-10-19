@@ -10,6 +10,7 @@ import { dmSuppressionKey, isSuppressed } from "@/lib/suppression";
 import { greetingFirstName, businessDisplayName } from "@/lib/leadName";
 import { recordAudit } from "@/lib/audit";
 import { HOLD_ALL_FIRST_REPLY_REASON, isUnconfirmedSpamSource } from "@/lib/holdReasons";
+import { getTrainingRules } from "@/lib/trainingRules";
 
 /**
  * Instant acknowledgement — the first half of "no lead is lost to LATE
@@ -332,6 +333,8 @@ export async function buildAckLine(input: {
   locale?: string | null;
   /** The business's kind, so the first reply asks the first question of its plan (A-296). */
   trade?: string | null;
+  /** The founder's rules for that kind (A-297). */
+  rules?: readonly string[];
 }): Promise<AckLine> {
   const fallback = genericAckLine(input.businessName);
   if (!input.inboundText.trim()) return { line: fallback, source: "fallback", reason: "no inbound text" }; // nothing specific to respond to
@@ -343,6 +346,7 @@ export async function buildAckLine(input: {
       ownerFirstName: input.ownerFirstName,
       inboundText: input.inboundText,
       trade: input.trade,
+      rules: input.rules,
     });
   } catch (err) {
     console.error("Instant reply generation failed, falling back to the generic acknowledgement:", err);
@@ -658,6 +662,7 @@ export async function acknowledgeNewLead(
       channel: input.channel,
       locale: lead.language,
       trade: business?.industry ?? null,
+      rules: await getTrainingRules(business?.industry),
     });
 
     // The lead's own message decides the language of everything that

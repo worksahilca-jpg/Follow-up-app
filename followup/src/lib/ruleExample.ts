@@ -9,6 +9,7 @@ import type { LeadLanguage } from "@/lib/leadLanguage";
 import type { Lead, Message } from "@/lib/types";
 import { draftingContext } from "@/lib/businessFacts";
 import { businessTrade } from "@/lib/tradePlaybooks";
+import { getTrainingRules } from "@/lib/trainingRules";
 
 /**
  * "See an example" on a follow-up rule (design brain A-044, the Zapier
@@ -55,11 +56,13 @@ export async function writeRuleExample(
   const language = (lead.languageRead ?? null) as Partial<LeadLanguage> | null;
   if (rule === "instant_ack") {
     const inbound = lead.conversation.filter((m) => m.direction === "inbound").sort((a, b) => Date.parse(a.date) - Date.parse(b.date))[0];
+    const trade = await businessTrade(businessId);
     const text = await generateInstantReply({
       leadFirstName: greetingFirstName(lead.name),
       ownerFirstName: await getSenderFirstName(businessId),
       inboundText: inbound?.body ?? "",
-      trade: await businessTrade(businessId),
+      trade,
+      rules: await getTrainingRules(trade),
     });
     return { text, what: "the first thank-you" };
   }
@@ -84,8 +87,8 @@ export async function writeRuleExample(
   const voiceSamples = await getVoiceSamples(businessId);
   const lastInbound = [...lead.conversation].reverse().find((m) => m.direction === "inbound");
   if (lastInbound && (lastInbound.channel === "instagram" || lastInbound.channel === "messenger")) {
-    const { trade, facts, examples } = await draftingContext(businessId);
-    const dm = await draftDm(lead.name, lead.conversation, voiceSamples, hint, undefined, language, facts, null, trade, examples);
+    const { trade, facts, examples, rules } = await draftingContext(businessId);
+    const dm = await draftDm(lead.name, lead.conversation, voiceSamples, hint, undefined, language, facts, null, trade, examples, rules);
     return { text: dm.body, what };
   }
   const draft = await generateFollowUpMessage({ name: lead.name, conversation: lead.conversation, ...(await draftingContext(businessId)) }, voiceSamples, hint, undefined, language);

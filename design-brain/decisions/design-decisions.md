@@ -14349,3 +14349,16 @@ Weak, said plainly: rules can still contradict each other; FollowUp merges a new
 notices they cover the same thing, so the list needs his eye now and then. Rules from older sessions only appear in the
 list after the page reloads (it refreshes itself after each change). The real test is his own Talk to it session with
 the live AI.
+
+## 2026-10-19 — "Claude on the Train page" drawn, waiting
+
+Founder, after A-297 was built: *"i want you to be there bro … if your clone is also sitting there with all the rules
+that you know and all the other things you know then its good"*, then *"yes draw it with claude"*. Drawn (artifact
+"Claude on Train"): on a laptop, Claude sits in a right-hand column beside Talk to it; on a phone, it gets its own tab.
+"Tell FollowUp what's wrong" becomes "Ask Claude". It knows BRAIN.md, every kind's reply plan, the saved rules and
+examples, and its past talks with him. It proposes a rule and shows the reply rewritten with it, saves only on his yes,
+tests the fix on five more ways a customer might say it, and catches rules that clash. It can't change code, message a
+customer or see customer data. Founder-only, with no avatar or typing dots (S-13). It needs an Anthropic key, which
+Sahil pastes into Vercel himself, plus a spending cap. Weak: it's a copy with the same notes, not this session, so it
+only knows what is written down. The cost per message is an estimate until a week of real use. It is a new paid
+service and a new dependency, so the build waits for his yes.

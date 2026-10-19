@@ -76,6 +76,7 @@ a booked call or visit; the owner closes.
 - **Before that:** every kind of business has a reply plan (A-296, PR #557, live).
 - **Waiting on Sahil:**
   1. "merge" for A-297, then try it in Talk to it.
-  2. Message 5 testers (was due Oct 19).
+  2. Yes or no on "Claude on the Train page" (drawn: a copy of Claude beside Talk to it; needs an Anthropic key he pastes into Vercel).
+  3. Message 5 testers (was due Oct 19).
 - **Known weak spots:** kinds other than real estate don't remember which questions were asked; the clinic "urgent"
   rule is an instruction only.

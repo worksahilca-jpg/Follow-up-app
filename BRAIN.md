@@ -70,12 +70,12 @@ a booked call or visit; the owner closes.
 
 **Last updated: 2026-10-19**
 
-- **Just shipped:** every kind of business has a reply plan, and every reply moves toward a call (A-296, PR #557,
-  live). Talk to it, Scorecard and per-kind progress are live on Admin → Train.
+- **Just built (PR open, waiting for "merge"):** "Tell FollowUp what's wrong" on Admin → Train → Talk to it (A-297).
+  Sahil says what's wrong in his own words; FollowUp turns it into a rule for that kind of business and writes the
+  answer again. Rules are saved in the database (`TrainingRule`), live at once, listed under the chat with Undo.
+- **Before that:** every kind of business has a reply plan (A-296, PR #557, live).
 - **Waiting on Sahil:**
-  1. Test the new replies in Admin → Train → Talk to it (Real estate: "hi", then "i saw your listing…").
-  2. Yes or no on "Tell FollowUp what's wrong" (drawn; his feedback becomes a rule per kind of business).
-  3. Message 5 testers (was due Oct 19).
-- **Next build, after his yes:** "Tell FollowUp what's wrong" on Talk to it.
+  1. "merge" for A-297, then try it in Talk to it.
+  2. Message 5 testers (was due Oct 19).
 - **Known weak spots:** kinds other than real estate don't remember which questions were asked; the clinic "urgent"
   rule is an instruction only.

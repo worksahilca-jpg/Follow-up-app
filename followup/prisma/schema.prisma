@@ -2401,3 +2401,21 @@ model TrainingExample {
   @@index([trade, createdAt])
   @@index([verdict])
 }
+
+// "Tell FollowUp what's wrong" (A-297): a rule the founder set for one kind of business, from his own words on
+// Train → Talk to it. Every draft and first reply for that kind reads the newest few (src/lib/trainingRules.ts).
+model TrainingRule {
+  id        String   @id @default(cuid())
+  // The kind of business it applies to, as Business.industry says it ("Real estate", "Legal", ...).
+  trade     String
+  // The rule as FollowUp states it: one plain sentence. The founder can change the wording.
+  text      String
+  // What he wrote, kept so the rule can be read against it later.
+  note      String
+  // Who set it. Plain id, no relation.
+  addedById String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@index([trade, createdAt])
+}

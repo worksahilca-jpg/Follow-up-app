@@ -14338,3 +14338,14 @@ rule for that kind of business, rewrites the reply at once (the old one crossed 
 rules with Undo. Rules are checked every morning and built in for good. Drawn as a page, not on the running app: the
 local test sign-in had expired. Weak: rules written in the moment can contradict each other; the morning check is
 where that gets caught, so it must actually happen.
+
+## 2026-10-19 — "Tell FollowUp what's wrong" built (A-297)
+
+Founder: *"yes do it"*. Built on Talk to it as drawn, with one change: no "checked every morning" step. A rule is live
+the moment it is saved and stays until he undoes it; the list under the chat is where he reviews them. Checked in a
+real browser at 1440 and 390 wide with the answers stubbed (the local admin sign-in has expired, and this copy has no
+AI key): the box, the crossed-out old answer, the new one, the rule block and the list all fit, no sideways scroll.
+Weak, said plainly: rules can still contradict each other; FollowUp merges a new rule into an old one only when it
+notices they cover the same thing, so the list needs his eye now and then. Rules from older sessions only appear in the
+list after the page reloads (it refreshes itself after each change). The real test is his own Talk to it session with
+the live AI.

@@ -5083,3 +5083,29 @@ yet).
   they'd like to see it or have a quick call first, never which area.
 Built in `src/lib/tradePlaybooks.ts` (plans, `firstAskFor`), `generateInstantReply` + `assessAckRisk` and the follow-up
 writer in `src/lib/integrations/openai.ts`, and `DM_SHAPE_RULES` in `src/lib/dmDrafts.ts`.
+
+## A-297 — "Tell FollowUp what's wrong": the founder's words become a rule for that kind of business ^A-297
+
+**Approved:** 2026-10-19, founder: *"yes do it"*, to the "Coach FollowUp" drawing. He asked for it in his own words:
+*"deploy an agent whom I can talk to and help that model to improve … I can't paste everything here and then send you
+screenshots."*
+**What specifically:**
+- **A third choice under every answer** in Admin → Train → Talk to it, after Good and Teach a better reply: "Tell
+  FollowUp what's wrong". It opens a box, "What's wrong with this reply? Say it your way." (short, casual or Hinglish is
+  fine), with one solid "Fix it" and a quiet Cancel.
+- **One rule, then the answer again.** FollowUp turns his words into one general rule for the chosen kind of business
+  (never about this customer; never against the safety rules; merged with an existing rule that covers the same thing)
+  and writes the same answer again from the same point in the chat. The old answer stays above it, crossed out, as
+  "FollowUp, before"; the new one is "FollowUp, with your rule".
+- **The rule shows under it:** "FollowUp's new rule · <kind>", the rule in bold, "Every <kind> business answers this way
+  now. Undo · Change the wording".
+- **"Your rules for <kind>"** under the chat: the count, each rule with its date, Change and Undo.
+- **Live at once, kept for good.** Rules are saved in FollowUp's database (`TrainingRule`), so nothing depends on anyone's
+  memory. The newest 20 for a kind go into every first reply, draft and DM for businesses of that kind, under the safety
+  rules (facts, prices, dates, pressure, a no, honesty about automation always win).
+Built in `src/lib/trainingRules.ts`, `src/lib/trainingRuleLines.ts`, `writeCoachRule` in
+`src/lib/integrations/openai.ts`, the `coach` / `rule-edit` / `rule-undo` actions of `/api/admin/train`, and
+`src/components/admin/TrainTalk.tsx`.
+**Changed from the drawing:** the drawing said rules are "checked every morning and built in". That step is not built:
+a rule works the moment it is saved, and stays until he undoes it. A morning review would mean reading rule text in
+production, which this setup does not do; his list of rules on Talk to it is the place to review them.

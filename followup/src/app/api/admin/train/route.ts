@@ -20,6 +20,9 @@ import {
   VERDICTS,
 } from "@/lib/training";
 import { practiceReply, type PracticeChannel } from "@/lib/practiceReply";
+import { writeCoachRule } from "@/lib/integrations/openai";
+import { deleteTrainingRule, getTrainingRules, saveTrainingRule, updateTrainingRule } from "@/lib/trainingRules";
+import { MAX_RULE_NOTE, MAX_RULE_TEXT } from "@/lib/trainingRuleLines";
 import { INDUSTRIES } from "@/lib/industries";
 
 // One FollowUp reply per call: a reply and its send check.
@@ -31,6 +34,8 @@ const SAVES_PER_DAY = 100;
 /** "Talk to it" (A-294): each customer message is a few paid model calls; teaching is a write only. */
 const TALKS_PER_DAY = 300;
 const TEACHES_PER_DAY = 300;
+/** "Tell FollowUp what's wrong" (A-297): each one writes a rule and the reply again, a few paid model calls. */
+const COACHES_PER_DAY = 100;
 /** One "Talk to it" chat: long enough to reach a booking, short enough to stay cheap (as in "Try it yourself"). */
 const MAX_TALK_TURNS = 24;
 
@@ -76,6 +81,21 @@ const bodySchema = z.discriminatedUnion("action", [
     taught: cleanedText(1500).nullish(),
   }),
   z.object({ action: z.literal("untrain"), id: z.string().min(1).max(64) }),
+  z.object({
+    action: z.literal("coach"),
+    trade: z.enum(INDUSTRIES),
+    channel: talkChannel,
+    // The turns before the customer's message, the message FollowUp answered, its answer, and what the founder says
+    // is wrong with it. The where-they-stand state from before that answer, so the rewrite picks up from the same point.
+    context: talkTurns,
+    customerSaid: cleanedText(1500),
+    followUpReply: cleanedText(1500),
+    note: cleanedText(MAX_RULE_NOTE),
+    qualification: z.unknown().optional(),
+    contactAsked: z.boolean().optional(),
+  }),
+  z.object({ action: z.literal("rule-edit"), id: z.string().min(1).max(64), text: cleanedText(MAX_RULE_TEXT) }),
+  z.object({ action: z.literal("rule-undo"), id: z.string().min(1).max(64) }),
 ]);
 
 function fromAnotherSite(request: NextRequest): boolean {
@@ -98,7 +118,9 @@ async function founder(request: NextRequest) {
  * read (split and scrub a paste, nothing saved), save (keep the scrubbed examples), score (FollowUp's reply for the
  * next moment), vote (which was better), reset (clear every verdict to score again), and "Talk to it" (A-294):
  * talk (FollowUp answers the founder playing a customer, as the chosen kind of business), teach (keep that answer, or
- * what it should have said, as an example), untrain (undo one).
+ * what it should have said, as an example), untrain (undo one); and "Tell FollowUp what's wrong" (A-297): coach (the
+ * founder's words become a rule for that kind of business, and the answer is written again with it), rule-edit,
+ * rule-undo.
  */
 export async function POST(request: NextRequest) {
   const { ctx, error } = await founder(request);
@@ -212,6 +234,51 @@ export async function POST(request: NextRequest) {
 
     case "untrain": {
       const ok = await deleteExample(body.id);
+      return NextResponse.json({ success: ok }, { status: ok ? 200 : 404 });
+    }
+
+    case "coach": {
+      if (!body.note.trim() || !body.customerSaid || !body.followUpReply) {
+        return NextResponse.json({ success: false, message: "Say what's wrong with this reply first." }, { status: 400 });
+      }
+      if (!process.env.OPENAI_API_KEY) {
+        return NextResponse.json({ success: false, message: "FollowUp can't write replies on this copy of the app." }, { status: 503 });
+      }
+      if (await tooManyRecentActions(ctx.businessId, "admin.train.coach", { windowMinutes: 24 * 60, max: COACHES_PER_DAY })) {
+        return NextResponse.json({ success: false, message: "That's a lot for one day. Try again tomorrow." }, { status: 429 });
+      }
+      let rule: { id: string; text: string };
+      try {
+        const text = await writeCoachRule({
+          trade: body.trade,
+          customerSaid: body.customerSaid,
+          followUpReply: body.followUpReply,
+          note: body.note,
+          existing: await getTrainingRules(body.trade),
+        });
+        rule = await saveTrainingRule({ trade: body.trade, text, note: body.note }, ctx.userId);
+      } catch {
+        return NextResponse.json({ success: false, message: "FollowUp couldn't turn that into a rule. Try saying it another way." }, { status: 502 });
+      }
+      // The answer again, for the same moment, now that the rule is in place.
+      try {
+        const turns = [...body.context, { from: "customer" as const, text: body.customerSaid }];
+        const result = await practiceReply(ctx.businessId, "there", turns, body.qualification ?? null, body.channel, body.contactAsked ?? false, {
+          industry: body.trade,
+        });
+        return NextResponse.json({ success: true, rule, reply: result.reply, qualification: result.qualification, contactAsked: result.contactAsked });
+      } catch {
+        return NextResponse.json({ success: true, rule, reply: null, message: "The rule is saved. FollowUp couldn't write the reply again just now." });
+      }
+    }
+
+    case "rule-edit": {
+      const ok = await updateTrainingRule(body.id, body.text);
+      return NextResponse.json({ success: ok }, { status: ok ? 200 : 404 });
+    }
+
+    case "rule-undo": {
+      const ok = await deleteTrainingRule(body.id);
       return NextResponse.json({ success: ok }, { status: ok ? 200 : 404 });
     }
 

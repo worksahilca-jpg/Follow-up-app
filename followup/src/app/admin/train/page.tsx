@@ -7,6 +7,7 @@ import TrainRemove from "@/components/admin/TrainRemove";
 import TrainProgress from "@/components/admin/TrainProgress";
 import { requirePlatformAdmin } from "@/lib/platformAdmin";
 import { getTrainingSummary, goodExamplesByTrade, listExamples } from "@/lib/training";
+import { listTrainingRules } from "@/lib/trainingRules";
 
 export const dynamic = "force-dynamic";
 
@@ -29,10 +30,11 @@ export default async function TrainPage({ searchParams }: { searchParams: Promis
   await requirePlatformAdmin();
   const { tab: asked } = await searchParams;
   const tab: Tab = TABS.some((t) => t.key === asked) ? (asked as Tab) : "talk";
-  const [summary, examples, byTrade] = await Promise.all([
+  const [summary, examples, byTrade, rules] = await Promise.all([
     getTrainingSummary(),
     tab === "examples" ? listExamples(100) : Promise.resolve([]),
     tab === "score" ? goodExamplesByTrade() : Promise.resolve({} as Record<string, number>),
+    tab === "talk" ? listTrainingRules() : Promise.resolve([]),
   ]);
   const perConversation = new Map<string, number>();
   for (const e of examples) perConversation.set(e.conversationId, (perConversation.get(e.conversationId) ?? 0) + 1);
@@ -63,7 +65,7 @@ export default async function TrainPage({ searchParams }: { searchParams: Promis
         ))}
       </nav>
 
-      {tab === "talk" && <TrainTalk />}
+      {tab === "talk" && <TrainTalk rules={rules.map((r) => ({ id: r.id, trade: r.trade, text: r.text, when: r.createdAt.toISOString() }))} />}
       {tab === "add" && <TrainAdd />}
       {tab === "score" && (
         <>

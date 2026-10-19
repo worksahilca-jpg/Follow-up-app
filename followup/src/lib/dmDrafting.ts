@@ -105,7 +105,9 @@ export async function draftDm(
   trade: string | null = null,
   // How the owner answers, by example ("Write it better", A-290). Approach only: an example's numbers or dates are
   // not counted as the business's words by the shape check below, so a draft that copies one is held.
-  examples: readonly OwnerExampleLine[] = []
+  examples: readonly OwnerExampleLine[] = [],
+  // The founder's rules for this kind of business ("Tell FollowUp what's wrong", A-297).
+  rules: readonly string[] = []
 ): Promise<{ body: string; quickReplies: StoredQuickReplies; shapeFailed: string | null }> {
   const situation = pickDmSituation(conversation, touch);
   const known = factsText(facts);
@@ -114,7 +116,7 @@ export async function draftDm(
   let lastRule: string | null = null;
   let ask = situation;
   for (let attempt = 0; attempt < 2; attempt++) {
-    const draft = await generateFollowUpMessage({ name: leadName, conversation, facts, qualify, trade, examples }, voiceSamples, messageHint, ask, leadLanguage);
+    const draft = await generateFollowUpMessage({ name: leadName, conversation, facts, qualify, trade, examples, rules }, voiceSamples, messageHint, ask, leadLanguage);
     const buttons = draft.buttons ?? [];
     // The draft is written in the lead's language, so the calendar rule
     // has to read it in that language — an English-only day list would be

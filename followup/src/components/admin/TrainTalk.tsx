@@ -7,18 +7,26 @@ import { INDUSTRIES, INDUSTRY_SHORT } from "@/lib/industries";
 /**
  * /admin/train → Talk to it (A-294, founder 2026-10-18: "Add a section where I will be talking to follow up, and I will
  * be teaching it what to reply"). The founder writes as a customer and FollowUp answers the way it would for a real one,
- * as the chosen kind of business. Under each answer: Good (keep it as an example) or Teach a better reply (write what it
- * should say). Either becomes an example for every business of that kind, with Undo. A taught reply takes the answer's
- * place in the chat, so the conversation carries on from what the business would really have said.
+ * as the chosen kind of business. Under each answer: Good (keep it as an example), Teach a better reply (write what it
+ * should say), or Tell FollowUp what's wrong (A-297: say it your way; FollowUp turns it into a rule for that kind of
+ * business and writes the answer again with it, the old one crossed out above). Examples and rules have Undo; the
+ * kind's rules are listed under the chat with Change the wording and Undo.
  */
 
 type Channel = "instagram" | "messenger" | "email";
+type Rule = { id: string; trade: string; text: string; when: string };
+type Before = { qualification: unknown; contactAsked: boolean };
 type Turn = {
   from: "customer" | "followup";
   text: string;
   /** FollowUp's own words, kept while a taught reply stands in their place (for Undo). */
   original?: string;
   saved?: { id: string; kind: "good" | "taught" };
+  /** Where things stood before this answer was written, so it can be written again from the same point. */
+  before?: Before;
+  /** The answer a rule replaced, shown crossed out above the new one. */
+  replaced?: string;
+  rule?: { id: string; text: string };
 };
 
 const CHANNELS: { value: Channel; label: string }[] = [
@@ -32,6 +40,9 @@ const pill = "inline-flex min-h-11 items-center rounded-full border px-4 text-[1
 function pillStyle(on: boolean) {
   return on ? { background: "var(--accent)", color: "var(--on-accent)", borderColor: "var(--accent)" } : { borderColor: "var(--line-strong)" };
 }
+const solid = "inline-flex min-h-11 items-center rounded-full px-5 text-[15px] font-semibold disabled:opacity-40";
+const solidStyle = { background: "var(--accent)", color: "var(--on-accent)" };
+const quiet = "min-h-11 underline underline-offset-4 disabled:opacity-50";
 
 async function post(body: unknown): Promise<{ ok: boolean; data: Record<string, unknown> }> {
   try {
@@ -42,7 +53,14 @@ async function post(body: unknown): Promise<{ ok: boolean; data: Record<string, 
   }
 }
 
-export default function TrainTalk() {
+function day(iso: string): string {
+  const d = new Date(iso);
+  const today = new Date();
+  if (d.toDateString() === today.toDateString()) return "Today";
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+export default function TrainTalk({ rules = [] }: { rules?: Rule[] }) {
   const router = useRouter();
   const [trade, setTrade] = useState<(typeof INDUSTRIES)[number]>("Real estate");
   const [channel, setChannel] = useState<Channel>("instagram");
@@ -55,6 +73,10 @@ export default function TrainTalk() {
   const [error, setError] = useState<string | null>(null);
   const [teaching, setTeaching] = useState<number | null>(null);
   const [better, setBetter] = useState("");
+  const [coaching, setCoaching] = useState<number | null>(null);
+  const [note, setNote] = useState("");
+  const [rewording, setRewording] = useState<string | null>(null);
+  const [wording, setWording] = useState("");
   const end = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -67,6 +89,7 @@ export default function TrainTalk() {
     setContactAsked(false);
     setConversationId(null);
     setTeaching(null);
+    setCoaching(null);
     setError(null);
   }
 
@@ -74,6 +97,7 @@ export default function TrainTalk() {
     const text = draft.trim();
     if (!text || busy) return;
     const next: Turn[] = [...turns, { from: "customer", text }];
+    const before: Before = { qualification, contactAsked };
     setTurns(next);
     setDraft("");
     setBusy(true);
@@ -91,7 +115,7 @@ export default function TrainTalk() {
       setError(String(data.message ?? "FollowUp couldn't answer just now. Try again."));
       return;
     }
-    setTurns([...next, { from: "followup", text: String(data.reply ?? "") }]);
+    setTurns([...next, { from: "followup", text: String(data.reply ?? ""), before }]);
     setQualification(data.qualification ?? null);
     setContactAsked(Boolean(data.contactAsked));
   }
@@ -135,15 +159,112 @@ export default function TrainTalk() {
     setBusy(true);
     await post({ action: "untrain", id: saved.id });
     setBusy(false);
-    setTurns((ts) => ts.map((t, j) => (j !== i ? t : { from: t.from, text: t.original ?? t.text })));
+    setTurns((ts) => ts.map((t, j) => (j !== i ? t : { ...t, text: t.original ?? t.text, original: undefined, saved: undefined })));
+    router.refresh();
+  }
+
+  /** "Tell FollowUp what's wrong" (A-297): the founder's words become a rule, and the answer is written again. */
+  async function coach(i: number) {
+    const words = note.trim();
+    if (!words || busy) return;
+    const turn = turns[i];
+    const last = i === turns.length - 1;
+    setBusy(true);
+    setError(null);
+    const { ok, data } = await post({
+      action: "coach",
+      trade,
+      channel,
+      context: turns.slice(0, i - 1).slice(-TURNS_SENT).map((t) => ({ from: t.from, text: t.text })),
+      customerSaid: turns[i - 1].text,
+      followUpReply: turn.text,
+      note: words,
+      qualification: turn.before?.qualification ?? null,
+      contactAsked: turn.before?.contactAsked ?? false,
+    });
+    setBusy(false);
+    if (!ok) {
+      setError(String(data.message ?? "That didn't work. Try again."));
+      return;
+    }
+    const rule = data.rule as { id: string; text: string };
+    const reply = typeof data.reply === "string" && data.reply ? data.reply : null;
+    setTurns((ts) =>
+      ts.map((t, j) =>
+        j !== i ? t : reply ? { ...t, replaced: t.text, text: reply, rule, saved: undefined, original: undefined } : { ...t, rule }
+      )
+    );
+    // Rewriting the newest answer changes where the conversation stands; an earlier one leaves it as it is.
+    if (reply && last) {
+      setQualification(data.qualification ?? null);
+      setContactAsked(Boolean(data.contactAsked));
+    }
+    if (!reply && data.message) setError(String(data.message));
+    setCoaching(null);
+    setNote("");
+    router.refresh();
+  }
+
+  async function undoRule(id: string) {
+    setBusy(true);
+    const { ok } = await post({ action: "rule-undo", id });
+    setBusy(false);
+    if (!ok) {
+      setError("That didn't undo. Try again.");
+      return;
+    }
+    setTurns((ts) => ts.map((t) => (t.rule?.id === id ? { ...t, rule: undefined } : t)));
+    router.refresh();
+  }
+
+  async function saveWording(id: string) {
+    const text = wording.trim();
+    if (!text || busy) return;
+    setBusy(true);
+    const { ok } = await post({ action: "rule-edit", id, text });
+    setBusy(false);
+    if (!ok) {
+      setError("That didn't save. Try again.");
+      return;
+    }
+    setTurns((ts) => ts.map((t) => (t.rule?.id === id ? { ...t, rule: { id, text } } : t)));
+    setRewording(null);
     router.refresh();
   }
 
   const short = INDUSTRY_SHORT[trade];
+  const kindRules = rules.filter((r) => r.trade === trade);
+
+  function wordingBox(id: string) {
+    return (
+      <div className="mt-2">
+        <label htmlFor={`rule-wording-${id}`} className="sr-only">
+          The rule, in your words
+        </label>
+        <textarea
+          id={`rule-wording-${id}`}
+          value={wording}
+          onChange={(e) => setWording(e.target.value)}
+          rows={2}
+          maxLength={300}
+          className="w-full rounded-xl border bg-card px-3.5 py-2.5 text-[15px] leading-relaxed"
+          style={{ borderColor: "var(--line-strong)" }}
+        />
+        <div className="mt-2 flex items-center gap-3">
+          <button type="button" onClick={() => saveWording(id)} disabled={!wording.trim() || busy} className={solid} style={solidStyle}>
+            Save
+          </button>
+          <button type="button" onClick={() => setRewording(null)} className={`${quiet} text-ink-soft`}>
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-6">
-      <p className="text-ink-soft">You write as the customer. Keep the good answers, teach it the ones it gets wrong.</p>
+      <p className="text-ink-soft">You write as the customer. Keep the good answers, and tell FollowUp what’s wrong with the rest.</p>
 
       <p className="mt-4 text-sm text-ink-soft" id="talk-trade">Kind of business</p>
       <div role="group" aria-labelledby="talk-trade" className="mt-2 flex flex-wrap gap-2">
@@ -197,13 +318,54 @@ export default function TrainTalk() {
             </div>
           ) : (
             <div key={i}>
-              <p className="mb-1 text-[12.5px] text-ink-faint">{t.saved?.kind === "taught" ? "What it should say" : "FollowUp"}</p>
+              {t.replaced && (
+                <div className="mb-3">
+                  <p className="mb-1 text-[12.5px] text-ink-faint">FollowUp, before</p>
+                  <p className="max-w-[86%] whitespace-pre-wrap break-words rounded-[18px_18px_18px_4px] border border-line px-3.5 py-2.5 text-ink-faint line-through">
+                    {t.replaced}
+                  </p>
+                </div>
+              )}
+              <p className="mb-1 text-[12.5px] text-ink-faint">
+                {t.saved?.kind === "taught" ? "What it should say" : t.replaced ? "FollowUp, with your rule" : "FollowUp"}
+              </p>
               <p className="max-w-[86%] whitespace-pre-wrap break-words rounded-[18px_18px_18px_4px] border border-line px-3.5 py-2.5">{t.text}</p>
+
+              {t.rule && (
+                <div className="mt-3 max-w-[86%] border-l-2 pl-3" style={{ borderColor: "var(--ink)" }}>
+                  <p className="text-[12.5px] text-ink-faint">FollowUp’s new rule · {short}</p>
+                  {rewording === t.rule.id ? (
+                    wordingBox(t.rule.id)
+                  ) : (
+                    <>
+                      <p className="mt-1 font-semibold">{t.rule.text}</p>
+                      <p className="mt-1 text-[13.5px] text-ink-soft">
+                        Every {short} business answers this way now.{" "}
+                        <button type="button" onClick={() => undoRule(t.rule!.id)} disabled={busy} className={quiet}>
+                          Undo
+                        </button>
+                        {" · "}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setRewording(t.rule!.id);
+                            setWording(t.rule!.text);
+                          }}
+                          disabled={busy}
+                          className={quiet}
+                        >
+                          Change the wording
+                        </button>
+                      </p>
+                    </>
+                  )}
+                </div>
+              )}
 
               {t.saved ? (
                 <p className="mt-1.5 text-[13.5px] text-ink-soft">
                   {t.saved.kind === "good" ? "Kept as a good answer." : "Taught."} {short} businesses answer like this now.{" "}
-                  <button type="button" onClick={() => undo(i)} disabled={busy} className="min-h-11 underline underline-offset-4 disabled:opacity-50">
+                  <button type="button" onClick={() => undo(i)} disabled={busy} className={quiet}>
                     Undo
                   </button>
                 </p>
@@ -222,16 +384,35 @@ export default function TrainTalk() {
                     style={{ borderColor: "var(--line-strong)" }}
                   />
                   <div className="mt-2 flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => keep(i, better.trim())}
-                      disabled={!better.trim() || busy}
-                      className="inline-flex min-h-11 items-center rounded-full px-5 text-[15px] font-semibold disabled:opacity-40"
-                      style={{ background: "var(--accent)", color: "var(--on-accent)" }}
-                    >
+                    <button type="button" onClick={() => keep(i, better.trim())} disabled={!better.trim() || busy} className={solid} style={solidStyle}>
                       Save
                     </button>
-                    <button type="button" onClick={() => setTeaching(null)} className="min-h-11 text-ink-soft underline underline-offset-4">
+                    <button type="button" onClick={() => setTeaching(null)} className={`${quiet} text-ink-soft`}>
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : coaching === i ? (
+                <div className="mt-2.5 max-w-[86%]">
+                  <label htmlFor={`talk-wrong-${i}`} className="mb-1 block text-[12.5px] text-ink-faint">
+                    What’s wrong with this reply? Say it your way.
+                  </label>
+                  <textarea
+                    id={`talk-wrong-${i}`}
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                    rows={3}
+                    maxLength={1500}
+                    autoFocus
+                    placeholder="Too cold. Ask which listing they saw and offer a call."
+                    className="w-full rounded-xl border bg-card px-3.5 py-2.5 text-[15px] leading-relaxed"
+                    style={{ borderColor: "var(--line-strong)" }}
+                  />
+                  <div className="mt-2 flex items-center gap-3">
+                    <button type="button" onClick={() => coach(i)} disabled={!note.trim() || busy} className={solid} style={solidStyle}>
+                      {busy ? "Fixing…" : "Fix it"}
+                    </button>
+                    <button type="button" onClick={() => setCoaching(null)} className={`${quiet} text-ink-soft`}>
                       Cancel
                     </button>
                   </div>
@@ -245,6 +426,7 @@ export default function TrainTalk() {
                     type="button"
                     onClick={() => {
                       setTeaching(i);
+                      setCoaching(null);
                       setBetter(t.text);
                     }}
                     disabled={busy}
@@ -253,14 +435,27 @@ export default function TrainTalk() {
                   >
                     Teach a better reply
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCoaching(i);
+                      setTeaching(null);
+                      setNote("");
+                    }}
+                    disabled={busy}
+                    className={pill}
+                    style={{ borderColor: "var(--ink)" }}
+                  >
+                    Tell FollowUp what’s wrong
+                  </button>
                 </div>
               ) : null}
             </div>
           )
         )}
-        {busy && turns[turns.length - 1]?.from === "customer" && (
+        {busy && (turns[turns.length - 1]?.from === "customer" || coaching !== null) && (
           <p role="status" className="text-ink-soft">
-            FollowUp is writing…
+            {coaching !== null ? "FollowUp is writing the rule and the reply again…" : "FollowUp is writing…"}
           </p>
         )}
         {error && (
@@ -304,6 +499,56 @@ export default function TrainTalk() {
           Start over
         </button>
       )}
+
+      <section className="mt-8 border-t border-line pt-5" aria-labelledby="talk-rules">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 id="talk-rules" className="text-lg font-semibold">
+            Your rules for {short}
+          </h2>
+          <span className="text-sm text-ink-soft">
+            {kindRules.length} {kindRules.length === 1 ? "rule" : "rules"}
+          </span>
+        </div>
+        {kindRules.length === 0 ? (
+          <p className="mt-2 text-sm text-ink-soft">None yet. Under any reply, tap “Tell FollowUp what’s wrong” and say it your way.</p>
+        ) : (
+          <>
+            <p className="mt-1.5 text-sm text-ink-soft">Every {short} business follows these. They’re saved for good; nothing is forgotten.</p>
+            <ul className="mt-3">
+              {kindRules.map((r) => (
+                <li key={r.id} className="border-t border-line py-3">
+                  {rewording === r.id ? (
+                    wordingBox(r.id)
+                  ) : (
+                    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+                      <div className="min-w-0">
+                        <p className="break-words">{r.text}</p>
+                        <p className="mt-1 text-[12.5px] text-ink-faint">{day(r.when)}</p>
+                      </div>
+                      <div className="flex gap-3 text-sm text-ink-soft">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setRewording(r.id);
+                            setWording(r.text);
+                          }}
+                          disabled={busy}
+                          className={quiet}
+                        >
+                          Change
+                        </button>
+                        <button type="button" onClick={() => undoRule(r.id)} disabled={busy} className={quiet}>
+                          Undo
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </section>
     </div>
   );
 }

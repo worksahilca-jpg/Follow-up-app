@@ -77,9 +77,9 @@ a booked call or visit; the owner closes.
      `followup/src/lib/trainerBrief.ts`: **when the rules in this file change, update that file too.**
 - **Before that:** every kind of business has a reply plan (A-296, PR #557, live).
 - **Waiting on Sahil:**
-  1. Make an Anthropic API key, add `ANTHROPIC_API_KEY` and `ANTHROPIC_MODEL` in Vercel (Production), set a spending
-     cap. Until then the old "Tell FollowUp what's wrong" button works.
-  2. Then try Claude on Admin → Train → Talk to it.
+  1. ~~Anthropic key~~ Done Oct 19: key (FollowUp workspace, 1 year) and model set in Vercel, $20/month org spend
+     limit, redeployed. Sahil: "it is working". The key expires in about a year: make a new one then.
+  2. Train FollowUp with Claude on Admin → Train → Talk to it, one kind of business at a time.
   3. Message 5 testers (was due Oct 19).
 - **Known weak spots:** kinds other than real estate don't remember which questions were asked; the clinic "urgent"
   rule is an instruction only.

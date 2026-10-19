@@ -14373,3 +14373,8 @@ textarea fill showed a white block; both overridden on that box only, with focus
 Weak, said plainly: what it knows is a summary of BRAIN.md kept in the app's code (the deployed app can't read files
 outside `followup/`), so a change to BRAIN.md's rules has to be copied there too. Its replies have not been run against
 the real Claude yet; the first real check is Sahil's, once the key is in. Cost per message is still an estimate.
+
+## 2026-10-19 — Claude on the Train page: built screen approved
+
+Founder, on the laptop screenshot of A-298 as built: *"This looks good."* Keep this layout: Claude as a right-hand
+column beside Talk to it, the tests grouped in one card, the proposed rule as the one solid button.

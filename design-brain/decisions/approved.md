@@ -5134,3 +5134,5 @@ Built in `src/lib/trainer.ts` (Anthropic's API through fetch, no new package), `
 `src/components/admin/TrainerPanel.tsx` and `TrainTalk.tsx`. Needs `ANTHROPIC_API_KEY` and `ANTHROPIC_MODEL` in Vercel.
 **Changed from the drawing:** "Keep a good answer as an example" stays on the Good button under each answer, not with
 Claude.
+**Seen built:** 2026-10-19, founder on the laptop screenshot (Claude column beside Talk to it, the tests card, the
+proposed rule with Save rule): *"This looks good."*

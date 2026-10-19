@@ -26,7 +26,14 @@ export async function GET() {
   if (tier === "free") {
     const now = new Date();
     const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-    leadsUsedThisMonth = await prisma.lead.count({ where: { businessId: ctx.businessId, createdAt: { gte: monthStart } } });
+    leadsUsedThisMonth = await prisma.lead.count({
+      where: {
+        businessId: ctx.businessId,
+        createdAt: { gte: monthStart },
+        // Counted the way the cap itself counts (isWithinTierLeadCap): a CRM contact counts from its first message.
+        NOT: { crmProvider: { not: null }, conversations: { none: { messages: { some: {} } } } },
+      },
+    });
   }
 
   return NextResponse.json({

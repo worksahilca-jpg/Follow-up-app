@@ -51,6 +51,12 @@ describe("isWithinFreeTierLeadCap", () => {
     expect(within).toBe(false);
   });
 
+  // GoHighLevel wake-up, 2026-10-19: a CRM sync of a few hundred contacts used to spend the month's cap at once.
+  it("doesn't count a contact the CRM sync brought in until there is a conversation with them", async () => {
+    await isWithinFreeTierLeadCap("biz1", { id: "l5", createdAt: new Date("2026-09-05T12:00:00Z") });
+    expect(count.mock.calls[0][0].where.NOT).toEqual({ crmProvider: { not: null }, conversations: { none: { messages: { some: {} } } } });
+  });
+
   it("counts only leads from this lead's own calendar month (UTC), not all-time", async () => {
     const leadCreatedAt = new Date("2026-09-05T12:00:00Z");
     await isWithinFreeTierLeadCap("biz1", { id: "l5", createdAt: leadCreatedAt });

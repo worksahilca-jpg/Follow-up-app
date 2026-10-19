@@ -46,7 +46,11 @@ const OVERLAP_MS = 2 * 60 * 1000;
  */
 export async function ghlReadFrom(businessId: string, now: number): Promise<Date> {
   const newest = await prisma.message.findFirst({
-    where: { conversation: { externalId: { startsWith: "ghl:" }, lead: { businessId } } },
+    where: {
+      conversation: { externalId: { startsWith: "ghl:" }, lead: { businessId } },
+      // Old conversations brought back by the wake-up (src/lib/ghlHistory.ts) are not where reading got to.
+      OR: [{ source: null }, { source: { not: "gohighlevel_history" } }],
+    },
     orderBy: { sentAt: "desc" },
     select: { sentAt: true },
   });
@@ -55,7 +59,7 @@ export async function ghlReadFrom(businessId: string, now: number): Promise<Date
 }
 
 /** The FollowUp customer for a GoHighLevel contact, brought in on the spot when the contact sync hasn't yet. */
-async function leadForContact(businessId: string, apiKey: string, contactId: string) {
+export async function leadForContact(businessId: string, apiKey: string, contactId: string) {
   const key = { businessId_crmProvider_crmId: { businessId, crmProvider: "gohighlevel", crmId: contactId } };
   const existing = await prisma.lead.findUnique({ where: key });
   if (existing) return existing;

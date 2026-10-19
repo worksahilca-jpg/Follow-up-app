@@ -191,6 +191,17 @@ function quietSince(cutoff: Date, notBefore?: Date): Prisma.LeadWhereInput {
 
 export const DEAD_LEAD_ACTION = "dead_lead_reactivation";
 
+/**
+ * Not a contact the CRM sync brought in that FollowUp has no conversation with (GoHighLevel wake-up, 2026-10-19).
+ * The sync dates such a contact from when it was made in the CRM, so a realtor connecting GoHighLevel had every
+ * contact older than the welcome-back wait get a welcome back written from a name and nothing else: hundreds of
+ * drafts on Today, about people nobody here has spoken to. They are reached once there is a conversation: they
+ * write, or the wake-up (src/lib/ghlHistory.ts) brings their old one in.
+ */
+export const HAS_CONVERSATION_IF_FROM_CRM: Prisma.LeadWhereInput = {
+  NOT: { crmProvider: { not: null }, conversations: { none: { messages: { some: {} } } } },
+};
+
 const HOLD_NOT_RECORDED = "the draft is written but couldn't be added to your approvals — trying again next run";
 
 /**
@@ -889,7 +900,7 @@ export async function runAutomationForBusiness(
         // Inside AND because the OR below is already spoken for. Two `OR`
         // keys in one object is not a conjunction, it is the second one
         // silently winning.
-        AND: [quietSince(cutoff, deadLeadEnabled ? deadCutoff : undefined)],
+        AND: [quietSince(cutoff, deadLeadEnabled ? deadCutoff : undefined), HAS_CONVERSATION_IF_FROM_CRM],
         // They said no (Lead.saidNoAt): no reminder, ever, until they write again.
         saidNoAt: null,
         OR: [{ lastAutomationCheckedAt: null }, { lastAutomationCheckedAt: { lt: recheckCutoff } }],
@@ -903,7 +914,7 @@ export async function runAutomationForBusiness(
             automationTier: { not: "OFF" },
             stage: { notIn: ["WON", "LOST"] },
             sequenceId: null,
-            AND: [quietSince(deadCutoff)],
+            AND: [quietSince(deadCutoff), HAS_CONVERSATION_IF_FROM_CRM],
             saidNoAt: null,
             OR: [{ lastAutomationCheckedAt: null }, { lastAutomationCheckedAt: { lt: recheckCutoff } }],
           },

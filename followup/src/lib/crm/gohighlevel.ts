@@ -405,6 +405,42 @@ export async function ghlConversationsSince(apiKey: string, since: Date, limit: 
   return out;
 }
 
+/**
+ * One page of conversations whose newest message is older than `before`, newest first, with that date
+ * (GoHighLevel wake-up, src/lib/ghlHistory.ts). GoHighLevel pages a date-sorted search by `startAfterDate`, the
+ * sort value of the last row seen (its API reference; not yet seen on a live account). Rows at or after `before`
+ * are dropped here as well, so an account that ignores the parameter is never read as old. `full` says the page
+ * came back full, so there may be more.
+ */
+export async function ghlConversationsBefore(
+  apiKey: string,
+  before: Date,
+  limit: number
+): Promise<{ rows: Array<{ id: string; contactId: string; lastMessageAt: Date }>; full: boolean }> {
+  const k = parseGhlKey(apiKey);
+  if (!k) throw new Error("GoHighLevel key is not in the expected shape.");
+  const q = new URLSearchParams({
+    locationId: k.locationId,
+    sortBy: "last_message_date",
+    sort: "desc",
+    startAfterDate: String(before.getTime()),
+    limit: String(limit),
+  });
+  const res = await fetch(`${BASE}/conversations/search?${q.toString()}`, { headers: headers(k.token), signal: AbortSignal.timeout(CRM_TIMEOUT_MS) });
+  if (!res.ok) throw new Error(`GoHighLevel returned ${res.status} listing conversations.`);
+  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  const all = Array.isArray(data.conversations) ? (data.conversations as Array<Record<string, unknown>>) : [];
+  const rows: Array<{ id: string; contactId: string; lastMessageAt: Date }> = [];
+  for (const c of all) {
+    const id = str(c.id);
+    const contactId = str(c.contactId);
+    const at = lastMessageAt(c);
+    if (!id || !contactId || !at || at >= before) continue;
+    rows.push({ id, contactId, lastMessageAt: at });
+  }
+  return { rows, full: all.length >= limit };
+}
+
 /** The newest messages in one conversation (texts and emails only). */
 export async function ghlConversationMessages(apiKey: string, conversationId: string, limit: number): Promise<GhlMessage[]> {
   const k = parseGhlKey(apiKey);

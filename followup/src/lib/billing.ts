@@ -312,6 +312,11 @@ export async function isWithinTierLeadCap(
       businessId,
       createdAt: { gte: monthStart },
       OR: [{ createdAt: { lt: lead.createdAt } }, { createdAt: lead.createdAt, id: { lte: lead.id } }],
+      // A contact the CRM sync brought in that nobody has a conversation with yet is not one FollowUp read or
+      // wrote for, so it isn't counted (GoHighLevel wake-up, 2026-10-19): connecting a CRM with a few hundred
+      // contacts used to spend the whole month's cap in one sync, and the owner's real new customers after it got
+      // no reply. It counts from its first message.
+      NOT: { crmProvider: { not: null }, conversations: { none: { messages: { some: {} } } } },
     },
   });
   return rank <= TIER_AI_LEAD_CAP[tier];

@@ -5180,3 +5180,7 @@ answers about the home, then asks a light question. Example: *"Is it just this o
 looking at a few in the area?"* The viewing is offered in the next reply. It comes sooner only if the customer asks
 to see the home (then: when suits them, and buzz the owner, A-242). Email and website enquiries about one home may
 offer the viewing in the first reply.
+**Correction (2026-10-19, founder: *"How you can say that its available until unless realtor had confirmed ??"*):** the chat test
+replies said "Yes, it's still available". That was invented. The rule stands, and it is already in the realtor
+playbook: availability, price and details come only from the owner's facts or the conversation. Otherwise FollowUp
+says it will confirm and get back to them, and the owner is asked.

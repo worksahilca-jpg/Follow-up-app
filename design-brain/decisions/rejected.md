@@ -1725,3 +1725,17 @@ different replies and different strategies"*. What was rejected: Train FollowUp 
 words on every label, examples shared with real estate businesses only, and the scorecard always answering as a
 realtor. **Principle:** FollowUp serves many kinds of business, each with its own replies and strategy; anything that
 teaches it is sorted by kind of business, and the screens name "the business", never one trade.
+
+## R-135 — Replies that sound like a machine and skip the plan
+
+**Rejected:** 2026-10-18, founder, after testing Train → Talk to it: *"Right now, it's totally disappointing … so bad
+and so inaccurate. It's totally against a plan … all the questions structured according to the goal that we're aiming
+to book meetings and calls"*. His test: "hi" got *"Hi! Send me your questions, and I'll make sure someone comes back
+to you personally shortly."*; "i saw your listing i am intrested to buy a house in toronto" got *"I'll check the Toronto
+listing status for you. Which area in Toronto are you looking in?"*. Also found the same day: a business set to any
+kind but Real estate (his own is "Other") gets no plan at all, no questions and no push toward a call.
+**What is rejected:** an instant reply with no welcome and no question; "I'll check" used as filler when the customer
+asked nothing; one question where the plan says two; replies with no human line; any kind of business left with no
+plan. **Principle:** every reply welcomes like a person, answers, then moves the customer one step toward a call or
+visit with two easy questions. The landing page's demo (unchanged since Oct 8) is the bar he compares against.
+Fix proposed as the reply plans drawing (2026-10-18), waiting for his yes.

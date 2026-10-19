@@ -5062,3 +5062,24 @@ trained for different niches"*).
 At 500 a kind gets a fine-tuned model of its own, tried on the Scorecard before answering real customers, falling back
 to the general model if it fails, one switch per kind (the plan as agreed in chat; the models themselves are not built
 yet).
+
+## A-296 — Every kind of business has a reply plan, and every reply moves toward a call ^A-296
+
+**Approved:** 2026-10-19, founder: *"Yes"*, to the reply plans drawing ("Reply Plans by Business") after R-135.
+**What specifically:**
+- **The first reply asks.** A new customer's first message gets a short reply that ends with the first question of the
+  business's plan, both parts in one sentence ("Are you looking to buy, sell or rent, and roughly when?"). A bare "hi"
+  gets a short, plain thanks for getting in touch, then that question; never "send me your questions".
+- **"I'll check" only when they asked.** "I saw your listing" or "I'm interested" asks nothing, so the reply answers it
+  warmly and moves on instead of promising to check.
+- **A few warm words first,** reacting to what they said ("that's great", "congratulations", "sorry you're dealing
+  with that"); never thanks for writing, never the same opener twice.
+- **Two questions together,** one sentence, one question mark; never one, never a list.
+- **The call or visit by the second reply,** right away if they ask; they pick the time.
+- **A plan for every kind:** Real estate (its checklist, A-246/A-291), Mortgage, Home services, Clinic, Legal,
+  Marketing agency, each with a goal meeting, three steps of two things, and what it never does; any other kind
+  (including "Other" and none) gets the general plan.
+- **Real estate, a listing they saw:** they've already picked a home, so ask which one caught their eye and whether
+  they'd like to see it or have a quick call first, never which area.
+Built in `src/lib/tradePlaybooks.ts` (plans, `firstAskFor`), `generateInstantReply` + `assessAckRisk` and the follow-up
+writer in `src/lib/integrations/openai.ts`, and `DM_SHAPE_RULES` in `src/lib/dmDrafts.ts`.

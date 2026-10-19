@@ -260,6 +260,13 @@ describe("an inbound message that is itself an opt-out", () => {
 });
 
 describe("instant acknowledgement", () => {
+  // A-296: the first reply asks the first question of the business's own plan, so it needs the kind of business.
+  it("tells the writer what kind of business this is", async () => {
+    p.business.findUnique.mockResolvedValue({ name: "MJ Homes", tier: "plus", subscriptionStatus: "active", industry: "Real estate" });
+    await acknowledgeNewLead("lead1", { channel: "text", inboundText: "hi", inboundAt: new Date() });
+    expect(generateReply).toHaveBeenCalledWith(expect.objectContaining({ inboundText: "hi", trade: "Real estate" }));
+  });
+
   it("sends the AI-generated reply once, on the channel the lead used, after a passing shape check and an ok risk verdict", async () => {
     const r = await acknowledgeNewLead("lead1", { channel: "text", inboundText: "Is the roof original?", inboundAt: new Date() });
     expect(r.sent).toBe(true);

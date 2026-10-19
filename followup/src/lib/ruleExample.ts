@@ -8,6 +8,7 @@ import { greetingFirstName } from "@/lib/leadName";
 import type { LeadLanguage } from "@/lib/leadLanguage";
 import type { Lead, Message } from "@/lib/types";
 import { draftingContext } from "@/lib/businessFacts";
+import { businessTrade } from "@/lib/tradePlaybooks";
 
 /**
  * "See an example" on a follow-up rule (design brain A-044, the Zapier
@@ -58,6 +59,7 @@ export async function writeRuleExample(
       leadFirstName: greetingFirstName(lead.name),
       ownerFirstName: await getSenderFirstName(businessId),
       inboundText: inbound?.body ?? "",
+      trade: await businessTrade(businessId),
     });
     return { text, what: "the first thank-you" };
   }

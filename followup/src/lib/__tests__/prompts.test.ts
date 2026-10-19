@@ -425,11 +425,11 @@ describe("instant reply (generateInstantReply)", () => {
   // asked … do that" framing invited partial/hedged answers. The
   // allow-list replaces it with exactly three permitted speech acts and
   // an explicit "even hedged" closure.
-  it("constrains the reply to an explicit three-act allow-list, forbidding even a hedged partial answer", async () => {
+  it("constrains the reply to an explicit four-act allow-list, forbidding even a hedged partial answer", async () => {
     create.mockResolvedValue({ choices: [{ message: { content: JSON.stringify({ reply: "Got it, I'll confirm the price for you." }) } }] });
     await generateInstantReply({ leadFirstName: "Young", ownerFirstName: "Manoj", inboundText: "How old is the roof?" });
     const system = create.mock.calls[0][0].messages[0].content as string;
-    expect(system).toMatch(/exactly three things/);
+    expect(system).toMatch(/exactly four things/);
     expect(system).toMatch(/even hedged/);
     expect(system).toMatch(/'shortly' or 'as soon as I can' is the only timeframe/);
     expect(system).toMatch(/unless you are repeating something the lead themselves wrote/);
@@ -450,14 +450,45 @@ describe("instant reply (generateInstantReply)", () => {
   // template, so the model writes one sentence per item and produces the
   // stiff tricolon acknowledgement no person has ever typed. The "1-2
   // short sentences" instruction further down was losing that argument.
-  it("says the three permitted acts are not a three-sentence template, and that one sentence is the best version", async () => {
+  it("says the permitted acts are not a sentence-per-item template, and that one sentence plus the question is the best version", async () => {
     create.mockResolvedValue({ choices: [{ message: { content: JSON.stringify({ reply: "Got it, I'll confirm the price for you." }) } }] });
     await generateInstantReply({ leadFirstName: "Young", ownerFirstName: "Manoj", inboundText: "How old is the roof?" });
     const system = create.mock.calls[0][0].messages[0].content as string;
-    expect(system).toMatch(/not a template and they are not three sentences/);
-    expect(system).toMatch(/ONE sentence that does all three at once/);
+    expect(system).toMatch(/not a template and they are not one sentence each/);
+    expect(system).toMatch(/ONE sentence that does \(1\) to \(3\) at once, then the question/);
     expect(system).toMatch(/two short sentences is the absolute maximum/);
     expect(system).toMatch(/you are writing a form letter/);
+  });
+
+  // The founder's Talk test, 2026-10-18 (R-135): "hi" got "Send me your questions, and I'll make sure someone comes
+  // back to you personally shortly", which asks nothing and stops the conversation. A-296: the first reply asks the
+  // first step of the business's plan.
+  it("ends with the first question of the business's plan, both parts in one sentence", async () => {
+    create.mockResolvedValue({ choices: [{ message: { content: JSON.stringify({ reply: "reply" }) } }] });
+    await generateInstantReply({ leadFirstName: "Young", ownerFirstName: "Manoj", inboundText: "hi", trade: "Real estate" });
+    const system = create.mock.calls[0][0].messages[0].content as string;
+    expect(system).toMatch(/\(4\) End with one short, friendly question asking about whether they are looking to buy, sell or rent, and roughly when/);
+    expect(system).toMatch(/which one caught their eye and whether they would like to see it/);
+    expect(system).toMatch(/Ask about both things together in that one sentence with a single question mark/);
+    expect(system).toMatch(/if it answers all of it, ask nothing/);
+  });
+
+  it("asks a clinic's first question for a clinic, and the general one when the kind is unknown", async () => {
+    create.mockResolvedValue({ choices: [{ message: { content: JSON.stringify({ reply: "reply" }) } }] });
+    await generateInstantReply({ leadFirstName: "Young", ownerFirstName: "Manoj", inboundText: "hi", trade: "Dental / medical clinic" });
+    expect(create.mock.calls[0][0].messages[0].content).toMatch(/what they would like to come in for, and whether it is their first visit/);
+    await generateInstantReply({ leadFirstName: "Young", ownerFirstName: "Manoj", inboundText: "hi" });
+    expect(create.mock.calls[1][0].messages[0].content).toMatch(/what they are looking for, and when they need it/);
+  });
+
+  it("answers a bare greeting with a short thanks and the question, never \"send your questions\"", async () => {
+    create.mockResolvedValue({ choices: [{ message: { content: JSON.stringify({ reply: "reply" }) } }] });
+    await generateInstantReply({ leadFirstName: "Young", ownerFirstName: "Manoj", inboundText: "hi" });
+    const system = create.mock.calls[0][0].messages[0].content as string;
+    expect(system).toMatch(/only a greeting or says nothing specific yet/);
+    expect(system).toMatch(/a short, plain thanks for getting in touch is the natural opener/);
+    expect(system).toMatch(/Never ask them to send their questions when they have not said they have any/);
+    expect(system).toMatch(/never promise to follow up when they have asked nothing/);
   });
 
   it("forbids parroting the lead's details back as a confirmation receipt", async () => {
@@ -557,6 +588,18 @@ describe("instant-ack risk check (assessAckRisk)", () => {
     expect(system).toMatch(/is required, not a risk/);
     expect(system).toMatch(/not a human review/);
     expect(system).toMatch(/even hedged with/);
+  });
+
+  // A-296: the first reply now asks the first question of the business's plan, so the judge must pass a plain question.
+  it("passes an easy question about what they need or when, but not one that offers a day, time or price", async () => {
+    create.mockResolvedValue({
+      choices: [{ message: { content: JSON.stringify({ reasoning: "nothing", verdict: "ok", reason: "ok" }) } }],
+    });
+    await assessAckRisk("hi", "Thanks for getting in touch! Are you looking to buy, sell or rent, and roughly when?");
+    const system = create.mock.calls[0][0].messages[0].content as string;
+    expect(system).toMatch(/may end with one easy question about what they are looking for or roughly when/);
+    expect(system).toMatch(/A question asking what they need, which one they mean, or roughly when asserts nothing and is 'ok', unless it offers a specific day, time or price/);
+    expect(system).toMatch(/A short thanks for getting in touch, when their message is only a greeting, is 'ok'/);
   });
 
   it("uses a binary verdict with reasoning emitted before it, at temperature 0", async () => {

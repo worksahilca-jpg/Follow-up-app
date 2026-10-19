@@ -17,7 +17,7 @@ import { timingBucketFromWords } from "@/lib/timingBucket";
 // The client and model name live in their own leaf module so this file
 // and leadLanguage.ts don't import each other — see openaiClient.ts.
 import { MODEL, TRANSCRIBE_MODEL, getClient } from "@/lib/integrations/openaiClient";
-import { playbookFor } from "@/lib/tradePlaybooks";
+import { firstAskFor, playbookFor } from "@/lib/tradePlaybooks";
 import { factsPromptBlock, factsText, type FactLine } from "@/lib/factLines";
 import { examplesPromptBlock, type OwnerExampleLine } from "@/lib/ownerExampleLines";
 import { customerGreetingName } from "@/lib/leadName";
@@ -253,6 +253,16 @@ const FOLLOW_UP_STEP_NOTICE =
   "Always address the customer with the polite form of 'you' in their language (aap in Hindi, Urdu or Punjabi; " +
   "usted, vous, Sie where that is how a business speaks), never the most familiar one (tu, tujhe), even when they " +
   "write casually.";
+
+// The founder's Talk test, 2026-10-18 (R-135, fixed by A-296): replies that read like a form, "I'll check" said when
+// nothing was asked. A person who is glad someone wrote says so, in their own words, before getting down to it.
+const WARM_OPENING_NOTICE =
+  " Sound glad they wrote: open with a few warm words that react to what they just said (\"that's great\", " +
+  "\"congratulations\", \"sorry you're dealing with that\"), at the start of your first sentence, or as a very short " +
+  "sentence of its own when there is nothing to answer. Never thank them for writing, never praise their question, " +
+  "and never reuse an opener the business already sent in this conversation. Only say you'll check or confirm " +
+  "something when their message actually asked about it: a statement such as \"I saw your listing\" or \"I'm " +
+  "interested\" asks nothing, so answer it warmly and move the conversation forward instead of promising to check.";
 
 const SCORE_JSON_SCHEMA = {
   name: "lead_score",
@@ -1506,7 +1516,11 @@ export async function generateFollowUpMessage(
       // he meant, and nothing about either thing he asked. The email had
       // this rule since 2026-10-05; the DM never did.
       " Whatever the hint says, their questions come first. If their most recent message asked anything, the " +
-      "first sentence answers it, or says plainly that you'll check that specific thing. If it asked more than " +
+      "first sentence answers it, or says plainly that you'll check that specific thing. " +
+      // The founder's Talk test, 2026-10-18 (R-135): "i saw your listing i am intrested to buy a house in toronto"
+      // got "I'll check the Toronto listing status for you." Nothing was asked; "I'll check" was filler.
+      "Only say you'll check something when their message actually asked about it: \"I saw your listing\" or " +
+      "\"I'm interested in buying\" asks nothing, so answer it warmly and move it forward instead. If it asked more than " +
       "one thing (what you charge and whether you're free, say), cover every one, briefly and in the order asked, " +
       "before your own question; skipping one tells them nobody read it. " +
       // The accuracy test, 2026-10-17: "Can I see the Danforth semi this
@@ -1703,6 +1717,7 @@ export async function generateFollowUpMessage(
           HUMAN_VOICE_NOTICE +
           TRUST_NOTICE +
           FOLLOW_UP_STEP_NOTICE +
+          WARM_OPENING_NOTICE +
           UNTRUSTED_CONVERSATION_NOTICE +
           VOICE_AGENT_TRUST_NOTICE +
           (playbookFor(lead.trade) ? "\n\n" + playbookFor(lead.trade) : "") +
@@ -1926,8 +1941,14 @@ export async function generateInstantReply(input: {
   leadFirstName: string;
   ownerFirstName: string;
   inboundText: string;
+  /** The business's kind, for the first question of its plan (src/lib/tradePlaybooks.ts, A-296). */
+  trade?: string | null;
 }): Promise<string> {
   const client = getClient();
+  // The founder's Talk test, 2026-10-18: "hi" got "Send me your questions, and I'll make sure someone comes back to
+  // you personally shortly". A first reply that asks nothing stops the conversation (R-135), so it now asks the
+  // first step of the business's plan: a question asserts nothing about the business.
+  const firstAsk = firstAskFor(input.trade);
   const completion = await client.chat.completions.create({
     model: MODEL,
     messages: [
@@ -1940,7 +1961,7 @@ export async function generateInstantReply(input: {
           `${input.ownerFirstName}, in the first person, and the message is signed by ${input.ownerFirstName} — ` +
           `never refer to ${input.ownerFirstName} in the third person, and never a bare "someone will get back ` +
           `to you."\n\n` +
-          "This reply may do exactly three things, and nothing else:\n" +
+          "This reply may do exactly four things, and nothing else:\n" +
           "(1) Acknowledge, by name, the specific thing they asked about or told you, so it reads as a real " +
           "read of their specific message — never a generic phrase like 'thanks for reaching out' or 'we got " +
           "your message' that could apply to literally any message from anyone; name the actual thing they " +
@@ -1948,19 +1969,26 @@ export async function generateInstantReply(input: {
           "(2) Show it registered by referring to their own specifics — the date they named, the place, the thing " +
           "they asked for — using only what they themselves wrote. Touch one or two of them in passing, the way a " +
           "person would; never list their details back at them like a confirmation receipt or a form summary.\n" +
-          "(3) Say that you will follow up with the specifics shortly — or, if they only said they have questions " +
-          "without asking them yet, invite them to send their questions.\n\n" +
+          "(3) If they asked something you cannot answer yet, say that you will follow up with it shortly — or, if " +
+          "they only said they have questions without asking them yet, invite them to send their questions.\n" +
+          `(4) End with one short, friendly question asking about ${firstAsk}, so the conversation moves forward. ` +
+          "Ask about both things together in that one sentence with a single question mark, never as two questions. " +
+          "Skip any part their message already answers, and if it answers all of it, ask nothing.\n\n" +
+          "If their message is only a greeting or says nothing specific yet ('hi', 'hello', 'are you there?'), there " +
+          "is nothing to name: a short, plain thanks for getting in touch is the natural opener (the one exception to " +
+          "the rule against opening with thanks), then the question in (4). Never ask them to send their questions " +
+          "when they have not said they have any, and never promise to follow up when they have asked nothing.\n\n" +
           // The count itself was the trap: an enumerated list of three
           // permitted acts reads as a three-part template, and the model
           // obliges with one sentence per item — which is exactly the
           // stiff, tricolon acknowledgement a person never writes, and
           // which the "1-2 short sentences" instruction further down was
           // losing the argument against.
-          "Those three are what you are ALLOWED to say. They are not a template and they are not three sentences: " +
-          "the best version of this message is ONE sentence that does all three at once, and two short sentences " +
-          "is the absolute maximum. If you are writing a sentence per item, you are writing a form letter. Picture " +
-          "the owner thumbing this out on their phone between jobs — they read the message, they say the one thing " +
-          "that proves they read it, they say they will come back with the details, they hit send.\n\n" +
+          "Those are what you are ALLOWED to say. They are not a template and they are not one sentence each: " +
+          "the best version of this message is ONE sentence that does (1) to (3) at once, then the question, and two " +
+          "short sentences is the absolute maximum. If you are writing a sentence per item, you are writing a form " +
+          "letter. Picture the owner thumbing this out on their phone between jobs — they read the message, they say " +
+          "the one thing that proves they read it, they ask the one question that moves it on, they hit send.\n\n" +
           "It must not do anything else. There is no business-side context available to you: you do not know " +
           "the prices, availability, schedule, stock, service area, policies, qualifications, or what the " +
           "business does or does not offer. So do not answer their question, even partially, even hedged " +
@@ -2101,8 +2129,9 @@ export async function assessAckRisk(
           "You check the very first automated reply to a brand-new lead's message before it is sent with no " +
           "human review. The reply was written with no business-side context at all — the business's prices, " +
           "availability, schedule, policies and offerings are unknown to the writer — so a correct reply does " +
-          "only three things: acknowledges what the lead asked about, restates the lead's own details back to " +
-          "them, and promises that the owner will follow up with the specifics shortly.\n\n" +
+          "only these things: acknowledges what the lead asked about, restates the lead's own details back to " +
+          "them, promises that the owner will follow up with the specifics shortly when they asked something, " +
+          "and may end with one easy question about what they are looking for or roughly when (A-296).\n\n" +
           "Answer 'ok' if the reply does only those things.\n\n" +
           "Answer 'not_ok' if the reply does anything else — specifically if it:\n" +
           "- states or implies any fact about the business: a price, rate, range, or that something is cheap, " +
@@ -2122,7 +2151,9 @@ export async function assessAckRisk(
           "risk, as long as nothing is asserted about it. Restating the lead's own words, dates, budget, " +
           "address, or requirements is not a claim. A promise to confirm or send the specifics shortly is the " +
           "intended shape of a good reply. \"I'll confirm availability for next week and send you pricing " +
-          "shortly\" is 'ok'. A frustrated, urgent, or comparison-shopping tone in the lead's message does not " +
+          "shortly\" is 'ok'. A question asking what they need, which one they mean, or roughly when asserts " +
+          "nothing and is 'ok', unless it offers a specific day, time or price. A short thanks for getting in touch, " +
+          "when their message is only a greeting, is 'ok'. A frustrated, urgent, or comparison-shopping tone in the lead's message does not " +
           "by itself make the reply 'not_ok'; only the reply's own content does.\n\n" +
           "If you answer 'not_ok', the lead receives a fixed generic line (\"Thank you for contacting us, " +
           "I've received your message and will get back to you shortly\") instead — not a human review — so " +

@@ -14487,3 +14487,20 @@ account needs a trial or paid plan.
 - Reply speed (the 2-minute poll).
 - The founder's rerun of the Talk test.
 
+## 2026-10-19 — FollowUp, not GoHighLevel's automated messages, answers his customers
+
+**Founder:**
+- "we are not sending thanks for reaching we will be replying and analyse their querry and then we will draft with the right answer right"
+- "i dont want go highlevels automated ai message bro when we can handle it like a real person"
+
+**What it means:**
+- On a GoHighLevel account, FollowUp sends no generic acknowledgement. It reads what the customer asked and drafts a
+  real answer.
+- In setup, the owner switches off GoHighLevel's own automatic and AI replies to new messages, so the customer never
+  gets a bot message and a FollowUp reply.
+- FollowUp can't switch them off itself: it has no permission on workflows, on purpose. It's a setup step done with
+  the owner.
+
+**Trade-off to say out loud:** while every reply waits for the owner's tap, the reply is only as fast as the owner.
+Once he trusts the drafts, automatic sending for safe replies (A-217, A-236) brings the speed back.
+

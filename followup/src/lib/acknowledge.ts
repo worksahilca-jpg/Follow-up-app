@@ -330,6 +330,8 @@ export async function buildAckLine(input: {
   inboundText: string;
   channel: AckChannel;
   locale?: string | null;
+  /** The business's kind, so the first reply asks the first question of its plan (A-296). */
+  trade?: string | null;
 }): Promise<AckLine> {
   const fallback = genericAckLine(input.businessName);
   if (!input.inboundText.trim()) return { line: fallback, source: "fallback", reason: "no inbound text" }; // nothing specific to respond to
@@ -340,6 +342,7 @@ export async function buildAckLine(input: {
       leadFirstName: input.leadFirstName,
       ownerFirstName: input.ownerFirstName,
       inboundText: input.inboundText,
+      trade: input.trade,
     });
   } catch (err) {
     console.error("Instant reply generation failed, falling back to the generic acknowledgement:", err);
@@ -641,7 +644,7 @@ export async function acknowledgeNewLead(
     });
     if (claim.count === 0) return { sent: false, reason: "already acknowledged" };
 
-    const business = await prisma.business.findUnique({ where: { id: lead.businessId }, select: { name: true } });
+    const business = await prisma.business.findUnique({ where: { id: lead.businessId }, select: { name: true, industry: true } });
     const businessName = business?.name ?? "us";
     const owner = await getSenderFirstName(lead.businessId);
     const leadFirstName = greetingFirstName(lead.name);
@@ -654,6 +657,7 @@ export async function acknowledgeNewLead(
       inboundText: input.inboundText ?? "",
       channel: input.channel,
       locale: lead.language,
+      trade: business?.industry ?? null,
     });
 
     // The lead's own message decides the language of everything that

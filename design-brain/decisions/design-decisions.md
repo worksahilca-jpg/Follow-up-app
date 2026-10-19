@@ -14318,3 +14318,13 @@ reply 2, every kind has a plan), then one plan per kind (Real estate, Mortgage, 
 Something else): the goal meeting, three replies of two questions each, what it never does, and a hand-written sample
 chat. Weak: the sample replies are targets written by hand, not FollowUp's output, so the real test is Talk to it after
 the build; the clinic, legal and mortgage "never" lists are common sense, not checked with a professional in each trade.
+
+## 2026-10-19 — Reply plans approved and built (A-296)
+
+Founder: *"Yes"* to the reply plans after R-135. Built as prompt rules, not new data: each kind's plan is a playbook
+in the reply writer, and the instant reply now asks the first question of that plan (its safety check was told a plain
+question asserts nothing). Real estate keeps its checklist, plus the listing rule from his own test. Weak, said
+plainly: the plans for kinds other than real estate have no memory of what was asked; the model reads it off the
+conversation, so a repeat question is possible where real estate's checklist prevents one. The clinic "urgent" rule is
+an instruction only; nothing yet holds such a reply for the owner by itself. None of the AI output could be run here
+(no AI key on this copy), so the founder's Talk to it test per kind is the real check.

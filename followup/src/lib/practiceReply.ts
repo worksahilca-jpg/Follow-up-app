@@ -89,6 +89,7 @@ export async function practiceReply(
       automationTier: "ASSISTED",
       inboundText: latest,
       channel,
+      trade: opts.industry ?? business?.industry ?? null,
     });
     // As acknowledgeNewLead sends it: framed on email, "Hi! " and the line on a DM.
     const reply = dm

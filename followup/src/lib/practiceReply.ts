@@ -118,17 +118,19 @@ export async function practiceReply(
 
   let qualification: Qualification | null = null;
   let qualify: Pick<Criterion, "ask"> | null = null;
+  let known: { qualification: Qualification | null; nothingToAsk: boolean } | null = null;
   if (template) {
     qualification = mergeQualification(template, readQualification(previous), extracted, customerTexts(conversation), null);
     const next = askContact ? [] : nextToAsk(template, qualification);
     qualify = askFor(next);
+    known = { qualification, nothingToAsk: !askContact && next.length === 0 };
     if (next.length) qualification = markOffered(qualification, ...next.map((c) => c.key));
   }
 
   const contactAsked = contactAskedBefore || askContact;
 
   if (dm) {
-    const written = await draftDm(customerName, conversation, voiceSamples, undefined, undefined, detected, context.facts, askContact ? DM_CONTACT_ASK : qualify, context.trade, context.examples, context.rules);
+    const written = await draftDm(customerName, conversation, voiceSamples, undefined, undefined, detected, context.facts, askContact ? DM_CONTACT_ASK : qualify, context.trade, context.examples, context.rules, known);
     let verdict: PracticeVerdict;
     if (written.shapeFailed) {
       // The send pass holds a DM that failed its shape check, in the same words (automation.ts).
@@ -142,7 +144,7 @@ export async function practiceReply(
 
   const bookingLink = saidYesToMeeting(conversation) ? `${appUrl()}${PRACTICE_BOOKING_PATH}` : null;
   const draft = await generateFollowUpMessage(
-    { name: customerName, conversation, ...context, qualify, bookingLink },
+    { name: customerName, conversation, ...context, qualify, bookingLink, known: known?.qualification ?? null, nothingToAsk: known?.nothingToAsk ?? false },
     voiceSamples,
     undefined,
     undefined,

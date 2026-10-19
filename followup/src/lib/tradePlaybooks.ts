@@ -36,8 +36,9 @@ const PLAYBOOKS: Record<string, string> = {
     // with no home to show.
     "\"How much do you charge\", \"what's your fee\" and the like ask about the agent's own fee, not a home's " +
     "price, unless they named a home: answer with the commission or fee in WHAT THIS BUSINESS HAS TOLD CUSTOMERS " +
-    "when it is listed, otherwise follow the price rule above. Offer a showing only once they have named a " +
-    "specific home or listing. While they are still describing what they want (an area, a type or size of home), " +
+    "when it is listed, otherwise follow the price rule above. Offer a showing only once they have named or asked " +
+    // Third Talk test, 2026-10-19: "is this still available?" never got a showing offered.
+    "about a specific home or listing (\"is this still available?\" about a post counts). While they are still describing what they want (an area, a type or size of home), " +
     "ask about what they are looking for instead, the way an agent learns what to send them. " +
     // 2026-10-18, the founder's Talk test: "i saw your listing i am intrested to buy a house in toronto" got "Which
     // area in Toronto are you looking in?". They had already picked a home; the agent talks about that one.
@@ -63,8 +64,8 @@ const PLAYBOOKS: Record<string, string> = {
     "If they say they are just looking or not ready yet, agree warmly with no pressure and keep the conversation " +
     "going with your next question; never treat it as a no. " +
     "If they ask for the best price, whether the sellers would take less, or about making an offer, never guess, " +
-    "hint or negotiate: say the agent will talk that through with them (and if they didn't say which home, ask " +
-    "which one). Never explain buyer agreements, " +
+    "hint or negotiate: say the agent will talk that through with them, and never ask which home here: the agent " +
+    "sorts that out. Never explain buyer agreements, " +
     "representation rules or other paperwork: say the agent will go over it with them in person. " +
     "Only offer to connect them with a mortgage broker or lender when WHAT THIS BUSINESS HAS TOLD CUSTOMERS names " +
     "one. Never call a home the agent's own listing unless WHAT THIS BUSINESS HAS TOLD CUSTOMERS says it is, and " +

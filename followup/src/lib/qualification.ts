@@ -556,8 +556,41 @@ export function qualifyPromptBlock(next: Pick<Criterion, "ask"> | null): string 
     "conversation already makes clear what they are enquiring about; if it does not, ask what they mean instead. If " +
     "your reply already needs a different question to answer them properly, ask that one and leave this for a " +
     "later message. Never more than one question sentence in total. This is the only exception to the rule about " +
-    "not asking qualifying questions on details they have not raised, and it covers these topics only."
+    "not asking qualifying questions on details they have not raised, and it covers these topics only. It is " +
+    "this reply's question: it takes the place of any other question suggested above."
   );
+}
+
+/**
+ * What the customer has already told FollowUp, and what was asked and left unanswered, for the reply writer. The
+ * checklist never asks a thing twice, but the writer didn't know what it held: the founder's third Talk test
+ * (2026-10-19) got the area asked in three replies running, from the DM's "ask an easy question" when the checklist
+ * had nothing to ask. `nothingLeft`: the checklist has nothing for this reply, so the reply asks nothing of its own
+ * and ends with what happens next.
+ */
+export function knownPromptBlock(q: Qualification | null, nothingLeft = false): string {
+  const template = q ? templateById(q.template) : null;
+  if (!q || !template) return "";
+  const label = (k: CriterionKey) => criterionOf(template, k)?.label ?? k;
+  const said = q.items.filter((i) => i.value.trim()).map((i) => `${label(i.key)}: ${i.value.trim()}`);
+  const unanswered = (q.offered ?? []).filter((k) => !knows(q, k)).map(label);
+  let block = "";
+  if (said.length) {
+    block += `\n\nWHAT THIS CUSTOMER HAS ALREADY TOLD YOU: ${said.join("; ")}. Use it, and never ask about any of it again, in any words.`;
+  }
+  if (unanswered.length) {
+    block +=
+      `\n\nALREADY ASKED, NOT ANSWERED: ${unanswered.join("; ")}. Never ask about these again, in any words; carry ` +
+      "on without them, and the business sorts them out later.";
+  }
+  if (nothingLeft) {
+    block +=
+      "\n\nNOTHING LEFT TO ASK. This overrides any instruction above to end with a question: ask no question of " +
+      "your own in this reply, unless their message needs one to be answered properly. Respond to what they just " +
+      "said, then end with what happens next as a plain statement, such as that someone will be in touch to set " +
+      "it up. No buttons.";
+  }
+  return block;
 }
 
 /** "Sat, Oct 12, 10:30 AM" in the business's time zone, for a booking made through the booking link. */

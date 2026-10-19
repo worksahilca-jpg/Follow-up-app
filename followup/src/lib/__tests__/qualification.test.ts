@@ -24,6 +24,7 @@ import {
   glanceFacts,
   isCustomerQuote,
   isReady,
+  knownPromptBlock,
   markOffered,
   mergeQualification,
   nextToAsk,
@@ -375,6 +376,35 @@ describe("the reply writer", () => {
   it("is told nothing new when there is nothing to ask", async () => {
     await generateFollowUpMessage({ name: "Raj Malhotra", conversation: thread.slice(0, 1), trade: "Real estate" });
     expect(create.mock.calls[0][0].messages[0].content).not.toContain("WHAT TO LEARN NEXT");
+  });
+
+  // Third Talk test, 2026-10-19: the area was asked three replies running, because the writer never saw the checklist.
+  it("is told what they already said and what went unanswered, and to ask nothing when nothing is left", async () => {
+    const before = q([SIDE, SOON, NO_AGENT], { offered: ["area"] });
+    await generateFollowUpMessage({ name: "Raj Malhotra", conversation: thread, trade: "Real estate", known: before, nothingToAsk: true });
+    const system = create.mock.calls[0][0].messages[0].content as string;
+    expect(system).toContain("WHAT THIS CUSTOMER HAS ALREADY TOLD YOU: Looking to: Buying; When: In about 2 months; Agent: No agent yet.");
+    expect(system).toContain("ALREADY ASKED, NOT ANSWERED: Area. Never ask about these again");
+    expect(system).toContain("NOTHING LEFT TO ASK");
+  });
+
+  it("asks its one checklist question instead of any other, and is never told 'nothing left' while it has one", async () => {
+    await generateFollowUpMessage({
+      name: "Raj Malhotra",
+      conversation: thread.slice(0, 1),
+      trade: "Real estate",
+      qualify: askFor(nextToAsk(realtor, q([SIDE]))),
+      known: q([SIDE]),
+      nothingToAsk: true,
+    });
+    const system = create.mock.calls[0][0].messages[0].content as string;
+    expect(system).toContain("it takes the place of any other question suggested above");
+    expect(system).not.toContain("NOTHING LEFT TO ASK");
+  });
+
+  it("says nothing about what they told it when there is no checklist or nothing known", () => {
+    expect(knownPromptBlock(null, true)).toBe("");
+    expect(knownPromptBlock(q([]))).toBe("");
   });
 });
 

@@ -12,7 +12,7 @@ import { businessText, checkDmDraftShape, conversationText, pickDmSituation, typ
 import type { StoredQuickReplies } from "@/lib/quickReplies";
 import type { Message } from "@/lib/types";
 import { factsText, type FactLine } from "@/lib/factLines";
-import type { Criterion } from "@/lib/qualification";
+import type { Criterion, Qualification } from "@/lib/qualification";
 import type { OwnerExampleLine } from "@/lib/ownerExampleLines";
 
 /** Lead.suggestedQuickReplies as stored, or null for anything that isn't the shape. */
@@ -107,7 +107,9 @@ export async function draftDm(
   // not counted as the business's words by the shape check below, so a draft that copies one is held.
   examples: readonly OwnerExampleLine[] = [],
   // The founder's rules for this kind of business ("Tell FollowUp what's wrong", A-297).
-  rules: readonly string[] = []
+  rules: readonly string[] = [],
+  // What the customer has already told FollowUp, and whether the checklist has nothing for this reply (knownPromptBlock).
+  told: { qualification: Qualification | null; nothingToAsk: boolean } | null = null
 ): Promise<{ body: string; quickReplies: StoredQuickReplies; shapeFailed: string | null }> {
   const situation = pickDmSituation(conversation, touch);
   const known = factsText(facts);
@@ -116,7 +118,7 @@ export async function draftDm(
   let lastRule: string | null = null;
   let ask = situation;
   for (let attempt = 0; attempt < 2; attempt++) {
-    const draft = await generateFollowUpMessage({ name: leadName, conversation, facts, qualify, trade, examples, rules }, voiceSamples, messageHint, ask, leadLanguage);
+    const draft = await generateFollowUpMessage({ name: leadName, conversation, facts, qualify, trade, examples, rules, known: told?.qualification ?? null, nothingToAsk: told?.nothingToAsk ?? false }, voiceSamples, messageHint, ask, leadLanguage);
     const buttons = draft.buttons ?? [];
     // The draft is written in the lead's language, so the calendar rule
     // has to read it in that language — an English-only day list would be

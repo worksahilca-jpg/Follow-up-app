@@ -79,8 +79,22 @@ a booked call or visit; the owner closes.
 - **Removed (R-136):** the paid Claude chat on Admin → Train (A-298). Sahil should delete `ANTHROPIC_API_KEY` and
   `ANTHROPIC_MODEL` in Vercel and revoke the "FollowUp Train" key at platform.claude.com. The empty `TrainerMessage`
   table stays. "Tell FollowUp what's wrong" (A-297) still works on Talk to it.
-- **In progress (not committed, copy in the scratchpad `wip-memory/`):** every kind remembers which plan questions it
-  asked (A-299), the same checklist real estate has.
+- **Realtor replies follow the top-agent playbook (A-299, built 2026-10-19):**
+  - The playbook comes from about 60 sources: `reports/FollowUp realtor reply playbook.md`, outside the repo.
+  - Sahil trained it by chat; the rules were checked against the earlier decisions.
+  - A buyer's questions now run: area + when → viewing + agent (asked gently) → lender + price range (money last).
+  - Saying yes to a viewing makes the customer Ready, and the phone buzzes.
+  - On Instagram, a question about one home gets an answer and a light question first; the showing comes in the next
+    reply.
+  - Never promise a time.
+  - Price, offers and paperwork go to the agent.
+  - A lender is offered only if it's in the owner's facts.
+  - Two questions per message and the A-245 plans are unchanged (founder: "yes go with both").
+  - Not built: the day-1 follow-up in the DM before Meta's 24-hour window closes (the plan engine's timing; ask
+    first).
+- **Paused (not committed, copy in the scratchpad `wip-memory/`):** every kind remembers which plan questions it
+  asked, the same checklist real estate has (no decision number yet; the "A-299" it was first called is now the
+  playbook above).
 - **Waiting on Sahil:**
   1. Train in the practice room; then say "check the practice room".
   2. Message 5 testers (was due Oct 19).

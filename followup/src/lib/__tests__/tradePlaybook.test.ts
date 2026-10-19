@@ -68,6 +68,19 @@ describe("the playbook", () => {
   });
 
   // R-135 / A-296: a business set to anything but real estate got no plan at all.
+  it("follows the top-agent playbook (A-299): one home first, no promised times, price and paperwork to the agent", () => {
+    const p = playbookFor("Real estate");
+    expect(p).toContain("just this one that caught their eye or they are looking at a few in the area");
+    expect(p).toContain("offer the showing in your next reply, or straight away if they asked to see it");
+    expect(p).toContain("Never promise a showing day or time");
+    expect(p).toContain("never treat it as a no");
+    expect(p).toContain("never guess, hint or negotiate");
+    expect(p).toContain("Never explain buyer agreements");
+    expect(p).toContain("Only offer to connect them with a mortgage broker or lender when");
+    expect(p).toContain("feel watched");
+    expect(firstAskFor("Real estate")).toContain("just this one that caught their eye");
+  });
+
   it("gives every other kind its own plan: a goal, three steps of two things, the meeting by step 2", () => {
     const kinds: [string, RegExp, RegExp][] = [
       ["Mortgage brokerage", /A MORTGAGE BROKER/, /Never quote a rate/],

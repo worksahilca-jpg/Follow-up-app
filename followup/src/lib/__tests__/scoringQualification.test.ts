@@ -137,12 +137,12 @@ beforeEach(() => {
 });
 
 describe("a realtor's customer who just wrote", () => {
-  it("is read, saved with their words, and the reply asks the next round — money and the meeting, in one sentence — once", async () => {
+  it("is read, saved with their words, and the reply asks the next round — the meeting and the agent, in one sentence — once", async () => {
     setLead();
     expect(await scoreAndDraftForLead("lead1")).toBe(true);
     expect(h.extract).toHaveBeenCalledTimes(1);
     expect(h.generate.mock.calls[0][0].qualify.ask).toBe(
-      "whether they have been pre-approved yet (or are buying with cash), and whether they would like to see the home or have a quick call about it, as an open question; never suggest a day, a time, or weekday versus weekend yourself"
+      "whether they would like to see the home or have a quick call about it, as an open question; never suggest a day, a time, or weekday versus weekend yourself, and whether they have been seeing homes with an agent so far, or just on their own"
     );
     expect(updateData().qualification).toEqual({
       v: 2,
@@ -152,7 +152,7 @@ describe("a realtor's customer who just wrote", () => {
         { key: "area", value: "Elm St", quote: "the 3 bed on Elm St" },
         { key: "timing", value: "In about 2 months", quote: "move in about 2 months", bucket: "soon" },
       ],
-      offered: ["financing", "viewing"],
+      offered: ["viewing", "agent"],
     });
     expect(updateData().saidNoAt).toBeNull();
     expect(h.updateMany).not.toHaveBeenCalledWith(expect.objectContaining({ data: { qualifiedAt: expect.any(Date) } }));
@@ -190,10 +190,10 @@ describe("a realtor's customer who just wrote", () => {
         "FollowUp: Nadia Khan looks ready to talk.",
         'Area: Elm St ("the 3 bed on Elm St")',
         'When: In about 2 months ("move in about 2 months")',
-        'Money: Pre-approved up to $900k ("pre-approved up to 900k")',
         'Viewing: Saturday morning ("Saturday morning works")',
-        'Price range: Up to $900k ("pre-approved up to 900k")',
         'Agent: No agent yet ("No agent.")',
+        'Money: Pre-approved up to $900k ("pre-approved up to 900k")',
+        'Price range: Up to $900k ("pre-approved up to 900k")',
       ].join("\n")
     );
 

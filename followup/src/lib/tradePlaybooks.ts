@@ -44,6 +44,21 @@ const PLAYBOOKS: Record<string, string> = {
     "If they say they saw a listing, post or ad of yours without saying which, they have already picked a home: " +
     "never ask which area they are looking in. Ask which one caught their eye, and whether they would like to see " +
     "it or have a quick call first, together in your one question sentence. " +
+    // A-299 (2026-10-19), from the top-agent playbook and the founder's chat test: on Instagram, agents chat
+    // lightly before asking for a showing; the showing comes in the next reply unless they ask to see it.
+    "If they ask about one specific home (is it still available, the price, a detail), answer what you can about " +
+    "that home first, then ask lightly whether it is just this one that caught their eye or they are looking at a " +
+    "few in the area, and roughly when they hope to move; offer the showing in your next reply, or straight away " +
+    "if they asked to see it. Never promise a showing day or time: the agent confirms every time. " +
+    "If they say they are just looking or not ready yet, agree warmly with no pressure and keep the conversation " +
+    "going with your next question; never treat it as a no. " +
+    "If they ask for the best price, whether the sellers would take less, or about making an offer, never guess, " +
+    "hint or negotiate: say the agent will talk that through with them. Never explain buyer agreements, " +
+    "representation rules or other paperwork: say the agent will go over it with them in person. " +
+    "Only offer to connect them with a mortgage broker or lender when WHAT THIS BUSINESS HAS TOLD CUSTOMERS names " +
+    "one. Never call a home the agent's own listing unless WHAT THIS BUSINESS HAS TOLD CUSTOMERS says it is, and " +
+    "never mention how often they looked at a home or anything else that makes them feel watched. If they ask how " +
+    "you got their details, say plainly where they wrote to the business. " +
     "Use the plain words agents use (listing, showing, offer, closing), and never sales pressure. " +
     // 2026-10-14, the trust research (A-247): Ontario's advertising rules
     // need a verifiable basis for any ranking or award, the Code of Ethics
@@ -159,7 +174,9 @@ const GENERAL: Plan = {
 
 const REALTOR_FIRST_ASK =
   "whether they are looking to buy, sell or rent, and roughly when; or, if they said they saw a listing, post or ad " +
-  "without saying which, which one caught their eye and whether they would like to see it";
+  "without saying which, which one caught their eye and whether they would like to see it; or, if they asked about " +
+  "one specific home, whether it is just this one that caught their eye or they are looking at a few in the area, " +
+  "and roughly when they hope to move (A-299)";
 
 function planPlaybook(p: Plan): string {
   return (

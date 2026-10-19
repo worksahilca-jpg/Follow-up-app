@@ -5112,6 +5112,8 @@ production, which this setup does not do; his list of rules on Talk to it is the
 
 ## A-298 — Claude on the Train page: a copy of Claude beside Talk to it ^A-298
 
+**SUPERSEDED (2026-10-19)** by R-136: removed the same day; training moved to the practice room with Claude Code.
+
 **Approved:** 2026-10-19, founder: *"yes draw it with claude"*, then *"yes build it"*, to the "Claude on Train" drawing.
 He asked for it in his own words: *"i want you to be there bro … if your clone is also sitting there with all the rules
 that you know and all the other things you know then its good"*.

@@ -70,16 +70,19 @@ a booked call or visit; the owner closes.
 
 **Last updated: 2026-10-19**
 
-- **Live (PR #559, merged Oct 19; TrainingRule + TrainerMessage tables confirmed in production, RLS on):**
-  1. "Tell FollowUp what's wrong" (A-297): his words become a rule per kind of business, saved in the database.
-  2. Claude on the Train page (A-298): a copy of Claude beside Talk to it. It talks bad answers through, proposes
-     rules (saved on his yes), tests replies and catches clashing rules. What it knows lives in
-     `followup/src/lib/trainerBrief.ts`: **when the rules in this file change, update that file too.**
-- **Before that:** every kind of business has a reply plan (A-296, PR #557, live).
+- **Training happens in the practice room** (artifact "FollowUp Practice Room",
+  https://claude.ai/artifact/WSiRYwcnJTD4Y3ZbHBPadR): Sahil plays the customer, it answers as FollowUp (on his Claude
+  plan), and "What's wrong?" turns his words into a rule per kind of business, saved on the page (collections `rules`
+  and `examples`). When he says **"check the practice room"**: read both collections with ArtifactData, put the new
+  rules and good answers into the app in one PR, then mark each `status: "in-app"`. Its brief mirrors the app's reply
+  rules (openai.ts) and plans (tradePlans.ts / qualification.ts): when those change, update the page too.
+- **Removed (R-136):** the paid Claude chat on Admin → Train (A-298). Sahil should delete `ANTHROPIC_API_KEY` and
+  `ANTHROPIC_MODEL` in Vercel and revoke the "FollowUp Train" key at platform.claude.com. The empty `TrainerMessage`
+  table stays. "Tell FollowUp what's wrong" (A-297) still works on Talk to it.
+- **In progress (not committed, copy in the scratchpad `wip-memory/`):** every kind remembers which plan questions it
+  asked (A-299), the same checklist real estate has.
 - **Waiting on Sahil:**
-  1. ~~Anthropic key~~ Done Oct 19: key (FollowUp workspace, 1 year) and model set in Vercel, $20/month org spend
-     limit, redeployed. Sahil: "it is working". The key expires in about a year: make a new one then.
-  2. Train FollowUp with Claude on Admin → Train → Talk to it, one kind of business at a time.
-  3. Message 5 testers (was due Oct 19).
+  1. Train in the practice room; then say "check the practice room".
+  2. Message 5 testers (was due Oct 19).
 - **Known weak spots:** kinds other than real estate don't remember which questions were asked; the clinic "urgent"
   rule is an instruction only.

@@ -8,7 +8,6 @@ import TrainProgress from "@/components/admin/TrainProgress";
 import { requirePlatformAdmin } from "@/lib/platformAdmin";
 import { getTrainingSummary, goodExamplesByTrade, listExamples } from "@/lib/training";
 import { listTrainingRules } from "@/lib/trainingRules";
-import { loadTrainerTalk, trainerReady } from "@/lib/trainer";
 
 export const dynamic = "force-dynamic";
 
@@ -31,19 +30,17 @@ export default async function TrainPage({ searchParams }: { searchParams: Promis
   await requirePlatformAdmin();
   const { tab: asked } = await searchParams;
   const tab: Tab = TABS.some((t) => t.key === asked) ? (asked as Tab) : "talk";
-  const [summary, examples, byTrade, rules, trainer] = await Promise.all([
+  const [summary, examples, byTrade, rules] = await Promise.all([
     getTrainingSummary(),
     tab === "examples" ? listExamples(100) : Promise.resolve([]),
     tab === "score" ? goodExamplesByTrade() : Promise.resolve({} as Record<string, number>),
     tab === "talk" ? listTrainingRules() : Promise.resolve([]),
-    tab === "talk" ? loadTrainerTalk().catch(() => []) : Promise.resolve([]),
   ]);
   const perConversation = new Map<string, number>();
   for (const e of examples) perConversation.set(e.conversationId, (perConversation.get(e.conversationId) ?? 0) + 1);
 
   return (
-    // Talk to it is wider on a laptop: Claude sits beside the chat (A-298).
-    <div className={tab === "talk" ? "max-w-6xl" : "max-w-3xl"}>
+    <div className="max-w-3xl">
       <PageHeader
         title="Train FollowUp"
         subtitle="Real conversations teach FollowUp how each kind of business answers. The scorecard shows how close it gets."
@@ -68,13 +65,7 @@ export default async function TrainPage({ searchParams }: { searchParams: Promis
         ))}
       </nav>
 
-      {tab === "talk" && (
-        <TrainTalk
-          rules={rules.map((r) => ({ id: r.id, trade: r.trade, text: r.text, when: r.createdAt.toISOString() }))}
-          claudeReady={trainerReady()}
-          trainer={trainer}
-        />
-      )}
+      {tab === "talk" && <TrainTalk rules={rules.map((r) => ({ id: r.id, trade: r.trade, text: r.text, when: r.createdAt.toISOString() }))} />}
       {tab === "add" && <TrainAdd />}
       {tab === "score" && (
         <>

@@ -2420,8 +2420,8 @@ model TrainingRule {
   @@index([trade, createdAt])
 }
 
-/// "Claude on the Train page" (A-298): the founder's talk with Claude beside Talk to it, kept so it remembers what he
-/// said before. Founder-only. Emails, phone numbers, addresses and links are taken out of his words before they're kept.
+/// "Claude on the Train page" (A-298), removed 2026-10-19 at the founder's word (R-136): training moved to the practice
+/// room with Claude Code. Nothing reads or writes this table any more; it is kept, empty, so no migration has to drop it.
 model TrainerMessage {
   id        String   @id @default(cuid())
   // "founder" or "claude".

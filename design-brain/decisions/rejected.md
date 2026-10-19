@@ -1739,3 +1739,13 @@ asked nothing; one question where the plan says two; replies with no human line;
 plan. **Principle:** every reply welcomes like a person, answers, then moves the customer one step toward a call or
 visit with two easy questions. The landing page's demo (unchanged since Oct 8) is the bar he compares against.
 Fix proposed as the reply plans drawing (2026-10-18), waiting for his yes.
+
+## R-136 — A paid Claude chat inside the admin page ^R-136
+
+**Rejected:** 2026-10-19, the founder, right after A-298 went live and he saw it spends API credit: *"remove the paid
+panel … I will just be training the model with you only. I don't want to train it on my admin app. Let's just keep the
+admin page for our app analytics only."* **What is rejected:** a pay-per-message assistant built into the app for
+training replies. **Principle:** training happens with Claude Code, on his Claude plan, in the practice room
+(artifact "FollowUp Practice Room"); its rules reach the app through a pull request when he says "check the practice
+room". The admin page stays for the app's numbers; Train → Talk to it stays only as the check that the real app answers
+the way the practice room does. A-298 is superseded by this.

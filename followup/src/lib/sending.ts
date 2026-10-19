@@ -491,6 +491,15 @@ export async function sendFollowUpToLead(
       failure: "refused",
     };
   }
+  // And nothing FollowUp sends on its own, on any channel (founder 2026-10-19: "we cant take risk"): someone who said
+  // STOP meant stop. The owner can still write to them by email themselves.
+  if (options.automated && lead.optedOutAt) {
+    return {
+      success: false,
+      message: "This customer said STOP, so FollowUp won't message them on its own on any channel.",
+      failure: "refused",
+    };
+  }
 
   // Never an automatic text or WhatsApp to someone who has not written to
   // the business, on any channel. Instagram and Messenger already refuse
@@ -522,10 +531,19 @@ export async function sendFollowUpToLead(
     const conn = await prisma.crmConnection.findUnique({ where: { businessId: lead.businessId }, select: { provider: true, apiKey: true } });
     if (conn?.provider === "gohighlevel" && conn.apiKey) {
       const firstName = lead.name.split(" ")[0];
-      if (await ghlDoNotDisturb(conn.apiKey, lead.crmId, channel)) {
+      const dnd = await ghlDoNotDisturb(conn.apiKey, lead.crmId, channel);
+      if (dnd) {
         return {
           success: false,
           message: `${firstName} is marked Do Not Disturb in GoHighLevel, so FollowUp won't send this. If they asked to hear from you, turn it off in GoHighLevel first.`,
+          failure: "refused",
+        };
+      }
+      // GoHighLevel didn't answer: FollowUp's own send waits for a pass where it can tell. The owner's Send goes.
+      if (dnd === null && options.automated) {
+        return {
+          success: false,
+          message: `FollowUp couldn't check with GoHighLevel whether ${firstName} is Do Not Disturb, so it didn't send this on its own. It tries again later.`,
           failure: "refused",
         };
       }

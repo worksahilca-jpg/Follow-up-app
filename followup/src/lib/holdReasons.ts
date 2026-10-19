@@ -136,6 +136,9 @@ export const IN_CRM_REASON =
 /** GoHighLevel says not to contact them (its Do Not Disturb), so nothing goes out on FollowUp's own. */
 export const CRM_DND_REASON = "they're marked Do Not Disturb in GoHighLevel, so FollowUp won't follow up with them on its own";
 
+/** GoHighLevel didn't answer whether they're Do Not Disturb: FollowUp doesn't guess, the owner decides. */
+export const CRM_DND_UNKNOWN_REASON = "FollowUp couldn't check with GoHighLevel whether they're Do Not Disturb, so this waits for you";
+
 /** A bad ending in the owner's CRM (marked do not contact, thrown out, unsubscribed): FollowUp never messages them. */
 export const CRM_NEVER_REASON = "your CRM says not to contact them, so FollowUp won't message them";
 

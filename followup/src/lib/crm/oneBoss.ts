@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import { CRM_PROVIDERS, isCrmProvider } from "@/lib/crm";
 import { ghlDoNotDisturb, ghlUpcomingMeeting } from "@/lib/crm/gohighlevel";
-import { CRM_BOOKED_REASON, CRM_DND_REASON, CRM_DONE_REASON, CRM_NEVER_REASON } from "@/lib/holdReasons";
+import { CRM_BOOKED_REASON, CRM_DND_REASON, CRM_DND_UNKNOWN_REASON, CRM_DONE_REASON, CRM_NEVER_REASON } from "@/lib/holdReasons";
 
 /**
  * One boss per customer (founder, 2026-10-12, A-237): when a customer is
@@ -79,7 +79,9 @@ export async function crmHoldReason(lead: { businessId: string; crmProvider: str
     const conn = await prisma.crmConnection.findUnique({ where: { businessId: lead.businessId }, select: { provider: true, apiKey: true } });
     if (conn?.provider !== lead.crmProvider || !conn.apiKey) return null;
     if (lead.crmProvider === "gohighlevel") {
-      if (await ghlDoNotDisturb(conn.apiKey, lead.crmId)) return CRM_DND_REASON;
+      const dnd = await ghlDoNotDisturb(conn.apiKey, lead.crmId);
+      if (dnd) return CRM_DND_REASON;
+      if (dnd === null) return CRM_DND_UNKNOWN_REASON;
       if (await ghlUpcomingMeeting(conn.apiKey, lead.crmId, now)) return CRM_BOOKED_REASON;
       return null;
     }

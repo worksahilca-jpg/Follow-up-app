@@ -20,7 +20,7 @@ vi.mock("@/lib/crm", () => ({
 }));
 
 import { crmIsFollowingUp, crmHoldReason, ourLastSendAt } from "@/lib/crm/oneBoss";
-import { CRM_BOOKED_REASON, CRM_DND_REASON, CRM_DONE_REASON, CRM_NEVER_REASON } from "@/lib/holdReasons";
+import { CRM_BOOKED_REASON, CRM_DND_REASON, CRM_DND_UNKNOWN_REASON, CRM_DONE_REASON, CRM_NEVER_REASON } from "@/lib/holdReasons";
 import { followUpBossClient } from "@/lib/crm/followupboss";
 import { hubspotClient } from "@/lib/crm/hubspot";
 
@@ -132,6 +132,12 @@ describe("crmHoldReason", () => {
     expect(await crmHoldReason(ghl)).toBe(CRM_BOOKED_REASON);
     h.meeting.mockResolvedValue(null);
     expect(await crmHoldReason(ghl)).toBeNull();
+  });
+
+  it("waits for the owner when GoHighLevel can't say whether they're Do Not Disturb", async () => {
+    h.dnd.mockResolvedValue(null);
+    expect(await crmHoldReason(ghl)).toBe(CRM_DND_UNKNOWN_REASON);
+    h.dnd.mockResolvedValue(false);
   });
 
   it("asks nothing when the CRM isn't connected", async () => {

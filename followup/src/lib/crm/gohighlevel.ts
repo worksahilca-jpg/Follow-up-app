@@ -515,15 +515,16 @@ const DND_AS: Record<GhlChannel, string> = { text: "SMS", email: "Email", whatsa
 
 /**
  * Whether the owner marked this person Do Not Disturb in GoHighLevel: for this channel, or for everything when no
- * channel is given. Can't tell (GoHighLevel didn't answer) reads as no: GoHighLevel refuses its own sends to them
- * anyway, and one slow answer shouldn't stop every reply.
+ * channel is given. Null when it can't tell (GoHighLevel didn't answer). Each caller decides what that means: the
+ * owner's own Send still goes (GoHighLevel refuses its own sends to them anyway), but nothing FollowUp does on its
+ * own goes ahead on a "don't know" (founder 2026-10-19, before the first real account: "we cant take risk").
  */
-export async function ghlDoNotDisturb(apiKey: string, contactId: string, channel?: GhlChannel): Promise<boolean> {
+export async function ghlDoNotDisturb(apiKey: string, contactId: string, channel?: GhlChannel): Promise<boolean | null> {
   const k = parseGhlKey(apiKey);
-  if (!k) return false;
+  if (!k) return null;
   try {
     const res = await fetch(`${BASE}/contacts/${encodeURIComponent(contactId)}`, { headers: headers(k.token), signal: AbortSignal.timeout(CRM_TIMEOUT_MS) });
-    if (!res.ok) return false;
+    if (!res.ok) return null;
     const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
     const c = (data.contact ?? data) as Record<string, unknown>;
     if (c.dnd === true) return true;
@@ -534,7 +535,7 @@ export async function ghlDoNotDisturb(apiKey: string, contactId: string, channel
     };
     return channel ? on(DND_AS[channel]) : Object.keys(settings).some(on);
   } catch {
-    return false;
+    return null;
   }
 }
 

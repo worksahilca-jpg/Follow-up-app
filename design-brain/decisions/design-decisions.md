@@ -14465,3 +14465,25 @@ Both would have shown on the first real account the day it connected.
 **Noted, not changed:** on the Free plan GoHighLevel isn't read at all (paid or trial only, by design). The realtor's
 account needs a trial or paid plan.
 
+## 2026-10-19 — Safety before the first real GoHighLevel account
+
+**Asked:** "fix the weak points you can fix tonight its his real account only we cant take risk".
+
+**Fixed:**
+- **STOP means stop, on every channel, for anything FollowUp does on its own.** No reminder or welcome back is drafted
+  for them, and an automatic send is refused on any channel. Before, STOP blocked only texts and WhatsApp. The owner
+  can still email them personally.
+- **A "don't know" about Do Not Disturb is never a yes.** If GoHighLevel doesn't answer:
+  - FollowUp's own sends wait;
+  - the draft waits for the owner, with the reason said plainly;
+  - the wake-up stops and asks again next run.
+  The owner's own Send still goes, and GoHighLevel refuses its own sends to a Do Not Disturb contact anyway. Before,
+  "can't tell" read as "no".
+- **The waiting reason on a GoHighLevel customer's draft says "in your GoHighLevel"**, not "in your inbox".
+
+**Not fixable tonight:**
+- The first run on a real account.
+- Calls and voicemails, which GoHighLevel's messages don't carry for FollowUp.
+- Reply speed (the 2-minute poll).
+- The founder's rerun of the Talk test.
+

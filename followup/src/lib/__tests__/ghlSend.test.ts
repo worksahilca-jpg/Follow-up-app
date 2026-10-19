@@ -193,6 +193,26 @@ describe("working alongside GoHighLevel", () => {
     dnd.mockResolvedValue(false);
   });
 
+  // 2026-10-19, before the first real account: a "don't know" never lets FollowUp's own message through.
+  it("doesn't send on its own when GoHighLevel can't say whether they're Do Not Disturb; the owner's send goes", async () => {
+    dnd.mockResolvedValue(null);
+    const auto = await sendFollowUpToLead("lead1", "Just checking in.", { automated: true, trigger: "silence" });
+    expect(auto).toMatchObject({ success: false, failure: "refused" });
+    expect(auto.message).toContain("couldn't check with GoHighLevel whether Nadia is Do Not Disturb");
+    expect(ghlSend).not.toHaveBeenCalled();
+    const own = await sendFollowUpToLead("lead1", "Saturday at 11 works.");
+    expect(own.success).toBe(true);
+    dnd.mockResolvedValue(false);
+  });
+
+  it("never sends on its own, on any channel, to someone who said STOP", async () => {
+    p.lead.findUnique.mockResolvedValue({ ...(await p.lead.findUnique()), optedOutAt: new Date() });
+    const result = await sendFollowUpToLead("lead1", "Just checking in.", { automated: true, trigger: "silence", channel: "email" });
+    expect(result).toMatchObject({ success: false, failure: "refused" });
+    expect(result.message).toContain("said STOP");
+    expect(ghlSend).not.toHaveBeenCalled();
+  });
+
   it("doesn't follow up on its own with someone who booked a meeting there", async () => {
     meeting.mockResolvedValue(new Date("2026-10-20T15:00:00Z"));
     const result = await sendFollowUpToLead("lead1", "Just checking in.", { automated: true, trigger: "silence" });

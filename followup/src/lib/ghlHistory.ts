@@ -90,7 +90,10 @@ export async function wakeConversation(businessId: string, apiKey: string, row: 
   const messages = (await ghlConversationMessages(apiKey, row.id, MESSAGES_PER_CONVERSATION)).sort((a, b) => a.at.getTime() - b.at.getTime());
   // Only a conversation the customer took part in: an owner's message nobody answered is not one to come back to.
   if (!messages.some((m) => m.direction === "inbound")) return "skipped";
-  if (await ghlDoNotDisturb(apiKey, row.contactId)) return "skipped";
+  const dnd = await ghlDoNotDisturb(apiKey, row.contactId);
+  if (dnd) return "skipped";
+  // GoHighLevel didn't say: stop this run here, and ask again next time, rather than guess.
+  if (dnd === null) throw new Error("GoHighLevel didn't say whether a contact is Do Not Disturb");
 
   for (const m of messages) {
     const conversation = await findOrCreateGhlConversation(lead.id, row.id, m.channel);

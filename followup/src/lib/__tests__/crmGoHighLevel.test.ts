@@ -293,9 +293,9 @@ describe("working alongside GoHighLevel", () => {
     // Instagram goes with Facebook's setting.
     fetchMock.mockResolvedValue(reply(200, { contact: { dndSettings: { FB: { status: "permanent" } } } }));
     expect(await ghlDoNotDisturb(KEY, "c1", "instagram")).toBe(true);
-    // Can't tell reads as no.
+    // Can't tell is said as such (null), never as "no": each caller decides.
     fetchMock.mockResolvedValue(reply(500, {}));
-    expect(await ghlDoNotDisturb(KEY, "c1", "text")).toBe(false);
+    expect(await ghlDoNotDisturb(KEY, "c1", "text")).toBeNull();
   });
 
   it("finds their next meeting still to come, never a cancelled or past one", async () => {

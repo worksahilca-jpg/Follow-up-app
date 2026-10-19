@@ -903,6 +903,8 @@ export async function runAutomationForBusiness(
         AND: [quietSince(cutoff, deadLeadEnabled ? deadCutoff : undefined), HAS_CONVERSATION_IF_FROM_CRM],
         // They said no (Lead.saidNoAt): no reminder, ever, until they write again.
         saidNoAt: null,
+        // They said STOP: no reminder on any channel (sendFollowUpToLead refuses it too; this saves the draft).
+        optedOutAt: null,
         OR: [{ lastAutomationCheckedAt: null }, { lastAutomationCheckedAt: { lt: recheckCutoff } }],
       },
       include: PLAN_LEAD_INCLUDE,
@@ -916,6 +918,7 @@ export async function runAutomationForBusiness(
             sequenceId: null,
             AND: [quietSince(deadCutoff), HAS_CONVERSATION_IF_FROM_CRM],
             saidNoAt: null,
+            optedOutAt: null,
             OR: [{ lastAutomationCheckedAt: null }, { lastAutomationCheckedAt: { lt: recheckCutoff } }],
           },
           include: PLAN_LEAD_INCLUDE,
@@ -1750,7 +1753,7 @@ export async function runAutomationForBusiness(
                 // this conversation predates FollowUp, so FollowUp does not
                 // know what already happened on it.
                 isBackfilled
-                ? `this conversation was already in your inbox before FollowUp started watching it, so it hasn't seen what you may have already done about it`
+                ? `this conversation was already in your ${lead.crmProvider === "gohighlevel" ? "GoHighLevel" : "inbox"} before FollowUp started watching it, so it hasn't seen what you may have already done about it`
               : // One step further along than isBackfilled, and ahead of
                 // it in specificity: there is no conversation at all.
                 // The owner needs to know the draft was written from what

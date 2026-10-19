@@ -14328,3 +14328,13 @@ plainly: the plans for kinds other than real estate have no memory of what was a
 conversation, so a repeat question is possible where real estate's checklist prevents one. The clinic "urgent" rule is
 an instruction only; nothing yet holds such a reply for the owner by itself. None of the AI output could be run here
 (no AI key on this copy), so the founder's Talk to it test per kind is the real check.
+
+## 2026-10-19 — "Tell FollowUp what's wrong" drawn, waiting
+
+Founder: *"be a part of that admin page too, or deploy an agent whom I can talk to and help that model to improve … I
+can't paste everything here and then send you screenshots"*. Drawn (artifact "Coach FollowUp"): under any answer in
+Train → Talk to it, a third choice "Tell FollowUp what's wrong"; he types in his own words; FollowUp turns it into one
+rule for that kind of business, rewrites the reply at once (the old one crossed out above it), and lists the kind's
+rules with Undo. Rules are checked every morning and built in for good. Drawn as a page, not on the running app: the
+local test sign-in had expired. Weak: rules written in the moment can contradict each other; the morning check is
+where that gets caught, so it must actually happen.

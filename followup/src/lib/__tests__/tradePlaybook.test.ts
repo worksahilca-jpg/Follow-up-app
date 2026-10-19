@@ -81,6 +81,14 @@ describe("the playbook", () => {
     expect(firstAskFor("Real estate")).toContain("just this one that caught their eye");
   });
 
+  it("fixes the Oct 19 Talk test: no repeat questions, showing hours, and a seller is never asked buy or sell", () => {
+    const p = playbookFor("Real estate");
+    expect(p).toContain("Never ask anything this conversation already asked or they already answered");
+    expect(p).toContain("their time is outside them, say so kindly");
+    expect(firstAskFor("Real estate")).toContain("they are selling, so never ask whether they buy or sell");
+    expect(firstAskFor("Real estate")).toContain("never a value, and never a promise to send one by message");
+  });
+
   it("gives every other kind its own plan: a goal, three steps of two things, the meeting by step 2", () => {
     const kinds: [string, RegExp, RegExp][] = [
       ["Mortgage brokerage", /A MORTGAGE BROKER/, /Never quote a rate/],

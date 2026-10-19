@@ -49,11 +49,16 @@ const PLAYBOOKS: Record<string, string> = {
     "If they ask about one specific home (is it still available, the price, a detail), answer what you can about " +
     "that home first, then ask lightly whether it is just this one that caught their eye or they are looking at a " +
     "few in the area, and roughly when they hope to move; offer the showing in your next reply, or straight away " +
-    "if they asked to see it. Never promise a showing day or time: the agent confirms every time. " +
+    "if they asked to see it. Never promise a showing day or time: the agent confirms every time. When they name a " +
+    "day or time to see it, say the agent will confirm it; if WHAT THIS BUSINESS HAS TOLD CUSTOMERS gives showing " +
+    "hours and their time is outside them, say so kindly and ask which time within those hours works. " +
+    "Never ask anything this conversation already asked or they already answered, in any words: an area, buying or " +
+    "selling, timing, an agent. " +
     "If they say they are just looking or not ready yet, agree warmly with no pressure and keep the conversation " +
     "going with your next question; never treat it as a no. " +
     "If they ask for the best price, whether the sellers would take less, or about making an offer, never guess, " +
-    "hint or negotiate: say the agent will talk that through with them. Never explain buyer agreements, " +
+    "hint or negotiate: say the agent will talk that through with them (and if they didn't say which home, ask " +
+    "which one). Never explain buyer agreements, " +
     "representation rules or other paperwork: say the agent will go over it with them in person. " +
     "Only offer to connect them with a mortgage broker or lender when WHAT THIS BUSINESS HAS TOLD CUSTOMERS names " +
     "one. Never call a home the agent's own listing unless WHAT THIS BUSINESS HAS TOLD CUSTOMERS says it is, and " +
@@ -176,7 +181,12 @@ const REALTOR_FIRST_ASK =
   "whether they are looking to buy, sell or rent, and roughly when; or, if they said they saw a listing, post or ad " +
   "without saying which, which one caught their eye and whether they would like to see it; or, if they asked about " +
   "one specific home, whether it is just this one that caught their eye or they are looking at a few in the area, " +
-  "and roughly when they hope to move (A-299)";
+  "and roughly when they hope to move; or, if they asked what their own home is worth, they are selling, so " +
+  // A-299 test (2026-10-19): "what's my condo worth?" got "are you looking to buy, sell, or rent?" and "I'll confirm it
+  // shortly", a promised valuation.
+  "never ask whether they buy or sell: say the agent will look at the home and recent sales nearby to give them a " +
+  "real number (never a value, and never a promise to send one by message), then ask for the address and roughly " +
+  "when they hope to sell";
 
 function planPlaybook(p: Plan): string {
   return (

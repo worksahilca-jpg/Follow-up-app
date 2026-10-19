@@ -79,7 +79,7 @@ a booked call or visit; the owner closes.
 - **Removed (R-136):** the paid Claude chat on Admin → Train (A-298). Sahil should delete `ANTHROPIC_API_KEY` and
   `ANTHROPIC_MODEL` in Vercel and revoke the "FollowUp Train" key at platform.claude.com. The empty `TrainerMessage`
   table stays. "Tell FollowUp what's wrong" (A-297) still works on Talk to it.
-- **Realtor replies follow the top-agent playbook (A-299, built 2026-10-19):**
+- **Realtor replies follow the top-agent playbook (A-299, LIVE 2026-10-19 with R-136, PR #560 → e55757a):**
   - The playbook comes from about 60 sources: `reports/FollowUp realtor reply playbook.md`, outside the repo.
   - Sahil trained it by chat; the rules were checked against the earlier decisions.
   - A buyer's questions now run: area + when → viewing + agent (asked gently) → lender + price range (money last).
@@ -95,8 +95,15 @@ a booked call or visit; the owner closes.
 - **Paused (not committed, copy in the scratchpad `wip-memory/`):** every kind remembers which plan questions it
   asked, the same checklist real estate has (no decision number yet; the "A-299" it was first called is now the
   playbook above).
-- **Waiting on Sahil:**
-  1. Train in the practice room; then say "check the practice room".
-  2. Message 5 testers (was due Oct 19).
+- **Talk to it test (Oct 19) found 5 reply faults, fixed in a PR:** repeat area question, "buy/sell?" after a listing question, weekend vs weekday showing hours, condo-worth reply. Rerun the 6 test messages after merge.
+- **GoHighLevel uses the same reply rules:** ghlPoll → scoreAndDraftForLead. The business type must be "Real estate".
+- **Waiting on Sahil (gave him one Claude in Chrome prompt for 1–4, Oct 19 night):**
+  1. Vercel: delete `ANTHROPIC_API_KEY` and `ANTHROPIC_MODEL`.
+  2. Revoke the "FollowUp Train" key.
+  3. Meta access-verification status. Open a ticket on Oct 20 if it's still pending.
+  4. FollowUp check: business type and GHL connected, plus 6 test replies in Talk to it. Check each reply against A-299.
+  5. Realtor GHL test (Oct 20).
+  6. Message 5 testers (overdue).
+- **Training now happens in chat with Claude Code.** Sahil plays the customer. The practice room is a backup.
 - **Known weak spots:** kinds other than real estate don't remember which questions were asked; the clinic "urgent"
   rule is an instruction only.

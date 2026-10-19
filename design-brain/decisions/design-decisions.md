@@ -14400,3 +14400,17 @@ column beside Talk to it, the tests grouped in one card, the proposed rule as th
   with "What do you mean" (2026-09-20). The chat test used it; the code keeps the evidence.
 - **Weak, said plainly:** these are prompt rules, so the model can still drift. Checking them means running Train →
   Talk to it, and the accuracy tests on /admin.
+
+## 2026-10-19 — Talk to it test after A-299: five reply fixes
+
+Claude in Chrome ran the founder's test script in Admin → Train → Talk to it (Real estate, Instagram). It found these
+faults and fixed them in the prompts, with no change to screens:
+1. "is this still available?" wasn't read as buying, so a later reply asked "buy, sell or both?". The reader now
+   counts asking about availability, price or a viewing as buying.
+2. "a few in the area" after asking about a home wasn't read as an area, so "What area?" was asked twice. It now counts.
+3. There was no rule against re-asking something in other words. The realtor playbook now forbids it.
+4. "weekend works" against the owner's weekday showing hours went unanswered. Now: the agent confirms, and a time
+   outside the stored hours is pointed out kindly, with a time inside them asked for.
+5. "what's my condo worth?" got "buy, sell or rent?" and "I'll confirm it shortly". The first reply now treats it as
+   selling: the agent will look at the home and recent sales, never a value by message, then address + when.
+Weak, said plainly: prompt rules, unverified against the live model until the founder reruns the test after merge.

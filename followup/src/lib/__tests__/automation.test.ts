@@ -166,6 +166,13 @@ describe("human-neglect trigger (lead wrote, nobody answered)", () => {
     }
   });
 
+  it("never drafts a reminder or welcome back for someone who said STOP", async () => {
+    await runAutomationForBusiness("biz1");
+    const [quiet, dead] = p.lead.findMany.mock.calls.map((c: [{ where: { optedOutAt?: unknown } }]) => c[0].where.optedOutAt);
+    expect(quiet).toBeNull();
+    expect(dead).toBeNull();
+  });
+
   it("picks up a lead whose last message is inbound and older than the window, and tells the owner when held", async () => {
     p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([unansweredLead(30)]);
     risk.mockResolvedValue({ riskLevel: "medium", reason: "answers a factual question" });

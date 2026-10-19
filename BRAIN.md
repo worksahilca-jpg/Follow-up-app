@@ -101,6 +101,9 @@ a booked call or visit; the owner closes.
   - It brings back 10 old conversations a day (45 days to 6 months old), and their welcome backs wait on Today.
   - Same change: contacts with no conversation get no drafts and don't use up the monthly limit.
   - GoHighLevel needs a trial or paid plan (Free doesn't read it).
+- **Safety before the first real account (Oct 19):**
+  - STOP stops everything FollowUp does on its own, on every channel.
+  - A "don't know" from GoHighLevel about Do Not Disturb is never a yes.
 - **Waiting on Sahil (gave him one Claude in Chrome prompt for 1–4, Oct 19 night):**
   1. Vercel: delete `ANTHROPIC_API_KEY` and `ANTHROPIC_MODEL`.
   2. Revoke the "FollowUp Train" key.

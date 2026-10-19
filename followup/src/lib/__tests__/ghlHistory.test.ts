@@ -87,6 +87,12 @@ describe("one old conversation", () => {
     expect(p.message.create).not.toHaveBeenCalled();
   });
 
+  it("stops the run, storing nothing, when GoHighLevel can't say whether they're Do Not Disturb", async () => {
+    mock(ghlDoNotDisturb).mockResolvedValueOnce(null);
+    await expect(wakeConversation("biz1", KEY, row(89))).rejects.toThrow(/Do Not Disturb/);
+    expect(p.message.create).not.toHaveBeenCalled();
+  });
+
   it("keeps a STOP: stored, marked opted out, not woken", async () => {
     const stopped = [...THREAD, msg({ id: "m3", body: "STOP", at: new Date(NOW - 88 * DAY) })];
     mock(ghlConversationMessages).mockResolvedValueOnce(stopped);

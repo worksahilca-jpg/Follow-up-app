@@ -14504,3 +14504,21 @@ account needs a trial or paid plan.
 **Trade-off to say out loud:** while every reply waits for the owner's tap, the reply is only as fast as the owner.
 Once he trusts the drafts, automatic sending for safe replies (A-217, A-236) brings the speed back.
 
+
+## 2026-10-19 — Setup step: turn off GoHighLevel's auto-reply (A-301)
+
+**Drawn:** three phone screens on the real setup page (now, A, B) and A on a laptop.
+- A: its own short screen right after GoHighLevel connects.
+- B: one quiet row on "Connect these too" ("Turn off its auto-reply · How") opening the same steps in a sheet.
+
+**Founder:** "A build it".
+
+**Built as drawn.** The title keeps "auto-reply" on one line: two lines on a phone, one on a laptop.
+
+**Weak, said out loud:**
+- "Later" moves on like Done, and the two steps aren't shown anywhere else afterwards. If owners tap Later, the steps
+  need a home (the GoHighLevel sheet in Settings is the obvious one). Draw it first; not built.
+- The GoHighLevel menu names are unverified (see A-301).
+- FollowUp can't tell whether the owner actually turned them off. If they didn't, FollowUp still never sends on its
+  own to someone GoHighLevel messaged in the last 14 days (the one-boss check in `sending.ts`): the reply waits for
+  the owner's tap. So a skipped step means a slower reply, not two automatic messages.

@@ -101,6 +101,8 @@ a booked call or visit; the owner closes.
   - It brings back 10 old conversations a day (45 days to 6 months old), and their welcome backs wait on Today.
   - Same change: contacts with no conversation get no drafts and don't use up the monthly limit.
   - GoHighLevel needs a trial or paid plan (Free doesn't read it).
+- **Setup asks to turn off GoHighLevel's auto-reply (A-301, Oct 19):** a short screen right after GoHighLevel
+  connects. Its menu names still need checking on a live account. "Later" has no second home yet.
 - **Safety before the first real account (Oct 19):**
   - STOP stops everything FollowUp does on its own, on every channel.
   - A "don't know" from GoHighLevel about Do Not Disturb is never a yes.

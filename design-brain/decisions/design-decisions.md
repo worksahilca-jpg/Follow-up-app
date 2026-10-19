@@ -14414,3 +14414,10 @@ faults and fixed them in the prompts, with no change to screens:
 5. "what's my condo worth?" got "buy, sell or rent?" and "I'll confirm it shortly". The first reply now treats it as
    selling: the agent will look at the home and recent sales, never a value by message, then address + when.
 Weak, said plainly: prompt rules, unverified against the live model until the founder reruns the test after merge.
+
+## 2026-10-19 — Second Talk test: "which one caught your eye?" on every reply
+
+After #565 the replies offered a call or showing (good), but every one asked "which one caught your eye?" again and
+ignored "weekend works" and "what's the best price?". Cause: the playbook's "saw a listing without saying which" line
+had no limit, so it won every reply. Fix: ask which one only once; every reply first responds to what their last
+message said (an answer is taken and used; a question is answered).

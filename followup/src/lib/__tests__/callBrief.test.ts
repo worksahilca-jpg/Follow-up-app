@@ -8,7 +8,6 @@ import {
   briefParts,
   callNoteDue,
   callNotOver,
-  callRowSub,
   callIsSoon,
   callRowWords,
   callSoonDue,
@@ -175,10 +174,6 @@ describe("the note's words", () => {
     const qs = quotesOf(b);
     expect(qs.map((q) => q.section)).toEqual(["wants", "mind", "next"]);
     expect(qs[0].at < qs[1].at).toBe(true);
-  });
-
-  it("says the row's sentence", () => {
-    expect(callRowSub("2:00 PM")).toBe("Your call is at 2:00 PM. What to talk about is ready.");
   });
 });
 

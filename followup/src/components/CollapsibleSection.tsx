@@ -14,7 +14,7 @@ import { ChevronDown } from "lucide-react";
  * other way around.
  *
  * Deliberately chrome-only: it never restyles or re-titles what it wraps
- * — a child component (LeadTrustPanel, LeadAutomationToggle) keeps its own
+ * — a child component (LeadTrustPanel, LeadWorkflowEnrollment) keeps its own
  * heading and card styling untouched, so this adds one clickable summary
  * row above it instead of requiring every child to be rewritten to fit a
  * shared shape.

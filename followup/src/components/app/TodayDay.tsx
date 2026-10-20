@@ -38,7 +38,7 @@ export function DayHeading({ title, aside }: { title: string; aside?: string | n
 }
 
 /** One row: an icon, what to do, why, and a time or a chevron. The whole row opens it. */
-export function DayRow({ row, first, onClick, expanded }: { row: TodayRow; first?: boolean; onClick?: () => void; expanded?: boolean }) {
+export function DayRow({ row, onClick, expanded }: { row: TodayRow; /** No longer changes anything (A-282 dropped the line above rows). */ first?: boolean; onClick?: () => void; expanded?: boolean }) {
   const Icon = ICON[row.kind];
   const body = (
     <>
@@ -67,8 +67,10 @@ export function DayRow({ row, first, onClick, expanded }: { row: TodayRow; first
       ) : null}
     </>
   );
-  // The hairline between rows starts where the words start (A-264): 16px padding + 36px icon + 12px gap.
-  const cls = `flex min-h-[60px] items-center gap-3 px-4 py-3 ${first ? "" : "ios-sep"}`;
+  // The hairline between rows starts where the words start (A-264): 16px padding + 36px icon + 12px gap. Since the
+  // calm look (A-282) ios-sep draws no line, only the rounded fill a row gets when pointed at, so every row has it,
+  // the first one too.
+  const cls = "ios-sep flex min-h-[60px] items-center gap-3 px-4 py-3";
   const sep = { "--sep-inset": "64px" } as React.CSSProperties;
   if (onClick) {
     return (

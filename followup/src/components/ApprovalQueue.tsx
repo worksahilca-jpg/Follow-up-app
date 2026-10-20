@@ -913,7 +913,7 @@ export default function ApprovalQueue({
     // A-286: on a phone the list comes first and a tap opens the person (with "‹ Today" back); a hairline, not a box,
     // divides the list from the open person on a computer.
     <div className="lg:grid lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)] lg:items-start">
-      <div className={"min-w-0 lg:sticky lg:top-6 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:min-h-[420px] lg:border-l lg:border-line lg:pl-9" + (selected && !openOnPhone ? " hidden lg:block" : "")}>
+      <div className={"min-w-0 lg:sticky lg:top-6 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:min-h-[420px] lg:max-h-[calc(100dvh-3rem)] lg:overflow-y-auto lg:border-l lg:border-line lg:pl-9" + (selected && !openOnPhone ? " hidden lg:block" : "")}>
       {/* Said once, above everything, rather than 48 times on 48 cards. */}
       {summary.fromBeforePermission > 0 && (
         <p className="mb-3 px-1 text-[12.5px] leading-relaxed text-ink-soft">

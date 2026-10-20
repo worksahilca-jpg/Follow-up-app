@@ -20,12 +20,19 @@ export default function CustomerChoiceRow({
   initialTier,
   autonomousAllowed = true,
   holdAllForApproval = false,
+  inWorkflow = false,
 }: {
   leadId: string;
   name: string;
   initialTier: AutomationTier;
   autonomousAllowed?: boolean;
   holdAllForApproval?: boolean;
+  /**
+   * Enrolled in a workflow (src/lib/sequences.ts). Enrolling sets this choice to off so the two never both write,
+   * while the workflow itself keeps writing: the row must not say FollowUp stays quiet, and the server refuses any
+   * other choice until the customer leaves the workflow.
+   */
+  inWorkflow?: boolean;
 }) {
   const first = name.trim().split(/\s+/)[0] || name;
   const [tier, setTier] = useState<AutomationTier>(initialTier);
@@ -56,7 +63,9 @@ export default function CustomerChoiceRow({
         : `FollowUp answers ${first} without asking, prices and dates included.`,
     });
   }
-  const current = choices.find((c) => c.value === tier) ?? choices[0];
+  const current = inWorkflow
+    ? { value: tier, label: "In a workflow", line: `A workflow is writing to ${first}. To change this, take ${first} out of it under Follow-up plan.` }
+    : (choices.find((c) => c.value === tier) ?? choices[0]);
 
   // Close on Escape or a click outside, as a menu should.
   useEffect(() => {
@@ -122,9 +131,8 @@ export default function CustomerChoiceRow({
           setConfirming(false);
         }}
         aria-expanded={open}
-        aria-haspopup="listbox"
         disabled={saving}
-        className="ios-sep flex min-h-[52px] w-full items-center justify-between gap-3 rounded-[14px] px-3.5 text-left text-[15px]"
+        className="flex min-h-[52px] w-full items-center justify-between gap-3 rounded-[14px] px-3.5 text-left text-[15px]"
         style={{ border: "1px solid var(--line)", background: "var(--wash)" }}
       >
         <span className="min-w-0 truncate">FollowUp and {first}</span>
@@ -139,20 +147,24 @@ export default function CustomerChoiceRow({
           className="mt-1.5 overflow-hidden rounded-[14px] p-1 lg:absolute lg:right-0 lg:z-40 lg:mt-1 lg:w-[300px] lg:shadow-[0_0_0_1px_var(--line),0_12px_32px_rgba(0,0,0,0.14)]"
           style={{ background: "var(--card)", border: "1px solid var(--line)" }}
         >
-          <ul role="listbox" aria-label={`FollowUp and ${first}`}>
-            {choices.map((c) => (
-              <li key={c.value} role="option" aria-selected={c.value === tier}>
-                <button
-                  type="button"
-                  onClick={() => pick(c.value)}
-                  className="flex min-h-11 w-full items-center justify-between gap-3 rounded-[10px] px-3 py-2 text-left text-[15px] hover:bg-[var(--nav-on)]"
-                >
-                  {c.label}
-                  {c.value === tier && <Check className="h-4 w-4 shrink-0" strokeWidth={2.4} aria-hidden="true" />}
-                </button>
-              </li>
-            ))}
-          </ul>
+          {/* Plain buttons, the current one pressed: a list of choices, not an ARIA listbox (which promises arrow keys). */}
+          {!inWorkflow && (
+            <ul aria-label={`FollowUp and ${first}`}>
+              {choices.map((c) => (
+                <li key={c.value}>
+                  <button
+                    type="button"
+                    aria-pressed={c.value === tier}
+                    onClick={() => pick(c.value)}
+                    className="flex min-h-11 w-full items-center justify-between gap-3 rounded-[10px] px-3 py-2 text-left text-[15px] hover:bg-[var(--nav-on)]"
+                  >
+                    {c.label}
+                    {c.value === tier && <Check className="h-4 w-4 shrink-0" strokeWidth={2.4} aria-hidden="true" />}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
           {confirming ? (
             <div className="px-3 pb-2 pt-1.5">
               <p className="text-[14px] leading-snug">Replies to {first} will go out without you checking them, prices and dates included. Sure?</p>

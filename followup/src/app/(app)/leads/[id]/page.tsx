@@ -70,7 +70,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
     ? await Promise.all([
         getPendingApprovals(ctx.businessId).then((all) => all.find((a) => a.leadId === lead.id) ?? null),
         prisma.business.findUnique({ where: { id: ctx.businessId }, select: { timezone: true, teamCalls: true, industry: true } }),
-        prisma.lead.findFirst({ where: { id: lead.id, businessId: ctx.businessId }, select: { qualification: true, qualifiedAt: true, crmProvider: true } }),
+        prisma.lead.findFirst({ where: { id: lead.id, businessId: ctx.businessId }, select: { qualification: true, qualifiedAt: true, crmProvider: true, sequenceId: true } }),
         getBusinessAutomationRules(ctx.businessId),
         prisma.crmConnection.findUnique({ where: { businessId: ctx.businessId }, select: { provider: true } }),
       ])
@@ -314,6 +314,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
           initialTier={lead.automationTier}
           autonomousAllowed={autonomousAllowed}
           holdAllForApproval={freeTierStatus?.holdAllForApproval ?? false}
+          inWorkflow={Boolean(checklist?.sequenceId)}
         />
 
         <DetailsFold>
@@ -374,8 +375,6 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
 
 /** The side column's action pill (PersonSide: 38px, hairline, white). */
 const PILL = "inline-flex h-[38px] items-center rounded-full border border-line bg-card px-3.5 text-[14px] font-medium hover:bg-card-2";
-
-/** The per-customer setting in the same words as the control itself. */
 
 /**
  * The three facts (A-080): why it's here (or the state when nothing

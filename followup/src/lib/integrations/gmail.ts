@@ -48,6 +48,14 @@ import type { InlineImage } from "@/lib/emailAssets";
 import { GMAIL_INBOX_ORDER } from "@/lib/gmailInboxOrder";
 import { isUniqueViolation } from "@/lib/uniqueViolation";
 import { isBulkMail, isNewsletterThread, NEWSLETTER_REASON } from "@/lib/bulkMail";
+import { isGoogleRateLimitError, withRateLimitRetry, type RateLimitRetryOptions } from "@/lib/rateLimitRetry";
+
+/**
+ * Gmail's "slow down" (a per-minute quota): wait twice, about 2–4 then 4–8 seconds, then give up on this run. A
+ * sync that still can't read leaves the rest for the next check two minutes later rather than waiting out the
+ * cron's time limit (see processThreadRefs).
+ */
+const GMAIL_LIMIT_RETRY: RateLimitRetryOptions = { isRetryable: isGoogleRateLimitError, maxRetries: 2, baseDelayMs: 4_000, maxDelayMs: 20_000 };
 
 const SCOPES = [
   "https://www.googleapis.com/auth/gmail.readonly",
@@ -569,7 +577,11 @@ export type SyncOptions = {
   // makes bounded progress; threads past the budget are simply left for
   // the next tick (they're unknown, so nothing is lost).
   maxClassifications?: number;
-  onResult?: (info: { truncated: boolean }) => void;
+  /**
+   * `skippedForLimit`: threads left unread because Gmail's per-minute limit outlasted the retries. The caller must
+   * not count the run as having read them (gmailSync.ts keeps its clock where it was).
+   */
+  onResult?: (info: { truncated: boolean; skippedForLimit?: number }) => void;
 };
 
 /**
@@ -635,26 +647,45 @@ async function processThreadRefs(
   // deleted thread, a transient DB error) must cost exactly that thread —
   // never the whole run, which would also mean lastSyncedAt/deepSyncedAt
   // never get stamped and the same pass restarts from zero every tick.
+  //
+  // Except Gmail's per-minute limit (2026-10-18: 28 threads of one pass
+  // failed on it, and the pass was stamped done, so they waited a day for
+  // the next one). Each read waits it out a little (GMAIL_LIMIT_RETRY); once
+  // one read still can't, the rest of the run is left unread on purpose and
+  // reported, so the caller leaves its clock alone and the next check, two
+  // minutes on, reads them.
+  let limited = false;
+  let skippedForLimit = 0;
   const results = await mapWithConcurrency(threadRefs, 5, async (ref): Promise<SyncedLead | null> => {
+    if (limited) {
+      skippedForLimit++;
+      return null;
+    }
     try {
       return await processOneThread(ref);
     } catch (err) {
+      if (isGoogleRateLimitError(err)) {
+        limited = true;
+        skippedForLimit++;
+        return null;
+      }
       console.error(`Failed to process Gmail thread ${ref.id ?? "?"}:`, err);
       return null;
     }
   });
+  if (skippedForLimit > 0) console.warn(`Gmail's per-minute limit: ${skippedForLimit} thread(s) left for the next check.`);
 
-  options.onResult?.({ truncated });
+  options.onResult?.({ truncated, skippedForLimit });
   return results.filter((lead): lead is SyncedLead => lead !== null);
 
   async function processOneThread(ref: gmail_v1.Schema$Thread): Promise<SyncedLead | null> {
     if (!ref.id) return null;
 
-    const { data: thread } = await gmail.users.threads.get({
-      userId: "me",
-      id: ref.id,
-      format: "full",
-    });
+    const threadId = ref.id;
+    const { data: thread } = await withRateLimitRetry(
+      () => gmail.users.threads.get({ userId: "me", id: threadId, format: "full" }),
+      GMAIL_LIMIT_RETRY
+    );
     // Never an unsent draft. threads.get returns a thread's drafts among its
     // messages, and Gmail saves one seconds after the owner starts typing:
     // stored, it was the business answering, and the customer read as
@@ -1135,16 +1166,24 @@ export async function fetchSalesConversations(
   // The marketplace gate in threadCustomer and the classifier still decide
   // which of them are leads.
   const [{ data: listData }, { data: updatesData }] = await Promise.all([
-    gmail.users.threads.list({
-      userId: "me",
-      q: `-category:promotions -category:social -category:updates -category:forums -in:chats newer_than:90d${sinceClause}`,
-      maxResults: options.since ? 30 : 100,
-    }),
-    gmail.users.threads.list({
-      userId: "me",
-      q: `category:updates ${leadMarketplaceFromQuery()} newer_than:90d${sinceClause}`,
-      maxResults: options.since ? 10 : 50,
-    }),
+    withRateLimitRetry(
+      () =>
+        gmail.users.threads.list({
+          userId: "me",
+          q: `-category:promotions -category:social -category:updates -category:forums -in:chats newer_than:90d${sinceClause}`,
+          maxResults: options.since ? 30 : 100,
+        }),
+      GMAIL_LIMIT_RETRY
+    ),
+    withRateLimitRetry(
+      () =>
+        gmail.users.threads.list({
+          userId: "me",
+          q: `category:updates ${leadMarketplaceFromQuery()} newer_than:90d${sinceClause}`,
+          maxResults: options.since ? 10 : 50,
+        }),
+      GMAIL_LIMIT_RETRY
+    ),
   ]);
   const seen = new Set<string>();
   const threadRefs = [...(listData?.threads ?? []), ...(updatesData?.threads ?? [])].filter((t) => {

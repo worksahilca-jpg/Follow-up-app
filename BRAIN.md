@@ -103,6 +103,9 @@ a booked call or visit; the owner closes.
   - GoHighLevel needs a trial or paid plan (Free doesn't read it).
 - **Setup asks to turn off GoHighLevel's auto-reply (A-301, Oct 19):** a short screen right after GoHighLevel
   connects. Its menu names still need checking on a live account. "Later" has no second home yet.
+- **Bug check (Oct 20):** Gmail now waits out Google's per-minute limit and never marks a check done with emails left
+  unread (Oct 18: 28 threads waited a day). Five screen bugs fixed (see design-decisions, Oct 20), one unused route
+  removed.
 - **Safety before the first real account (Oct 19):**
   - STOP stops everything FollowUp does on its own, on every channel.
   - A "don't know" from GoHighLevel about Do Not Disturb is never a yes.

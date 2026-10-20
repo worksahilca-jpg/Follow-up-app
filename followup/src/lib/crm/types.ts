@@ -38,6 +38,18 @@ export interface CrmClient {
   listStages(apiKey: string): Promise<CrmStage[]>;
   /** Moves this person to one of those stages (A-275). `name` is theirs, for a CRM that needs one to make a record. */
   moveToStage(apiKey: string, externalId: string, stageId: string, name: string): Promise<{ ok: boolean; message?: string }>;
+  /**
+   * The notes on this person, as plain text (A-303, "Read my notes"): the owner's call notes and FollowUp's own alike;
+   * the caller tells them apart. [] when the CRM couldn't say. Never throws. Only where the CRM is read for notes.
+   */
+  listNotes?(apiKey: string, externalId: string): Promise<CrmNote[]>;
+}
+
+/** A note on a person in the owner's CRM. `at` is null when the CRM didn't say when. */
+export interface CrmNote {
+  id: string;
+  body: string;
+  at: Date | null;
 }
 
 /** A stage in the owner's CRM: its id there, and its name as the owner sees it. */

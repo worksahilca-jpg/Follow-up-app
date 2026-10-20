@@ -78,8 +78,10 @@ a booked call or visit; the owner closes.
   the owner's own GoHighLevel notes, like call notes, every 2 hours, 10 customers per poll, inside the AI ceilings;
   FollowUp's own notes are never read and nothing is sent from a note. Privacy page updated (GoHighLevel, notes, stage
   moves). The GoHighLevel key must also have **Opportunities**: the connect text says so, and the CRM window says what
-  to turn on when it can't see the stages. **After merge:** check the realtor's key lists his stages; confirm the 5
-  new columns in production (read-only).
+  to turn on when it can't see the stages. LIVE (PR #574 → de37e5d), 5 columns confirmed. **Bug review fixes** (PR
+  after #574): no moves for stop / no / won / lost / CRM do-not-contact / GoHighLevel bookings; a CRM hiccup no longer
+  uses up a move; notes skip off-limits customers, claimed per customer, 2-minute budget. **Open, Sahil's call:** move
+  nobody until he picks the three stages once, and never create new deal cards for tier moves (recommended).
 
 - **Training happens in the practice room** (artifact "FollowUp Practice Room",
   https://claude.ai/artifact/WSiRYwcnJTD4Y3ZbHBPadR): Sahil plays the customer, it answers as FollowUp (on his Claude

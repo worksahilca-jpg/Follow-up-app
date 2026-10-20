@@ -23,10 +23,14 @@ import type { Message } from "@/lib/types";
  *    the last NOTES_EVERY_MS. Looking costs one GoHighLevel request; reading new notes costs one model call, counted
  *    like any other against the daily ceilings.
  *  - No message is drafted or sent from a note, and nobody is buzzed: the owner wrote it, so the owner knows.
+ *  - Not for customers FollowUp leaves alone (said stop or no, won or lost): nothing to sort, so nothing is read.
+ *  - Each customer is claimed before it is read, so two overlapping polls never read the same notes twice, and a poll
+ *    stops starting new customers after NOTES_BUDGET_MS, well inside the cron's time limit.
  */
 
 export const NOTES_EVERY_MS = 2 * 60 * 60 * 1000;
 export const LEADS_PER_RUN = 10;
+export const NOTES_BUDGET_MS = 120_000;
 const ACTIVE_DAYS = 90;
 const FIRST_LOOK_DAYS = 30;
 const MAX_NOTES = 5;
@@ -97,7 +101,8 @@ export async function readNotesForLead(lead: NotesLead, apiKey: string, now: Dat
 }
 
 /** After each GoHighLevel poll: a few customers' notes, for every business that reads them. Never throws per business. */
-export async function readGhlNotesForAllBusinesses(now: Date = new Date()): Promise<{ looked: number; read: number; failed: number }> {
+export async function readGhlNotesForAllBusinesses(now: Date = new Date(), clock: () => number = Date.now): Promise<{ looked: number; read: number; failed: number }> {
+  const started = clock();
   const connections = await prisma.crmConnection.findMany({
     where: { provider: "gohighlevel", apiKey: { not: null }, readNotes: true },
     select: { businessId: true, apiKey: true, business: { select: { subscriptionStatus: true, industry: true } } },
@@ -117,12 +122,21 @@ export async function readGhlNotesForAllBusinesses(now: Date = new Date()): Prom
           crmId: { not: null },
           OR: [{ crmNotesCheckedAt: null }, { crmNotesCheckedAt: { lt: due } }],
           AND: [{ OR: [{ lastContacted: { gte: active } }, { createdAt: { gte: active } }] }],
+          optedOutAt: null,
+          saidNoAt: null,
+          stage: { notIn: ["WON", "LOST"] },
         },
         orderBy: { crmNotesCheckedAt: { sort: "asc", nulls: "first" } },
         take: LEADS_PER_RUN,
         include: { conversations: { include: { messages: true } }, business: { select: { industry: true, askPlan: true } } },
       });
       for (const lead of leads) {
+        if (clock() - started > NOTES_BUDGET_MS) return { looked, read, failed };
+        const claimed = await prisma.lead.updateMany({
+          where: { id: lead.id, OR: [{ crmNotesCheckedAt: null }, { crmNotesCheckedAt: { lt: due } }] },
+          data: { crmNotesCheckedAt: now },
+        });
+        if (claimed.count === 0) continue;
         looked++;
         if ((await readNotesForLead(lead, conn.apiKey, now)) === "read") read++;
       }

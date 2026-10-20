@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { CRM_PROVIDERS, isCrmProvider } from "@/lib/crm";
 import type { CrmStage } from "@/lib/crm/types";
 import { writeToCrm } from "@/lib/crm/writes";
+import { crmHoldReason } from "@/lib/crm/oneBoss";
 import type { Qualification, Tier } from "@/lib/qualification";
 
 /**
@@ -140,8 +141,10 @@ export function tierMoveWhy(q: Qualification | null, tier: Tier | null | undefin
 
 /**
  * When a customer's tier changes: move them to the owner's stage for it. Once per change (Lead.crmTierMoved, claimed
- * so two passes never both move them), never while a meeting is booked, and only in the CRM the business is still
- * connected to. Never throws; never holds up the reply that called it.
+ * so two passes never both move them), and only in the CRM the business is still connected to. Never someone FollowUp
+ * leaves alone: they said stop or no, the deal is won or lost, or the CRM says do not contact, closed, or (GoHighLevel)
+ * a meeting is booked there; never while a meeting is booked in FollowUp (A-275 wins). A move that can't be decided now
+ * (the CRM didn't answer) isn't claimed, so the next pass tries again. Never throws.
  */
 export async function moveLeadForTier(
   lead: { id: string; businessId: string; name: string; crmProvider: string | null; crmId: string | null },
@@ -150,6 +153,12 @@ export async function moveLeadForTier(
 ): Promise<void> {
   try {
     if (!isSortTier(tier) || !lead.crmProvider || !lead.crmId || !isCrmProvider(lead.crmProvider)) return;
+    const state = await prisma.lead.findUnique({
+      where: { id: lead.id },
+      select: { crmTierMoved: true, optedOutAt: true, saidNoAt: true, stage: true, quietOutcome: true },
+    });
+    if (!state || state.crmTierMoved === tier) return;
+    if (state.optedOutAt || state.saidNoAt || state.stage === "WON" || state.stage === "LOST" || state.quietOutcome === "CLOSED") return;
     const conn = await prisma.crmConnection.findUnique({ where: { businessId: lead.businessId }, select: { provider: true, apiKey: true, tierStages: true } });
     if (!conn?.apiKey || conn.provider !== lead.crmProvider) return;
     const booked = await prisma.booking.findFirst({
@@ -157,14 +166,20 @@ export async function moveLeadForTier(
       select: { id: true },
     });
     if (booked) return;
-    // Claimed first: whichever pass gets here first moves them; a "Don't move them" is remembered the same way.
+    let stage: CrmStage | null = null;
+    if (readTierStages(conn.tierStages)[tier] !== null) {
+      stage = await tierStage({ ...conn, apiKey: conn.apiKey }, tier);
+      // No stage: the CRM may just not have answered, or nothing fits yet. Not claimed, so the next pass tries again.
+      if (!stage) return;
+      // The CRM's own word: do not disturb (or couldn't tell), do not contact, closed, a meeting booked there.
+      if (await crmHoldReason(lead)) return;
+    }
+    // Claimed: whichever pass gets here first moves them; a "Don't move them" is remembered the same way.
     const claimed = await prisma.lead.updateMany({
       where: { id: lead.id, OR: [{ crmTierMoved: null }, { crmTierMoved: { not: tier } }] },
       data: { crmTierMoved: tier },
     });
-    if (claimed.count === 0) return;
-    const stage = await tierStage({ ...conn, apiKey: conn.apiKey }, tier);
-    if (!stage) return;
+    if (claimed.count === 0 || !stage) return;
     await writeToCrm({
       businessId: lead.businessId,
       leadId: lead.id,

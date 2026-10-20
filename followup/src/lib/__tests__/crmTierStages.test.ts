@@ -1,15 +1,16 @@
 /**
  * "When FollowUp sorts them" (A-303): a customer who becomes Ready, Warm or Later moves to the owner's own stage for
  * it in their CRM, once per change, with what decided it as the reason, and never while a meeting is booked. Until
- * the owner chooses, FollowUp picks the stage whose name reads like it.
+ * the owner chooses, FollowUp picks the stage whose name reads like it. Never someone FollowUp leaves alone.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const h = vi.hoisted(() => ({ conn: vi.fn(), booking: vi.fn(), claim: vi.fn(), write: vi.fn(), listStages: vi.fn() }));
+const h = vi.hoisted(() => ({ conn: vi.fn(), booking: vi.fn(), claim: vi.fn(), write: vi.fn(), listStages: vi.fn(), state: vi.fn(), hold: vi.fn() }));
 vi.mock("@/lib/db", () => ({
-  prisma: { crmConnection: { findUnique: h.conn }, booking: { findFirst: h.booking }, lead: { updateMany: h.claim } },
+  prisma: { crmConnection: { findUnique: h.conn }, booking: { findFirst: h.booking }, lead: { updateMany: h.claim, findUnique: h.state } },
 }));
 vi.mock("@/lib/crm/writes", () => ({ writeToCrm: h.write }));
+vi.mock("@/lib/crm/oneBoss", () => ({ crmHoldReason: h.hold }));
 
 import { moveLeadForTier, readStageWrite, readTierStages, tierMoveWhy, tierStage, tierStageByName } from "@/lib/crm/stages";
 import { describeWrite } from "@/lib/crm/record";
@@ -24,6 +25,8 @@ beforeEach(() => {
   vi.resetAllMocks();
   h.conn.mockResolvedValue({ provider: "gohighlevel", apiKey: "k", tierStages: null });
   h.booking.mockResolvedValue(null);
+  h.state.mockResolvedValue({ crmTierMoved: null, optedOutAt: null, saidNoAt: null, stage: "NEW", quietOutcome: null });
+  h.hold.mockResolvedValue(null);
   h.claim.mockResolvedValue({ count: 1 });
   h.write.mockResolvedValue("done");
   vi.spyOn(CRM_PROVIDERS.gohighlevel.client, "listStages").mockImplementation(h.listStages);
@@ -82,10 +85,43 @@ describe("moving a customer when their tier changes", () => {
     expect(readStageWrite(input.text)).toEqual({ stageId: "p1:Nurture", label: "Nurture", name: "Priya Shah", why: "They said: “probably in about 3 months”" });
   });
 
-  it("once per change: another pass for the same tier writes nothing", async () => {
+  it("once per change: another pass for the same tier asks nothing and writes nothing", async () => {
+    h.state.mockResolvedValue({ crmTierMoved: "warm", optedOutAt: null, saidNoAt: null, stage: "NEW", quietOutcome: null });
+    await moveLeadForTier(lead, "warm", null);
+    expect(h.listStages).not.toHaveBeenCalled();
+    expect(h.write).not.toHaveBeenCalled();
+    // Two passes racing: the one that loses the claim writes nothing.
+    h.state.mockResolvedValue({ crmTierMoved: null, optedOutAt: null, saidNoAt: null, stage: "NEW", quietOutcome: null });
     h.claim.mockResolvedValue({ count: 0 });
     await moveLeadForTier(lead, "warm", null);
     expect(h.write).not.toHaveBeenCalled();
+  });
+
+  it("never someone FollowUp leaves alone: said stop or no, won or lost, closed", async () => {
+    const base = { crmTierMoved: null, optedOutAt: null, saidNoAt: null, stage: "NEW", quietOutcome: null };
+    for (const off of [{ optedOutAt: new Date() }, { saidNoAt: new Date() }, { stage: "WON" }, { stage: "LOST" }, { quietOutcome: "CLOSED" }]) {
+      h.state.mockResolvedValue({ ...base, ...off });
+      await moveLeadForTier(lead, "ready", null);
+    }
+    expect(h.claim).not.toHaveBeenCalled();
+    expect(h.write).not.toHaveBeenCalled();
+  });
+
+  it("never when the CRM says no: do not disturb, do not contact, closed, or a meeting booked there", async () => {
+    h.hold.mockResolvedValue("They have a meeting booked in GoHighLevel.");
+    await moveLeadForTier(lead, "warm", null);
+    expect(h.hold).toHaveBeenCalledWith(lead);
+    expect(h.claim).not.toHaveBeenCalled();
+    expect(h.write).not.toHaveBeenCalled();
+  });
+
+  it("when the CRM doesn't list a stage for it (or didn't answer): not claimed, so the next pass tries again", async () => {
+    h.listStages.mockResolvedValue([]);
+    await moveLeadForTier(lead, "warm", null);
+    expect(h.claim).not.toHaveBeenCalled();
+    h.listStages.mockResolvedValue(HIS);
+    await moveLeadForTier(lead, "warm", null);
+    expect(h.write).toHaveBeenCalledTimes(1);
   });
 
   it("never while a meeting is booked: the booking's stage stays", async () => {
@@ -108,10 +144,11 @@ describe("moving a customer when their tier changes", () => {
     expect(h.write).not.toHaveBeenCalled();
   });
 
-  it("\"Don't move them\", or no stage that fits: remembered, nothing written", async () => {
+  it("\"Don't move them\": remembered, nothing asked, nothing written", async () => {
     h.conn.mockResolvedValue({ provider: "gohighlevel", apiKey: "k", tierStages: { ready: null } });
     await moveLeadForTier(lead, "ready", null);
     expect(h.claim).toHaveBeenCalled();
+    expect(h.listStages).not.toHaveBeenCalled();
     expect(h.write).not.toHaveBeenCalled();
   });
 

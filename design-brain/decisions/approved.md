@@ -5224,3 +5224,27 @@ real person"*.
   live account. Check them on the founder's trial and the first realtor's account, and change the words if they
   differ.
 
+
+## A-302
+**The owner teaches FollowUp what to ask, in their own words (2026-10-20).** The founder: *"yes build it"* to three
+drawn screens, after *"every realtor has different approach right"* and *"can we something like train it on your own
+way"*, then *"whats the easiest way to let them train followup"*. Comes from the first realtor interview
+(`followup/research/customers/2026-10-20-first-realtor-interview.md`): he asks about money first and area last, the
+opposite of FollowUp's order (A-299).
+- **The question, on Today:** the one-question card (A-101), for a realtor. Label "One quick question", the title
+  "What do you ask a new buyer, and in what order?", one line: "Write it the way you'd tell a new assistant, or tap the
+  mic on your keyboard and say it. FollowUp will ask your customers the same way." A five-line box, a black **Save**, a
+  quiet **Not now**. Voice is the phone keyboard's own microphone (as A-279); no microphone of FollowUp's own.
+- **After Save:** "Saved. FollowUp turned your words into questions and will ask them in your order." and a "See your
+  questions" link.
+- **His questions, his order:** Settings › Sending replies › **What FollowUp asks**. "Made from your words. FollowUp
+  asks one or two at a time, in this order. Drag to change it." One numbered group: each row a short name and the
+  question in quotes, a grip on the right. The ones FollowUp adds carry a small outlined "Added" tag, with one line
+  under the group saying why ("they help book a viewing, and it stops if they already have an agent").
+- **For your call:** anything FollowUp won't ask in writing sits in its own group, e.g. "Immigration status · FollowUp
+  doesn't ask this in a message. Ask it on your call." Flagged, not a legal opinion: a written question about status
+  from a business may carry legal risk in Ontario.
+- **Your words:** what he wrote, quoted, with "Change your words". Under it, the quiet link "Use FollowUp's order
+  instead".
+- **Not drawn, decided while building (the founder can change them):** buyers only (renters and sellers keep
+  FollowUp's order); income is asked as "have you spoken with a lender yet?", never as a number.

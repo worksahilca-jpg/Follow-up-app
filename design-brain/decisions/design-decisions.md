@@ -14658,5 +14658,9 @@ already did); without it, the window says what to turn on instead of a silent "N
   exists (bookings still create one, as A-275 does). Asked; not built.
 - **Decided (same day):** the founder said "yes do it and merge" to the first part, so tier moves now go only to a
   stage he picked, per tier (A-303 updated). This SUPERSEDES the A-303 build entry's "until he chooses, it picks the
-  stage whose name reads like it". Not asked, so not changed: a tier move still creates a deal card for a customer
-  who has none in that pipeline.
+  stage whose name reads like it".
+- **Decided (same day), deal cards:** "no new cards but if customers doesn't have card we can make a new for them".
+  A move now finds all of the customer's cards (not only that pipeline's) and moves one; a new card only for someone
+  with none. Before, a customer whose card was in another pipeline got a second card. Weak point: which card moves
+  when he has several is a rule (same pipeline, then open, then any), not his choice; GoHighLevel's `pipelineId` on
+  an update is from its SDK, not yet seen on a real account.

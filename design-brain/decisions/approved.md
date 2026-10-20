@@ -5277,3 +5277,7 @@ track, and back to hot when keen again, from his chats and his GoHighLevel call 
   drawing's pre-picked "Hot" / "Nurture" / "Long-term Nurture". Why: nobody moves on day one before he has looked, and
   a seller never lands in the buyers' pipeline by a name match. A booking's stage (A-275) still picks by name until
   he chooses.
+- **One card per customer (founder, 2026-10-20: "no new cards but if customers doesn't have card we can make a new
+  for them").** In GoHighLevel, a move (tier or booking) moves the customer's existing card (opportunity), wherever it
+  is: the one already in that pipeline first, then an open one, then any; a card in another pipeline moves across.
+  Only a customer with no card at all gets a new one.

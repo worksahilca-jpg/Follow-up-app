@@ -239,19 +239,23 @@ export const goHighLevelClient: CrmClient = {
     }
   },
 
-  // Their opportunity in that pipeline moves to the stage; with none yet, one is made there for them
-  // (GET /opportunities/search, PUT /opportunities/{id}, POST /opportunities/, from the SDK, grade B).
+  // Their card (opportunity) moves to the stage; only someone with no card at all gets a new one, so nobody ever has
+  // two (founder 2026-10-20: "no new cards but if customers doesn't have card we can make a new for them"). Their
+  // card already in that pipeline first, then an open one, then any; a card in another pipeline moves across.
+  // (GET /opportunities/search, PUT /opportunities/{id}, POST /opportunities/, from the SDK, grade B.)
   async moveToStage(apiKey, externalId, stageId, name) {
     const k = parseGhlKey(apiKey);
     if (!k) return { ok: false, message: "GoHighLevel key is not in the expected shape." };
     const [pipelineId, pipelineStageId] = stageId.split(":");
     if (!pipelineId || !pipelineStageId) return { ok: false, message: "That stage isn't in GoHighLevel any more." };
     try {
-      const q = new URLSearchParams({ location_id: k.locationId, contact_id: externalId, pipeline_id: pipelineId, limit: "1" });
+      const q = new URLSearchParams({ location_id: k.locationId, contact_id: externalId, limit: "20" });
       const found = await fetch(`${BASE}/opportunities/search?${q.toString()}`, { headers: headers(k.token), signal: AbortSignal.timeout(CRM_TIMEOUT_MS) });
       if (!found.ok) return { ok: false, message: `GoHighLevel returned ${found.status}.` };
       const data = (await found.json().catch(() => ({}))) as { opportunities?: Array<Record<string, unknown>> };
-      const existing = str(data.opportunities?.[0]?.id);
+      const cards = (data.opportunities ?? []).filter((c) => str(c?.id));
+      const card = cards.find((c) => str(c.pipelineId) === pipelineId) ?? cards.find((c) => str(c.status) === "open") ?? cards[0];
+      const existing = str(card?.id);
       const res = existing
         ? await fetch(`${BASE}/opportunities/${encodeURIComponent(existing)}`, {
             method: "PUT",

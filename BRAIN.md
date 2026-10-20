@@ -81,8 +81,8 @@ a booked call or visit; the owner closes.
   to turn on when it can't see the stages. LIVE (PR #574 → de37e5d), 5 columns confirmed. **Bug review fixes** (PR
   after #574): no moves for stop / no / won / lost / CRM do-not-contact / GoHighLevel bookings; a CRM hiccup no longer
   uses up a move; notes skip off-limits customers, claimed per customer, 2-minute budget. Since Sahil's "yes do it":
-  tier moves go only to a stage he picked (rows say "Choose" until then). **Still open:** a tier move creates a new
-  deal card for a customer with none in that pipeline.
+  tier moves go only to a stage he picked (rows say "Choose" until then). Deal cards: a move moves the customer's
+  existing card wherever it is; only someone with no card gets a new one (Sahil, Oct 20).
 
 - **Training happens in the practice room** (artifact "FollowUp Practice Room",
   https://claude.ai/artifact/WSiRYwcnJTD4Y3ZbHBPadR): Sahil plays the customer, it answers as FollowUp (on his Claude

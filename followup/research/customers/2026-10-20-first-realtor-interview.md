@@ -55,3 +55,29 @@ from Sahil's transcript notes; no names kept. **Evidence: one realtor, his own w
   A-247). Old GoHighLevel conversations already come back 10 a day as drafts he approves (GHL wake-up).
 - "Learns my questions and my style" is now a promise made to a real customer. Style is learned from his sent and
   edited replies today; his own question order is not (open: "teach it your own way", not built).
+
+## Third conversation, same day: connecting GoHighLevel and WhatsApp (from Sahil's meeting summary)
+
+**How he works**
+- New customers and phone-only conversations live in GoHighLevel. After meeting a client he may keep nurturing them in
+  a WhatsApp group with the client's family.
+- He wants FollowUp to notice when a customer's plans change and move them: a hot customer who says "in three
+  months" goes to a colder nurture track, and back to hot when they show interest again. From WhatsApp chats and
+  GoHighLevel notes.
+- Calls are made through GoHighLevel, which writes call notes there. FollowUp doesn't hear calls.
+- **His main concern: it has to be fully automatic.** Part manual means more work for him, not less.
+
+**What Sahil told him, checked against the code (2026-10-20)**
+- Different follow-ups for different kinds of customer: true (follow-up plans A-245; Ready, Warm, Later A-246, which
+  are worked out again from what the customer said last).
+- Updating GoHighLevel: partly. FollowUp writes a note after a reply and moves the customer to the owner's chosen
+  stage when they book (A-275). It does **not** yet move stages when a customer goes hot or cold.
+- Reading GoHighLevel call notes: **not built.** FollowUp writes notes; it doesn't read them.
+- Booking showings through his showing calendar (heard as "Broker Base", probably BrokerBay): **not built.** FollowUp
+  has its own booking link and a note before the call (A-268).
+- WhatsApp: FollowUp answers a WhatsApp Business number. It cannot read a personal WhatsApp or a family group chat.
+- Fully automatic: possible today ("FollowUp sends them" in Settings), after a few days of checking replies.
+
+**What to build first, if Sahil agrees:** move the GoHighLevel stage when a customer goes hot or cold, and read
+GoHighLevel notes (call notes included) as something the customer said, so a call that changes their plans changes
+their stage.

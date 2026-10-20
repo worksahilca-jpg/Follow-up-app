@@ -84,10 +84,13 @@ export type QualItem = {
   key: CriterionKey;
   /** A short summary for the owner, e.g. "Pre-approved to $650k". */
   value: string;
-  /** The customer's own words, copied exactly. Empty only when `source` is "booking". */
+  /** The customer's own words, copied exactly (with `source` "note", the owner's own note's words). Empty only for "booking". */
   quote: string;
-  /** "booking": known from a confirmed booking made through the booking link, not from words. */
-  source?: "booking";
+  /**
+   * "booking": known from a confirmed booking made through the booking link, not from words.
+   * "note": from the owner's own note on them in their CRM, like a call note (A-303, "Read my notes").
+   */
+  source?: "booking" | "note";
   /** The reader's label for sorting ("soon", "sorted", "has" ...), one of the criterion's buckets. */
   bucket?: string;
   /** One of the owner's own questions (A-302): its name, kept with the answer so it still reads after the owner changes their questions. */
@@ -372,7 +375,7 @@ export function readQualification(value: unknown): Qualification | null {
       key,
       value: i.value,
       quote: i.quote,
-      ...(i.source === "booking" ? { source: "booking" as const } : {}),
+      ...(i.source === "booking" || i.source === "note" ? { source: i.source } : {}),
       ...(!legacy && typeof i.bucket === "string" && i.bucket ? { bucket: i.bucket } : {}),
       ...(isOwnKey(key) && typeof i.label === "string" && i.label.trim() ? { label: i.label.trim().slice(0, 40) } : {}),
     });
@@ -467,7 +470,9 @@ export function mergeQualification(
   previous: Qualification | null,
   extracted: readonly ExtractedItem[] | null,
   texts: readonly string[],
-  booking: string | null = null
+  booking: string | null = null,
+  // The owner's own notes on this customer (A-303): a quote found in one counts too, marked as their note.
+  notes: readonly string[] = []
 ): Qualification {
   const same = previous?.template === template.id ? previous : null;
   const prev = new Map((same?.items ?? []).map((i) => [i.key, i]));
@@ -478,8 +483,9 @@ export function mergeQualification(
   // the side is known, an item that only belongs to the other side is
   // dropped, whatever its quote. "both" keeps everything.
   const sideItem = found.get("side");
+  const said = (quote: string) => isCustomerQuote(quote, texts) || isCustomerQuote(quote, notes);
   const sideBucket =
-    sideItem?.known && sideItem.bucket && sideItem.value.trim() && isCustomerQuote(sideItem.quote, texts)
+    sideItem?.known && sideItem.bucket && sideItem.value.trim() && said(sideItem.quote)
       ? sideItem.bucket
       : prev.get("side")?.bucket;
   const offSide = new Set<CriterionKey>(
@@ -489,9 +495,17 @@ export function mergeQualification(
     if (offSide.has(c.key)) continue;
     const e = found.get(c.key);
     const value = e?.value.trim().slice(0, MAX_VALUE) ?? "";
-    if (e?.known && value && isCustomerQuote(e.quote, texts)) {
+    if (e?.known && value && said(e.quote)) {
       const bucket = c.buckets && e.bucket && Object.hasOwn(c.buckets, e.bucket) ? e.bucket : undefined;
-      items.push({ key: c.key, value, quote: e.quote.trim(), ...(bucket ? { bucket } : {}), ...(isOwnKey(c.key) ? { label: c.label } : {}) });
+      const fromNote = !isCustomerQuote(e.quote, texts);
+      items.push({
+        key: c.key,
+        value,
+        quote: e.quote.trim(),
+        ...(bucket ? { bucket } : {}),
+        ...(fromNote ? { source: "note" as const } : {}),
+        ...(isOwnKey(c.key) ? { label: c.label } : {}),
+      });
       continue;
     }
     const before = prev.get(c.key);

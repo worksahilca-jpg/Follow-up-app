@@ -17,6 +17,7 @@ const h = vi.hoisted(() => ({
   generate: vi.fn(),
   draftDm: vi.fn(),
   pushNote: vi.fn(),
+  moveTier: vi.fn(),
 }));
 
 vi.mock("@/lib/db", () => ({
@@ -45,6 +46,7 @@ vi.mock("@/lib/businessFacts", () => ({ draftingContext: vi.fn(async () => ({ tr
 vi.mock("@/lib/audit", () => ({ recordAudit: vi.fn() }));
 vi.mock("@/lib/pendingApprovals", () => ({ heldSince: vi.fn(async () => true) }));
 vi.mock("@/lib/crm/notes", async (importOriginal) => ({ ...(await importOriginal<typeof import("@/lib/crm/notes")>()), pushCrmNote: h.pushNote }));
+vi.mock("@/lib/crm/stages", async (importOriginal) => ({ ...(await importOriginal<typeof import("@/lib/crm/stages")>()), moveLeadForTier: h.moveTier }));
 
 import { scoreAndDraftForLead } from "@/lib/scoring";
 
@@ -205,11 +207,23 @@ describe("a realtor's customer who just wrote", () => {
     expect(h.pushNote).not.toHaveBeenCalled();
   });
 
+  it("moves them to the owner's stage for their new tier in that CRM, with the reason (A-303)", async () => {
+    h.extract.mockResolvedValue(READY);
+    setLead({ messages: READY_THREAD, crm: { provider: "followupboss", id: "fub-42" } });
+    await scoreAndDraftForLead("lead1");
+    expect(h.moveTier).toHaveBeenCalledTimes(1);
+    const [who, tier, why] = h.moveTier.mock.calls[0];
+    expect(who).toMatchObject({ id: "lead1", businessId: "biz1", crmProvider: "followupboss", crmId: "fub-42" });
+    expect(tier).toBe("ready");
+    expect(why).toBe("They said: “Saturday morning works”");
+  });
+
   it("pushes nothing for a customer who isn't in a CRM", async () => {
     setLead({ messages: READY_THREAD });
     h.extract.mockResolvedValue(READY);
     await scoreAndDraftForLead("lead1");
     expect(h.pushNote).not.toHaveBeenCalled();
+    expect(h.moveTier).not.toHaveBeenCalled();
   });
 
   it("is not stamped ready again once it has been", async () => {

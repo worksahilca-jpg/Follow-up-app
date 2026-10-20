@@ -96,13 +96,15 @@ describe("each CRM's stages", () => {
     expect(JSON.parse(init.body)).toEqual({ properties: { hs_lead_status: "CONNECTED" } });
   });
 
-  it("GoHighLevel: pipeline stages; their opportunity moves, or one is made", async () => {
+  it("GoHighLevel: pipeline stages; their card moves, and only someone with no card gets one", async () => {
     const KEY = packGhlKey("loc123ABC", "pit-0000-1111-2222");
     fetchMock.mockResolvedValueOnce(json({ pipelines: [{ id: "p1", name: "Buyers", stages: [{ id: "s1", name: "New" }, { id: "s2", name: "Appointment booked" }] }] }));
     expect(await goHighLevelClient.listStages(KEY)).toEqual([{ id: "p1:s1", name: "New" }, { id: "p1:s2", name: "Appointment booked" }]);
 
     fetchMock.mockResolvedValueOnce(json({ opportunities: [{ id: "opp9" }] })).mockResolvedValueOnce(json({}));
     expect(await goHighLevelClient.moveToStage(KEY, "c1", "p1:s2", "Priya Shah")).toEqual({ ok: true });
+    // All their cards are asked for, not only this pipeline's.
+    expect(fetchMock.mock.calls[1][0]).not.toContain("pipeline_id");
     expect(fetchMock.mock.calls[2][0]).toBe("https://services.leadconnectorhq.com/opportunities/opp9");
     expect(JSON.parse(fetchMock.mock.calls[2][1].body)).toEqual({ pipelineId: "p1", pipelineStageId: "s2" });
 
@@ -110,6 +112,25 @@ describe("each CRM's stages", () => {
     await goHighLevelClient.moveToStage(KEY, "c1", "p1:s2", "Priya Shah");
     expect(fetchMock.mock.calls[4][1].method).toBe("POST");
     expect(JSON.parse(fetchMock.mock.calls[4][1].body)).toMatchObject({ pipelineId: "p1", pipelineStageId: "s2", contactId: "c1", name: "Priya Shah", status: "open" });
+
+    // A card in another pipeline moves across: never a second card.
+    fetchMock.mockClear();
+    fetchMock.mockResolvedValueOnce(json({ opportunities: [{ id: "oppSell", pipelineId: "p2", status: "open" }] })).mockResolvedValueOnce(json({}));
+    await goHighLevelClient.moveToStage(KEY, "c1", "p1:s2", "Priya Shah");
+    expect(fetchMock.mock.calls[1][0]).toBe("https://services.leadconnectorhq.com/opportunities/oppSell");
+    expect(fetchMock.mock.calls[1][1].method).toBe("PUT");
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({ pipelineId: "p1", pipelineStageId: "s2" });
+
+    // With several, the one already in that pipeline; then an open one.
+    fetchMock.mockClear();
+    fetchMock.mockResolvedValueOnce(json({ opportunities: [{ id: "a", pipelineId: "p2", status: "won" }, { id: "b", pipelineId: "p1", status: "open" }] })).mockResolvedValueOnce(json({}));
+    await goHighLevelClient.moveToStage(KEY, "c1", "p1:s2", "Priya Shah");
+    expect(fetchMock.mock.calls[1][0]).toBe("https://services.leadconnectorhq.com/opportunities/b");
+    fetchMock.mockClear();
+    fetchMock.mockResolvedValueOnce(json({ opportunities: [{ id: "a", pipelineId: "p2", status: "won" }, { id: "c", pipelineId: "p3", status: "open" }] })).mockResolvedValueOnce(json({}));
+    await goHighLevelClient.moveToStage(KEY, "c1", "p1:s2", "Priya Shah");
+    expect(fetchMock.mock.calls[1][0]).toBe("https://services.leadconnectorhq.com/opportunities/c");
+    expect(fetchMock.mock.calls.some((c) => c[1]?.method === "POST")).toBe(false);
   });
 
   it("a CRM that can't say lists nothing", async () => {

@@ -6,14 +6,14 @@ import { CRM_PROVIDERS, isCrmProvider } from "@/lib/crm";
 import { recordAudit } from "@/lib/audit";
 import { parseJsonBody } from "@/lib/validation";
 import { Prisma } from "@prisma/client";
-import { meetingStage, readTierStages, SORT_TIERS, tierStageByName, type SortTier } from "@/lib/crm/stages";
+import { meetingStage, readTierStages, SORT_TIERS, type SortTier } from "@/lib/crm/stages";
 
 /**
  * "When they book a meeting, move them to" (A-275) and "When FollowUp sorts them" (A-303), for the CRM window in
  * Settings. Admins only, like the rest of the CRM's controls.
  *
  * GET: the owner's own stages in their CRM; which one a booking moves them to, and which ones Ready, Warm and Later
- * move them to (their choice, or the one whose name reads like it while they haven't chosen); and "Read my notes".
+ * move them to (only what they picked: until then nobody moves, founder 2026-10-20); and "Read my notes".
  * PUT { stageId, for? }: their choice for a booking (the default) or a tier; null is "Don't move them".
  * PUT { readNotes }: "Read my notes" on or off (GoHighLevel).
  */
@@ -47,7 +47,7 @@ export async function GET() {
         : meetingStage(stages);
   const picked = readTierStages(conn.tierStages);
   const tiers = Object.fromEntries(
-    SORT_TIERS.map((t) => [t, { chosen: picked[t] === null ? null : (picked[t] ?? tierStageByName(t, stages)), dontMove: picked[t] === null }])
+    SORT_TIERS.map((t) => [t, { chosen: picked[t] ?? null, dontMove: picked[t] === null }])
   );
   return NextResponse.json({
     success: true,

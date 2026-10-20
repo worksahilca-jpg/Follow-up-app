@@ -5271,3 +5271,9 @@ track, and back to hot when keen again, from his chats and his GoHighLevel call 
   move; nothing is drafted or sent from a note; do-not-disturb, STOP and one-boss-per-customer are untouched; the
   daily AI ceilings count note reading. The privacy policy names every CRM and what FollowUp reads and writes in it,
   and the GoHighLevel key text asks for every permission FollowUp uses (contacts, conversations, opportunities).
+- **Only to a stage he picked (founder, 2026-10-20, after the bug review: "yes do it and merge").** For Ready, Warm
+  and Later, FollowUp never guesses a stage by name: each row reads "Choose" until he picks one (or "Don't move
+  them"), and under the rows: "Pick a stage for each. Until you do, FollowUp moves nobody." This supersedes the
+  drawing's pre-picked "Hot" / "Nurture" / "Long-term Nurture". Why: nobody moves on day one before he has looked, and
+  a seller never lands in the buyers' pipeline by a name match. A booking's stage (A-275) still picks by name until
+  he chooses.

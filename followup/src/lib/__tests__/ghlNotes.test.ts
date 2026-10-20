@@ -8,12 +8,13 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 const h = vi.hoisted(() => ({
   leadUpdate: vi.fn(),
   leadFind: vi.fn(),
+  leadClaim: vi.fn(),
   conns: vi.fn(),
   extract: vi.fn(),
   move: vi.fn(),
   limited: vi.fn(),
 }));
-vi.mock("@/lib/db", () => ({ prisma: { lead: { update: h.leadUpdate, findMany: h.leadFind }, crmConnection: { findMany: h.conns } } }));
+vi.mock("@/lib/db", () => ({ prisma: { lead: { update: h.leadUpdate, findMany: h.leadFind, updateMany: h.leadClaim }, crmConnection: { findMany: h.conns } } }));
 vi.mock("@/lib/integrations/openai", () => ({ extractQualificationFacts: h.extract }));
 vi.mock("@/lib/crm/stages", async (orig) => ({ ...(await orig<typeof import("@/lib/crm/stages")>()), moveLeadForTier: h.move }));
 vi.mock("@/lib/rateLimit", () => ({ tooManyRecentActions: h.limited }));
@@ -47,6 +48,7 @@ beforeEach(() => {
   vi.resetAllMocks();
   h.limited.mockResolvedValue(false);
   h.leadUpdate.mockResolvedValue({});
+  h.leadClaim.mockResolvedValue({ count: 1 });
 });
 afterEach(() => vi.restoreAllMocks());
 
@@ -153,8 +155,10 @@ describe("reading one customer's notes", () => {
 });
 
 describe("after each poll", () => {
+  const conn = { businessId: "biz1", apiKey: "LOC|key", business: { subscriptionStatus: "active", industry: "Real estate" } };
+
   it("only businesses that read notes, a few customers each, the least recently looked at first", async () => {
-    h.conns.mockResolvedValue([{ businessId: "biz1", apiKey: "LOC|key", business: { subscriptionStatus: "active", industry: "Real estate" } }]);
+    h.conns.mockResolvedValue([conn]);
     h.leadFind.mockResolvedValue([]);
     await readGhlNotesForAllBusinesses(NOW);
     expect(h.conns.mock.calls[0][0].where).toMatchObject({ provider: "gohighlevel", readNotes: true });
@@ -162,5 +166,25 @@ describe("after each poll", () => {
     expect(q.where).toMatchObject({ businessId: "biz1", crmProvider: "gohighlevel" });
     expect(q.take).toBe(10);
     expect(q.orderBy).toEqual({ crmNotesCheckedAt: { sort: "asc", nulls: "first" } });
+  });
+
+  it("never customers FollowUp leaves alone: said stop or no, won or lost", async () => {
+    h.conns.mockResolvedValue([conn]);
+    h.leadFind.mockResolvedValue([]);
+    await readGhlNotesForAllBusinesses(NOW);
+    expect(h.leadFind.mock.calls[0][0].where).toMatchObject({ optedOutAt: null, saidNoAt: null, stage: { notIn: ["WON", "LOST"] } });
+  });
+
+  it("a customer another poll already took is skipped, and a long poll stops starting new ones", async () => {
+    const listNotes = vi.spyOn(goHighLevelClient, "listNotes").mockResolvedValue([]);
+    h.conns.mockResolvedValue([conn]);
+    h.leadFind.mockResolvedValue([lead({ id: "a" }), lead({ id: "b" }), lead({ id: "c" })]);
+    h.leadClaim.mockResolvedValueOnce({ count: 0 }).mockResolvedValue({ count: 1 });
+    let t = 0;
+    const clock = () => (t += 50_000);
+    const out = await readGhlNotesForAllBusinesses(NOW, clock);
+    // "a" was taken by another poll; "b" read; the budget runs out before "c".
+    expect(out.looked).toBe(1);
+    expect(listNotes).toHaveBeenCalledTimes(1);
   });
 });

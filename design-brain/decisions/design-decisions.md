@@ -14631,3 +14631,32 @@ already did); without it, the window says what to turn on instead of a silent "N
 - A key without Opportunities still connects (replies keep working); the stage moves just don't happen until he turns
   it on. The window says so, but only when he opens it.
 - The privacy text is factual, not legal advice. The lawyer reads it before charging.
+
+## 2026-10-20 — A-303 bug review (founder: "lets find the bugs and weakness points as well")
+
+**Fixed (each broke something already decided):**
+- A tier move could move someone FollowUp leaves alone. Now it never moves a customer who said stop or no, whose deal is
+  won or lost, whom the CRM marks do not contact / closed / Do Not Disturb, or who has a meeting booked in GoHighLevel's
+  own calendar (before, only FollowUp's own bookings were checked, so a GoHighLevel booking could be pulled out of
+  "Appointment Set").
+- A move was "used up" when the CRM didn't answer: the customer was marked as moved before the stage was found, so a
+  passing GoHighLevel hiccup meant they never moved. Now nothing is marked until there is a stage to move to.
+- "Read my notes" read notes (and spent AI) for customers who said stop or no, or whose deal was won or lost. Now skipped.
+- Two overlapping polls could read the same customer's notes twice, and a slow poll could run into the cron's time
+  limit. Each customer is now claimed before it is read, and a poll stops starting new customers after 2 minutes.
+- The CRM window's example sentence named "Nurture" / "Ready" even when he had no such stage or chose "Don't move
+  them". It now names his stages, or says only the plain sentence.
+- The privacy page said "the stage you choose", but until he chooses FollowUp picks by name. Now it says both.
+
+**Weak points left, for the founder (not changed: they change approved behaviour):**
+- Moving a customer in GoHighLevel can start his own GoHighLevel automations (a "stage changed" workflow that texts).
+- A customer with no deal card in that pipeline gets a new one, so his pipeline fills with FollowUp's moves.
+- With two pipelines (buyers and sellers), FollowUp's pick by name can put a seller in the buyers' pipeline.
+- On day one, FollowUp moves existing customers by its own pick before he has looked at the three rows.
+- Notes written by GoHighLevel automations or a teammate are read as "your note".
+- **Recommended:** move nobody until he has picked the three stages once, and only move a deal card that already
+  exists (bookings still create one, as A-275 does). Asked; not built.
+- **Decided (same day):** the founder said "yes do it and merge" to the first part, so tier moves now go only to a
+  stage he picked, per tier (A-303 updated). This SUPERSEDES the A-303 build entry's "until he chooses, it picks the
+  stage whose name reads like it". Not asked, so not changed: a tier move still creates a deal card for a customer
+  who has none in that pipeline.

@@ -1,17 +1,18 @@
 /**
  * "When FollowUp sorts them" (A-303): a customer who becomes Ready, Warm or Later moves to the owner's own stage for
- * it in their CRM, once per change, with what decided it as the reason, and never while a meeting is booked. Until
- * the owner chooses, FollowUp picks the stage whose name reads like it.
+ * it in their CRM, once per change, with what decided it as the reason, and never while a meeting is booked. Only to
+ * a stage the owner picked: until then nobody moves. Never someone FollowUp leaves alone.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const h = vi.hoisted(() => ({ conn: vi.fn(), booking: vi.fn(), claim: vi.fn(), write: vi.fn(), listStages: vi.fn() }));
+const h = vi.hoisted(() => ({ conn: vi.fn(), booking: vi.fn(), claim: vi.fn(), write: vi.fn(), listStages: vi.fn(), state: vi.fn(), hold: vi.fn() }));
 vi.mock("@/lib/db", () => ({
-  prisma: { crmConnection: { findUnique: h.conn }, booking: { findFirst: h.booking }, lead: { updateMany: h.claim } },
+  prisma: { crmConnection: { findUnique: h.conn }, booking: { findFirst: h.booking }, lead: { updateMany: h.claim, findUnique: h.state } },
 }));
 vi.mock("@/lib/crm/writes", () => ({ writeToCrm: h.write }));
+vi.mock("@/lib/crm/oneBoss", () => ({ crmHoldReason: h.hold }));
 
-import { moveLeadForTier, readStageWrite, readTierStages, tierMoveWhy, tierStage, tierStageByName } from "@/lib/crm/stages";
+import { moveLeadForTier, readStageWrite, readTierStages, tierMoveWhy } from "@/lib/crm/stages";
 import { describeWrite } from "@/lib/crm/record";
 import { CRM_PROVIDERS } from "@/lib/crm";
 import type { Qualification } from "@/lib/qualification";
@@ -19,11 +20,15 @@ import type { Qualification } from "@/lib/qualification";
 const HIS = ["New Lead", "Hot", "Nurture", "Long-term Nurture", "Appointment Set", "Under Contract", "Closed"].map((n) => ({ id: `p1:${n}`, name: n }));
 const lead = { id: "lead1", businessId: "biz1", name: "Priya Shah", crmProvider: "gohighlevel", crmId: "c1" };
 const q = (items: Qualification["items"]): Qualification => ({ v: 2, template: "realtor", items });
+const stage = (n: string) => ({ id: `p1:${n}`, name: n });
+const PICKED = { ready: stage("Hot"), warm: stage("Nurture"), later: stage("Long-term Nurture") };
 
 beforeEach(() => {
   vi.resetAllMocks();
-  h.conn.mockResolvedValue({ provider: "gohighlevel", apiKey: "k", tierStages: null });
+  h.conn.mockResolvedValue({ provider: "gohighlevel", apiKey: "k", tierStages: PICKED });
   h.booking.mockResolvedValue(null);
+  h.state.mockResolvedValue({ crmTierMoved: null, optedOutAt: null, saidNoAt: null, stage: "NEW", quietOutcome: null });
+  h.hold.mockResolvedValue(null);
   h.claim.mockResolvedValue({ count: 1 });
   h.write.mockResolvedValue("done");
   vi.spyOn(CRM_PROVIDERS.gohighlevel.client, "listStages").mockImplementation(h.listStages);
@@ -31,19 +36,20 @@ beforeEach(() => {
 });
 
 describe("which stage", () => {
-  it("until the owner chooses: the one whose name reads like it", () => {
-    expect(tierStageByName("ready", HIS)?.name).toBe("Hot");
-    expect(tierStageByName("warm", HIS)?.name).toBe("Nurture");
-    expect(tierStageByName("later", HIS)?.name).toBe("Long-term Nurture");
-    expect(tierStageByName("warm", [{ id: "a", name: "Cold leads" }, { id: "b", name: "Warm leads" }])?.name).toBe("Warm leads");
-    expect(tierStageByName("ready", [{ id: "a", name: "New" }, { id: "b", name: "Closed" }])).toBeNull();
-  });
-
-  it("the owner's choice wins, and \"Don't move them\" is none", async () => {
-    const conn = { provider: "gohighlevel", apiKey: "k", tierStages: { ready: { id: "p1:New Lead", name: "New Lead" }, warm: null } };
-    expect(await tierStage(conn, "ready")).toEqual({ id: "p1:New Lead", name: "New Lead" });
-    expect(await tierStage(conn, "warm")).toBeNull();
-    expect(await tierStage(conn, "later")).toEqual({ id: "p1:Long-term Nurture", name: "Long-term Nurture" });
+  it("only the stage the owner picked: until then nobody moves, and the next pass after he picks moves them", async () => {
+    h.conn.mockResolvedValue({ provider: "gohighlevel", apiKey: "k", tierStages: null });
+    await moveLeadForTier(lead, "warm", null);
+    // Nothing guessed by name, nothing asked of the CRM, nothing claimed.
+    expect(h.listStages).not.toHaveBeenCalled();
+    expect(h.claim).not.toHaveBeenCalled();
+    expect(h.write).not.toHaveBeenCalled();
+    h.conn.mockResolvedValue({ provider: "gohighlevel", apiKey: "k", tierStages: { warm: stage("New Lead") } });
+    await moveLeadForTier(lead, "warm", null);
+    expect(readStageWrite(h.write.mock.calls[0][0].text)).toMatchObject({ stageId: "p1:New Lead", label: "New Lead" });
+    // Ready isn't picked yet: still nobody.
+    h.write.mockClear();
+    await moveLeadForTier(lead, "ready", null);
+    expect(h.write).not.toHaveBeenCalled();
   });
 
   it("a stored choice is read defensively", () => {
@@ -82,11 +88,36 @@ describe("moving a customer when their tier changes", () => {
     expect(readStageWrite(input.text)).toEqual({ stageId: "p1:Nurture", label: "Nurture", name: "Priya Shah", why: "They said: “probably in about 3 months”" });
   });
 
-  it("once per change: another pass for the same tier writes nothing", async () => {
+  it("once per change: another pass for the same tier asks nothing and writes nothing", async () => {
+    h.state.mockResolvedValue({ crmTierMoved: "warm", optedOutAt: null, saidNoAt: null, stage: "NEW", quietOutcome: null });
+    await moveLeadForTier(lead, "warm", null);
+    expect(h.listStages).not.toHaveBeenCalled();
+    expect(h.write).not.toHaveBeenCalled();
+    // Two passes racing: the one that loses the claim writes nothing.
+    h.state.mockResolvedValue({ crmTierMoved: null, optedOutAt: null, saidNoAt: null, stage: "NEW", quietOutcome: null });
     h.claim.mockResolvedValue({ count: 0 });
     await moveLeadForTier(lead, "warm", null);
     expect(h.write).not.toHaveBeenCalled();
   });
+
+  it("never someone FollowUp leaves alone: said stop or no, won or lost, closed", async () => {
+    const base = { crmTierMoved: null, optedOutAt: null, saidNoAt: null, stage: "NEW", quietOutcome: null };
+    for (const off of [{ optedOutAt: new Date() }, { saidNoAt: new Date() }, { stage: "WON" }, { stage: "LOST" }, { quietOutcome: "CLOSED" }]) {
+      h.state.mockResolvedValue({ ...base, ...off });
+      await moveLeadForTier(lead, "ready", null);
+    }
+    expect(h.claim).not.toHaveBeenCalled();
+    expect(h.write).not.toHaveBeenCalled();
+  });
+
+  it("never when the CRM says no: do not disturb, do not contact, closed, or a meeting booked there", async () => {
+    h.hold.mockResolvedValue("They have a meeting booked in GoHighLevel.");
+    await moveLeadForTier(lead, "warm", null);
+    expect(h.hold).toHaveBeenCalledWith(lead);
+    expect(h.claim).not.toHaveBeenCalled();
+    expect(h.write).not.toHaveBeenCalled();
+  });
+
 
   it("never while a meeting is booked: the booking's stage stays", async () => {
     h.booking.mockResolvedValue({ id: "b1" });
@@ -108,10 +139,11 @@ describe("moving a customer when their tier changes", () => {
     expect(h.write).not.toHaveBeenCalled();
   });
 
-  it("\"Don't move them\", or no stage that fits: remembered, nothing written", async () => {
+  it("\"Don't move them\": remembered, nothing asked, nothing written", async () => {
     h.conn.mockResolvedValue({ provider: "gohighlevel", apiKey: "k", tierStages: { ready: null } });
     await moveLeadForTier(lead, "ready", null);
     expect(h.claim).toHaveBeenCalled();
+    expect(h.listStages).not.toHaveBeenCalled();
     expect(h.write).not.toHaveBeenCalled();
   });
 

@@ -102,8 +102,9 @@ export default function PrivacyPage() {
                 imported via CSV, and contacts from a CRM you connect (Follow Up Boss, HubSpot or GoHighLevel).
                 With GoHighLevel we also read the texts, emails and chats in its conversations, so FollowUp can
                 answer them there. In your CRM, FollowUp adds a note when it sends a message and when a customer is
-                ready to talk, and moves the customer to the stage you choose when they book a meeting or when where
-                they stand changes (Ready, Warm or Later); you can turn each of these off. If you leave &quot;Read my
+                ready to talk. It also moves the customer to one of your stages: when they book a meeting (the stage you
+                choose or, until you choose, the one whose name fits), and when where they stand changes (Ready, Warm
+                or Later, only to stages you picked). You can turn each of these off. If you leave &quot;Read my
                 notes&quot; on (GoHighLevel), we also read your own notes on a customer, like call notes, to tell where
                 they stand. We never read FollowUp&apos;s own notes, and we keep only the few words that show it.
               </li>

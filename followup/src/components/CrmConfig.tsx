@@ -558,8 +558,11 @@ function TierStages({
   if (stages && !stages.tiers) return null;
   const tiers = stages?.tiers;
   const opens = Boolean(stages?.stages.length);
-  const first = tiers?.warm.chosen?.name ?? "Nurture";
-  const back = tiers?.ready.chosen?.name ?? "Ready";
+  // The example names his own stages, and only when both moves happen: never a stage he doesn't have.
+  const first = tiers?.warm.dontMove ? null : tiers?.warm.chosen?.name;
+  const back = tiers?.ready.dontMove ? null : tiers?.ready.chosen?.name;
+  // Nobody moves until he picks (founder 2026-10-20), so the window says so while any row still reads "Choose".
+  const unpicked = (["ready", "warm", "later"] as const).some((t) => tiers && !tiers[t].chosen && !tiers[t].dontMove);
   return (
     <>
       <p className="ios-footnote mt-6 px-4 uppercase tracking-[0.02em] text-ink-faint">When FollowUp sorts them</p>
@@ -569,7 +572,10 @@ function TierStages({
         ))}
       </div>
       <p className="ios-footnote mt-1.5 px-4 text-ink-soft">
-        FollowUp moves them in {crm} when what they say changes, and back again. Someone who says “in about three months” goes to {first}, and back to {back} when they&apos;re keen again.
+        {unpicked && opens
+          ? `Pick a stage for each. Until you do, FollowUp moves nobody. Then it moves them in ${crm} when what they say changes, and back again.`
+          : `FollowUp moves them in ${crm} when what they say changes, and back again.`}
+        {first && back ? ` Someone who says “in about three months” goes to ${first}, and back to ${back} when they're keen again.` : ""}
       </p>
       {stages?.notesAvailable && (
         <>

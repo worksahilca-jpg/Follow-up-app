@@ -14568,3 +14568,31 @@ comes before speed on a real business. FollowUp is safe alongside his automation
 to someone GoHighLevel messaged in the last 14 days.
 
 **Not checked:** GoHighLevel's real menu names (no trial account). Read them in his account at the meeting.
+
+## 2026-10-20 — The owner teaches FollowUp what to ask (A-302), built
+
+**Founder:** "yes build it" to the three drawn screens (the question on Today, Saved, What FollowUp asks).
+
+**What was built, and the choices made while building (his to change):**
+- A realtor gets the question on Today second, right after "what does your business do?", with the same quiet rules
+  as every question (A-101). "Not now" sets it aside for good; the page is always there.
+- His words are read by a model into a proposed list; fixed rules (`followup/src/lib/askPlan.ts`) decide what is
+  kept: FollowUp's own careful wording for what it already knows how to ask, income always asked as the lender
+  question, immigration status and other personal things kept "For your call" and never asked in writing, and When,
+  Pre-approval and Their agent added (tagged "Added") when he leaves them out, because they sort the customer and stop
+  FollowUp writing to someone with an agent.
+- Buyers only. Renters and sellers keep FollowUp's order. A customer whose side isn't clear is asked only that first.
+- His questions go two at a time, in his order. Each is asked once, the same as FollowUp's own.
+- The page: drag by the grip, or tap the grip for Move up / Move down (dragging is never the only way, WCAG 2.5.7).
+  "Use FollowUp's order instead" keeps his words in the box, one Save from coming back.
+- Not drawn: the page before he has given his words (the question box, then "FollowUp's order" as a plain numbered
+  list). Built from the drawn parts; show it to him.
+
+**Weak points, honestly:**
+- The model's reading of real words was not tried here (no model key on the local copy). The tests use fixed
+  readings; the first real one happens on the live app. Try it with his exact words after the merge.
+- With his order the agent question comes last, so a customer moving soon with money sorted is marked Ready (and the
+  phone buzzes) later than with FollowUp's order, unless they ask to see a home.
+- "For your call" is a word list plus the model's judgement. An unusually worded personal question could slip
+  through; nothing he wrote is sent as-is, but check the page after he saves.
+- The Settings tree on the computer doesn't list the page; it is reached from its row under Sending replies.

@@ -68,7 +68,7 @@ a booked call or visit; the owner closes.
 
 ## Where we are (update at the end of every task)
 
-**Last updated: 2026-10-19**
+**Last updated: 2026-10-20**
 
 - **Training happens in the practice room** (artifact "FollowUp Practice Room",
   https://claude.ai/artifact/WSiRYwcnJTD4Y3ZbHBPadR): Sahil plays the customer, it answers as FollowUp (on his Claude
@@ -82,7 +82,8 @@ a booked call or visit; the owner closes.
 - **Realtor replies follow the top-agent playbook (A-299, LIVE 2026-10-19 with R-136, PR #560 → e55757a):**
   - The playbook comes from about 60 sources: `reports/FollowUp realtor reply playbook.md`, outside the repo.
   - Sahil trained it by chat; the rules were checked against the earlier decisions.
-  - A buyer's questions now run: area + when → viewing + agent (asked gently) → lender + price range (money last).
+  - A buyer's questions now run: area + when → viewing + agent (asked gently) → lender + price range (money last),
+    unless the owner gave their own (A-302, below).
   - Saying yes to a viewing makes the customer Ready, and the phone buzzes.
   - On Instagram, a question about one home gets an answer and a light question first; the showing comes in the next
     reply.
@@ -103,6 +104,13 @@ a booked call or visit; the owner closes.
   - GoHighLevel needs a trial or paid plan (Free doesn't read it).
 - **Setup asks to turn off GoHighLevel's auto-reply (A-301, Oct 19):** a short screen right after GoHighLevel
   connects. Its menu names still need checking on a live account. "Later" has no second home yet.
+- **The owner teaches FollowUp what to ask (A-302, built Oct 20, in a PR waiting for "merge"):** a realtor is asked
+  on Today "What do you ask a new buyer, and in what order?", and FollowUp asks a buyer his questions in his order
+  (Settings › Sending replies › What FollowUp asks). Status and other personal things are kept for his call, never
+  asked in writing. Weak points in design-decisions (Oct 20). After the merge: try it with his real words.
+- **Realtor meetings 2 and 3 (Oct 20):** he wants it fully automatic. Not built yet: moving GoHighLevel stages when a
+  customer goes hot or cold, reading GoHighLevel call notes, booking showings in his showing calendar. His family
+  WhatsApp groups can't be read. Recommended next: the first two (asked Sahil). He was added as a beta tester.
 - **First realtor interview (Oct 20):** he qualifies by status and money first, area last; "not now" leads go to
   nurture; listing emails after. Notes and open questions: `followup/research/customers/2026-10-20-first-realtor-interview.md`.
 - **First realtor GoHighLevel account (plan, Oct 20):** no trial dry run (Sahil's choice). Assisted, tap **Later** on

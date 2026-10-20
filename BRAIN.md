@@ -103,6 +103,9 @@ a booked call or visit; the owner closes.
   - GoHighLevel needs a trial or paid plan (Free doesn't read it).
 - **Setup asks to turn off GoHighLevel's auto-reply (A-301, Oct 19):** a short screen right after GoHighLevel
   connects. Its menu names still need checking on a live account. "Later" has no second home yet.
+- **First realtor GoHighLevel account (plan, Oct 20):** no trial dry run (Sahil's choice). Assisted, tap **Later** on
+  the auto-reply screen, test with one text from Sahil, and only after about a week turn off just the auto-reply step
+  (design-decisions, Oct 20). Menu names still unchecked.
 - **Bug check (Oct 20):** Gmail now waits out Google's per-minute limit and never marks a check done with emails left
   unread (Oct 18: 28 threads waited a day). Five screen bugs fixed (see design-decisions, Oct 20), one unused route
   removed.

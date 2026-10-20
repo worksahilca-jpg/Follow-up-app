@@ -14547,3 +14547,24 @@ check two minutes later, and the check is not marked done. A daily limit is neve
 
 **Not changed:** on a laptop the open person is shown highlighted in place in the list, as A-284 drew it. The review's
 "Next: repeats Later" point is A-283 as approved.
+
+## 2026-10-20 — The first realtor meeting: keep his GoHighLevel automations on for now
+
+**Founder:** decided not to make a GoHighLevel trial account for a dry run ("i dont want to make account"). Then
+asked "are you sure i should let him stop his automated messages", and said "okay" to the plan below.
+
+**The plan for the first real account:**
+- He signs up, picks GoHighLevel, makes the key himself and pastes it in. Setup step 2: **Assisted**, so every reply
+  waits for his tap.
+- On the "Turn off GoHighLevel's auto-reply" screen (A-301), tap **Later**. Nothing in his GoHighLevel is switched off
+  on day one.
+- Test: Sahil texts his GoHighLevel number; a draft should appear in FollowUp within about 2 minutes, nothing sent.
+- After about a week, if he likes the drafts, turn off **only the auto-reply step**, never the whole workflow: his
+  tags, pipeline moves, reminders and alerts stay.
+
+**Why:** with every reply waiting for his tap, switching his auto-reply off could make new customers wait longer than
+they do today; one "new lead" workflow often also tags, moves and alerts, and switching it off breaks those; and trust
+comes before speed on a real business. FollowUp is safe alongside his automations meanwhile: it never sends on its own
+to someone GoHighLevel messaged in the last 14 days.
+
+**Not checked:** GoHighLevel's real menu names (no trial account). Read them in his account at the meeting.

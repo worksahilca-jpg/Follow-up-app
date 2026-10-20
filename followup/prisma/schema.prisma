@@ -305,6 +305,8 @@ model Business {
   // to, which are then left for when a real customer asks.
   questionAfter        DateTime?
   questionsSkipped     String[]        @default([])
+  // What the owner asks a new buyer, in their own words and order (A-302, src/lib/askPlan.ts). Null: FollowUp's order.
+  askPlan              Json?
   // What the owner always does, offered once and kept only on a yes (src/lib/habits.ts).
   habits               OwnerHabit[]
 

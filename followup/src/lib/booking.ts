@@ -155,9 +155,9 @@ type CreateBookingResult =
 export async function noteBookingOnChecklist(leadId: string, at: Date, timeZone: string): Promise<void> {
   const row = await prisma.lead.findUnique({
     where: { id: leadId },
-    select: { qualification: true, qualifiedAt: true, business: { select: { industry: true } } },
+    select: { qualification: true, qualifiedAt: true, business: { select: { industry: true, askPlan: true } } },
   });
-  const template = templateFor(row?.business.industry);
+  const template = templateFor(row?.business.industry, row?.business.askPlan);
   if (!row || !template) return;
   const qualification = mergeQualification(template, readQualification(row.qualification), null, [], bookingWhen(at, timeZone));
   await prisma.lead.update({ where: { id: leadId }, data: { qualification: qualification as unknown as Prisma.InputJsonValue } });

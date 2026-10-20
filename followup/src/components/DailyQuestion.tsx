@@ -19,8 +19,11 @@ export type DailyQuestionProps = {
   question: string;
   example: string;
   why: string;
-  /** "stay": news for the customers staying in touch (A-260), answered at /api/stay-in-touch/news. */
-  kind?: "stay";
+  /**
+   * "stay": news for the customers staying in touch (A-260), answered at /api/stay-in-touch/news.
+   * "plan": what the owner asks a new buyer, in their order (A-302), answered at /api/business/ask-plan.
+   */
+  kind?: "stay" | "plan";
   maxLength?: number;
 };
 
@@ -29,7 +32,7 @@ export default function DailyQuestion({ question }: { question: DailyQuestionPro
   const [answer, setAnswer] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState<"saved" | "later" | null>(null);
+  const [done, setDone] = useState<"saved" | "planned" | "later" | null>(null);
   // What FollowUp did with the news (A-260): who it wrote for, and who it didn't and why.
   const [lines, setLines] = useState<string[]>([]);
 
@@ -37,11 +40,23 @@ export default function DailyQuestion({ question }: { question: DailyQuestionPro
     setBusy(true);
     setError(null);
     try {
-      const stay = question?.kind === "stay";
-      const res = await fetch(stay ? "/api/stay-in-touch/news" : "/api/business/question", {
+      const kind = question?.kind;
+      const res = await fetch(kind === "stay" ? "/api/stay-in-touch/news" : kind === "plan" ? "/api/business/ask-plan" : "/api/business/question", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(stay ? (value ? { text: value } : { notNow: true }) : value ? { label, answer: value } : { label }),
+        body: JSON.stringify(
+          kind === "stay"
+            ? value
+              ? { text: value }
+              : { notNow: true }
+            : kind === "plan"
+              ? value
+                ? { words: value }
+                : { notNow: true }
+              : value
+                ? { label, answer: value }
+                : { label }
+        ),
       });
       const data = (await res.json().catch(() => ({}))) as { success?: boolean; message?: string; lines?: string[] };
       if (!res.ok || !data.success) {
@@ -49,7 +64,7 @@ export default function DailyQuestion({ question }: { question: DailyQuestionPro
         return;
       }
       setLines(Array.isArray(data.lines) ? data.lines : []);
-      setDone(value ? "saved" : "later");
+      setDone(value ? (kind === "plan" ? "planned" : "saved") : "later");
       setAnswer("");
       router.refresh();
     } catch {
@@ -70,6 +85,16 @@ export default function DailyQuestion({ question }: { question: DailyQuestionPro
         ))}
         <Link href="/workflows" className="mt-3 inline-block text-[14px] text-ink-soft underline underline-offset-2">
           See Stay in touch
+        </Link>
+      </section>
+    );
+  }
+  if (done === "planned") {
+    return (
+      <section className="mt-5 box p-4 sm:p-5 max-w-[640px]" role="status">
+        <p className="text-[15px] leading-snug">Saved. FollowUp turned your words into questions and will ask them in your order.</p>
+        <Link href="/asks" className="mt-3 inline-block text-[14px] text-ink-soft underline underline-offset-2">
+          See your questions
         </Link>
       </section>
     );
@@ -99,7 +124,7 @@ export default function DailyQuestion({ question }: { question: DailyQuestionPro
       </label>
       <textarea
         id="daily-answer"
-        rows={question.kind === "stay" ? 3 : 2}
+        rows={question.kind === "plan" ? 5 : question.kind === "stay" ? 3 : 2}
         maxLength={question.maxLength ?? 200}
         value={answer}
         onChange={(e) => setAnswer(e.target.value)}

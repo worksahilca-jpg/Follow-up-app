@@ -18,6 +18,7 @@
  */
 import { labelKey } from "@/lib/factLines";
 import { teachQuestions, type TeachQuestion } from "@/lib/teachQuestions";
+import { ASK_PLAN_LABEL } from "@/lib/askPlan";
 
 /** The fact's name for the owner's own description of the business. */
 export const WHAT_YOU_DO_LABEL = "What you do";
@@ -45,6 +46,18 @@ export function whatYouDoQuestion(trade: string | null | undefined): TeachQuesti
   };
 }
 
+/**
+ * "What do you ask a new buyer, and in what order?" (A-302, src/lib/askPlan.ts): for a realtor, the second question,
+ * once FollowUp knows what the business does. The answer is the owner's own questions, in their order.
+ */
+export function askPlanQuestion(): TeachQuestion {
+  return {
+    label: ASK_PLAN_LABEL,
+    question: "What do you ask a new buyer, and in what order?",
+    example: "e.g. First their down payment and if they've talked to a lender. Then which areas they want, and when they want to move.",
+  };
+}
+
 const ASKED_BY: Record<string, string> = {
   "real estate": "Realtors",
   "mortgage brokerage": "Mortgage brokers",
@@ -55,6 +68,9 @@ const ASKED_BY: Record<string, string> = {
 export function whyAsk(question: TeachQuestion, trade: string | null | undefined): string {
   if (question.label === WHAT_YOU_DO_LABEL) {
     return "So FollowUp can tell real customers from newsletters, and write the way you would.";
+  }
+  if (question.label === ASK_PLAN_LABEL) {
+    return "Write it the way you'd tell a new assistant, or tap the mic on your keyboard and say it. FollowUp will ask your customers the same way.";
   }
   const who = trade ? ASKED_BY[norm(trade)] : undefined;
   return `${who ? `${who} get asked this a lot.` : "Customers ask this a lot."} FollowUp will answer with your exact words.`;
@@ -72,6 +88,8 @@ export type DailyQuestionState = {
   questionAfter: Date | null;
   questionsSkipped: readonly string[];
   knownLabels: readonly string[];
+  /** A realtor who hasn't said what they ask a new buyer yet (A-302). */
+  wantsAskPlan?: boolean;
 };
 
 /** Today's question, or null when there is nothing to ask right now. */
@@ -81,6 +99,7 @@ export function pickDailyQuestion(state: DailyQuestionState, now: Date = new Dat
   const done = [...state.knownLabels, ...state.questionsSkipped];
   const doneKeys = new Set(done.map(labelKey));
   if (!doneKeys.has(labelKey(WHAT_YOU_DO_LABEL))) return whatYouDoQuestion(state.trade);
+  if (state.wantsAskPlan && !doneKeys.has(labelKey(ASK_PLAN_LABEL))) return askPlanQuestion();
   return teachQuestions(state.trade, done)[0] ?? null;
 }
 

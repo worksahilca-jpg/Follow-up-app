@@ -155,7 +155,7 @@ describe("the checklist with his order", () => {
   const plan = finishPlan(HIS_WORDS, proposed, NOW)!;
   const template = templateFor("Real estate", plan)!;
   const base = templateFor("Real estate")!;
-  const msg = (body: string): Message => ({ id: body, direction: "inbound", body, channel: "email", sentAt: NOW.toISOString() }) as Message;
+  const msg = (body: string): Message => ({ id: body, direction: "inbound", body, channel: "email", date: NOW.toISOString() });
 
   it("is FollowUp's own checklist without a plan, and for a business that isn't real estate", () => {
     expect(base.ownOrder).toBeUndefined();

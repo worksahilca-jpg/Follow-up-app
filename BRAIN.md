@@ -103,6 +103,8 @@ a booked call or visit; the owner closes.
   - GoHighLevel needs a trial or paid plan (Free doesn't read it).
 - **Setup asks to turn off GoHighLevel's auto-reply (A-301, Oct 19):** a short screen right after GoHighLevel
   connects. Its menu names still need checking on a live account. "Later" has no second home yet.
+- **First realtor interview (Oct 20):** he qualifies by status and money first, area last; "not now" leads go to
+  nurture; listing emails after. Notes and open questions: `followup/research/customers/2026-10-20-first-realtor-interview.md`.
 - **First realtor GoHighLevel account (plan, Oct 20):** no trial dry run (Sahil's choice). Assisted, tap **Later** on
   the auto-reply screen, test with one text from Sahil, and only after about a week turn off just the auto-reply step
   (design-decisions, Oct 20). Menu names still unchecked.

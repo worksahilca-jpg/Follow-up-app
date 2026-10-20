@@ -109,7 +109,10 @@ a booked call or visit; the owner closes.
 - **Waiting on Sahil (gave him one Claude in Chrome prompt for 1–4, Oct 19 night):**
   1. Vercel: delete `ANTHROPIC_API_KEY` and `ANTHROPIC_MODEL`.
   2. Revoke the "FollowUp Train" key.
-  3. Meta access-verification status. Open a ticket on Oct 20 if it's still pending.
+  3. ~~Meta access-verification status.~~ Checked Oct 20: still "In review" (submitted Sep 25), no request from
+     Meta, no warnings. Must be done by **Dec 18, 2026** or the app is restricted. Meta offers no ticket for review
+     delays (its bug tool sends you to the public Developer Community Forum). Plan: wait, check weekly; forum post
+     only if still in review in late November.
   4. FollowUp check: business type and GHL connected, plus 6 test replies in Talk to it. Check each reply against A-299.
   5. Realtor GHL test (Oct 20).
   6. Message 5 testers (overdue).

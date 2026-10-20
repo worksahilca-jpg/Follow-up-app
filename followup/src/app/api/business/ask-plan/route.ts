@@ -7,9 +7,33 @@ import { recordAudit } from "@/lib/audit";
 import { parseJsonBody } from "@/lib/validation";
 import { tooManyRecentActions } from "@/lib/rateLimit";
 import { proposeAskPlan } from "@/lib/integrations/openai";
-import { ASK_PLAN_LABEL, MAX_WORDS, finishPlan, readAskPlan, reorderPlan } from "@/lib/askPlan";
+import { ASK_PLAN_LABEL, MAX_WORDS, finishPlan, followUpOrder, readAskPlan, reorderPlan } from "@/lib/askPlan";
 import { templateFor } from "@/lib/qualification";
 import { NEXT_QUESTION_GAP_MS } from "@/lib/dailyQuestion";
+
+const fail = (message: string, status: number) => NextResponse.json({ success: false, message }, { status });
+
+/**
+ * GET /api/business/ask-plan — for "What FollowUp asks" and its row in Settings: whether this business has the
+ * checklist at all (real estate), the owner's questions if any, and FollowUp's own order to show before them.
+ */
+export async function GET() {
+  const ctx = await getSessionContext();
+  if (!ctx) return fail("Not signed in.", 401);
+  const [business, isAdmin] = await Promise.all([
+    prisma.business.findUnique({ where: { id: ctx.businessId }, select: { industry: true, askPlan: true } }),
+    requireAdmin(ctx),
+  ]);
+  if (!business) return fail("Business not found.", 404);
+  const template = templateFor(business.industry);
+  return NextResponse.json({
+    success: true,
+    realtor: Boolean(template),
+    isAdmin,
+    plan: template ? readAskPlan(business.askPlan) : null,
+    followUpOrder: template ? followUpOrder(template.rounds.buy) : [],
+  });
+}
 
 /**
  * POST /api/business/ask-plan — what the owner asks a new buyer, in their own words and order (A-302,
@@ -31,7 +55,6 @@ const schema = z.union([
   z.object({ clear: z.literal(true) }),
 ]);
 
-const fail = (message: string, status: number) => NextResponse.json({ success: false, message }, { status });
 
 export async function POST(request: NextRequest) {
   const ctx = await getSessionContext();

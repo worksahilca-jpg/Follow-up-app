@@ -291,6 +291,19 @@ function SettingsPageInner() {
       .catch(() => {});
   }, []);
 
+  // "What FollowUp asks" (A-302): a realtor's row, with the owner's first questions or "FollowUp's order". Null: no row.
+  const [asksLine, setAsksLine] = useState<string | null>(null);
+  useEffect(() => {
+    fetch("/api/business/ask-plan")
+      .then((r) => r.json())
+      .then((data: { success?: boolean; realtor?: boolean; plan?: { steps: { label: string }[] } | null }) => {
+        if (!data?.success || !data.realtor) return;
+        const labels = data.plan?.steps.map((s) => s.label) ?? [];
+        setAsksLine(labels.length ? labels.slice(0, 3).join(", ") + (labels.length > 3 ? "…" : "") : "FollowUp's order");
+      })
+      .catch(() => {});
+  }, []);
+
   // "Mon–Sat, 9:00 am–7:00 pm · Toronto" on the Booking hours row (A-253).
   const [bookingSummary, setBookingSummary] = useState("");
   useEffect(() => {
@@ -689,6 +702,13 @@ function SettingsPageInner() {
         </div>
 
         <div className={BOX + " mt-6"}>
+          {asksLine !== null && (
+            <Link href="/asks" className={ROW + " border-b border-line-2 hover:bg-card-2"}>
+              <span className="shrink-0 whitespace-nowrap">What FollowUp asks</span>
+              <span className="min-w-0 flex-1 truncate text-right text-[15px] text-ink-faint">{asksLine}</span>
+              <ChevronRight aria-hidden className="h-[18px] w-[18px] shrink-0 text-ink-faint" />
+            </Link>
+          )}
           <Link href="/workflows" className={ROW + " hover:bg-card-2"}>
             <span className="shrink-0 whitespace-nowrap">When to check in</span>
             <span className="min-w-0 flex-1 truncate text-right text-[15px] text-ink-faint">{planLine(followUpPlans, planFor(followUpPlans, "most"))}</span>

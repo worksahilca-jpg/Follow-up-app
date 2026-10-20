@@ -9,7 +9,7 @@ const { getSessionContext, requireAdmin } = vi.hoisted(() => ({ getSessionContex
 vi.mock("@/lib/session", () => ({ getSessionContext, requireAdmin }));
 const { tooManyRecentActions } = vi.hoisted(() => ({ tooManyRecentActions: vi.fn() }));
 vi.mock("@/lib/rateLimit", () => ({ tooManyRecentActions }));
-const { recordAudit } = vi.hoisted(() => ({ recordAudit: vi.fn(async () => true) }));
+const { recordAudit } = vi.hoisted(() => ({ recordAudit: vi.fn<(ctx: unknown, action: string, details: { meta?: unknown }) => Promise<boolean>>(async () => true) }));
 vi.mock("@/lib/audit", () => ({ recordAudit }));
 const { proposeAskPlan } = vi.hoisted(() => ({ proposeAskPlan: vi.fn() }));
 vi.mock("@/lib/integrations/openai", () => ({ proposeAskPlan }));
@@ -136,5 +136,21 @@ describe("the other changes", () => {
     await POST(req({ clear: true }));
     expect(prismaMock.business.update.mock.calls[0][0].data).toHaveProperty("askPlan");
     expect(proposeAskPlan).not.toHaveBeenCalled();
+  });
+});
+
+describe("reading it", () => {
+  it("says whether the business is a realtor, who may change it, and FollowUp's own order", async () => {
+    const { GET } = await import("../route");
+    requireAdmin.mockResolvedValue(false);
+    const body = await (await GET()).json();
+    expect(body).toMatchObject({ success: true, realtor: true, isAdmin: false, plan: null });
+    expect(body.followUpOrder.map((s: { label: string }) => s.label)).toEqual(["Area", "When", "A viewing", "Their agent", "Pre-approval", "Price range"]);
+  });
+
+  it("is nothing for a business that isn't real estate", async () => {
+    const { GET } = await import("../route");
+    prismaMock.business.findUnique.mockResolvedValue({ industry: "Plumbing", askPlan: saved() });
+    expect(await (await GET()).json()).toMatchObject({ realtor: false, plan: null, followUpOrder: [] });
   });
 });

@@ -61,12 +61,19 @@ export const KNOWN_QUESTION: Readonly<Record<KnownKey, string>> = {
   viewing: "Would you like to see it, or have a quick call?",
 };
 
+/** What each is called on "What FollowUp asks" when it is FollowUp's own (FollowUp's order, or added). */
+export const KNOWN_LABEL: Readonly<Record<KnownKey, string>> = {
+  area: "Area",
+  timing: "When",
+  financing: "Pre-approval",
+  budget: "Price range",
+  kind: "Kind of home",
+  agent: "Their agent",
+  viewing: "A viewing",
+};
+
 /** Added when the owner's words leave them out, in this order. */
-const ADDED: readonly { key: KnownKey; label: string }[] = [
-  { key: "timing", label: "When" },
-  { key: "financing", label: "Pre-approval" },
-  { key: "agent", label: "Their agent" },
-];
+const ADDED: readonly KnownKey[] = ["timing", "financing", "agent"];
 
 export type AskStep = {
   /** A known key, or "own:<words>" for one of the owner's own questions. */
@@ -174,8 +181,8 @@ export function finishPlan(words: string, proposed: ProposedPlan, now: Date = ne
   }
   for (const f of proposed.forCall ?? []) addForCall(forCall, f);
   if (steps.length === 0) return null;
-  for (const a of ADDED) {
-    if (!steps.some((s) => s.key === a.key)) steps.push({ key: a.key, label: a.label, question: KNOWN_QUESTION[a.key], added: true });
+  for (const key of ADDED) {
+    if (!steps.some((s) => s.key === key)) steps.push({ key, label: KNOWN_LABEL[key], question: KNOWN_QUESTION[key], added: true });
   }
   return { v: 1, words: clean(words, MAX_WORDS), steps, forCall, madeAt: now.toISOString() };
 }
@@ -219,6 +226,11 @@ export function reorderPlan(plan: AskPlan, keys: readonly string[]): AskPlan | n
   const steps = keys.map((k) => plan.steps.find((s) => s.key === k));
   if (steps.some((s) => !s)) return null;
   return { ...plan, steps: steps as AskStep[] };
+}
+
+/** FollowUp's own order for a buyer, as the page lists it before the owner gives theirs. */
+export function followUpOrder(rounds: readonly (readonly CriterionKey[])[]): { key: CriterionKey; label: string; question: string }[] {
+  return rounds.flat().flatMap((key) => (isKnownKey(key) ? [{ key, label: KNOWN_LABEL[key], question: KNOWN_QUESTION[key] }] : []));
 }
 
 /** The buyer's rounds, in the owner's order: two questions at a time, joined in one sentence (A-246). */

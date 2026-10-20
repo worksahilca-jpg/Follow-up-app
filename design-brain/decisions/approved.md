@@ -5205,3 +5205,22 @@ day, before the first realtor GoHighLevel meeting.
     after it got no reply.
 - **No new screen.** The welcome backs appear on Today like any other draft that waits for the owner.
 
+## A-301
+**Setup asks the owner to turn off GoHighLevel's auto-reply (2026-10-19).** The founder picked option A of two drawn
+the same day ("A build it"), after *"i dont want go highlevels automated ai message bro when we can handle it like a
+real person"*.
+- **Where:** its own short screen, shown once, right after GoHighLevel connects in setup. Then "Connect these too"
+  (A-272) as before. Only for GoHighLevel; another CRM goes straight on.
+- **What it says:** "✓ GoHighLevel connected", the title "Turn off GoHighLevel's auto-reply", one line of why ("So
+  customers get one real answer from you, not a bot."), then two numbered rows in one group:
+  1. Workflows that reply to new messages · "In GoHighLevel: Automation. Turn them off."
+  2. Conversation AI · "If you use it, turn it off for messages."
+- **What it keeps:** a footnote under the group: "Keep reminders and your other workflows. FollowUp only takes over the
+  reply." The owner switches off GoHighLevel's replies, not GoHighLevel.
+- **Buttons:** Done (the one black button) and a quiet "Later" link. Both move on; nothing is checked or saved.
+- **Why it's a screen and not a row (option B, one quiet row on "Connect these too"):** a customer who gets a bot
+  message and a FollowUp reply sees spam. That is worth one screen; a row is easy to miss.
+- **Not verified yet:** the menu names "Automation" and "Conversation AI" come from GoHighLevel's help pages, not a
+  live account. Check them on the founder's trial and the first realtor's account, and change the words if they
+  differ.
+

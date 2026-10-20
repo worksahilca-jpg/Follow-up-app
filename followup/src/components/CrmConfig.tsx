@@ -118,7 +118,7 @@ function syncProblem(raw: string, name: string): string {
  * of every note FollowUp wrote, the pause and Disconnect sit in the connected
  * window.
  */
-export default function CrmConfig({ setup }: { setup?: { onConnected: (name: string) => void } } = {}) {
+export default function CrmConfig({ setup }: { setup?: { onConnected: (name: string, provider: Provider) => void } } = {}) {
   const [loading, setLoading] = useState(true);
   const [config, setConfig] = useState<Config | null>(null);
   // null: no window. "pick": which CRM. A provider: its key.
@@ -185,7 +185,7 @@ export default function CrmConfig({ setup }: { setup?: { onConnected: (name: str
         // Setup (A-272) moves on to "Connect these too"; Settings shows what is connected.
         if (setup) {
           setStep(null);
-          setup.onConnected(CRMS.find((c) => c.id === provider)?.name ?? "Your CRM");
+          setup.onConnected(CRMS.find((c) => c.id === provider)?.name ?? "Your CRM", provider);
         } else setStep("connected");
       } else {
         setSaveError(data.message ?? "That didn't connect. Check the key and try again.");

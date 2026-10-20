@@ -93,8 +93,9 @@ function OnboardingFormInner({ sources }: OnboardingFormProps) {
   const connected = inboxConnected || sources.instagramConnected || crmName !== null;
   const connectedName = sources.gmailConnected ? "Gmail" : sources.outlookConnected ? "Outlook" : sources.instagramConnected ? "Instagram" : (crmName ?? "");
   const [step, setStep] = useState<Step>(connected ? 2 : 1);
-  // Step 1's screen (A-272): the CRM question; after a CRM connects, what it doesn't get; with no CRM, the apps.
-  const [first, setFirst] = useState<"crm" | "suggest" | "apps">("crm");
+  // Step 1's screen (A-272): the CRM question; after GoHighLevel connects, its auto-reply off (A-301); after a CRM,
+  // what it doesn't get; with no CRM, the apps.
+  const [first, setFirst] = useState<"crm" | "autoreply" | "suggest" | "apps">("crm");
   const [finishing, setFinishing] = useState(false);
 
   // Fires once, right when a connected inbox first renders — pulls the
@@ -204,14 +205,15 @@ function OnboardingFormInner({ sources }: OnboardingFormProps) {
         <main className="flex flex-1 flex-col pt-5">
           {step === 1 && first === "crm" && !connectError && (
             <UseACrm
-              onConnected={(name) => {
+              onConnected={(name, provider) => {
                 setCrmName(name);
-                setFirst("suggest");
+                setFirst(provider === "gohighlevel" ? "autoreply" : "suggest");
               }}
               onNone={() => setFirst("apps")}
             />
           )}
-          {step === 1 && (first !== "crm" || connectError) && (
+          {step === 1 && first === "autoreply" && !connectError && <TurnOffAutoReply onDone={() => setFirst("suggest")} />}
+          {step === 1 && ((first !== "crm" && first !== "autoreply") || connectError) && (
             <ChooseWhere
               crmName={first === "suggest" ? crmName : null}
               instagramAvailable={sources.instagramAvailable}
@@ -236,7 +238,7 @@ function OnboardingFormInner({ sources }: OnboardingFormProps) {
  * they don't lose leads", "keep onboarding as short as we can"). The CRMs are the answers; one tap opens the same
  * key window Settings uses. "No CRM" goes straight to the apps.
  */
-function UseACrm({ onConnected, onNone }: { onConnected: (name: string) => void; onNone: () => void }) {
+function UseACrm({ onConnected, onNone }: { onConnected: (name: string, provider: string) => void; onNone: () => void }) {
   return (
     <div className="flex flex-1 flex-col">
       <h1 className={H1}>Do you use a CRM?</h1>
@@ -244,6 +246,61 @@ function UseACrm({ onConnected, onNone }: { onConnected: (name: string) => void;
       <button type="button" onClick={onNone} className="ios-subhead mt-4 inline-flex min-h-11 w-full items-center justify-center text-ink-soft hover:text-ink">
         No CRM
       </button>
+    </div>
+  );
+}
+
+/**
+ * Step 1, right after GoHighLevel connects (A-301, founder 2026-10-19: "i dont want go highlevels automated ai
+ * message bro when we can handle it like a real person"). Shown once, then "Connect these too". FollowUp can't switch
+ * GoHighLevel's replies off itself (it has no permission on workflows, on purpose), so the owner does it here, and
+ * keeps everything else GoHighLevel does for him.
+ *
+ * The menu names ("Automation", "Conversation AI") are from GoHighLevel's help pages, not a live account: confirm
+ * them on the founder's trial and the first real owner's account.
+ */
+function TurnOffAutoReply({ onDone }: { onDone: () => void }) {
+  const steps = [
+    { main: "Workflows that reply to new messages", sub: "In GoHighLevel: Automation. Turn them off." },
+    { main: "Conversation AI", sub: "If you use it, turn it off for messages." },
+  ];
+  return (
+    <div className="flex flex-1 flex-col">
+      <p className="ios-subhead flex items-center gap-1.5" style={{ color: "var(--sage)" }}>
+        <Check className="h-4 w-4" aria-hidden="true" />
+        GoHighLevel connected
+      </p>
+      <h1 className={H1 + " mt-2"}>
+        Turn off GoHighLevel&apos;s <span className="whitespace-nowrap">auto-reply</span>
+      </h1>
+      <p className="ios-subhead mt-1.5 text-ink-soft">So customers get one real answer from you, not a bot.</p>
+
+      <ol className={GROUP + " mt-5"}>
+        {steps.map((s, i) => (
+          <li key={s.main} className="flex items-start gap-3 pl-4">
+            <span
+              aria-hidden="true"
+              className="mt-[13px] flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-card-2 text-[13px] font-semibold text-ink"
+            >
+              {i + 1}
+            </span>
+            <span className={"flex-1 py-3 pr-4" + (i ? " border-t border-line-2" : "")}>
+              <span className="ios-body block text-ink">{s.main}</span>
+              <span className="ios-subhead mt-0.5 block text-ink-soft">{s.sub}</span>
+            </span>
+          </li>
+        ))}
+      </ol>
+      <p className="ios-footnote mx-4 mt-2 text-ink-faint">Keep reminders and your other workflows. FollowUp only takes over the reply.</p>
+
+      <div className="mt-auto pb-7 pt-6">
+        <button type="button" onClick={onDone} className={PRIMARY} style={PRIMARY_STYLE}>
+          Done
+        </button>
+        <button type="button" onClick={onDone} className="ios-subhead mt-1 inline-flex min-h-11 w-full items-center justify-center text-ink-soft hover:text-ink">
+          Later
+        </button>
+      </div>
     </div>
   );
 }

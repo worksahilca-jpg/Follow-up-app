@@ -14656,3 +14656,7 @@ already did); without it, the window says what to turn on instead of a silent "N
 - Notes written by GoHighLevel automations or a teammate are read as "your note".
 - **Recommended:** move nobody until he has picked the three stages once, and only move a deal card that already
   exists (bookings still create one, as A-275 does). Asked; not built.
+- **Decided (same day):** the founder said "yes do it and merge" to the first part, so tier moves now go only to a
+  stage he picked, per tier (A-303 updated). This SUPERSEDES the A-303 build entry's "until he chooses, it picks the
+  stage whose name reads like it". Not asked, so not changed: a tier move still creates a deal card for a customer
+  who has none in that pipeline.

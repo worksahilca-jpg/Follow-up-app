@@ -40,12 +40,12 @@ beforeEach(() => {
 });
 
 describe("reading the CRM window", () => {
-  it("each tier's stage: the owner's choice, \"Don't move them\", or the one whose name reads like it", async () => {
+  it("each tier's stage: the owner's pick, \"Don't move them\", or not picked yet (nothing guessed)", async () => {
     prismaMock.crmConnection.findUnique.mockResolvedValue(conn({ tierStages: { ready: { id: "p1:New Lead", name: "New Lead" }, later: null } }));
     const body = await (await GET()).json();
     expect(body.tiers).toEqual({
       ready: { chosen: { id: "p1:New Lead", name: "New Lead" }, dontMove: false },
-      warm: { chosen: { id: "p1:Nurture", name: "Nurture" }, dontMove: false },
+      warm: { chosen: null, dontMove: false },
       later: { chosen: null, dontMove: true },
     });
     expect(body).toMatchObject({ readNotes: true, notesAvailable: true, stagesHelp: null });

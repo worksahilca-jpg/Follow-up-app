@@ -82,13 +82,16 @@ export async function moveBookedLead(lead: { id: string; businessId: string; nam
  * be fully automatic): when a customer becomes Ready, Warm or Later (src/lib/qualification.ts), they move to the
  * owner's own stage for it in their CRM, and back again when what they say changes. Same writes, on record and tried
  * again, as the booked move above. A customer with a meeting booked stays where the booking put them.
+ *
+ * Only to a stage the owner picked (founder, same day: "yes do it"): FollowUp never guesses one by name for these, so
+ * nobody moves on day one before he has looked, and a seller never lands in the buyers' pipeline by a name match.
  */
 
 export type SortTier = "ready" | "warm" | "later";
 export const SORT_TIERS: readonly SortTier[] = ["ready", "warm", "later"];
 const isSortTier = (t: unknown): t is SortTier => typeof t === "string" && (SORT_TIERS as readonly string[]).includes(t);
 
-/** The owner's choice for each: one of their stages, or null for "Don't move them". A tier left out isn't chosen yet. */
+/** The owner's choice for each: one of their stages, or null for "Don't move them". A tier left out isn't picked yet. */
 export type TierStages = Partial<Record<SortTier, CrmStage | null>>;
 
 /** A stored choice, read defensively: anything off-shape counts as not chosen. */
@@ -106,25 +109,6 @@ export function readTierStages(value: unknown): TierStages {
   return out;
 }
 
-const LATER = /long[\s-]*term|\bcold\b|\blater\b|\bfuture\b/i;
-const READY = /\bhot\b|\bready\b/i;
-const WARM = /\bwarm\b|\bnurtur/i;
-
-/** FollowUp's pick until the owner chooses: the stage whose name reads like it ("Hot", "Nurture", "Long-term Nurture"). */
-export function tierStageByName(tier: SortTier, stages: CrmStage[]): CrmStage | null {
-  const pattern = tier === "ready" ? READY : tier === "warm" ? WARM : LATER;
-  return stages.find((s) => pattern.test(s.name) && (tier === "later" || !LATER.test(s.name))) ?? null;
-}
-
-/** Where a customer in this tier goes: the owner's choice, or FollowUp's pick by name. null: don't move them. */
-export async function tierStage(conn: { provider: string; apiKey: string; tierStages: unknown }, tier: SortTier): Promise<CrmStage | null> {
-  const chosen = readTierStages(conn.tierStages)[tier];
-  if (chosen === null) return null;
-  if (chosen) return chosen;
-  if (!isCrmProvider(conn.provider)) return null;
-  return tierStageByName(tier, await CRM_PROVIDERS[conn.provider].client.listStages(conn.apiKey));
-}
-
 /**
  * Why they moved, in the words that moved them: what decided the tier, quoted. "They said: …", or "From your note: …"
  * for the owner's own note (A-303). null when nothing quotable decided it.
@@ -140,11 +124,11 @@ export function tierMoveWhy(q: Qualification | null, tier: Tier | null | undefin
 }
 
 /**
- * When a customer's tier changes: move them to the owner's stage for it. Once per change (Lead.crmTierMoved, claimed
- * so two passes never both move them), and only in the CRM the business is still connected to. Never someone FollowUp
- * leaves alone: they said stop or no, the deal is won or lost, or the CRM says do not contact, closed, or (GoHighLevel)
- * a meeting is booked there; never while a meeting is booked in FollowUp (A-275 wins). A move that can't be decided now
- * (the CRM didn't answer) isn't claimed, so the next pass tries again. Never throws.
+ * When a customer's tier changes: move them to the stage the owner picked for it. Once per change (Lead.crmTierMoved,
+ * claimed so two passes never both move them), and only in the CRM the business is still connected to. Nothing until
+ * he has picked one: not claimed, so the next pass after he picks moves them. Never someone FollowUp leaves alone: they
+ * said stop or no, the deal is won or lost, or the CRM says do not contact, closed, or (GoHighLevel) a meeting is booked
+ * there; never while a meeting is booked in FollowUp (A-275 wins). Never throws.
  */
 export async function moveLeadForTier(
   lead: { id: string; businessId: string; name: string; crmProvider: string | null; crmId: string | null },
@@ -166,14 +150,10 @@ export async function moveLeadForTier(
       select: { id: true },
     });
     if (booked) return;
-    let stage: CrmStage | null = null;
-    if (readTierStages(conn.tierStages)[tier] !== null) {
-      stage = await tierStage({ ...conn, apiKey: conn.apiKey }, tier);
-      // No stage: the CRM may just not have answered, or nothing fits yet. Not claimed, so the next pass tries again.
-      if (!stage) return;
-      // The CRM's own word: do not disturb (or couldn't tell), do not contact, closed, a meeting booked there.
-      if (await crmHoldReason(lead)) return;
-    }
+    const stage = readTierStages(conn.tierStages)[tier];
+    if (stage === undefined) return;
+    // The CRM's own word: do not disturb (or couldn't tell), do not contact, closed, a meeting booked there.
+    if (stage && (await crmHoldReason(lead))) return;
     // Claimed: whichever pass gets here first moves them; a "Don't move them" is remembered the same way.
     const claimed = await prisma.lead.updateMany({
       where: { id: lead.id, OR: [{ crmTierMoved: null }, { crmTierMoved: { not: tier } }] },

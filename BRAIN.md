@@ -103,13 +103,19 @@ a booked call or visit; the owner closes.
   - GoHighLevel needs a trial or paid plan (Free doesn't read it).
 - **Setup asks to turn off GoHighLevel's auto-reply (A-301, Oct 19):** a short screen right after GoHighLevel
   connects. Its menu names still need checking on a live account. "Later" has no second home yet.
+- **Bug check (Oct 20):** Gmail now waits out Google's per-minute limit and never marks a check done with emails left
+  unread (Oct 18: 28 threads waited a day). Five screen bugs fixed (see design-decisions, Oct 20), one unused route
+  removed.
 - **Safety before the first real account (Oct 19):**
   - STOP stops everything FollowUp does on its own, on every channel.
   - A "don't know" from GoHighLevel about Do Not Disturb is never a yes.
 - **Waiting on Sahil (gave him one Claude in Chrome prompt for 1–4, Oct 19 night):**
   1. Vercel: delete `ANTHROPIC_API_KEY` and `ANTHROPIC_MODEL`.
   2. Revoke the "FollowUp Train" key.
-  3. Meta access-verification status. Open a ticket on Oct 20 if it's still pending.
+  3. ~~Meta access-verification status.~~ Checked Oct 20: still "In review" (submitted Sep 25), no request from
+     Meta, no warnings. Must be done by **Dec 18, 2026** or the app is restricted. Meta offers no ticket for review
+     delays (its bug tool sends you to the public Developer Community Forum). Plan: wait, check weekly; forum post
+     only if still in review in late November.
   4. FollowUp check: business type and GHL connected, plus 6 test replies in Talk to it. Check each reply against A-299.
   5. Realtor GHL test (Oct 20).
   6. Message 5 testers (overdue).

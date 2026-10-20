@@ -186,11 +186,6 @@ export function quotesOf(b: CallBrief): (BriefQuote & { section: BriefSection })
   return out.sort((a, b) => a.at.localeCompare(b.at));
 }
 
-/** The row on Today (A-268): what time, and that the note is there. */
-export function callRowSub(time: string): string {
-  return `Your call is at ${time}. What to talk about is ready.`;
-}
-
 /**
  * Today's row for a booked call (A-283): the time sits on the right of the row, like a calendar, so the sentence
  * doesn't repeat it. A call starting within the hour says so.

@@ -19,7 +19,7 @@ interface Enrollment {
   dueAt?: string;
 }
 
-/** Shows this lead's current workflow enrollment, or a picker to enroll it in one — the counterpart to LeadAutomationToggle for multi-step sequences. */
+/** Shows this lead's current workflow enrollment, or a picker to enroll it in one — the counterpart to CustomerChoiceRow for multi-step sequences. */
 export default function LeadWorkflowEnrollment({ leadId }: { leadId: string }) {
   const [enrollment, setEnrollment] = useState<Enrollment | null>(null);
   const [sequences, setSequences] = useState<SequenceOption[]>([]);

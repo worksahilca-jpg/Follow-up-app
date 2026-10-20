@@ -365,10 +365,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     brief: readCallBrief(b.brief),
   }));
   const bookingsTomorrow = nearBookings.filter((b) => dayOffset(b.scheduledAt, now, timezone) === 1);
-  // The owner's next booked call, today first, else tomorrow: named when their replies are done (A-283).
-  const nextCallBooking = bookingsToday[0] ?? bookingsTomorrow[0] ?? null;
+  // The owner's next booked call, today first, else tomorrow: named when their replies are done (A-283). One
+  // that has already started isn't next (bookingsToday keeps it until it's over, for its row in Then).
+  const nextToday = bookingsToday.find((b) => b.scheduledAt >= now) ?? null;
+  const nextCallBooking = nextToday ?? bookingsTomorrow[0] ?? null;
   const nextCallForYou = nextCallBooking
-    ? { name: nextCallBooking.lead.name, time: clockTime(nextCallBooking.scheduledAt, timezone), tomorrow: !bookingsToday[0] }
+    ? { name: nextCallBooking.lead.name, time: clockTime(nextCallBooking.scheduledAt, timezone), tomorrow: !nextToday }
     : null;
   // Calls to make (A-103) as rows: the customer's page has the call and its buttons.
   const callRows: TodayRow[] = callCards.map((c) => ({
@@ -486,7 +488,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             calls={callsToPrepare}
             plan={approvalItems.length === 0 && comingUp ? planLine(comingUp.groups) : null}
             next={nextForYouLine(nextCallForYou)}
-            later={<DayLater lines={later} />}
+            later={later.length > 0 ? <DayLater lines={later} /> : null}
             weekResults={weekResults}
             answeredForYou={rescue?.answeredForYou ?? 0}
             sendLocked={sendLocked}

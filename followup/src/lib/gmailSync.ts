@@ -103,12 +103,14 @@ export async function syncGmailForBusiness(
   let scored = await scoreUnscoredLeads(businessId, MAX_SCORES_PER_RUN);
 
   let truncated = false;
+  let skippedForLimit = 0;
   const leads = await fetchSalesConversations(businessId, {
     since: options.since,
     ...(integrationId ? { integrationId } : {}),
     maxClassifications: MAX_CLASSIFICATIONS_PER_RUN,
     onResult: (info) => {
       truncated = info.truncated;
+      skippedForLimit = info.skippedForLimit ?? 0;
     },
   });
 
@@ -139,16 +141,23 @@ export async function syncGmailForBusiness(
   // A deep pass only counts as done when nothing was left past the
   // budget; a truncated one runs again next tick and picks up where the
   // known-thread skipping leaves off.
+  //
+  // Threads left unread for Gmail's per-minute limit are not read: the
+  // clock stays where it was, so the next tick's window (lastSyncedAt minus
+  // the overlap) still covers them, and a deep pass runs again rather than
+  // waiting a day (2026-10-18). Not an error either: the "keeps failing"
+  // notice is for an inbox that can't be read at all.
+  const unread = skippedForLimit > 0;
   await prisma.integration.updateMany({
     where: { provider: "gmail", status: "connected", user: { businessId }, ...(integrationId ? { id: integrationId } : {}) },
     data: {
-      lastSyncedAt: startedAt,
+      ...(unread ? {} : { lastSyncedAt: startedAt }),
       lastSyncError: null,
-      ...(isDeep && !truncated ? { deepSyncedAt: startedAt } : {}),
+      ...(isDeep && !truncated && !unread ? { deepSyncedAt: startedAt } : {}),
     },
   });
 
-  return { count: leads.length, scored, repliesDetected, truncated, leads };
+  return { count: leads.length, scored, repliesDetected, truncated: truncated || unread, leads };
 }
 
 /**

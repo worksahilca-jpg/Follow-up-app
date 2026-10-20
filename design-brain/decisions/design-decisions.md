@@ -14522,3 +14522,28 @@ Once he trusts the drafts, automatic sending for safe replies (A-217, A-236) bri
 - FollowUp can't tell whether the owner actually turned them off. If they didn't, FollowUp still never sends on its
   own to someone GoHighLevel messaged in the last 14 days (the one-boss check in `sending.ts`): the reply waits for
   the owner's tap. So a skipped step means a slower reply, not two automatic messages.
+
+## 2026-10-20 — Bug check: Gmail limit, Today, the customer row
+
+**Founder:** "do the bugs check and fix them also security check".
+
+**Gmail's per-minute limit (Oct 18):** one full pass of one inbox hit Google's "units per minute per user" limit on
+28 threads, and the pass was still marked done, so those emails waited a day for the next one. Now each read waits
+the limit out twice (about 2–4, then 4–8 seconds); if it still can't, the rest of that check is left for the next
+check two minutes later, and the check is not marked done. A daily limit is never waited on.
+
+**Fixed on screens (bugs, not new design):**
+- Today on a laptop: the open reply column is held in view, but it had no height limit, so on a short screen a long
+  reply card put Send below the bottom with no way to scroll to it. The column now scrolls on its own.
+- Today: the first row of each list had no hover fill (A-282 put the fill on `ios-sep`, which the first row skipped).
+- Today, done card (A-283): "Next:" could name a call that had already started. It now names the next one to come.
+- Today: an empty Later block still added space at the bottom.
+- Customer page row (A-280): for a customer in a workflow it said "FollowUp stays quiet with Raj" while the workflow
+  writes to them, and picking anything else failed. It now says **"In a workflow"**, and opening it says: "A workflow
+  is writing to Raj. To change this, take Raj out of it under Follow-up plan." Its choices are plain buttons (the
+  pressed one is the current choice) instead of a list that promised arrow keys it didn't have.
+- Removed: an unused search route (`/api/customers/search`, already marked for removal), an unused helper and an
+  orphan comment.
+
+**Not changed:** on a laptop the open person is shown highlighted in place in the list, as A-284 drew it. The review's
+"Next: repeats Later" point is A-283 as approved.

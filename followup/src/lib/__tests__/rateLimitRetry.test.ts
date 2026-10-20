@@ -3,7 +3,7 @@
  * own sleep and randomness, so nothing waits and nothing is left to chance.
  */
 import { describe, it, expect, vi } from "vitest";
-import { isRateLimitError, rateLimitDelayMs, retryAfterMs, withRateLimitRetry } from "@/lib/rateLimitRetry";
+import { isGoogleRateLimitError, isRateLimitError, rateLimitDelayMs, retryAfterMs, withRateLimitRetry } from "@/lib/rateLimitRetry";
 
 /** Shaped like the OpenAI SDK's RateLimitError: status 429, a fetch Headers. */
 const rateLimited = (headers: Record<string, string> = {}) =>
@@ -95,5 +95,46 @@ describe("withRateLimitRetry", () => {
     await expect(withRateLimitRetry(fn, { sleep })).rejects.toBe(err);
     expect(fn).toHaveBeenCalledTimes(1);
     expect(sleep).not.toHaveBeenCalled();
+  });
+});
+
+describe("isGoogleRateLimitError", () => {
+  it("knows Gmail's per-minute limit in each of the ways Google says it", () => {
+    // The words Gmail used on 2026-10-18, a 403 that never says "rate limit".
+    expect(
+      isGoogleRateLimitError({
+        code: 403,
+        status: 403,
+        message: "Quota exceeded for quota metric 'Total Query Cost' and limit 'Units per minute per user' of service 'gmail.googleapis.com'",
+      })
+    ).toBe(true);
+    expect(isGoogleRateLimitError({ code: 403, message: "User Rate Limit Exceeded", errors: [{ reason: "userRateLimitExceeded" }] })).toBe(true);
+    expect(isGoogleRateLimitError({ code: 403, message: "Rate Limit Exceeded", errors: [{ reason: "rateLimitExceeded" }] })).toBe(true);
+    expect(isGoogleRateLimitError({ status: 429, message: "Too many requests" })).toBe(true);
+    expect(isGoogleRateLimitError({ response: { status: 403, data: { error: { status: "RESOURCE_EXHAUSTED", message: "Slow down" } } } })).toBe(true);
+  });
+
+  it("does not wait on a daily limit, which a minute never fixes", () => {
+    expect(isGoogleRateLimitError({ code: 403, message: "Daily Limit Exceeded", errors: [{ reason: "dailyLimitExceeded" }] })).toBe(false);
+    expect(isGoogleRateLimitError({ code: 403, message: "Quota exceeded for quota metric 'Queries' and limit 'Queries per day'" })).toBe(false);
+  });
+
+  it("leaves every other failure alone", () => {
+    expect(isGoogleRateLimitError({ code: 403, message: "Insufficient Permission", errors: [{ reason: "insufficientPermissions" }] })).toBe(false);
+    expect(isGoogleRateLimitError(new Error("invalid_grant"))).toBe(false);
+    expect(isGoogleRateLimitError({ code: 404, message: "Requested entity was not found." })).toBe(false);
+    expect(isGoogleRateLimitError(null)).toBe(false);
+  });
+
+  it("withRateLimitRetry waits it out when told to, and not by default", async () => {
+    const limit = { code: 403, message: "Quota exceeded for quota metric 'Total Query Cost' and limit 'Units per minute per user'" };
+    const sleep = vi.fn(async () => undefined);
+    const fn = vi.fn().mockRejectedValueOnce(limit).mockResolvedValueOnce("ok");
+    await expect(withRateLimitRetry(fn, { sleep, isRetryable: isGoogleRateLimitError })).resolves.toBe("ok");
+    expect(sleep).toHaveBeenCalledTimes(1);
+
+    const plain = vi.fn().mockRejectedValue(limit);
+    await expect(withRateLimitRetry(plain, { sleep })).rejects.toBe(limit);
+    expect(plain).toHaveBeenCalledTimes(1);
   });
 });

@@ -5265,3 +5265,9 @@ track, and back to hot when keen again, from his chats and his GoHighLevel call 
   “probably in about 3 months”", or "From your call note: “…”".
 - **This relaxes A-246's "only the customer's own words"** for one source: the owner's own notes on that customer
   count as evidence too, quoted exactly, and marked as his note.
+- **It must not contradict anything, and the privacy policy and permissions keep up (founder, same day):** *"ye should
+  not contradic anything okay ?? we also need to keep the privacy policy for all sources and crms and also the
+  restrictions and permission we need to keep in mind"*. So: a booked meeting's stage (A-275) always wins over a tier
+  move; nothing is drafted or sent from a note; do-not-disturb, STOP and one-boss-per-customer are untouched; the
+  daily AI ceilings count note reading. The privacy policy names every CRM and what FollowUp reads and writes in it,
+  and the GoHighLevel key text asks for every permission FollowUp uses (contacts, conversations, opportunities).

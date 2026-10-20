@@ -14596,3 +14596,38 @@ to someone GoHighLevel messaged in the last 14 days.
 - "For your call" is a word list plus the model's judgement. An unusually worded personal question could slip
   through; nothing he wrote is sent as-is, but check the page after he saves.
 - The Settings tree on the computer doesn't list the page; it is reached from its row under Sending replies.
+
+## 2026-10-20 — GoHighLevel kept in step on its own (A-303), built
+
+**Founder:** "Yes" to the drawing; then "ye should not contradic anything okay ?? we also need to keep the privacy
+policy for all sources and crms and also the restrictions and permission we need to keep in mind".
+
+**What was built:**
+- When a customer's tier changes (from their messages or the owner's note), FollowUp moves
+  them to the owner's stage for it in GoHighLevel (and Follow Up Boss / HubSpot, which already move stages), once per
+  change, with what decided it as the reason on the record. Until he chooses, it picks the stage whose name reads like
+  it ("Hot", "Nurture", "Long-term Nurture"); with none that fits, it moves nobody.
+- "Read my notes" (GoHighLevel, on by default): after each 2-minute poll, up to 10 customers whose notes weren't looked
+  at in 2 hours. Only new notes, the owner's own, the latest 5, each cut at 1,200 characters. A quote from a note
+  counts only if it is really in the note, and is marked as his.
+- The CRM window: "When FollowUp sorts them" (Ready · Warm · Later) with the A-275 picker, and the switch.
+
+**Checked against what was already decided (nothing contradicted):** a confirmed future booking always keeps the
+booking's stage (A-275); a note never drafts or sends a message and never buzzes (the owner wrote it); do-not-disturb,
+STOP, "said no" and one boss per customer are untouched; reading notes counts against the same daily AI ceilings
+(30 per customer, 500 per business). A-246's "only the customer's own words" is relaxed for the owner's notes only,
+as A-303 says.
+
+**Privacy and permissions:** the privacy policy now names GoHighLevel everywhere CRMs are listed, says FollowUp reads
+its conversations to answer them, adds notes, moves stages, and (with "Read my notes" on) reads his own notes and
+sends them to the AI provider, keeping only the few words that show it. "Last updated" moved to October 20, 2026.
+The GoHighLevel key text now asks for contacts, conversations **and opportunities** (stage moves need it, and A-275
+already did); without it, the window says what to turn on instead of a silent "Not available".
+
+**Weak points, honestly:**
+- GoHighLevel's notes endpoint and its date field come from its SDK docs, not a real account. Check with the realtor's
+  key after the merge.
+- A long note's quote is checked against at most 1,200 characters; a fact further down is not seen.
+- A key without Opportunities still connects (replies keep working); the stage moves just don't happen until he turns
+  it on. The window says so, but only when he opens it.
+- The privacy text is factual, not legal advice. The lawyer reads it before charging.

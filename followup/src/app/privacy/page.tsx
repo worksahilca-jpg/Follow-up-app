@@ -36,7 +36,7 @@ export default function PrivacyPage() {
 
       <main className="max-w-3xl mx-auto px-6 py-16">
         <h1 className="font-display text-3xl">Privacy Policy</h1>
-        <p className="text-sm text-ink-soft mt-2">Last updated: October 11, 2026</p>
+        <p className="text-sm text-ink-soft mt-2">Last updated: October 20, 2026</p>
 
         <div className="mt-10 space-y-10 text-sm leading-relaxed text-ink-soft">
           <section>
@@ -99,8 +99,13 @@ export default function PrivacyPage() {
               </li>
               <li>
                 <strong className="text-ink">Leads you add yourself</strong> — manually entered leads, ones
-                imported via CSV, and contacts from a CRM you connect (Follow Up Boss or HubSpot), where we also
-                add a note back when you send a message.
+                imported via CSV, and contacts from a CRM you connect (Follow Up Boss, HubSpot or GoHighLevel).
+                With GoHighLevel we also read the texts, emails and chats in its conversations, so FollowUp can
+                answer them there. In your CRM, FollowUp adds a note when it sends a message and when a customer is
+                ready to talk, and moves the customer to the stage you choose when they book a meeting or when where
+                they stand changes (Ready, Warm or Later); you can turn each of these off. If you leave &quot;Read my
+                notes&quot; on (GoHighLevel), we also read your own notes on a customer, like call notes, to tell where
+                they stand. We never read FollowUp&apos;s own notes, and we keep only the few words that show it.
               </li>
               <li>
                 <strong className="text-ink">Billing info</strong> — handled entirely by Stripe; we never see
@@ -179,8 +184,9 @@ export default function PrivacyPage() {
           <section>
             <h2 className="font-display text-xl text-ink">How we use AI</h2>
             <p className="mt-2">
-              To score leads and draft follow-up messages, relevant conversation text is sent to our AI
-              provider (currently OpenAI) for processing. That provider does not use your data to train its
+              To score leads and draft follow-up messages, relevant conversation text (and, if you leave &quot;Read my
+              notes&quot; on, your own notes on that customer in your CRM) is sent to our AI provider (currently
+              OpenAI) for processing. That provider does not use your data to train its
               models under our account terms with them. AI-drafted messages are never sent without your
               approval unless you have turned on sending without asking, as described above.
             </p>
@@ -310,7 +316,7 @@ export default function PrivacyPage() {
               <li><strong className="text-ink">Microsoft</strong> — Outlook / Microsoft 365 access, if you connect it.</li>
               <li><strong className="text-ink">Meta</strong> — Instagram DM, Messenger, Facebook Lead Ads and WhatsApp access.</li>
               <li><strong className="text-ink">Twilio</strong> — text messages and voice calls, if you connect it (and WhatsApp for businesses that connected it through Twilio before).</li>
-              <li><strong className="text-ink">Follow Up Boss and HubSpot</strong> — only if you connect your CRM.</li>
+              <li><strong className="text-ink">Follow Up Boss, HubSpot and GoHighLevel</strong> — only if you connect your CRM.</li>
               <li><strong className="text-ink">OpenAI</strong> — AI scoring and message drafting.</li>
               <li><strong className="text-ink">Stripe</strong> — subscription billing.</li>
               <li><strong className="text-ink">Supabase and Vercel</strong> — database and application hosting.</li>

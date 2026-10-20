@@ -94,7 +94,8 @@ function neutraliseDelimiter(body: string): string {
   // acknowledgement's translator reads) was added 2026-09-20; one list
   // here rather than a second helper, so a third wrapper cannot be added
   // without passing this point.
-  return body.replace(/<\s*\/?\s*(lead_conversation|customer_message)\s*>/gi, "(removed tag)");
+  // <owner_notes> (A-303) too: a customer must never be able to write something that reads as the owner's own note.
+  return body.replace(/<\s*\/?\s*(lead_conversation|customer_message|owner_notes)\s*>/gi, "(removed tag)");
 }
 
 /**
@@ -2477,9 +2478,12 @@ export async function extractQualificationFacts(
   criteria: readonly Criterion[],
   // "Within 3 months" is counted from here. The accuracy test pins it so
   // its answers don't drift with the calendar.
-  today: Date = new Date()
+  today: Date = new Date(),
+  // The owner's own notes on this customer, like call notes (A-303, "Read my notes"). Evidence too, quoted from the
+  // note; mergeQualification marks what came from one as the owner's note.
+  notes: readonly { at: Date | null; body: string }[] = []
 ): Promise<ExtractedItem[] | null> {
-  if (!process.env.OPENAI_API_KEY || conversation.length === 0 || criteria.length === 0) return null;
+  if (!process.env.OPENAI_API_KEY || (conversation.length === 0 && notes.length === 0) || criteria.length === 0) return null;
   const keys = criteria.map((c) => c.key);
   const longDate = (d: Date) => d.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric", timeZone: "UTC" });
   const monthsOn = (n: number) => {
@@ -2524,6 +2528,12 @@ export async function extractQualificationFacts(
           "business said, assumed or offered is not known. Never guess and never infer from tone: when the " +
           "customer has not clearly said it, known is false, and value, quote and bucket are empty. If they " +
           "changed their mind, use what they said last.\n\n" +
+          (notes.length
+            ? "The one exception: <owner_notes> holds notes the business wrote about this customer, for example " +
+              "after a phone call, each with its date. What a note says about the customer counts as known too, and " +
+              "the quote is then copied from the note. Where a note and the messages disagree, use whichever is dated " +
+              "last.\n\n"
+            : "") +
           "value: a short plain-English summary the owner can read at a glance, at most 8 words, e.g. " +
           "\"Pre-approved to $650k\" or \"Moving in March\". quote: the customer's exact words that show it, " +
           "copied character for character from one inbound line, in the language they wrote in, never " +
@@ -2533,7 +2543,16 @@ export async function extractQualificationFacts(
           "an item that lists buckets, exactly one of them when known; for every other item, empty." +
           UNTRUSTED_CONVERSATION_NOTICE,
       },
-      { role: "user", content: formatTranscript(conversation) },
+      {
+        role: "user",
+        content:
+          formatTranscript(conversation) +
+          (notes.length
+            ? `\n<owner_notes>\n${notes
+                .map((n) => `[note · ${n.at ? n.at.toISOString().slice(0, 10) : "date unknown"}] ${neutraliseDelimiter(n.body)}`)
+                .join("\n")}\n</owner_notes>`
+            : ""),
+      },
     ],
     // The same answer for the same conversation: this is a record, read
     // again on every message, and a sampled reading would flicker.

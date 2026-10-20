@@ -1,4 +1,4 @@
-import { CRM_TIMEOUT_MS, type CrmClient, type CrmPerson } from "./types";
+import { CRM_TIMEOUT_MS, type CrmClient, type CrmNote, type CrmPerson } from "./types";
 import { readWhen } from "./dates";
 
 /**
@@ -50,6 +50,22 @@ export function mapGhlContact(c: Record<string, unknown>): CrmPerson | null {
     "GoHighLevel contact";
   const added = str(c.dateAdded);
   return { externalId: id, name, email: str(c.email), phone: str(c.phone), createdAt: added && !Number.isNaN(Date.parse(added)) ? new Date(added) : new Date() };
+}
+
+/** A note's text as plain words: GoHighLevel's note box can keep some HTML. */
+export function plainNote(body: string): string {
+  return body
+    .replace(/<br\s*\/?>|<\/p>|<\/div>|<\/li>/gi, "\n")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;|&apos;/g, "'")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\s*\n\s*/g, "\n")
+    .trim();
 }
 
 /** Which of the two things FollowUp reads the key isn't allowed to (401/403). Anything else is not a permission question. */
@@ -117,6 +133,27 @@ export const goHighLevelClient: CrmClient = {
     const after = typeof meta.startAfter === "number" ? String(meta.startAfter) : null;
     const hasMore = rows.length === PAGE_SIZE && Boolean(afterId || after);
     return { people, nextCursor: hasMore ? `${afterId ?? ""}|${after ?? ""}` : null, hasMore };
+  },
+
+  // "Read my notes" (A-303): GET /contacts/{contactId}/notes, the counterpart of the POST above. The SDK names the
+  // response `notes`, each with id, body and dateAdded; read defensively, like everything here.
+  async listNotes(apiKey, externalId) {
+    const k = parseGhlKey(apiKey);
+    if (!k) return [];
+    try {
+      const res = await fetch(`${BASE}/contacts/${encodeURIComponent(externalId)}/notes`, { headers: headers(k.token), signal: AbortSignal.timeout(CRM_TIMEOUT_MS) });
+      if (!res.ok) return [];
+      const data = (await res.json().catch(() => null)) as { notes?: unknown } | null;
+      const rows = Array.isArray(data?.notes) ? (data.notes as Record<string, unknown>[]) : [];
+      return rows.flatMap((r): CrmNote[] => {
+        const id = str(r?.id);
+        const body = typeof r?.body === "string" ? plainNote(r.body) : "";
+        if (!id || !body) return [];
+        return [{ id, body, at: readWhen(r.dateAdded).at }];
+      });
+    } catch {
+      return [];
+    }
   },
 
   async pushNote(apiKey, externalId, text) {

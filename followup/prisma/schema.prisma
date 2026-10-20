@@ -1286,6 +1286,11 @@ model Lead {
   // sendFollowUpToLead in src/lib/sending.ts).
   crmProvider String?
   crmId       String?
+  // A-303: the tier (ready | warm | later) FollowUp last moved this person's CRM stage for, so a move happens once per
+  // change; and the owner's own notes on them in GoHighLevel, when last checked and up to which note's time read.
+  crmTierMoved      String?
+  crmNotesCheckedAt DateTime?
+  crmNotesSeenAt    DateTime?
 
   @@unique([businessId, email])
   // Postgres allows multiple NULLs in a unique index, so leads with no
@@ -2026,6 +2031,11 @@ model CrmConnection {
   // null: not chosen yet, so FollowUp uses the stage whose name reads like a meeting. "": "Don't move them".
   bookedStage      String?
   bookedStageLabel String?
+  // "When FollowUp sorts them" (A-303): for Ready, Warm and Later, the owner's own stage { id, label }, or null for
+  // "Don't move them". A tier left out isn't chosen yet: FollowUp uses the stage whose name reads like it, if any.
+  tierStages       Json?
+  // "Read my notes" (A-303, GoHighLevel): the owner's own notes on a customer, like call notes, count as what they said.
+  readNotes        Boolean   @default(true)
 }
 
 /**

@@ -48,7 +48,8 @@ export function describeWrite(kind: string, text: string, name: string): { title
   // A booked customer moved to the owner's chosen stage (A-275).
   if (kind === "stage") {
     const w = readStageWrite(text);
-    return { title: w ? `Moved ${name} to ${w.label}` : `Moved ${name}`, quote: null };
+    // Why, when it was a tier move (A-303): "They said: “probably in about 3 months”".
+    return { title: w ? `Moved ${name} to ${w.label}` : `Moved ${name}`, quote: w?.why ? clip(w.why) : null };
   }
   const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
   if (kind === "note" && lines[0] === "FollowUp sent:") {

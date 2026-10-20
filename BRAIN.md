@@ -38,6 +38,9 @@ there, the next session reads.
 - Production is read-only for Claude: database reads that return counts or yes/no only, never names, emails or messages.
 - Never run the app against the production database. Local runs use the local test database only.
 - No tester or customer names in docs or public pages.
+- **The privacy policy keeps up with every source and CRM** (founder, 2026-10-20). Any PR that makes FollowUp read,
+  write or send something new, anywhere, updates `followup/src/app/privacy/page.tsx` in the same PR, and the connect
+  text asks for exactly the permissions FollowUp uses. Facts only; the lawyer reads it before charging.
 
 ---
 
@@ -69,6 +72,14 @@ a booked call or visit; the owner closes.
 ## Where we are (update at the end of every task)
 
 **Last updated: 2026-10-20**
+
+- **GoHighLevel on its own (A-303, built, PR open):** Ready / Warm / Later move a customer to the owner's own stage,
+  and back, once per change, with the reason on record; never while a meeting is booked. "Read my notes" (on) reads
+  the owner's own GoHighLevel notes, like call notes, every 2 hours, 10 customers per poll, inside the AI ceilings;
+  FollowUp's own notes are never read and nothing is sent from a note. Privacy page updated (GoHighLevel, notes, stage
+  moves). The GoHighLevel key must also have **Opportunities**: the connect text says so, and the CRM window says what
+  to turn on when it can't see the stages. **After merge:** check the realtor's key lists his stages; confirm the 5
+  new columns in production (read-only).
 
 - **Training happens in the practice room** (artifact "FollowUp Practice Room",
   https://claude.ai/artifact/WSiRYwcnJTD4Y3ZbHBPadR): Sahil plays the customer, it answers as FollowUp (on his Claude

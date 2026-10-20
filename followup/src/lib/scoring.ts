@@ -19,6 +19,7 @@ import { dmChannelOf } from "@/lib/dmDrafts";
 import { draftDm } from "@/lib/dmDrafting";
 import { DM_CONTACT_ASK, shouldAskForContact } from "@/lib/dmContact";
 import { pushCrmNote, readyNote } from "@/lib/crm/notes";
+import { moveLeadForTier, tierMoveWhy } from "@/lib/crm/stages";
 import { getVoiceSamples } from "@/lib/voice";
 import { checkAiEligibility } from "@/lib/billing";
 import { detectLeadLanguage, leadLanguageOf } from "@/lib/leadLanguage";
@@ -398,6 +399,12 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
       aiPausedReason: null,
     },
   });
+
+  // Their CRM kept in step (A-303): a new Ready, Warm or Later moves them to the owner's own stage for it, once per
+  // change, with what decided it as the reason. Never throws.
+  if (qualification?.tier && lead.crmProvider && lead.crmId) {
+    await moveLeadForTier(lead, qualification.tier, tierMoveWhy(qualification, qualification.tier));
+  }
 
   // The moment the owner is told "Nadia is ready" (src/lib/ownerAlerts.ts).
   // Stamped once, and only where nothing stamped it first, so two passes

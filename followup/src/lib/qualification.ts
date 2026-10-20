@@ -1,4 +1,5 @@
 import type { Message } from "@/lib/types";
+import { isOwnKey, ownWords, planRounds, readAskPlan } from "@/lib/askPlan";
 
 /**
  * Where does this customer stand? Qualifying a realtor's customer (A-246,
@@ -53,7 +54,9 @@ export type CriterionKey =
   | "why"
   | "condition"
   | "price"
-  | "visit";
+  | "visit"
+  // One of the owner's own questions (A-302, src/lib/askPlan.ts): "own:down-payment".
+  | `own:${string}`;
 
 /** Which way the customer is going. "both" (selling one home and buying another) follows the seller's rounds. */
 export type Side = "buy" | "rent" | "sell" | "both";
@@ -87,6 +90,8 @@ export type QualItem = {
   source?: "booking";
   /** The reader's label for sorting ("soon", "sorted", "has" ...), one of the criterion's buckets. */
   bucket?: string;
+  /** One of the owner's own questions (A-302): its name, kept with the answer so it still reads after the owner changes their questions. */
+  label?: string;
 };
 
 export type Qualification = {
@@ -116,6 +121,8 @@ export type Template = {
   criteria: Criterion[];
   /** The rounds, in asking order: each round is at most two things, asked in one sentence. */
   rounds: Readonly<Record<"buy" | "rent" | "sell", readonly (readonly CriterionKey[])[]>>;
+  /** A buyer is asked in the owner's own order (A-302): nothing of FollowUp's goes in front of it. */
+  ownOrder?: boolean;
 };
 
 const TIMING_BUCKETS = {
@@ -252,7 +259,7 @@ const KEYS: readonly CriterionKey[] = REALTOR.map((c) => c.key);
 /** Items that only make sense for someone selling a home they own, and for someone buying or renting one. */
 const SELLER_ONLY: readonly CriterionKey[] = ["home", "why", "condition", "price", "visit"];
 const BUYER_ONLY: readonly CriterionKey[] = ["kind", "viewing", "financing", "budget"];
-const isKey = (k: unknown): k is CriterionKey => typeof k === "string" && (KEYS as readonly string[]).includes(k);
+const isKey = (k: unknown): k is CriterionKey => typeof k === "string" && ((KEYS as readonly string[]).includes(k) || isOwnKey(k));
 
 const TEMPLATES: Record<string, Template> = {
   "Real estate": {
@@ -271,9 +278,21 @@ const TEMPLATES: Record<string, Template> = {
   },
 };
 
-/** The checklist for this line of work, or null when there is none. */
-export function templateFor(industry: string | null | undefined): Template | null {
-  return industry ? TEMPLATES[industry.trim()] ?? null : null;
+/**
+ * The checklist for this line of work, or null when there is none. With the owner's own questions (A-302, the
+ * business's `askPlan`), a buyer is asked those, in the owner's order; renters and sellers keep FollowUp's.
+ */
+export function templateFor(industry: string | null | undefined, askPlan?: unknown): Template | null {
+  const base = industry ? TEMPLATES[industry.trim()] ?? null : null;
+  const plan = base ? readAskPlan(askPlan) : null;
+  if (!base || !plan) return base;
+  const own: Criterion[] = plan.steps.flatMap((s) => (isOwnKey(s.key) && s.ask && s.find ? [{ key: s.key, label: s.label, ask: s.ask, find: s.find }] : []));
+  return {
+    ...base,
+    criteria: [...base.criteria, ...own],
+    rounds: { ...base.rounds, buy: planRounds(plan) },
+    ownOrder: true,
+  };
 }
 
 /** The checklist a stored qualification was filled against, or null. */
@@ -283,6 +302,11 @@ export function templateById(id: string): Template | null {
 
 export function criterionOf(template: Template, key: CriterionKey): Criterion | null {
   return template.criteria.find((c) => c.key === key) ?? null;
+}
+
+/** What an item is called: its criterion's name, or for one of the owner's own questions the name kept with the answer. */
+export function labelOf(template: Template, q: Qualification | null, key: CriterionKey): string {
+  return criterionOf(template, key)?.label ?? q?.items.find((i) => i.key === key)?.label ?? (isOwnKey(key) ? ownWords(key) : key);
 }
 
 /** Longest a stored summary or quote may be; anything longer is not a short fact. */
@@ -350,6 +374,7 @@ export function readQualification(value: unknown): Qualification | null {
       quote: i.quote,
       ...(i.source === "booking" ? { source: "booking" as const } : {}),
       ...(!legacy && typeof i.bucket === "string" && i.bucket ? { bucket: i.bucket } : {}),
+      ...(isOwnKey(key) && typeof i.label === "string" && i.label.trim() ? { label: i.label.trim().slice(0, 40) } : {}),
     });
   }
   const offered = Array.isArray(v.offered) ? [...new Set(v.offered.map(keyOf).filter((k): k is CriterionKey => k !== null))] : [];
@@ -466,12 +491,14 @@ export function mergeQualification(
     const value = e?.value.trim().slice(0, MAX_VALUE) ?? "";
     if (e?.known && value && isCustomerQuote(e.quote, texts)) {
       const bucket = c.buckets && e.bucket && Object.hasOwn(c.buckets, e.bucket) ? e.bucket : undefined;
-      items.push({ key: c.key, value, quote: e.quote.trim(), ...(bucket ? { bucket } : {}) });
+      items.push({ key: c.key, value, quote: e.quote.trim(), ...(bucket ? { bucket } : {}), ...(isOwnKey(c.key) ? { label: c.label } : {}) });
       continue;
     }
     const before = prev.get(c.key);
     if (before) items.push(before);
   }
+  // An answer to one of the owner's own questions stays known after the owner changes their questions (A-302).
+  for (const before of prev.values()) if (isOwnKey(before.key) && !items.some((i) => i.key === before.key)) items.push(before);
   const merged: Qualification = {
     v: 2,
     template: template.id,
@@ -507,7 +534,8 @@ export function nextToAsk(template: Template, q: Qualification | null): Criterio
   const open = (k: CriterionKey) => !knows(same, k) && !asked(same, k);
   // Two at once from the first question (founder, 2026-10-18): what they are after, and when.
   if (!sideOf(same) && open("side") && !knows(same, "area") && !knows(same, "home")) {
-    return open("timing") ? [criterionOf(template, "side")!, criterionOf(template, "timing")!] : [criterionOf(template, "side")!];
+    // The owner's own order (A-302) starts with the owner's first question, so nothing else rides along with this one.
+    return open("timing") && !template.ownOrder ? [criterionOf(template, "side")!, criterionOf(template, "timing")!] : [criterionOf(template, "side")!];
   }
   for (const round of roundsFor(template, same)) {
     const missing = round.filter(open);
@@ -571,7 +599,7 @@ export function qualifyPromptBlock(next: Pick<Criterion, "ask"> | null): string 
 export function knownPromptBlock(q: Qualification | null, nothingLeft = false): string {
   const template = q ? templateById(q.template) : null;
   if (!q || !template) return "";
-  const label = (k: CriterionKey) => criterionOf(template, k)?.label ?? k;
+  const label = (k: CriterionKey) => labelOf(template, q, k);
   const said = q.items.filter((i) => i.value.trim()).map((i) => `${label(i.key)}: ${i.value.trim()}`);
   const unanswered = (q.offered ?? []).filter((k) => !knows(q, k)).map(label);
   let block = "";
@@ -644,11 +672,18 @@ export function homeOf(q: Qualification | null): string | null {
  */
 export function shownItems(template: Template, q: Qualification): { criterion: Criterion; item: QualItem }[] {
   const order = [...new Set([...roundsFor(template, q).flat(), ...template.criteria.map((c) => c.key)])].filter((k) => k !== "side");
-  return order.flatMap((k) => {
+  const shown = order.flatMap((k) => {
     const item = itemOf(q, k);
     const criterion = criterionOf(template, k);
     return item && criterion ? [{ criterion, item }] : [];
   });
+  // Answers to the owner's own questions that their questions no longer hold (A-302): still what the customer said.
+  for (const item of q.items) {
+    if (isOwnKey(item.key) && !shown.some((s) => s.item.key === item.key)) {
+      shown.push({ criterion: { key: item.key, label: labelOf(template, q, item.key), find: "", ask: "" }, item });
+    }
+  }
+  return shown;
 }
 
 /** What is still to find out for this customer, in asking order (for "Still to find out: ..."). */

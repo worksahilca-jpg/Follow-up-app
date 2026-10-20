@@ -5,6 +5,7 @@
  */
 import { describe, it, expect } from "vitest";
 import { businessAbout, isAskableLabel, pickDailyQuestion, whyAsk, WHAT_YOU_DO_LABEL } from "@/lib/dailyQuestion";
+import { ASK_PLAN_LABEL } from "@/lib/askPlan";
 
 const now = new Date("2026-10-07T15:00:00Z");
 const base = {
@@ -35,6 +36,16 @@ describe("which question", () => {
   it("then the trade's questions, skipping what is known or set aside", () => {
     const q = pickDailyQuestion({ ...base, knownLabels: ["what you do", "Commission"], questionsSkipped: ["Area you cover"] }, now);
     expect(q?.label).toBe("Showings");
+  });
+
+  it("asks a realtor what they ask a new buyer second, once (A-302)", () => {
+    const q = pickDailyQuestion({ ...base, knownLabels: ["What you do"], wantsAskPlan: true }, now);
+    expect(q?.label).toBe(ASK_PLAN_LABEL);
+    expect(q?.question).toBe("What do you ask a new buyer, and in what order?");
+    expect(whyAsk(q!, "Real estate")).toMatch(/tell a new assistant, or tap the mic on your keyboard/);
+    expect(pickDailyQuestion({ ...base, wantsAskPlan: true }, now)?.label).toBe(WHAT_YOU_DO_LABEL);
+    expect(pickDailyQuestion({ ...base, knownLabels: ["What you do"], wantsAskPlan: true, questionsSkipped: [ASK_PLAN_LABEL] }, now)?.label).toBe("Commission");
+    expect(pickDailyQuestion({ ...base, knownLabels: ["What you do"] }, now)?.label).toBe("Commission");
   });
 
   it("nothing once every question is answered or set aside", () => {

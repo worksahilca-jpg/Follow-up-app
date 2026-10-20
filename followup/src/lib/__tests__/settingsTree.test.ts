@@ -25,6 +25,10 @@ describe("settingsPlace", () => {
   it("treats the follow-up plans page as a branch of Sending replies", () => {
     expect(settingsPlace("/workflows", "")).toEqual({ group: "Sending replies", branch: "When to check in" });
   });
+
+  it("keeps What FollowUp asks under Sending replies (A-302)", () => {
+    expect(settingsPlace("/asks", "")).toEqual({ group: "Sending replies", branch: null });
+  });
 });
 
 describe("the tree's addresses", () => {

@@ -17,10 +17,10 @@ export async function keepFollowing(
 ): Promise<{ success: boolean; message?: string }> {
   const lead = await prisma.lead.findFirst({
     where: { id: leadId, businessId },
-    select: { id: true, qualification: true, business: { select: { industry: true } } },
+    select: { id: true, qualification: true, business: { select: { industry: true, askPlan: true } } },
   });
   if (!lead) return { success: false, message: "Customer not found." };
-  const template = templateFor(lead.business.industry);
+  const template = templateFor(lead.business.industry, lead.business.askPlan);
   const before = readQualification(lead.qualification);
   if (!template || !before) return { success: false, message: "Nothing to change for this customer." };
 

@@ -69,7 +69,7 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
     where: { id: leadId },
     include: {
       conversations: { include: { messages: { orderBy: { sentAt: "asc" } } } },
-      business: { select: { tier: true, name: true, industry: true, timezone: true, followUpPlans: true } },
+      business: { select: { tier: true, name: true, industry: true, timezone: true, followUpPlans: true, askPlan: true } },
     },
   });
   if (!lead) return false;
@@ -191,7 +191,8 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
   // only when the customer is the one who just wrote: nothing anyone else
   // says can teach FollowUp what the customer wants. It can never cost
   // the reply: a failure is "learned nothing this time".
-  const template = templateFor(lead.business.industry);
+  // With the owner's own questions, a buyer is asked those, in the owner's order (A-302).
+  const template = templateFor(lead.business.industry, lead.business.askPlan);
   const customerJustWrote = newest.direction === "inbound";
   // The owner's past replies in the language this one will be written in
   // come first (src/lib/voice.ts), so the samples wait for the language

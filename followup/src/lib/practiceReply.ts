@@ -79,7 +79,7 @@ export async function practiceReply(
   const dm = channel !== "email";
   const first = customerName.trim().split(/\s+/)[0] || "there";
   const latest = latestInboundText(conversation) ?? "";
-  const business = await prisma.business.findUnique({ where: { id: businessId }, select: { name: true, industry: true } });
+  const business = await prisma.business.findUnique({ where: { id: businessId }, select: { name: true, industry: true, askPlan: true } });
 
   // Their first message: the instant reply every new customer gets.
   if (!conversation.some((m) => m.direction === "outbound")) {
@@ -107,7 +107,8 @@ export async function practiceReply(
 
   // Every later message: the reply FollowUp writes for a real customer (scoreAndDraftForLead, email branch).
   const industry = opts.industry ?? business?.industry;
-  const template = templateFor(industry);
+  // The owner's own questions (A-302) are this business's; a trade tried on the admin's Talk page has none.
+  const template = templateFor(industry, opts.industry ? null : business?.askPlan);
   const detecting = detectLeadLanguage(latest);
   const [voiceSamples, detected, extracted, context] = await Promise.all([
     detecting.then((d) => getVoiceSamples(businessId, d ?? undefined)),

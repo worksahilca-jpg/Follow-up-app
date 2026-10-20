@@ -3,6 +3,8 @@ import { FIRST_QUESTION_AFTER_MS, pickDailyQuestion, whyAsk } from "@/lib/dailyQ
 import { stayingSummary, shouldAskForNews } from "@/lib/stayInTouchData";
 import { MAX_NEWS, newsExample, newsQuestion, newsWhy, STAY_IN_TOUCH_TRIGGER } from "@/lib/stayInTouch";
 import type { DailyQuestionProps } from "@/components/DailyQuestion";
+import { ASK_PLAN_LABEL, MAX_WORDS, readAskPlan } from "@/lib/askPlan";
+import { templateFor } from "@/lib/qualification";
 
 /**
  * Today's one question for this business (A-101, src/lib/dailyQuestion.ts),
@@ -13,7 +15,7 @@ export async function todaysQuestion(businessId: string, now: Date = new Date())
     const [business, facts] = await Promise.all([
       prisma.business.findUnique({
         where: { id: businessId },
-        select: { industry: true, createdAt: true, questionAfter: true, questionsSkipped: true },
+        select: { industry: true, createdAt: true, questionAfter: true, questionsSkipped: true, askPlan: true },
       }),
       prisma.businessFact.findMany({ where: { businessId }, select: { label: true } }),
     ]);
@@ -43,10 +45,14 @@ export async function todaysQuestion(businessId: string, now: Date = new Date())
         questionAfter: business.questionAfter,
         questionsSkipped: business.questionsSkipped ?? [],
         knownLabels: facts.map((f) => f.label),
+        wantsAskPlan: Boolean(templateFor(business.industry)) && !readAskPlan(business.askPlan),
       },
       now
     );
-    return question ? { ...question, why: whyAsk(question, business.industry) } : null;
+    if (!question) return null;
+    const why = whyAsk(question, business.industry);
+    // The owner's own questions (A-302) are saved as their plan, not as a fact.
+    return question.label === ASK_PLAN_LABEL ? { ...question, why, kind: "plan", maxLength: MAX_WORDS } : { ...question, why };
   } catch (err) {
     console.error(`Could not pick today's question for business ${businessId}:`, err);
     return null;

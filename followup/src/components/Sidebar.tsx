@@ -66,8 +66,9 @@ export default function Sidebar({ businessName = "", counts = {} }: { businessNa
   const settingsActive = isActive(pathname, "/settings");
   // A customer's page brings its own phone bar (Back, their name) and no tabs, like a chat app (A-222).
   const ownPhoneBar = /^\/leads\/[^/]+$/.test(pathname ?? "");
-  // Settings, the follow-up plans page (its "When to check in" branch) and "Try it yourself" (A-288) show Settings' tree.
-  const inSettings = settingsActive || isActive(pathname, "/workflows") || isActive(pathname, "/practice");
+  // Settings, the follow-up plans page (its "When to check in" branch), "Try it yourself" (A-288) and "What FollowUp
+  // asks" (A-302) show Settings' tree.
+  const inSettings = settingsActive || isActive(pathname, "/workflows") || isActive(pathname, "/practice") || isActive(pathname, "/asks");
 
   return (
     <>

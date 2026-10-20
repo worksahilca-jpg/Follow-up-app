@@ -69,7 +69,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
   const [approval, business, checklist, rules, crmConn] = ctx
     ? await Promise.all([
         getPendingApprovals(ctx.businessId).then((all) => all.find((a) => a.leadId === lead.id) ?? null),
-        prisma.business.findUnique({ where: { id: ctx.businessId }, select: { timezone: true, teamCalls: true, industry: true } }),
+        prisma.business.findUnique({ where: { id: ctx.businessId }, select: { timezone: true, teamCalls: true, industry: true, askPlan: true } }),
         prisma.lead.findFirst({ where: { id: lead.id, businessId: ctx.businessId }, select: { qualification: true, qualifiedAt: true, crmProvider: true, sequenceId: true } }),
         getBusinessAutomationRules(ctx.businessId),
         prisma.crmConnection.findUnique({ where: { businessId: ctx.businessId }, select: { provider: true } }),
@@ -129,7 +129,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
   // line of work with a checklist. Ready, Warm, Later and "has an agent"
   // are shown while the deal is open; a closed or decided one keeps only
   // the record of what was learned.
-  const template = templateFor(business?.industry);
+  const template = templateFor(business?.industry, business?.askPlan);
   const qualification = template ? readQualification(checklist?.qualification) : null;
   const checklistShown = template && qualification && qualification.template === template.id ? qualification : null;
   const dealOpen = lead.automationStatus?.kind !== "closed" && lead.stage !== "won" && lead.stage !== "lost";

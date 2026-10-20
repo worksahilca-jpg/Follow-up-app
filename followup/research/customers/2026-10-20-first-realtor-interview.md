@@ -35,3 +35,23 @@ from Sahil's transcript notes; no names kept. **Evidence: one realtor, his own w
 - Immigration status: should an automated message ever ask it? Flagged: a written status question from a business
   can read as discrimination and may carry legal risk in Ontario. Not a legal opinion; check with RECO or a lawyer
   before any automated message asks it.
+
+## Second conversation, same day (from Sahil's meeting summary)
+
+**What he uses today**
+- An Instagram messaging tool, built by someone he knows. It could not message the cold and warm customers in his
+  GoHighLevel resale pipeline in one go ("too many messages"). It gave him a CSV of about 699 customers with
+  instructions instead.
+
+**What he heard about FollowUp**
+- Sahil told him: it connects GoHighLevel and his other sources (Instagram, Gmail, website forms, CSV), learns his
+  qualifying questions and his way of writing, chats with customers to find their status, budget and what home they
+  need, gives a summary before the call, and hands over the ready ones. He said this would be very beneficial.
+
+**What this tells us**
+- His real pain is a pipeline of hundreds of old customers nobody is writing to, not only new messages.
+- FollowUp can take the file: import accepts a CSV of up to 1,000 rows (`api/leads/import`), and importing sends
+  nothing. It must stay that way: messaging 699 people at once is the blast FollowUp never does (trust rules,
+  A-247). Old GoHighLevel conversations already come back 10 a day as drafts he approves (GHL wake-up).
+- "Learns my questions and my style" is now a promise made to a real customer. Style is learned from his sent and
+  edited replies today; his own question order is not (open: "teach it your own way", not built).

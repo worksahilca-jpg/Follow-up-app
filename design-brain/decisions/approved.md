@@ -5248,3 +5248,20 @@ opposite of FollowUp's order (A-299).
   instead".
 - **Not drawn, decided while building (the founder can change them):** buyers only (renters and sellers keep
   FollowUp's order); income is asked as "have you spoken with a lender yet?", never as a number.
+
+## A-303
+**GoHighLevel kept in step on its own: stages follow Ready / Warm / Later, and FollowUp reads the owner's notes
+(2026-10-20).** The founder: *"Yes"* to the drawing (scratchpad `tierstage/stages-board.png`), after the first realtor
+said the system has to be fully automatic: a hot customer who says "in three months" should move to a colder nurture
+track, and back to hot when keen again, from his chats and his GoHighLevel call notes.
+- **In the CRM window, under "When they book a meeting" (A-275):** a group "When FollowUp sorts them" with three rows,
+  Ready · Warm · Later, each showing the owner's own stage ("Hot", "Nurture", "Long-term Nurture") with a chevron.
+  Tapping one opens the same picker as A-275 ("When they're Ready", his stages with a tick, "Don't move them"). Under
+  the group: "FollowUp moves them in GoHighLevel when what they say changes, and back again. Someone who says “in about
+  three months” goes to Nurture, and back to Hot when they're keen again."
+- **"Read my notes"**, a switch, on: "Like your call notes. A call that changes their plans moves them too. FollowUp
+  never reads its own notes."
+- **Every move says why** in "What FollowUp wrote there this week": "Moved Priya Shah to Nurture · They said:
+  “probably in about 3 months”", or "From your call note: “…”".
+- **This relaxes A-246's "only the customer's own words"** for one source: the owner's own notes on that customer
+  count as evidence too, quoted exactly, and marked as his note.

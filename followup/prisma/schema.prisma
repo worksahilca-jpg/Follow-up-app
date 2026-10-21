@@ -147,6 +147,10 @@ model Business {
   // meaningful when Gmail is connected; getAvailableSlots() falls back to
   // "followup" behavior if it isn't, rather than erroring.
   bookingCalendarSource String   @default("followup")
+  // Which calendar the owner says they book in (A-305, src/lib/calendarUsed.ts): "google", "outlook", "gohighlevel",
+  // "brokerbay", "showingtime", "calendly", "other" or "none". Null: not asked yet. FollowUp books only into
+  // bookingCalendarSource above; this is what the owner uses, so Settings can say when FollowUp can't book into it.
+  calendarUsed          String?
 
   // Setup steps the owner has said do not apply to them (SetupStep.id in
   // src/lib/setupStatus.ts — "widget", "phone").

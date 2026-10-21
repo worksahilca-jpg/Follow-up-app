@@ -5,20 +5,24 @@ import { prisma } from "@/lib/db";
 import { getGmailStatus } from "@/lib/integrations/gmail";
 import { recordAudit } from "@/lib/audit";
 import { parseJsonBody } from "@/lib/validation";
+import { templateFor } from "@/lib/qualification";
+import { isCalendarKey } from "@/lib/calendarUsed";
 
 /**
  * GET /api/business/booking-source — the signed-in business's current
  * choice of where FollowUp checks availability and books meetings (see
  * Business.bookingCalendarSource's doc comment in schema.prisma), plus
  * whether Gmail is connected at all, since the "My Google Calendar"
- * option only makes sense when it is.
+ * option only makes sense when it is. Also which calendar the owner says
+ * they book in (A-305), for "Your calendar" above it, and whether they are
+ * a realtor (the showing services are offered only to them).
  */
 export async function GET() {
   const ctx = await getSessionContext();
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
 
   const [business, gmailStatus] = await Promise.all([
-    prisma.business.findUnique({ where: { id: ctx.businessId }, select: { bookingCalendarSource: true } }),
+    prisma.business.findUnique({ where: { id: ctx.businessId }, select: { bookingCalendarSource: true, calendarUsed: true, industry: true } }),
     getGmailStatus(ctx.businessId),
   ]);
   if (!business) return NextResponse.json({ success: false, message: "Business not found." }, { status: 404 });
@@ -27,6 +31,8 @@ export async function GET() {
     success: true,
     bookingCalendarSource: business.bookingCalendarSource,
     gmailConnected: gmailStatus.connected,
+    calendarUsed: isCalendarKey(business.calendarUsed) ? business.calendarUsed : null,
+    realtor: Boolean(templateFor(business.industry)),
   });
 }
 

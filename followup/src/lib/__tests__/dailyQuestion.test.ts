@@ -6,6 +6,7 @@
 import { describe, it, expect } from "vitest";
 import { businessAbout, isAskableLabel, pickDailyQuestion, whyAsk, WHAT_YOU_DO_LABEL } from "@/lib/dailyQuestion";
 import { ASK_PLAN_LABEL } from "@/lib/askPlan";
+import { CALENDAR_LABEL } from "@/lib/calendarUsed";
 
 const now = new Date("2026-10-07T15:00:00Z");
 const base = {
@@ -46,6 +47,20 @@ describe("which question", () => {
     expect(pickDailyQuestion({ ...base, wantsAskPlan: true }, now)?.label).toBe(WHAT_YOU_DO_LABEL);
     expect(pickDailyQuestion({ ...base, knownLabels: ["What you do"], wantsAskPlan: true, questionsSkipped: [ASK_PLAN_LABEL] }, now)?.label).toBe("Commission");
     expect(pickDailyQuestion({ ...base, knownLabels: ["What you do"] }, now)?.label).toBe("Commission");
+  });
+
+  it("which calendar they book in, after what they ask a new buyer, once (A-305)", () => {
+    const known = { ...base, knownLabels: ["What you do"], wantsAskPlan: false, wantsCalendar: true, realtor: true };
+    const q = pickDailyQuestion(known, now);
+    expect(q?.label).toBe(CALENDAR_LABEL);
+    expect(q?.question).toBe("Which calendar do you book showings in?");
+    expect(whyAsk(q!, "Real estate")).toBe("So the times FollowUp offers are times you're really free, and bookings land where you look.");
+    expect(pickDailyQuestion({ ...known, wantsAskPlan: true }, now)?.label).toBe(ASK_PLAN_LABEL);
+    expect(pickDailyQuestion({ ...known, questionsSkipped: [CALENDAR_LABEL] }, now)?.label).toBe("Commission");
+    expect(pickDailyQuestion({ ...known, wantsCalendar: false }, now)?.label).toBe("Commission");
+    expect(pickDailyQuestion({ ...known, trade: "Home services (contractor, cleaning, etc.)", realtor: false }, now)?.question).toBe(
+      "Which calendar do you book meetings in?"
+    );
   });
 
   it("nothing once every question is answered or set aside", () => {

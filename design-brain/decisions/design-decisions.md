@@ -14685,3 +14685,24 @@ Messenger to skip the one-a-day rule. Held drafts say when Instagram closes the 
 - Stay-in-touch and the rule example on Settings still show times in New York time when no time zone is passed
   (unchanged; they don't show the next-day step).
 - If the hourly run is down for the one hour that fits, the moment passes and the owner's day-2–7 draft takes over.
+
+## 2026-10-21 — Which calendar the owner uses (A-305), built
+
+**Why:** the founder: "for booking, we'll be asking them which calendar they use. Otherwise, they can use ours or
+Google's." Realtors book showings in BrokerBay or ShowingTime; FollowUp can only book into its own calendar or Google
+Calendar today. Asking tells the owner honestly where customers will book, and tells us which calendars to build next.
+
+**How it works:** one question on Today (A-101 card, pills instead of a text box). The answer is saved as
+`Business.calendarUsed` (a key, not free text) by `POST /api/business/calendar` (admin only, rate-limited, audited
+with the key only). Google with Gmail, or "I don't use one", sets `bookingCalendarSource` at once; anything else shows
+the drawn "can't book into it yet" step, whose two rows use the existing booking-source route. Settings › Your free
+hours shows "Your calendar" with Change above "Where customers book".
+
+**Weak points:**
+- The pill list is our guess at the common calendars (Google, Outlook, GoHighLevel, BrokerBay, ShowingTime, Calendly);
+  nothing measured. "Something else" doesn't ask which one, so we learn less from it.
+- GoHighLevel has its own calendar and FollowUp already talks to GoHighLevel, so an owner may expect it to book there.
+  It can't yet; the card says so plainly.
+- If the owner leaves the "can't book into it yet" step without picking, nothing changes: customers keep booking in
+  whatever was set (FollowUp's calendar by default). The card doesn't come back to ask.
+- No count of answers on the admin page yet; a read-only database count can answer "which calendars do owners use?".

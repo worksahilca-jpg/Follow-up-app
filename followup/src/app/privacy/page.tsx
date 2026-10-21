@@ -109,6 +109,12 @@ export default function PrivacyPage() {
                 they stand. We never read FollowUp&apos;s own notes, and we keep only the few words that show it.
               </li>
               <li>
+                <strong className="text-ink">Your booking settings</strong> — your booking hours, where customers book
+                (FollowUp&apos;s calendar, or your Google Calendar if you choose it), and, if you tell us, the name of the
+                calendar you use. For any calendar other than Google, we keep only its name; FollowUp doesn&apos;t
+                connect to it.
+              </li>
+              <li>
                 <strong className="text-ink">Billing info</strong> — handled entirely by Stripe; we never see
                 or store your card details ourselves.
               </li>

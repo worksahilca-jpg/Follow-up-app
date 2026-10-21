@@ -5,6 +5,7 @@ import { MAX_NEWS, newsExample, newsQuestion, newsWhy, STAY_IN_TOUCH_TRIGGER } f
 import type { DailyQuestionProps } from "@/components/DailyQuestion";
 import { ASK_PLAN_LABEL, MAX_WORDS, readAskPlan } from "@/lib/askPlan";
 import { templateFor } from "@/lib/qualification";
+import { CALENDAR_LABEL, calendarsFor } from "@/lib/calendarUsed";
 
 /**
  * Today's one question for this business (A-101, src/lib/dailyQuestion.ts),
@@ -15,7 +16,7 @@ export async function todaysQuestion(businessId: string, now: Date = new Date())
     const [business, facts] = await Promise.all([
       prisma.business.findUnique({
         where: { id: businessId },
-        select: { industry: true, createdAt: true, questionAfter: true, questionsSkipped: true, askPlan: true },
+        select: { industry: true, createdAt: true, questionAfter: true, questionsSkipped: true, askPlan: true, calendarUsed: true },
       }),
       prisma.businessFact.findMany({ where: { businessId }, select: { label: true } }),
     ]);
@@ -38,6 +39,7 @@ export async function todaysQuestion(businessId: string, now: Date = new Date())
         };
       }
     }
+    const realtor = Boolean(templateFor(business.industry));
     const question = pickDailyQuestion(
       {
         trade: business.industry,
@@ -45,12 +47,18 @@ export async function todaysQuestion(businessId: string, now: Date = new Date())
         questionAfter: business.questionAfter,
         questionsSkipped: business.questionsSkipped ?? [],
         knownLabels: facts.map((f) => f.label),
-        wantsAskPlan: Boolean(templateFor(business.industry)) && !readAskPlan(business.askPlan),
+        wantsAskPlan: realtor && !readAskPlan(business.askPlan),
+        wantsCalendar: !business.calendarUsed,
+        realtor,
       },
       now
     );
     if (!question) return null;
     const why = whyAsk(question, business.industry);
+    // Which calendar they book in (A-305) is a tap on one of the calendars, saved as a setting, not a fact.
+    if (question.label === CALENDAR_LABEL) {
+      return { ...question, why, kind: "calendar", choices: calendarsFor(realtor).map((c) => ({ key: c.key, label: c.label })) };
+    }
     // The owner's own questions (A-302) are saved as their plan, not as a fact.
     return question.label === ASK_PLAN_LABEL ? { ...question, why, kind: "plan", maxLength: MAX_WORDS } : { ...question, why };
   } catch (err) {

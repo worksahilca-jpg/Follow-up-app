@@ -77,7 +77,13 @@ a booked call or visit; the owner closes.
   follow-up now goes about 20 hours after the customer's last message, inside the send hours and before Meta's 24-hour
   window closes (it used to come a day after our reply, always too late). Only once, never after "Not now", no or
   stop. It is the one exception to "one a day". A held draft says when Instagram closes the chat. After 24 hours the
-  owner's day-2–7 draft takes over, as before. Next: the calendar question (A-305, approved).
+  owner's day-2–7 draft takes over, as before.
+
+- **Which calendar the owner uses (A-305, built Oct 21, same PR):** Today asks once "Which calendar do you book
+  showings in?" with pills. Google (with Gmail) or "I don't use one" sets where customers book at once; any other
+  (BrokerBay, ShowingTime, Outlook, GoHighLevel, Calendly, something else) says "FollowUp can't book into it yet" and
+  asks: FollowUp's calendar or My Google Calendar. Settings › Your free hours shows "Your calendar" with Change. Only
+  the name is kept; privacy page updated. Migration: `Business.calendarUsed`.
 
 - **GoHighLevel on its own (A-303, LIVE):** Ready / Warm / Later move a customer to the owner's own stage,
   and back, once per change, with the reason on record; never while a meeting is booked. "Read my notes" (on) reads
@@ -129,7 +135,7 @@ a booked call or visit; the owner closes.
   asked in writing. Weak points in design-decisions (Oct 20). After the merge: try it with his real words.
 - **Realtor meetings 2 and 3 (Oct 20):** he wants it fully automatic. Built since: moving GoHighLevel stages when a
   customer goes hot or cold, and reading his GoHighLevel call notes (A-303, live). Not built: booking showings in his
-  showing calendar (A-305 first asks which calendar he uses). His family
+  showing calendar (A-305 now asks which calendar he uses; BrokerBay/ShowingTime booking itself is not built). His family
   WhatsApp groups can't be read. Recommended next: the first two (asked Sahil). He was added as a beta tester.
 - **First realtor interview (Oct 20):** he qualifies by status and money first, area last; "not now" leads go to
   nurture; listing emails after. Notes and open questions: `followup/research/customers/2026-10-20-first-realtor-interview.md`.

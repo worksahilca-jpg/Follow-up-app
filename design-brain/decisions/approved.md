@@ -5318,3 +5318,18 @@ computer).
 - **Settings › Booking calendar:** a "Your calendar" row with its name and **Change**, a footnote "FollowUp can't book
   into BrokerBay yet, so customers book in the one you pick below.", and the existing choice retitled **"Where
   customers book"**.
+- **Decided while building (2026-10-21; the founder can change any of them):**
+  - Order on Today: after "what does your business do?" and, for a realtor, "what do you ask a new buyer?" (A-302);
+    before the trade's questions. Asked once; "Not now" means it isn't asked on Today again (Settings can still set it).
+  - BrokerBay and ShowingTime are offered only to realtors; everyone else is asked "Which calendar do you book
+    meetings in?".
+  - Picking **Google Calendar** with Gmail connected sets "Where customers book" to it straight away ("Saved.
+    Customers book straight into your Google Calendar."). Without Gmail: "Saved. Connect Gmail and FollowUp books
+    straight into your Google Calendar. Until then, customers book in FollowUp's calendar." with a "Connect Gmail" link.
+  - Picking **I don't use one** sets FollowUp's calendar ("Saved. Customers book in FollowUp's calendar, in your
+    booking hours.").
+  - In the "can't book into it yet" step, without Gmail the Google row reads "Connect Gmail first, then pick this." and
+    opens Connected apps. The lines under both rows wrap on a phone, never cut off.
+  - Settings with nothing chosen: "Not chosen yet" with **Choose**, and "Tell FollowUp which calendar you use, so
+    bookings land where you look." Change opens the same pills in place, the current one filled black.
+  - Only the calendar's name is kept (Business.calendarUsed); FollowUp connects to nothing new.

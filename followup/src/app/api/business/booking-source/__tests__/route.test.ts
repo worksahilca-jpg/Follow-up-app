@@ -50,7 +50,14 @@ describe("GET", () => {
     const res = await GET();
     const data = await res.json();
 
-    expect(data).toEqual({ success: true, bookingCalendarSource: "google", gmailConnected: true });
+    expect(data).toEqual({ success: true, bookingCalendarSource: "google", gmailConnected: true, calendarUsed: null, realtor: false });
+  });
+
+  it("says which calendar the owner books in (A-305), and whether they are a realtor", async () => {
+    p.business.findUnique.mockResolvedValue({ bookingCalendarSource: "followup", calendarUsed: "brokerbay", industry: "Real estate" });
+    gmail.mockResolvedValue({ connected: false });
+    const data = await (await GET()).json();
+    expect(data).toMatchObject({ calendarUsed: "brokerbay", realtor: true });
   });
 
   it("requires a signed-in session", async () => {

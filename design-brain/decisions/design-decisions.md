@@ -14664,3 +14664,24 @@ already did); without it, the window says what to turn on instead of a silent "N
   with none. Before, a customer whose card was in another pipeline got a second card. Weak point: which card moves
   when he has several is a rule (same pipeline, then open, then any), not his choice; GoHighLevel's `pipelineId` on
   an update is from its SDK, not yet seen on a real account.
+
+## 2026-10-21 — The Instagram next-day follow-up (A-304), built
+
+**Why:** Meta allows an automated Instagram or Messenger message only within 24 hours of the customer's last one. The
+Fast plan's first follow-up came a day after our reply, so on a DM it was always too late and every quiet DM customer
+waited for the owner's day-2–7 draft. The research playbook (`reports/FollowUp realtor reply playbook.md`, outside the
+repo) says the same: an instant reply, then one DM nudge inside the 24 hours.
+
+**How it works:** `metaNudgeAt` (followUpPlans.ts) picks the time: 20 hours after their last message, moved into the
+send hours with an hour of headroom, between 4 hours after our reply and 23 hours after theirs. The engine has a fifth
+query for DM customers our reply reached 4 to 24 hours ago (the quiet query only looks a day back), claims them with a
+4-hour recheck instead of 20, and sends with `metaWindowNudge`, which the sender honours only on Instagram and
+Messenger to skip the one-a-day rule. Held drafts say when Instagram closes the chat.
+
+**Weak points:**
+- The 20-hour aim is a judgment, not a measured best time; nobody has measured reply rates for it yet.
+- A customer whose message came at night may get the next-day message in the evening of the same day (e.g. wrote at
+  1am, answered at 8am, nudged at 7pm), which can feel soon. It is still one message and inside the window.
+- Stay-in-touch and the rule example on Settings still show times in New York time when no time zone is passed
+  (unchanged; they don't show the next-day step).
+- If the hourly run is down for the one hour that fits, the moment passes and the owner's day-2–7 draft takes over.

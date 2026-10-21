@@ -109,7 +109,7 @@ beforeEach(() => {
   p.automation.findFirst.mockImplementation(async ({ where }: { where: { action: string } }) =>
     where.action === "auto_send" ? { enabled: true, triggerDays: 3 } : { enabled: true, triggerHours: 24 }
   );
-  // First findMany is the silence query, second the unanswered query.
+  // findMany order: silence, dead lead (when on), unanswered, the next-day DM query, then the handoff scan.
   p.lead.findMany.mockResolvedValue([]);
   p.lead.update.mockResolvedValue({});
   p.lead.updateMany.mockResolvedValue({ count: 1 }); // claim succeeds by default
@@ -153,10 +153,11 @@ function unansweredLead(
 }
 
 describe("human-neglect trigger (lead wrote, nobody answered)", () => {
-  // Promise.all fires the three lead.findMany calls in a fixed order:
+  // Promise.all fires the lead.findMany calls in a fixed order:
   // the silence query, then the dead-lead-reactivation query (on by
   // default — see DEAD_LEAD_ACTION), then findUnansweredLeads's own
-  // query. Every test in this block cares only about the third.
+  // query, then the next-day DM query. Every test in this block cares
+  // only about the third.
   // GoHighLevel wake-up, 2026-10-19: a CRM contact with no conversation got a welcome back written from a name.
   it("never asks the plan or welcome-back queries for a CRM contact FollowUp has no conversation with", async () => {
     await runAutomationForBusiness("biz1");
@@ -410,9 +411,10 @@ describe("human-neglect trigger (lead wrote, nobody answered)", () => {
       where.action === "auto_send" ? { enabled: true, triggerDays: 3 } : { enabled: false, triggerHours: 24 }
     );
     await runAutomationForBusiness("biz1");
-    // The silence query, plus the day-2–7 handoff scan (draftDmHandoffs),
-    // which runs on every tick regardless of this rule.
-    expect(p.lead.findMany).toHaveBeenCalledTimes(2);
+    // The silence query, the Instagram/Messenger next-day query (A-304), and
+    // the day-2–7 handoff scan (draftDmHandoffs), which run on every tick
+    // regardless of this rule.
+    expect(p.lead.findMany).toHaveBeenCalledTimes(3);
   });
 });
 
@@ -989,8 +991,8 @@ describe("dead-lead reactivation (DEAD_LEAD_ACTION)", () => {
     p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]); // silent, then unanswered — no dead-lead call
     const r = await runAutomationForBusiness("biz1");
     expect(r.reactivated).toBe(0);
-    // Silent, unanswered, and the day-2–7 handoff scan — never a dead-lead query.
-    expect(p.lead.findMany).toHaveBeenCalledTimes(3);
+    // Silent, unanswered, the next-day DM query, and the day-2–7 handoff scan — never a dead-lead query.
+    expect(p.lead.findMany).toHaveBeenCalledTimes(4);
   });
 
   it("respects a business-configured dead-lead day threshold instead of the 45-day default", async () => {
@@ -1407,9 +1409,9 @@ describe("the day-2–7 handoff on Instagram and Messenger", () => {
       ...overrides,
     });
   }
-  // silent, dead, unanswered → empty; the 4th findMany is the handoff scan.
+  // silent, dead, unanswered, next-day DM → empty; the 5th findMany is the handoff scan.
   function queueHandoff(...leads: unknown[]) {
-    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce(leads);
+    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce(leads);
   }
   const handoffDraft = { subject: "", body: "A couple of days on from your two-bed question, I can price it from a quick photo of the flat, or shall I leave it?", buttons: [] };
 
@@ -1443,11 +1445,46 @@ describe("the day-2–7 handoff on Instagram and Messenger", () => {
     expect(send).not.toHaveBeenCalled();
   });
 
+  it("next day inside Meta's window (A-304): drafts plan step 1 for a DM lead quiet since our reply, and says when the chat closes", async () => {
+    replyChannel.mockResolvedValue("instagram");
+    p.business.findUnique.mockResolvedValue({ autonomousAllowed: true, autonomousAllowedAt: new Date("2000-01-01"), timezone: "America/New_York", tier: "pro", holdAllForApproval: true });
+    draftMessage.mockResolvedValue({ subject: "", body: "Still happy to price the two-bed, want me to hold a slot this week?", buttons: [] });
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+    // They wrote 21 hours ago, we answered 3 hours later: the silence query skips them (under a day), the next-day
+    // query finds them, and step 1 is due 20 hours after their message.
+    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([quietDmLead(21)]);
+    const r = await runAutomationForBusiness("biz1");
+    expect(send).not.toHaveBeenCalled();
+    expect(r.held).toBe(1);
+    expect(r.heldReasons[0]).toMatch(/Aanya went quiet on Instagram after your reply, and Instagram closes the chat at .+ Send this before then/);
+    expect(p.lead.update).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: "leadHandoff" }, data: expect.objectContaining({ suggestedDraftKind: "reminder_1" }) })
+    );
+  });
+
+  it("next day inside Meta's window (A-304): when it may send, it goes out marked as the in-window message", async () => {
+    replyChannel.mockResolvedValue("instagram");
+    draftMessage.mockResolvedValue({ subject: "", body: "Still happy to price the two-bed, want me to hold a slot this week?", buttons: [] });
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([quietDmLead(21)]);
+    await runAutomationForBusiness("biz1");
+    expect(send).toHaveBeenCalledWith("leadHandoff", expect.any(String), expect.objectContaining({ trigger: "silence", channel: "instagram", metaWindowNudge: true }));
+  });
+
+  it("the next-day query only looks at DM leads our reply reached 4 to 24 hours ago", async () => {
+    await runAutomationForBusiness("biz1");
+    const q = p.lead.findMany.mock.calls[3][0];
+    expect(q.where.OR).toEqual([{ phone: { startsWith: "ig:" } }, { phone: { startsWith: "fb:" } }]);
+    const window = q.where.AND[0].lastContacted;
+    expect(Date.now() - window.gt.getTime()).toBeCloseTo(24 * H, -4);
+    expect(Date.now() - window.lte.getTime()).toBeCloseTo(4 * H, -4);
+  });
+
   it("never sends automatically past the window — the silence rule skips the lead without drafting", async () => {
     replyChannel.mockResolvedValue("instagram");
     // 80 hours, not 30: reminder 1 is due three days after our last
     // message (2026-09-25 cadence), and this pins what happens once it is.
-    p.lead.findMany.mockResolvedValueOnce([quietDmLead(80)]).mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([]);
+    p.lead.findMany.mockResolvedValueOnce([quietDmLead(80)]).mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([]);
     risk.mockResolvedValue({ riskLevel: "low", reason: "" });
     const r = await runAutomationForBusiness("biz1");
     expect(send).not.toHaveBeenCalled();
@@ -1524,7 +1561,7 @@ describe("the day-2–7 handoff on Instagram and Messenger", () => {
   it("only scans DM leads that are not in a workflow", async () => {
     queueHandoff();
     await runAutomationForBusiness("biz1");
-    const handoffQuery = p.lead.findMany.mock.calls[3][0];
+    const handoffQuery = p.lead.findMany.mock.calls[4][0];
     expect(handoffQuery.where).toEqual(
       expect.objectContaining({ sequenceId: null, OR: [{ phone: { startsWith: "ig:" } }, { phone: { startsWith: "fb:" } }] })
     );

@@ -70,6 +70,8 @@ export function mapDbLeadToUiLead(dbLead: DbLead, rules: BusinessAutomationRules
     bookings: (dbLead.bookings ?? []).map((b) => ({ createdAt: b.createdAt.getTime(), scheduledAt: b.scheduledAt.getTime(), outcome: b.outcome ?? null })),
     createdAtMs: dbLead.createdAt.getTime(),
     stayingSince: dbLead.stayInTouchAt ? dbLead.stayInTouchAt.getTime() : null,
+    // Instagram or Messenger: the first follow-up goes inside Meta's window (A-304).
+    metaDm: Boolean(dbLead.phone?.startsWith("ig:") || dbLead.phone?.startsWith("fb:")),
   };
   const stage = dbLead.stage.toLowerCase() as Lead["stage"];
   const automationTier = dbLead.automationTier.toLowerCase() as Lead["automationTier"];

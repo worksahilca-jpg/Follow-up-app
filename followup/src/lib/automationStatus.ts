@@ -72,6 +72,8 @@ export interface BusinessAutomationRules {
   followUpPlans: FollowUpPlans;
   /** Business.stayInTouchDays (A-260): days between notes to a customer staying in touch. */
   stayInTouchDays?: number;
+  /** Business.timezone: when the Instagram/Messenger next-day follow-up goes (A-304) depends on the send hours there. */
+  timeZone?: string;
 }
 
 /**
@@ -93,7 +95,7 @@ export async function getBusinessAutomationRules(businessId: string): Promise<Bu
     hasAnySendChannel(businessId),
     // Defaults to held, matching the column's own `@default(true)`: if the
     // row cannot be read, the safe answer is the one that promises less.
-    prisma.business.findUnique({ where: { id: businessId }, select: { holdAllForApproval: true, followUpPlans: true, stayInTouchDays: true } }),
+    prisma.business.findUnique({ where: { id: businessId }, select: { holdAllForApproval: true, followUpPlans: true, stayInTouchDays: true, timezone: true } }),
   ]);
   const master = rows.find((r) => r.action === "auto_send");
   const unanswered = rows.find((r) => r.action === UNANSWERED_ACTION);
@@ -108,6 +110,7 @@ export async function getBusinessAutomationRules(businessId: string): Promise<Bu
     deadLeadDays: deadLead?.triggerDays ?? DEAD_LEAD_DEFAULT_DAYS,
     followUpPlans: readFollowUpPlans(business?.followUpPlans),
     stayInTouchDays: business?.stayInTouchDays ?? 30,
+    timeZone: business?.timezone ?? undefined,
   };
 }
 
@@ -408,7 +411,7 @@ export function computeAutomationStatus(
     // (followUpState, quietLeadNext): the plan's messages, then nothing
     // until the welcome back. Null when they spoke last, which the
     // unanswered branch above has already described.
-    const plan = followUpState(timeline, new Date(lead.lastContacted).getTime(), rules.followUpPlans, lead.followUp ?? {}, now.getTime(), rules.deadLeadDays);
+    const plan = followUpState(timeline, new Date(lead.lastContacted).getTime(), rules.followUpPlans, lead.followUp ?? {}, now.getTime(), rules.deadLeadDays, rules.timeZone);
     const next = quietLeadNext(plan, {
       pastWelcomeBackWait: daysSinceContact >= rules.deadLeadDays,
       welcomeBackOn: rules.deadLeadEnabled,

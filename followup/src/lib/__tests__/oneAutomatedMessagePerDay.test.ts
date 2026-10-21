@@ -122,6 +122,23 @@ describe("one automatic message a day", () => {
     expect(r.success).toBe(true);
   });
 
+  it("lets the Instagram next-day follow-up through: tomorrow is past Meta's window (A-304)", async () => {
+    p.lead.findUnique.mockResolvedValue({ id: "lead1", businessId: "biz1", name: "Maya Patel", email: null, phone: "ig:17841400000000001", optedOutAt: null, crmProvider: null, crmId: null });
+    p.message.findFirst.mockResolvedValue({ sentAt: new Date(Date.now() - 20 * 3_600_000) });
+    sentAgo(0);
+    const r = await sendFollowUpToLead("lead1", "Still happy to help.", { automated: true, trigger: "silence", channel: "instagram", metaWindowNudge: true });
+    expect(r.success).toBe(true);
+    // Without the flag, the same send waits, as every other reminder does.
+    const again = await sendFollowUpToLead("lead1", "Still happy to help.", { automated: true, trigger: "silence", channel: "instagram" });
+    expect(again.success).toBe(false);
+  });
+
+  it("the next-day exemption means nothing off Instagram and Messenger", async () => {
+    sentAgo(0);
+    const r = await sendFollowUpToLead("lead1", "Reminder two.", { automated: true, trigger: "silence", channel: "email", metaWindowNudge: true });
+    expect(r.success).toBe(false);
+  });
+
   it("waits a day rather than guess when it cannot tell", async () => {
     p.followUp.findFirst.mockRejectedValue(new Error("pool timeout"));
     const r = await sendFollowUpToLead("lead1", "Reminder two.", { automated: true, trigger: "silence", channel: "email" });

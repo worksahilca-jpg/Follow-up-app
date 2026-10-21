@@ -54,7 +54,7 @@ export function nextFor(lead: Lead, rules: BusinessAutomationRules, now: Date): 
       if (!rules.masterEnabled) return null;
       const t = timeline(lead);
       const lastContacted = new Date(lead.lastContacted).getTime();
-      const plan = followUpState(t, lastContacted, rules.followUpPlans, lead.followUp ?? {}, now.getTime(), rules.deadLeadDays);
+      const plan = followUpState(t, lastContacted, rules.followUpPlans, lead.followUp ?? {}, now.getTime(), rules.deadLeadDays, rules.timeZone);
       if (plan?.dueAt != null) return { at: new Date(plan.dueAt), what: checkInName(plan), unless: true };
       // After the plan, one welcome back, but never past the six months
       // (rule 2 on every plan) and never after they booked.

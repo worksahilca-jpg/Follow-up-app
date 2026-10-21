@@ -47,7 +47,8 @@ export function planCard(lead: Lead, rules: BusinessAutomationRules, now: Date, 
     rules.followUpPlans,
     lead.followUp ?? {},
     now.getTime(),
-    rules.deadLeadDays
+    rules.deadLeadDays,
+    rules.timeZone ?? timeZone
   );
   const plan: PlanId = state?.plan ?? (lead.followUp?.override === "long" || lead.followUp?.override === "own" ? lead.followUp.override : lead.followUp?.tier === "later" ? "long" : "fast");
   const name = PLAN_NAMES[plan];

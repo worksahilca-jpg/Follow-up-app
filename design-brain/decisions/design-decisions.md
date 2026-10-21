@@ -14735,3 +14735,15 @@ and templte formate and how they organise"*. Read with A-214 (the app's layout m
 sheet for the content, plain titles, lists grouped by day, a small stats card at home, setup as a short checklist).
 Still never its logo, name, words or assets (A-214, R-097). Next: draw it on the real app, phone and computer, before
 any code.
+
+**Drawn (2026-10-21, waiting for the founder):** scratchpad `wfo/wispr-board.png`, on the real app with the test
+account, computer and phone. Same calm look and sidebar (already Wispr's, A-214). Changes: Today shows three numbers
+top right, "since you started" (answered, booked, won; real local totals); one card at a time under the greeting; every
+list ("Needs you", "Later", Customers, Activity) in one white rounded group under a small uppercase label. Customers:
+search and one black "Add a customer" button in the title row, grouped "Your reply is ready" then "Everyone else", and
+rows in the first group no longer repeat "Your reply is ready". Activity: by day, the time on the left. Day groups are
+not used on Today (tried and dropped on 2026-10-09: Today is ordered by who needs you).
+**Departs from approved entries if built:** A-267 ("one list, no boxes") and A-282 ("no row lines") for the laptop
+and phone lists; in line with R-130 (Mac-style groups wanted) and R-131 (one template everywhere).
+**Weak:** Activity rows in the drawing are examples (the test account has none); on the phone "11:15 AM" wraps in the
+time column; the stats pill shows small numbers on a new account (1 booked, 1 won), which may read as thin.

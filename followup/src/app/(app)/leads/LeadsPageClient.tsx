@@ -15,7 +15,7 @@ import EmptyState from "@/components/EmptyState";
 import CleanupLeadsButton from "@/components/CleanupLeadsButton";
 import { motion } from "framer-motion";
 import { MOTION } from "@/lib/motion";
-import { Search, Plus, Upload, Phone, Inbox, SlidersHorizontal, X, ChevronLeft } from "lucide-react";
+import { Search, Plus, Upload, Phone, Inbox, SlidersHorizontal, X, ChevronLeft, MoreHorizontal } from "lucide-react";
 import { Initials, shortAge } from "@/components/app/canvasBits";
 
 /**
@@ -44,7 +44,7 @@ type FilterId = string;
  * dependency, no focus-trap ceremony. The menu holds three low-frequency
  * actions, not a navigation system.
  */
-function LeadsMoreMenu({ onAdd, onLogCall, onImport }: { onAdd: () => void; onLogCall: () => void; onImport: () => void }) {
+function LeadsMoreMenu({ onAdd, onLogCall, onImport, wide = false }: { onAdd: () => void; onLogCall: () => void; onImport: () => void; /** On a computer (A-307): "Add a customer" is its own black button, the rest sit behind "More". */ wide?: boolean }) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -65,15 +65,26 @@ function LeadsMoreMenu({ onAdd, onLogCall, onImport }: { onAdd: () => void; onLo
     "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-left hover:bg-paper transition-colors";
 
   return (
-    <div className="relative" onClick={(e) => e.stopPropagation()}>
+    <div className="relative flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+      {wide && (
+        <button
+          type="button"
+          onClick={onAdd}
+          className="inline-flex h-10 items-center gap-1.5 whitespace-nowrap rounded-full px-4 text-[14px] font-semibold"
+          style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
+        >
+          <Plus className="h-4 w-4" aria-hidden="true" />
+          Add a customer
+        </button>
+      )}
       <button
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-label="Add or import customers"
-        className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-line bg-card text-ink"
+        aria-label={wide ? "More: log a call, import, clean up" : "Add or import customers"}
+        className={(wide ? "h-10 w-10" : "h-11 w-11") + " inline-flex items-center justify-center rounded-full border border-line bg-card text-ink"}
       >
-        <Plus className="h-[18px] w-[18px]" />
+        {wide ? <MoreHorizontal className="h-[18px] w-[18px]" /> : <Plus className="h-[18px] w-[18px]" />}
       </button>
       {open && (
         /* No overflow-hidden. "Clean up leads" opens its own confirm panel,
@@ -84,13 +95,15 @@ function LeadsMoreMenu({ onAdd, onLogCall, onImport }: { onAdd: () => void; onLo
            is what the clipping was doing for them. */
         <div
           role="menu"
-          className="absolute right-0 z-20 mt-1 w-52 box p-1"
+          className="absolute right-0 top-full z-20 mt-1 w-52 box p-1"
           style={{ boxShadow: "var(--shadow-box-hover)" }}
         >
-          <button role="menuitem" className={item} onClick={() => { setOpen(false); onAdd(); }}>
-            <Plus className="h-4 w-4 text-ink-soft" />
-            Add a customer
-          </button>
+          {!wide && (
+            <button role="menuitem" className={item} onClick={() => { setOpen(false); onAdd(); }}>
+              <Plus className="h-4 w-4 text-ink-soft" />
+              Add a customer
+            </button>
+          )}
           <button role="menuitem" className={item} onClick={() => { setOpen(false); onLogCall(); }}>
             <Phone className="h-4 w-4 text-ink-soft" />
             Log a call
@@ -141,12 +154,11 @@ const said = (l: Lead) => {
 type Status = "needs" | "ready" | "booked" | "quiet" | "waiting";
 
 /** One customer: their name, one line, where they are in words, and (for Ready to book) a Call button beside the row. */
-function Row({ lead, href, line, meta, selected, first = false, call = false, status = null, when = null }: { lead: Lead; href: string; line: string; meta?: string | null; selected?: boolean; first?: boolean; call?: boolean; status?: Status | null; when?: string | null }) {
+function Row({ lead, href, line, meta, selected, call = false, status = null, when = null }: { lead: Lead; href: string; line: string; meta?: string | null; selected?: boolean; first?: boolean; call?: boolean; status?: Status | null; when?: string | null }) {
   return (
-    // The hairline between rows starts where the name starts (A-264): the 40px initials + the 12px gap.
+    // A row in a white group (A-307): the group draws the thin line between rows.
     <li
-      style={{ "--sep-inset": "52px" } as React.CSSProperties}
-      className={"flex min-w-0 items-center gap-2.5" + (first ? "" : " ios-sep") + (selected ? " -mx-2 rounded-[12px] bg-card-2 px-2" : "")}
+      className={"flex min-w-0 items-center gap-2.5 px-4" + (selected ? " bg-card-2" : "")}
     >
       {/* On a phone the row opens the customer's own page, sliding in (A-222, A-264); on a computer, the panel beside the list. */}
       <Link
@@ -320,18 +332,20 @@ export default function LeadsPageClient({
   // what happens next, when the booking is; otherwise their last message.
   const statusOf = (id: string): Status | null =>
     groups.needs.includes(id) ? "needs" : groups.ready.includes(id) ? "ready" : groups.booked.includes(id) ? "booked" : groups.quiet.includes(id) ? "quiet" : groups.waiting.includes(id) ? "waiting" : null;
-  const rowFor = (lead: Lead, where: Show | null, first = false) => {
+  const rowFor = (lead: Lead, where: Show | null, sayStatus = true) => {
     const last = lastOf(lead);
     const line = where && where !== "all" && where !== "needs" ? (lines[lead.id] ?? said(lead)) : said(lead);
     const meta = where === "needs" || where === "all" || !where ? (last ? shortAge(last.date) : null) : null;
     // The one list and search (A-267): their last words, then where they are in words.
-    const status = where ? null : statusOf(lead.id);
-    const call = where === "ready" || status === "ready";
-    return <Row key={lead.id} lead={lead} href={rowHref(lead.id)} line={line} meta={meta} selected={lead.id === openId} first={first} call={call} status={status} when={status === "booked" ? lines[lead.id] ?? null : null} />;
+    const state = where ? null : statusOf(lead.id);
+    const call = where === "ready" || state === "ready";
+    // A row in a labelled group doesn't repeat the label (A-307): "Your reply is ready" says it once.
+    const status = sayStatus ? state : null;
+    return <Row key={lead.id} lead={lead} href={rowHref(lead.id)} line={line} meta={meta} selected={lead.id === openId} call={call} status={status} when={status === "booked" ? lines[lead.id] ?? null : null} />;
   };
 
-  const searchBox = (
-    <div className="relative mt-3">
+  const searchBox = (where = "mt-3") => (
+    <div className={"relative " + where}>
       <Search className="pointer-events-none absolute left-3.5 top-1/2 h-[17px] w-[17px] -translate-y-1/2 text-ink-faint" aria-hidden="true" />
       {/* 16px, so a phone doesn't zoom in when the box takes focus. */}
       <input
@@ -384,7 +398,7 @@ export default function LeadsPageClient({
         </div>
         {SUB[show] && <p className="mt-0.5 text-[13px] text-ink-faint">{SUB[show]}</p>}
         {forms}
-        {searchBox}
+        {searchBox()}
 
         {show === "all" && (
           <>
@@ -474,7 +488,7 @@ export default function LeadsPageClient({
         )}
 
         {filtered.length > 0 && (
-          <ul className="-mx-2 mt-3 rounded-[16px] border border-line bg-card px-3 py-1 sm:mx-0">{filtered.map((l, i) => rowFor(l, show, i === 0))}</ul>
+          <ul className="list-group mt-3">{filtered.map((l) => rowFor(l, show))}</ul>
         )}
         {filtered.length === 0 && leads.length > 0 && (
           <p className="py-8 text-center text-[14px] text-ink-soft">
@@ -500,42 +514,61 @@ export default function LeadsPageClient({
     );
   }
 
-  // ---- Everyone, as one list (A-267; were groups with counts, A-220). ----
-  // Reply ready first (in Today's order), then ready to book, then everyone else, newest message first.
+  // ---- Everyone (A-267), in labelled white groups (A-307): reply ready first (in Today's order), then ready to book,
+  // then everyone else, newest message first. Still no counts. ----
   const firstIds = [...groups.needs, ...groups.ready.filter((id) => !groups.needs.includes(id))];
   const rest = inGroup.filter((l) => !firstIds.includes(l.id));
   const everyone = [...firstIds.map((id) => byId.get(id)).filter((l): l is Lead => Boolean(l)), ...rest];
   const listed = everyone.slice(0, LIST_MAX);
+  const sections: { label: string; leads: Lead[]; sayStatus: boolean }[] = [
+    { label: "Your reply is ready", leads: listed.filter((l) => groups.needs.includes(l.id)), sayStatus: false },
+    { label: "Ready to book", leads: listed.filter((l) => !groups.needs.includes(l.id) && groups.ready.includes(l.id)), sayStatus: false },
+    { label: "Everyone else", leads: listed.filter((l) => !firstIds.includes(l.id)), sayStatus: true },
+  ].filter((g) => g.leads.length > 0);
+  // With only one group there is nothing to tell apart: no label above it.
+  const oneGroup = sections.length === 1;
 
   return (
     <div className="max-w-[720px]">
-      {/* The title and one + button (A-267), then search, then everyone. */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
+      {/* The title, one line, search and Add (A-307). On a computer search and "Add a customer" sit beside the title;
+          on a phone the one + (A-267), then the line, then search across the width. */}
+      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+        <div className="mr-auto min-w-0">
           <ScrollTitle title="Customers" />
           <h1 className="title-serif ios-title1">Customers</h1>
         </div>
-        <LeadsMoreMenu onAdd={() => setShowAddLead(true)} onLogCall={() => setShowLogCall(true)} onImport={() => setShowImport(true)} />
+        <div className="order-2 lg:order-3">
+          <div className="lg:hidden">
+            <LeadsMoreMenu onAdd={() => setShowAddLead(true)} onLogCall={() => setShowLogCall(true)} onImport={() => setShowImport(true)} />
+          </div>
+          <div className="hidden lg:block">
+            <LeadsMoreMenu wide onAdd={() => setShowAddLead(true)} onLogCall={() => setShowLogCall(true)} onImport={() => setShowImport(true)} />
+          </div>
+        </div>
+        <p className="order-3 basis-full text-[15px] text-ink-soft lg:order-4">All your customers in one place.</p>
+        {leads.length > 0 && searchBox("order-4 mt-2.5 basis-full lg:order-2 lg:mt-0 lg:basis-[320px]")}
       </div>
       {forms}
-      {leads.length > 0 && searchBox}
 
       {leads.length > 0 &&
         (query.trim() ? (
-          // Searching looks through everyone, as one list.
-          <>
-            <p className="mt-4 px-1 text-[12.5px] text-ink-faint">
+          // Searching looks through everyone, as one group.
+          <section className="mt-6">
+            <p className="group-label mb-2 px-1">
               {filtered.length} {filtered.length === 1 ? "customer" : "customers"} found
             </p>
-            {filtered.length > 0 && <ul className="mt-1">{filtered.map((l, i) => rowFor(l, null, i === 0))}</ul>}
-          </>
+            {filtered.length > 0 && <ul className="list-group">{filtered.map((l) => rowFor(l, null))}</ul>}
+          </section>
         ) : (
           <>
-            <ul aria-label="Everyone" className="mt-2">
-              {listed.map((l, i) => rowFor(l, null, i === 0))}
-            </ul>
+            {sections.map((g) => (
+              <section key={g.label} aria-label={g.label} className="mt-6">
+                {!oneGroup && <h2 className="group-label mb-2 px-1">{g.label}</h2>}
+                <ul className="list-group">{g.leads.map((l) => rowFor(l, null, oneGroup || g.sayStatus))}</ul>
+              </section>
+            ))}
             {everyone.length > listed.length && (
-              <Link href="/leads?show=all" className="mt-1 flex min-h-11 items-center text-[13.5px] text-ink-soft underline underline-offset-[3px]">
+              <Link href="/leads?show=all" className="mt-2 flex min-h-11 items-center text-[13.5px] text-ink-soft underline underline-offset-[3px]">
                 Show everyone ({everyone.length})
               </Link>
             )}

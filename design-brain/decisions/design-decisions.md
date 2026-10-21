@@ -14747,3 +14747,30 @@ not used on Today (tried and dropped on 2026-10-09: Today is ordered by who need
 and phone lists; in line with R-130 (Mac-style groups wanted) and R-131 (one template everywhere).
 **Weak:** Activity rows in the drawing are examples (the test account has none); on the phone "11:15 AM" wraps in the
 time column; the stats pill shows small numbers on a new account (1 booked, 1 won), which may read as thin.
+
+## 2026-10-21 — The app organised the Wispr way (A-307), built
+
+**Founder:** *"yes build it"* to `wfo/wispr-board.png`.
+
+**How it works:** one list pattern for the whole app: `.list-group` (white, 1px line, 14px corners, a thin line
+between rows) under `.group-label` (12px, uppercase, faint), in `globals.css`. Today: `SinceStartedPill` (computer top
+right, phone under the greeting) from `src/lib/sinceStarted.ts` (customers answered, bookings not cancelled, customers
+won; never the practice customer; hidden while all three are 0); "Needs you" and "Later" in groups (`DayHeading`
+became the small label); one card at a time: while "Your last 90 days" shows, no question, habit card, first-send
+note or alerts card stands beside it (the alerts card still opens from the phone link). Customers: on a computer
+search (320px) and a black "Add a customer" beside the title, with Log a call, Import and Clean up behind a "More"
+button; the phone keeps its one +. Groups "Your reply is ready", "Ready to book", "Everyone else"; a row in the first
+two doesn't repeat its group's status; a single group has no label; searching shows one "N customers found" group.
+Activity: each day a group, the time in a 66px column on the left, no initials.
+
+**Checked:** computer and phone on the local app, 31 of 31 (numbers beside the greeting, labels, groups, no sideways
+scroll, search beside the title, More menu, Add opens the form, search result group, Activity time column on the test
+business that has history). 4,485 tests, typecheck, lint, build.
+
+**Weak points:**
+- "More" (the ⋯ button) wasn't in the drawing; it keeps Log a call, Import and Clean up one click away on a computer.
+- The numbers count all time; on a new account they stay small for a while ("1 booked").
+- "Answered" counts anyone who got a message from the business through FollowUp, including the first automatic
+  "thanks, I'll get back to you" note, not only full replies.
+- Today on a phone: the list and the first-days card are 12px from the edge, the numbers and greeting 20px (the
+  approved "cards a little wider than the text").

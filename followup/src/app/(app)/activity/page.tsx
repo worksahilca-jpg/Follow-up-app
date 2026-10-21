@@ -1,6 +1,5 @@
 import Link from "next/link";
 import ScrollTitle from "@/components/app/ScrollTitle";
-import { Initials } from "@/components/app/canvasBits";
 import { getSessionContext } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { getActivityFeed, type ActivityItem } from "@/lib/activity";
@@ -12,7 +11,8 @@ export const dynamic = "force-dynamic";
  * Activity (A-256, simpler in A-270): a calm record of what FollowUp did on its own, newest first, by day. Nothing on
  * it needs the owner: replies waiting for their OK and problems to fix are on Today (research, 2026-10-16: every
  * product studied keeps "needs you" apart from history; repeats are what make people stop looking, R-116). Several
- * replies sent on one day fold into one line that opens to the list.
+ * replies sent on one day fold into one line that opens to the list. Each day is one white group under a small label,
+ * the time in a column on the left (A-307, the way Wispr Flow lays out its history).
  */
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -65,25 +65,23 @@ export default async function ActivityPage() {
     } else g.rows.push({ kind: "one", item });
   }
 
+  // The time sits in its own column on the left (A-307), so a day reads down like a log.
+  const timeCol = (iso: string | null) => (
+    <span className="w-[66px] shrink-0 whitespace-nowrap pt-0.5 text-[12.5px] tabular-nums text-ink-faint sm:text-[13px]">{iso ? timeOf(iso) : ""}</span>
+  );
   const person = (item: ActivityItem, first: boolean, quote: boolean) => {
     const body = (
       <>
-        {item.leadName && <Initials name={item.leadName} size={40} />}
+        {timeCol(item.occurredAt)}
         <span className="min-w-0 flex-1">
           {item.leadName ? (
             <>
-              <span className="flex justify-between gap-2.5">
-                <span className="text-[15.5px] font-semibold">{item.leadName}</span>
-                <span className="whitespace-nowrap text-[13px] tabular-nums text-ink-faint">{timeOf(item.occurredAt)}</span>
-              </span>
+              <span className="block text-[15px] font-semibold">{item.leadName}</span>
               <span className="mt-px block text-[14px] leading-snug text-ink-soft">{activityLine(item)}</span>
             </>
           ) : (
             // About the account, not a customer (an inbox lost): the sentence is the row.
-            <span className="flex justify-between gap-2.5">
-              <span className="text-[15px] leading-snug">{activityLine(item)}</span>
-              <span className="whitespace-nowrap text-[13px] tabular-nums text-ink-faint">{timeOf(item.occurredAt)}</span>
-            </span>
+            <span className="block text-[15px] leading-snug">{activityLine(item)}</span>
           )}
           {quote && item.detail && (
             <span className="mt-0.5 line-clamp-2 block text-[14px] leading-snug text-ink-soft">“{item.detail.replace(/\s+/g, " ").trim()}”</span>
@@ -91,7 +89,8 @@ export default async function ActivityPage() {
         </span>
       </>
     );
-    const cls = "flex gap-3 py-3 " + (first ? "" : "border-t border-line");
+    // The day's group draws the line between its rows; rows folded under "sent N replies" draw their own.
+    const cls = "flex gap-3 px-4 py-3 " + (first ? "" : "border-t border-line");
     const href = item.leadId ? `/leads/${item.leadId}` : /\breconnect\b/i.test(item.message) ? "/settings#connections" : null;
     return href ? (
       <Link key={item.id} href={href} data-nav="push" className={cls}>
@@ -124,15 +123,17 @@ export default async function ActivityPage() {
       ) : (
         <>
           {groups.map((g) => (
-            <section key={g.day} className="mt-5">
-              <h2 className="text-[14px] font-semibold">{g.day}</h2>
-              {g.rows.map((r, i) => {
-                if (r.kind === "one" || r.items.length === 1) return person(r.kind === "one" ? r.item : r.items[0], i === 0, r.kind !== "one" || r.item.type === "automated_send");
+            <section key={g.day} className="mt-6">
+              <h2 className="group-label mb-2 px-1">{g.day}</h2>
+              <div className="list-group">
+              {g.rows.map((r) => {
+                if (r.kind === "one" || r.items.length === 1) return person(r.kind === "one" ? r.item : r.items[0], true, r.kind !== "one" || r.item.type === "automated_send");
                 // Several replies on one day: one line that opens to them.
                 return (
-                  <details key={r.items[0].id} className={"group " + (i === 0 ? "" : "border-t border-line")}>
-                    <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 py-3 [&::-webkit-details-marker]:hidden">
-                      <span className="min-w-0">
+                  <details key={r.items[0].id} className="group">
+                    <summary className="flex min-h-11 cursor-pointer list-none items-start gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden">
+                      {timeCol(r.items[0].occurredAt)}
+                      <span className="min-w-0 flex-1">
                         <span className="block text-[15.5px] font-semibold">FollowUp sent {r.items.length} replies on its own</span>
                         <span className="mt-px block text-[14px] text-ink-soft">
                           To {namesLine([...new Map(r.items.map((x) => [x.leadId ?? x.id, x.leadName ?? "someone"])).values()])}
@@ -141,10 +142,11 @@ export default async function ActivityPage() {
                       <span aria-hidden="true" className="text-[13px] text-ink-faint group-open:hidden">Show</span>
                       <span aria-hidden="true" className="hidden text-[13px] text-ink-faint group-open:inline">Hide</span>
                     </summary>
-                    <div className="pb-1">{r.items.map((x, j) => person(x, j === 0, true))}</div>
+                    <div className="border-t border-line pb-1">{r.items.map((x, j) => person(x, j === 0, true))}</div>
                   </details>
                 );
               })}
+              </div>
             </section>
           ))}
           {/* Never imply completeness the page doesn't have: the feed keeps the most recent events only. */}

@@ -797,6 +797,30 @@ main[data-swipe="leaving"] {
   }
 }
 
+/* A list in one white rounded group under a small uppercase label (A-307, the way Wispr Flow organises its lists):
+   thin lines between rows, a row pointed at fills edge to edge. Used on Today (Needs you, Later), Customers and
+   Activity. Something that belongs to the row above it (a card opened in place) says so with data-attached, and no
+   line is drawn between them. */
+.list-group {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.list-group > * + *:not([data-attached]) {
+  box-shadow: inset 0 1px 0 var(--line);
+}
+.list-group .ios-sep {
+  border-radius: 0;
+}
+.group-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
 /* The page's title moves into the phone's top bar once it scrolls away
    (A-264, iOS large titles): Sidebar.tsx shows it, ScrollTitle.tsx watches. */
 .bar-title {

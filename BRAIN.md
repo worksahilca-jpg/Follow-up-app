@@ -79,8 +79,11 @@ a booked call or visit; the owner closes.
   Today's own waiting list, so the two always match. Admin only, within 14 days of connecting. Migration:
   `Business.inboxSummarySeenAt`.
 
-- **Next to draw:** the whole app organised like Wispr Flow (sidebar, one sheet, lists grouped by day, a stats card at
-  home), founder's ask Oct 21. Draw first, build after his yes.
+- **The app organised the Wispr way (A-307, built Oct 21, same PR):** Today shows "Since you started · answered ·
+  booked · won" top right (under the greeting on a phone) and one card at a time; every list (Needs you, Later,
+  Customers, Activity) is one white group under a small uppercase label; Customers has search and a black "Add a
+  customer" beside the title on a computer, grouped "Your reply is ready" / "Ready to book" / "Everyone else";
+  Activity shows each day with the time on the left.
 
 - **Demo realtor account (Oct 21):** nobody could test, so we test ourselves: `design-brain/workflows/demo-realtor-test.md`
   (setup + 16 tests). Sahil connects a spare Gmail; FollowUp reads 90 days and sends nothing on its own.

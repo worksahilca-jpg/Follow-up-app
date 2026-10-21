@@ -31,7 +31,7 @@ export default function InboxSummaryCard({ summary, provider }: { summary: Inbox
 
   if (gone) return null;
   return (
-    <section className="mt-3.5 box p-4 sm:p-5 max-w-[760px]" aria-labelledby="inbox-summary">
+    <section className="-mx-2 mt-3.5 box p-4 sm:mx-0 sm:p-5 max-w-[760px]" aria-labelledby="inbox-summary">
       <p className="text-[12.5px] text-ink-soft">Your last 90 days</p>
       <h2 id="inbox-summary" className="mt-1 text-[19px] font-semibold leading-snug tracking-[-0.01em]">
         {words.heading}

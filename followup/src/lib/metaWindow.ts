@@ -56,6 +56,18 @@ export const META_DM_WINDOW_HOURS = 24;
 export const UNANSWERED_META_DM_MAX_HOURS = 20;
 
 /**
+ * The next-day follow-up on Instagram and Messenger (A-304, founder 2026-10-21: "build the instagram day 2 follow
+ * up"). A customer who went quiet after our reply can only be written to while Meta's window is open, so the plan's
+ * first follow-up goes inside it: aimed at 20 hours after their last message, never later than 23 (the run is hourly
+ * and a send can be held), and never sooner than 4 hours after our own reply. Inside the send hours; when 20 hours
+ * lands at night, the last evening hour before it instead. The one exception to "at most one message a day": on
+ * these two channels it is that day or not at all.
+ */
+export const META_NUDGE_AIM_HOURS = 20;
+export const META_NUDGE_LATEST_HOURS = 23;
+export const META_NUDGE_GAP_HOURS = 4;
+
+/**
  * How long after the lead's last message a HUMAN may still reply, under
  * Meta's human-agent allowance: 7 days, measured from the person's last
  * message, and nothing the business sends restarts it (api-facts §B4,

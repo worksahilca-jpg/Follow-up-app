@@ -5281,3 +5281,55 @@ track, and back to hot when keen again, from his chats and his GoHighLevel call 
   for them").** In GoHighLevel, a move (tier or booking) moves the customer's existing card (opportunity), wherever it
   is: the one already in that pipeline first, then an open one, then any; a card in another pipeline moves across.
   Only a customer with no card at all gets a new one.
+
+## A-304
+**Instagram and Messenger: the next-day follow-up goes inside Meta's 24 hours (2026-10-21).** The founder: *"build the
+instagram day 2 follow up"*. Meta lets a business message someone on Instagram or Messenger only within 24 hours of
+their last message (after that, 7 days, and only a person may send, A-161 / `draftDmHandoffs`). A plan's first
+follow-up a full day after our reply (A-245) always landed after that window, so on a DM the plan never started.
+- **When:** plan step 1 for an Instagram or Messenger customer who went quiet after our reply is aimed at **20 hours
+  after their last message**, inside the send hours (8am to 8pm, the owner's time zone), with an hour to spare so the
+  hourly run reaches it. Never later than 23 hours after their message, never sooner than 4 hours after our reply.
+  If no time fits (we answered too late in their window), nothing is sent and the day-2–7 owner draft covers it.
+- **Only once, and only when it is fair:** only plan step 1, only if they have not written since our reply, never
+  after they tapped "Not now", said no, or stopped, never while a workflow runs, never if the CRM is following up.
+  From step 2 the plan carries on as drawn (day 3, 7, 14, 30).
+- **The one exception to "at most one a day" (rule 3 of A-245 and the one-a-day send rule).** If FollowUp already
+  replied earlier the same day, the next-day message still goes, as an owner's workflow step does: tomorrow is past
+  Meta's window, so "waits until tomorrow" would mean never. Only on Instagram and Messenger.
+- **When it waits for the owner** (Assisted with a hold, or "Hold everything"), the reason says the deadline:
+  "Priya went quiet on Instagram after your reply, and Instagram closes the chat at 3:00 PM. Send this before then;
+  after it, only you can write." The time is the owner's own.
+- **No new screen.** It shows where every plan step shows (Coming up, the customer's plan card).
+
+## A-305
+**Which calendar the owner uses, asked once; until FollowUp can book into it, ours or Google's (2026-10-21).** The
+founder: *"for booking, we'll be asking them which calendar they use. Otherwise, they can use ours or Google's"*, then
+*"coll build it"* to the drawing (scratchpad `calendar/calendar-board.png`: phone Today twice, Settings phone and
+computer).
+- **The question, on Today:** the one-question card (A-101). Label "One quick question", title "Which calendar do you
+  book showings in?", one line "So the times FollowUp offers are times you're really free, and bookings land where you
+  look." The calendars as pills (Google Calendar, Outlook, GoHighLevel, BrokerBay, ShowingTime, Calendly, Something
+  else, I don't use one), and a quiet "Not now".
+- **When FollowUp can't book into the one picked yet** (e.g. BrokerBay): the same card turns into "FollowUp can't book
+  into BrokerBay yet." / "Until it can, where should customers book?" with two rows: **FollowUp's calendar** ("Your
+  booking hours. Nothing to connect.") and **My Google Calendar** ("Checks when you're busy, and adds each booking."),
+  then "We've noted BrokerBay. You can change this in Settings."
+- **Settings › Booking calendar:** a "Your calendar" row with its name and **Change**, a footnote "FollowUp can't book
+  into BrokerBay yet, so customers book in the one you pick below.", and the existing choice retitled **"Where
+  customers book"**.
+- **Decided while building (2026-10-21; the founder can change any of them):**
+  - Order on Today: after "what does your business do?" and, for a realtor, "what do you ask a new buyer?" (A-302);
+    before the trade's questions. Asked once; "Not now" means it isn't asked on Today again (Settings can still set it).
+  - BrokerBay and ShowingTime are offered only to realtors; everyone else is asked "Which calendar do you book
+    meetings in?".
+  - Picking **Google Calendar** with Gmail connected sets "Where customers book" to it straight away ("Saved.
+    Customers book straight into your Google Calendar."). Without Gmail: "Saved. Connect Gmail and FollowUp books
+    straight into your Google Calendar. Until then, customers book in FollowUp's calendar." with a "Connect Gmail" link.
+  - Picking **I don't use one** sets FollowUp's calendar ("Saved. Customers book in FollowUp's calendar, in your
+    booking hours.").
+  - In the "can't book into it yet" step, without Gmail the Google row reads "Connect Gmail first, then pick this." and
+    opens Connected apps. The lines under both rows wrap on a phone, never cut off.
+  - Settings with nothing chosen: "Not chosen yet" with **Choose**, and "Tell FollowUp which calendar you use, so
+    bookings land where you look." Change opens the same pills in place, the current one filled black.
+  - Only the calendar's name is kept (Business.calendarUsed); FollowUp connects to nothing new.

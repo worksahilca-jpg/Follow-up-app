@@ -12,6 +12,8 @@ import {
   timeOptions,
   type BookingHours,
 } from "@/lib/bookingHours";
+import { GROUP, ListRow } from "@/components/app/IosList";
+import { calendarFootnote, calendarLabel, calendarsFor, type CalendarKey } from "@/lib/calendarUsed";
 
 type Source = "followup" | "google";
 
@@ -29,6 +31,10 @@ type Source = "followup" | "google";
  * can book — days, hours and the business's time zone. Each change saves
  * on its own, the way the two options above always have; the summary
  * line restates the choice in words with a quiet "Saved".
+ *
+ * Above them, since A-305 (founder, 2026-10-21): "Your calendar", the one the
+ * owner says they book in, with Change, and a line saying whether FollowUp can
+ * book into it. The two options are "Where customers book" until it can.
  */
 export default function BookingCalendarConfig() {
   const [loading, setLoading] = useState(true);
@@ -36,6 +42,10 @@ export default function BookingCalendarConfig() {
   const [gmailConnected, setGmailConnected] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [calendarUsed, setCalendarUsed] = useState<CalendarKey | null>(null);
+  const [realtor, setRealtor] = useState(false);
+  const [picking, setPicking] = useState(false);
+  const [calendarError, setCalendarError] = useState<string | null>(null);
 
   const [hours, setHours] = useState<BookingHours>(DEFAULT_BOOKING_HOURS);
   const [timezone, setTimezone] = useState("America/New_York");
@@ -52,10 +62,12 @@ export default function BookingCalendarConfig() {
     Promise.all([
       fetch("/api/business/booking-source")
         .then((r) => r.json())
-        .then((data: { success: boolean; bookingCalendarSource?: Source; gmailConnected?: boolean }) => {
+        .then((data: { success: boolean; bookingCalendarSource?: Source; gmailConnected?: boolean; calendarUsed?: CalendarKey | null; realtor?: boolean }) => {
           if (data.success) {
             setSource(data.bookingCalendarSource ?? "followup");
             setGmailConnected(!!data.gmailConnected);
+            setCalendarUsed(data.calendarUsed ?? null);
+            setRealtor(!!data.realtor);
           }
         }),
       fetch("/api/business/booking-hours")
@@ -96,6 +108,33 @@ export default function BookingCalendarConfig() {
       } else {
         setSaveError(data.message ?? "Couldn't save — try again.");
       }
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  /** "Your calendar" › Change (A-305): the same answer as the question on Today, from the same list. */
+  async function pickCalendar(key: CalendarKey) {
+    if (saving) return;
+    setSaving(true);
+    setCalendarError(null);
+    try {
+      const res = await fetch("/api/business/calendar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ calendar: key }),
+      });
+      const data: { success: boolean; message?: string; gmailConnected?: boolean; bookingCalendarSource?: Source } = await res.json();
+      if (!data.success) {
+        setCalendarError(data.message ?? "Couldn't save — try again.");
+        return;
+      }
+      setCalendarUsed(key);
+      setGmailConnected(!!data.gmailConnected);
+      if (data.bookingCalendarSource) setSource(data.bookingCalendarSource);
+      setPicking(false);
+    } catch {
+      setCalendarError("Couldn't save — check your connection and try again.");
     } finally {
       setSaving(false);
     }
@@ -147,17 +186,57 @@ export default function BookingCalendarConfig() {
   const times = timeOptions();
   const selectStyle = { borderColor: "var(--line)", backgroundColor: "var(--card)", color: "var(--ink)" };
   const timezoneListed = TIME_ZONES.some((z) => z.value === timezone);
+  const footnote = calendarFootnote(calendarUsed, source, gmailConnected);
 
   return (
-    <div className="box p-5">
+    <>
+    <p className="mx-1 mb-2 text-[14px] text-ink-faint">Your calendar</p>
+    <div className={GROUP}>
+      <ListRow
+        first
+        label={calendarUsed ? calendarLabel(calendarUsed) : "Not chosen yet"}
+        trailing={<span className="shrink-0 text-[15px] text-ink-soft">{picking ? "Done" : calendarUsed ? "Change" : "Choose"}</span>}
+        chevron={false}
+        onClick={() => setPicking((p) => !p)}
+      />
+    </div>
+    {picking && (
+      <div role="group" aria-label="Which calendar you book in" className="mx-1 mt-3 flex flex-wrap gap-2">
+        {calendarsFor(realtor).map((c) => {
+          const on = c.key === calendarUsed;
+          return (
+            <button
+              key={c.key}
+              type="button"
+              aria-pressed={on}
+              disabled={saving}
+              onClick={() => void pickCalendar(c.key)}
+              className={
+                "inline-flex min-h-11 items-center rounded-full border px-4 text-[15px] disabled:opacity-60 " +
+                (on ? "border-ink bg-ink text-paper" : "border-line-strong bg-card text-ink hover:bg-card-2")
+              }
+            >
+              {c.label}
+            </button>
+          );
+        })}
+      </div>
+    )}
+    {calendarError && (
+      <p className="mx-1 mt-2 text-[13px]" role="alert" style={{ color: "var(--coral)" }}>
+        {calendarError}
+      </p>
+    )}
+    {footnote && <p className="mx-1 mt-2 text-[13.5px] leading-[1.45] text-ink-faint">{footnote}</p>}
+    <div className="box p-5 mt-5">
       <div className="flex items-start gap-3">
         <div className="h-9 w-9 rounded-[10px] flex items-center justify-center shrink-0" style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}>
           <Calendar className="h-4 w-4" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium">Where should FollowUp book meetings?</p>
+          <p className="text-sm font-medium">Where customers book</p>
           <p className="text-[13px] text-ink-soft mt-1">
-            This decides what a lead sees as open on their booking link, and where a confirmed booking actually goes.
+            This decides what a customer sees as open on their booking link, and where a confirmed booking actually goes.
           </p>
 
           {saveError && (
@@ -192,7 +271,7 @@ export default function BookingCalendarConfig() {
               </span>
               <span className="block text-ink-soft mt-0.5">
                 {gmailConnected
-                  ? "Your booking hours below, minus anything already on your calendar — a lead can never book over a meeting you already have. Confirmed bookings land directly on it."
+                  ? "Your booking hours below, minus anything already on your calendar — a customer can never book over a meeting you already have. Confirmed bookings land directly on it."
                   : "Requires Gmail connected above."}
               </span>
             </button>
@@ -296,5 +375,6 @@ export default function BookingCalendarConfig() {
         </div>
       </div>
     </div>
+    </>
   );
 }

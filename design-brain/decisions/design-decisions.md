@@ -14664,3 +14664,45 @@ already did); without it, the window says what to turn on instead of a silent "N
   with none. Before, a customer whose card was in another pipeline got a second card. Weak point: which card moves
   when he has several is a rule (same pipeline, then open, then any), not his choice; GoHighLevel's `pipelineId` on
   an update is from its SDK, not yet seen on a real account.
+
+## 2026-10-21 — The Instagram next-day follow-up (A-304), built
+
+**Why:** Meta allows an automated Instagram or Messenger message only within 24 hours of the customer's last one. The
+Fast plan's first follow-up came a day after our reply, so on a DM it was always too late and every quiet DM customer
+waited for the owner's day-2–7 draft. The research playbook (`reports/FollowUp realtor reply playbook.md`, outside the
+repo) says the same: an instant reply, then one DM nudge inside the 24 hours.
+
+**How it works:** `metaNudgeAt` (followUpPlans.ts) picks the time: 20 hours after their last message, moved into the
+send hours with an hour of headroom, between 4 hours after our reply and 23 hours after theirs. The engine has a fifth
+query for DM customers our reply reached 4 to 24 hours ago (the quiet query only looks a day back), claims them with a
+4-hour recheck instead of 20, and sends with `metaWindowNudge`, which the sender honours only on Instagram and
+Messenger to skip the one-a-day rule. Held drafts say when Instagram closes the chat.
+
+**Weak points:**
+- The 20-hour aim is a judgment, not a measured best time; nobody has measured reply rates for it yet.
+- A customer whose message came at night may get the next-day message in the evening of the same day (e.g. wrote at
+  1am, answered at 8am, nudged at 7pm), which can feel soon. It is still one message and inside the window.
+- Stay-in-touch and the rule example on Settings still show times in New York time when no time zone is passed
+  (unchanged; they don't show the next-day step).
+- If the hourly run is down for the one hour that fits, the moment passes and the owner's day-2–7 draft takes over.
+
+## 2026-10-21 — Which calendar the owner uses (A-305), built
+
+**Why:** the founder: "for booking, we'll be asking them which calendar they use. Otherwise, they can use ours or
+Google's." Realtors book showings in BrokerBay or ShowingTime; FollowUp can only book into its own calendar or Google
+Calendar today. Asking tells the owner honestly where customers will book, and tells us which calendars to build next.
+
+**How it works:** one question on Today (A-101 card, pills instead of a text box). The answer is saved as
+`Business.calendarUsed` (a key, not free text) by `POST /api/business/calendar` (admin only, rate-limited, audited
+with the key only). Google with Gmail, or "I don't use one", sets `bookingCalendarSource` at once; anything else shows
+the drawn "can't book into it yet" step, whose two rows use the existing booking-source route. Settings › Your free
+hours shows "Your calendar" with Change above "Where customers book".
+
+**Weak points:**
+- The pill list is our guess at the common calendars (Google, Outlook, GoHighLevel, BrokerBay, ShowingTime, Calendly);
+  nothing measured. "Something else" doesn't ask which one, so we learn less from it.
+- GoHighLevel has its own calendar and FollowUp already talks to GoHighLevel, so an owner may expect it to book there.
+  It can't yet; the card says so plainly.
+- If the owner leaves the "can't book into it yet" step without picking, nothing changes: customers keep booking in
+  whatever was set (FollowUp's calendar by default). The card doesn't come back to ask.
+- No count of answers on the admin page yet; a read-only database count can answer "which calendars do owners use?".

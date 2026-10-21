@@ -71,18 +71,30 @@ a booked call or visit; the owner closes.
 
 ## Where we are (update at the end of every task)
 
-**Last updated: 2026-10-20**
+**Last updated: 2026-10-21**
 
-- **GoHighLevel on its own (A-303, built, PR open):** Ready / Warm / Later move a customer to the owner's own stage,
+- **Instagram next-day follow-up (A-304, built Oct 21, PR open):** on Instagram and Messenger the plan's first
+  follow-up now goes about 20 hours after the customer's last message, inside the send hours and before Meta's 24-hour
+  window closes (it used to come a day after our reply, always too late). Only once, never after "Not now", no or
+  stop. It is the one exception to "one a day". A held draft says when Instagram closes the chat. After 24 hours the
+  owner's day-2–7 draft takes over, as before.
+
+- **Which calendar the owner uses (A-305, built Oct 21, same PR):** Today asks once "Which calendar do you book
+  showings in?" with pills. Google (with Gmail) or "I don't use one" sets where customers book at once; any other
+  (BrokerBay, ShowingTime, Outlook, GoHighLevel, Calendly, something else) says "FollowUp can't book into it yet" and
+  asks: FollowUp's calendar or My Google Calendar. Settings › Your free hours shows "Your calendar" with Change. Only
+  the name is kept; privacy page updated. Migration: `Business.calendarUsed`.
+
+- **GoHighLevel on its own (A-303, LIVE):** Ready / Warm / Later move a customer to the owner's own stage,
   and back, once per change, with the reason on record; never while a meeting is booked. "Read my notes" (on) reads
   the owner's own GoHighLevel notes, like call notes, every 2 hours, 10 customers per poll, inside the AI ceilings;
   FollowUp's own notes are never read and nothing is sent from a note. Privacy page updated (GoHighLevel, notes, stage
   moves). The GoHighLevel key must also have **Opportunities**: the connect text says so, and the CRM window says what
   to turn on when it can't see the stages. LIVE (PR #574 → de37e5d), 5 columns confirmed. **Bug review fixes** (PR
-  after #574): no moves for stop / no / won / lost / CRM do-not-contact / GoHighLevel bookings; a CRM hiccup no longer
+  #575): no moves for stop / no / won / lost / CRM do-not-contact / GoHighLevel bookings; a CRM hiccup no longer
   uses up a move; notes skip off-limits customers, claimed per customer, 2-minute budget. Since Sahil's "yes do it":
   tier moves go only to a stage he picked (rows say "Choose" until then). Deal cards: a move moves the customer's
-  existing card wherever it is; only someone with no card gets a new one (Sahil, Oct 20).
+  existing card wherever it is; only someone with no card gets a new one (Sahil, Oct 20; PR #576, live).
 
 - **Training happens in the practice room** (artifact "FollowUp Practice Room",
   https://claude.ai/artifact/WSiRYwcnJTD4Y3ZbHBPadR): Sahil plays the customer, it answers as FollowUp (on his Claude
@@ -105,8 +117,7 @@ a booked call or visit; the owner closes.
   - Price, offers and paperwork go to the agent.
   - A lender is offered only if it's in the owner's facts.
   - Two questions per message and the A-245 plans are unchanged (founder: "yes go with both").
-  - Not built: the day-1 follow-up in the DM before Meta's 24-hour window closes (the plan engine's timing; ask
-    first).
+  - The next-day follow-up in the DM before Meta's 24-hour window closes: built (A-304, Oct 21).
 - **Paused (not committed, copy in the scratchpad `wip-memory/`):** every kind remembers which plan questions it
   asked, the same checklist real estate has (no decision number yet; the "A-299" it was first called is now the
   playbook above).
@@ -118,12 +129,13 @@ a booked call or visit; the owner closes.
   - GoHighLevel needs a trial or paid plan (Free doesn't read it).
 - **Setup asks to turn off GoHighLevel's auto-reply (A-301, Oct 19):** a short screen right after GoHighLevel
   connects. Its menu names still need checking on a live account. "Later" has no second home yet.
-- **The owner teaches FollowUp what to ask (A-302, built Oct 20, in a PR waiting for "merge"):** a realtor is asked
+- **The owner teaches FollowUp what to ask (A-302, LIVE: PR #573 → a147d4a):** a realtor is asked
   on Today "What do you ask a new buyer, and in what order?", and FollowUp asks a buyer his questions in his order
   (Settings › Sending replies › What FollowUp asks). Status and other personal things are kept for his call, never
   asked in writing. Weak points in design-decisions (Oct 20). After the merge: try it with his real words.
-- **Realtor meetings 2 and 3 (Oct 20):** he wants it fully automatic. Not built yet: moving GoHighLevel stages when a
-  customer goes hot or cold, reading GoHighLevel call notes, booking showings in his showing calendar. His family
+- **Realtor meetings 2 and 3 (Oct 20):** he wants it fully automatic. Built since: moving GoHighLevel stages when a
+  customer goes hot or cold, and reading his GoHighLevel call notes (A-303, live). Not built: booking showings in his
+  showing calendar (A-305 now asks which calendar he uses; BrokerBay/ShowingTime booking itself is not built). His family
   WhatsApp groups can't be read. Recommended next: the first two (asked Sahil). He was added as a beta tester.
 - **First realtor interview (Oct 20):** he qualifies by status and money first, area last; "not now" leads go to
   nurture; listing emails after. Notes and open questions: `followup/research/customers/2026-10-20-first-realtor-interview.md`.

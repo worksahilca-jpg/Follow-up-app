@@ -83,7 +83,7 @@ export const UNANSWERED_FIRST_REPLY_HOURS = 3;
 // file pulls in Prisma. Re-exported here so nothing that already imports
 // them from automation.ts has to move. The full reasoning is on the
 // constants themselves.
-import { META_DM_WINDOW_HOURS, META_HUMAN_AGENT_MAX_HOURS, UNANSWERED_CEILING_CHANNELS, UNANSWERED_META_DM_MAX_HOURS } from "@/lib/metaWindow";
+import { META_DM_WINDOW_HOURS, META_HUMAN_AGENT_MAX_HOURS, META_NUDGE_GAP_HOURS, UNANSWERED_CEILING_CHANNELS, UNANSWERED_META_DM_MAX_HOURS } from "@/lib/metaWindow";
 export { META_DM_WINDOW_HOURS, UNANSWERED_META_DM_MAX_HOURS };
 import { isInstagramLeadId, isMessengerLeadId } from "@/lib/instagramId";
 import { HOLD_ALL_AUTOMATION_REASON, BACKLOG_BEFORE_PERMISSION_REASON, RISK_CHECK_FAILED_REASON, UNTOUCHED_LEAD_REASON, NEVER_WROTE_REASON, FOUND_IN_SPAM_REASON, FORM_SPAM_CHECK_REASON, FORM_SPAM_CHECK_SOURCE, isUnconfirmedSpamSource, IN_CRM_REASON, UNGROUNDED_DRAFT_REASONS, ASKED_IF_PERSON_REASON } from "@/lib/holdReasons";
@@ -287,6 +287,8 @@ function isAckMessage(m: { direction: string; trigger?: string | null }): boolea
 type PlanRow = {
   createdAt: Date;
   lastContacted: Date | null;
+  // ig:… / fb:…: an Instagram or Messenger customer, whose first follow-up goes inside Meta's window (A-304).
+  phone?: string | null;
   followUpPlan?: string | null;
   followUpNotBefore?: Date | null;
   qualification?: unknown;
@@ -306,7 +308,7 @@ export function timelineOfRow(l: PlanRow): TimelineMessage[] {
  * off its row. The same function the badge, Coming up and the customer card
  * read, so none of them can promise a message the engine won't send.
  */
-export function planStateOfRow(l: PlanRow, plans: FollowUpPlans, nowMs: number, deadLeadDays: number): PlanState | null {
+export function planStateOfRow(l: PlanRow, plans: FollowUpPlans, nowMs: number, deadLeadDays: number, timeZone?: string): PlanState | null {
   return followUpState(
     timelineOfRow(l),
     (l.lastContacted ?? l.createdAt ?? new Date(nowMs)).getTime(),
@@ -318,9 +320,11 @@ export function planStateOfRow(l: PlanRow, plans: FollowUpPlans, nowMs: number, 
       bookings: (l.bookings ?? []).map((b) => ({ createdAt: b.createdAt.getTime(), scheduledAt: b.scheduledAt.getTime(), outcome: b.outcome ?? null })),
       createdAtMs: l.createdAt ? l.createdAt.getTime() : undefined,
       stayingSince: l.stayInTouchAt ? l.stayInTouchAt.getTime() : null,
+      metaDm: isInstagramLeadId(l.phone ?? null) || isMessengerLeadId(l.phone ?? null),
     },
     nowMs,
-    deadLeadDays
+    deadLeadDays,
+    timeZone
   );
 }
 
@@ -877,7 +881,10 @@ export async function runAutomationForBusiness(
   if (freshFound && freshFound.leads.length === 0) return EMPTY_RESULT;
 
   const voiceFor = voiceByLanguage(businessId);
-  const [quietCandidates, deadCandidates, voiceSamples, unanswered] = await Promise.all([
+  // Instagram and Messenger (A-304): our reply went at least META_NUDGE_GAP_HOURS ago and less than a day ago. The
+  // quiet query waits a full day, by which time Meta's window has shut, so these are looked at on their own.
+  const nudgeGapCutoff = new Date(Date.now() - META_NUDGE_GAP_HOURS * 60 * 60 * 1000);
+  const [quietCandidates, deadCandidates, voiceSamples, unanswered, dmNudgeCandidates] = await Promise.all([
     fresh
       ? Promise.resolve([])
       : prisma.lead.findMany({
@@ -933,6 +940,26 @@ export async function runAutomationForBusiness(
       : unansweredEnabled
         ? findUnansweredLeads(businessId, unansweredHours, recheckCutoff, skipThanks)
         : Promise.resolve([]),
+    fresh
+      ? Promise.resolve([])
+      : prisma.lead.findMany({
+          where: {
+            businessId,
+            automationTier: { not: "OFF" },
+            stage: { notIn: ["WON", "LOST"] },
+            sequenceId: null,
+            saidNoAt: null,
+            optedOutAt: null,
+            OR: [{ phone: { startsWith: "ig:" } }, { phone: { startsWith: "fb:" } }],
+            AND: [
+              { lastContacted: { gt: cutoff, lte: nudgeGapCutoff } },
+              // Our own reply claimed the lead when it went; four hours on, it may be looked at again for this.
+              { OR: [{ lastAutomationCheckedAt: null }, { lastAutomationCheckedAt: { lt: nudgeGapCutoff } }] },
+              HAS_CONVERSATION_IF_FROM_CRM,
+            ],
+          },
+          include: PLAN_LEAD_INCLUDE,
+        }),
   ]);
 
   const nowMs = Date.now();
@@ -953,7 +980,7 @@ export async function runAutomationForBusiness(
   };
   const silent = quietCandidates.filter((l) => {
     if (talkedOut(l)) return false;
-    const plan = planStateOfRow(l, plans, nowMs, deadLeadDays);
+    const plan = planStateOfRow(l, plans, nowMs, deadLeadDays, timezone);
     if (quietLeadNext(plan, { pastWelcomeBackWait: false, welcomeBackOn: deadLeadEnabled, welcomeBackSent: false, nowMs }) !== "plan") return false;
     planStepById.set(l.id, plan!);
     return true;
@@ -964,7 +991,7 @@ export async function runAutomationForBusiness(
   // ones above.
   const deadLeads = deadCandidates.filter((l) => {
     if (talkedOut(l)) return false;
-    const plan = planStateOfRow(l, plans, nowMs, deadLeadDays);
+    const plan = planStateOfRow(l, plans, nowMs, deadLeadDays, timezone);
     const next = quietLeadNext(plan, { pastWelcomeBackWait: true, welcomeBackOn: true, welcomeBackSent: reactivationAlreadySent(timelineOf(l), deadLeadDays), nowMs });
     if (next === "plan") {
       planStepById.set(l.id, plan!);
@@ -972,6 +999,19 @@ export async function runAutomationForBusiness(
     }
     return next === "welcome_back";
   });
+
+  // The Instagram and Messenger next-day follow-up (A-304): only the plan's first message, only when it is due,
+  // which followUpState puts inside Meta's window (metaNudgeAt). One that isn't due yet is looked at next hour.
+  const dmNudgeIds = new Set<string>();
+  for (const l of dmNudgeCandidates) {
+    if (talkedOut(l)) continue;
+    const plan = planStateOfRow(l, plans, nowMs, deadLeadDays, timezone);
+    if (!plan || plan.touches !== 0) continue;
+    if (quietLeadNext(plan, { pastWelcomeBackWait: false, welcomeBackOn: deadLeadEnabled, welcomeBackSent: false, nowMs }) !== "plan") continue;
+    planStepById.set(l.id, plan);
+    dmNudgeIds.add(l.id);
+    silent.push(l);
+  }
 
   // Merge in priority order — unanswered (the lead wrote and got ignored)
   // is the most urgent, dead-lead reactivation is a deliberate exit from
@@ -1025,7 +1065,7 @@ export async function runAutomationForBusiness(
           sequenceId: null,
           OR: freshInboundAt
             ? [{ lastAutomationCheckedAt: null }, { lastAutomationCheckedAt: { lt: freshInboundAt } }]
-            : [{ lastAutomationCheckedAt: null }, { lastAutomationCheckedAt: { lt: recheckCutoff } }],
+            : [{ lastAutomationCheckedAt: null }, { lastAutomationCheckedAt: { lt: dmNudgeIds.has(lead.id) ? nudgeGapCutoff : recheckCutoff } }],
         },
         data: { lastAutomationCheckedAt: new Date() },
       });
@@ -1769,6 +1809,10 @@ export async function runAutomationForBusiness(
                   : FOUND_IN_SPAM_REASON
               : crmHold
                 ? crmHold
+              : // Ahead of holdAll: the Instagram/Messenger next-day follow-up has a deadline (A-304), and the owner
+                // needs it more than the reason it waits.
+                dmNudgeIds.has(lead.id) && isDm
+                ? metaNudgeHoldReason(firstName, sendChannel, hoursSinceLastInbound(conversation, sendChannel), timezone)
               : holdAll
                 ? HOLD_ALL_AUTOMATION_REASON
               : // Below holdAll on purpose. While the hold is on, THAT is
@@ -1939,6 +1983,7 @@ export async function runAutomationForBusiness(
         // and which question it answers, so a tap comes back as an answer
         // rather than a bare word (src/lib/quickReplies.ts).
         quickReplies: quickReplies && quickReplies.buttons.length > 0 ? toQuickReplies(quickReplies, trigger) : undefined,
+        ...(dmNudgeIds.has(lead.id) && isDm ? { metaWindowNudge: true } : {}),
       });
       if (result.success && unansweredIds.has(lead.id)) await notifyNeglect(lead, conversation, "sent");
       return result.success
@@ -2000,6 +2045,18 @@ export async function runAutomationForBusiness(
     skipped,
     heldReasons: heldOutcomes.map((o) => o.note),
   };
+}
+
+/**
+ * Why the Instagram or Messenger next-day follow-up waits (A-304): when Meta closes the chat, in the owner's time,
+ * because after it only a person can write. A clause that finishes "Held because …", like the others.
+ */
+export function metaNudgeHoldReason(firstName: string, channel: string | undefined, hoursSince: number | null, timeZone: string, now: Date = new Date()): string {
+  const platform = channel === "messenger" ? "Messenger" : "Instagram";
+  if (hoursSince === null) return `${firstName} went quiet on ${platform} after your reply`;
+  const closes = new Date(now.getTime() + Math.max(0, META_DM_WINDOW_HOURS - hoursSince) * 3_600_000);
+  const at = new Intl.DateTimeFormat("en-US", { timeZone, hour: "numeric", minute: "2-digit" }).format(closes);
+  return `${firstName} went quiet on ${platform} after your reply, and ${platform} closes the chat at ${at}. Send this before then; after it, only you can write`;
 }
 
 /** Hours since the lead's last inbound on this channel; null if they never wrote there. */

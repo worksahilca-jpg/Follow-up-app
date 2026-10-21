@@ -12,13 +12,15 @@
  *  - The page shows it only when nobody is waiting on the owner.
  *  - First, for everyone, "what does your business do?", the one question
  *    that fits any trade, and the one the lead check reads (see
- *    `businessAbout`). Then the trade's questions (src/lib/teachQuestions.ts),
+ *    `businessAbout`). For a realtor, what they ask a new buyer (A-302). Then
+ *    which calendar they book in (A-305). Then the trade's questions (src/lib/teachQuestions.ts),
  *    minus anything already known or set aside with "Not now". A question
  *    set aside comes back only as an answer blank, when a real customer asks.
  */
 import { labelKey } from "@/lib/factLines";
 import { teachQuestions, type TeachQuestion } from "@/lib/teachQuestions";
 import { ASK_PLAN_LABEL } from "@/lib/askPlan";
+import { CALENDAR_LABEL, CALENDAR_WHY, calendarQuestion } from "@/lib/calendarUsed";
 
 /** The fact's name for the owner's own description of the business. */
 export const WHAT_YOU_DO_LABEL = "What you do";
@@ -58,6 +60,11 @@ export function askPlanQuestion(): TeachQuestion {
   };
 }
 
+/** "Which calendar do you book showings in?" (A-305, src/lib/calendarUsed.ts): answered with a tap, not words. */
+export function calendarTeachQuestion(realtor: boolean): TeachQuestion {
+  return { label: CALENDAR_LABEL, question: calendarQuestion(realtor), example: "" };
+}
+
 const ASKED_BY: Record<string, string> = {
   "real estate": "Realtors",
   "mortgage brokerage": "Mortgage brokers",
@@ -69,6 +76,7 @@ export function whyAsk(question: TeachQuestion, trade: string | null | undefined
   if (question.label === WHAT_YOU_DO_LABEL) {
     return "So FollowUp can tell real customers from newsletters, and write the way you would.";
   }
+  if (question.label === CALENDAR_LABEL) return CALENDAR_WHY;
   if (question.label === ASK_PLAN_LABEL) {
     return "Write it the way you'd tell a new assistant, or tap the mic on your keyboard and say it. FollowUp will ask your customers the same way.";
   }
@@ -90,6 +98,9 @@ export type DailyQuestionState = {
   knownLabels: readonly string[];
   /** A realtor who hasn't said what they ask a new buyer yet (A-302). */
   wantsAskPlan?: boolean;
+  /** An owner who hasn't said which calendar they book in yet (A-305); `realtor` words it for showings. */
+  wantsCalendar?: boolean;
+  realtor?: boolean;
 };
 
 /** Today's question, or null when there is nothing to ask right now. */
@@ -100,6 +111,7 @@ export function pickDailyQuestion(state: DailyQuestionState, now: Date = new Dat
   const doneKeys = new Set(done.map(labelKey));
   if (!doneKeys.has(labelKey(WHAT_YOU_DO_LABEL))) return whatYouDoQuestion(state.trade);
   if (state.wantsAskPlan && !doneKeys.has(labelKey(ASK_PLAN_LABEL))) return askPlanQuestion();
+  if (state.wantsCalendar && !doneKeys.has(labelKey(CALENDAR_LABEL))) return calendarTeachQuestion(Boolean(state.realtor));
   return teachQuestions(state.trade, done)[0] ?? null;
 }
 

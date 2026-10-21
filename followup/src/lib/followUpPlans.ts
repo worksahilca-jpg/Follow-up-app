@@ -1,4 +1,7 @@
 import { isNotAnAnswer } from "@/lib/notAnAnswer";
+import { isWithinSendWindow } from "@/lib/sendWindow";
+import { isExitPayload } from "@/lib/quickReplies";
+import { META_NUDGE_AIM_HOURS, META_NUDGE_GAP_HOURS, META_NUDGE_LATEST_HOURS } from "@/lib/metaWindow";
 
 /**
  * Follow-up plans (A-245: approved 2026-10-14, drawn and approved the same
@@ -261,7 +264,33 @@ export type PlanLead = {
    * owner's notes take its place (src/lib/stayInTouch.ts).
    */
   stayingSince?: number | null;
+  /**
+   * They write on Instagram or Messenger (A-304): the first follow-up goes inside Meta's 24-hour window
+   * (metaNudgeAt), because after it nothing automatic can reach them there.
+   */
+  metaDm?: boolean;
 };
+
+const HOUR = 3_600_000;
+const NUDGE_STEP = 15 * 60_000;
+
+/**
+ * When the next-day follow-up on Instagram or Messenger goes (A-304, src/lib/metaWindow.ts): 20 hours after their
+ * last message, inside the send hours, and at a time the hourly run still catches inside them; when 20 hours lands
+ * at night, the last such time before it, but never sooner than 4 hours after our reply. Null when no time fits
+ * (we answered too late in their window): then nothing automatic goes, and the owner's own day-2–7 message takes
+ * over (draftDmHandoffs).
+ */
+export function metaNudgeAt(lastInboundMs: number, oursMs: number, timeZone: string): number | null {
+  const deadline = lastInboundMs + META_NUDGE_LATEST_HOURS * HOUR;
+  const earliest = oursMs + META_NUDGE_GAP_HOURS * HOUR;
+  if (earliest > deadline) return null;
+  const aim = Math.max(lastInboundMs + META_NUDGE_AIM_HOURS * HOUR, earliest);
+  const fits = (t: number) => isWithinSendWindow(new Date(t), timeZone) && isWithinSendWindow(new Date(t + HOUR - 60_000), timeZone);
+  for (let t = aim; t <= deadline; t += NUDGE_STEP) if (fits(t)) return t;
+  for (let t = aim - NUDGE_STEP; t >= earliest; t -= NUDGE_STEP) if (fits(t)) return t;
+  return null;
+}
 
 export type PlanStop =
   /** All of the plan's messages have gone. */
@@ -322,7 +351,9 @@ export function followUpState(
   plans: FollowUpPlans,
   lead: PlanLead,
   nowMs: number,
-  deadLeadDays: number
+  deadLeadDays: number,
+  // The business's time zone: only the Instagram/Messenger first follow-up (metaNudgeAt) reads it.
+  timeZone: string = "America/New_York"
 ): PlanState | null {
   const judged = messages.filter((m) => !isAck(m)).sort((a, b) => a.at - b.at);
   const newest = judged[judged.length - 1];
@@ -401,10 +432,19 @@ export function followUpState(
   const onCalendar = start + next.day * DAY;
   const afterPrevious = touches === 0 ? onCalendar : lastTouch + (next.day - steps[touches - 1].day) * DAY;
   let due = Math.max(onCalendar, afterPrevious, theirDay ?? 0);
-  due = withinSendLimits(
-    due,
-    messages.filter((m) => m.direction === "outbound").map((m) => m.at)
-  );
+  // Instagram and Messenger (A-304): the first follow-up goes inside Meta's window, the same day as our reply when
+  // it must; the one exception to rule 3. With no time that fits, the plan goes on as drawn (and the owner's own
+  // message takes over, since nothing automatic reaches them once the window shuts).
+  // Not after they tapped "Not now": that means not now (the same rule as the owner's day-2–7 message).
+  const saidNotNow = lastInbound >= 0 && isExitPayload(judged[lastInbound].quickReplyPayload);
+  const nudge =
+    lead.metaDm && touches === 0 && !moved && !saidNotNow && lastInboundAt !== null && ours.length > 0 ? metaNudgeAt(lastInboundAt, anchor, timeZone) : null;
+  if (nudge !== null) due = nudge;
+  else
+    due = withinSendLimits(
+      due,
+      messages.filter((m) => m.direction === "outbound").map((m) => m.at)
+    );
   // It can go no sooner than now, so a message that fell due before the six
   // months but would only go out after them never goes.
   if (Math.max(due, nowMs) > capAt) return done("six_months", touches, steps.length, touches);
@@ -519,7 +559,7 @@ export function stepHint(state: Pick<PlanState, "step" | "total" | "kind" | "fin
       : kind === "thanks"
       ? "You met or spoke with them yesterday and they are still deciding; this is the thank-you after it."
       : `This is follow-up ${state.step + 1} of ${state.total} to someone who went quiet after the last message here — ` +
-        `nothing from them in about ${daysQuiet} days.`;
+        (daysQuiet < 1 ? "nothing from them since it, less than a day ago." : `nothing from them in about ${daysQuiet} days.`);
   return (
     `${which} ${angles[kind]}${last} ` +
     "Do not apologise: they stopped replying, nobody let them down. Never write \"just checking in\", " +

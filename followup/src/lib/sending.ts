@@ -434,6 +434,10 @@ export async function sendFollowUpToLead(
     // when `automated` is set, so no cron, sequence, retry or auto-send
     // path can ever carry the tag, whatever it passes.
     humanSend?: { userId: string };
+    // Set ONLY by the automation engine for the Instagram/Messenger next-day follow-up (A-304): plan step 1 sent
+    // inside Meta's 24-hour window. It is exempt from the one-a-day rule below for the same reason an owner's
+    // workflow is: tomorrow is past the window, so "waits until tomorrow" would mean never.
+    metaWindowNudge?: boolean;
     // false when the owner unticked "Use <price> next time" on Today: this
     // reply is not read for things to remember (src/lib/businessFacts.ts).
     // Every other reply sent through FollowUp is.
@@ -738,7 +742,8 @@ export async function sendFollowUpToLead(
   // delays exist to place a second touch inside Meta's 24-hour window
   // (sequences.ts), and quietly pushing that to tomorrow would close the
   // window it was built for.
-  if (options.automated && (options.trigger === "silence" || options.trigger === "dead_lead_reactivation")) {
+  const metaWindowNudge = options.metaWindowNudge === true && (options.channel === "instagram" || options.channel === "messenger");
+  if (options.automated && !metaWindowNudge && (options.trigger === "silence" || options.trigger === "dead_lead_reactivation")) {
     if (await alreadyMessagedAutomaticallyToday(lead.id, lead.businessId)) {
       const firstName = lead.name.split(" ")[0];
       return {

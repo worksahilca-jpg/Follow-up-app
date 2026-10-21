@@ -14706,3 +14706,32 @@ hours shows "Your calendar" with Change above "Where customers book".
 - If the owner leaves the "can't book into it yet" step without picking, nothing changes: customers keep booking in
   whatever was set (FollowUp's calendar by default). The card doesn't come back to ask.
 - No count of answers on the admin page yet; a read-only database count can answer "which calendars do owners use?".
+
+## 2026-10-21 — "Your last 90 days" (A-306), built
+
+**Why:** the first minute decides whether an owner trusts FollowUp. After the first inbox read, the owner sees what
+FollowUp found in their own inbox: how many people wrote, how many are still waiting for an answer (each with a reply
+ready), and how much it set aside. It is the "send me the people who never booked" offer, built in.
+
+**How it works:** `src/lib/inboxSummary.ts` (pure: numbers and words), `src/lib/inboxSummaryData.ts` (reads the
+business; never throws, Today never fails over the card), `InboxSummaryCard.tsx`, `POST /api/business/inbox-summary`
+(admin only; sets `Business.inboxSummarySeenAt`). Today passes its own waiting list in, so the count matches "Needs
+you". Only counts are read; nothing new leaves the database, so the privacy page needs no change.
+
+**Weak points:**
+- Gmail's first read is capped at 100 main threads and 50 update threads; on a busy inbox "23 people wrote" is "23 in
+  what FollowUp read", and the card doesn't say so.
+- On day one the number shows twice: in the card and as "Needs you 17" right under it.
+- "Didn't get a reply" only knows FollowUp's records: an owner who called the customer back still sees them counted
+  until they tap "Already spoke".
+- Not checked against a real inbox yet; the demo realtor account (`design-brain/workflows/demo-realtor-test.md`) is the
+  first real test.
+
+## 2026-10-21 — Founder: organise the app like Wispr Flow (to draw)
+
+The founder, right after approving A-306: *"yes build it and copy wisper flow ui ux design"*, then *"like the design
+and templte formate and how they organise"*. Read with A-214 (the app's layout may follow Wispr's closely) and A-277
+(Wispr for feel, home and setup; Apple for screens): what to take is **how Wispr organises** (the quiet sidebar, one
+sheet for the content, plain titles, lists grouped by day, a small stats card at home, setup as a short checklist).
+Still never its logo, name, words or assets (A-214, R-097). Next: draw it on the real app, phone and computer, before
+any code.

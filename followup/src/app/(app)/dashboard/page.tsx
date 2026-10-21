@@ -39,6 +39,8 @@ import { clockTime, dayOffset, daySentence, doneLines, greeting, nextForYouLine 
 import { oneQueue } from "@/lib/approvalGroups";
 import { replyForMeOffer } from "@/lib/replyForMeOffer";
 import { todaysQuestion } from "@/lib/dailyQuestionData";
+import { inboxSummaryFor } from "@/lib/inboxSummaryData";
+import InboxSummaryCard from "@/components/InboxSummaryCard";
 import { planLine } from "@/lib/comingUp";
 import { findHabitSuggestion } from "@/lib/habits";
 import type { MeetingToLookBackOn } from "@/components/app/MeetingOutcomeCard";
@@ -226,6 +228,15 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   // One question a day (A-101): only when nobody is waiting on the owner and
   // nothing else is being asked, so it never stands in front of real work.
   const dailyQuestion = ctx && isAdmin && approvalItems.length === 0 && callCards.length === 0 && !habitSuggestion ? await todaysQuestion(ctx.businessId, now) : null;
+  // "Your last 90 days" (A-306): once, after the first inbox read, in place of the day's sentence.
+  const inboxSummary =
+    ctx && isAdmin && leads.length > 0
+      ? await inboxSummaryFor(
+          ctx.businessId,
+          approvalItems.map((a) => ({ leadId: a.leadId, lastWroteAt: a.leadLastMessageAt })),
+          now
+        )
+      : null;
   const sendingPaused = Boolean(business?.sendingPausedAt);
   const sendLocked = Boolean(business?.onlyAdminsSend) && !isAdmin;
   const cantSend = !anySendChannel;
@@ -451,8 +462,13 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       ) : (
         <>
           <h1 className="title-serif ios-title1 mt-0.5">{greeting(now, timezone, me?.name)}</h1>
-          {/* The day in one sentence (A-266), in place of the day's box. */}
-          <p className="mt-1.5 text-[16px] leading-snug text-ink-soft">{dayWords}</p>
+          {/* The day in one sentence (A-266), in place of the day's box. On the first days, "Your last 90 days"
+              (A-306) says it instead, until "Got it". */}
+          {inboxSummary ? (
+            <InboxSummaryCard summary={inboxSummary.summary} provider={inboxSummary.provider} />
+          ) : (
+            <p className="mt-1.5 text-[16px] leading-snug text-ink-soft">{dayWords}</p>
+          )}
         </>
       )}
       </div>

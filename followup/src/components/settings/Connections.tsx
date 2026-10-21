@@ -51,8 +51,12 @@ export default function Connections({
   const [facebook, setFacebook] = useState<Social | null>(null);
   const [embedUrl, setEmbedUrl] = useState<string | null>(null);
   const [kept, setKept] = useState<Record<string, number>>({});
-  const [open, setOpen] = useState<Open>(null);
-  const [showKept, setShowKept] = useState(false);
+  // "See them" on Today's "Your last 90 days" (A-306) lands here with ?skipped=gmail: that inbox's window opens with
+  // what it set aside showing.
+  const skippedFor = searchParams.get("skipped");
+  const seeSkipped = skippedFor === "gmail" || skippedFor === "outlook" ? skippedFor : null;
+  const [open, setOpen] = useState<Open>(seeSkipped);
+  const [showKept, setShowKept] = useState(seeSkipped !== null);
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
   const [pages, setPages] = useState<{ id: string; name: string }[] | null>(null);

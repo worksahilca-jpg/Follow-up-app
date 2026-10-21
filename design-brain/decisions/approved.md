@@ -5333,3 +5333,25 @@ computer).
   - Settings with nothing chosen: "Not chosen yet" with **Choose**, and "Tell FollowUp which calendar you use, so
     bookings land where you look." Change opens the same pills in place, the current one filled black.
   - Only the calendar's name is kept (Business.calendarUsed); FollowUp connects to nothing new.
+
+## A-306
+**"Your last 90 days": once, after FollowUp first reads the inbox, Today says who wrote, who didn't get a reply, and
+what was set aside (2026-10-21).** The founder: *"yes draw it"*, then *"yes build it"* to the drawing (scratchpad
+`missed/missed-board.png`: phone and computer Today). It came from his own inbox: *"I do have a lot of emails lying
+sleeping there"*, and wanting to see FollowUp *"ignoring the spam"* and *"just capturing the leads only"*.
+- **The card:** in place of the day's sentence on Today, one box. Small label "Your last 90 days"; heading "23 people
+  wrote to you. 17 didn't get a reply."; one line "Each one has a reply ready below. The oldest has waited 30 days.";
+  then "184 newsletters, receipts and other emails were set aside." with a **See them** link; a quiet **Got it**.
+- **Decided while building (2026-10-21; the founder can change any of them):**
+  - "Didn't get a reply" is counted from **Today's own waiting list** (the people under "Needs you"), so the card and
+    Today always say the same number, and "Each one has a reply ready below" is true by construction. A customer
+    marked won, put off till later, or still being checked isn't counted. First build counted everyone whose last
+    message had no answer (21 on the local test data while Today showed 17); changed the same day.
+  - Nobody waiting: "23 people wrote to you. Nobody is waiting for a reply." / "From now on, FollowUp writes the reply
+    the moment they write." It never says "you answered every one": calls and texts outside FollowUp can't be seen.
+  - "People who wrote" = customers with a message from them in the last 90 days, any channel, never the practice
+    customer. "Set aside" = emails FollowUp read in those 90 days and filed as not customers.
+  - Shows only to an admin, after the first full inbox read finished (Gmail's deep read; Outlook's first sync), within
+    14 days of connecting, until **Got it**. Got it hides it for good (`Business.inboxSummarySeenAt`) and the day's
+    sentence comes back.
+  - **See them** opens Settings with that inbox's window open on "Skipped: not customers".

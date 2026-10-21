@@ -30,9 +30,10 @@ const ICON = { reply: MessageCircle, call: Phone, booking: CalendarDays, checkin
 /** A section title in the day: a plain heading and, on the right, a short count or date. */
 export function DayHeading({ title, aside }: { title: string; aside?: string | null }) {
   return (
-    <div className="mb-2.5 flex items-baseline justify-between gap-3 px-1">
-      <h2 className="text-[18px] font-semibold tracking-[-0.01em]">{title}</h2>
-      {aside && <span className="text-[13.5px] text-ink-soft">{aside}</span>}
+    // A small uppercase label over the section's white group (A-307).
+    <div className="mb-2 flex items-baseline justify-between gap-3 px-1">
+      <h2 className="group-label">{title}</h2>
+      {aside && <span className="text-[12.5px] font-semibold tabular-nums text-ink-faint">{aside}</span>}
     </div>
   );
 }
@@ -102,7 +103,7 @@ export function DayLater({ lines }: { lines: LaterLine[] }) {
   return (
     <section aria-label="Later">
       <DayHeading title="Later" />
-      <ul className="px-1">
+      <ul className="list-group">
         {lines.map((l) => {
           const inner = (
             <>
@@ -110,7 +111,7 @@ export function DayLater({ lines }: { lines: LaterLine[] }) {
               <span className="min-w-0 text-right text-[14.5px] leading-snug text-ink-soft">{l.value}</span>
             </>
           );
-          const cls = "flex min-h-[52px] items-center justify-between gap-4 py-3";
+          const cls = "flex min-h-[52px] items-center justify-between gap-4 px-4 py-3";
           return (
             <li key={l.label}>
               {l.href ? (

@@ -73,13 +73,28 @@ a booked call or visit; the owner closes.
 
 **Last updated: 2026-10-21**
 
-- **Instagram next-day follow-up (A-304, built Oct 21, PR open):** on Instagram and Messenger the plan's first
+- **"Your last 90 days" (A-306, built Oct 21, PR open):** once, after FollowUp first reads the inbox, Today says "23
+  people wrote to you. 17 didn't get a reply. Each one has a reply ready below." and how many emails were set aside,
+  with **See them** (opens the skipped list) and **Got it** (hides it for good). The "didn't get a reply" number is
+  Today's own waiting list, so the two always match. Admin only, within 14 days of connecting. Migration:
+  `Business.inboxSummarySeenAt`.
+
+- **The app organised the Wispr way (A-307, built Oct 21, same PR):** Today shows "Since you started · answered ·
+  booked · won" top right (under the greeting on a phone) and one card at a time; every list (Needs you, Later,
+  Customers, Activity) is one white group under a small uppercase label; Customers has search and a black "Add a
+  customer" beside the title on a computer, grouped "Your reply is ready" / "Ready to book" / "Everyone else";
+  Activity shows each day with the time on the left.
+
+- **Demo realtor account (Oct 21):** nobody could test, so we test ourselves: `design-brain/workflows/demo-realtor-test.md`
+  (setup + 16 tests). Sahil connects a spare Gmail; FollowUp reads 90 days and sends nothing on its own.
+
+- **Instagram next-day follow-up (A-304, LIVE Oct 21, PR #577 → baa3d96):** on Instagram and Messenger the plan's first
   follow-up now goes about 20 hours after the customer's last message, inside the send hours and before Meta's 24-hour
   window closes (it used to come a day after our reply, always too late). Only once, never after "Not now", no or
   stop. It is the one exception to "one a day". A held draft says when Instagram closes the chat. After 24 hours the
   owner's day-2–7 draft takes over, as before.
 
-- **Which calendar the owner uses (A-305, built Oct 21, same PR):** Today asks once "Which calendar do you book
+- **Which calendar the owner uses (A-305, LIVE Oct 21, same PR; column confirmed):** Today asks once "Which calendar do you book
   showings in?" with pills. Google (with Gmail) or "I don't use one" sets where customers book at once; any other
   (BrokerBay, ShowingTime, Outlook, GoHighLevel, Calendly, something else) says "FollowUp can't book into it yet" and
   asks: FollowUp's calendar or My Google Calendar. Settings › Your free hours shows "Your calendar" with Change. Only

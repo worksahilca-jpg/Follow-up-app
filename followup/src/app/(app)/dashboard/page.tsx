@@ -39,6 +39,10 @@ import { clockTime, dayOffset, daySentence, doneLines, greeting, nextForYouLine 
 import { oneQueue } from "@/lib/approvalGroups";
 import { replyForMeOffer } from "@/lib/replyForMeOffer";
 import { todaysQuestion } from "@/lib/dailyQuestionData";
+import { inboxSummaryFor } from "@/lib/inboxSummaryData";
+import InboxSummaryCard from "@/components/InboxSummaryCard";
+import { sinceStartedFor } from "@/lib/sinceStarted";
+import SinceStartedPill from "@/components/app/SinceStartedPill";
 import { planLine } from "@/lib/comingUp";
 import { findHabitSuggestion } from "@/lib/habits";
 import type { MeetingToLookBackOn } from "@/components/app/MeetingOutcomeCard";
@@ -221,11 +225,29 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   // this screen can honestly promise.
   const holdAll = business?.holdAllForApproval ?? false;
   const isAdmin = me?.role === "ADMIN";
+  // "Your last 90 days" (A-306): once, after the first inbox read, in place of the day's sentence. "Since you started"
+  // (A-307): the owner's own numbers at the top.
+  const [inboxSummary, since] = await Promise.all([
+    ctx && isAdmin && leads.length > 0
+      ? inboxSummaryFor(
+          ctx.businessId,
+          approvalItems.map((a) => ({ leadId: a.leadId, lastWroteAt: a.leadLastMessageAt })),
+          now
+        )
+      : null,
+    ctx && leads.length > 0 ? sinceStartedFor(ctx.businessId) : null,
+  ]);
+  // One card at a time (A-307): while "Your last 90 days" shows, no question, habit card, first-send note or alerts
+  // card stands beside it (the alerts card still opens when the phone link asked for it).
+  const cardShowing = Boolean(inboxSummary);
   // "FollowUp learns what you do" (A-099): asked of an admin only, once.
-  const habitSuggestion = ctx && isAdmin && leads.length > 0 && needYou === 0 ? await findHabitSuggestion(ctx.businessId, now) : null;
+  const habitSuggestion = ctx && isAdmin && leads.length > 0 && needYou === 0 && !cardShowing ? await findHabitSuggestion(ctx.businessId, now) : null;
   // One question a day (A-101): only when nobody is waiting on the owner and
   // nothing else is being asked, so it never stands in front of real work.
-  const dailyQuestion = ctx && isAdmin && approvalItems.length === 0 && callCards.length === 0 && !habitSuggestion ? await todaysQuestion(ctx.businessId, now) : null;
+  const dailyQuestion =
+    ctx && isAdmin && approvalItems.length === 0 && callCards.length === 0 && !habitSuggestion && !cardShowing
+      ? await todaysQuestion(ctx.businessId, now)
+      : null;
   const sendingPaused = Boolean(business?.sendingPausedAt);
   const sendLocked = Boolean(business?.onlyAdminsSend) && !isAdmin;
   const cantSend = !anySendChannel;
@@ -443,16 +465,29 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       <ScrollTitle title="Today" />
       {/* data-today-head: hidden on a phone while one person is open (A-286, globals.css). */}
       <div data-today-head>
+      {/* The greeting on the left, the owner's own numbers on the right (A-307); on a phone the numbers go under it. */}
+      <div className="lg:flex lg:items-end lg:justify-between lg:gap-6">
+      <div className="min-w-0">
       <div className="text-[12.5px] text-ink-faint">
         {new Intl.DateTimeFormat(undefined, { timeZone: timezone, weekday: "long", month: "long", day: "numeric" }).format(now)}
       </div>
       {sentence ? (
         <h1 className="title-serif ios-title2 mt-1">{sentence}</h1>
       ) : (
+        <h1 className="title-serif ios-title1 mt-0.5">{greeting(now, timezone, me?.name)}</h1>
+      )}
+      </div>
+      {since && !sentence && <SinceStartedPill counts={since} />}
+      </div>
+      {!sentence && (
         <>
-          <h1 className="title-serif ios-title1 mt-0.5">{greeting(now, timezone, me?.name)}</h1>
-          {/* The day in one sentence (A-266), in place of the day's box. */}
-          <p className="mt-1.5 text-[16px] leading-snug text-ink-soft">{dayWords}</p>
+          {/* The day in one sentence (A-266), in place of the day's box. On the first days, "Your last 90 days"
+              (A-306) says it instead, until "Got it". */}
+          {inboxSummary ? (
+            <InboxSummaryCard summary={inboxSummary.summary} provider={inboxSummary.provider} />
+          ) : (
+            <p className="mt-1.5 text-[16px] leading-snug text-ink-soft">{dayWords}</p>
+          )}
         </>
       )}
       </div>
@@ -468,7 +503,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       <div data-today-head>
         <ProblemNotices problems={problems} />
       </div>
-      {firstValue && <FirstValueNote title={firstValue.title} body={firstValue.body} />}
+      {firstValue && !cardShowing && <FirstValueNote title={firstValue.title} body={firstValue.body} />}
       <div className={leads.length > 0 ? "mt-5" : "mt-3.5 sm:mt-5"}>
       <div className="min-w-0">
       {/* A buzz on the owner's phone when a customer needs them (A-216): shown
@@ -477,7 +512,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           Not above a waiting customer either (A-243), except on the visit
           the phone link opened, which is for alerts. */}
       {/* "How did it go?" after a call (A-263) is a row in Then now (A-266), opening its four answers in place. */}
-      {!offer && (needYou === 0 || alertsOpen) && <div className="mb-4"><AlertsCard open={alertsOpen} /></div>}
+      {!offer && ((needYou === 0 && !cardShowing) || alertsOpen) && <div className="mb-4"><AlertsCard open={alertsOpen} /></div>}
       {/* Do this first, then everything still to do today (A-244). With no
           customers at all, the box below says what FollowUp checked. */}
       {leads.length > 0 && (() => {

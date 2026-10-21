@@ -151,6 +151,9 @@ model Business {
   // "brokerbay", "showingtime", "calendly", "other" or "none". Null: not asked yet. FollowUp books only into
   // bookingCalendarSource above; this is what the owner uses, so Settings can say when FollowUp can't book into it.
   calendarUsed          String?
+  // When the owner pressed "Got it" on "Your last 90 days" (A-306, src/lib/inboxSummary.ts), the card Today shows
+  // once after FollowUp first reads the inbox. Null: not seen yet.
+  inboxSummarySeenAt    DateTime?
 
   // Setup steps the owner has said do not apply to them (SetupStep.id in
   // src/lib/setupStatus.ts — "widget", "phone").

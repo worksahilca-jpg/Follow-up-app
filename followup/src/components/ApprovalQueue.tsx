@@ -965,13 +965,14 @@ export default function ApprovalQueue({
         <section aria-label={selected ? "Needs you" : "Still to do today"} className={(selected ? "mt-2" : "mt-7") + " lg:mt-0" + (stillToDo > 0 || selected ? "" : " hidden lg:block")}>
           {/* Everyone who needs the owner, one row each, the open one marked on a computer (A-286). */}
           <DayHeading title={selected ? "Needs you" : "Still to do today"} aside={selected ? String(queue.length) : null} />
-          <div className="-mx-3">
+          {/* One white group, a thin line between rows (A-307). */}
+          <div className="list-group">
             {/* A call starting within the hour comes first (A-283, after A-268): it happens at a time, and its note is
                 what to read before. Later calls follow the replies, in time order, each with its time on the right. */}
             {soonCalls.map((c, n) => callRow(c, n === 0))}
             {shown.map((i, n) =>
               i.leadId === selected?.leadId ? (
-                <div key={i.leadId} className="rounded-[12px] lg:bg-[var(--nav-on)]" aria-current="true">
+                <div key={i.leadId} className="lg:bg-[var(--nav-on)]" aria-current="true">
                   <DayRow row={replyRow(i)} first={soonCalls.length === 0 && n === 0} onClick={() => openPerson(i.leadId)} />
                 </div>
               ) : (
@@ -1002,7 +1003,7 @@ export default function ApprovalQueue({
                   onClick={() => setOpenMeeting((o) => (o === m.bookingId ? null : m.bookingId))}
                 />
                 {openMeeting === m.bookingId && (
-                  <div className="px-3 pb-3">
+                  <div data-attached className="px-3 pb-3">
                     <MeetingOutcomeCard meeting={m} />
                   </div>
                 )}

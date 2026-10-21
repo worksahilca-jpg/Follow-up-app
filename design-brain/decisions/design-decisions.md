@@ -14706,3 +14706,71 @@ hours shows "Your calendar" with Change above "Where customers book".
 - If the owner leaves the "can't book into it yet" step without picking, nothing changes: customers keep booking in
   whatever was set (FollowUp's calendar by default). The card doesn't come back to ask.
 - No count of answers on the admin page yet; a read-only database count can answer "which calendars do owners use?".
+
+## 2026-10-21 — "Your last 90 days" (A-306), built
+
+**Why:** the first minute decides whether an owner trusts FollowUp. After the first inbox read, the owner sees what
+FollowUp found in their own inbox: how many people wrote, how many are still waiting for an answer (each with a reply
+ready), and how much it set aside. It is the "send me the people who never booked" offer, built in.
+
+**How it works:** `src/lib/inboxSummary.ts` (pure: numbers and words), `src/lib/inboxSummaryData.ts` (reads the
+business; never throws, Today never fails over the card), `InboxSummaryCard.tsx`, `POST /api/business/inbox-summary`
+(admin only; sets `Business.inboxSummarySeenAt`). Today passes its own waiting list in, so the count matches "Needs
+you". Only counts are read; nothing new leaves the database, so the privacy page needs no change.
+
+**Weak points:**
+- Gmail's first read is capped at 100 main threads and 50 update threads; on a busy inbox "23 people wrote" is "23 in
+  what FollowUp read", and the card doesn't say so.
+- On day one the number shows twice: in the card and as "Needs you 17" right under it.
+- "Didn't get a reply" only knows FollowUp's records: an owner who called the customer back still sees them counted
+  until they tap "Already spoke".
+- Not checked against a real inbox yet; the demo realtor account (`design-brain/workflows/demo-realtor-test.md`) is the
+  first real test.
+
+## 2026-10-21 — Founder: organise the app like Wispr Flow (to draw)
+
+The founder, right after approving A-306: *"yes build it and copy wisper flow ui ux design"*, then *"like the design
+and templte formate and how they organise"*. Read with A-214 (the app's layout may follow Wispr's closely) and A-277
+(Wispr for feel, home and setup; Apple for screens): what to take is **how Wispr organises** (the quiet sidebar, one
+sheet for the content, plain titles, lists grouped by day, a small stats card at home, setup as a short checklist).
+Still never its logo, name, words or assets (A-214, R-097). Next: draw it on the real app, phone and computer, before
+any code.
+
+**Drawn (2026-10-21, waiting for the founder):** scratchpad `wfo/wispr-board.png`, on the real app with the test
+account, computer and phone. Same calm look and sidebar (already Wispr's, A-214). Changes: Today shows three numbers
+top right, "since you started" (answered, booked, won; real local totals); one card at a time under the greeting; every
+list ("Needs you", "Later", Customers, Activity) in one white rounded group under a small uppercase label. Customers:
+search and one black "Add a customer" button in the title row, grouped "Your reply is ready" then "Everyone else", and
+rows in the first group no longer repeat "Your reply is ready". Activity: by day, the time on the left. Day groups are
+not used on Today (tried and dropped on 2026-10-09: Today is ordered by who needs you).
+**Departs from approved entries if built:** A-267 ("one list, no boxes") and A-282 ("no row lines") for the laptop
+and phone lists; in line with R-130 (Mac-style groups wanted) and R-131 (one template everywhere).
+**Weak:** Activity rows in the drawing are examples (the test account has none); on the phone "11:15 AM" wraps in the
+time column; the stats pill shows small numbers on a new account (1 booked, 1 won), which may read as thin.
+
+## 2026-10-21 — The app organised the Wispr way (A-307), built
+
+**Founder:** *"yes build it"* to `wfo/wispr-board.png`.
+
+**How it works:** one list pattern for the whole app: `.list-group` (white, 1px line, 14px corners, a thin line
+between rows) under `.group-label` (12px, uppercase, faint), in `globals.css`. Today: `SinceStartedPill` (computer top
+right, phone under the greeting) from `src/lib/sinceStarted.ts` (customers answered, bookings not cancelled, customers
+won; never the practice customer; hidden while all three are 0); "Needs you" and "Later" in groups (`DayHeading`
+became the small label); one card at a time: while "Your last 90 days" shows, no question, habit card, first-send
+note or alerts card stands beside it (the alerts card still opens from the phone link). Customers: on a computer
+search (320px) and a black "Add a customer" beside the title, with Log a call, Import and Clean up behind a "More"
+button; the phone keeps its one +. Groups "Your reply is ready", "Ready to book", "Everyone else"; a row in the first
+two doesn't repeat its group's status; a single group has no label; searching shows one "N customers found" group.
+Activity: each day a group, the time in a 66px column on the left, no initials.
+
+**Checked:** computer and phone on the local app, 31 of 31 (numbers beside the greeting, labels, groups, no sideways
+scroll, search beside the title, More menu, Add opens the form, search result group, Activity time column on the test
+business that has history). 4,485 tests, typecheck, lint, build.
+
+**Weak points:**
+- "More" (the ⋯ button) wasn't in the drawing; it keeps Log a call, Import and Clean up one click away on a computer.
+- The numbers count all time; on a new account they stay small for a while ("1 booked").
+- "Answered" counts anyone who got a message from the business through FollowUp, including the first automatic
+  "thanks, I'll get back to you" note, not only full replies.
+- Today on a phone: the list and the first-days card are 12px from the edge, the numbers and greeting 20px (the
+  approved "cards a little wider than the text").

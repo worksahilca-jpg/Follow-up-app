@@ -4666,7 +4666,9 @@ he said *"yes"*.
 
 **Date:** 2026-10-16. **Founder:** *"we got customers page sorted but it feels too complex like i dont know make that
 simple too"*. Shown the drawing (`simpler-board.png`), he said *"yes"*.
-- **One list of everyone**, no boxes, no counts, no rows that open other lists. People with a reply ready first (an
+- **One list of everyone**, no boxes, no counts, no rows that open other lists.
+  **PARTLY SUPERSEDED (2026-10-21)** by [[approved#^A-307|A-307]]: the same order, now shown as labelled white groups
+  ("Your reply is ready", "Ready to book", "Everyone else"); still no counts. People with a reply ready first (an
   orange dot and "Your reply is ready"), then Ready to book (in green, with a Call button), then everyone else,
   newest message first.
 - **Each row:** initials, name, their last words (or "You: …"), how long ago, and one status in words when there is
@@ -4880,6 +4882,8 @@ version; his reference was the Claude desktop app's see-through typing bar, "loo
   with the sidebar #1a1a1a).
 - One calm ground for the whole window; the sidebar only a touch darker (light #fafaf9, sidebar #f3f3f2).
 - No lines between rows or under headers; space separates. The selected row is a soft rounded fill (4–6% black/white).
+  **PARTLY SUPERSEDED (2026-10-21)** by [[approved#^A-307|A-307]]: lists now sit in one white rounded group with thin
+  lines between rows (Wispr's organisation, founder's "yes build it").
 - The reply box is see-through (3–70% fill) with a thin border and 22px corners, not a raised card. The notice box the same.
 - Their bubbles are a faint see-through grey; the button is charcoal on light, soft white on dark.
 **Supersedes:** A-278's raised white cards on grey for the app (depth now comes from see-through layers, not shadows).
@@ -5333,3 +5337,43 @@ computer).
   - Settings with nothing chosen: "Not chosen yet" with **Choose**, and "Tell FollowUp which calendar you use, so
     bookings land where you look." Change opens the same pills in place, the current one filled black.
   - Only the calendar's name is kept (Business.calendarUsed); FollowUp connects to nothing new.
+
+## A-306
+**"Your last 90 days": once, after FollowUp first reads the inbox, Today says who wrote, who didn't get a reply, and
+what was set aside (2026-10-21).** The founder: *"yes draw it"*, then *"yes build it"* to the drawing (scratchpad
+`missed/missed-board.png`: phone and computer Today). It came from his own inbox: *"I do have a lot of emails lying
+sleeping there"*, and wanting to see FollowUp *"ignoring the spam"* and *"just capturing the leads only"*.
+- **The card:** in place of the day's sentence on Today, one box. Small label "Your last 90 days"; heading "23 people
+  wrote to you. 17 didn't get a reply."; one line "Each one has a reply ready below. The oldest has waited 30 days.";
+  then "184 newsletters, receipts and other emails were set aside." with a **See them** link; a quiet **Got it**.
+- **Decided while building (2026-10-21; the founder can change any of them):**
+  - "Didn't get a reply" is counted from **Today's own waiting list** (the people under "Needs you"), so the card and
+    Today always say the same number, and "Each one has a reply ready below" is true by construction. A customer
+    marked won, put off till later, or still being checked isn't counted. First build counted everyone whose last
+    message had no answer (21 on the local test data while Today showed 17); changed the same day.
+  - Nobody waiting: "23 people wrote to you. Nobody is waiting for a reply." / "From now on, FollowUp writes the reply
+    the moment they write." It never says "you answered every one": calls and texts outside FollowUp can't be seen.
+  - "People who wrote" = customers with a message from them in the last 90 days, any channel, never the practice
+    customer. "Set aside" = emails FollowUp read in those 90 days and filed as not customers.
+  - Shows only to an admin, after the first full inbox read finished (Gmail's deep read; Outlook's first sync), within
+    14 days of connecting, until **Got it**. Got it hides it for good (`Business.inboxSummarySeenAt`) and the day's
+    sentence comes back.
+  - **See them** opens Settings with that inbox's window open on "Skipped: not customers".
+
+## A-307 — The app organised the way Wispr Flow organises ^A-307
+
+**Date:** 2026-10-21. **Founder, verbatim:** *"yes build it and copy wisper flow ui ux design"*, *"like the design and
+templte formate and how they organise"*, then *"yes build it"* to the drawing (scratchpad `wfo/wispr-board.png`: Today,
+Customers, Activity, computer and phone, on the real app). Principles only (A-214, A-277, R-097): no Wispr logo, words
+or assets; the calm look (A-282) and the sidebar stay.
+**What specifically was approved:**
+- **Today:** the owner's own numbers at the top right on a computer, under the greeting on a phone: "Since you
+  started · 2 answered · 1 booked · 1 won", in one thin white pill. One card at a time under the greeting (the
+  first-days card, a question, a setup step: never two).
+- **Every list in one white rounded group** under a small uppercase label, with thin lines between rows: "Needs you"
+  (with its count) and "Later" on Today; Customers; each day on Activity.
+- **Customers:** search and one black "Add a customer" button in the title row on a computer (the phone keeps its round
+  + and full-width search); one line under the title, "Everyone who wrote to you. Newest first."; the list grouped
+  "Your reply is ready", then the rest. A row in a labelled group doesn't repeat the label.
+- **Activity:** by day, the time in a column on the left, one line each.
+- Day groups are still not used on Today (Today is ordered by who needs you; tried and dropped 2026-10-09).

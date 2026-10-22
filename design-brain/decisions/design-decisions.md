@@ -14838,3 +14838,24 @@ Edit that fact; hiding it would cost more than the repetition.
 
 **Weak points:** the reminders can't make anyone come back; the founder's own note to them still matters more. The
 founder's stuck-testers email still leaves out testers quiet for more than two weeks (by design, A-249).
+
+## 2026-10-22 — "FollowUp's call" drawn; waiting for the founder
+
+**Founder:** *"yes go ahead"* to drawing it, and *"make it so accurate and effective that business owners should think,
+'Oh yeah, this is the job that I needed'"* (now a brand principle, "The job they needed").
+
+**Drawn on the real app** (scratchpad `call/board-1-today.png`, `board-2-customer.png`, `board-3-phone.png`; local test
+data only): where a customer stands (Ready / Warm / Later / Has an agent), the one next step and who does it ("Send this,
+then call Raj today to book Saturday"; "if Priya doesn't answer, FollowUp writes again on Mon, Oct 26. Nothing for you to
+do."), and "Did FollowUp get Raj right? Yes · No". No opens "Where does Raj stand?" (four rows, FollowUp's call marked,
+an optional "What did FollowUp miss?") in place on a computer and as a bottom sheet on a phone. After Yes, one quiet line
+stays. Results gains "FollowUp's calls · last 30 days" (counts per tier, how many Ready customers booked, how many calls
+the owner checked and changed). It builds on A-246's card and A-286's open person; nothing is removed.
+
+**Behaviour it would change (founder's call):** the owner's pick changes the tier, the plan (Warm → Fast, Later → Long)
+and the GoHighLevel stage (A-303); the note teaches FollowUp; the question is asked once per call; the pilot counts
+right/changed calls.
+
+**Weak points, named:** a second "change" control on Warm/Later cards ("Change plan" and "No"); Ready is a green pill on
+the customer page but an outline tag on Today (an older mismatch, not new); Results numbers mean little before about 5
+calls; realtors only, since only the realtor checklist sorts customers today.

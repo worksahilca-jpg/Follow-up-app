@@ -36,7 +36,7 @@ export default function PrivacyPage() {
 
       <main className="max-w-3xl mx-auto px-6 py-16">
         <h1 className="font-display text-3xl">Privacy Policy</h1>
-        <p className="text-sm text-ink-soft mt-2">Last updated: October 20, 2026</p>
+        <p className="text-sm text-ink-soft mt-2">Last updated: October 22, 2026</p>
 
         <div className="mt-10 space-y-10 text-sm leading-relaxed text-ink-soft">
           <section>
@@ -107,6 +107,9 @@ export default function PrivacyPage() {
                 or Later, only to stages you picked). You can turn each of these off. If you leave &quot;Read my
                 notes&quot; on (GoHighLevel), we also read your own notes on a customer, like call notes, to tell where
                 they stand. We never read FollowUp&apos;s own notes, and we keep only the few words that show it.
+                When a customer who wrote to you isn&apos;t in your CRM, FollowUp shows you who; when you tap Add, it
+                adds them to your CRM (their name, email, phone and where they wrote) with their messages as a note.
+                After your first Add, new ones are added the same way by themselves, until you turn that off.
               </li>
               <li>
                 <strong className="text-ink">Your booking settings</strong> — your booking hours, where customers book

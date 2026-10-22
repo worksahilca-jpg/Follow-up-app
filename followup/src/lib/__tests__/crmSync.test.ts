@@ -18,6 +18,8 @@ vi.mock("@/lib/assignment", () => ({ pickAssignee: vi.fn(async () => "user1") })
 vi.mock("@/lib/sourceRouting", () => ({ applySourceRouting: vi.fn() }));
 vi.mock("@/lib/outboundWebhook", () => ({ notifyLeadEvent: vi.fn() }));
 vi.mock("@/lib/scoring", () => ({ scoreAndDraftForLead: vi.fn(async () => true) }));
+const autoAddMissed = vi.fn(async () => ({ added: 0, failed: [] }));
+vi.mock("@/lib/missedByCrmData", () => ({ autoAddMissed: (...a: unknown[]) => autoAddMissed(...(a as [])) }));
 
 const fetchPage = vi.fn();
 vi.mock("@/lib/crm", () => ({
@@ -37,6 +39,7 @@ function person(externalId: string, over: Record<string, unknown> = {}) {
 
 beforeEach(() => {
   fetchPage.mockReset();
+  autoAddMissed.mockClear();
   p.crmConnection.findUnique.mockResolvedValue({ businessId: "biz1", provider: "followupboss", apiKey: "key", lastSyncedAt: null, syncCursor: null });
   p.crmConnection.update.mockResolvedValue({});
   p.lead.findUnique.mockResolvedValue(null);
@@ -204,5 +207,33 @@ describe("one person, one customer, across the CRM and the inbox", () => {
     expect(p.lead.create).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ email: "new@example.com", phone: "+14165550100" }) })
     );
+  });
+
+  it("links a chat customer by the email they gave in the chat, so they aren't counted as missed (A-315)", async () => {
+    p.lead.findFirst.mockResolvedValueOnce(null).mockResolvedValueOnce({ id: "ig-lead", crmProvider: null, crmId: null, email: null, phone: null });
+    fetchPage.mockResolvedValueOnce({ people: [person("301", { email: "jo@example.com" })], nextCursor: null, hasMore: false });
+    await syncCrmForBusiness("biz1");
+    expect(p.lead.findFirst).toHaveBeenLastCalledWith(
+      expect.objectContaining({ where: { businessId: "biz1", email: null, dmEmail: { equals: "jo@example.com", mode: "insensitive" } } })
+    );
+    expect(p.lead.update).toHaveBeenCalledWith({ where: { id: "ig-lead" }, data: { crmProvider: "followupboss", crmId: "301", email: "jo@example.com" } });
+  });
+
+  it("adds new customers the CRM still lacks only after checking the whole CRM (A-315)", async () => {
+    fetchPage.mockResolvedValueOnce({ people: [person("101")], nextCursor: null, hasMore: false });
+    await syncCrmForBusiness("biz1");
+    expect(autoAddMissed).toHaveBeenCalledWith("biz1");
+
+    autoAddMissed.mockClear();
+    for (let i = 0; i < 6; i++) fetchPage.mockResolvedValueOnce({ people: [person(String(i))], nextCursor: String(i + 1), hasMore: true });
+    await syncCrmForBusiness("biz1");
+    expect(autoAddMissed).not.toHaveBeenCalled();
+  });
+
+  it("never fails the sync when adding them fails", async () => {
+    autoAddMissed.mockRejectedValueOnce(new Error("CRM down"));
+    fetchPage.mockResolvedValueOnce({ people: [], nextCursor: null, hasMore: false });
+    await expect(syncCrmForBusiness("biz1")).resolves.toMatchObject({ truncated: false });
+    expect(p.crmConnection.update).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ lastSyncError: null }) }));
   });
 });

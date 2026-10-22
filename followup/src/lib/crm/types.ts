@@ -43,6 +43,22 @@ export interface CrmClient {
    * the caller tells them apart. [] when the CRM couldn't say. Never throws. Only where the CRM is read for notes.
    */
   listNotes?(apiKey: string, externalId: string): Promise<CrmNote[]>;
+  /**
+   * Adds this person to the CRM ("Missed by your CRM", A-315), or finds them there when the CRM already has them by
+   * email or phone, so a tap never makes a second copy. `externalId` is their id in the CRM either way. Never throws.
+   */
+  createPerson(apiKey: string, person: NewCrmPerson): Promise<{ ok: boolean; externalId?: string; message?: string }>;
+}
+
+/**
+ * Someone FollowUp adds to the owner's CRM: what they told FollowUp, nothing more. At least an email or a phone; the
+ * names are "" when FollowUp only has a placeholder, so the CRM shows the email or phone instead of a made-up name.
+ */
+export interface NewCrmPerson {
+  firstName: string;
+  lastName: string;
+  email: string | null;
+  phone: string | null;
 }
 
 /** A note on a person in the owner's CRM. `at` is null when the CRM didn't say when. */

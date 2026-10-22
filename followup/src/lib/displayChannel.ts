@@ -23,3 +23,17 @@ export function displayChannel(channel: string | null | undefined, source: strin
   if (channel === "web" && source === LEAD_AD_SOURCE) return LEAD_FORM;
   return channel;
 }
+
+/** A customer with no messages yet still came from somewhere: read it off the source's name. */
+export function channelFromSource(source: string | null | undefined): string | null {
+  const s = (source ?? "").toLowerCase();
+  if (/gmail|outlook|mail/.test(s)) return "email";
+  if (/instagram/.test(s)) return "instagram";
+  if (/whatsapp/.test(s)) return "whatsapp";
+  if (/facebook lead ad/.test(s)) return LEAD_FORM;
+  if (/messenger|facebook/.test(s)) return "messenger";
+  if (/website|form|widget/.test(s)) return "web";
+  if (/call|voice|phone/.test(s)) return "call";
+  if (/sms|text/.test(s)) return "text";
+  return null;
+}

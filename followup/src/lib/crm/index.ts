@@ -15,4 +15,4 @@ export function isCrmProvider(value: string): value is CrmProvider {
   return value === "followupboss" || value === "hubspot" || value === "gohighlevel";
 }
 
-export type { CrmClient, CrmPerson } from "./types";
+export type { CrmClient, CrmPerson, NewCrmPerson } from "./types";

@@ -5537,3 +5537,24 @@ Next to draw after this build; recorded in design-decisions.
 **Tried live, 2026-10-22:** the founder ran the whole meeting on their own account (8 answers, then Looks right;
 counted from audit events, no words read). Founder, verbatim: *"done we will be improving this but sound good"*.
 Approved as a first version; improvements to come, not yet named.
+
+## A-315 — "Missed by your CRM": customers who wrote but never reached the owner's CRM, on Results ^A-315
+
+**Date:** 2026-10-22. **Founder, verbatim**, to the drawing in design-decisions ("Missed by your CRM"): *"yes build it"*.
+Why it exists, founder: *"we have to focus more on the differentiation we are creating, I don't want CRMs to get all
+these features and eat us."* A CRM can't build this: it never sees the owner's inbox and DMs.
+**What specifically was approved:**
+- **At the top of Results, "Missed by your CRM · last 30 days":** a big count of customers who wrote and aren't in the
+  owner's CRM, one sentence saying FollowUp caught them in email and messages, one row per place they wrote, one black
+  **Add all N to {CRM}**, a quiet **See who**, and the check in small text ("Checked against {CRM} by email and phone,
+  N min ago. Friends, newsletters and pitches aren't counted.").
+- **See who:** "Not in {CRM}", each person with their first words in quotes, where and when, and an outlined **Add**
+  (✓ Added once in), then **Add all**, and what gets added: name, email, phone, where they wrote, their messages as a
+  note. Never friends, newsletters or pitches.
+- **After:** "✓ All N are in {CRM} now, with their messages as a note." and **new customers FollowUp catches go in by
+  themselves**, with **Turn off** (the recommendation the founder said yes to).
+- The CRM is named as the owner's own (Follow Up Boss, HubSpot, GoHighLevel); nothing shows without a CRM connected.
+**Built 2026-10-22 (local, PR waiting for "merge"):** as drawn, plus: the after state says "weren't in" (the drawing
+kept "aren't"); Turn off sits on its own line; the switch's home is the CRM's own window under Connected apps (the
+founder's same-day rule: everything where its name says); a CRM that refuses says what to do, never a status code.
+

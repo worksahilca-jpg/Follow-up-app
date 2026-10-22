@@ -2,6 +2,8 @@ import { Globe, Mail, Phone } from "lucide-react";
 import { BrandMark } from "@/components/brandLogos";
 import { LEAD_FORM } from "@/lib/displayChannel";
 
+export { channelFromSource } from "@/lib/displayChannel";
+
 /**
  * The small channel glyph the canvas rows draw after a name or before a
  * channel's name: the app's own logo where there is one (brandLogos.tsx).
@@ -16,19 +18,5 @@ export function ChannelIcon({ channel, className = "h-3.5 w-3.5 shrink-0 text-in
   if (channel === "instagram") return <BrandMark brand="instagram" className={className} />;
   if (channel === "whatsapp") return <BrandMark brand="whatsapp" className={className} />;
   if (channel === "messenger") return <BrandMark brand="messenger" className={className} />;
-  return null;
-}
-
-/** A customer with no messages yet still came from somewhere: read it off the source's name. */
-export function channelFromSource(source: string | null | undefined): string | null {
-  const s = (source ?? "").toLowerCase();
-  if (/gmail|outlook|mail/.test(s)) return "email";
-  if (/instagram/.test(s)) return "instagram";
-  if (/whatsapp/.test(s)) return "whatsapp";
-  if (/facebook lead ad/.test(s)) return LEAD_FORM;
-  if (/messenger|facebook/.test(s)) return "messenger";
-  if (/website|form|widget/.test(s)) return "web";
-  if (/call|voice|phone/.test(s)) return "call";
-  if (/sms|text/.test(s)) return "text";
   return null;
 }

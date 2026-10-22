@@ -1315,6 +1315,9 @@ model Lead {
   crmTierMoved      String?
   crmNotesCheckedAt DateTime?
   crmNotesSeenAt    DateTime?
+  // "Missed by your CRM" (A-315): when FollowUp added this customer to the owner's CRM, because they wrote but the
+  // CRM never had them. Results counts these as caught; null for everyone the CRM had on its own.
+  crmAddedAt        DateTime?
 
   @@unique([businessId, email])
   // Postgres allows multiple NULLs in a unique index, so leads with no
@@ -2060,6 +2063,11 @@ model CrmConnection {
   tierStages       Json?
   // "Read my notes" (A-303, GoHighLevel): the owner's own notes on a customer, like call notes, count as what they said.
   readNotes        Boolean   @default(true)
+  // "Missed by your CRM" (A-315): new customers FollowUp catches go into this CRM by themselves, from this moment.
+  // Turned on by the owner's first Add; null while off. autoAddOff is the owner's own Turn off, so a later Add
+  // doesn't turn it back on behind their back.
+  autoAddSince     DateTime?
+  autoAddOff       Boolean   @default(false)
 }
 
 /**

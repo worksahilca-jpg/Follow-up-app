@@ -1,5 +1,5 @@
 import { CRM_TIMEOUT_MS, type CrmClient, type CrmPerson } from "./types";
-import { readWhen } from "./dates";
+import { addRefused, readWhen } from "./dates";
 
 /**
  * HubSpot — a service key (Settings → search "service key" in their portal),
@@ -135,6 +135,35 @@ export const hubspotClient: CrmClient = {
         .map((o) => ({ id: String(o.value), name: String(o.label) }));
     } catch {
       return [];
+    }
+  },
+
+  // "Missed by your CRM" (A-315): POST /crm/v3/objects/contacts. HubSpot keeps one contact per email and answers 409
+  // with "Existing ID: …" in the message when the email is taken (grade B: HubSpot's contacts guide and many
+  // integrations); that existing contact is the answer, so a tap never makes a second one.
+  async createPerson(token, person) {
+    try {
+      const properties: Record<string, string> = {};
+      if (person.firstName) properties.firstname = person.firstName;
+      if (person.lastName) properties.lastname = person.lastName;
+      if (person.email) properties.email = person.email;
+      if (person.phone) properties.phone = person.phone;
+      const res = await fetch(`${BASE}/crm/v3/objects/contacts`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ properties }),
+        signal: AbortSignal.timeout(CRM_TIMEOUT_MS),
+      });
+      const data = (await res.json().catch(() => null)) as { id?: unknown; message?: unknown } | null;
+      if (res.status === 409) {
+        const existing = typeof data?.message === "string" ? /Existing ID:\s*(\d+)/i.exec(data.message)?.[1] : undefined;
+        return existing ? { ok: true, externalId: existing } : { ok: false, message: "HubSpot already has this email under another contact." };
+      }
+      if (!res.ok) return { ok: false, message: addRefused("HubSpot", res.status) };
+      const id = typeof data?.id === "string" || typeof data?.id === "number" ? String(data.id) : "";
+      return id ? { ok: true, externalId: id } : { ok: false, message: "HubSpot didn't say who it added. Try again in a minute." };
+    } catch {
+      return { ok: false, message: "Couldn't reach HubSpot. Try again in a minute." };
     }
   },
 

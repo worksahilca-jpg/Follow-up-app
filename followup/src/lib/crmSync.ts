@@ -6,6 +6,7 @@ import { notifyLeadEvent } from "@/lib/outboundWebhook";
 import { scoreAndDraftForLead } from "@/lib/scoring";
 import { CRM_PROVIDERS, isCrmProvider } from "@/lib/crm";
 import type { CrmPerson } from "@/lib/crm/types";
+import { autoAddMissed } from "@/lib/missedByCrmData";
 
 // Per-run page cap — same reasoning as Gmail's MAX_CLASSIFICATIONS_PER_RUN
 // (src/lib/gmailSync.ts): a run FINISHES and stamps itself instead of
@@ -94,6 +95,11 @@ export async function syncCrmForBusiness(businessId: string): Promise<CrmSyncRes
         lastSyncError: null,
       },
     });
+    // The whole CRM was just checked: new customers it still doesn't have go in now, if the owner said so (A-315).
+    // Never fails the sync; a customer the CRM didn't take is tried again next run.
+    if (!truncated) {
+      await autoAddMissed(businessId).catch((err) => console.error(`CRM auto-add failed for business ${businessId}:`, err instanceof Error ? err.message : err));
+    }
   } catch (err) {
     console.error(`CRM sync failed for business ${businessId} (${conn.provider}):`, err);
     await prisma.crmConnection.update({
@@ -152,17 +158,25 @@ export async function upsertCrmLead(businessId: string, provider: string, raw: C
   // their CRM record instead of skipping them. Skipping left the lead with
   // no CRM identity, so FollowUp's replies never reached the CRM as notes,
   // and the "also in your CRM" hold (src/lib/automation.ts) never applied.
-  // Matched case-insensitively on email, then on the normalized phone.
-  const match = await prisma.lead.findFirst({
-    where: {
-      businessId,
-      OR: [
-        ...(person.email ? [{ email: { equals: person.email, mode: "insensitive" as const } }] : []),
-        ...(person.phone ? [{ phone: person.phone }] : []),
-      ],
-    },
-    select: { id: true, crmProvider: true, crmId: true, email: true, phone: true },
-  });
+  // Matched case-insensitively on email, then on the normalized phone. Then, only if nobody matched, an Instagram or
+  // Messenger customer by the email they gave in the chat (Lead.dmEmail, src/lib/dmContact.ts): without it they read
+  // as "Missed by your CRM" (A-315) while the CRM has them. Second, so a customer who has that email as their own
+  // always wins, and filling the chat customer's email below can never collide with them.
+  const select = { id: true, crmProvider: true, crmId: true, email: true, phone: true };
+  const match =
+    (await prisma.lead.findFirst({
+      where: {
+        businessId,
+        OR: [
+          ...(person.email ? [{ email: { equals: person.email, mode: "insensitive" as const } }] : []),
+          ...(person.phone ? [{ phone: person.phone }] : []),
+        ],
+      },
+      select,
+    })) ??
+    (person.email
+      ? await prisma.lead.findFirst({ where: { businessId, email: null, dmEmail: { equals: person.email, mode: "insensitive" } }, select })
+      : null);
   if (match) {
     // Already tied to a different CRM record: leave it. Two CRM contacts
     // for one person is the CRM's duplicate to resolve, not ours to pick.

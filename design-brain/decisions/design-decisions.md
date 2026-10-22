@@ -15026,3 +15026,52 @@ the draft, in question order. "Looks right" saves the draft and the owner's edit
 **Weak spots, honestly:** the AI parts (worded questions, the dig, the read, corrections) were stood in locally, so the
 first live run is the real test of their words. The end is two phone screens long. A meeting left at Finish later waits
 in the draft with nothing reminding the owner; the way back is Settings › Your business (the Today card is offered once).
+
+## 2026-10-22 — "Missed by your CRM": drawn, waiting for the founder's yes
+
+**Why:** the founder: *"we have to focus more on the differentiation we are creating, I don't want CRMs to get all these
+features and eat us."* Of the options offered, the founder picked A, **"Missed by your CRM"**: the one thing a CRM can't show,
+because it never sees the owner's inbox and DMs (the competitor report's moat: the connections and the owner's trust,
+not the AI). Principle to keep: **every new feature should lean on what only FollowUp sees**, not on what any CRM could
+add next quarter.
+**Drawn on the real local Results page** (390×844 and 1280; example numbers and names, business name masked):
+1. At the top of Results, "Missed by your CRM · last 30 days": a big **12 customers** "aren't in Follow Up Boss. They
+   wrote to you by email or message, and FollowUp caught them", one row per place (Gmail 7, Instagram 3, Messenger 1,
+   Website form 1), one black **Add all 12 to Follow Up Boss**, a quiet **See who**, and the check in small text:
+   "Checked against Follow Up Boss by email and phone, 2 min ago. Friends, newsletters and pitches aren't counted."
+2. **See who** opens "Not in Follow Up Boss": each person with their first words in quotes, where and when they wrote,
+   and an outlined **Add** (✓ Added once done), about five then "and 7 more", then **Add all 11** and what gets added
+   (name, email, phone, where they wrote, their messages as a note; never friends, newsletters or pitches).
+3. **After:** "✓ All 12 are in Follow Up Boss now, with their messages as a note. New customers FollowUp catches go in
+   by themselves. Turn off".
+**The founder's calls before building:** whether new ones go into the CRM by themselves after the first add (drawn as
+on, with Turn off), and that this is new work: FollowUp's CRM link can't create a contact today (it links and adds notes
+only), so each CRM (Follow Up Boss, HubSpot, GoHighLevel) needs an "add a contact" step and may need one more permission.
+**Weak spots, honestly:** the number is only worth showing if it's right. One friend or pitch counted as a customer and
+the owner stops trusting it, so it stands on the existing customer check and the CRM match by email and phone (a person
+the CRM has under another email would be counted wrongly). An owner with no CRM connected sees nothing here; the empty
+state isn't drawn. "Add all" is a bulk action, but it only fills the owner's own CRM; it never messages anyone.
+
+## 2026-10-22 — "Missed by your CRM": approved and built (A-315)
+
+**Approved:** *"yes build it"*. **Built as drawn**, checked on the real local app at 390×844 and 1280 against a pretend
+Follow Up Boss (no real CRM reached): Results card, See who list with Show N more, a real Add refused (the key was
+fake: "Couldn't reach Follow Up Boss. Try again in a minute."), an Add accepted (✓ Added), the after state, Turn off,
+and the switch in Settings › Connected apps › Follow Up Boss. No sideways scroll, no page errors.
+**Decided while building:**
+- **Who counts:** a real customer (not the practice one) who wrote to the owner (an inbound message), in the last 30
+  days, with an email or phone (or the ones they gave in a chat), who hasn't said no or stop, and who was already here
+  when FollowUp last finished checking the whole CRM. Before the first full check, nothing shows. A customer the CRM
+  has is linked by the sync (email, phone, and now the email they gave in a chat); only the unlinked are missing.
+- **Adding:** Follow Up Boss through /people with deduplicate, not /events: an event starts the owner's action plans,
+  and this is someone FollowUp is already talking to. HubSpot answers 409 with the contact it already has; that one is
+  used. GoHighLevel upserts. Each gets a note: who, where they wrote, and their last five messages in their words.
+- **By themselves:** turned on by the first Add (the recommendation the founder said yes to), never back on after the
+  owner's own Turn off; only customers newer than the switch; ten a run, after a full CRM check; paused writing stops it.
+- **Where the switch lives:** the CRM's own window under Connected apps, by the founder's rule from the same day.
+**Weak spots, honestly:** the count is only as good as the customer check and the email/phone match; someone the CRM
+has under another email is counted wrongly (and a HubSpot add by phone alone can make a second contact). The owner's
+own CRM automations (HubSpot workflows, GoHighLevel "contact created" triggers) may fire on a new contact; FollowUp's
+one-boss rule then steps back. Follow Up Boss's deduplicate flag and response shape are grade C (their reference
+doesn't load here): the first real add on a live account is the real test. No empty state when no CRM is connected.
+

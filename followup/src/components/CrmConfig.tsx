@@ -173,6 +173,17 @@ export default function CrmConfig({ setup }: { setup?: { onConnected: (name: str
     }
   }
 
+  async function setAutoAdd(on: boolean) {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/crm/missed", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "auto", on }) });
+      const data = (await res.json()) as { success: boolean };
+      if (data.success) setStages((s) => (s ? { ...s, autoAdd: on } : s));
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function load() {
     try {
       const data = (await (await fetch("/api/crm/config")).json()) as { success: boolean } & Config;
@@ -441,6 +452,9 @@ export default function CrmConfig({ setup }: { setup?: { onConnected: (name: str
           {config.isAdmin && (
             <TierStages crm={crm.name} stages={stages} onOpen={(t) => (stages ? setPicking(t) : undefined)} onReadNotes={setReadNotes} busy={saving} />
           )}
+          {config.isAdmin && stages?.autoAdd !== undefined && (
+            <AutoAdd crm={crm.name} on={stages.autoAdd} onChange={setAutoAdd} busy={saving} />
+          )}
           {config.record && (
             <div className="mt-5">
               <p className="text-[15px] font-semibold">What FollowUp wrote there this week</p>
@@ -503,6 +517,8 @@ type StageChoice = Choice & {
   tiers?: Record<SortTier, Choice>;
   readNotes?: boolean;
   notesAvailable?: boolean;
+  /** "Missed by your CRM" (A-315): new customers FollowUp catches go in by themselves. Absent from an older server. */
+  autoAdd?: boolean;
   /** When the CRM lists no stages: what the owner can turn on so it does. */
   stagesHelp?: string | null;
 };
@@ -586,6 +602,27 @@ function TierStages({
           <p className="ios-footnote mt-1.5 px-4 text-ink-soft">Like your call notes. A call that changes their plans moves them too. FollowUp never reads its own notes.</p>
         </>
       )}
+    </>
+  );
+}
+
+/**
+ * "Missed by your CRM" (A-315): its switch lives here, with the CRM it writes to (founder, 2026-10-22: everything
+ * where its name says). Results says the same and offers Turn off; the owner's first Add there turns it on.
+ */
+function AutoAdd({ crm, on, onChange, busy }: { crm: string; on: boolean; onChange: (on: boolean) => void; busy: boolean }) {
+  return (
+    <>
+      <p className="ios-footnote mt-6 px-4 uppercase tracking-[0.02em] text-ink-faint">Customers {crm} doesn&apos;t have</p>
+      <div className={BOX + " mt-1.5 flex min-h-[56px] items-center gap-3 px-4"}>
+        <span className="flex-1 text-[16px]">Add new ones by themselves</span>
+        <Switch checked={on} onChange={() => onChange(!on)} disabled={busy} label={`Add new customers to ${crm} by themselves`} />
+      </div>
+      <p className="ios-footnote mt-1.5 px-4 text-ink-soft">
+        {on
+          ? `When someone writes to you who isn't in ${crm}, FollowUp adds them, with their messages as a note.`
+          : `New ones wait on Results under "Missed by your CRM" for you to add.`}
+      </p>
     </>
   );
 }

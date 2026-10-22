@@ -7,6 +7,10 @@ import { describe, it, expect } from "vitest";
 import {
   CARD_MIN_OPEN,
   checkedRows,
+  checkedWording,
+  currentTopic,
+  NOT_OFFERED_LABEL,
+  WHO_LABEL,
   exampleLine,
   knowsLine,
   MAX_ROWS,
@@ -31,6 +35,18 @@ describe("the questions", () => {
     expect(labels).toContain("Commission");
     expect(labels).toContain("Area you cover");
     expect(tellTopics("Home services (contractor, cleaning, etc.)").map((t) => t.label)).toContain("Warranty");
+  });
+
+  it("ask every business who its customers are and what it doesn't do (A-313), each once", () => {
+    const general = tellTopics("Other").map((t) => t.label);
+    expect(general[0]).toBe(WHAT_YOU_DO_LABEL);
+    expect(general[1]).toBe(WHO_LABEL);
+    expect(general[general.length - 1]).toBe(NOT_OFFERED_LABEL);
+    expect(general).toHaveLength(9);
+    // A realtor is already asked who they work with, in their trade's own words: not twice.
+    expect(labels.filter((l) => l === WHO_LABEL)).toHaveLength(1);
+    expect(tellTopic(REALTOR, WHO_LABEL)?.question).toBe("Do you work with buyers, sellers or both?");
+    expect(labels[labels.length - 1]).toBe(NOT_OFFERED_LABEL);
   });
 
   it("are only ones FollowUp can use: no rules or tone dressed up as facts", () => {
@@ -65,6 +81,49 @@ describe("where the conversation is", () => {
   it("a skipped question answered later is not counted as skipped", () => {
     const s = tellState(REALTOR, [{ label: "Commission", value: "2.5%" }], ["Commission"]);
     expect(s.skipped).toEqual([]);
+  });
+});
+
+describe("the question asked now", () => {
+  it("is the first still open, after the ones skipped on this visit", () => {
+    const s = tellState(REALTOR, [{ label: WHAT_YOU_DO_LABEL, value: "Realtor" }], []);
+    expect(currentTopic(s)?.label).toBe("Commission");
+    expect(currentTopic(s, ["commission"])?.label).toBe("Area you cover");
+    expect(currentTopic(tellState(REALTOR, [], []), labels)).toBeNull();
+  });
+});
+
+describe("FollowUp's own wording of a question (A-313)", () => {
+  const price = tellTopic("Other", "Prices")!;
+
+  it("is used when it is a short plain question, with an example that reads as one", () => {
+    const w = checkedWording(
+      { question: "How do you price a website for a restaurant or salon? Set packages, or a quote after a call?", example: "e.g. Starter site $900 for 5 pages" },
+      price
+    );
+    expect(w).toEqual({
+      label: "Prices",
+      question: "How do you price a website for a restaurant or salon? Set packages, or a quote after a call?",
+      example: "e.g. Starter site $900 for 5 pages",
+    });
+  });
+
+  it("keeps the plain example when FollowUp's doesn't read as one", () => {
+    expect(checkedWording({ question: "How do you price a site?", example: "Starter site $900" }, price)?.example).toBe(price.example);
+  });
+
+  it("is dropped for anything that isn't a plain question: praise, markup, links, a statement, or too long", () => {
+    for (const question of [
+      "Great! How do you price a site?",
+      "How do you price a <b>site</b>?",
+      "How do you price a site? See https://example.com",
+      "Tell me how you price a site.",
+      `How do you price ${"a very long thing ".repeat(15)}?`,
+      "",
+    ]) {
+      expect(checkedWording({ question, example: "e.g. $900" }, price), question).toBeNull();
+    }
+    expect(checkedWording(null, price)).toBeNull();
   });
 });
 

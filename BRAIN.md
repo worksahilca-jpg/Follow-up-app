@@ -74,12 +74,19 @@ a booked call or visit; the owner closes.
 
 **Last updated: 2026-10-22**
 
-- **"Tell FollowUp about your business" built (A-311 + A-312, Oct 22, PR #582, not merged):** the founder said "Sure" to
-  the drawings. A card on Today (once, after FollowUp has shown it works, 3+ questions open) opens a conversation under
+- **"Tell FollowUp" as a conversation built (A-313, Oct 22, not merged):** the founder asked for it to feel like a real
+  conversation and said "yes build it" to the drawing. Each next question is worded for the business (checked, plain
+  fallback); one more question when an answer can't help a customer; "Who you work with" and "What you don't do" asked
+  of everyone (the first also feeds the customer check, the second only replies). Phone bar title fixed. The AI parts
+  were stood in for locally; check live after merge.
+- **"Tell FollowUp about your business" LIVE (A-311 + A-312, Oct 22, PR #582 → bcfa9ae, merged at the founder's "Yes /
+  Merge too" after seeing the built screens):** the founder said "Sure" to the drawings. A card on Today (once, after FollowUp has shown it works, 3+ questions open) opens a conversation under
   Settings › Your business: one question at a time, the owner's words split into facts, saved only on "Use these".
   `/teach` opens it. One new column (`Business.tellCardClosedAt`). Left out on purpose: "when to hand over", "never
   promise", "how you sound" (milestone 3: facts are quoted word for word and can't carry a rule). The AI split was not
-  seen locally (no key); check it live after merge. Report: plan section 8.
+  seen locally (no key); next: the founder answers two questions live to see it. Report: plan section 8.
+  The founder's own account becomes their web design side business (kind: Something else, realtor facts removed); the
+  realtor test moves to a new account invited from /admin. No "Web design" kind (R-138).
 - **Personal AI assistant brief, milestone 1 built (Oct 22, PR #582, not merged):** the founder's brief (parts 1–22) is
   audited in `followup/research/product/2026-10-22-ai-assistant-system-plan.md`: Train It and Talk to It exist but are
   founder-only (Admin → Train); owners have Try it yourself + Write it better, Teach FollowUp, What FollowUp knows,

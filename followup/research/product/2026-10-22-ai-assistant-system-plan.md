@@ -330,3 +330,9 @@ Start, an answer, Use these, Not right, Skip, the end screen, "Answer them now",
 **Not checked:** the AI split itself, because the test environment has no OpenAI key; locally every answer showed as
 one row (the fallback). The split is covered by tests with fixed model answers, and checked live after merge.
 
+**Then, as a conversation (A-313, built 2026-10-22):** the founder asked for it to feel like a real conversation. Each
+next question is worded for the business from what it already said (`wordTellQuestion`, checked by `checkedWording`,
+plain question as fallback); when an answer can't help a customer, one more question that says why (`proposeTellFacts`
+now returns `vague` and `dig`); two topics for every business, "Who you work with" (also read by the customer check) and
+"What you don't do" (replies only). 4,620 tests pass (12 new).
+

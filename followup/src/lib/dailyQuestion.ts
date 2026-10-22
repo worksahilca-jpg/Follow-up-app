@@ -18,7 +18,7 @@
  *    set aside comes back only as an answer blank, when a real customer asks.
  */
 import { labelKey } from "@/lib/factLines";
-import { teachQuestions, type TeachQuestion } from "@/lib/teachQuestions";
+import { teachQuestions, WHO_LABEL, type TeachQuestion } from "@/lib/teachQuestions";
 import { ASK_PLAN_LABEL } from "@/lib/askPlan";
 import { CALENDAR_LABEL, CALENDAR_WHY, calendarQuestion } from "@/lib/calendarUsed";
 
@@ -115,8 +115,15 @@ export function pickDailyQuestion(state: DailyQuestionState, now: Date = new Dat
   return teachQuestions(state.trade, done)[0] ?? null;
 }
 
-/** The owner's own description of the business, for the lead check, if they gave one. */
+/**
+ * The owner's own description of the business, for the lead check, if they gave one: what they do, and who their
+ * customers are when they said (A-313). What they don't do is left out on purpose: a request for it is still a real
+ * person asking, and setting it aside could hide a customer.
+ */
 export function businessAbout(facts: readonly { label: string; value: string }[]): string | null {
-  const fact = facts.find((f) => labelKey(f.label) === labelKey(WHAT_YOU_DO_LABEL));
-  return fact?.value.trim() || null;
+  const value = (label: string) => facts.find((f) => labelKey(f.label) === labelKey(label))?.value.trim() || null;
+  const what = value(WHAT_YOU_DO_LABEL);
+  if (!what) return null;
+  const who = value(WHO_LABEL);
+  return who ? `${what.replace(/[.\s]+$/, "")}. Customers: ${who}` : what;
 }

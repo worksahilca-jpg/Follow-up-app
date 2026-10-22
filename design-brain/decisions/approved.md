@@ -5496,3 +5496,21 @@ design-decisions.md ("Tell FollowUp about your business" drawn). Builds A-311.
 - **The rows are the owner's own words**, split, never tidied ("Mississauga and Oakville", not a summary): drafts quote
   facts word for word, so a value FollowUp wrote would be FollowUp speaking for the owner.
 - **No dot on the "Saved" line** (the drawing's own weak spot).
+**Confirmed on the built screens, 2026-10-22.** After seeing the phone and computer screenshots of the build, founder,
+verbatim: *"Yes / Merge too"*. Merged in PR #582 (bcfa9ae).
+
+## A-313 — "Tell FollowUp" asks like a conversation ^A-313
+
+**Date:** 2026-10-22. **Founder, verbatim:** *"make it a bit more like a conversations followup should ask questions about
+their businesses so that it can learn and use for its job"*, then *"yes build it"* to the drawing (design-decisions,
+"Tell FollowUp as a real conversation"). Builds on A-312; its rows, Use this / Not right, Skip and Finish later stay.
+**What specifically was approved:**
+- **Questions fit the business:** the topics stay a short fixed list, so it ends; FollowUp words each question from what
+  the owner already said ("Who are your websites usually for?"), with an example that fits. Plain fixed wording when that
+  can't be done.
+- **One dig when an answer can't help a customer** ("depends on the site"): one more question that says why it matters,
+  then it moves on. Never twice on one topic; a clear short answer ("Yes") is never dug into.
+- **Two topics for every business:** "Who you work with" and "What you don't do".
+- **No chit-chat, no praise, no personality** (brand principle 3, S-13). Every fact is still the owner's own words, saved
+  only on their OK.
+- **The phone bar title on this page is short** ("Tell FollowUp"), so it no longer runs into the logo.

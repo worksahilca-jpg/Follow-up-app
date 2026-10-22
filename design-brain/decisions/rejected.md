@@ -1760,3 +1760,12 @@ owner is never asked to grade or sort. Accuracy is measured from what happens (R
 changes, customers set aside or brought back), not from asking. The owner's existing ways to disagree stay (Change plan,
 Keep following up anyway, Not a customer); no new one is added. **Do not propose again:** a confirm/grade step on
 FollowUp's judgements, in any form.
+
+## R-138 — A "kind of business" choice for each niche (e.g. "Web design") ^R-138
+
+**Rejected:** 2026-10-22, founder, when offered a "Web design" choice with its own questions for their side business:
+*"upto you bro dont make it specific"*. **What is rejected:** adding a new kind of business, with its own questions and
+reply plan, for one niche. **Principle (inferred):** the list of kinds stays short and general; a business that doesn't
+fit picks **Something else**, and its own "What you do" answer (A-101, A-312) tells FollowUp what it sells. **Do not
+propose again:** one-off kinds of business for a single owner's niche. A new kind needs many owners of that trade, and
+the founder's yes.

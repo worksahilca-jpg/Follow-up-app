@@ -9,8 +9,8 @@ import { proposeTellFacts } from "@/lib/integrations/openai";
 import { labelKey, MAX_FACTS, MAX_LABEL, MAX_VALUE } from "@/lib/factLines";
 import { saveOwnerFact } from "@/lib/businessFacts";
 import { NEXT_QUESTION_GAP_MS } from "@/lib/dailyQuestion";
-import { checkedRows, MAX_ANSWER, MAX_ROWS, tellRows, tellTopic, tellTopics } from "@/lib/tellFollowUp";
-import { loadTellState } from "@/lib/tellFollowUpData";
+import { checkedRows, checkedWording, currentTopic, MAX_ANSWER, MAX_ROWS, tellRows, tellTopic, tellTopics } from "@/lib/tellFollowUp";
+import { loadTellState, wordedTopic } from "@/lib/tellFollowUpData";
 
 const fail = (message: string, status: number) => NextResponse.json({ success: false, message }, { status });
 
@@ -18,16 +18,28 @@ const topic = z.string().trim().min(1).max(MAX_LABEL);
 // "Answer them now": the skipped questions are back in the conversation, so the state sent back keeps them.
 const again = z.boolean().optional();
 const answer = z.string().trim().min(1, "Write your answer first.").max(MAX_ANSWER, `Keep it under ${MAX_ANSWER} characters.`);
+// Questions skipped on this visit: with `again` they are still open, and the next question is the one after them.
+const setAside = z.array(topic).max(20).optional();
 const schema = z.discriminatedUnion("action", [
-  z.object({ action: z.literal("read"), topic, answer }),
+  z.object({
+    action: z.literal("read"),
+    topic,
+    answer,
+    // The words the owner saw (A-313), so the answer is read against them; the plain question when missing.
+    question: z.string().trim().max(240).optional(),
+    // The answer to FollowUp's one extra question: `previous` is the first answer, and FollowUp doesn't ask again.
+    previous: z.string().trim().max(MAX_ANSWER).optional(),
+    dug: z.boolean().optional(),
+  }),
   z.object({
     action: z.literal("use"),
     topic,
     answer,
     rows: z.array(z.object({ label: z.string().max(MAX_LABEL), value: z.string().max(MAX_VALUE) })).min(1).max(MAX_ROWS),
     again,
+    setAside,
   }),
-  z.object({ action: z.literal("skip"), topic, again }),
+  z.object({ action: z.literal("skip"), topic, again, setAside }),
   z.object({ action: z.literal("start") }),
   z.object({ action: z.literal("not_now") }),
 ]);
@@ -35,9 +47,11 @@ const schema = z.discriminatedUnion("action", [
 /**
  * POST /api/business/tell — "Tell FollowUp about your business" (A-311, src/lib/tellFollowUp.ts).
  *
- *  - read: what FollowUp took from one answer, to show the owner. Saves nothing.
+ *  - read: what FollowUp took from one answer, to show the owner. Saves nothing. When the answer can't help a
+ *    customer ("depends"), one more question instead (A-313), once per question.
  *  - use: the owner said "Use these": each row is saved as a fact they typed, used in replies from now on.
  *  - skip: "Skip this one": left for when a real customer asks (A-101).
+ *  - use and skip answer with the next question, worded for this business when FollowUp can (A-313).
  *  - start / not_now: the card on Today was answered; it is offered once. "Not now" also rests the daily question.
  *
  * Admin only, like every fact, because answers go into replies sent in the business's name. Audited without the
@@ -83,10 +97,13 @@ export async function POST(request: NextRequest) {
     }
     const labels = tellTopics(business.industry).map((t) => t.label);
     // A hiccup never loses the answer: without the model's reading, the whole answer is shown under the question.
-    const proposed = await proposeTellFacts(asked.question, body.answer, labels).catch((err) => {
+    const proposed = await proposeTellFacts(body.question || asked.question, body.answer, labels, body.previous).catch((err) => {
       console.error(`Could not read a "Tell FollowUp" answer for business ${ctx.businessId}:`, err instanceof Error ? err.message : err);
       return null;
     });
+    // One more question when the answer gives a customer nothing to act on, never twice on one question.
+    const dig = !body.dug && proposed?.vague ? checkedWording({ question: proposed.dig, example: proposed.digExample }, asked) : null;
+    if (dig) return NextResponse.json({ success: true, dig });
     const rows = tellRows(asked, body.answer, proposed, labels);
     if (rows.length === 0) return fail("FollowUp couldn't read that. Try saying it in a sentence or two.", 422);
     return NextResponse.json({ success: true, rows });
@@ -108,7 +125,7 @@ export async function POST(request: NextRequest) {
       data: { tellCardClosedAt: closed, questionAfter: new Date(now.getTime() + NEXT_QUESTION_GAP_MS) },
     });
     void recordAudit(ctx, "business.tell", { targetType: "business", targetId: ctx.businessId, meta: { decision: "used", facts: rows.length } });
-    return NextResponse.json({ success: true, state: await loadTellState(ctx.businessId, body.again) });
+    return NextResponse.json({ success: true, ...(await nextStep(ctx.businessId, body.again, body.setAside)) });
   }
 
   // skip
@@ -118,5 +135,12 @@ export async function POST(request: NextRequest) {
     data: { questionsSkipped: skipped, tellCardClosedAt: closed, questionAfter: new Date(now.getTime() + NEXT_QUESTION_GAP_MS) },
   });
   void recordAudit(ctx, "business.tell", { targetType: "business", targetId: ctx.businessId, meta: { decision: "skipped" } });
-  return NextResponse.json({ success: true, state: await loadTellState(ctx.businessId, body.again) });
+  return NextResponse.json({ success: true, ...(await nextStep(ctx.businessId, body.again, body.setAside)) });
+}
+
+/** Where the conversation is now, and its next question worded for this business (A-313). */
+async function nextStep(businessId: string, again?: boolean, setAside?: string[]) {
+  const state = await loadTellState(businessId, again);
+  const next = state ? await wordedTopic(businessId, currentTopic(state, setAside), state.facts) : null;
+  return { state, next };
 }

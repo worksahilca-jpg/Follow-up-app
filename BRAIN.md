@@ -80,6 +80,8 @@ a booked call or visit; the owner closes.
   `/teach` opens it. One new column (`Business.tellCardClosedAt`). Left out on purpose: "when to hand over", "never
   promise", "how you sound" (milestone 3: facts are quoted word for word and can't carry a rule). The AI split was not
   seen locally (no key); next: the founder answers two questions live to see it. Report: plan section 8.
+  The founder's own account becomes their web design side business (kind: Something else, realtor facts removed); the
+  realtor test moves to a new account invited from /admin. No "Web design" kind (R-138).
 - **Personal AI assistant brief, milestone 1 built (Oct 22, PR #582, not merged):** the founder's brief (parts 1–22) is
   audited in `followup/research/product/2026-10-22-ai-assistant-system-plan.md`: Train It and Talk to It exist but are
   founder-only (Admin → Train); owners have Try it yourself + Write it better, Teach FollowUp, What FollowUp knows,

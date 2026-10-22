@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import ScrollTitle from "@/components/app/ScrollTitle";
 import type { FactLine } from "@/lib/factLines";
-import type { TellState } from "@/lib/tellFollowUp";
+import type { TellState, TellTopic } from "@/lib/tellFollowUp";
 import { exampleLine, MAX_ANSWER } from "@/lib/tellLines";
 
 /**
@@ -12,14 +12,21 @@ import { exampleLine, MAX_ANSWER } from "@/lib/tellLines";
  * answers in their own words; FollowUp shows what it took from the answer, and nothing is saved until "Use these".
  * The practice chat's bubbles (no avatar, no typing dots: brand principle 3), Today's quiet links.
  *
+ * Like a conversation (A-313): each question comes from the server worded for this business, and when an answer can't
+ * help a customer ("depends on the site") FollowUp asks once more and says why, before showing what it took.
+ *
  * What was said this visit lives only on this page: what FollowUp knows lives in Settings › What FollowUp knows, and
  * where the conversation is comes from there (src/lib/tellFollowUp.ts), so leaving halfway loses nothing that was used.
  */
-type Turn =
-  | { kind: "asked"; question: string; answer: string; rows: FactLine[] }
-  | { kind: "skipped"; question: string };
+type Exchange = { q: string; a: string };
 
-type Pending = { label: string; answer: string; rows: FactLine[] | null };
+type Turn = { kind: "asked"; exchanges: Exchange[]; rows: FactLine[] } | { kind: "skipped"; exchanges: Exchange[]; question: string };
+
+/**
+ * The question being answered: what was said so far (the question and answer, then FollowUp's one more question and
+ * its answer), `dig` once FollowUp asked once more, and `rows` once it shows what it took from `answer`.
+ */
+type Pending = { label: string; exchanges: Exchange[]; dig: TellTopic | null; rows: FactLine[] | null; answer: string };
 
 const OUTLINED = "inline-flex min-h-11 items-center rounded-full border bg-card px-[18px] text-[15px] font-medium disabled:opacity-50";
 const QUIET = "inline-flex min-h-11 items-center text-[14px] text-ink-soft underline underline-offset-[3px] disabled:opacity-50";
@@ -55,6 +62,20 @@ function YouSay({ text }: { text: string }) {
   );
 }
 
+/** What was said about one question: FollowUp's question, the owner's answer, and FollowUp's one more question if any. */
+function Said({ exchanges }: { exchanges: Exchange[] }) {
+  return (
+    <>
+      {exchanges.map((e, i) => (
+        <div key={i} className="flex flex-col gap-4">
+          <FollowUpSays text={e.q} />
+          <YouSay text={e.a} />
+        </div>
+      ))}
+    </>
+  );
+}
+
 /** What FollowUp took from one answer: plain label/value rows in one white group (Settings' fact rows). */
 function Took({ rows, used }: { rows: FactLine[]; used: boolean }) {
   return (
@@ -73,12 +94,25 @@ function Took({ rows, used }: { rows: FactLine[]; used: boolean }) {
   );
 }
 
-export default function TellFollowUp({ initial, again, doneHref }: { initial: TellState; again: boolean; doneHref: string }) {
+export default function TellFollowUp({
+  initial,
+  first,
+  again,
+  doneHref,
+}: {
+  initial: TellState;
+  first: TellTopic | null;
+  again: boolean;
+  doneHref: string;
+}) {
   const [state, setState] = useState(initial);
+  // The question to answer now, worded for this business by the server (A-313); null when there is nothing left.
+  const [topic, setTopic] = useState<TellTopic | null>(first);
   // Skipped on this visit: with `again`, a question skipped before is open, so skipping it again must still move on.
   const [setAside, setSetAside] = useState<string[]>([]);
   const [turns, setTurns] = useState<Turn[]>([]);
   const [pending, setPending] = useState<Pending | null>(null);
+  const [reading, setReading] = useState(false);
   const [retry, setRetry] = useState(false);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
@@ -87,51 +121,76 @@ export default function TellFollowUp({ initial, again, doneHref }: { initial: Te
   const input = useRef<HTMLInputElement>(null);
 
   const remaining = state.open.filter((l) => !setAside.includes(l));
-  const topic = remaining.length > 0 ? state.topics.find((t) => t.label === remaining[0]) ?? null : null;
   const total = state.topics.length;
-  const position = Math.min(total, total - remaining.length + 1);
+  const position = Math.min(total, Math.max(1, total - remaining.length + 1));
+  // The box takes an answer to the question, or to FollowUp's one more question; not while it shows what it took.
+  const canAnswer = !busy && (!pending || (Boolean(pending.dig) && !pending.rows));
 
   // Each new step comes into view, as a chat does; the first question is already on screen.
   useEffect(() => {
     if (turns.length > 0 || pending) end.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }, [turns.length, pending]);
 
-  function nextQuestion() {
-    setRetry(false);
-    setError(null);
+  function focusBox() {
     // After the box is enabled again, on the next frame.
     requestAnimationFrame(() => input.current?.focus());
   }
 
+  /** The conversation moved on: where it is now, and the next question as the server worded it. */
+  function moveOn(data: Record<string, unknown>) {
+    if (data.state) setState(data.state as TellState);
+    setTopic((data.next as TellTopic | null | undefined) ?? null);
+    setRetry(false);
+    setError(null);
+    focusBox();
+  }
+
   async function send() {
     const answer = draft.trim();
-    if (!topic || !answer || busy) return;
-    setBusy(true);
-    setError(null);
-    setPending({ label: topic.label, answer, rows: null });
+    if (!topic || !answer || !canAnswer) return;
+    const before = pending;
+    // A first answer, or the answer to FollowUp's one more question (read with the first, never dug into again).
+    const q = before?.dig ? before.dig.question : topic.question;
+    const exchanges = [...(before?.dig ? before.exchanges : []), { q, a: answer }];
+    const next: Pending = { label: topic.label, exchanges, dig: before?.dig ?? null, rows: null, answer };
+    setPending(next);
     setDraft("");
-    const r = await post({ action: "read", topic: topic.label, answer });
+    setBusy(true);
+    setReading(true);
+    setError(null);
+    const r = await post({
+      action: "read",
+      topic: topic.label,
+      answer,
+      question: q,
+      ...(before?.dig ? { previous: before.exchanges[0]?.a, dug: true } : {}),
+    });
     setBusy(false);
+    setReading(false);
     if (!r.ok) {
-      setPending(null);
+      setPending(before);
       setDraft(answer);
       setError(r.message);
       return;
     }
-    setPending({ label: topic.label, answer, rows: (r.data.rows as FactLine[]) ?? [] });
+    if (r.data.dig) {
+      setPending({ ...next, dig: r.data.dig as TellTopic });
+      focusBox();
+      return;
+    }
+    setPending({ ...next, rows: (r.data.rows as FactLine[]) ?? [] });
   }
 
   async function use() {
     if (!topic || !pending?.rows || busy) return;
     setBusy(true);
     setError(null);
-    const r = await post({ action: "use", topic: pending.label, answer: pending.answer, rows: pending.rows, again });
+    const r = await post({ action: "use", topic: pending.label, answer: pending.answer, rows: pending.rows, again, setAside });
     setBusy(false);
     if (!r.ok) return setError(r.message);
-    setTurns((t) => [...t, { kind: "asked", question: topic.question, answer: pending.answer, rows: pending.rows ?? [] }]);
+    setTurns((t) => [...t, { kind: "asked", exchanges: pending.exchanges, rows: pending.rows ?? [] }]);
     setPending(null);
-    if (r.data.state) setState(r.data.state as TellState);
-    nextQuestion();
+    moveOn(r.data);
   }
 
   /** "Not right": nothing is saved; their words go back in the box to say it another way. */
@@ -141,21 +200,22 @@ export default function TellFollowUp({ initial, again, doneHref }: { initial: Te
     setPending(null);
     setRetry(true);
     setError(null);
-    requestAnimationFrame(() => input.current?.focus());
+    focusBox();
   }
 
   async function skip() {
-    if (!topic || busy) return;
+    if (!topic || busy || pending?.rows) return;
+    const aside = [...setAside, topic.label];
     setBusy(true);
     setError(null);
-    const r = await post({ action: "skip", topic: topic.label, again });
+    const r = await post({ action: "skip", topic: topic.label, again, setAside: aside });
     setBusy(false);
     if (!r.ok) return setError(r.message);
-    setTurns((t) => [...t, { kind: "skipped", question: topic.question }]);
-    setSetAside((s) => [...s, topic.label]);
+    setTurns((t) => [...t, { kind: "skipped", exchanges: pending?.exchanges ?? [], question: pending?.dig?.question ?? topic.question }]);
+    setSetAside(aside);
+    setPending(null);
     setDraft("");
-    if (r.data.state) setState(r.data.state as TellState);
-    nextQuestion();
+    moveOn(r.data);
   }
 
   const back = (
@@ -169,7 +229,8 @@ export default function TellFollowUp({ initial, again, doneHref }: { initial: Te
     const skipped = state.skipped.length;
     return (
       <div className="max-w-[640px] pb-10">
-        <ScrollTitle title="Tell FollowUp about your business" />
+        {/* Short, so the phone's top bar keeps room for the logo (A-313). */}
+        <ScrollTitle title="Tell FollowUp" />
         {back}
         <p className="mt-2 text-[13px] text-ink-soft">Tell FollowUp about your business</p>
         <h1 className="title-serif ios-title1 mt-1">
@@ -208,7 +269,7 @@ export default function TellFollowUp({ initial, again, doneHref }: { initial: Te
   const example = exampleLine(topic.example);
   return (
     <div className="max-w-[640px] pb-10">
-      <ScrollTitle title="Tell FollowUp about your business" />
+      <ScrollTitle title="Tell FollowUp" />
       {back}
       <div className="flex items-start justify-between gap-3">
         <h1 className="title-serif ios-title1">Tell FollowUp about your business</h1>
@@ -225,24 +286,33 @@ export default function TellFollowUp({ initial, again, doneHref }: { initial: Te
         {turns.map((t, i) =>
           t.kind === "asked" ? (
             <div key={i} className="flex flex-col gap-4">
-              <FollowUpSays text={t.question} />
-              <YouSay text={t.answer} />
+              <Said exchanges={t.exchanges} />
               <Took rows={t.rows} used />
             </div>
           ) : (
-            <div key={i} className="flex flex-col gap-2">
-              <FollowUpSays text={t.question} />
-              <p className="px-1 text-[13.5px] text-ink-faint">Skipped.</p>
+            <div key={i} className="flex flex-col gap-4">
+              <Said exchanges={t.exchanges} />
+              <div className="flex flex-col gap-2">
+                <FollowUpSays text={t.question} />
+                <p className="px-1 text-[13.5px] text-ink-faint">Skipped.</p>
+              </div>
             </div>
           )
         )}
 
-        <FollowUpSays text={topic.question} />
+        {!pending && <FollowUpSays text={topic.question} />}
         {!pending && (retry || example) && (
           <p className="-mt-2 px-1 text-[13.5px] text-ink-faint">{retry ? "Say it another way, or skip this one." : example}</p>
         )}
-        {pending && <YouSay text={pending.answer} />}
-        {pending && !pending.rows && <p className="px-1 text-[14px] text-ink-faint">FollowUp is reading your answer…</p>}
+        {pending && <Said exchanges={pending.exchanges} />}
+        {/* FollowUp's one more question, while it waits for the answer (A-313). */}
+        {pending?.dig && !pending.rows && !reading && pending.exchanges.length === 1 && (
+          <>
+            <FollowUpSays text={pending.dig.question} />
+            {exampleLine(pending.dig.example) && <p className="-mt-2 px-1 text-[13.5px] text-ink-faint">{exampleLine(pending.dig.example)}</p>}
+          </>
+        )}
+        {reading && <p className="px-1 text-[14px] text-ink-faint">FollowUp is reading your answer…</p>}
         {pending?.rows && (
           <div>
             <Took rows={pending.rows} used={false} />
@@ -278,12 +348,12 @@ export default function TellFollowUp({ initial, again, doneHref }: { initial: Te
           maxLength={MAX_ANSWER}
           placeholder="Answer in your own words…"
           autoComplete="off"
-          disabled={Boolean(pending)}
+          disabled={Boolean(pending?.rows)}
           className="min-h-10 min-w-0 flex-1 bg-transparent text-[16px] outline-none placeholder:text-ink-faint disabled:opacity-60"
         />
         <button
           type="submit"
-          disabled={busy || Boolean(pending) || !draft.trim()}
+          disabled={!canAnswer || !draft.trim()}
           className="min-h-10 shrink-0 rounded-full px-[18px] text-[15px] font-medium disabled:opacity-50"
           style={{ background: "var(--accent)", color: "var(--on-accent)" }}
         >
@@ -296,7 +366,7 @@ export default function TellFollowUp({ initial, again, doneHref }: { initial: Te
         </p>
       )}
       <div className="mt-2 flex items-center justify-between px-1">
-        <button type="button" onClick={() => void skip()} disabled={busy || Boolean(pending)} className={QUIET}>
+        <button type="button" onClick={() => void skip()} disabled={busy || Boolean(pending?.rows)} className={QUIET}>
           Skip this one
         </button>
         <Link href={doneHref} className={QUIET}>

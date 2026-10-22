@@ -10,9 +10,12 @@
  *    aside when it is in `questionsSkipped`, where A-101 then leaves it for when a real customer asks.
  *  - Offered once on Today, with the same quiet rules as the one question a day (A-101), and any time from
  *    Settings › Your business.
+ *  - Like a conversation (A-313): the topics stay this short fixed list, so it ends, but FollowUp words each question
+ *    from what the owner already said, and asks once more when an answer can't help a customer ("depends"). Its own
+ *    wording is checked here (`checkedWording`); the plain question below is used whenever it fails.
  */
 import { labelKey, MAX_LABEL, MAX_VALUE, squash, type FactLine } from "@/lib/factLines";
-import { teachQuestions, type TeachQuestion } from "@/lib/teachQuestions";
+import { teachQuestions, WHO_LABEL, type TeachQuestion } from "@/lib/teachQuestions";
 import { whatYouDoQuestion } from "@/lib/dailyQuestion";
 
 export { exampleLine, knowsLine, MAX_ANSWER } from "@/lib/tellLines";
@@ -24,9 +27,52 @@ export const MAX_ROWS = 4;
 /** The card on Today is offered only while this many are still to ask; one or two left are the daily question's (A-101). */
 export const CARD_MIN_OPEN = 3;
 
-/** Every question, in the order FollowUp asks them. */
+export { WHO_LABEL } from "@/lib/teachQuestions";
+/** What the business doesn't do (A-313): replies can say so politely, instead of leaving the customer waiting. */
+export const NOT_OFFERED_LABEL = "What you don't do";
+
+const WHO: TellTopic = {
+  label: WHO_LABEL,
+  question: "Who are your customers, usually?",
+  example: "e.g. Families and small businesses in Mississauga",
+};
+const NOT_OFFERED: TellTopic = {
+  label: NOT_OFFERED_LABEL,
+  question: "Is there anything people ask for that you don't do?",
+  example: "e.g. We don't take jobs outside the GTA",
+};
+
+/** Every question, in the order FollowUp asks them: what the business does and for whom, the trade's own, then what it doesn't do. */
 export function tellTopics(trade: string | null | undefined): TellTopic[] {
-  return [whatYouDoQuestion(trade), ...teachQuestions(trade)];
+  const trades = teachQuestions(trade);
+  // A realtor is already asked who they work with (buyers, sellers or both), in the trade's own words.
+  const hasWho = trades.some((t) => labelKey(t.label) === labelKey(WHO_LABEL));
+  return [whatYouDoQuestion(trade), ...(hasWho ? [] : [WHO]), ...trades, NOT_OFFERED];
+}
+
+/** The question to ask now: the first still open that wasn't set aside on this visit. */
+export function currentTopic(state: TellState, setAside: readonly string[] = []): TellTopic | null {
+  const aside = new Set(setAside.map(labelKey));
+  const label = state.open.find((l) => !aside.has(labelKey(l)));
+  return label ? (state.topics.find((t) => t.label === label) ?? null) : null;
+}
+
+/** How long FollowUp's own question and example may be: one short question, one short example. */
+const MAX_QUESTION = 200;
+const MAX_EXAMPLE = 140;
+
+/**
+ * FollowUp's own wording of a question (A-313), kept only when it is short and plain: no markup, no link, no
+ * exclamation, at most two questions ("How do you price it? Set packages, or a quote?"). The example must start "e.g." so it reads as one.
+ * Null means: use the plain question.
+ */
+export function checkedWording(proposed: { question?: unknown; example?: unknown } | null, topic: TellTopic): TellTopic | null {
+  const question = typeof proposed?.question === "string" ? squash(proposed.question) : "";
+  const example = typeof proposed?.example === "string" ? squash(proposed.example) : "";
+  if (!question || question.length > MAX_QUESTION || !question.includes("?")) return null;
+  if (/[<>{}[\]!]|https?:\/\//.test(question) || (question.match(/\?/g) ?? []).length > 2) return null;
+  const okExample = example.length > 5 && example.length <= MAX_EXAMPLE && /^e\.g\./i.test(example) && !/[<>{}]/.test(example);
+  return { label: topic.label, question, example: okExample ? example : topic.example };
 }
 
 export type TellState = {

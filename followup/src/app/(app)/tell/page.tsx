@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSessionContext, requireAdmin } from "@/lib/session";
-import { loadTellState } from "@/lib/tellFollowUpData";
+import { loadTellState, wordedTopic } from "@/lib/tellFollowUpData";
+import { currentTopic } from "@/lib/tellFollowUp";
 import TellFollowUp from "@/components/TellFollowUp";
 
 export const dynamic = "force-dynamic";
@@ -17,8 +18,18 @@ export default async function TellPage({ searchParams }: { searchParams: Promise
   const { again, from } = await searchParams;
   const state = await loadTellState(ctx.businessId, again === "1");
   if (!state) redirect("/dashboard");
+  // The first question, worded for this business when FollowUp already knows something about it (A-313).
+  const first = await wordedTopic(ctx.businessId, currentTopic(state), state.facts);
   // Keyed, so "Answer them now" (same page, new address) starts the conversation again instead of keeping the end.
-  return <TellFollowUp key={again === "1" ? "again" : "first"} initial={state} again={again === "1"} doneHref={from === "today" ? "/dashboard" : "/settings#business"} />;
+  return (
+    <TellFollowUp
+      key={again === "1" ? "again" : "first"}
+      initial={state}
+      first={first}
+      again={again === "1"}
+      doneHref={from === "today" ? "/dashboard" : "/settings#business"}
+    />
+  );
 }
 
 // Its own tab title (WCAG 2.4.2); the root template adds " — FollowUp".

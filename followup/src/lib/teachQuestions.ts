@@ -16,13 +16,19 @@ import { labelKey } from "@/lib/factLines";
 
 export type TeachQuestion = { label: string; question: string; example: string };
 
+/**
+ * Who the business's customers are: a realtor's own question below, asked of every business in "Tell FollowUp"
+ * (A-313), and read by the customer check with "What you do" (src/lib/dailyQuestion.ts, businessAbout).
+ */
+export const WHO_LABEL = "Who you work with";
+
 const REAL_ESTATE: TeachQuestion[] = [
   { label: "Commission", question: "What commission do you charge?", example: "e.g. 2.5% of the sale price, which covers photos, the listing and every showing" },
   { label: "Area you cover", question: "Which areas do you cover?", example: "e.g. Toronto and Mississauga" },
   { label: "Showings", question: "When can people see a property?", example: "e.g. Weekdays 10 am to 7 pm, weekends by appointment" },
   { label: "How to book a viewing", question: "How should someone book a viewing?", example: "e.g. Reply with two times that work for you" },
   { label: "Home evaluation", question: "Do you offer a home evaluation, and what does it cost?", example: "e.g. Free, no obligation" },
-  { label: "Who you work with", question: "Do you work with buyers, sellers or both?", example: "e.g. Both, including first-time buyers" },
+  { label: WHO_LABEL, question: "Do you work with buyers, sellers or both?", example: "e.g. Both, including first-time buyers" },
   { label: "Languages", question: "Which languages do you work in?", example: "e.g. English, Punjabi and Hindi" },
 ];
 

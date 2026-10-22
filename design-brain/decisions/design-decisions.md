@@ -14961,3 +14961,20 @@ their businesses so that it can learn and use for its job"*. Drawn on the real `
 **Weak, said honestly:** the count grows to 9 for most kinds of business; questions written per business can't be
 tested word for word (fixed wording is the fallback). **Found while drawing:** the phone's top bar title on `/tell` is
 too long and runs into the logo; fix with the build (a shorter bar title).
+
+## 2026-10-22 — "Tell FollowUp" as a real conversation: built (A-313)
+
+Approved: *"yes build it"*. Built as drawn, existing parts only; checked in a browser at 390×844 and 1280×900, with the
+two AI answers stood in for (no key locally): a worded question, and a dig on "depends on the site".
+- **How it works:** after "Use this" or "Skip", the server answers with the next question, worded for this business by
+  one small AI call (4-second limit, inside the daily AI ceiling) and checked (`checkedWording`: a short plain question,
+  no praise, no markup); the plain question otherwise. The opener ("what does your business do?") and any question
+  while nothing is known stay plain. Reading an answer may come back with one more question instead of rows; the
+  second answer is read with the first and never dug into again.
+- **Changed from the drawing note, on purpose:** "What you don't do" is **not** given to the customer check, only to
+  replies. A request for something the business doesn't do is still a real person asking; letting it set the email
+  aside could hide a customer (trust outranks sophistication). "Who you work with" is given to the check, after "What
+  you do".
+- **Fixed:** the phone bar title is now "Tell FollowUp" and no longer runs into the logo.
+**Weak, said honestly:** the AI's wording and digs were not seen live (no key here); a question that waits for its
+wording shows nothing new for up to 4 seconds after "Use this"; the count is 9 or 10 now.

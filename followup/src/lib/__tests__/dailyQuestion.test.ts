@@ -87,5 +87,14 @@ describe("the words", () => {
   it("finds the owner's own description among the facts", () => {
     expect(businessAbout([{ label: "Commission", value: "2.5%" }, { label: "What you do", value: " Homes in Brampton " }])).toBe("Homes in Brampton");
     expect(businessAbout([])).toBeNull();
+    // Who the customers are goes with it (A-313); what the business doesn't do never does, so no real person is set aside for asking.
+    expect(
+      businessAbout([
+        { label: "What you do", value: "I provide web designing services." },
+        { label: "Who you work with", value: "Restaurants and salons in Brampton" },
+        { label: "What you don't do", value: "Logos" },
+      ])
+    ).toBe("I provide web designing services. Customers: Restaurants and salons in Brampton");
+    expect(businessAbout([{ label: "Who you work with", value: "Restaurants" }])).toBeNull();
   });
 });

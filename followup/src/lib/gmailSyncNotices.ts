@@ -356,7 +356,7 @@ export function gmailReconnectEmail(p: { inbox: string; base: string; timeZone?:
     what: `FollowUp can't read ${p.inbox} right now, so new customer emails there aren't being picked up.`,
     how: "Reconnecting takes a few seconds: press the button and choose the same Google account.",
     why: "It can mean access was removed in your Google account or the password changed. Connections made before October 3 also ended after 7 days while Google reviewed FollowUp; one reconnect fixes that for good.",
-    once: "FollowUp sends this once, only when the connection stops.",
+    once: "If it stays disconnected, FollowUp reminds you after 2 days and after a week, then stops.",
   });
 }
 

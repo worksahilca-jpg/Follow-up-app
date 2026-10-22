@@ -13,6 +13,8 @@ import {
   type Template,
 } from "@/lib/qualification";
 import KeepFollowingButton from "@/components/app/KeepFollowingButton";
+import { TierTag } from "@/components/app/TodayDay";
+import { readyFacts, readyNext, TIER_WORD } from "@/lib/followUpCall";
 
 /**
  * Where this customer stands (A-246, drawn and approved 2026-10-14). One
@@ -26,6 +28,11 @@ import KeepFollowingButton from "@/components/app/KeepFollowingButton";
  *    keeping in touch. Nothing for the owner to do.
  *  - Has an agent: FollowUp stopped; one quiet way to overrule it.
  *  - Still finding out: what FollowUp knows so far, and what it doesn't.
+ *
+ * FollowUp's call (A-310, founder 2026-10-22: "totally automated … we are judging if it is warm or cold"): the tier
+ * is FollowUp's own judgement, sorted again every time the customer writes, and each card says the one next step and
+ * who takes it. The owner is never asked to grade it. One quiet tag for every tier (A-281: no colour for status that
+ * isn't broken or done), so Ready reads the same here as on Today.
  *
  * The owner never fills anything in here. A server component: the folds
  * are native <details>, so there is no script to wait for.
@@ -61,18 +68,22 @@ export default function CustomerStanding({
     const why = readyWhy(q);
     return (
       <Box label={`${first} is ready`}>
-        <Pill ready>Ready</Pill>
+        <Head tier="ready" />
         <Title>{seller ? `${first} wants to sell` : booked ? `${first} is ready` : `${first} is ready to view`}</Title>
         {seller && (home || viewing) ? (
-          <Row icon={<House aria-hidden className="h-4 w-4 shrink-0 text-sage" />}>{[home, viewing && `Home visit ${lowerFirst(viewing)}`].filter(Boolean).join(" · ")}</Row>
+          <Row icon={<House aria-hidden className="h-4 w-4 shrink-0 text-ink-soft" />}>{[home, viewing && `Home visit ${lowerFirst(viewing)}`].filter(Boolean).join(" · ")}</Row>
         ) : viewing ? (
-          <Row icon={<CalendarDays aria-hidden className="h-4 w-4 shrink-0 text-sage" />}>{viewing}</Row>
+          <Row icon={<CalendarDays aria-hidden className="h-4 w-4 shrink-0 text-ink-soft" />}>{viewing}</Row>
         ) : null}
         {why && (
           <p className="mt-3 text-[14px] leading-relaxed text-ink-soft">
             <span className="font-semibold text-ink">Why:</span> {why}
           </p>
         )}
+        {/* The owner's one next step, and when (A-310). */}
+        <p className="mt-2 text-[14.5px] leading-relaxed">
+          <span className="font-semibold">Next:</span> {readyNext(readyFacts(q, first, callHref !== null))}
+        </p>
         <div className="mt-3.5 flex gap-2">
           {callHref && (
             <a href={callHref} className="inline-flex h-11 flex-1 items-center justify-center rounded-full bg-accent px-4 text-[14px] font-semibold text-on-accent">
@@ -97,7 +108,7 @@ export default function CustomerStanding({
   if (tier === "warm" || tier === "later") {
     return (
       <Box label={`Where ${first} stands`}>
-        <Pill>{tier === "warm" ? "Warm" : "Later"}</Pill>
+        <Head tier={tier} />
         <Title>{notYetTitle(q, first, tier)}</Title>
         <Facts q={q} className="mt-2.5" />
         {plan ?? <p className="mt-2.5 text-[14px] leading-relaxed text-ink-soft">Nothing for you to do.</p>}
@@ -109,7 +120,7 @@ export default function CustomerStanding({
   if (tier === "agent") {
     return (
       <Box label={`${first} has an agent`}>
-        <Pill>Has an agent</Pill>
+        <Head tier="agent" />
         <Title>{`${first} already has an agent`}</Title>
         <p className="mt-2 text-[14px] leading-relaxed text-ink-soft">
           FollowUp stopped following up with {first}. If {first} writes again, it shows up on Today.
@@ -181,14 +192,13 @@ function Box({ label, children }: { label: string; children: React.ReactNode }) 
   );
 }
 
-function Pill({ ready = false, children }: { ready?: boolean; children: React.ReactNode }) {
-  return ready ? (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-sage-soft px-2.5 py-0.5 text-[12.5px] font-semibold text-sage">
-      <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
-      {children}
-    </span>
-  ) : (
-    <span className="inline-flex items-center rounded-full border border-line bg-card px-2.5 py-px text-[12.5px] font-semibold text-ink">{children}</span>
+/** Where they stand, as the same quiet tag Today uses, and whose judgement it is. */
+function Head({ tier }: { tier: keyof typeof TIER_WORD }) {
+  return (
+    <p className="flex items-center justify-between gap-3">
+      <TierTag>{TIER_WORD[tier]}</TierTag>
+      <span className="text-[13px] text-ink-faint">FollowUp&rsquo;s call</span>
+    </p>
   );
 }
 

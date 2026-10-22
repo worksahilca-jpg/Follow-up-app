@@ -58,13 +58,16 @@ function BusinessPilot({ b }: { b: PilotBusiness }) {
           </>
         )}
       </Row>
-      <Row label="Called Ready">
-        {calls.ready === 0 ? (
+      <Row label="FollowUp's calls">
+        {calls.ready + calls.warm + calls.later + calls.agent === 0 ? (
           <span className="text-ink-soft">None yet.</span>
         ) : (
-          <p>
-            {calls.ready} · {calls.readyBookedOrWon} booked or won
-          </p>
+          <>
+            <p>
+              Ready {calls.ready} ({calls.readyBookedOrWon} booked or won) · Warm {calls.warm} · Later {calls.later} · Has an agent {calls.agent}
+            </p>
+            <p className="text-ink-soft">Owner changed the plan on {calls.planPicked}</p>
+          </>
         )}
       </Row>
       <Row label="Replies sent">

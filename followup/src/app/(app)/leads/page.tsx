@@ -6,9 +6,11 @@ import { getWaitingOn } from "@/lib/waitingOn";
 import { getAtRiskLeads } from "@/lib/rescue";
 import { customerGroups } from "@/lib/customerPlaces";
 import { readQualification, readyWhy } from "@/lib/qualification";
+import { TIER_WORD } from "@/lib/followUpCall";
 import { prisma } from "@/lib/db";
+import { Prisma } from "@prisma/client";
 import Link from "next/link";
-import LeadsPageClient, { type Show, type GroupLines } from "./LeadsPageClient";
+import LeadsPageClient, { type Show, type GroupLines, type Tags } from "./LeadsPageClient";
 import PersonPanel from "@/components/app/PersonPanel";
 import { sendLockedForSession } from "@/lib/sendingControl";
 import { restingState, type StateKey } from "@/components/app/canvasBits";
@@ -38,7 +40,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
   if (!ctx) return <LeadsPageClient leads={leads} groups={empty} lines={{}} show={show} stage={stage ?? null} />;
 
   const now = new Date();
-  const [approvals, business, rules, sendLocked, qualified, bookings] = await Promise.all([
+  const [approvals, business, rules, sendLocked, qualified, bookings, sorted] = await Promise.all([
     getPendingApprovals(ctx.businessId),
     prisma.business.findUnique({ where: { id: ctx.businessId }, select: { timezone: true } }),
     getBusinessAutomationRules(ctx.businessId),
@@ -55,6 +57,12 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
       where: { businessId: ctx.businessId, status: "confirmed", scheduledAt: { gte: now } },
       orderBy: { scheduledAt: "asc" },
       select: { leadId: true, scheduledAt: true },
+    }),
+    // FollowUp's call (A-310): where each open customer stands, one quiet word beside their name.
+    prisma.lead.findMany({
+      where: { businessId: ctx.businessId, stage: { notIn: ["WON", "LOST"] }, qualification: { not: Prisma.DbNull } },
+      select: { id: true, qualification: true },
+      take: 2000,
     }),
   ]);
   const timeZone = business?.timezone ?? "America/New_York";
@@ -85,11 +93,16 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
   }
   for (const l of atRisk) lines[l.id] ??= l.rescue.reason;
   for (const w of waitingItems) lines[w.leadId] ??= w.next;
+  const tags: Tags = {};
+  for (const l of sorted) {
+    const tier = readQualification(l.qualification)?.tier;
+    if (tier) tags[l.id] = TIER_WORD[tier];
+  }
 
   // A customer opened beside the list (A-025, the canvas App board). Only
   // one of this business's own customers: getLeads is already scoped.
   const open = p ? leads.find((l) => l.id === p) ?? null : null;
-  if (!open) return <LeadsPageClient leads={leads} groups={groups} lines={lines} show={show} stage={stage ?? null} />;
+  if (!open) return <LeadsPageClient leads={leads} groups={groups} lines={lines} tags={tags} show={show} stage={stage ?? null} />;
 
   const approval = approvals.find((a) => a.leadId === open.id) ?? null;
   const place: { state: StateKey; label: string } = needs.has(open.id)
@@ -109,7 +122,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
     // the right edge, the Inbox's frame (A-025). Phone: the customer alone.
     <div className="app-bleed lg:grid lg:h-screen lg:grid-cols-[minmax(0,1fr)_400px]">
       <div className="hidden min-w-0 lg:block lg:overflow-y-auto lg:px-7 lg:pb-12 lg:pt-9">
-        <LeadsPageClient leads={leads} groups={groups} lines={lines} show={show} stage={stage ?? null} openId={open.id} />
+        <LeadsPageClient leads={leads} groups={groups} lines={lines} tags={tags} show={show} stage={stage ?? null} openId={open.id} />
       </div>
       <aside aria-label={open.name} className="lg:overflow-y-auto lg:border-l lg:border-line lg:bg-card">
         <Link href={show ? `/leads?show=${show}` : "/leads"} data-nav="pop" className="mb-3 inline-flex min-h-11 items-center text-[13px] text-ink-faint lg:hidden">

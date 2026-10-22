@@ -74,7 +74,13 @@ export function countReplies(rows: readonly SentRow[]): Replies {
 }
 
 /** A customer who came in during the window. */
-export type NewCustomer = { tier: string | null; won: boolean; booked: boolean };
+export type NewCustomer = {
+  tier: string | null;
+  won: boolean;
+  booked: boolean;
+  /** The owner picked a different plan for them on their page: the automatic sign FollowUp's call was off (A-310). */
+  planPicked?: boolean;
+};
 
 /** What the owner corrected in the window: customers they set aside, and messages FollowUp kept out that they brought back. */
 export type OwnerCorrections = { setAside: number; keptOut: number; broughtBack: number };
@@ -91,6 +97,11 @@ export type Calls = {
   /** Customers FollowUp called Ready, and how many of them booked or were won. */
   ready: number;
   readyBookedOrWon: number;
+  /** The rest of FollowUp's calls (A-310), and the customers whose plan the owner changed. */
+  warm: number;
+  later: number;
+  agent: number;
+  planPicked: number;
 };
 
 /**
@@ -110,6 +121,10 @@ export function countCalls(customers: readonly NewCustomer[], owner: OwnerCorrec
     rightPercent: all === 0 ? null : Math.round(((all - owner.setAside - owner.broughtBack) / all) * 100),
     ready: ready.length,
     readyBookedOrWon: ready.filter((c) => c.booked || c.won).length,
+    warm: customers.filter((c) => c.tier === "warm").length,
+    later: customers.filter((c) => c.tier === "later").length,
+    agent: customers.filter((c) => c.tier === "agent").length,
+    planPicked: customers.filter((c) => c.planPicked).length,
   };
 }
 

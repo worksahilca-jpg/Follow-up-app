@@ -792,9 +792,9 @@ is blocked by it.**
 | Tue Oct 20 | Realtor's real GoHighLevel test. If Meta access verification is still "in review", open a Meta support ticket | Founder + Claude |
 | Fri Oct 24 | 3 testers connected | Founder |
 | Sat Oct 25 | Messenger + Lead Ads submitted to Meta review | Founder |
-| Tue Oct 28 | YC application first draft (real numbers) | Claude |
+| Tue Oct 28 | YC application first draft (real numbers). **Paused** (founder, 2026-10-22: "let's just leave the YC application for now"); the draft is kept | Claude |
 | Fri Oct 31 | **Stage 1 done:** 5 testers daily, 20+ customers answered a week. Business name, city and refund rule decided | Founder |
-| Sun Nov 2 | YC application submitted | Founder |
+| Sun Nov 2 | YC application submitted. **Paused** (same day, same reason) | Founder |
 | Sun Nov 15 | Google security check (CASA) booked | Founder |
 | Mon Nov 30 | **Stage 2 done:** testers get bookings and come back in week 2; 10–20 testers | Founder + Claude |
 | Mon Jan 4, 2027 | **Stage 3 done:** Google verification + CASA passed; first paying customer | Founder + Claude |
@@ -833,7 +833,9 @@ group the founder can get three owners from is the pilot; the founder hasn't sai
 **What the pilot measures, per business, on /admin → Testers → "The pilot"** (founder-only, numbers only, last 30
 days, never the practice customer):
 1. **Were FollowUp's calls right?** Customers it let in that the owner set aside; messages it kept out that the owner
-   brought back; the share of calls the owner didn't correct. Customers it called Ready, and how many booked or were won.
+   brought back; the share of calls the owner didn't correct. FollowUp's calls (A-310): Ready, Warm, Later, Has an agent,
+   how many Ready ones booked or were won, and how many customers' plans the owner changed. Measured from what happens;
+   owners are never asked to grade a call (R-137).
 2. **How much of the owner's work did it take?** Replies sent as written, changed first, or sent on its own, and
    "about N minutes saved". The minutes are a stated guess (4 to write, ½ to check, 2 to change) until testers time
    themselves.

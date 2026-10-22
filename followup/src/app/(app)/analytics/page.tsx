@@ -14,6 +14,8 @@ import { getRescueReport } from "@/lib/rescued";
 import { countCustomersAnswered, customersAnsweredByDay } from "@/lib/weeklyDigest";
 import { sentAsWritten } from "@/lib/showTheWork";
 import { startOfLocalDay } from "@/lib/calmToday";
+import { getCallTally } from "@/lib/callResultsData";
+import { CALLS_SHOWN_FROM, readyOutcome } from "@/lib/followUpCall";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +39,7 @@ export default async function NumbersPage() {
   // day it happened, and the date line names the days the number covers.
   const weekStart = startOfLocalDay(new Date(now.getTime() - 6 * DAY), timeZone);
 
-  const [data, leads, report, written, booked, won] = await Promise.all([
+  const [data, leads, report, written, booked, won, calls] = await Promise.all([
     getAnalytics(),
     getLeads(),
     getRescueReport(ctx.businessId, 7, now),
@@ -46,6 +48,8 @@ export default async function NumbersPage() {
     prisma.booking.count({ where: { businessId: ctx.businessId, status: "confirmed", createdAt: { gte: weekStart, lt: now } } }),
     // Won: the customers you marked won this week (the stage route stamps Deal.wonAt).
     prisma.deal.findMany({ where: { wonAt: { gte: weekStart, lt: now }, lead: { businessId: ctx.businessId } }, select: { leadId: true }, distinct: ["leadId"] }),
+    // FollowUp's calls (A-310): how it sorted the month's new customers, and what came of the Ready ones.
+    getCallTally(ctx.businessId, now),
   ]);
   if (!data) return null;
 
@@ -75,6 +79,15 @@ export default async function NumbersPage() {
     { label: "First reply", value: heardBack != null ? formatSpan(heardBack) : "—", note: heardBack != null ? "Half of your customers heard back faster" : "Nobody has written in yet" },
     { label: "Won", value: String(won.length), note: "Customers you marked won this week" },
   ];
+  // Shown once FollowUp has sorted enough customers for the numbers to mean something.
+  const callTiles = calls.sorted >= CALLS_SHOWN_FROM
+    ? [
+        { label: "Ready", value: calls.ready, note: "You call them" },
+        { label: "Warm", value: calls.warm, note: "FollowUp follows up" },
+        { label: "Later", value: calls.later, note: "FollowUp checks in" },
+        { label: "Has an agent", value: calls.agent, note: "FollowUp stopped" },
+      ]
+    : null;
   const max = Math.max(1, ...weeks.map((w) => w.n));
   const rest: [string, string][] = [
     ["Customers", String(data.totalLeads)],
@@ -142,6 +155,35 @@ export default async function NumbersPage() {
               </div>
             ))}
           </div>
+
+          {/* FollowUp's calls (A-310): how it sorted the month's new customers, judged by FollowUp alone, and what came of
+              the Ready ones. Rows on the phone, four columns on the desk, like the three above. */}
+          {callTiles && (
+            <section>
+              <h2 className={HEAD}>FollowUp&rsquo;s calls · last 30 days</h2>
+              <div className={GROUP + " mt-1.5"}>
+                <div className="lg:grid lg:grid-cols-4">
+                  {callTiles.map((t, i) => (
+                    <div
+                      key={t.label}
+                      className={
+                        "flex items-center justify-between gap-4 px-[18px] py-3 lg:flex-col lg:items-start lg:justify-start lg:gap-0 lg:py-3.5 " +
+                        (i ? "border-t border-line-2 lg:border-l lg:border-t-0" : "")
+                      }
+                    >
+                      <div className="min-w-0">
+                        <div className="text-[15px] lg:text-[13px] lg:text-ink-faint">{t.label}</div>
+                        <div className="mt-0.5 text-[13px] text-ink-faint lg:hidden">{t.note}</div>
+                      </div>
+                      <div className="shrink-0 text-[22px] font-semibold leading-tight tracking-[-0.02em] tabular-nums lg:mt-0.5 lg:text-[24px]">{t.value}</div>
+                      <div className="mt-0.5 hidden text-[12px] text-ink-faint lg:block">{t.note}</div>
+                    </div>
+                  ))}
+                </div>
+                <p className="border-t border-line-2 px-[18px] py-3 text-[14.5px] font-medium leading-snug">{readyOutcome(calls)}</p>
+              </div>
+            </section>
+          )}
 
           {/* Eight weeks, as bars. Hidden on the phone (R-015). */}
           <section className="hidden lg:block">

@@ -14817,3 +14817,62 @@ read covers) and since.
 - "Before FollowUp" only exists where the inbox read reached back; a business that connected Instagram only has a thin
   "before".
 - An admin page with dense rows: fine for the founder, not a design for owners.
+
+## 2026-10-22 — Reconnect reminders (A-309), built; one weak point left as it is
+
+**Founder:** *"do whatever you think is best for the application. Let's just fix everything, all the weak points"*.
+
+**What the live data showed (read-only, counts only):** of the 3 outside Gmail connections ever made, 2 broke exactly 7
+days after connecting (Sep 6 → Sep 13, Sep 29 → Oct 6): Google's Testing-mode expiry, before the app went to production
+on Oct 3. Connections made since then last (one has run 15 days). Neither owner reconnected after the one notice. In the
+last 30 days 14 messages went to real customers, all sent by hand, the last on Oct 11.
+
+**Built:** `src/lib/reconnectReminders.ts`, run by the daily setup-health cron (13:07 UTC, about 9 am Toronto): day-2
+and day-7 emails per admin for Gmail and Outlook (Outlook had no email at all before, only the bell). "Already sent" is an
+`integration.reconnect_reminder` audit row keyed by the connection's connect time, so a new break starts fresh. A business
+already working through another connection of the same kind gets nothing. An inbox found long after it broke gets only the
+last reminder, never two in a row. The two testers broken today get one email each when this ships.
+
+**Left as it is, on purpose:** A-308's "a fact with new words waiting shows twice". The in-use row is the only place to
+Edit that fact; hiding it would cost more than the repetition.
+
+**Weak points:** the reminders can't make anyone come back; the founder's own note to them still matters more. The
+founder's stuck-testers email still leaves out testers quiet for more than two weeks (by design, A-249).
+
+## 2026-10-22 — "FollowUp's call" drawn; waiting for the founder
+
+**SUPERSEDED (2026-10-22)** by the entry below and A-310 / R-137: built fully automatic, without the Yes/No question.
+
+**Founder:** *"yes go ahead"* to drawing it, and *"make it so accurate and effective that business owners should think,
+'Oh yeah, this is the job that I needed'"* (now a brand principle, "The job they needed").
+
+**Drawn on the real app** (scratchpad `call/board-1-today.png`, `board-2-customer.png`, `board-3-phone.png`; local test
+data only): where a customer stands (Ready / Warm / Later / Has an agent), the one next step and who does it ("Send this,
+then call Raj today to book Saturday"; "if Priya doesn't answer, FollowUp writes again on Mon, Oct 26. Nothing for you to
+do."), and "Did FollowUp get Raj right? Yes · No". No opens "Where does Raj stand?" (four rows, FollowUp's call marked,
+an optional "What did FollowUp miss?") in place on a computer and as a bottom sheet on a phone. After Yes, one quiet line
+stays. Results gains "FollowUp's calls · last 30 days" (counts per tier, how many Ready customers booked, how many calls
+the owner checked and changed). It builds on A-246's card and A-286's open person; nothing is removed.
+
+**Behaviour it would change (founder's call):** the owner's pick changes the tier, the plan (Warm → Fast, Later → Long)
+and the GoHighLevel stage (A-303); the note teaches FollowUp; the question is asked once per call; the pilot counts
+right/changed calls.
+
+**Weak points, named:** a second "change" control on Warm/Later cards ("Change plan" and "No"); Ready is a green pill on
+the customer page but an outline tag on Today (an older mismatch, not new); Results numbers mean little before about 5
+calls; realtors only, since only the realtor checklist sorts customers today.
+
+## 2026-10-22 — FollowUp's call built, fully automatic (A-310, R-137)
+
+**Founder:** build it, fix the weak spots, *"totally automated … we are judging if it is warm or cold"*.
+**Built:** `src/lib/followUpCall.ts` (the words, from the tier and the plan the engine sends by), Today's open person and
+row tags, the customer's card, Customers row tags, Results "FollowUp's calls", and the pilot's counts.
+**The four weak spots from the drawing:**
+1. Two change links on Warm cards: gone with the Yes/No (R-137); "Change plan" is the only one.
+2. Green Ready on the card, outline on Today: one outline tag everywhere now (A-281).
+3. Results numbers meaningless with few customers: the box waits for 5 sorted customers.
+4. Realtors only: still true, on purpose. Sorting other kinds of business needs their own checklist (open task); the
+   card and tags simply don't show for them, so nothing false appears.
+**Also found and fixed while building:** a customer with an agent had "Has an agent" twice on their Today row.
+**Weak points:** "call Raj today" is said even when the Ready call is days old (still the right step, but "today" can
+repeat); the Results sentence can read as "0 of your 2 Ready customers booked" early in a month, which is honest but flat.

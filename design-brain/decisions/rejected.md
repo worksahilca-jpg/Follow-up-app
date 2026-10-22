@@ -1749,3 +1749,14 @@ training replies. **Principle:** training happens with Claude Code, on his Claud
 (artifact "FollowUp Practice Room"); its rules reach the app through a pull request when he says "check the practice
 room". The admin page stays for the app's numbers; Train → Talk to it stays only as the check that the real app answers
 the way the practice room does. A-298 is superseded by this.
+
+## R-137 — Asking the owner to grade FollowUp's call ("Did FollowUp get Raj right? Yes · No") ^R-137
+
+**Rejected:** 2026-10-22, founder, on the "FollowUp's call" drawing: *"it should be totally automated. We are judging if it
+is warm or cold. The business owner or the user of Follower will not come again and again to ping you up or to select
+whether it is a warm lead or a hot lead"*. **What is rejected:** the Yes / No question on every call, and the "Where does
+Raj stand?" picker with four tiers and a note it opened. **Principle:** FollowUp makes the judgement and owns it; the
+owner is never asked to grade or sort. Accuracy is measured from what happens (Ready customers who book, plans the owner
+changes, customers set aside or brought back), not from asking. The owner's existing ways to disagree stay (Change plan,
+Keep following up anyway, Not a customer); no new one is added. **Do not propose again:** a confirm/grade step on
+FollowUp's judgements, in any form.

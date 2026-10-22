@@ -401,3 +401,15 @@ and all right"*.
 - **Update (founder, 2026-10-17, later):** *"laptop is priortiy"*. The computer now comes **first** in design work: draw
   and check the computer screen first, then make sure the phone still works. The phone is not dropped (owners still
   answer on it between jobs); it is checked second.
+
+## The job they needed (founder, 2026-10-22)
+
+**Founder, verbatim:** *"make it so accurate and effective that business owners should think, 'Oh yeah, this is the job
+that I needed,' because that's something that I wouldn't have done with my experience … We should get the results and
+stuff to the users … so that we can help them grow their businesses."*
+
+- FollowUp does the expert's part of the job, the part an owner wouldn't do alone: who is serious, what to do next, and
+  when. Writing replies is only the start (every CRM writes replies now).
+- Every judgment must be accurate enough to act on, say why in the customer's own words, and let the owner correct it in
+  one tap.
+- The results come back to the owner in their own numbers: what came of FollowUp's calls, not how many messages went.

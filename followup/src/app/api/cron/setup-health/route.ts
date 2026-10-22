@@ -4,6 +4,7 @@ import { reportCronFailure } from "@/lib/monitoring";
 import { runSetupHealth } from "@/lib/setupHealth";
 import { refreshAllInstagramTokens } from "@/lib/instagramTokenRefresh";
 import { sendStuckTesters } from "@/lib/stuckTesters";
+import { sendReconnectReminders } from "@/lib/reconnectReminders";
 
 export const maxDuration = 60;
 
@@ -23,6 +24,9 @@ export const maxDuration = 60;
  * sent reply (src/lib/stuckTesters.ts), quiet when there are none. Also on
  * its own, for the same reason.
  *
+ * And reminds owners whose Gmail or Outlook still needs reconnecting, 2 days and 7 days after it stopped
+ * (src/lib/reconnectReminders.ts). Also on its own.
+ *
  * Protected by CRON_SECRET like every other /api/cron/* route.
  */
 export async function GET(request: NextRequest) {
@@ -39,9 +43,14 @@ export async function GET(request: NextRequest) {
     return null;
   });
 
+  const reconnectReminders = await sendReconnectReminders().catch((err) => {
+    reportCronFailure("setup-health", err, "reconnect reminders");
+    return null;
+  });
+
   try {
     const result = await runSetupHealth();
-    return NextResponse.json({ success: true, ...result, instagramTokens, stuckTesters });
+    return NextResponse.json({ success: true, ...result, instagramTokens, stuckTesters, reconnectReminders });
   } catch (err) {
     reportCronFailure("setup-health", err);
     const message = err instanceof Error ? err.message : "Setup check failed.";

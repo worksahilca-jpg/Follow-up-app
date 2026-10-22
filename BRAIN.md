@@ -74,6 +74,13 @@ a booked call or visit; the owner closes.
 
 **Last updated: 2026-10-22**
 
+- **Sales engine, phase 1 audit (Oct 22, PR #582, no code changed):** the founder's "AI sales assistant engine" brief
+  (phases 1–10). `followup/research/product/2026-10-22-sales-engine-audit.md`: one message traced through the code,
+  every feature marked works / incomplete / missing / risky, the gaps per phase, proposed tables (all additive, each
+  behind an off / watching / on switch) and the 7 steps in the brief's order. Riskiest today: the founder's trained
+  rules and examples reach every business of that trade at once, untested and unversioned. The "720 conversations"
+  are 720 checklist answers in 58 invented conversations. Waiting: the founder's yes to step 1 (training goes through
+  a test and the founder's OK) and the founder's answers to the 7 decisions in section 7. Nothing gets built before that.
 - **FollowUp's playbook (Oct 22, PR open):** founder: *"how to judge … what to reply, whom to reply, when to reply and
   all"* and *"how this app will remember all these"*. `followup/playbook/real-estate.md` writes down, from the code, the
   whole job for realtors; `followup/playbook/README.md` says how the app remembers (code = fixed rules, database =

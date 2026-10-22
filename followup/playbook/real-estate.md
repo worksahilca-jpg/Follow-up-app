@@ -64,8 +64,8 @@ later read missed it.
 **The owner is never asked to grade a call** (founder, 2026-10-22). Whether the calls were right is measured from what
 happens next: did the Ready ones book or buy, did the owner change someone's plan.
 
-*How we check it:* the checklist accuracy test (Admin → Accuracy tests). Last run on record, 2026-10-14: 5 misses,
-0 made up.
+*How we check it:* the checklist accuracy test (Admin → Accuracy tests): 58 made-up conversations, 720 checklist
+answers. Last run on record, 2026-10-17: 718 of 720 right, none made up.
 *Weak:* other kinds of business have no checklist yet. Their call comes from a single interest score, which is coarser,
 and there's no accuracy test for it yet.
 
@@ -103,8 +103,9 @@ what they said. Never "just checking in".
 **If they say no**, it writes one short, warm goodbye with no question and no offer, and every later reply stays that
 way. **If they're not sure**, it takes the pressure off and offers one useful thing, without asking again.
 
-*How we check it:* the replies accuracy test. Last run on record, 2026-10-14: 10 of 20 judged good; fixes went live
-the same day, and no newer run is on record. The founder also trains it on Admin → Train (section 7).
+*How we check it:* the replies accuracy test. Last run on record, 2026-10-17: 17 of 20 passed every check, none
+invented a fact. Fixes for the misses went live after that run; it hasn't been run since. The founder also trains
+it on Admin → Train (section 7).
 
 ---
 
@@ -194,5 +195,6 @@ Until there's a Playbook page in the app that shows them live, each new rule is 
 ## Open gaps (to fix before or during the pilot)
 
 1. No accuracy test for the call on businesses other than real estate.
-2. The accuracy scores above are from 2026-10-14. Run all four again before the pilot starts.
+2. The accuracy scores above are from 2026-10-14 (emails, Instagram) and 2026-10-17 (checklist, replies), and fixes
+   went in after them. Run all four again before the pilot starts.
 3. Trained rules (section 7) aren't shown next to this page automatically.

@@ -39,7 +39,8 @@ import { CRM_PROVIDERS, isCrmProvider } from "@/lib/crm";
 import CallBox from "@/components/app/CallBox";
 import { isCallablePhone, telHref } from "@/lib/callPlan";
 import { displayChannel } from "@/lib/displayChannel";
-import CustomerStanding from "@/components/app/CustomerStanding";
+import CustomerStanding, { GeneralCall } from "@/components/app/CustomerStanding";
+import { tierFromScore } from "@/lib/followUpCall";
 import CallBriefCard, { type CallToPrepare } from "@/components/app/CallBriefCard";
 import { callNotOver, readCallBrief } from "@/lib/callBrief";
 import { clockTime, dayOffset } from "@/lib/todayWords";
@@ -144,7 +145,14 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
         open={dealOpen}
         callHref={phone ? telHref(phone) : null}
         plan={planLine(true)}
+        readySince={checklist?.qualifiedAt ?? null}
       />
+    ) : null;
+  // FollowUp's call for every other kind of business (A-310): from the interest score it already keeps, while the deal is open.
+  const scoreTier = !template && dealOpen ? tierFromScore(lead.score, lead.reviewed) : null;
+  const generalCall =
+    scoreTier && scoreTier !== "agent" ? (
+      <GeneralCall leadName={lead.name} tier={scoreTier} reason={lead.reviewed ? lead.scoreReason : null} callHref={phone ? telHref(phone) : null} plan={planLine(true)} />
     ) : null;
 
   // "Before your call" (A-268): the next booked call in the coming week, at the top until it is over.
@@ -181,7 +189,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
       : null;
 
   // One box at the top, never two (A-269): the call note while a call is coming, otherwise where they stand.
-  const topBox = prep ? <CallBriefCard call={prep} onTheirPage /> : standing;
+  const topBox = prep ? <CallBriefCard call={prep} onTheirPage /> : (standing ?? generalCall);
 
   // Why the reply waits, said inside the reply card on a phone (A-222), where the side column isn't.
   const holdWhy = approval
@@ -296,7 +304,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
           )}
           <CopyBookingLinkButton leadId={lead.id} />
           {/* The call note or the ready card already carries "Call {name}": one Call button, not two. */}
-          {callable || ((prep || showReady) && phone) ? null : phone ? (
+          {callable || ((prep || showReady || (!standing && scoreTier === "ready")) && phone) ? null : phone ? (
             <a href={telHref(phone)} className={PILL}>
               Call
             </a>

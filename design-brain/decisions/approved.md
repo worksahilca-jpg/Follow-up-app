@@ -5441,5 +5441,16 @@ accurately."* Drawn the same day (scratchpad `call/board-*.png`); built without 
   plan on N": the automatic sign a call was off. Nobody grades anything.
 - **Accurate by construction:** the step comes from the same plan the engine sends by (planCard.ts), so it never promises a
   message that won't go; the tier is sorted again each time the customer writes and from the owner's CRM call notes (A-303).
-- **Realtors only for now:** only the realtor checklist sorts customers; other kinds of business show no tag until they
-  have their own (open task: memory for every kind).
+- ~~**Realtors only for now:** only the realtor checklist sorts customers; other kinds of business show no tag until they
+  have their own (open task: memory for every kind).~~ **SUPERSEDED (2026-10-22)** by the amendment below.
+- **Amended 2026-10-22 (founder: "we got to fix all the weak spots"):**
+  - **Every kind of business is sorted.** One with no checklist of its own is sorted from the interest score FollowUp
+    already gives every customer it has read (high Ready, medium Warm, low Later; nothing before it has read them), so
+    no extra AI runs. Its card shows the score's written reason instead of the realtor facts; Ready says "Next: call Sam
+    today." (or "reply to Sam today." with no number), with Call and Message. Today shows the same reason under the line
+    when there are no facts.
+  - **An old Ready call says how long:** "call Raj today to set up the showing. Raj has been ready for 3 days." from a
+    day on, so "today" never reads as news on day four.
+  - **Results gives an action, not only a count:** with no Ready customer booked, "Your 2 Ready customers haven't booked
+    yet. Call them today."
+

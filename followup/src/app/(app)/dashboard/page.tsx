@@ -22,7 +22,7 @@ import { getCallsToMake } from "@/lib/calls";
 import { isCallablePhone, ordinalCall } from "@/lib/callPlan";
 import { getBusinessAutomationRules } from "@/lib/automationStatus";
 import { planCard } from "@/lib/planCard";
-import { readyFacts, TIER_WORD, todayCall } from "@/lib/followUpCall";
+import { readyFacts, tierFromScore, TIER_WORD, todayCall, type ReadyFacts } from "@/lib/followUpCall";
 import type { CallCard } from "@/components/app/CallsToMake";
 import { getIncompleteSetupSteps } from "@/lib/setupStatus";
 import { getGmailStatus } from "@/lib/integrations/gmail";
@@ -55,7 +55,7 @@ import { callIsSoon, callNotOver, readCallBrief } from "@/lib/callBrief";
 import ScrollTitle from "@/components/app/ScrollTitle";
 import { LOOK_BACK_DAYS, endedMeetings, isMeetingOutcome, meetingWhen } from "@/lib/meetingOutcome";
 import { PLAN_NAMES, choosePlan, readFollowUpPlans } from "@/lib/followUpPlans";
-import { knownGlanceFacts, personLine, readQualification } from "@/lib/qualification";
+import { knownGlanceFacts, personLine, readQualification, templateFor } from "@/lib/qualification";
 
 // "last checked 2 minutes ago" — deliberately coarse (minutes/hours/days,
 // no seconds) since this is a status line, not a live clock.
@@ -110,7 +110,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     // component, so without it "Good morning" came from the server's
     // clock — UTC on Vercel — and greeted a Toronto owner at 8pm with it.
     ctx
-      ? prisma.business.findUnique({ where: { id: ctx.businessId }, select: { timezone: true, holdAllForApproval: true, sendingPausedAt: true, onlyAdminsSend: true, instagramUsername: true, followUpPlans: true } })
+      ? prisma.business.findUnique({ where: { id: ctx.businessId }, select: { timezone: true, holdAllForApproval: true, sendingPausedAt: true, onlyAdminsSend: true, instagramUsername: true, followUpPlans: true, industry: true } })
       : null,
     // Pause all sending, and Only admins send (A-041). The role is read here
     // rather than trusted from the session, which doesn't carry it.
@@ -179,7 +179,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const [waitingQuals, waitingConvs, rules] =
     ctx && waitingIds.length > 0
       ? await Promise.all([
-          prisma.lead.findMany({ where: { id: { in: waitingIds }, businessId: ctx.businessId }, select: { id: true, qualification: true } }),
+          prisma.lead.findMany({ where: { id: { in: waitingIds }, businessId: ctx.businessId }, select: { id: true, qualification: true, qualifiedAt: true } }),
           prisma.conversation.findMany({
             where: { leadId: { in: waitingIds }, lead: { businessId: ctx.businessId } },
             select: { leadId: true, _count: { select: { messages: { where: { direction: "outbound" } } } } },
@@ -189,20 +189,30 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         ])
       : [[], [], null];
   const qualOf = new Map(waitingQuals.map((l) => [l.id, readQualification(l.qualification)]));
+  const readySince = new Map(waitingQuals.map((l) => [l.id, l.qualifiedAt]));
   const repliesTo = new Map<string, number>();
   for (const c of waitingConvs) repliesTo.set(c.leadId, (repliesTo.get(c.leadId) ?? 0) + c._count.messages);
   const leadById = new Map(leads.map((l) => [l.id, l]));
-  // FollowUp's call (A-310): where each waiting person stands and the one next step, judged by FollowUp alone.
+  // FollowUp's call (A-310): where each waiting person stands and the one next step, judged by FollowUp alone. A
+  // kind of business with a checklist (real estate) is sorted by it; every other kind by the interest score FollowUp
+  // already keeps, with its written reason standing in for the facts.
+  const checklist = templateFor(business?.industry);
   const callFor = (leadId: string, name: string): ApprovalItem["call"] => {
     const q = qualOf.get(leadId) ?? null;
-    if (!q?.tier) return null;
     const lead = leadById.get(leadId);
+    const tier = checklist ? (q?.tier ?? null) : lead ? tierFromScore(lead.score, lead.reviewed) : null;
+    if (!tier) return null;
     const first = name.split(" ")[0] || name;
     const canCall = isCallablePhone(lead?.phone) || isCallablePhone(lead?.dmPhone);
     const plan = lead && rules ? planCard(lead, rules, now, timezone) : null;
+    const since = readySince.get(leadId);
+    const daysReady = since ? Math.floor((now.getTime() - since.getTime()) / 86_400_000) : null;
+    const ready: ReadyFacts | null =
+      tier !== "ready" ? null : checklist && q ? { ...readyFacts(q, first, canCall), daysReady } : { first, general: true, seller: false, home: null, viewing: false, booked: false, canCall };
     return {
-      tag: TIER_WORD[q.tier],
-      next: todayCall(q.tier, { first, ready: q.tier === "ready" ? readyFacts(q, first, canCall) : null, plan, holdAll: rules?.holdAllForApproval ?? true }),
+      tag: TIER_WORD[tier],
+      next: todayCall(tier, { first, ready, plan, holdAll: rules?.holdAllForApproval ?? true }),
+      why: checklist ? null : (lead?.scoreReason ?? null),
     };
   };
   const approvalItems: ApprovalItem[] = withBasisItems.map((a) => ({

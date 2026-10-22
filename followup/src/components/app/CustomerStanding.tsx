@@ -15,6 +15,7 @@ import {
 import KeepFollowingButton from "@/components/app/KeepFollowingButton";
 import { TierTag } from "@/components/app/TodayDay";
 import { readyFacts, readyNext, TIER_WORD } from "@/lib/followUpCall";
+import type { Tier } from "@/lib/qualification";
 
 /**
  * Where this customer stands (A-246, drawn and approved 2026-10-14). One
@@ -45,6 +46,7 @@ export default function CustomerStanding({
   open,
   callHref,
   plan,
+  readySince = null,
 }: {
   leadId: string;
   leadName: string;
@@ -56,6 +58,8 @@ export default function CustomerStanding({
   callHref: string | null;
   /** Their follow-up plan and its one sentence (A-245, src/components/app/CustomerPlan.tsx), or null. */
   plan: React.ReactNode;
+  /** When FollowUp found them Ready (Lead.qualifiedAt): an old Ready call says how long they have waited. */
+  readySince?: Date | null;
 }) {
   const first = leadName.split(" ")[0] || leadName;
   const tier = open ? q.tier : undefined;
@@ -82,7 +86,7 @@ export default function CustomerStanding({
         )}
         {/* The owner's one next step, and when (A-310). */}
         <p className="mt-2 text-[14.5px] leading-relaxed">
-          <span className="font-semibold">Next:</span> {readyNext(readyFacts(q, first, callHref !== null))}
+          <span className="font-semibold">Next:</span> {readyNext({ ...readyFacts(q, first, callHref !== null), daysReady: daysSince(readySince) })}
         </p>
         <div className="mt-3.5 flex gap-2">
           {callHref && (
@@ -150,6 +154,64 @@ export default function CustomerStanding({
       {open && missing.length > 0 && <p className="mt-2 text-[12.5px] text-ink-faint">Still to find out: {list(missing)}.</p>}
     </section>
   );
+}
+
+/**
+ * FollowUp's call for a kind of business with no checklist of its own (A-310): the tier from the interest score
+ * FollowUp already keeps, its written reason, and the one next step. Same box, tag and label as a realtor's card.
+ */
+export function GeneralCall({
+  leadName,
+  tier,
+  reason,
+  callHref,
+  plan,
+}: {
+  leadName: string;
+  tier: Exclude<Tier, "agent">;
+  /** FollowUp's own reason for the score, in plain words. */
+  reason: string | null;
+  callHref: string | null;
+  plan: React.ReactNode;
+}) {
+  const first = leadName.split(" ")[0] || leadName;
+  return (
+    <Box label={`Where ${first} stands`}>
+      <Head tier={tier} />
+      {reason && <p className="mt-2.5 text-[15px] leading-relaxed">{reason}</p>}
+      {tier === "ready" ? (
+        <>
+          <p className="mt-2 text-[14.5px] leading-relaxed">
+            <span className="font-semibold">Next:</span>{" "}
+            {readyNext({ first, general: true, seller: false, home: null, viewing: false, booked: false, canCall: callHref !== null })}
+          </p>
+          <div className="mt-3.5 flex gap-2">
+            {callHref && (
+              <a href={callHref} className="inline-flex h-11 flex-1 items-center justify-center rounded-full bg-accent px-4 text-[14px] font-semibold text-on-accent">
+                Call {first}
+              </a>
+            )}
+            <a
+              href="#reply"
+              className={
+                "inline-flex h-11 flex-1 items-center justify-center rounded-full px-4 text-[14px] font-semibold " +
+                (callHref ? "border border-line-strong text-ink hover:bg-card-2" : "bg-accent text-on-accent")
+              }
+            >
+              {callHref ? "Message" : `Message ${first}`}
+            </a>
+          </div>
+        </>
+      ) : (
+        (plan ?? <p className="mt-2.5 text-[14px] leading-relaxed text-ink-soft">Nothing for you to do.</p>)
+      )}
+    </Box>
+  );
+}
+
+/** Whole days since a moment, or null. */
+function daysSince(at: Date | null): number | null {
+  return at ? Math.floor((Date.now() - at.getTime()) / 86_400_000) : null;
 }
 
 /** "Priya is a few months away", "Tom is just looking for now". */

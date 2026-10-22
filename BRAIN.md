@@ -73,9 +73,13 @@ a booked call or visit; the owner closes.
 
 **Last updated: 2026-10-22**
 
-- **FollowUp's call (A-310, Oct 22, PR open):** every customer shows where they stand (Ready, Warm, Later, Has an agent)
-  and the one next step, on Today, their page and Customers; Results shows what the calls came to. Fully automatic: the
-  founder rejected asking owners to grade it (R-137). New brand principle: "The job they needed".
+- **FollowUp's call (A-310, Oct 22, live in PR #580):** every customer shows where they stand (Ready, Warm, Later, Has an
+  agent) and the one next step, on Today, their page and Customers; Results shows what the calls came to. Fully
+  automatic: the founder rejected asking owners to grade it (R-137). New brand principle: "The job they needed".
+  Weak spots fixed the same day (new PR): every kind of business is sorted (from the score), an old Ready says how many
+  days, Results says what to do.
+- **Next, drawn first:** make what matters stand out (how long someone has waited, their message vs our reply).
+  Outreach the owner starts (no reply yet): recommended "not now, after the pilot"; his call.
 
 - **Reconnect reminders (A-309, Oct 22, PR open):** an owner whose Gmail or Outlook stays disconnected gets one email at
   day 2 and one at day 7, then nothing. Found because 2 of 3 testers' Gmail had been broken for weeks (Google's old 7-day

@@ -5,8 +5,8 @@ import { getBusinessAutomationRules } from "@/lib/automationStatus";
 import { getWaitingOn } from "@/lib/waitingOn";
 import { getAtRiskLeads } from "@/lib/rescue";
 import { customerGroups } from "@/lib/customerPlaces";
-import { readQualification, readyWhy } from "@/lib/qualification";
-import { TIER_WORD } from "@/lib/followUpCall";
+import { readQualification, readyWhy, templateFor } from "@/lib/qualification";
+import { tierFromScore, TIER_WORD } from "@/lib/followUpCall";
 import { prisma } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import Link from "next/link";
@@ -42,7 +42,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
   const now = new Date();
   const [approvals, business, rules, sendLocked, qualified, bookings, sorted] = await Promise.all([
     getPendingApprovals(ctx.businessId),
-    prisma.business.findUnique({ where: { id: ctx.businessId }, select: { timezone: true } }),
+    prisma.business.findUnique({ where: { id: ctx.businessId }, select: { timezone: true, industry: true } }),
     getBusinessAutomationRules(ctx.businessId),
     sendLockedForSession(),
     // Ready to book (#466): FollowUp has everything it asks for, so it's time
@@ -94,9 +94,17 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
   for (const l of atRisk) lines[l.id] ??= l.rescue.reason;
   for (const w of waitingItems) lines[w.leadId] ??= w.next;
   const tags: Tags = {};
-  for (const l of sorted) {
-    const tier = readQualification(l.qualification)?.tier;
-    if (tier) tags[l.id] = TIER_WORD[tier];
+  if (templateFor(business?.industry)) {
+    for (const l of sorted) {
+      const tier = readQualification(l.qualification)?.tier;
+      if (tier) tags[l.id] = TIER_WORD[tier];
+    }
+  } else {
+    // Every other kind of business: from the interest score FollowUp already keeps, open deals only.
+    for (const l of leads) {
+      const tier = l.stage === "won" || l.stage === "lost" ? null : tierFromScore(l.score, l.reviewed);
+      if (tier) tags[l.id] = TIER_WORD[tier];
+    }
   }
 
   // A customer opened beside the list (A-025, the canvas App board). Only

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
-import { readQualification } from "@/lib/qualification";
+import { readQualification, templateFor } from "@/lib/qualification";
+import { tierFromScore } from "@/lib/followUpCall";
 import {
   beforeAndSince,
   countAppointments,
@@ -84,7 +85,7 @@ async function pilotFor(
     }),
     prisma.lead.findMany({
       where: { businessId, createdAt: { gte: since }, ...REAL_CUSTOMER },
-      select: { qualification: true, stage: true, followUpPlan: true, bookings: { where: { status: "confirmed" }, select: { id: true }, take: 1 } },
+      select: { qualification: true, score: true, scoreReason: true, stage: true, followUpPlan: true, bookings: { where: { status: "confirmed" }, select: { id: true }, take: 1 } },
       take: MAX_MESSAGES,
     }),
     prisma.auditEvent.groupBy({
@@ -133,7 +134,8 @@ async function pilotFor(
     connectedAt,
     calls: countCalls(
       customers.map((c) => ({
-        tier: readQualification(c.qualification)?.tier ?? null,
+        // Real estate by its checklist; every other kind by the interest score (A-310).
+        tier: templateFor(b.industry) ? (readQualification(c.qualification)?.tier ?? null) : tierFromScore(c.score, c.scoreReason != null),
         won: c.stage === "WON",
         booked: c.bookings.length > 0,
         planPicked: c.followUpPlan !== null,

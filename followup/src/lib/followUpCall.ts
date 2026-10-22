@@ -1,5 +1,6 @@
 import { homeOf, isSeller, viewingOf, type Qualification, type Tier } from "@/lib/qualification";
 import type { PlanCard } from "@/lib/planCard";
+import { scoreLevel } from "@/lib/scoreThresholds";
 
 /**
  * "FollowUp's call" (founder, 2026-10-22: "build this follow-up call … it should be totally automated … we are
@@ -15,8 +16,23 @@ import type { PlanCard } from "@/lib/planCard";
 /** The word on a tag and on the card. */
 export const TIER_WORD: Record<Tier, string> = { ready: "Ready", warm: "Warm", later: "Later", agent: "Has an agent" };
 
+/**
+ * Where a customer stands for a kind of business with no checklist of its own (everything but real estate today):
+ * from the interest score FollowUp already gives every customer it has read (scoring.ts, with its written reason), so
+ * no extra AI runs. High is Ready, medium Warm, low Later; nothing until FollowUp has read them.
+ */
+export function tierFromScore(score: number, reviewed: boolean): Tier | null {
+  if (!reviewed || score <= 0) return null;
+  const level = scoreLevel(score);
+  return level === "high" ? "ready" : level === "medium" ? "warm" : "later";
+}
+
 export type ReadyFacts = {
   first: string;
+  /** A kind of business with no checklist: FollowUp knows they're keen, not what they want to see or sell. */
+  general?: boolean;
+  /** Whole days since FollowUp found them Ready, when known: said when it's a day or more. */
+  daysReady?: number | null;
   seller: boolean;
   /** A seller's home, "18 Birch Cres", when known. */
   home: string | null;
@@ -45,7 +61,15 @@ export function readyFacts(q: Qualification, first: string, canCall: boolean): R
  * A Ready customer is the owner's: a person who wants to see a home (or sell one) hears from a person, the same day.
  */
 export function readyNext(r: ReadyFacts): string {
+  const step = readyStep(r);
+  // An old Ready call still says "today", and how long they have waited, so the day doesn't read as news.
+  const d = r.daysReady ?? 0;
+  return !r.booked && d >= 1 ? `${step} ${r.first} has been ready for ${d} ${d === 1 ? "day" : "days"}.` : step;
+}
+
+function readyStep(r: ReadyFacts): string {
   const { first } = r;
+  if (r.general) return r.canCall ? `call ${first} today.` : `reply to ${first} today.`;
   if (r.booked) return r.seller ? "the home visit is booked. Nothing to do before it." : "the showing is booked. Nothing to do before it.";
   if (r.seller) {
     const home = r.home ?? "the home";
@@ -106,6 +130,7 @@ export function tallyCalls(customers: readonly { tier: Tier | null; booked: bool
 /** The one sentence under the counts: what came of the Ready calls. */
 export function readyOutcome(t: CallTally): string {
   if (t.ready === 0) return "Nobody was Ready yet. FollowUp tells you the moment someone is.";
-  if (t.ready === 1) return t.readyBooked ? "Your Ready customer booked a time with you." : "Your Ready customer hasn't booked yet.";
+  if (t.ready === 1) return t.readyBooked ? "Your Ready customer booked a time with you." : "Your Ready customer hasn't booked yet. Call them today.";
+  if (t.readyBooked === 0) return `Your ${t.ready} Ready customers haven't booked yet. Call them today.`;
   return `${t.readyBooked} of your ${t.ready} Ready customers booked a time with you.`;
 }

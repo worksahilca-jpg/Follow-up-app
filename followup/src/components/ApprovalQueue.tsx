@@ -97,7 +97,7 @@ export type ApprovalItem = PendingApproval & {
    * FollowUp's call (A-310): where they stand ("Ready", "Warm", "Later", "Has an agent") for their row and the open
    * person, and the one next step after this reply, from the plan the engine sends by. Judged by FollowUp alone.
    */
-  call?: { tag: string; next: string | null } | null;
+  call?: { tag: string; next: string | null; /** For a kind of business with no checklist: FollowUp's written reason, in place of the facts. */ why?: string | null } | null;
   /** Up to three known facts for the open person (A-286). */
   facts?: [string, string][];
   /** How many messages FollowUp or the owner has sent them (A-286): "FollowUp has replied 3 times". */
@@ -333,6 +333,7 @@ function ApprovalCard({
             <span className="text-[13px] text-ink-faint">FollowUp&rsquo;s call</span>
           </p>
           {item.call.next && <p className="mt-1.5 text-[16px] font-semibold leading-snug">{item.call.next}</p>}
+          {item.call.why && !(item.facts && item.facts.length > 0) && <p className="mt-1 line-clamp-3 text-[14px] leading-snug text-ink-soft">{item.call.why}</p>}
         </div>
       )}
       {/* Who they are, at a glance (A-286): at most three facts from their own words, known ones only, then the way to

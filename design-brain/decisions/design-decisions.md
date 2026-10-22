@@ -14876,3 +14876,37 @@ row tags, the customer's card, Customers row tags, Results "FollowUp's calls", a
 **Also found and fixed while building:** a customer with an agent had "Has an agent" twice on their Today row.
 **Weak points:** "call Raj today" is said even when the Ready call is days old (still the right step, but "today" can
 repeat); the Results sentence can read as "0 of your 2 Ready customers booked" early in a month, which is honest but flat.
+
+## 2026-10-22 — FollowUp's call, weak spots fixed (A-310 amended)
+
+After the merge (PR #580) the founder asked: *"we got to fix all the weak spots."* The ones found in review, and what
+changed:
+- **Realtors only.** Every other kind of business saw no call at all. Now it comes from the interest score FollowUp
+  already keeps (scoring.ts, with its written reason): no new AI cost, no owner input. The card for those shows the
+  reason sentence, and Ready gets "Next: call Sam today." with Call and Message. Results and the pilot numbers count
+  those customers too.
+- **An old Ready said "today" forever.** From one day on the line adds "Raj has been ready for 3 days."
+- **The Results line only reported.** With nobody booked it now says what to do: "Call them today."
+- **Two Call buttons** on a general Ready card (card + the actions row): the row's Call hides when the card has one,
+  the same rule as the realtor card.
+Checked on the real app with the local business switched to "Home services" (computer and phone), then switched back.
+**Weak, still:** the score is coarser than the realtor checklist (one number and one sentence, not facts), so a
+non-realtor call is less specific. A checklist per kind of business stays the open task ("memory for every kind").
+
+## 2026-10-22 — "What matters stands out" drawn; waiting for the founder
+
+**Founder, verbatim:** *"let's highlight all the stuff that is important and that should catch the eye of a business
+owner. Suppose I just saw the email that is sent by the lead, and it is in a plain thing. Our text is also in a plain
+thing. How many days, or how long, has it been pending here?"*
+Drawn on the real local app (scratchpad `stand/board-*.png`), computer and phone, with no new colour (A-281, R-128):
+- **The wait on every Today row** where the chevron was: hours in an outlined pill, **a day or more in a dark pill**
+  (the one thing on the row that catches the eye). The row's line no longer repeats it.
+- **The open person and a customer's page:** "Waiting 3 hours" beside the name (on the phone, in the top bar), counted
+  from their last message. Today's customer page counts from when the reply was written (it said 21 days for a message
+  from yesterday): to fix with the build.
+- **Their words in their own bubble** (the thread's grey, A-261) under "Raj emailed you:", with **what FollowUp read in
+  bold**: only the exact words its checklist quoted, so nothing is guessed.
+- **The reply named as yours:** "Your reply to Raj · written by FollowUp", the box edge a touch firmer.
+- **Customers stays calm:** the wait in bold, no dark pills. Today is where the owner acts.
+**Weak, said in the message:** a short, fact-heavy message ends up mostly bold; and a big backlog shows several dark
+pills at once (Today shows about five rows, so it stays readable).

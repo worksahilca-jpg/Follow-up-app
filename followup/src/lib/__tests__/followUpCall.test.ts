@@ -3,7 +3,7 @@
  * The owner is never asked to grade it.
  */
 import { describe, it, expect } from "vitest";
-import { afterReply, CALLS_SHOWN_FROM, readyFacts, readyNext, readyOutcome, tallyCalls, TIER_WORD, todayCall } from "@/lib/followUpCall";
+import { afterReply, CALLS_SHOWN_FROM, readyFacts, readyNext, readyOutcome, tallyCalls, tierFromScore, TIER_WORD, todayCall } from "@/lib/followUpCall";
 import type { Qualification } from "@/lib/qualification";
 
 const buyer = (extra: Qualification["items"] = []): Qualification => ({
@@ -124,11 +124,35 @@ describe("what FollowUp's calls came to (Results)", () => {
 
   it("says one Ready customer and none plainly", () => {
     expect(readyOutcome({ sorted: 5, ready: 1, warm: 4, later: 0, agent: 0, readyBooked: 1 })).toBe("Your Ready customer booked a time with you.");
-    expect(readyOutcome({ sorted: 5, ready: 1, warm: 4, later: 0, agent: 0, readyBooked: 0 })).toBe("Your Ready customer hasn't booked yet.");
+    expect(readyOutcome({ sorted: 5, ready: 1, warm: 4, later: 0, agent: 0, readyBooked: 0 })).toBe("Your Ready customer hasn't booked yet. Call them today.");
+    expect(readyOutcome({ sorted: 6, ready: 2, warm: 4, later: 0, agent: 0, readyBooked: 0 })).toBe("Your 2 Ready customers haven't booked yet. Call them today.");
     expect(readyOutcome({ sorted: 5, ready: 0, warm: 5, later: 0, agent: 0, readyBooked: 0 })).toBe("Nobody was Ready yet. FollowUp tells you the moment someone is.");
   });
 
   it("waits for five sorted customers before showing anything", () => {
     expect(CALLS_SHOWN_FROM).toBe(5);
+  });
+});
+
+describe("every kind of business, and an old Ready call", () => {
+  it("sorts a business with no checklist from the score FollowUp already gives every customer", () => {
+    expect(tierFromScore(82, true)).toBe("ready");
+    expect(tierFromScore(55, true)).toBe("warm");
+    expect(tierFromScore(20, true)).toBe("later");
+    // Never a call on someone FollowUp hasn't read.
+    expect(tierFromScore(0, true)).toBeNull();
+    expect(tierFromScore(90, false)).toBeNull();
+  });
+
+  it("a general Ready step: call today, or reply today with no number", () => {
+    expect(readyNext({ first: "Sam", general: true, seller: false, home: null, viewing: false, booked: false, canCall: true })).toBe("call Sam today.");
+    expect(readyNext({ first: "Sam", general: true, seller: false, home: null, viewing: false, booked: false, canCall: false })).toBe("reply to Sam today.");
+  });
+
+  it("says how long a Ready customer has waited once it's a day or more", () => {
+    const q = buyer([{ key: "viewing", value: "Asked to see it Saturday", quote: "Could we see it this Saturday?" }]);
+    expect(readyNext({ ...readyFacts(q, "Raj", true), daysReady: 0 })).toBe("call Raj today to set up the showing.");
+    expect(readyNext({ ...readyFacts(q, "Raj", true), daysReady: 1 })).toBe("call Raj today to set up the showing. Raj has been ready for 1 day.");
+    expect(readyNext({ ...readyFacts(q, "Raj", true), daysReady: 3 })).toBe("call Raj today to set up the showing. Raj has been ready for 3 days.");
   });
 });

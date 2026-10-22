@@ -15129,3 +15129,81 @@ window is longer than the other app windows (two choices in one). "Learned from 
 from your 'Not a customer' answers" under Your business. The hours fact in What FollowUp knows and Your free hours still
 sit on the same page with different meanings.
 
+
+## 2026-10-22 — "Talk to FollowUp about your business" and "Calls this week": drawn, waiting for the founder's yes
+
+**Asked:** the founder accepted drawing the voice version of the meeting (the idea they raised when approving A-314, above), then
+asked *"do we have our own inbuilt calendar?"* (answer: partly. Customers book FollowUp's free hours through the owner's
+link, and Today shows tomorrow's call, but there is no place to see the week) and *"yes draw the calls this week page
+too"*. Both drawn on the real local app at 390×844 and 1280 (test business masked; example customers from the local
+seed; nothing saved).
+
+**Calls this week (drawn):**
+- **Where it lives:** no new tab (Today · Customers · Activity · Results stay four). Today's Later group gets one row
+  between Tomorrow and Done today: "Calls this week · 4 booked ›". It opens a page with "← Today", the way Coming up
+  already works.
+- **The page:** title "Calls this week", one sentence ("4 calls, booked through your link in your free hours. Nothing
+  today, Friday, Sunday or Wednesday."), then the calls by day in grouped lists: time on the left (as Activity, A-307),
+  the customer's initials, name, and one line on what the call is about. The whole row opens the customer. Footer links:
+  "Next week" and "Your free hours".
+- **Why this shape:** empty days are named in the sentence instead of drawn as empty boxes (Miller's law, no calendar
+  grid to read on a phone); one row on Today rather than a tab keeps the nav at four (Hick's law).
+- **Weak spots, honestly:** "Next week" behaviour isn't drawn (it would show the next 7 days with the same layout). The
+  row reads "4 booked" even when today has none; the sentence carries the detail. Calls booked outside FollowUp (in
+  Google Calendar directly) don't show; the page only knows bookings made through the link. A week with one call is a
+  thin page.
+
+**Talk to FollowUp about your business (drawn, option B):**
+- **Where it lives:** inside the existing 5-minute meeting (A-314). Under its opening sentence, an outlined pill
+  "Rather talk? Talk for 2 minutes". Typing stays exactly as it is.
+- **Ready:** "Talk about your business", one sentence (brief it like a new assistant; nothing used until you say it's
+  right), a "Things to mention" list (what you do, who you work with, prices you're happy to share, area, hours, how
+  people book, what you don't do), one big black microphone "Start talking", "FollowUp keeps the words, never your
+  voice." and "Rather type? Answer one question at a time".
+- **Talking:** a timer (1:24), a coral "Listening" dot, the same list, "Done talking" and "Start over".
+- **After:** the same play-back as the typed meeting ("Here's your business, as FollowUp understands it.", every line
+  editable, nothing used before Looks right), plus one line "From what you said · 2 min 14 s · Read what you said".
+- **Would be built with:** the browser's own recorder (no new library), transcription on the same OpenAI account
+  FollowUp already uses, then the A-314 extraction. The recording is turned into words and deleted; only the words are
+  kept, with the draft. The privacy page must say so before it ships.
+- **Weak spots, honestly:** no live words while talking (they appear after Done talking, so a long pause can feel like
+  nothing is happening; the timer and dot are the only signal). The phone asks for the microphone once, and a "no" needs
+  a plain way back to typing (the Rather type link). Transcription costs a little per talk (cents; exact price to check
+  before building). Accents and mixed languages may transcribe imperfectly; the play-back is the safety net.
+
+## 2026-10-22 — "Calls this week" and "Talk to FollowUp about your business": approved and built (A-317, A-318)
+
+**Approved:** *"yes build both"*. **Built as drawn**, checked on the real local app at 390×844 and 1280 (test business
+masked; example calls and an example talk stored in the local database, then removed), no sideways scroll, no page
+errors.
+**Calls this week, decided while building:**
+- Today's row is always there ("Calls this week · None yet" with nothing booked), so FollowUp's calendar can always be
+  found; the number counts only calls still to come (one already over today has its "How did it go?" on Today).
+- Every line in Later that opens a page now shows the same small chevron, not only the new one.
+- The line under each name: what the customer wants from the call note (A-268) when there is one, else where they stand
+  (Today's line), else their latest words in quotes, else the call's length ("30-minute call"). Seen locally: the quotes
+  carry most rows until a note or a read exists.
+- The sentence says "today" and "tomorrow" by name, and names the busy days instead when most days are quiet ("All on
+  Saturday and Monday").
+- "Next week" opens "Calls next week" (the 7 days after), with "← This week". On a computer the list is 720px wide, like
+  Activity (the drawing ran wider).
+**Talk to FollowUp, decided while building:**
+- "Things to mention" lists the meeting's own question names for the kind of business (the drawing used softer
+  phrases), so what was asked, what was said and the play-back use the same words.
+- "Rather talk?" shows only where the browser can record. Up to 5 minutes, then it stops by itself; under 3 seconds it
+  asks to talk a little longer.
+- After a talk, the play-back adds "Not in what you said: Hours and Languages. Answer them now", which goes back to
+  typing at the first of them; the draft keeps the talk. "Read what you said" shows the words in a quiet box.
+- Only the meeting's page may ask for the microphone (its own browser rule); every other page keeps it off.
+- The recording goes to the same transcription voicemails use, with the language detected, and is never stored; only
+  the words wait with the draft, and "Looks right" clears them. Every line must be words the owner said, or it's
+  dropped. 10 talks an hour, 20 a day, inside the daily AI ceiling; posts from other sites are refused; audited with
+  the length and the count, never the words. The privacy page says so.
+**Weak spots, honestly:**
+- Never tried with a real voice: this computer has no AI key, so the writing-down and the reading were checked by tests
+  with stand-ins, and the screens with a fake microphone. The first real talk will be on the live app.
+- After "Done talking" the only sign of progress is "FollowUp is writing down what you said…"; a long talk may take
+  10 to 20 seconds.
+- The "Listening" dot uses the error colour (coral), as drawn: the usual recording red, but off-token.
+- Words from a talk the owner never finishes stay in the draft until they finish or start over, as typed answers do.
+- "Calls this week" only knows calls booked through FollowUp's link, and adds a line to Today even when it's empty.

@@ -74,6 +74,13 @@ a booked call or visit; the owner closes.
 
 **Last updated: 2026-10-22**
 
+- **"Calls this week" + "Talk to FollowUp about your business" BUILT (A-317, A-318, Oct 22, PR waiting for the founder's
+  "merge"):** both drawn and approved with "yes build both". Today's Later has "Calls this week · N booked", opening
+  `/calls`: the calls booked through the owner's link for the next 7 days, by day, one sentence naming the quiet days,
+  "Next week". The 5-minute meeting has "Rather talk? Talk for 2 minutes": the owner talks (up to 5 minutes), the
+  recording is written down (same transcription as voicemails) and never stored, FollowUp reads the words against the
+  meeting's questions (every line must be their words), and the same play-back shows it with "From what you said" and
+  "Not in what you said". Only `/tell` may use the microphone. No migration (the words ride in `Business.tellDraft`).
 - **"Missed by your CRM" LIVE (A-315, Oct 22, PR #585 → 0a79683, merged at the founder's "merge it"; deploy green; 3 columns + migration confirmed in production, read-only):** the founder's
   differentiation ask (*"I don't want CRMs to get all these features and eat us"*, option A, "yes build it"). Results
   opens with the customers who wrote by email, DM or form in the last 30 days and still aren't in the owner's CRM, by
@@ -85,7 +92,7 @@ a booked call or visit; the owner closes.
   customers now match the CRM by the email they gave in the chat. Two columns (`Lead.crmAddedAt`,
   `CrmConnection.autoAddSince/autoAddOff`). Privacy page says it. Same PR: **Next.js 16.4.2 + Sentry 10.76.2**
   (2 critical advisories Oct 22; not reachable here, but CI's audit fails on them).
-- **Settings organised by what each name says BUILT (A-316, Oct 22, PR waiting for the founder's "merge"):** the
+- **Settings organised by what each name says LIVE (A-316, Oct 22, PR #587 → 8553d97, merged at the founder's "merge it"; deploy green; no migration):** the
   founder's rule (*"All the applications should be right there"*), audited page by page, drawn, and approved with "yes
   build it". Four moves, same switches and words: the **calendar** is a row under Connected apps (its window holds which
   calendar you book in and where customers book); **Your free hours** opens from Your business (hours only, with a link

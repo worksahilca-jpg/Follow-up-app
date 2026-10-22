@@ -18,6 +18,7 @@ import {
   type TellState,
   type TellTopic,
 } from "@/lib/tellFollowUp";
+import type { Talk } from "@/lib/tellTalk";
 
 /** How long the owner waits for a question worded for their business before the plain one is asked instead. */
 const WORDING_WAIT_MS = 4000;
@@ -64,13 +65,17 @@ export async function loadTellState(businessId: string, again = false): Promise<
   return tellState(business.industry, facts, business.questionsSkipped ?? [], again, parseTellDraft(business.tellDraft).rows);
 }
 
-/** Adds what FollowUp took from an answer to the meeting's draft (A-314). Its read of the business is made again. */
-export async function addToDraft(businessId: string, rows: readonly FactLine[]): Promise<void> {
+/**
+ * Adds what FollowUp took from an answer to the meeting's draft (A-314). Its read of the business is made again. With
+ * `talk` (A-318), what the owner said out loud is kept with it, replacing an earlier talk; a typed answer keeps it.
+ */
+export async function addToDraft(businessId: string, rows: readonly FactLine[], talk?: Talk): Promise<void> {
   const business = await prisma.business.findUnique({ where: { id: businessId }, select: { tellDraft: true } });
   const draft = parseTellDraft(business?.tellDraft);
+  const said = talk ?? draft.talk;
   await prisma.business.update({
     where: { id: businessId },
-    data: { tellDraft: { rows: mergeRows(draft.rows, rows) } },
+    data: { tellDraft: { rows: mergeRows(draft.rows, rows), ...(said ? { talk: said } : {}) } },
   });
 }
 
@@ -103,7 +108,12 @@ export async function tellPlayback(businessId: string, state: TellState): Promis
           timer = setTimeout(() => resolve(null), READ_WAIT_MS);
         });
         read = checkedRead(await Promise.race([summarizeTellProfile(plain), late]), plain);
-        if (read) await prisma.business.update({ where: { id: businessId }, data: { tellDraft: { rows: draft.rows, read } } });
+        if (read) {
+          await prisma.business.update({
+            where: { id: businessId },
+            data: { tellDraft: { rows: draft.rows, read, ...(draft.talk ? { talk: draft.talk } : {}) } },
+          });
+        }
       }
     } catch (err) {
       console.error(`Could not read back the business for ${businessId}:`, err instanceof Error ? err.message : err);
@@ -112,7 +122,7 @@ export async function tellPlayback(businessId: string, state: TellState): Promis
       if (timer) clearTimeout(timer);
     }
   }
-  return { read, rows, uses: usageLines(rows, state.skipped), skipped: state.skipped };
+  return { read, rows, uses: usageLines(rows, state.skipped), skipped: state.skipped, talk: draft.talk ?? null };
 }
 
 export type TellCardProps = { knows: string };

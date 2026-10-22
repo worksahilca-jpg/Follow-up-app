@@ -118,6 +118,13 @@ export default function PrivacyPage() {
                 connect to it.
               </li>
               <li>
+                <strong className="text-ink">What you tell FollowUp about your business</strong> — your answers in
+                &quot;Tell FollowUp about your business&quot;, kept as the facts FollowUp uses in your replies. If you
+                choose to talk instead of typing, your recording is sent to our AI provider to be turned into words
+                and is never kept by FollowUp: we keep only the words, with your answers, until you tap Looks right,
+                and then only the facts you approved.
+              </li>
+              <li>
                 <strong className="text-ink">Billing info</strong> — handled entirely by Stripe; we never see
                 or store your card details ourselves.
               </li>
@@ -196,7 +203,8 @@ export default function PrivacyPage() {
             <p className="mt-2">
               To score leads and draft follow-up messages, relevant conversation text (and, if you leave &quot;Read my
               notes&quot; on, your own notes on that customer in your CRM) is sent to our AI provider (currently
-              OpenAI) for processing. That provider does not use your data to train its
+              OpenAI) for processing. When you talk to FollowUp about your business, your recording goes to the same
+              provider to be written down. That provider does not use your data to train its
               models under our account terms with them. AI-drafted messages are never sent without your
               approval unless you have turned on sending without asking, as described above.
             </p>
@@ -327,7 +335,7 @@ export default function PrivacyPage() {
               <li><strong className="text-ink">Meta</strong> — Instagram DM, Messenger, Facebook Lead Ads and WhatsApp access.</li>
               <li><strong className="text-ink">Twilio</strong> — text messages and voice calls, if you connect it (and WhatsApp for businesses that connected it through Twilio before).</li>
               <li><strong className="text-ink">Follow Up Boss, HubSpot and GoHighLevel</strong> — only if you connect your CRM.</li>
-              <li><strong className="text-ink">OpenAI</strong> — AI scoring and message drafting.</li>
+              <li><strong className="text-ink">OpenAI</strong> — AI scoring, message drafting, and writing down what you say to FollowUp.</li>
               <li><strong className="text-ink">Stripe</strong> — subscription billing.</li>
               <li><strong className="text-ink">Supabase and Vercel</strong> — database and application hosting.</li>
               <li><strong className="text-ink">Sentry</strong> — error reports, with email addresses and phone numbers removed.</li>

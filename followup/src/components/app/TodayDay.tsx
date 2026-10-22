@@ -104,7 +104,8 @@ export type LaterLine = { label: string; value: string; href?: string | null };
 
 /**
  * "Later" (A-266, 2026-10-16; was Tomorrow and Done today as two sections with boxes, A-244): one plain line each
- * for tomorrow, what is already done, and what FollowUp does on its own. A line opens its page when there is one.
+ * for tomorrow, the week's calls (A-317), what is already done, and what FollowUp does on its own. A line opens its
+ * page when there is one.
  */
 export function DayLater({ lines }: { lines: LaterLine[] }) {
   if (lines.length === 0) return null;
@@ -113,10 +114,14 @@ export function DayLater({ lines }: { lines: LaterLine[] }) {
       <DayHeading title="Later" />
       <ul className="list-group">
         {lines.map((l) => {
+          // A line that opens a page says so with a small chevron (A-317's "Calls this week · 4 booked ›").
           const inner = (
             <>
               <span className="shrink-0 text-[15px]">{l.label}</span>
-              <span className="min-w-0 text-right text-[14.5px] leading-snug text-ink-soft">{l.value}</span>
+              <span className="flex min-w-0 items-center gap-1.5">
+                <span className="min-w-0 text-right text-[14.5px] leading-snug text-ink-soft">{l.value}</span>
+                {l.href && <ChevronRight aria-hidden className="h-[15px] w-[15px] shrink-0 text-ink-faint opacity-70" strokeWidth={2.5} />}
+              </span>
             </>
           );
           const cls = "flex min-h-[52px] items-center justify-between gap-4 px-4 py-3";

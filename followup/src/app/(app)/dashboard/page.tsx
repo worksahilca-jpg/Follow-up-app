@@ -48,6 +48,8 @@ import { inboxSummaryFor } from "@/lib/inboxSummaryData";
 import InboxSummaryCard from "@/components/InboxSummaryCard";
 import { sinceStartedFor } from "@/lib/sinceStarted";
 import { factsWaitingCount } from "@/lib/businessFacts";
+import { callsWeekValue } from "@/lib/callsWeek";
+import { countCallsThisWeek } from "@/lib/callsWeekData";
 import SinceStartedPill from "@/components/app/SinceStartedPill";
 import { planLine } from "@/lib/comingUp";
 import { findHabitSuggestion } from "@/lib/habits";
@@ -350,7 +352,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   // tomorrow, what got booked today, and how many customers FollowUp wrote
   // to today. Every time is said on the owner's own clock.
   const dayStart = startOfLocalDay(now, timezone);
-  const [nearBookings, bookedToday, wroteForToday] = ctx && leads.length > 0
+  const [nearBookings, bookedToday, wroteForToday, callsThisWeek] = ctx && leads.length > 0
     ? await Promise.all([
         // From a few hours back, so a call that has started stays on Today (with its note) until it ends (A-268).
         prisma.booking.findMany({
@@ -370,8 +372,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           select: { leadId: true },
           distinct: ["leadId"],
         }),
+        // The number on "Calls this week" in Later (A-317).
+        countCallsThisWeek(ctx.businessId, now, timezone),
       ])
-    : [[], [], []];
+    : [[], [], [], 0];
   // "How did it go?" (A-263): calls that are over and not yet answered, and
   // the ones answered today (their card stays, with Undo, until tomorrow).
   const lookBackRows = ctx && leads.length > 0
@@ -482,6 +486,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         : "Nothing booked yet",
       href: firstTomorrow ? `/leads/${firstTomorrow.leadId}` : null,
     },
+    // FollowUp's own calendar (A-317): every call booked through the owner's link, the next seven days by day.
+    { label: "Calls this week", value: callsWeekValue(callsThisWeek), href: "/calls" },
     { label: "Done today", value: done.length > 0 ? done.join(" ") : "Nothing yet", href: done.length > 0 ? "/activity" : null },
     // Something FollowUp learned waits for the owner's OK before a reply uses it (A-308).
     ...(factsWaiting > 0

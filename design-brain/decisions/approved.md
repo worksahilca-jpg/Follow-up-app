@@ -5581,6 +5581,43 @@ saying."*
 **Unchanged:** the five groups and their order; the phone line stays off while texts are paused (its home is Connected
 apps when it returns); webhooks and routing stay in the back (R-115); "Only admins send" stays in Team; the rest of Your
 data stays.
-**Built 2026-10-22 (local, PR waiting for "merge"):** as drawn. Write like me stays admins only; two sentences lost a
+**Built 2026-10-22:** as drawn. Write like me stays admins only; two sentences lost a
 "below"/"above" that was no longer true; Today's calendar answer links to the calendar under Connected apps.
+**Merged** at the founder's "merge it" in PR #587 (8553d97), 2026-10-22; live.
 
+## A-317 — "Calls this week": FollowUp's own calendar as one page, opened from Today ^A-317
+
+**Date:** 2026-10-22. **Founder, verbatim**, to the drawings in design-decisions ("Talk to FollowUp about your business"
+and "Calls this week"): *"yes build both"*. Asked before: *"do we have our own inbuilt calendar?"*
+**What specifically was approved:**
+- **No new tab.** Today's Later group gets one row between Tomorrow and Done today: "Calls this week · N booked ›",
+  opening the page.
+- **The page:** "← Today", the title "Calls this week", one sentence that counts the calls and names the days with none
+  ("4 calls, booked through your link in your free hours. Nothing today, Friday, Sunday or Wednesday."), then the calls
+  grouped by day: time on the left, the customer's initials, name, and one line on what the call is about. The whole
+  row opens the customer.
+- **Under the list:** "Next week" and "Your free hours".
+- Only calls booked through the owner's link (FollowUp's bookings); nothing about how booking works changes.
+**Built 2026-10-22 (local, PR waiting for "merge"):** as drawn; the row on Today is always there ("None yet" when
+empty); every Later line that opens a page shows the chevron; each call's line is the call note's "wants", else where the
+customer stands, else their latest words in quotes. Details in design-decisions.
+
+## A-318 — "Talk to FollowUp about your business": talk instead of type, the same play-back at the end ^A-318
+
+**Date:** 2026-10-22. **Founder, verbatim:** *"yes build both"* (same message as A-317). The idea was the founder's own,
+when approving A-314: talk about the business "like Wispr", transcribed and analysed.
+**What specifically was approved:**
+- **Inside the 5-minute meeting (A-314):** an outlined pill under its opening sentence, "Rather talk? Talk for 2
+  minutes". Typing stays as it is.
+- **Ready:** "Talk about your business", one sentence, "Things to mention" (what you do, who you work with, prices
+  you're happy to share, the area you cover, your hours, how people book with you, what you don't do), one big black
+  microphone "Start talking", "FollowUp keeps the words, never your voice.", and "Rather type? Answer one question at a
+  time".
+- **Talking:** a timer, a "Listening" dot, the same list, "Done talking" and "Start over".
+- **After:** the same play-back as the typed meeting, every line editable, nothing used before Looks right, plus "From
+  what you said · {length} · Read what you said".
+- **Privacy:** the recording is turned into words and deleted; only the words are kept, with the draft. The privacy
+  page says so.
+**Built 2026-10-22 (local, PR waiting for "merge"):** as drawn; "Things to mention" uses the meeting's own question
+names; after a talk, "Not in what you said … Answer them now" returns to typing; only the meeting's page may use the
+microphone. Not yet tried with a real voice (no AI key locally). Details in design-decisions.

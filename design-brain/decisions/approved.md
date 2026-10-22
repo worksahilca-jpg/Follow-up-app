@@ -5454,3 +5454,45 @@ accurately."* Drawn the same day (scratchpad `call/board-*.png`); built without 
   - **Results gives an action, not only a count:** with no Ready customer booked, "Your 2 Ready customers haven't booked
     yet. Call them today."
 
+
+## A-311 — Setup stays as it is; "Tell FollowUp about your business" comes after FollowUp has shown it works ^A-311
+
+**Date:** 2026-10-22. **Founder, verbatim:** *"Yes we gotta do this"*, to decision 1 of the AI assistant plan
+(`followup/research/product/2026-10-22-ai-assistant-system-plan.md`, section 6): the brief asked for a sign-up
+conversation covering about 15 topics; R-027 rejected questions between setup and Today.
+**What specifically was approved (the direction; the screens are drawn and wait for their own yes):**
+- **Setup is unchanged** (A-272: CRM first, then the apps it misses, then Today). No questions are added before the owner
+  sees FollowUp work.
+- **"Tell FollowUp about your business"**: a conversation in which FollowUp asks what a new assistant would ask, one
+  thing at a time, and the owner answers in their own words. It covers the brief's topics (what the business does,
+  areas, prices and what buyers pay, how to book, when to hand a customer over, languages, what never to promise, how
+  the owner sounds), skippable, finish later.
+- **Offered once on Today after FollowUp has shown it works** (the same moment rules as A-101), and **any time** from
+  Settings → Your business → What FollowUp knows.
+- **Nothing from it is used before the owner checks it:** what FollowUp took from each answer is shown, and saved only on
+  the owner's OK (A-308's pattern).
+
+## A-312 — "Tell FollowUp about your business", built as drawn ^A-312
+
+**Date:** 2026-10-22. **Founder, verbatim:** *"Sure"*, to "build it as drawn. Shall I build it?" after the boards in
+design-decisions.md ("Tell FollowUp about your business" drawn). Builds A-311.
+**What specifically was approved:**
+- **Today:** one card where the one-question card sits, only while 3 or more things are still to ask, with A-101's quiet
+  rules: a small line ("FollowUp knows 3 things about your business"), the title, one line of why, an outlined
+  **Start** and a quiet **Not now**. Offered once: Start or Not now closes it for good (Settings keeps the way in).
+  While it shows, the one question a day waits.
+- **The conversation** under Settings → Your business: FollowUp's question in a plain bubble labelled "FollowUp" (no
+  avatar, no typing dots), one "For example" line under it, the owner's answer in their bubble, then what FollowUp took
+  from it as label/value rows with an outlined **Use these** and a quiet **Not right**; "3 of 10" beside the title;
+  the answer box with Send; **Skip this one** · **Finish later**.
+- **The end:** "FollowUp knows N things about your business.", every fact in one list, what was skipped and what happens
+  to it, **Done**.
+- **Settings:** "Answer a few questions" becomes "Tell FollowUp about your business".
+**How it was built, where it differs from the boards (decided while building, said to the founder):**
+- **Only questions FollowUp can act on today:** what the business does, then the trade's questions (A-100's list). The
+  drawn "Hand to you when", "Never promise" and "How you sound" are left out: facts are quoted to customers word for
+  word and anything that reads like an instruction is ignored on purpose, so FollowUp could not honour those answers yet.
+  They come with the step that lets owners set rules (plan milestone 3).
+- **The rows are the owner's own words**, split, never tidied ("Mississauga and Oakville", not a summary): drafts quote
+  facts word for word, so a value FollowUp wrote would be FollowUp speaking for the owner.
+- **No dot on the "Saved" line** (the drawing's own weak spot).

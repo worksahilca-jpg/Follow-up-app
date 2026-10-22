@@ -34,6 +34,7 @@ import FirstValueNote from "@/components/FirstValueNote";
 import { FIRST_VALUE_SEND, firstValueNote } from "@/lib/firstValue";
 import HabitQuestion from "@/components/HabitQuestion";
 import DailyQuestion from "@/components/DailyQuestion";
+import TellCard from "@/components/TellCard";
 import { AlertsCard } from "@/components/app/AlertsSetup";
 import InstallCard from "@/components/app/InstallCard";
 import ReplyForMeCard from "@/components/app/ReplyForMeCard";
@@ -42,6 +43,7 @@ import { clockTime, dayOffset, daySentence, doneLines, greeting, nextForYouLine 
 import { oneQueue } from "@/lib/approvalGroups";
 import { replyForMeOffer } from "@/lib/replyForMeOffer";
 import { todaysQuestion } from "@/lib/dailyQuestionData";
+import { tellCardOffer } from "@/lib/tellFollowUpData";
 import { inboxSummaryFor } from "@/lib/inboxSummaryData";
 import InboxSummaryCard from "@/components/InboxSummaryCard";
 import { sinceStartedFor } from "@/lib/sinceStarted";
@@ -275,12 +277,15 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const cardShowing = Boolean(inboxSummary);
   // "FollowUp learns what you do" (A-099): asked of an admin only, once.
   const habitSuggestion = ctx && isAdmin && leads.length > 0 && needYou === 0 && !cardShowing ? await findHabitSuggestion(ctx.businessId, now) : null;
+  // "Tell FollowUp about your business" (A-311): offered once, after FollowUp has shown it works (a customer on
+  // Today), at the same quiet moments as the one question a day, which waits while it shows. Never beside the setup
+  // step of the same name (no business name or trade yet): that one comes first, and it picks the questions.
+  const quietForQuestions = Boolean(ctx && isAdmin && approvalItems.length === 0 && callCards.length === 0 && !habitSuggestion && !cardShowing);
+  const tellCard =
+    ctx && quietForQuestions && leads.length > 0 && !setupSteps.some((s) => s.id === "business") ? await tellCardOffer(ctx.businessId, now) : null;
   // One question a day (A-101): only when nobody is waiting on the owner and
   // nothing else is being asked, so it never stands in front of real work.
-  const dailyQuestion =
-    ctx && isAdmin && approvalItems.length === 0 && callCards.length === 0 && !habitSuggestion && !cardShowing
-      ? await todaysQuestion(ctx.businessId, now)
-      : null;
+  const dailyQuestion = ctx && quietForQuestions && !tellCard ? await todaysQuestion(ctx.businessId, now) : null;
   const sendingPaused = Boolean(business?.sendingPausedAt);
   const sendLocked = Boolean(business?.onlyAdminsSend) && !isAdmin;
   const cantSend = !anySendChannel;
@@ -588,6 +593,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       {/* Going quiet is the last row of Then (A-266). Anyone already waiting above is left out (A-046, once each). */}
 
       {isAdmin && needYou === 0 && <HabitQuestion suggestion={habitSuggestion} />}
+      {isAdmin && tellCard && <TellCard card={tellCard} />}
       {isAdmin && <DailyQuestion question={dailyQuestion} />}
 
       {leads.length === 0 ? (

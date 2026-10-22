@@ -52,6 +52,7 @@ there, the next session reads.
 | Roadmap and checklist (shared doc) | Claude doc "FollowUp Roadmap and Checklist" |
 | Design and UX rules | `CLAUDE.md`, `design-brain/README.md`, `.claude/skills/followup-design` |
 | Every approved / rejected design decision | `design-brain/decisions/approved.md`, `rejected.md`, dated log in `design-decisions.md` |
+| **FollowUp's playbook: whom it answers, how it judges, what and when it writes, when it stops, how it learns** | `followup/playbook/` (one page per kind of business; real estate first). Keep it in step with the code it describes |
 | How replies are written | `followup/src/lib/integrations/openai.ts` (the reply writer), `followup/src/lib/tradePlaybooks.ts` (a plan per kind of business), `followup/src/lib/qualification.ts` (real estate's questions) |
 | Admin (Decide, Train, tests, testers, usage) | `followup/src/app/admin/` |
 | Team and who owns what | `TEAM.md`, `CONTRIBUTING.md` |
@@ -73,13 +74,40 @@ a booked call or visit; the owner closes.
 
 **Last updated: 2026-10-22**
 
-- **FollowUp's call (A-310, Oct 22, live in PR #580):** every customer shows where they stand (Ready, Warm, Later, Has an
-  agent) and the one next step, on Today, their page and Customers; Results shows what the calls came to. Fully
-  automatic: the founder rejected asking owners to grade it (R-137). New brand principle: "The job they needed".
-  Weak spots fixed the same day (new PR): every kind of business is sorted (from the score), an old Ready says how many
-  days, Results says what to do.
-- **Next, drawn first:** make what matters stand out (how long someone has waited, their message vs our reply).
-  Outreach the owner starts (no reply yet): recommended "not now, after the pilot"; his call.
+- **"Tell FollowUp about your business" built (A-311 + A-312, Oct 22, PR #582, not merged):** the founder said "Sure" to
+  the drawings. A card on Today (once, after FollowUp has shown it works, 3+ questions open) opens a conversation under
+  Settings › Your business: one question at a time, the owner's words split into facts, saved only on "Use these".
+  `/teach` opens it. One new column (`Business.tellCardClosedAt`). Left out on purpose: "when to hand over", "never
+  promise", "how you sound" (milestone 3: facts are quoted word for word and can't carry a rule). The AI split was not
+  seen locally (no key); check it live after merge. Report: plan section 8.
+- **Personal AI assistant brief, milestone 1 built (Oct 22, PR #582, not merged):** the founder's brief (parts 1–22) is
+  audited in `followup/research/product/2026-10-22-ai-assistant-system-plan.md`: Train It and Talk to It exist but are
+  founder-only (Admin → Train); owners have Try it yourself + Write it better, Teach FollowUp, What FollowUp knows,
+  Teach it your way. Milestone 1 (no screen changes): founder rules and examples have statuses, versions and a history
+  (`LearningEvent`), Undo rolls back and can be restored, pasted-conversation permission is stored, owner examples are
+  admin-only, and `src/lib/actionPolicy.ts` lists every action with who must allow it (a test fails if an automatic
+  sender ignores "ask me first"). Waiting: the founder's answers to the 5 decisions in section 6 (onboarding vs R-027,
+  a test step for founder rules, owner Talk to It vs R-136, corrections vs R-137, identity), then drawings for
+  milestones 2–3.
+- **Sales engine, phase 1 audit (Oct 22, PR #582, no code changed):** the founder's "AI sales assistant engine" brief
+  (phases 1–10). `followup/research/product/2026-10-22-sales-engine-audit.md`: one message traced through the code,
+  every feature marked works / incomplete / missing / risky, the gaps per phase, proposed tables (all additive, each
+  behind an off / watching / on switch) and the 7 steps in the brief's order. Riskiest today: the founder's trained
+  rules and examples reach every business of that trade at once, untested and unversioned. The "720 conversations"
+  are 720 checklist answers in 58 invented conversations. Waiting: the founder's yes to step 1 (training goes through
+  a test and the founder's OK) and the founder's answers to the 7 decisions in section 7. Nothing gets built before that.
+- **FollowUp's playbook (Oct 22, PR open):** founder: *"how to judge … what to reply, whom to reply, when to reply and
+  all"* and *"how this app will remember all these"*. `followup/playbook/real-estate.md` writes down, from the code, the
+  whole job for realtors; `followup/playbook/README.md` says how the app remembers (code = fixed rules, database =
+  learned facts and trained rules, playbook = the written copy, accuracy tests = the check). Open: an accuracy test for
+  the call on other kinds of business; re-run the four tests before the pilot; a Playbook page in the app showing the
+  trained rules live.
+- **FollowUp's call (A-310, Oct 22, live in PR #580; weak spots fixed and live in PR #581):** every customer shows where
+  they stand (Ready, Warm, Later, Has an agent) and the one next step; every kind of business is sorted (from the
+  score); an old Ready says how many days; Results says what to do. Fully automatic (R-137).
+- **Drawn, waiting for his yes:** what matters stands out (how long someone has waited on every row, their message in
+  its own bubble with only their questions in bold, "Your reply to Raj"). Outreach the owner starts (no reply yet):
+  recommended after the pilot (he replied "cool"; not a firm yes).
 
 - **Reconnect reminders (A-309, Oct 22, PR open):** an owner whose Gmail or Outlook stays disconnected gets one email at
   day 2 and one at day 7, then nothing. Found because 2 of 3 testers' Gmail had been broken for weeks (Google's old 7-day

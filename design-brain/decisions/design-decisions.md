@@ -14910,3 +14910,38 @@ Drawn on the real local app (scratchpad `stand/board-*.png`), computer and phone
 - **Customers stays calm:** the wait in bold, no dark pills. Today is where the owner acts.
 **Weak, said in the message:** a short, fact-heavy message ends up mostly bold; and a big backlog shows several dark
 pills at once (Today shows about five rows, so it stays readable).
+
+## 2026-10-22 — "Tell FollowUp about your business" drawn; waiting for the founder
+
+Direction approved as A-311 ("Yes we gotta do this"). Drawn on the real local app (scratchpad `brain-chat/board-*.png`),
+phone and computer, with existing parts only (the practice chat's bubbles, the Today question card, Settings rows):
+- **Today:** one card where the one-question card sits: "FollowUp knows 3 things about your business" · **Tell FollowUp
+  about your business** · one line (about five minutes, one thing at a time, you see what it took first) · an outlined
+  **Start** (Today's one black button stays Send) · **Not now**.
+- **The conversation** (replaces `/teach`'s one-question screens, under Settings → Your business): FollowUp's question in
+  a plain bubble labelled "FollowUp" (no avatar, no typing dots), the owner's answer in their dark bubble, then **what
+  FollowUp took from it** as label/value rows in one white group, with an outlined **Use these** and a quiet **Not
+  right**; once used, one line: "Saved. Change it any time in What FollowUp knows." A small "3 of 10" beside the title
+  (allowed by A-100). The answer box with Send at the bottom; **Skip this one** · **Finish later** under it.
+- **The end:** "FollowUp knows 9 things about your business.", every fact in one list, "You skipped 1. When a customer
+  asks about it, FollowUp will ask you on Today, once.", **Done**.
+- **Settings:** the "Answer a few questions" link under What FollowUp knows becomes "Tell FollowUp about your business".
+**Weak, said honestly:** the Today card's line is three lines on a phone (could be one); checking each answer adds a tap
+per answer (chosen on purpose: nothing unchecked reaches a customer); on the computer the conversation keeps the
+practice page's 640px column, which leaves the right side empty; the "Saved" line carries a small dot that adds nothing.
+
+## 2026-10-22 — "Tell FollowUp about your business" built (A-312)
+
+Approved as drawn ("Sure"). Built with the practice chat's bubbles and composer, Today's question card and Settings' fact
+rows; no new component styles or tokens. Checked in a browser at 390×844 and 1280×900.
+- **Where it differs from the boards, on purpose:** only questions FollowUp can act on (what the business does + the
+  trade's A-100 list); the rows are the owner's words split, never tidied; "Use this" when there is one row; no dot on
+  the "Saved" line.
+- **Found while building:** a setup step already used the same title (it shows only with no business name or trade).
+  The card never shows beside it. "Answer them now" first kept the end screen on the page; fixed (the page restarts).
+- **Starting without answering:** the card is gone for good, and the one question a day carries on as before (A-101).
+**Weak, said honestly:** on the phone the card sits below Later, so an owner who doesn't scroll won't see it (the same
+place as the daily question, kept for consistency); the input's focus ring is a square inside a round box (shared with
+Try it yourself); on the computer the 640px column leaves the right side empty; the answer box is one line, so a long
+answer scrolls sideways while typing.
+

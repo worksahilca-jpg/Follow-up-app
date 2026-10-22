@@ -307,11 +307,16 @@ model Business {
   facts                BusinessFact[]
   // How the owner wants replies to go, shown by example ("Write it better", src/lib/ownerExamples.ts).
   ownerExamples        OwnerExample[]
+  // The history of what this business taught FollowUp (src/lib/learning.ts).
+  learningEvents       LearningEvent[]
   // One question a day on Today (A-101, src/lib/dailyQuestion.ts): no
   // question before this time, and the questions the owner said "Not now"
   // to, which are then left for when a real customer asks.
   questionAfter        DateTime?
   questionsSkipped     String[]        @default([])
+  // "Tell FollowUp about your business" (A-311, src/lib/tellFollowUp.ts): when the owner started it or said "Not now"
+  // to its card on Today. Set once; the card is offered once.
+  tellCardClosedAt     DateTime?
   // What the owner asks a new buyer, in their own words and order (A-302, src/lib/askPlan.ts). Null: FollowUp's order.
   askPlan              Json?
   // The pilot (founder, 2026-10-22): what the owner said on the setup call about how they work today, before
@@ -2403,6 +2408,13 @@ model TrainingConversation {
   // Who added it. Plain id, no relation.
   addedById String?
   turnCount Int
+  // Milestone 1 (2026-10-22): "pasted" (a real conversation an owner shared) or "practice" (the founder playing the
+  // customer on Talk to it). Null for rows from before this was kept.
+  source             String?
+  // A pasted conversation can only be saved with the "I have permission to use this" box ticked; this is when it was
+  // ticked, and by whom. Null for practice chats (made up, nobody's conversation) and rows from before.
+  consentConfirmedAt DateTime?
+  consentById        String?
   createdAt DateTime          @default(now())
   examples  TrainingExample[]
 
@@ -2424,6 +2436,12 @@ model TrainingExample {
   // "followup" (FollowUp better), "same", or "agent" (the realtor's was better).
   verdict        String?
   scoredAt       DateTime?
+  // Milestone 1 (2026-10-22): where it is in its life (src/lib/learning.ts). Only "ACTIVE" reaches a draft; Undo
+  // makes it "ROLLED_BACK", which keeps it so it can be put back. Who approved it and when; when it stopped.
+  status         String               @default("ACTIVE")
+  approvedById   String?
+  approvedAt     DateTime?
+  endedAt        DateTime?
   createdAt      DateTime             @default(now())
 
   @@index([trade, createdAt])
@@ -2442,9 +2460,47 @@ model TrainingRule {
   note      String
   // Who set it. Plain id, no relation.
   addedById String?
+  // Milestone 1 (2026-10-22): where it is in its life (src/lib/learning.ts). Only "ACTIVE" reaches a reply; Undo makes
+  // it "ROLLED_BACK", which keeps it so it can be put back. The version goes up with each change of wording; every
+  // change, with the words before and after, is in LearningEvent.
+  status       String    @default("ACTIVE")
+  version      Int       @default(1)
+  approvedById String?
+  approvedAt   DateTime?
+  endedAt      DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
+  @@index([trade, createdAt])
+}
+
+/// Everything FollowUp learns, and every change to it, in one history (milestone 1, 2026-10-22; part 16 of the founder's
+/// assistant brief: "record the source and history of every learning item"). One row per change: a rule or example
+/// the founder set for a kind of business (businessId null, trade set), or something one business taught it
+/// (businessId set). It keeps the words before and after a change, so a change can be undone, and nothing else: no
+/// customer's details (the training text is scrubbed before it is stored, src/lib/trainingParse.ts).
+model LearningEvent {
+  id         String    @id @default(cuid())
+  business   Business? @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  businessId String?
+  trade      String?
+  // "training_rule" | "training_example" | "training_conversation" | "owner_example" (LEARNING_KINDS).
+  kind       String
+  targetId   String
+  // "created" | "edited" | "rolled_back" | "restored" | "removed" (LEARNING_ACTIONS).
+  action     String
+  fromStatus String?
+  toStatus   String?
+  version    Int?
+  before     Json?
+  after      Json?
+  // Who did it. Plain id, no relation: the history outlives a teammate who leaves.
+  byUserId   String?
+  note       String?
+  createdAt  DateTime  @default(now())
+
+  @@index([kind, targetId, createdAt])
+  @@index([businessId, createdAt])
   @@index([trade, createdAt])
 }
 

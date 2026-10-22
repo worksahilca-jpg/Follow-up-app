@@ -74,10 +74,12 @@ a booked call or visit; the owner closes.
 
 **Last updated: 2026-10-22**
 
-- **"Tell FollowUp about your business" (A-311, Oct 22): direction approved, screens drawn** (scratchpad
-  `brain-chat/board-*.png`; record in design-decisions). Setup unchanged; the conversation is offered on Today after
-  FollowUp has shown it works, and any time from What FollowUp knows; nothing it takes is used before the owner's OK.
-  Waiting: the founder's yes to the drawings, then build (milestone 2). Milestone 1's checks all passed on GitHub.
+- **"Tell FollowUp about your business" built (A-311 + A-312, Oct 22, PR #582, not merged):** the founder said "Sure" to
+  the drawings. A card on Today (once, after FollowUp has shown it works, 3+ questions open) opens a conversation under
+  Settings › Your business: one question at a time, the owner's words split into facts, saved only on "Use these".
+  `/teach` opens it. One new column (`Business.tellCardClosedAt`). Left out on purpose: "when to hand over", "never
+  promise", "how you sound" (milestone 3: facts are quoted word for word and can't carry a rule). The AI split was not
+  seen locally (no key); check it live after merge. Report: plan section 8.
 - **Personal AI assistant brief, milestone 1 built (Oct 22, PR #582, not merged):** the founder's brief (parts 1–22) is
   audited in `followup/research/product/2026-10-22-ai-assistant-system-plan.md`: Train It and Talk to It exist but are
   founder-only (Admin → Train); owners have Try it yourself + Write it better, Teach FollowUp, What FollowUp knows,

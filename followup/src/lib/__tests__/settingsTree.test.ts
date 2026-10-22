@@ -28,6 +28,7 @@ describe("settingsPlace", () => {
 
   it("keeps What FollowUp asks under Sending replies (A-302)", () => {
     expect(settingsPlace("/asks", "")).toEqual({ group: "Sending replies", branch: null });
+    expect(settingsPlace("/tell", "")).toEqual({ group: "Your business", branch: null });
   });
 });
 

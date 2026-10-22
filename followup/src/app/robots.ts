@@ -20,6 +20,7 @@ export default function robots(): MetadataRoute.Robots {
         "/analytics",
         "/workflows",
         "/asks",
+        "/tell",
         "/onboarding",
         "/signin",
         "/book/",

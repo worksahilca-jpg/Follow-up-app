@@ -163,7 +163,9 @@ is new, database changes, test results, risks, and the business benefit. Screens
   - controls (how replies go out, pause).
 - Facts get categories, versions and "last reviewed".
 - Onboarding: no new questions up front. A **"Tell FollowUp about your business"** chat, which you can open any time,
-  fills the same facts, one topic at a time, with skip and come back. A website or document import shows what it
+  fills the same facts, one topic at a time, with skip and come back. *Built 2026-10-22 (A-312, PR #582): what the
+  business does plus the trade's questions; when to hand over, what never to promise and how the owner sounds wait for
+  milestone 3, because facts are quoted word for word and can't carry a rule.* A website or document import shows what it
   found for your OK and is never trusted on its own.
 
 ### Milestone 3: Train It and Talk to It for owners (needs drawings)
@@ -207,7 +209,7 @@ is new, database changes, test results, risks, and the business benefit. Screens
 | # | Step | Today |
 |---|---|---|
 | 1 | Sign up | Invite only, by your choice (R-012); open sign-up is planned for launch |
-| 2 | Describe the business in conversation | Missing (milestone 2) |
+| 2 | Describe the business in conversation | Built (A-312, PR #582): the trade's questions; the preference topics wait for milestone 3 |
 | 3 | Teach services and pricing | Works (facts, one question a day, Settings) |
 | 4 | Upload example conversations | Owners: missing; founder: paste (Admin → Train) |
 | 5 | Approve suggested tone and preferences | Missing (milestone 3) |
@@ -231,7 +233,7 @@ is new, database changes, test results, risks, and the business benefit. Screens
 
 ## 6. Decisions only the founder can make
 
-1. **Onboarding.** *Decided 2026-10-22: yes (A-311); screens drawn, waiting for the founder's yes.* The brief asks for
+1. **Onboarding.** *Decided 2026-10-22: yes (A-311); drawn, approved ("Sure") and built as drawn (A-312), in PR #582.* The brief asks for
    a sign-up conversation covering ~15 topics. R-027 rejected questions between
    setup and Today. *Recommendation:* setup stays as it is; the "Tell FollowUp about your business" chat is offered
    after FollowUp has shown it works (like A-101), and can be opened any time.
@@ -304,3 +306,27 @@ the same; the rule is kept behind the scenes instead of deleted.
 - The test step before a founder rule reaches every business is not built yet (decision 2, milestone 3).
 - Facts (A-308) don't write to the new history yet (milestone 2).
 - The new restore and revert actions have no buttons until the screens are drawn.
+
+## 8. "Tell FollowUp about your business" report (built 2026-10-22, in PR #582, not merged)
+
+**What it does, in plain words:** on Today, once FollowUp has shown it works and while 3 or more questions are still
+open, a card offers a five-minute conversation. FollowUp asks one thing at a time; the owner answers in their own words;
+FollowUp shows what it took from the answer, split into facts, and saves nothing until "Use these". Skip and Finish later
+lose nothing. It can be opened any time from Settings › Your business. `/teach` now opens it.
+
+**Files:** `src/lib/tellFollowUp.ts` (questions, progress, the word-for-word checks), `src/lib/tellLines.ts`,
+`src/lib/tellFollowUpData.ts`, `src/app/api/business/tell/route.ts`, `src/components/TellFollowUp.tsx`,
+`src/components/TellCard.tsx`, `src/app/(app)/tell/page.tsx`; `proposeTellFacts` in `src/lib/integrations/openai.ts`; one
+column, `Business.tellCardClosedAt` (migration `20261022150000_tell_followup`, additive).
+
+**Safety:** every value shown or saved must appear word for word in the owner's answer (checked again on the server when
+they press Use these); admins only; only this conversation's questions; one small AI call per answer, counted in the
+daily AI ceiling, with the whole answer used if the call fails; audited without the words.
+
+**Tests:** 4,608 of 4,608 pass (28 new: `tellFollowUp.test.ts`, `tellRoute.test.ts`, one tree case). Type check, lint,
+build and `npm audit --omit=dev` (0) pass. Walked through in a browser on a phone (390×844) and a computer: the card,
+Start, an answer, Use these, Not right, Skip, the end screen, "Answer them now", the Settings link and the old `/teach`.
+
+**Not checked:** the AI split itself, because the test environment has no OpenAI key; locally every answer showed as
+one row (the fallback). The split is covered by tests with fixed model answers, and checked live after merge.
+

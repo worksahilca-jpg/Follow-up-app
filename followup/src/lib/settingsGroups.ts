@@ -125,6 +125,7 @@ export function groupHref(g: SettingsGroup): string {
 export function settingsPlace(pathname: string, hash: string): { group: SettingsGroup; branch: string | null } {
   if (pathname.startsWith("/workflows")) return { group: "Sending replies", branch: "When to check in" };
   if (pathname.startsWith("/practice") || pathname.startsWith("/asks")) return { group: "Sending replies", branch: null };
+  if (pathname.startsWith("/tell")) return { group: "Your business", branch: null };
   const id = hash.replace(/^#/, "");
   const page = pageForId(id);
   if (page) {

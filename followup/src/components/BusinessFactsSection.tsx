@@ -265,9 +265,9 @@ export default function BusinessFactsSection() {
           <button onClick={() => start(null)} className="h-10 rounded-full border border-line px-4 text-sm font-medium">
             Add something
           </button>
-          {/* The short question step (A-100): the things customers in this trade ask most. */}
-          <a href="/teach" className="inline-flex h-10 items-center text-sm underline underline-offset-2">
-            Answer a few questions
+          {/* The conversation (A-312): what a new assistant would ask, one thing at a time. */}
+          <a href="/tell" className="inline-flex h-10 items-center text-sm underline underline-offset-2">
+            Tell FollowUp about your business
           </a>
         </div>
       )}

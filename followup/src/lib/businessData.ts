@@ -139,7 +139,7 @@ export async function exportBusinessData(businessId: string): Promise<BusinessEx
     // The owner's own "customer" / "not a customer" calls (src/lib/senderVerdicts.ts).
     prisma.senderVerdict.findMany({ where: { businessId }, select: { sender: true, verdict: true, subject: true, updatedAt: true } }),
     // What FollowUp knows (src/lib/businessFacts.ts): the owner's own words.
-    prisma.businessFact.findMany({ where: { businessId }, select: { label: true, value: true, source: true, createdAt: true, updatedAt: true } }),
+    prisma.businessFact.findMany({ where: { businessId }, select: { label: true, value: true, source: true, approvedAt: true, proposedValue: true, createdAt: true, updatedAt: true } }),
     // "How you work" (src/lib/habits.ts): what the owner said yes or no to on Today.
     prisma.ownerHabit.findMany({ where: { businessId }, select: { kind: true, status: true, evidence: true, decidedAt: true } }),
     // What FollowUp wrote in the owner's CRM, and whether it landed (A-252).

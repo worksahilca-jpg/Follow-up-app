@@ -53,6 +53,18 @@ describe("reading the list", () => {
     expect(data.facts[0]).not.toHaveProperty("sourceLeadId");
   });
 
+  it("says which ones wait for an OK: something new, or new words beside one in use (A-308)", async () => {
+    const at = new Date("2026-10-05");
+    fact.findMany.mockResolvedValue([
+      { id: "f1", label: "Commission", value: "2.5%", source: "reply", sourceLeadId: null, updatedAt: at, approvedAt: null, proposedValue: null },
+      { id: "f2", label: "Area", value: "Toronto", source: "reply", sourceLeadId: null, updatedAt: at, approvedAt: at, proposedValue: "Toronto and Mississauga" },
+      { id: "f3", label: "Hours", value: "9 to 5", source: "owner", sourceLeadId: null, updatedAt: at, approvedAt: at, proposedValue: null },
+    ]);
+    const data = await (await GET()).json();
+    expect(data.facts.map((f: { waiting: boolean }) => f.waiting)).toEqual([true, true, false]);
+    expect(data.facts[0]).not.toHaveProperty("approvedAt");
+  });
+
   it("is for signed-in people only", async () => {
     getSessionContext.mockResolvedValue(null);
     expect((await GET()).status).toBe(401);
@@ -63,7 +75,10 @@ describe("changing it", () => {
   it("adds the owner's own fact", async () => {
     const res = await POST(req({ label: "  Showings ", value: "Weekdays  after 4" }));
     expect(res.status).toBe(200);
-    expect(fact.create).toHaveBeenCalledWith({ data: { businessId: "biz1", label: "Showings", value: "Weekdays after 4", source: "owner" } });
+    // The owner's own words are in use at once (A-308).
+    expect(fact.create).toHaveBeenCalledWith({
+      data: { businessId: "biz1", label: "Showings", value: "Weekdays after 4", source: "owner", approvedAt: expect.any(Date) },
+    });
     expect(recordAudit).toHaveBeenCalledWith(expect.anything(), "business.fact.save", { targetType: "business_fact", targetId: "f9" });
   });
 
@@ -71,7 +86,10 @@ describe("changing it", () => {
     fact.findMany.mockResolvedValue([{ id: "f1", label: "Commission" }]);
     fact.update.mockResolvedValue({ id: "f1" });
     await POST(req({ label: "commission", value: "2%" }));
-    expect(fact.update).toHaveBeenCalledWith({ where: { id: "f1" }, data: { label: "commission", value: "2%", source: "owner", sourceLeadId: null } });
+    expect(fact.update).toHaveBeenCalledWith({
+      where: { id: "f1" },
+      data: { label: "commission", value: "2%", source: "owner", sourceLeadId: null, approvedAt: expect.any(Date), proposedValue: null },
+    });
     expect(fact.create).not.toHaveBeenCalled();
   });
 
@@ -89,7 +107,14 @@ describe("changing it", () => {
   it("edits and removes only within this business", async () => {
     await PATCH(req({ label: "Commission", value: "2%" }), params("f1"));
     expect(fact.updateMany.mock.calls[0][0].where).toEqual({ id: "f1", businessId: "biz1" });
-    expect(fact.updateMany.mock.calls[0][0].data).toEqual({ label: "Commission", value: "2%", source: "owner", sourceLeadId: null });
+    expect(fact.updateMany.mock.calls[0][0].data).toEqual({
+      label: "Commission",
+      value: "2%",
+      source: "owner",
+      sourceLeadId: null,
+      approvedAt: expect.any(Date),
+      proposedValue: null,
+    });
     await DELETE(req({}), params("f1"));
     expect(fact.deleteMany.mock.calls[0][0].where).toEqual({ id: "f1", businessId: "biz1" });
   });

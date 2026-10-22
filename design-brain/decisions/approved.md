@@ -1818,7 +1818,8 @@ it acts like it's totally a clone of the user."* Drawn first (before/after, Toda
   Etobicoke") plus empty phrases ("our services"). Now only person-sent replies, and only specific facts (a figure, a
   place, a link, or a whole statement). Values must appear word for word in the reply; anything carrying the
   customer's name, an email, a phone number or a street address is dropped. The newest reply updates a learned fact;
-  an owner-written one is never overwritten.
+  an owner-written one is never overwritten. **PARTLY SUPERSEDED (2026-10-22) by [[#^A-308|A-308]]:** a learned fact now
+  waits for the owner's OK before replies use it, and new words wait beside a fact in use instead of replacing it.
 - **Drafting:** facts go into every follow-up draft as data, to be used word for word when the customer asks. A
   price fact replaces the [PRICE] blank. The made-up-number check and the risk check count a fact as the owner's own
   words, so *"Anything that isn't here still waits for you"* is literally true.
@@ -5377,3 +5378,24 @@ or assets; the calm look (A-282) and the sidebar stay.
   "Your reply is ready", then the rest. A row in a labelled group doesn't repeat the label.
 - **Activity:** by day, the time in a column on the left, one line each.
 - Day groups are still not used on Today (Today is ordered by who needs you; tried and dropped 2026-10-09).
+
+## A-308 — What FollowUp learns waits for the owner's OK ^A-308
+
+**Date:** 2026-10-22. **Founder, verbatim:** *"realtors, and do 2 and 3"*, where 3 was the advisor's "learn safely,
+with approval": a review list showing the proposed fact, where it came from, and approve / reject controls.
+Partly supersedes A-096's learning bullet (learned facts were used at once; the newest reply overwrote the old one).
+**What specifically was approved:**
+- **A fact FollowUp learns from a sent reply is not used in any reply until an admin OKs it.** The owner's own words
+  (typed in Settings, or the ticked "Use 2.5% next time" line on the reply card) are OK'd as they are saved.
+- **A newer reply that says something different about a fact already in use doesn't replace it.** The new words wait
+  beside it, and replies keep using the old words until the owner picks.
+- **Settings → What FollowUp knows**, at the top: a small label **"Waiting for your OK"** and one white group. Each
+  row: the label, the new words (biggest), *"Replies say now: …"* when it would replace something, and *"From your
+  reply to Daniel, Oct 22"*. One outlined pill, **Use it** (or **Use the new one**), and a quiet **Not right** link.
+  Not right on something new removes it; on new words, it drops them and keeps the old. A teammate who isn't an admin
+  sees *"Waiting for an admin's OK."*
+- **Today → Later:** one line, **"FollowUp learned · 2 things to check"**, opening Settings at that list. Admins only;
+  gone when nothing waits.
+- Everything already in use on the day this shipped stays in use.
+- Built without a separate drawing: the rows reuse A-096's list and A-307's white group, and the founder's ask named
+  the parts. Flagged to the founder with screenshots.

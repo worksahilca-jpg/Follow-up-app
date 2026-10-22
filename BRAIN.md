@@ -71,7 +71,17 @@ a booked call or visit; the owner closes.
 
 ## Where we are (update at the end of every task)
 
-**Last updated: 2026-10-21**
+**Last updated: 2026-10-22**
+
+- **The pilot (Oct 22, PR open):** FollowUp is sold as a sales system, proven in one kind of business. Realtors for
+  now (contractors if the founder can get three owners there first). `followup/PRODUCT_DIRECTION.md` → "The pilot".
+  - **What FollowUp learns waits for the owner's OK (A-308):** learned facts and changed words wait in Settings →
+    "Waiting for your OK" (Use it / Not right) and on Today's Later list; replies use only OK'd facts. Migration:
+    `BusinessFact.approvedAt`, `BusinessFact.proposedValue` (everything already in use stays in use).
+  - **Pilot numbers on /admin → Testers → "The pilot":** per business, last 30 days: calls right, Ready → booked,
+    replies as written / changed / on its own with minutes saved (a stated guess), next step → wrote back,
+    appointments, and answering before FollowUp vs since. The founder types the owner's own numbers from the setup
+    call. Migration: `Business.pilotBaseline`.
 
 - **"Your last 90 days" (A-306, built Oct 21, PR open):** once, after FollowUp first reads the inbox, Today says "23
   people wrote to you. 17 didn't get a reply. Each one has a reply ready below." and how many emails were set aside,

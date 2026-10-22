@@ -14774,3 +14774,46 @@ business that has history). 4,485 tests, typecheck, lint, build.
   "thanks, I'll get back to you" note, not only full replies.
 - Today on a phone: the list and the first-days card are 12px from the edge, the numbers and greeting 20px (the
   approved "cards a little wider than the text").
+
+## 2026-10-22 — What FollowUp learns waits for the owner's OK (A-308), built
+
+**Founder:** *"realtors, and do 2 and 3"*, after an outside strategy note; 3 = "learn safely, with approval".
+
+**How it works:** `BusinessFact.approvedAt` (null = learned, not OK'd; drafts, the risk checks and "show the work" never
+use it) and `BusinessFact.proposedValue` (new words from a newer reply, waiting beside a fact in use). The owner's own
+words are OK'd on save. `POST /api/business/facts/[id]/review` with `use` or `not_right`, admin only, own business
+only, rate-limited, on the audit log. Settings → What FollowUp knows opens with "Waiting for your OK" (group label +
+white group); Today's Later group gets "FollowUp learned · N things to check" for admins. The migration OK's every
+fact already in use, so nothing changes for anyone on deploy.
+
+**Checked:** local app, computer and phone: both kinds of waiting row, "Use the new one" swapped the words and cleared
+the wait, "Not right" removed the new fact, the Today line opened Settings at the list. Tests, typecheck, lint.
+
+**Weak points:**
+- No drawing first; it reuses A-096's rows and A-307's group, and the founder named the parts. Screenshots sent.
+- A fact with new words waiting shows twice: once waiting ("Replies say now: …") and once in the list in use. Honest,
+  but a little repetitive.
+- Nothing nudges the owner beyond the Today line; an owner who never opens it keeps the old words forever (safe, but
+  FollowUp stops getting better for them).
+
+## 2026-10-22 — The pilot numbers on admin, built
+
+**Founder:** *"do 2"* (the pilot measurements), plus the advisor's follow-up: the AI's chosen next step and whether it
+worked, and a before-FollowUp baseline for each business.
+
+**How it works:** `/admin/testers` → "The pilot", one white box per business with something connected or a real
+customer in the last 30 days. Pure counting in `src/lib/pilotNumbers.ts`, reading in `src/lib/pilotNumbersData.ts`
+(every query scoped to the business, never the practice customer). The owner's own numbers from the setup call are
+typed in by the founder (`Business.pilotBaseline`, `POST /api/admin/pilot-baseline`, founder only). Rows: who's a
+customer (let in / set aside, kept out / brought back, % not corrected), Called Ready (booked or won), replies sent
+(as written / changed / on its own, minutes saved as a stated guess), FollowUp's next step and did they write back,
+appointments (happened / didn't / not answered / to come), answering customers before FollowUp (the 90 days the inbox
+read covers) and since.
+
+**Weak points:**
+- Minutes saved is a guess (4 / ½ / 2 min) until testers time themselves; the page says so under the section.
+- "Set aside" counts the window's set-asides, not only those of customers who came in during it (a set-aside customer
+  is deleted, so its first-message date is gone).
+- "Before FollowUp" only exists where the inbox read reached back; a business that connected Instagram only has a thin
+  "before".
+- An admin page with dense rows: fine for the founder, not a design for owners.

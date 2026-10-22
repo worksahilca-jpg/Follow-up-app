@@ -29,11 +29,11 @@ export async function withBasis<T extends { leadId: string; leadName: string; dr
   businessId?: string
 ): Promise<(T & { basis: string | null; checkWords: string[] })[]> {
   if (items.length === 0) return [];
-  // The owner's own facts are theirs to have written (A-096): never a word to check.
+  // The owner's own facts are theirs to have written (A-096): never a word to check. Only the ones they OK'd (A-308).
   // So is the news they gave for the customers staying in touch (A-260): the notes are written from it.
   const factText = businessId
     ? [
-        (await prisma.businessFact.findMany({ where: { businessId }, select: { value: true } }).catch(() => [])).map((f) => f.value).join("\n"),
+        (await prisma.businessFact.findMany({ where: { businessId, approvedAt: { not: null } }, select: { value: true } }).catch(() => [])).map((f) => f.value).join("\n"),
         await recentNewsText(businessId),
       ].join("\n")
     : "";

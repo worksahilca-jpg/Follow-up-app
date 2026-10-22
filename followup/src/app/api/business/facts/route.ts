@@ -19,7 +19,7 @@ export async function GET() {
   const facts = await prisma.businessFact.findMany({
     where: { businessId: ctx.businessId },
     orderBy: { createdAt: "asc" },
-    select: { id: true, label: true, value: true, source: true, sourceLeadId: true, updatedAt: true },
+    select: { id: true, label: true, value: true, source: true, sourceLeadId: true, updatedAt: true, approvedAt: true, proposedValue: true },
   });
   // "Learned from your reply to Ivy": names looked up inside this business only.
   const leadIds = [...new Set(facts.map((f) => f.sourceLeadId).filter((id): id is string => !!id))];
@@ -30,7 +30,12 @@ export async function GET() {
   return NextResponse.json({
     success: true,
     isAdmin: await requireAdmin(ctx),
-    facts: facts.map(({ sourceLeadId, ...f }) => ({ ...f, learnedFrom: sourceLeadId ? names.get(sourceLeadId) ?? null : null })),
+    // A-308: `waiting` says whether this one waits for an OK (new, or new words in `proposedValue`).
+    facts: facts.map(({ sourceLeadId, approvedAt, ...f }) => ({
+      ...f,
+      waiting: !approvedAt || f.proposedValue !== null,
+      learnedFrom: sourceLeadId ? names.get(sourceLeadId) ?? null : null,
+    })),
   });
 }
 

@@ -5496,3 +5496,5 @@ design-decisions.md ("Tell FollowUp about your business" drawn). Builds A-311.
 - **The rows are the owner's own words**, split, never tidied ("Mississauga and Oakville", not a summary): drafts quote
   facts word for word, so a value FollowUp wrote would be FollowUp speaking for the owner.
 - **No dot on the "Saved" line** (the drawing's own weak spot).
+**Confirmed on the built screens, 2026-10-22.** After seeing the phone and computer screenshots of the build, founder,
+verbatim: *"Yes / Merge too"*. Merged in PR #582 (bcfa9ae).

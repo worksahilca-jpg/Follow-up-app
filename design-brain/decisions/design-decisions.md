@@ -14945,3 +14945,19 @@ place as the daily question, kept for consistency); the input's focus ring is a 
 Try it yourself); on the computer the 640px column leaves the right side empty; the answer box is one line, so a long
 answer scrolls sideways while typing.
 
+
+## 2026-10-22 — "Tell FollowUp" as a real conversation: drawn, waiting for the founder
+
+Founder, after trying the live version: *"make it a bit more like a conversations followup should ask questions about
+their businesses so that it can learn and use for its job"*. Drawn on the real `/tell` page (scratchpad
+`tell2/board-*.png`) with a web designer's answers; existing parts only.
+- **Questions fit the business:** the topics stay a short fixed list (so it ends), but FollowUp words each question from
+  what the owner already said ("Who are your websites usually for?", "How do you price a website for a restaurant or
+  salon?"), with an example that fits.
+- **It digs once when an answer can't help a customer** ("depends on the site"): one more question that says why ("A
+  starting price lets FollowUp answer customers who ask"), then it moves on. Never twice on one topic.
+- **Two topics for every business:** "Who you work with" and "What you don't do", both used by the customer check and
+  in replies. No chit-chat, no praise, no personality (brand principle 3, S-13).
+**Weak, said honestly:** the count grows to 9 for most kinds of business; questions written per business can't be
+tested word for word (fixed wording is the fallback). **Found while drawing:** the phone's top bar title on `/tell` is
+too long and runs into the logo; fix with the build (a shorter bar title).

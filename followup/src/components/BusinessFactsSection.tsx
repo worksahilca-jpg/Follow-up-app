@@ -12,6 +12,9 @@ import { useEffect, useState } from "react";
  * Drawn and approved 2026-10-06: one quiet list, an Edit link per row, one
  * "Add something" button, and a line of examples. Remove lives inside Edit,
  * so the list itself carries one action per row.
+ *
+ * A-308 (founder, 2026-10-22): what FollowUp learns from a reply waits at the top, under "Waiting for your OK", with
+ * where it came from and two answers, "Use it" and "Not right". Nothing there reaches a customer until then.
  */
 
 type Fact = {
@@ -21,6 +24,9 @@ type Fact = {
   source: "reply" | "owner";
   learnedFrom: string | null;
   updatedAt: string;
+  /** Waits for an OK (A-308): something new, or new words for one in use (`proposedValue`). */
+  waiting: boolean;
+  proposedValue: string | null;
 };
 
 const LABEL_MAX = 40;
@@ -28,6 +34,11 @@ const VALUE_MAX = 200;
 
 function shortDate(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+/** Where something waiting came from, in the owner's words (A-308). */
+function learnedLine(f: Fact) {
+  return f.learnedFrom ? `From your reply to ${f.learnedFrom}, ${shortDate(f.updatedAt)}` : `From one of your replies, ${shortDate(f.updatedAt)}`;
 }
 
 function provenance(f: Fact) {
@@ -99,6 +110,10 @@ export default function BusinessFactsSection() {
 
   if (!loaded) return null;
 
+  const waiting = facts.filter((f) => f.waiting);
+  // Something new is only listed under "Waiting"; one in use with new words beside it stays in the list too.
+  const inUse = facts.filter((f) => !f.waiting || f.proposedValue !== null);
+
   const form = (
     <div className="space-y-3 py-4">
       <div>
@@ -159,19 +174,64 @@ export default function BusinessFactsSection() {
     <div className="box p-5">
       <p className="text-sm font-medium">What FollowUp knows</p>
       <p className="mt-1 text-[13px] text-ink-soft">
-        FollowUp uses these in replies, word for word. Anything that isn&apos;t here still waits for you, and it never
-        makes up a price, a date or a promise.
+        FollowUp uses these in replies, word for word. What it learns from your replies waits for your OK first.
+        Anything that isn&apos;t here still waits for you, and it never makes up a price, a date or a promise.
       </p>
 
-      {facts.length === 0 && open !== "new" && (
+      {waiting.length > 0 && (
+        <section aria-label="Waiting for your OK" className="mt-4">
+          <h3 className="group-label px-1">Waiting for your OK</h3>
+          <ul className="list-group mt-2">
+            {waiting.map((f) => (
+              <li key={f.id} className="px-4 py-3.5">
+                <p className="text-[13px] text-ink-soft">{f.label}</p>
+                <p className="mt-0.5 break-words text-[15px] leading-snug">{f.proposedValue ?? f.value}</p>
+                {f.proposedValue !== null && (
+                  <p className="mt-0.5 break-words text-[13px] text-ink-soft">Replies say now: {f.value}</p>
+                )}
+                <p className="mt-1 text-[12.5px] text-ink-soft">{learnedLine(f)}</p>
+                {isAdmin ? (
+                  <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-2">
+                    <button
+                      onClick={() => void call(`/api/business/facts/${f.id}/review`, "POST", { decision: "use" })}
+                      disabled={busy}
+                      className="h-10 rounded-full border border-line px-4 text-sm font-medium disabled:opacity-60"
+                    >
+                      {f.proposedValue !== null ? "Use the new one" : "Use it"}
+                    </button>
+                    <button
+                      onClick={() => void call(`/api/business/facts/${f.id}/review`, "POST", { decision: "not_right" })}
+                      disabled={busy}
+                      className="h-10 px-2 text-sm underline underline-offset-2 disabled:opacity-60"
+                    >
+                      Not right
+                    </button>
+                  </div>
+                ) : (
+                  <p className="mt-1.5 text-[12.5px] text-ink-soft">Waiting for an admin&apos;s OK.</p>
+                )}
+              </li>
+            ))}
+          </ul>
+          {error && open === null && (
+            <p className="mt-2 text-[13px]" role="alert" style={{ color: "var(--coral)" }}>
+              {error}
+            </p>
+          )}
+        </section>
+      )}
+
+      {inUse.length === 0 && open !== "new" && (
         <p className="mt-4 border-t border-line pt-4 text-[13.5px] text-ink">
-          Nothing yet. FollowUp learns from the replies you send{isAdmin ? ", or you can add something now." : "."}
+          {waiting.length > 0
+            ? "Nothing in use yet."
+            : `Nothing yet. FollowUp learns from the replies you send${isAdmin ? ", or you can add something now." : "."}`}
         </p>
       )}
 
-      {facts.length > 0 && (
+      {inUse.length > 0 && (
         <ul className="mt-4 border-t border-line">
-          {facts.map((f) => (
+          {inUse.map((f) => (
             <li key={f.id} className="border-b border-line">
               {open === f.id ? (
                 form
@@ -198,7 +258,7 @@ export default function BusinessFactsSection() {
         </ul>
       )}
 
-      {open === "new" && <div className={facts.length > 0 ? "" : "mt-4 border-t border-line"}>{form}</div>}
+      {open === "new" && <div className={inUse.length > 0 ? "" : "mt-4 border-t border-line"}>{form}</div>}
 
       {isAdmin && open !== "new" && (
         <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">

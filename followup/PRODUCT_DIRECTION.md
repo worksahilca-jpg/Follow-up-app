@@ -807,3 +807,43 @@ A date that slips is moved here, with the reason, not dropped.
 - Landing page: the founder's social links, and the business name and city, in the footer (needs them from the founder).
 - Landing page: count taps on the sign-up button, not only visits.
 - Landing page: open sign-up at launch (invite-only until then).
+
+## The pilot: prove it sells, in one kind of business (founder, 2026-10-22)
+
+The founder brought an outside strategy note ("People won't buy FollowUp because it has AI…") with six things a
+buyer pays for, and asked *"Are we doing something like this?"*, then chose *"realtors, and do 2 and 3"*. A follow-up
+note from the same advisor added the details below.
+
+**What FollowUp is sold as:** a sales system that makes sure no customer is lost, not "AI". The six things, and where
+FollowUp stands on 2026-10-22:
+
+| What the buyer pays for | Where it stands |
+|---|---|
+| 1. Knows who is ready to buy (buying intent) | Built: the Ready / Warm / Later card (A-246) |
+| 2. Picks the next best step for each customer | Partly: first reply, follow-up plans, bring-backs; now measured (below) |
+| 3. Remembers every customer and conversation | Built |
+| 4. Follows the industry's own sales process | Partly: real estate deep; three other trades have step plans; the rest general |
+| 5. Learns safely, with the owner's approval | Built 2026-10-22 (A-308): what it learns waits for the owner's OK |
+| 6. Proves business results | Started 2026-10-22: the pilot numbers (below) |
+
+**The pilot, in one kind of business.** Realtors for now. The advisor leans towards GTA home-service contractors
+(HVAC, roofing, renovation); their point is that "access to 3–5 willing owners matters more" than the trade. Whichever
+group the founder can get three owners from is the pilot; the founder hasn't said yet whether contractors are an option.
+
+**What the pilot measures, per business, on /admin → Testers → "The pilot"** (founder-only, numbers only, last 30
+days, never the practice customer):
+1. **Were FollowUp's calls right?** Customers it let in that the owner set aside; messages it kept out that the owner
+   brought back; the share of calls the owner didn't correct. Customers it called Ready, and how many booked or were won.
+2. **How much of the owner's work did it take?** Replies sent as written, changed first, or sent on its own, and
+   "about N minutes saved". The minutes are a stated guess (4 to write, ½ to check, 2 to change) until testers time
+   themselves.
+3. **What came of the appointments?** Booked, happened, didn't, not answered yet, still to come (the owner's own answer
+   after each call, A-263).
+4. **FollowUp's next step, and did it work:** first replies, follow-ups and bring-backs sent, and how many the customer
+   wrote back after.
+5. **Before FollowUp, against since:** from the inbox FollowUp read when it connected (the 90 days before), how many
+   customers wrote, how many got an answer and how fast; then the same since. Plus the owner's own numbers from the
+   setup call (inquiries a month, appointments a month, hours a week replying), typed in by the founder.
+
+Not measured yet: whether a "happened" appointment was a qualified one (the owner's outcome says working / deciding /
+not going, which is close), and time saved measured rather than guessed.

@@ -314,6 +314,9 @@ model Business {
   questionsSkipped     String[]        @default([])
   // What the owner asks a new buyer, in their own words and order (A-302, src/lib/askPlan.ts). Null: FollowUp's order.
   askPlan              Json?
+  // The pilot (founder, 2026-10-22): what the owner said on the setup call about how they work today, before
+  // FollowUp: { inquiriesPerMonth, appointmentsPerMonth, hoursPerWeek } (src/lib/pilotNumbers.ts). Founder-entered.
+  pilotBaseline        Json?
   // What the owner always does, offered once and kept only on a yes (src/lib/habits.ts).
   habits               OwnerHabit[]
 
@@ -721,6 +724,12 @@ model BusinessFact {
   // reply to Ivy". Not a relation: deleting that customer keeps the fact
   // (it is about the business, not them) and the screen says "a reply".
   sourceLeadId String?
+  // A-308 (founder, 2026-10-22: "do 3"): what FollowUp learns from a reply waits for the owner's OK before any reply
+  // uses it. Null: learned, not yet OK'd (drafts never use it). Set: in use. The owner's own words are OK'd at once.
+  approvedAt    DateTime?
+  // A newer reply said something different about a fact already in use: the new words wait here for the owner's OK,
+  // and replies keep using `value` until then.
+  proposedValue String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

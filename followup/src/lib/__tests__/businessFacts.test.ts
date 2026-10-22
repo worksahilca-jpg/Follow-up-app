@@ -133,7 +133,7 @@ describe("the draft's instructions", () => {
   it("come with the trade, read for this business only", async () => {
     p.businessFact.findMany.mockResolvedValue([{ label: "Commission", value: "2.5%" }]);
     expect(await draftingContext("biz1")).toEqual({ trade: "Real estate", facts: [{ label: "Commission", value: "2.5%" }], examples: [], rules: [] });
-    expect(p.businessFact.findMany.mock.calls[0][0].where).toEqual({ businessId: "biz1" });
+    expect(p.businessFact.findMany.mock.calls[0][0].where).toEqual({ businessId: "biz1", approvedAt: { not: null } });
   });
 
   it("never cost a draft: a failed read is an empty list", async () => {
@@ -162,6 +162,27 @@ describe("saving what a reply taught", () => {
     expect(changed).toBe(1);
     expect(p.businessFact.update).toHaveBeenCalledWith({ where: { id: "f1" }, data: { value: "2.5%", sourceLeadId: "lead2" } });
     expect(p.businessFact.update).toHaveBeenCalledTimes(1);
+  });
+
+  it("never changes the words in use: new words about a fact in use wait beside it for the owner's OK (A-308)", async () => {
+    p.businessFact.findMany.mockResolvedValue([
+      { id: "f1", label: "Commission", value: "3%", source: "reply", approvedAt: new Date("2026-10-01"), proposedValue: null },
+      { id: "f2", label: "Area", value: "Toronto", source: "reply", approvedAt: new Date("2026-10-01"), proposedValue: "Toronto and Mississauga" },
+    ]);
+    const changed = await saveLearnedFacts("biz1", "lead2", [
+      { label: "Commission", value: "2.5%" },
+      // The same words as already waiting: nothing to do.
+      { label: "Area", value: "Toronto and Mississauga" },
+    ]);
+    expect(changed).toBe(1);
+    expect(p.businessFact.update).toHaveBeenCalledWith({ where: { id: "f1" }, data: { proposedValue: "2.5%", sourceLeadId: "lead2" } });
+    expect(p.businessFact.update).toHaveBeenCalledTimes(1);
+  });
+
+  it("adds something new with no OK, so no reply uses it yet", async () => {
+    await saveLearnedFacts("biz1", "lead1", [{ label: "Showings", value: "Weekdays after 4" }]);
+    const data = p.businessFact.create.mock.calls[0][0].data;
+    expect(data).not.toHaveProperty("approvedAt");
   });
 
   it("stops adding at the cap", async () => {

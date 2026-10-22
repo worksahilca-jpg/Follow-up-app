@@ -1,10 +1,12 @@
 import AccessRequestList from "@/components/AccessRequestList";
 import ActivationSection from "@/components/ActivationSection";
 import TesterHealthSection from "@/components/TesterHealthSection";
+import PilotSection from "@/components/PilotSection";
 import { PageHeader } from "@/components/PageHeader";
 import { getPlatformAdminData } from "@/lib/admin-data";
 import { getActivation } from "@/lib/activation-data";
 import { getTesterHealth } from "@/lib/testerHealth";
+import { getPilotNumbers } from "@/lib/pilotNumbersData";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +25,12 @@ const SIGNUP_GRID = "grid-cols-[minmax(0,1.5fr)_auto_minmax(0,1.5fr)_auto]";
 
 /** /admin → Testers: who can sign in, who is set up, and who is getting value. */
 export default async function TestersPage() {
-  const [data, activation, health] = await Promise.all([getPlatformAdminData(), getActivation(), getTesterHealth()]);
+  const [data, activation, health, pilot] = await Promise.all([
+    getPlatformAdminData(),
+    getActivation(),
+    getTesterHealth(),
+    getPilotNumbers(),
+  ]);
 
   return (
     <div>
@@ -39,6 +46,8 @@ export default async function TestersPage() {
           <AccessRequestList requests={data.accessRequests} />
         </div>
       </section>
+
+      <PilotSection report={pilot} />
 
       <TesterHealthSection report={health} />
 

@@ -47,11 +47,14 @@ const BATCH = 25;
 /** How much of one reply the model reads. */
 const MAX_REPLY_CHARS = 3000;
 
-/** The business's facts for a draft, newest first. Never throws: a draft is never lost over it. */
+/**
+ * The business's facts for a draft, newest first: only the ones the owner has OK'd (A-308). Something learned from a
+ * reply and still waiting never reaches a customer. Never throws: a draft is never lost over it.
+ */
 export async function getBusinessFacts(businessId: string): Promise<FactLine[]> {
   try {
     const rows = await prisma.businessFact.findMany({
-      where: { businessId },
+      where: { businessId, approvedAt: { not: null } },
       orderBy: { updatedAt: "desc" },
       take: PROMPT_FACTS,
       select: { label: true, value: true },
@@ -75,8 +78,11 @@ export async function saveOwnerFact(businessId: string, label: string, value: st
   const same = existing.find((f) => labelKey(f.label) === labelKey(name));
   if (!same && existing.length >= MAX_FACTS) return null;
   const fact = same
-    ? await prisma.businessFact.update({ where: { id: same.id }, data: { label: name, value: words, source: "owner", sourceLeadId: null } })
-    : await prisma.businessFact.create({ data: { businessId, label: name, value: words, source: "owner" } });
+    ? await prisma.businessFact.update({
+        where: { id: same.id },
+        data: { label: name, value: words, source: "owner", sourceLeadId: null, approvedAt: new Date(), proposedValue: null },
+      })
+    : await prisma.businessFact.create({ data: { businessId, label: name, value: words, source: "owner", approvedAt: new Date() } });
   return { id: fact.id };
 }
 
@@ -87,7 +93,7 @@ export async function saveOwnerFact(businessId: string, label: string, value: st
  */
 export async function getBusinessAbout(businessId: string): Promise<string | null> {
   try {
-    const facts = await prisma.businessFact.findMany({ where: { businessId }, select: { label: true, value: true } });
+    const facts = await prisma.businessFact.findMany({ where: { businessId, approvedAt: { not: null } }, select: { label: true, value: true } });
     return businessAbout(facts ?? []);
   } catch {
     return null;
@@ -181,15 +187,16 @@ async function proposeFacts(reply: string, ownerFilled: string | null, labelsInU
 }
 
 /**
- * Writes what one reply taught. The newest reply wins for a learned fact
- * (the owner's latest word is their current one); a fact the owner typed
- * themselves is left alone. Returns how many were added or changed.
+ * Writes what one reply taught, as a proposal (A-308): nothing learned is used in a reply until the owner says it's
+ * right. Something new waits with no OK; new words about a fact already in use wait beside it (`proposedValue`) while
+ * replies keep the words the owner OK'd. A fact the owner typed themselves is left alone. Returns how many were added
+ * or changed.
  */
 export async function saveLearnedFacts(businessId: string, leadId: string | null, facts: readonly FactLine[]): Promise<number> {
   if (facts.length === 0) return 0;
   const existing = await prisma.businessFact.findMany({
     where: { businessId },
-    select: { id: true, label: true, value: true, source: true },
+    select: { id: true, label: true, value: true, source: true, approvedAt: true, proposedValue: true },
   });
   const byKey = new Map(existing.map((f) => [labelKey(f.label), f]));
   let count = existing.length;
@@ -197,8 +204,16 @@ export async function saveLearnedFacts(businessId: string, leadId: string | null
   for (const fact of facts) {
     const known = byKey.get(labelKey(fact.label));
     if (known) {
-      if (known.source === "owner" || squash(known.value) === fact.value) continue;
-      await prisma.businessFact.update({ where: { id: known.id }, data: { value: fact.value, sourceLeadId: leadId } });
+      if (known.source === "owner") continue;
+      if (known.approvedAt) {
+        // In use: the new words wait beside it. The same words as in use, or as already waiting, change nothing.
+        if (squash(known.value) === fact.value || (known.proposedValue && squash(known.proposedValue) === fact.value)) continue;
+        await prisma.businessFact.update({ where: { id: known.id }, data: { proposedValue: fact.value, sourceLeadId: leadId } });
+      } else {
+        // Still waiting: the newest reply's words are the ones to OK.
+        if (squash(known.value) === fact.value) continue;
+        await prisma.businessFact.update({ where: { id: known.id }, data: { value: fact.value, sourceLeadId: leadId } });
+      }
       changed++;
     } else if (count < MAX_FACTS) {
       await prisma.businessFact.create({ data: { businessId, label: fact.label, value: fact.value, source: "reply", sourceLeadId: leadId } });
@@ -207,6 +222,15 @@ export async function saveLearnedFacts(businessId: string, leadId: string | null
     }
   }
   return changed;
+}
+
+/** How many things FollowUp learned that wait for the owner's OK (A-308): new ones, and new words for one in use. */
+export async function factsWaitingCount(businessId: string): Promise<number> {
+  try {
+    return await prisma.businessFact.count({ where: { businessId, OR: [{ approvedAt: null }, { proposedValue: { not: null } }] } });
+  } catch {
+    return 0;
+  }
 }
 
 /**

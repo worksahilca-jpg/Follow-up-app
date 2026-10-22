@@ -42,6 +42,7 @@ import { todaysQuestion } from "@/lib/dailyQuestionData";
 import { inboxSummaryFor } from "@/lib/inboxSummaryData";
 import InboxSummaryCard from "@/components/InboxSummaryCard";
 import { sinceStartedFor } from "@/lib/sinceStarted";
+import { factsWaitingCount } from "@/lib/businessFacts";
 import SinceStartedPill from "@/components/app/SinceStartedPill";
 import { planLine } from "@/lib/comingUp";
 import { findHabitSuggestion } from "@/lib/habits";
@@ -227,7 +228,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const isAdmin = me?.role === "ADMIN";
   // "Your last 90 days" (A-306): once, after the first inbox read, in place of the day's sentence. "Since you started"
   // (A-307): the owner's own numbers at the top.
-  const [inboxSummary, since] = await Promise.all([
+  const [inboxSummary, since, factsWaiting] = await Promise.all([
     ctx && isAdmin && leads.length > 0
       ? inboxSummaryFor(
           ctx.businessId,
@@ -236,6 +237,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         )
       : null,
     ctx && leads.length > 0 ? sinceStartedFor(ctx.businessId) : null,
+    // What FollowUp learned from replies and waits for an OK (A-308): an admin's to answer.
+    ctx && isAdmin ? factsWaitingCount(ctx.businessId) : 0,
   ]);
   // One card at a time (A-307): while "Your last 90 days" shows, no question, habit card, first-send note or alerts
   // card stands beside it (the alerts card still opens when the phone link asked for it).
@@ -445,6 +448,16 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       href: firstTomorrow ? `/leads/${firstTomorrow.leadId}` : null,
     },
     { label: "Done today", value: done.length > 0 ? done.join(" ") : "Nothing yet", href: done.length > 0 ? "/activity" : null },
+    // Something FollowUp learned waits for the owner's OK before a reply uses it (A-308).
+    ...(factsWaiting > 0
+      ? [
+          {
+            label: "FollowUp learned",
+            value: `${factsWaiting} ${factsWaiting === 1 ? "thing" : "things"} to check`,
+            href: "/settings#business",
+          },
+        ]
+      : []),
     ...(checkInsTomorrow.length > 0
       ? [
           {

@@ -10,7 +10,7 @@ import { factInputSchema, labelKey } from "@/lib/factLines";
  * PATCH/DELETE /api/business/facts/[id] — edit or remove one thing FollowUp
  * knows (src/lib/businessFacts.ts). Admin-only; the fact must belong to the
  * signed-in business, checked in the same query that changes it. An edited
- * fact becomes the owner's own, which a later reply never overwrites.
+ * fact becomes the owner's own, which a later reply never overwrites, and is in use at once (A-308).
  */
 type Params = { params: Promise<{ id: string }> };
 
@@ -39,7 +39,8 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   }
   const updated = await prisma.businessFact.updateMany({
     where: { id, businessId: ctx.businessId },
-    data: { label, value, source: "owner", sourceLeadId: null },
+    // The owner's own words: in use at once, and anything that was waiting beside it is settled (A-308).
+    data: { label, value, source: "owner", sourceLeadId: null, approvedAt: new Date(), proposedValue: null },
   });
   if (updated.count === 0) return NextResponse.json({ success: false, message: "Not found." }, { status: 404 });
   void recordAudit(ctx, "business.fact.save", { targetType: "business_fact", targetId: id });

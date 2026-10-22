@@ -76,7 +76,7 @@ describe("the made-up-number check before an unreviewed send", () => {
   it("passes a figure the business has told customers before, read for this business only", async () => {
     factRows.mockResolvedValue(FACTS);
     expect(await checkUnreviewedDraft({ text: "My commission is 2.5%.", conversation: thread, businessId: "biz1", leadId: "lead1" })).toBeNull();
-    expect(factRows.mock.calls[0][0].where).toEqual({ businessId: "biz1" });
+    expect(factRows.mock.calls[0][0].where).toEqual({ businessId: "biz1", approvedAt: { not: null } });
   });
 
   it("still holds a different figure", async () => {

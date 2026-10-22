@@ -5534,3 +5534,6 @@ read-back of the whole business at the end (drawing waiting).
 and **talk** about the business instead of typing, which FollowUp transcribes, analyses and adds from, "like Wispr".
 Next to draw after this build; recorded in design-decisions.
 **Merged** at the founder's "merge" in PR #584 (fc5da24), 2026-10-22.
+**Tried live, 2026-10-22:** the founder ran the whole meeting on their own account (8 answers, then Looks right;
+counted from audit events, no words read). Founder, verbatim: *"done we will be improving this but sound good"*.
+Approved as a first version; improvements to come, not yet named.

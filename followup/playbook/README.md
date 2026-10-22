@@ -4,6 +4,7 @@ One page per kind of business, in plain words: **whom** FollowUp answers, **how 
 writes, **when**, **when it stops**, **what waits for the owner**, and **how it learns**.
 
 - [Real estate](real-estate.md) (written 2026-10-22; the pilot's kind of business)
+- [The judging test](judging-test.md): 30 messages a realtor marks, so FollowUp's call is tested against a real realtor's answers (sheet written 2026-10-22, no answers yet)
 - Other kinds: not written yet. They have reply plans (A-296) but no checklist of their own.
 
 ## How the app remembers all of this

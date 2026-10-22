@@ -14978,3 +14978,21 @@ two AI answers stood in for (no key locally): a worded question, and a dig on "d
 - **Fixed:** the phone bar title is now "Tell FollowUp" and no longer runs into the logo.
 **Weak, said honestly:** the AI's wording and digs were not seen live (no key here); a question that waits for its
 wording shows nothing new for up to 4 seconds after "Use this"; the count is 9 or 10 now.
+
+## 2026-10-22 — "Tell FollowUp" like a consultant: drawn, waiting for the founder
+
+**Why:** the founder tried A-313 live and rejected the check after every answer (R-139): *"ask questions like a
+consultant … then analyse the whole profile or the business accordingly, like Wispr does."*
+**Drawn on the real app** (a web designer's answers; boards in the session scratchpad, tell4/):
+- **The conversation is only questions and answers.** No rows, no Use this / Not right. Each question builds on what
+  was said ("You mentioned Brampton. Do you take clients outside Brampton too?"); a vague answer still gets one more
+  question (A-313). Progress "5 of 9", Skip this one, Finish later stay.
+- **At the end, one play-back of the whole business:** "Here's your business, as FollowUp understands it." FollowUp's
+  read (a short paragraph), what it will tell customers in the owner's own words (each row with Edit), how FollowUp will
+  use it (three plain lines), what it still doesn't know (skipped topics), a box for "Anything wrong or missing?", then
+  one black **Looks right** and a quiet Finish later. "Nothing is quoted to a customer until you tap Looks right."
+**Proposed, the founder's call:** the one check stays at the end (facts go into replies word for word in the owner's
+name). Answers would be kept as unapproved facts while the owner talks, so Finish later loses nothing.
+**Weak spots, said honestly:** the end is two phone screens long; "FollowUp's read" is in FollowUp's words, so the build
+must only let it repeat what the owner said; "How FollowUp will use it" must describe what FollowUp really does, never a
+promise. "Like Wispr" was read as "it learns you, then shows you what it learned"; to confirm.

@@ -5498,6 +5498,7 @@ design-decisions.md ("Tell FollowUp about your business" drawn). Builds A-311.
 - **No dot on the "Saved" line** (the drawing's own weak spot).
 **Confirmed on the built screens, 2026-10-22.** After seeing the phone and computer screenshots of the build, founder,
 verbatim: *"Yes / Merge too"*. Merged in PR #582 (bcfa9ae).
+**Partly SUPERSEDED (2026-10-22) by R-139:** the rows with **Use these** / **Not right** after every answer.
 
 ## A-313 — "Tell FollowUp" asks like a conversation ^A-313
 
@@ -5514,3 +5515,5 @@ their businesses so that it can learn and use for its job"*, then *"yes build it
 - **No chit-chat, no praise, no personality** (brand principle 3, S-13). Every fact is still the owner's own words, saved
   only on their OK.
 - **The phone bar title on this page is short** ("Tell FollowUp"), so it no longer runs into the logo.
+**Partly SUPERSEDED (2026-10-22) by R-139:** "saved only on their OK" after each answer; the check moves to one
+read-back of the whole business at the end (drawing waiting).

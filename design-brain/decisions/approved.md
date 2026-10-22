@@ -5498,6 +5498,7 @@ design-decisions.md ("Tell FollowUp about your business" drawn). Builds A-311.
 - **No dot on the "Saved" line** (the drawing's own weak spot).
 **Confirmed on the built screens, 2026-10-22.** After seeing the phone and computer screenshots of the build, founder,
 verbatim: *"Yes / Merge too"*. Merged in PR #582 (bcfa9ae).
+**Partly SUPERSEDED (2026-10-22) by R-139:** the rows with **Use these** / **Not right** after every answer.
 
 ## A-313 — "Tell FollowUp" asks like a conversation ^A-313
 
@@ -5514,3 +5515,21 @@ their businesses so that it can learn and use for its job"*, then *"yes build it
 - **No chit-chat, no praise, no personality** (brand principle 3, S-13). Every fact is still the owner's own words, saved
   only on their OK.
 - **The phone bar title on this page is short** ("Tell FollowUp"), so it no longer runs into the logo.
+**Partly SUPERSEDED (2026-10-22) by R-139:** "saved only on their OK" after each answer; the check moves to one
+read-back of the whole business at the end (drawing waiting).
+
+## A-314 — "Tell FollowUp" is a 5-minute get-to-know meeting, played back once at the end ^A-314
+
+**Date:** 2026-10-22. **Founder, verbatim**, to the drawing in design-decisions ("Tell FollowUp like a consultant"):
+*"yes build it so it's like a 5-minute meeting just to get to know what their business is."* Follows R-139.
+**What specifically was approved:**
+- **The meeting is only questions and answers.** No rows and no Use this / Not right after an answer. Each question
+  builds on what was said (A-313's worded questions and one dig stay). "N of 9", Skip this one, Finish later stay.
+- **Framed as a short meeting:** about five minutes, a consultant getting to know the business.
+- **At the end, one play-back of the whole business:** "Here's your business, as FollowUp understands it." FollowUp's
+  read (a short paragraph that only repeats what the owner said), what it will tell customers in the owner's own words
+  (each with Edit), how FollowUp will use it, what it still doesn't know, "Anything wrong or missing?", then one black
+  **Looks right**. Nothing is quoted to a customer until then; answers wait as a draft, so Finish later loses nothing.
+**Also said, not yet drawn (the founder's idea, same message):** a place to "set up a meeting with the app" again later
+and **talk** about the business instead of typing, which FollowUp transcribes, analyses and adds from, "like Wispr".
+Next to draw after this build; recorded in design-decisions.

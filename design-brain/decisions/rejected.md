@@ -1769,3 +1769,15 @@ reply plan, for one niche. **Principle (inferred):** the list of kinds stays sho
 fit picks **Something else**, and its own "What you do" answer (A-101, A-312) tells FollowUp what it sells. **Do not
 propose again:** one-off kinds of business for a single owner's niche. A new kind needs many owners of that trade, and
 the founder's yes.
+
+## R-139 — "Use this / Not right" after every answer in "Tell FollowUp" ^R-139
+
+**Rejected:** 2026-10-22, founder, trying A-313 live: *"Bro, I should ask questions like a consultant. I should not just
+pop up like "use this" or something like that. It should ask questions and then analyse the whole profile or the
+business accordingly, like Wispr does."* **What is rejected:** the rows of what FollowUp took from each answer, with
+**Use this** / **Not right**, shown after every answer (A-312, kept in A-313). **Principle:** "Tell FollowUp" is an
+interview, not a form with a checkpoint per field. FollowUp asks, listens and asks the next thing; the owner only
+answers. Its understanding is shown once, at the end, over the whole business, as a consultant would play it back.
+(Inferred, to confirm on the drawing: one check of that whole picture still comes before anything is quoted to
+customers, because facts go into replies word for word in the owner's name.) **Do not propose again:** a confirm step
+after each answer in this conversation, in any form.

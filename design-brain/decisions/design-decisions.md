@@ -14978,3 +14978,51 @@ two AI answers stood in for (no key locally): a worded question, and a dig on "d
 - **Fixed:** the phone bar title is now "Tell FollowUp" and no longer runs into the logo.
 **Weak, said honestly:** the AI's wording and digs were not seen live (no key here); a question that waits for its
 wording shows nothing new for up to 4 seconds after "Use this"; the count is 9 or 10 now.
+
+## 2026-10-22 — "Tell FollowUp" like a consultant: drawn, waiting for the founder
+
+**Why:** the founder tried A-313 live and rejected the check after every answer (R-139): *"ask questions like a
+consultant … then analyse the whole profile or the business accordingly, like Wispr does."*
+**Drawn on the real app** (a web designer's answers; boards in the session scratchpad, tell4/):
+- **The conversation is only questions and answers.** No rows, no Use this / Not right. Each question builds on what
+  was said ("You mentioned Brampton. Do you take clients outside Brampton too?"); a vague answer still gets one more
+  question (A-313). Progress "5 of 9", Skip this one, Finish later stay.
+- **At the end, one play-back of the whole business:** "Here's your business, as FollowUp understands it." FollowUp's
+  read (a short paragraph), what it will tell customers in the owner's own words (each row with Edit), how FollowUp will
+  use it (three plain lines), what it still doesn't know (skipped topics), a box for "Anything wrong or missing?", then
+  one black **Looks right** and a quiet Finish later. "Nothing is quoted to a customer until you tap Looks right."
+**Proposed, the founder's call:** the one check stays at the end (facts go into replies word for word in the owner's
+name). Answers would be kept as unapproved facts while the owner talks, so Finish later loses nothing.
+**Weak spots, said honestly:** the end is two phone screens long; "FollowUp's read" is in FollowUp's words, so the build
+must only let it repeat what the owner said; "How FollowUp will use it" must describe what FollowUp really does, never a
+promise. "Like Wispr" was read as "it learns you, then shows you what it learned"; to confirm.
+
+## 2026-10-22 — A-314 approved; the founder's next idea: talk to FollowUp about the business
+
+The founder approved the consultant drawing as a "5-minute meeting just to get to know what their business is" (A-314)
+and, in the same message, asked for a second way in: *"another section where we'll be setting up a meeting with the
+app, where he can talk about his business again … a feature like Wispr, where he can just talk about his business, and
+we can transcribe it, then analyse it, and we can add whatever he wants."* Recommended back: yes, talking is easier than
+typing for an owner between jobs; it would reuse this build's play-back (the same "Here's your business" check, so
+nothing said aloud is used before the owner's OK). Open before drawing it: transcription runs on the same OpenAI account
+(no new library); the recording is turned into text and not kept; the privacy page says so. Draw first, then build.
+
+## 2026-10-22 — "Tell FollowUp" as a 5-minute meeting: built (A-314)
+
+**Built as drawn**, checked on the real local app at 390×844 and 1280: the meeting is only questions and answers; the
+end plays the whole business back once; Edit in place; "Anything wrong or missing?"; one black **Looks right**.
+**How it works underneath:** each answer goes into a draft on the business (`Business.tellDraft`), never into the facts
+customers are quoted, so leaving halfway loses nothing and nothing is used early. The play-back is every fact in use plus
+the draft, in question order. "Looks right" saves the draft and the owner's edits as facts they typed, then clears it.
+**Decided while building:**
+- **"How FollowUp will use it" is fixed rules, not the model:** "Asked the price: it answers with “…”", "Asked for
+  something you don't do", the first skipped topic ("it doesn't know yet, so it waits for you"), then booking and area.
+  At most three. Only what FollowUp already does, so it can't promise something it won't.
+- **FollowUp's read is checked before it shows:** every figure must be one the owner gave and every name (a capitalised
+  word inside a sentence) one they used; no links, no "!". Otherwise the play-back shows without a read. Made once per
+  draft and kept with it.
+- **A correction FollowUp can't place** (no clear line it changes) says so and points to Edit, instead of guessing.
+- **A line already in use can't be emptied here** (Settings removes it); a new line from this meeting can ("Leave it out").
+**Weak spots, honestly:** the AI parts (worded questions, the dig, the read, corrections) were stood in locally, so the
+first live run is the real test of their words. The end is two phone screens long. A meeting left at Finish later waits
+in the draft with nothing reminding the owner; the way back is Settings › Your business (the Today card is offered once).

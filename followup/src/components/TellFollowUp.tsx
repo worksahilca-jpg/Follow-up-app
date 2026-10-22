@@ -4,32 +4,31 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import ScrollTitle from "@/components/app/ScrollTitle";
 import type { FactLine } from "@/lib/factLines";
-import type { TellState, TellTopic } from "@/lib/tellFollowUp";
+import type { Playback, PlaybackRow, TellState, TellTopic } from "@/lib/tellFollowUp";
 import { exampleLine, MAX_ANSWER } from "@/lib/tellLines";
 
 /**
- * "Tell FollowUp about your business" (A-311, built as drawn: A-312). FollowUp asks one thing at a time; the owner
- * answers in their own words; FollowUp shows what it took from the answer, and nothing is saved until "Use these".
- * The practice chat's bubbles (no avatar, no typing dots: brand principle 3), Today's quiet links.
+ * "Tell FollowUp about your business", a 5-minute meeting (A-311, A-314). FollowUp asks what a consultant would ask,
+ * one thing at a time, each question worded from what the owner already said (A-313); the owner only answers. Nothing
+ * pops up between answers (R-139). At the end, one play-back of the whole business: FollowUp's read, what it will tell
+ * customers in the owner's words (each with Edit), how it will use it, what it still doesn't know, a box for anything
+ * wrong or missing, and one "Looks right". Nothing is quoted to a customer before that.
  *
- * Like a conversation (A-313): each question comes from the server worded for this business, and when an answer can't
- * help a customer ("depends on the site") FollowUp asks once more and says why, before showing what it took.
- *
- * What was said this visit lives only on this page: what FollowUp knows lives in Settings › What FollowUp knows, and
- * where the conversation is comes from there (src/lib/tellFollowUp.ts), so leaving halfway loses nothing that was used.
+ * The practice chat's bubbles (no avatar, no typing dots: brand principle 3), Today's quiet links. What was said this
+ * visit lives only on this page; what FollowUp took from it waits on the server (the meeting's draft), so leaving
+ * halfway loses nothing.
  */
 type Exchange = { q: string; a: string };
 
-type Turn = { kind: "asked"; exchanges: Exchange[]; rows: FactLine[] } | { kind: "skipped"; exchanges: Exchange[]; question: string };
+/** One question of the meeting: what was said about it, and the question itself when it was skipped. */
+type Turn = { exchanges: Exchange[]; skipped?: string };
 
-/**
- * The question being answered: what was said so far (the question and answer, then FollowUp's one more question and
- * its answer), `dig` once FollowUp asked once more, and `rows` once it shows what it took from `answer`.
- */
-type Pending = { label: string; exchanges: Exchange[]; dig: TellTopic | null; rows: FactLine[] | null; answer: string };
+/** The question being answered: what was said so far, and `dig` once FollowUp asked once more (A-313). */
+type Pending = { label: string; exchanges: Exchange[]; dig: TellTopic | null };
 
-const OUTLINED = "inline-flex min-h-11 items-center rounded-full border bg-card px-[18px] text-[15px] font-medium disabled:opacity-50";
 const QUIET = "inline-flex min-h-11 items-center text-[14px] text-ink-soft underline underline-offset-[3px] disabled:opacity-50";
+const OUTLINED = "inline-flex min-h-11 items-center rounded-full border bg-card px-[18px] text-[15px] font-medium disabled:opacity-50";
+const SECTION = "px-1 text-[13px] font-semibold text-ink-soft";
 
 async function post(body: unknown): Promise<{ ok: true; data: Record<string, unknown> } | { ok: false; message: string }> {
   try {
@@ -76,21 +75,17 @@ function Said({ exchanges }: { exchanges: Exchange[] }) {
   );
 }
 
-/** What FollowUp took from one answer: plain label/value rows in one white group (Settings' fact rows). */
-function Took({ rows, used }: { rows: FactLine[]; used: boolean }) {
+/** Label/value rows in one white group (Settings' fact rows). */
+function FactList({ rows }: { rows: FactLine[] }) {
   return (
-    <div>
-      <p className="mb-1 px-1 text-[12.5px] text-ink-faint">{used ? "In use" : "FollowUp will use this, if it's right"}</p>
-      <ul className="overflow-hidden rounded-[16px] border border-line bg-card">
-        {rows.map((r, i) => (
-          <li key={r.label} className={"px-3.5 py-2.5" + (i ? " border-t border-line" : "")}>
-            <p className="text-[12.5px] text-ink-soft">{r.label}</p>
-            <p className="mt-0.5 text-[15px] leading-snug">{r.value}</p>
-          </li>
-        ))}
-      </ul>
-      {used && <p className="mt-1.5 px-1 text-[13.5px] text-ink-soft">Saved. Change it any time in What FollowUp knows.</p>}
-    </div>
+    <ul className="overflow-hidden rounded-[16px] border border-line bg-card">
+      {rows.map((f, i) => (
+        <li key={f.label} className={"px-3.5 py-2.5" + (i ? " border-t border-line" : "")}>
+          <p className="text-[12.5px] text-ink-soft">{f.label}</p>
+          <p className="mt-0.5 text-[15px] leading-snug">{f.value}</p>
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -112,19 +107,39 @@ export default function TellFollowUp({
   const [setAside, setSetAside] = useState<string[]>([]);
   const [turns, setTurns] = useState<Turn[]>([]);
   const [pending, setPending] = useState<Pending | null>(null);
-  const [reading, setReading] = useState(false);
-  const [retry, setRetry] = useState(false);
-  const [draft, setDraft] = useState("");
+  const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // The end of the meeting (A-314): the play-back, the owner's edits on it (label → their words; "" leaves a new line
+  // out), and what was saved on "Looks right".
+  const [playback, setPlayback] = useState<Playback | null>(null);
+  const [loadingPlayback, setLoadingPlayback] = useState(!first && initial.draft.length > 0);
+  const [edits, setEdits] = useState<Record<string, string>>({});
+  const [editing, setEditing] = useState<{ label: string; value: string } | null>(null);
+  const [correction, setCorrection] = useState("");
+  const [saved, setSaved] = useState<FactLine[] | null>(null);
   const end = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
 
   const remaining = state.open.filter((l) => !setAside.includes(l));
   const total = state.topics.length;
   const position = Math.min(total, Math.max(1, total - remaining.length + 1));
-  // The box takes an answer to the question, or to FollowUp's one more question; not while it shows what it took.
-  const canAnswer = !busy && (!pending || (Boolean(pending.dig) && !pending.rows));
+  const last = remaining.length <= 1;
+
+  // Coming back to a meeting whose questions are all answered: straight to the play-back.
+  useEffect(() => {
+    if (!loadingPlayback) return;
+    let gone = false;
+    void post({ action: "playback", again }).then((r) => {
+      if (gone) return;
+      setLoadingPlayback(false);
+      if (r.ok) setPlayback((r.data.playback as Playback | null) ?? null);
+      else setError(r.message);
+    });
+    return () => {
+      gone = true;
+    };
+  }, [loadingPlayback, again]);
 
   // Each new step comes into view, as a chat does; the first question is already on screen.
   useEffect(() => {
@@ -136,86 +151,109 @@ export default function TellFollowUp({
     requestAnimationFrame(() => input.current?.focus());
   }
 
-  /** The conversation moved on: where it is now, and the next question as the server worded it. */
+  /** The meeting moved on: the next question as the server worded it, or the play-back when none is left. */
   function moveOn(data: Record<string, unknown>) {
     if (data.state) setState(data.state as TellState);
-    setTopic((data.next as TellTopic | null | undefined) ?? null);
-    setRetry(false);
+    const next = (data.next as TellTopic | null | undefined) ?? null;
+    setTopic(next);
     setError(null);
-    focusBox();
+    if (next) return focusBox();
+    const back = (data.playback as Playback | null | undefined) ?? null;
+    setPlayback(back);
+    if (back) window.scrollTo({ top: 0 });
   }
 
   async function send() {
-    const answer = draft.trim();
-    if (!topic || !answer || !canAnswer) return;
+    const answer = text.trim();
+    if (!topic || !answer || busy) return;
     const before = pending;
     // A first answer, or the answer to FollowUp's one more question (read with the first, never dug into again).
     const q = before?.dig ? before.dig.question : topic.question;
     const exchanges = [...(before?.dig ? before.exchanges : []), { q, a: answer }];
-    const next: Pending = { label: topic.label, exchanges, dig: before?.dig ?? null, rows: null, answer };
-    setPending(next);
-    setDraft("");
+    setPending({ label: topic.label, exchanges, dig: before?.dig ?? null });
+    setText("");
     setBusy(true);
-    setReading(true);
     setError(null);
     const r = await post({
-      action: "read",
+      action: "answer",
       topic: topic.label,
       answer,
       question: q,
       ...(before?.dig ? { previous: before.exchanges[0]?.a, dug: true } : {}),
+      again,
+      setAside,
     });
     setBusy(false);
-    setReading(false);
     if (!r.ok) {
       setPending(before);
-      setDraft(answer);
+      setText(answer);
       setError(r.message);
       return;
     }
     if (r.data.dig) {
-      setPending({ ...next, dig: r.data.dig as TellTopic });
+      setPending({ label: topic.label, exchanges, dig: r.data.dig as TellTopic });
       focusBox();
       return;
     }
-    setPending({ ...next, rows: (r.data.rows as FactLine[]) ?? [] });
-  }
-
-  async function use() {
-    if (!topic || !pending?.rows || busy) return;
-    setBusy(true);
-    setError(null);
-    const r = await post({ action: "use", topic: pending.label, answer: pending.answer, rows: pending.rows, again, setAside });
-    setBusy(false);
-    if (!r.ok) return setError(r.message);
-    setTurns((t) => [...t, { kind: "asked", exchanges: pending.exchanges, rows: pending.rows ?? [] }]);
+    setTurns((t) => [...t, { exchanges }]);
     setPending(null);
     moveOn(r.data);
   }
 
-  /** "Not right": nothing is saved; their words go back in the box to say it another way. */
-  function notRight() {
-    if (!pending) return;
-    setDraft(pending.answer);
-    setPending(null);
-    setRetry(true);
-    setError(null);
-    focusBox();
-  }
-
   async function skip() {
-    if (!topic || busy || pending?.rows) return;
+    if (!topic || busy) return;
     const aside = [...setAside, topic.label];
     setBusy(true);
     setError(null);
     const r = await post({ action: "skip", topic: topic.label, again, setAside: aside });
     setBusy(false);
     if (!r.ok) return setError(r.message);
-    setTurns((t) => [...t, { kind: "skipped", exchanges: pending?.exchanges ?? [], question: pending?.dig?.question ?? topic.question }]);
+    setTurns((t) => [...t, { exchanges: pending?.exchanges ?? [], skipped: pending?.dig?.question ?? topic.question }]);
     setSetAside(aside);
     setPending(null);
-    setDraft("");
+    setText("");
     moveOn(r.data);
+  }
+
+  /** "Anything wrong or missing?": FollowUp takes it in, and plays the business back again. */
+  async function correct() {
+    const said = correction.trim();
+    if (!said || busy) return;
+    setBusy(true);
+    setError(null);
+    const r = await post({ action: "correct", text: said, again });
+    setBusy(false);
+    if (!r.ok) return setError(r.message);
+    if (r.data.state) setState(r.data.state as TellState);
+    setPlayback((r.data.playback as Playback | null) ?? playback);
+    setCorrection("");
+  }
+
+  function value(row: PlaybackRow): string {
+    return edits[row.label] ?? row.value;
+  }
+
+  function saveEdit() {
+    if (!editing || !playback) return;
+    const row = playback.rows.find((r) => r.label === editing.label);
+    const words = editing.value.replace(/\s+/g, " ").trim();
+    // A line already in use is removed in Settings; here it can only get new words.
+    if (!row || (!words && !row.fresh)) return;
+    setEdits((e) => ({ ...e, [row.label]: words }));
+    setEditing(null);
+  }
+
+  /** "Looks right": the meeting's lines, with the owner's edits, are used from now on. */
+  async function confirm() {
+    if (!playback || busy) return;
+    setBusy(true);
+    setError(null);
+    const list = Object.entries(edits).map(([label, v]) => ({ label, value: v }));
+    const r = await post({ action: "confirm", edits: list, again });
+    setBusy(false);
+    if (!r.ok) return setError(r.message);
+    setSaved(playback.rows.map((row) => ({ label: row.label, value: value(row) })).filter((f) => f.value));
+    window.scrollTo({ top: 0 });
   }
 
   const back = (
@@ -223,13 +261,219 @@ export default function TellFollowUp({
       ‹ What FollowUp knows
     </Link>
   );
+  const errorLine = error && (
+    <p role="alert" className="mt-2 px-1 text-[14px]" style={{ color: "var(--coral)" }}>
+      {error}
+    </p>
+  );
 
+  // After "Looks right".
+  if (saved) {
+    return (
+      <div className="max-w-[640px] pb-10">
+        <ScrollTitle title="Tell FollowUp" />
+        {back}
+        <p className="mt-2 text-[13px] text-ink-soft">Tell FollowUp about your business</p>
+        <h1 className="title-serif ios-title1 mt-1">
+          FollowUp knows {saved.length} {saved.length === 1 ? "thing" : "things"} about your business.
+        </h1>
+        <p className="mt-1.5 text-[15px] leading-relaxed text-ink-soft">It uses them in your replies from now on, in your words.</p>
+        {saved.length > 0 && (
+          <div className="mt-5">
+            <FactList rows={saved} />
+          </div>
+        )}
+        <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2">
+          <Link href={doneHref} className="inline-flex h-12 items-center rounded-full bg-ink px-8 text-[15px] font-medium text-paper">
+            Done
+          </Link>
+          <span className="text-[13px] text-ink-soft">Change any of these in Settings › What FollowUp knows.</span>
+        </div>
+      </div>
+    );
+  }
+
+  // The end of the meeting: the whole business, played back once (A-314).
+  if (!topic && (playback || loadingPlayback)) {
+    return (
+      <div className="max-w-[640px] pb-10">
+        <ScrollTitle title="Tell FollowUp" />
+        {back}
+        <p className="mt-2 text-[13px] text-ink-soft">Tell FollowUp about your business</p>
+        <h1 className="title-serif ios-title1 mt-1">Here&apos;s your business, as FollowUp understands it.</h1>
+        {loadingPlayback || !playback ? (
+          <p className="mt-6 px-1 text-[15px] text-ink-faint">FollowUp is putting it together…</p>
+        ) : (
+          <>
+            {playback.read && (
+              <section className="mt-6 flex flex-col gap-2" aria-labelledby="tell-read">
+                <h2 id="tell-read" className={SECTION}>
+                  FollowUp&apos;s read
+                </h2>
+                <p className="rounded-[16px] border border-line bg-card px-3.5 py-3 text-[16px] leading-relaxed">{playback.read}</p>
+              </section>
+            )}
+
+            <section className="mt-6 flex flex-col gap-2" aria-labelledby="tell-rows">
+              <h2 id="tell-rows" className={SECTION}>
+                What it will tell customers, in your words
+              </h2>
+              <ul className="overflow-hidden rounded-[16px] border border-line bg-card">
+                {playback.rows.map((row, i) => {
+                  const v = value(row);
+                  const open = editing?.label === row.label;
+                  return (
+                    <li key={row.label} className={"flex items-center justify-between gap-3 px-3.5 py-2.5" + (i ? " border-t border-line" : "")}>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[12.5px] text-ink-soft">{row.label}</p>
+                        {open ? (
+                          <form
+                            className="mt-1 flex flex-col gap-2"
+                            onSubmit={(e) => {
+                              e.preventDefault();
+                              saveEdit();
+                            }}
+                          >
+                            <label htmlFor="tell-edit" className="sr-only">
+                              {row.label}
+                            </label>
+                            <textarea
+                              id="tell-edit"
+                              value={editing.value}
+                              onChange={(e) => setEditing({ label: row.label, value: e.target.value })}
+                              maxLength={200}
+                              rows={2}
+                              autoFocus
+                              className="w-full rounded-[12px] border bg-paper px-3 py-2 text-[15px] leading-snug outline-none"
+                              style={{ borderColor: "var(--line-strong)" }}
+                            />
+                            <div className="flex items-center gap-4">
+                              <button type="submit" disabled={!editing.value.trim() && !row.fresh} className={OUTLINED} style={{ borderColor: "var(--line-strong)" }}>
+                                {!editing.value.trim() ? "Leave it out" : "Save"}
+                              </button>
+                              <button type="button" onClick={() => setEditing(null)} className={QUIET}>
+                                Cancel
+                              </button>
+                            </div>
+                          </form>
+                        ) : v ? (
+                          <p className="mt-0.5 text-[15px] leading-snug">{v}</p>
+                        ) : (
+                          <p className="mt-0.5 text-[15px] leading-snug text-ink-faint">Left out.</p>
+                        )}
+                      </div>
+                      {!open && (
+                        <button
+                          type="button"
+                          onClick={() => setEditing({ label: row.label, value: v })}
+                          className="-my-1 inline-flex min-h-11 shrink-0 items-center px-1 text-[13.5px] text-ink-soft underline underline-offset-[3px]"
+                          aria-label={`Edit ${row.label}`}
+                        >
+                          Edit
+                        </button>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+
+            {playback.uses.length > 0 && (
+              <section className="mt-6 flex flex-col gap-2" aria-labelledby="tell-uses">
+                <h2 id="tell-uses" className={SECTION}>
+                  How FollowUp will use it
+                </h2>
+                <ul className="flex flex-col gap-2 px-1">
+                  {playback.uses.map(([when, what]) => (
+                    <li key={when} className="text-[15px] leading-snug">
+                      <span className="font-semibold">{when}:</span> <span className="text-ink-soft">{what}</span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            {playback.skipped.length > 0 && (
+              <section className="mt-6 flex flex-col gap-2" aria-labelledby="tell-later">
+                <h2 id="tell-later" className={SECTION}>
+                  Still to learn
+                </h2>
+                <p className="px-1 text-[14.5px] leading-relaxed text-ink-soft">
+                  You skipped {listed(playback.skipped)}. If a customer asks, FollowUp asks you then.{" "}
+                  {!again && (
+                    <Link href="/tell?again=1" className="text-ink underline underline-offset-[3px]">
+                      Answer {playback.skipped.length === 1 ? "it" : "them"} now
+                    </Link>
+                  )}
+                </p>
+              </section>
+            )}
+
+            <section className="mt-7 flex flex-col gap-2" aria-labelledby="tell-fix">
+              <h2 id="tell-fix" className={SECTION}>
+                Anything wrong or missing?
+              </h2>
+              <form
+                className="flex items-center gap-2 rounded-full border bg-card py-1.5 pl-4 pr-1.5"
+                style={{ borderColor: "var(--line-strong)" }}
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void correct();
+                }}
+              >
+                <label htmlFor="tell-correct" className="sr-only">
+                  Anything wrong or missing?
+                </label>
+                <input
+                  id="tell-correct"
+                  value={correction}
+                  onChange={(e) => setCorrection(e.target.value)}
+                  maxLength={MAX_ANSWER}
+                  placeholder="In your own words…"
+                  autoComplete="off"
+                  className="min-h-10 min-w-0 flex-1 bg-transparent text-[16px] outline-none placeholder:text-ink-faint"
+                />
+                <button
+                  type="submit"
+                  disabled={busy || !correction.trim()}
+                  className="min-h-10 shrink-0 rounded-full border bg-card px-[18px] text-[15px] font-medium disabled:opacity-50"
+                  style={{ borderColor: "var(--line-strong)" }}
+                >
+                  {busy && correction.trim() ? "Reading…" : "Send"}
+                </button>
+              </form>
+            </section>
+
+            {errorLine}
+            <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2">
+              <button
+                type="button"
+                onClick={() => void confirm()}
+                disabled={busy || Boolean(editing)}
+                className="inline-flex h-12 items-center rounded-full bg-ink px-8 text-[15px] font-medium text-paper disabled:opacity-60"
+              >
+                {busy && !correction.trim() ? "Saving…" : "Looks right"}
+              </button>
+              <Link href={doneHref} className={QUIET}>
+                Finish later
+              </Link>
+            </div>
+            <p className="mt-3 px-1 text-[13px] leading-normal text-ink-soft">
+              Nothing is quoted to a customer until you tap Looks right. Change anything later in Settings › What FollowUp knows.
+            </p>
+          </>
+        )}
+        {(loadingPlayback || !playback) && errorLine}
+      </div>
+    );
+  }
+
+  // Nothing left to ask and nothing waiting: what FollowUp knows.
   if (!topic) {
     const known = state.facts;
     const skipped = state.skipped.length;
     return (
       <div className="max-w-[640px] pb-10">
-        {/* Short, so the phone's top bar keeps room for the logo (A-313). */}
         <ScrollTitle title="Tell FollowUp" />
         {back}
         <p className="mt-2 text-[13px] text-ink-soft">Tell FollowUp about your business</p>
@@ -237,14 +481,9 @@ export default function TellFollowUp({
           {known.length === 0 ? "FollowUp will learn as you go." : `FollowUp knows ${known.length} ${known.length === 1 ? "thing" : "things"} about your business.`}
         </h1>
         {known.length > 0 && (
-          <ul className="mt-5 overflow-hidden rounded-[16px] border border-line bg-card">
-            {known.map((f, i) => (
-              <li key={f.label} className={"px-3.5 py-2.5" + (i ? " border-t border-line" : "")}>
-                <p className="text-[12.5px] text-ink-soft">{f.label}</p>
-                <p className="mt-0.5 text-[15px] leading-snug">{f.value}</p>
-              </li>
-            ))}
-          </ul>
+          <div className="mt-5">
+            <FactList rows={known} />
+          </div>
         )}
         {skipped > 0 && (
           <p className="mt-4 text-[14.5px] leading-relaxed text-ink-soft">
@@ -266,9 +505,11 @@ export default function TellFollowUp({
     );
   }
 
+  // The meeting.
   const example = exampleLine(topic.example);
   return (
     <div className="max-w-[640px] pb-10">
+      {/* Short, so the phone's top bar keeps room for the logo (A-313). */}
       <ScrollTitle title="Tell FollowUp" />
       {back}
       <div className="flex items-start justify-between gap-3">
@@ -278,53 +519,36 @@ export default function TellFollowUp({
         </span>
       </div>
       <p className="mt-1.5 text-[15px] leading-relaxed text-ink-soft">
-        It asks what a new assistant would ask, one thing at a time. Answer in your own words. You check what it took from
-        each answer before it&apos;s used, and it never makes up the rest.
+        A 5-minute meeting so FollowUp gets to know your business. It asks what a consultant would ask, one thing at a time;
+        just answer in your own words. At the end it shows you what it understood, and nothing is used until you say it&apos;s
+        right.
       </p>
 
       <div className="mt-6 flex flex-col gap-4" aria-live="polite">
-        {turns.map((t, i) =>
-          t.kind === "asked" ? (
-            <div key={i} className="flex flex-col gap-4">
-              <Said exchanges={t.exchanges} />
-              <Took rows={t.rows} used />
-            </div>
-          ) : (
-            <div key={i} className="flex flex-col gap-4">
-              <Said exchanges={t.exchanges} />
+        {turns.map((t, i) => (
+          <div key={i} className="flex flex-col gap-4">
+            <Said exchanges={t.exchanges} />
+            {t.skipped && (
               <div className="flex flex-col gap-2">
-                <FollowUpSays text={t.question} />
+                <FollowUpSays text={t.skipped} />
                 <p className="px-1 text-[13.5px] text-ink-faint">Skipped.</p>
               </div>
-            </div>
-          )
-        )}
+            )}
+          </div>
+        ))}
 
         {!pending && <FollowUpSays text={topic.question} />}
-        {!pending && (retry || example) && (
-          <p className="-mt-2 px-1 text-[13.5px] text-ink-faint">{retry ? "Say it another way, or skip this one." : example}</p>
-        )}
+        {!pending && example && <p className="-mt-2 px-1 text-[13.5px] text-ink-faint">{example}</p>}
         {pending && <Said exchanges={pending.exchanges} />}
         {/* FollowUp's one more question, while it waits for the answer (A-313). */}
-        {pending?.dig && !pending.rows && !reading && pending.exchanges.length === 1 && (
+        {pending?.dig && !busy && pending.exchanges.length === 1 && (
           <>
             <FollowUpSays text={pending.dig.question} />
             {exampleLine(pending.dig.example) && <p className="-mt-2 px-1 text-[13.5px] text-ink-faint">{exampleLine(pending.dig.example)}</p>}
           </>
         )}
-        {reading && <p className="px-1 text-[14px] text-ink-faint">FollowUp is reading your answer…</p>}
-        {pending?.rows && (
-          <div>
-            <Took rows={pending.rows} used={false} />
-            <div className="mt-2 flex items-center gap-4 px-1">
-              <button type="button" onClick={() => void use()} disabled={busy} className={OUTLINED} style={{ borderColor: "var(--line-strong)" }}>
-                {busy ? "Saving…" : pending.rows.length === 1 ? "Use this" : "Use these"}
-              </button>
-              <button type="button" onClick={notRight} disabled={busy} className={QUIET}>
-                Not right
-              </button>
-            </div>
-          </div>
+        {busy && pending && (
+          <p className="px-1 text-[14px] text-ink-faint">{last ? "FollowUp is putting it together…" : "FollowUp is reading your answer…"}</p>
         )}
         <div ref={end} />
       </div>
@@ -343,30 +567,25 @@ export default function TellFollowUp({
         <input
           id="tell-answer"
           ref={input}
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
           maxLength={MAX_ANSWER}
           placeholder="Answer in your own words…"
           autoComplete="off"
-          disabled={Boolean(pending?.rows)}
-          className="min-h-10 min-w-0 flex-1 bg-transparent text-[16px] outline-none placeholder:text-ink-faint disabled:opacity-60"
+          className="min-h-10 min-w-0 flex-1 bg-transparent text-[16px] outline-none placeholder:text-ink-faint"
         />
         <button
           type="submit"
-          disabled={!canAnswer || !draft.trim()}
+          disabled={busy || !text.trim()}
           className="min-h-10 shrink-0 rounded-full px-[18px] text-[15px] font-medium disabled:opacity-50"
           style={{ background: "var(--accent)", color: "var(--on-accent)" }}
         >
           Send
         </button>
       </form>
-      {error && (
-        <p role="alert" className="mt-2 px-1 text-[14px]" style={{ color: "var(--coral)" }}>
-          {error}
-        </p>
-      )}
+      {errorLine}
       <div className="mt-2 flex items-center justify-between px-1">
-        <button type="button" onClick={() => void skip()} disabled={busy || Boolean(pending?.rows)} className={QUIET}>
+        <button type="button" onClick={() => void skip()} disabled={busy} className={QUIET}>
           Skip this one
         </button>
         <Link href={doneHref} className={QUIET}>
@@ -375,4 +594,10 @@ export default function TellFollowUp({
       </div>
     </div>
   );
+}
+
+/** "Hours and Languages", "Hours, Payment and Languages". */
+function listed(labels: readonly string[]): string {
+  if (labels.length <= 1) return labels.join("");
+  return `${labels.slice(0, -1).join(", ")} and ${labels[labels.length - 1]}`;
 }

@@ -317,6 +317,9 @@ model Business {
   // "Tell FollowUp about your business" (A-311, src/lib/tellFollowUp.ts): when the owner started it or said "Not now"
   // to its card on Today. Set once; the card is offered once.
   tellCardClosedAt     DateTime?
+  // The meeting so far (A-314): what FollowUp took from each answer, { rows: [{ label, value }], read? }, waiting for
+  // the owner's one "Looks right" at the end. Nothing here is quoted to a customer. Cleared when they confirm.
+  tellDraft            Json?
   // What the owner asks a new buyer, in their own words and order (A-302, src/lib/askPlan.ts). Null: FollowUp's order.
   askPlan              Json?
   // The pilot (founder, 2026-10-22): what the owner said on the setup call about how they work today, before

@@ -34,7 +34,7 @@ export default function TellCard({ card }: { card: TellCardProps }) {
         Tell FollowUp about your business
       </h2>
       <p className="mt-1 text-[13.5px] leading-normal text-ink-soft">
-        About five minutes, in your own words. It asks one thing at a time and shows you what it took from each answer before using it.
+        A 5-minute meeting so FollowUp gets to know your business. You answer in your own words; at the end it shows you what it understood.
       </p>
       <div className="mt-3 flex items-center gap-4">
         <button

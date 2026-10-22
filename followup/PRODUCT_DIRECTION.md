@@ -792,9 +792,9 @@ is blocked by it.**
 | Tue Oct 20 | Realtor's real GoHighLevel test. If Meta access verification is still "in review", open a Meta support ticket | Founder + Claude |
 | Fri Oct 24 | 3 testers connected | Founder |
 | Sat Oct 25 | Messenger + Lead Ads submitted to Meta review | Founder |
-| Tue Oct 28 | YC application first draft (real numbers) | Claude |
+| Tue Oct 28 | YC application first draft (real numbers). **Paused** (founder, 2026-10-22: "let's just leave the YC application for now"); the draft is kept | Claude |
 | Fri Oct 31 | **Stage 1 done:** 5 testers daily, 20+ customers answered a week. Business name, city and refund rule decided | Founder |
-| Sun Nov 2 | YC application submitted | Founder |
+| Sun Nov 2 | YC application submitted. **Paused** (same day, same reason) | Founder |
 | Sun Nov 15 | Google security check (CASA) booked | Founder |
 | Mon Nov 30 | **Stage 2 done:** testers get bookings and come back in week 2; 10–20 testers | Founder + Claude |
 | Mon Jan 4, 2027 | **Stage 3 done:** Google verification + CASA passed; first paying customer | Founder + Claude |

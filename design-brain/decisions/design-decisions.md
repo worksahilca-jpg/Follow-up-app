@@ -14817,3 +14817,24 @@ read covers) and since.
 - "Before FollowUp" only exists where the inbox read reached back; a business that connected Instagram only has a thin
   "before".
 - An admin page with dense rows: fine for the founder, not a design for owners.
+
+## 2026-10-22 — Reconnect reminders (A-309), built; one weak point left as it is
+
+**Founder:** *"do whatever you think is best for the application. Let's just fix everything, all the weak points"*.
+
+**What the live data showed (read-only, counts only):** of the 3 outside Gmail connections ever made, 2 broke exactly 7
+days after connecting (Sep 6 → Sep 13, Sep 29 → Oct 6): Google's Testing-mode expiry, before the app went to production
+on Oct 3. Connections made since then last (one has run 15 days). Neither owner reconnected after the one notice. In the
+last 30 days 14 messages went to real customers, all sent by hand, the last on Oct 11.
+
+**Built:** `src/lib/reconnectReminders.ts`, run by the daily setup-health cron (13:07 UTC, about 9 am Toronto): day-2
+and day-7 emails per admin for Gmail and Outlook (Outlook had no email at all before, only the bell). "Already sent" is an
+`integration.reconnect_reminder` audit row keyed by the connection's connect time, so a new break starts fresh. A business
+already working through another connection of the same kind gets nothing. An inbox found long after it broke gets only the
+last reminder, never two in a row. The two testers broken today get one email each when this ships.
+
+**Left as it is, on purpose:** A-308's "a fact with new words waiting shows twice". The in-use row is the only place to
+Edit that fact; hiding it would cost more than the repetition.
+
+**Weak points:** the reminders can't make anyone come back; the founder's own note to them still matters more. The
+founder's stuck-testers email still leaves out testers quiet for more than two weeks (by design, A-249).

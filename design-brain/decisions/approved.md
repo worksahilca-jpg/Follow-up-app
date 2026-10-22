@@ -5399,3 +5399,18 @@ Partly supersedes A-096's learning bullet (learned facts were used at once; the 
 - Everything already in use on the day this shipped stays in use.
 - Built without a separate drawing: the rows reuse A-096's list and A-307's white group, and the founder's ask named
   the parts. Flagged to the founder with screenshots.
+
+## A-309 — An owner whose inbox stays disconnected is reminded twice ^A-309
+
+**Date:** 2026-10-22. **Founder, verbatim:** *"do whatever you think is best for the application. Let's just fix
+everything, all the weak points"*, after being asked yes or no on exactly this reminder.
+Amends brand principle 2 ("urgency is stated once") for this one case.
+**What specifically:**
+- When Gmail or Outlook still needs reconnecting **2 days** after it last worked, each admin gets one email; at **7 days**,
+  one more, marked as the last. Then nothing, until it is reconnected and breaks again.
+- The email: "Gmail is still disconnected", since when, "Reconnecting takes a few seconds", one black **Reconnect Gmail**
+  button (the same one-press reconnect as the first notice), why it can happen, and whether another reminder will come.
+- The first notice's small print now says so: "If it stays disconnected, FollowUp reminds you after 2 days and after a
+  week, then stops."
+- Why: two testers' Gmail sat disconnected for weeks (since Sep 13 and Oct 6) after one notice each. The owner who
+  stopped opening FollowUp is the one who never sees the line inside it.

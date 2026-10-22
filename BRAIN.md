@@ -52,6 +52,7 @@ there, the next session reads.
 | Roadmap and checklist (shared doc) | Claude doc "FollowUp Roadmap and Checklist" |
 | Design and UX rules | `CLAUDE.md`, `design-brain/README.md`, `.claude/skills/followup-design` |
 | Every approved / rejected design decision | `design-brain/decisions/approved.md`, `rejected.md`, dated log in `design-decisions.md` |
+| **FollowUp's playbook: whom it answers, how it judges, what and when it writes, when it stops, how it learns** | `followup/playbook/` (one page per kind of business; real estate first). Keep it in step with the code it describes |
 | How replies are written | `followup/src/lib/integrations/openai.ts` (the reply writer), `followup/src/lib/tradePlaybooks.ts` (a plan per kind of business), `followup/src/lib/qualification.ts` (real estate's questions) |
 | Admin (Decide, Train, tests, testers, usage) | `followup/src/app/admin/` |
 | Team and who owns what | `TEAM.md`, `CONTRIBUTING.md` |
@@ -73,13 +74,18 @@ a booked call or visit; the owner closes.
 
 **Last updated: 2026-10-22**
 
-- **FollowUp's call (A-310, Oct 22, live in PR #580):** every customer shows where they stand (Ready, Warm, Later, Has an
-  agent) and the one next step, on Today, their page and Customers; Results shows what the calls came to. Fully
-  automatic: the founder rejected asking owners to grade it (R-137). New brand principle: "The job they needed".
-  Weak spots fixed the same day (new PR): every kind of business is sorted (from the score), an old Ready says how many
-  days, Results says what to do.
-- **Next, drawn first:** make what matters stand out (how long someone has waited, their message vs our reply).
-  Outreach the owner starts (no reply yet): recommended "not now, after the pilot"; his call.
+- **FollowUp's playbook (Oct 22, PR open):** founder: *"how to judge … what to reply, whom to reply, when to reply and
+  all"* and *"how this app will remember all these"*. `followup/playbook/real-estate.md` writes down, from the code, the
+  whole job for realtors; `followup/playbook/README.md` says how the app remembers (code = fixed rules, database =
+  learned facts and trained rules, playbook = the written copy, accuracy tests = the check). Open: an accuracy test for
+  the call on other kinds of business; re-run the four tests before the pilot; a Playbook page in the app showing the
+  trained rules live.
+- **FollowUp's call (A-310, Oct 22, live in PR #580; weak spots fixed and live in PR #581):** every customer shows where
+  they stand (Ready, Warm, Later, Has an agent) and the one next step; every kind of business is sorted (from the
+  score); an old Ready says how many days; Results says what to do. Fully automatic (R-137).
+- **Drawn, waiting for his yes:** what matters stands out (how long someone has waited on every row, their message in
+  its own bubble with only their questions in bold, "Your reply to Raj"). Outreach the owner starts (no reply yet):
+  recommended after the pilot (he replied "cool"; not a firm yes).
 
 - **Reconnect reminders (A-309, Oct 22, PR open):** an owner whose Gmail or Outlook stays disconnected gets one email at
   day 2 and one at day 7, then nothing. Found because 2 of 3 testers' Gmail had been broken for weeks (Google's old 7-day

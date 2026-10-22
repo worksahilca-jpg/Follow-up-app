@@ -1,13 +1,19 @@
 /**
- * "Tell FollowUp about your business" (A-311, A-312): which questions are asked and in what order, where the
- * conversation is from what FollowUp already knows, and the promise that every value shown or saved is the owner's
- * own words, copied, never written by FollowUp.
+ * "Tell FollowUp about your business" (A-311, A-314): which questions are asked and in what order, where the meeting is
+ * from what FollowUp already knows and what it took so far, the play-back at the end, and the promise that every value
+ * shown or saved is the owner's own words, copied or typed by them, never written by FollowUp.
  */
 import { describe, it, expect } from "vitest";
 import {
   CARD_MIN_OPEN,
-  checkedRows,
+  checkedRead,
   checkedWording,
+  confirmedRows,
+  correctionRows,
+  mergeRows,
+  parseTellDraft,
+  playbackRows,
+  usageLines,
   currentTopic,
   NOT_OFFERED_LABEL,
   WHO_LABEL,
@@ -212,20 +218,159 @@ describe("what FollowUp took from an answer", () => {
   });
 });
 
-describe("what the owner OK'd, checked again on the server", () => {
-  const ok = [
-    { label: WHAT_YOU_DO_LABEL, value: "I'm a realtor in Mississauga and Oakville." },
-    { label: "Languages", value: "English and Punjabi" },
-  ];
-
-  it("is kept when every value is in their answer and the question's own row comes first", () => {
-    expect(checkedRows(whatYouDo, ANSWER, ok)).toEqual(ok);
+describe("the meeting's draft (A-314)", () => {
+  it("counts as answered, so a question isn't asked twice, though nothing in it is in use", () => {
+    const s = tellState(REALTOR, [], [], false, [{ label: "what you do", value: "Realtor" }, { label: "Commission", value: "2.5%" }]);
+    expect(s.open[0]).toBe("Area you cover");
+    expect(s.facts).toEqual([]);
+    expect(s.draft).toHaveLength(2);
   });
 
-  it("is refused when a value was changed, the question's row is missing, or a name repeats", () => {
-    expect(checkedRows(whatYouDo, ANSWER, [ok[0], { label: "Languages", value: "English, Punjabi and Hindi" }])).toBeNull();
-    expect(checkedRows(whatYouDo, ANSWER, [ok[1]])).toBeNull();
-    expect(checkedRows(whatYouDo, ANSWER, [ok[0], { ...ok[1], label: "what you do" }])).toBeNull();
-    expect(checkedRows(whatYouDo, ANSWER, [])).toBeNull();
+  it("is read back from the database checked again: bad lines and repeats dropped, the read kept", () => {
+    const d = parseTellDraft({
+      rows: [
+        { label: "Prices", value: " From $900 " },
+        { label: "prices", value: "twice" },
+        { label: "", value: "no name" },
+        { label: "Area", value: "x".repeat(MAX_VALUE + 1) },
+        "not a row",
+      ],
+      read: "You build websites.",
+    });
+    expect(d).toEqual({ rows: [{ label: "Prices", value: "From $900" }], read: "You build websites." });
+    expect(parseTellDraft(null)).toEqual({ rows: [] });
+  });
+
+  it("takes a new answer over the old one under the same name, where it stands", () => {
+    const rows = mergeRows(
+      [
+        { label: "Prices", value: "From $800" },
+        { label: "Area you cover", value: "Brampton" },
+      ],
+      [
+        { label: "prices", value: "From $900" },
+        { label: "Payment", value: "Half up front" },
+      ]
+    );
+    expect(rows.map((r) => r.value)).toEqual(["From $900", "Brampton", "Half up front"]);
+  });
+});
+
+describe("the play-back (A-314)", () => {
+  const facts = [
+    { label: "Languages", value: "English and Punjabi" },
+    { label: "Commission", value: "2%" },
+  ];
+  const draft = [
+    { label: "What you do", value: "I sell homes in Brampton" },
+    { label: "Commission", value: "2.5% of the sale price" },
+    { label: "Commission", value: "2.5% of the sale price" },
+  ];
+
+  it("is the whole business, in the order the questions are asked, marking what this meeting changed", () => {
+    const rows = playbackRows(facts, draft, labels);
+    expect(rows).toEqual([
+      { label: "What you do", value: "I sell homes in Brampton", fresh: true },
+      { label: "Commission", value: "2.5% of the sale price", fresh: true },
+      { label: "Languages", value: "English and Punjabi", fresh: false },
+    ]);
+    expect(playbackRows(facts, [{ label: "Languages", value: "English and Punjabi" }], labels).every((r) => !r.fresh)).toBe(true);
+  });
+
+  it("says how FollowUp will use it, only what it really does, in at most three lines", () => {
+    const rows = [
+      { label: "Prices", value: "Most sites start at $900 for 5 pages" },
+      { label: NOT_OFFERED_LABEL, value: "We don't do logos or printing" },
+      { label: "Area you cover", value: "Anywhere in the GTA" },
+    ];
+    expect(usageLines(rows, ["Hours", "Languages"])).toEqual([
+      ["Asked the price", "it answers with “Most sites start at $900 for 5 pages”."],
+      ["Asked for something you don't do", "it answers with “We don't do logos or printing”."],
+      ["Asked about hours", "it doesn't know yet, so it waits for you."],
+    ]);
+    expect(usageLines([], [])).toEqual([]);
+    const long = usageLines([{ label: "Commission", value: `${"Two and a half percent of the sale price ".repeat(4)}` }], [])[0][1];
+    expect(long.length).toBeLessThan(120);
+    expect(long).toContain("…”");
+  });
+});
+
+describe("FollowUp's read of the business (A-314)", () => {
+  const rows = [
+    { label: "What you do", value: "I provide web designing services" },
+    { label: "Who you work with", value: "Mostly small businesses in Brampton, a lot of restaurants and salons" },
+    { label: "Prices", value: "Most sites start at $900 for 5 pages" },
+  ];
+
+  it("is kept when it only repeats what the owner said", () => {
+    const read = "You design websites for small businesses in Brampton, mostly restaurants and salons. Sites start at $900 for 5 pages.";
+    expect(checkedRead(read, rows)).toBe(read);
+  });
+
+  it("is dropped when it adds a figure, a place or a name, gushes, or links", () => {
+    for (const read of [
+      "You design websites in Brampton. Sites start at $700 for 5 pages.",
+      "You design websites for businesses in Brampton and Toronto.",
+      "You are Brampton's favourite web designer!",
+      "You design websites. See www.example.com for more.",
+      "Too short.",
+      "",
+    ]) {
+      expect(checkedRead(read, rows), read).toBeNull();
+    }
+    expect(checkedRead(null, rows)).toBeNull();
+  });
+});
+
+describe("Anything wrong or missing? (A-314)", () => {
+  it("takes each thing the owner stated in their words, under a name FollowUp uses when it is the same thing", () => {
+    const rows = correctionRows(
+      "Actually it's from $1,000 now, and we also do Shopify stores",
+      [
+        { label: "prices", value: "from $1,000 now" },
+        { label: "Shopify", value: "we also do Shopify stores" },
+        { label: "Hours", value: "9 to 5" },
+      ],
+      ["Prices", "Hours"]
+    );
+    expect(rows).toEqual([
+      { label: "Prices", value: "from $1,000 now" },
+      { label: "Shopify", value: "we also do Shopify stores" },
+    ]);
+    expect(correctionRows("hmm", null, ["Prices"])).toEqual([]);
+  });
+});
+
+describe("Looks right (A-314)", () => {
+  const rows = [
+    { label: "What you do", value: "I sell homes", fresh: true },
+    { label: "Commission", value: "2.5%", fresh: true },
+    { label: "Languages", value: "English", fresh: false },
+  ];
+
+  it("saves this meeting's lines, with the owner's edits, and a known line only when they changed it", () => {
+    expect(confirmedRows(rows, [])).toEqual([
+      { label: "What you do", value: "I sell homes" },
+      { label: "Commission", value: "2.5%" },
+    ]);
+    expect(
+      confirmedRows(rows, [
+        { label: "commission", value: "3%" },
+        { label: "Languages", value: "English and Punjabi" },
+      ])
+    ).toEqual([
+      { label: "What you do", value: "I sell homes" },
+      { label: "Commission", value: "3%" },
+      { label: "Languages", value: "English and Punjabi" },
+    ]);
+  });
+
+  it("leaves a new line out when the owner empties it, but never empties one already in use", () => {
+    expect(confirmedRows(rows, [{ label: "Commission", value: " " }])).toEqual([{ label: "What you do", value: "I sell homes" }]);
+    expect(confirmedRows(rows, [{ label: "Languages", value: "" }])).toBeNull();
+  });
+
+  it("refuses an edit to a line that isn't there", () => {
+    expect(confirmedRows(rows, [{ label: "Bank account", value: "123" }])).toBeNull();
   });
 });

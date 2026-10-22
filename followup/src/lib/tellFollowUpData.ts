@@ -1,9 +1,23 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { FIRST_QUESTION_AFTER_MS, WHAT_YOU_DO_LABEL } from "@/lib/dailyQuestion";
 import { labelKey, type FactLine } from "@/lib/factLines";
 import { tooManyRecentActions } from "@/lib/rateLimit";
-import { wordTellQuestion } from "@/lib/integrations/openai";
-import { checkedWording, knowsLine, showTellCard, tellState, type TellState, type TellTopic } from "@/lib/tellFollowUp";
+import { summarizeTellProfile, wordTellQuestion } from "@/lib/integrations/openai";
+import {
+  checkedRead,
+  checkedWording,
+  knowsLine,
+  mergeRows,
+  parseTellDraft,
+  playbackRows,
+  showTellCard,
+  tellState,
+  usageLines,
+  type Playback,
+  type TellState,
+  type TellTopic,
+} from "@/lib/tellFollowUp";
 
 /** How long the owner waits for a question worded for their business before the plain one is asked instead. */
 const WORDING_WAIT_MS = 4000;
@@ -33,10 +47,13 @@ export async function wordedTopic(businessId: string, topic: TellTopic | null, f
   }
 }
 
-/** Where this business's conversation is (src/lib/tellFollowUp.ts), from what FollowUp knows and what was skipped. */
+/**
+ * Where this business's conversation is (src/lib/tellFollowUp.ts), from what FollowUp knows, what this meeting already
+ * took (A-314) and what was skipped.
+ */
 export async function loadTellState(businessId: string, again = false): Promise<TellState | null> {
   const [business, facts] = await Promise.all([
-    prisma.business.findUnique({ where: { id: businessId }, select: { industry: true, questionsSkipped: true } }),
+    prisma.business.findUnique({ where: { id: businessId }, select: { industry: true, questionsSkipped: true, tellDraft: true } }),
     prisma.businessFact.findMany({
       where: { businessId, approvedAt: { not: null } },
       orderBy: { createdAt: "asc" },
@@ -44,7 +61,58 @@ export async function loadTellState(businessId: string, again = false): Promise<
     }),
   ]);
   if (!business) return null;
-  return tellState(business.industry, facts, business.questionsSkipped ?? [], again);
+  return tellState(business.industry, facts, business.questionsSkipped ?? [], again, parseTellDraft(business.tellDraft).rows);
+}
+
+/** Adds what FollowUp took from an answer to the meeting's draft (A-314). Its read of the business is made again. */
+export async function addToDraft(businessId: string, rows: readonly FactLine[]): Promise<void> {
+  const business = await prisma.business.findUnique({ where: { id: businessId }, select: { tellDraft: true } });
+  const draft = parseTellDraft(business?.tellDraft);
+  await prisma.business.update({
+    where: { id: businessId },
+    data: { tellDraft: { rows: mergeRows(draft.rows, rows) } },
+  });
+}
+
+/** The meeting is over: what it took is in use, or it was let go. */
+export async function clearDraft(businessId: string): Promise<void> {
+  await prisma.business.update({ where: { id: businessId }, data: { tellDraft: Prisma.DbNull } });
+}
+
+/** How long the owner waits for FollowUp's read of the business before the play-back shows without it. */
+const READ_WAIT_MS = 8000;
+
+/**
+ * The end of the meeting (A-314): the whole business as FollowUp understands it. FollowUp's read is made once per
+ * draft and kept with it; when it can't be made, or doesn't only repeat what the owner said, the play-back shows the
+ * owner's lines alone. Null when the meeting took nothing yet. Never throws over the read.
+ */
+export async function tellPlayback(businessId: string, state: TellState): Promise<Playback | null> {
+  if (state.draft.length === 0) return null;
+  const rows = playbackRows(state.facts, state.draft, state.topics.map((t) => t.label));
+  const plain: FactLine[] = rows.map((r) => ({ label: r.label, value: r.value }));
+  const business = await prisma.business.findUnique({ where: { id: businessId }, select: { tellDraft: true } });
+  const draft = parseTellDraft(business?.tellDraft);
+  let read = draft.read ? checkedRead(draft.read, plain) : null;
+  if (!read) {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      const { AI_RUNS_PER_BUSINESS_PER_DAY } = await import("@/lib/scoring");
+      if (!(await tooManyRecentActions(businessId, "ai.run", AI_RUNS_PER_BUSINESS_PER_DAY))) {
+        const late = new Promise<null>((resolve) => {
+          timer = setTimeout(() => resolve(null), READ_WAIT_MS);
+        });
+        read = checkedRead(await Promise.race([summarizeTellProfile(plain), late]), plain);
+        if (read) await prisma.business.update({ where: { id: businessId }, data: { tellDraft: { rows: draft.rows, read } } });
+      }
+    } catch (err) {
+      console.error(`Could not read back the business for ${businessId}:`, err instanceof Error ? err.message : err);
+      read = null;
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+  }
+  return { read, rows, uses: usageLines(rows, state.skipped), skipped: state.skipped };
 }
 
 export type TellCardProps = { knows: string };

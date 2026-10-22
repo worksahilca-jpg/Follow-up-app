@@ -231,7 +231,8 @@ is new, database changes, test results, risks, and the business benefit. Screens
 
 ## 6. Decisions only the founder can make
 
-1. **Onboarding.** The brief asks for a sign-up conversation covering ~15 topics. R-027 rejected questions between
+1. **Onboarding.** *Decided 2026-10-22: yes (A-311); screens drawn, waiting for the founder's yes.* The brief asks for
+   a sign-up conversation covering ~15 topics. R-027 rejected questions between
    setup and Today. *Recommendation:* setup stays as it is; the "Tell FollowUp about your business" chat is offered
    after FollowUp has shown it works (like A-101), and can be opened any time.
 2. **Founder training reaches every business only after a test.** Today a rule you write goes live for every business

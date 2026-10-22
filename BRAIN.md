@@ -74,6 +74,10 @@ a booked call or visit; the owner closes.
 
 **Last updated: 2026-10-22**
 
+- **"Tell FollowUp about your business" (A-311, Oct 22): direction approved, screens drawn** (scratchpad
+  `brain-chat/board-*.png`; record in design-decisions). Setup unchanged; the conversation is offered on Today after
+  FollowUp has shown it works, and any time from What FollowUp knows; nothing it takes is used before the owner's OK.
+  Waiting: the founder's yes to the drawings, then build (milestone 2). Milestone 1's checks all passed on GitHub.
 - **Personal AI assistant brief, milestone 1 built (Oct 22, PR #582, not merged):** the founder's brief (parts 1–22) is
   audited in `followup/research/product/2026-10-22-ai-assistant-system-plan.md`: Train It and Talk to It exist but are
   founder-only (Admin → Train); owners have Try it yourself + Write it better, Teach FollowUp, What FollowUp knows,

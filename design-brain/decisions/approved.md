@@ -5454,3 +5454,20 @@ accurately."* Drawn the same day (scratchpad `call/board-*.png`); built without 
   - **Results gives an action, not only a count:** with no Ready customer booked, "Your 2 Ready customers haven't booked
     yet. Call them today."
 
+
+## A-311 — Setup stays as it is; "Tell FollowUp about your business" comes after FollowUp has shown it works ^A-311
+
+**Date:** 2026-10-22. **Founder, verbatim:** *"Yes we gotta do this"*, to decision 1 of the AI assistant plan
+(`followup/research/product/2026-10-22-ai-assistant-system-plan.md`, section 6): the brief asked for a sign-up
+conversation covering about 15 topics; R-027 rejected questions between setup and Today.
+**What specifically was approved (the direction; the screens are drawn and wait for their own yes):**
+- **Setup is unchanged** (A-272: CRM first, then the apps it misses, then Today). No questions are added before the owner
+  sees FollowUp work.
+- **"Tell FollowUp about your business"**: a conversation in which FollowUp asks what a new assistant would ask, one
+  thing at a time, and the owner answers in their own words. It covers the brief's topics (what the business does,
+  areas, prices and what buyers pay, how to book, when to hand a customer over, languages, what never to promise, how
+  the owner sounds), skippable, finish later.
+- **Offered once on Today after FollowUp has shown it works** (the same moment rules as A-101), and **any time** from
+  Settings → Your business → What FollowUp knows.
+- **Nothing from it is used before the owner checks it:** what FollowUp took from each answer is shown, and saved only on
+  the owner's OK (A-308's pattern).

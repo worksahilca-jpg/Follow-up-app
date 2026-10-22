@@ -5533,3 +5533,4 @@ read-back of the whole business at the end (drawing waiting).
 **Also said, not yet drawn (the founder's idea, same message):** a place to "set up a meeting with the app" again later
 and **talk** about the business instead of typing, which FollowUp transcribes, analyses and adds from, "like Wispr".
 Next to draw after this build; recorded in design-decisions.
+**Merged** at the founder's "merge" in PR #584 (fc5da24), 2026-10-22.

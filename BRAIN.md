@@ -74,7 +74,7 @@ a booked call or visit; the owner closes.
 
 **Last updated: 2026-10-22**
 
-- **"Tell FollowUp" as a 5-minute meeting built (A-314, Oct 22, not merged):** the founder rejected the check after every
+- **"Tell FollowUp" as a 5-minute meeting LIVE (A-314, Oct 22, PR #584 → fc5da24, merged at the founder's "merge"; deploy green; `tellDraft` column + migration confirmed in production, read-only):** the founder rejected the check after every
   answer (R-139) and approved the drawing as "a 5-minute meeting just to get to know what their business is". Only
   questions and answers; answers wait in a draft (`Business.tellDraft`, one new column); the end plays the whole
   business back (FollowUp's checked read, the owner's lines with Edit, how FollowUp will use it, still to learn,

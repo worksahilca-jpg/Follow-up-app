@@ -1414,6 +1414,8 @@ prefer and they can change it anytime."*
 
 ## A-072 — "Write like me", the card in Settings → Your data ^A-072
 
+*Place SUPERSEDED (2026-10-22) by [A-316](#^A-316): Write like me now lives in Sending replies. The behaviour and words stay.*
+
 **Approved:** 2026-09-28, founder: *"yes open the PR"*, after seeing the card on a phone.
 **What specifically:**
 - **The card:** a second card under "Help improve FollowUp", in the same pattern: icon tile (a reply arrow, never a
@@ -1863,6 +1865,7 @@ a point where it acts like it's totally a clone of the user"*.
 - **Placement:** under the reply cards, above the booked-call line. After an answer, one plain line stays:
   *"Done. FollowUp will do this for you from now on."*
 - **Settings → Your business → "How you work":** one row per yes (the rule in plain words, *"You chose this Oct 6,
+  *Place SUPERSEDED (2026-10-22) by [A-316](#^A-316): these lines now live in Sending replies, as "Learned from you". The behaviour and words stay.*
   after skipping 4 of them"*, and **Undo**). Hidden while empty.
 - **The two habits it learns today:** (1) "Don't send" on replies to messages that only say thanks → those get no
   reply (the newest message only; anything they write after is answered as usual). (2) "Later" on weekend messages
@@ -4392,6 +4395,7 @@ computer). The board answers R-115 (*"we just have to show 'Connect this' or 'th
   - "Who sends your replies?", with two choices: "FollowUp sends them" ("A price, a date or anything unsure waits for
     you") or "I check each one first";
   - then Follow-up plan, Booking hours, and a Pause all sending switch.
+    *Place SUPERSEDED (2026-10-22) by [A-316](#^A-316): Booking hours ("Your free hours") now live in Your business; the calendar in Connected apps. The behaviour and words stay.*
 - **More:** Team, Your plan, Sign-ins, Your data. The Advanced page is gone from owners' Settings.
 - **Unchanged:** the Settings home (A-220's five rows) and Alerts.
 - **Accepted with this yes (each was listed beside the question):**
@@ -4481,6 +4485,7 @@ it … I want something like that."*
   business, Account).
 - **The stem:** the parent you are in opens its branches under it on a thin line (Sending replies: When to check in,
   Your free hours; Account: Team, Your plan, Sign-ins, Your data). Only that one opens, so the list stays short.
+  *Place SUPERSEDED (2026-10-22) by [A-316](#^A-316): "Your free hours" is now a branch of Your business; Sending replies keeps "When to check in". The behaviour and words stay.*
 - **Each page says where it sits** at the top ("Settings › Account").
 - **On a phone, nothing moves:** one level per screen, "←" one step up the stem, as it already works.
 - **Kept:** branches stay their own short pages. Stacking them on the parent's page (Claude's General page style) was
@@ -5554,7 +5559,28 @@ these features and eat us."* A CRM can't build this: it never sees the owner's i
 - **After:** "✓ All N are in {CRM} now, with their messages as a note." and **new customers FollowUp catches go in by
   themselves**, with **Turn off** (the recommendation the founder said yes to).
 - The CRM is named as the owner's own (Follow Up Boss, HubSpot, GoHighLevel); nothing shows without a CRM connected.
-**Built 2026-10-22 (local, PR waiting for "merge"):** as drawn, plus: the after state says "weren't in" (the drawing
+**Built 2026-10-22, merged at the founder's "merge it" (PR #585):** as drawn, plus: the after state says "weren't in" (the drawing
 kept "aren't"); Turn off sits on its own line; the switch's home is the CRM's own window under Connected apps (the
 founder's same-day rule: everything where its name says); a CRM that refuses says what to do, never a status code.
+
+## A-316 — Settings organised by what each name says: every app in Connected apps ^A-316
+
+**Date:** 2026-10-22. **Founder, verbatim**, to the drawing in design-decisions ("Settings organised by what each name
+says"): *"yes build it"*. The rule behind it, same day: *"All the applications should be right there. You cannot put
+it in your business or something like that … Everything should be organised properly according to what it is
+saying."*
+**What specifically was approved (four moves; same switches, same words, new home):**
+- **Calendar → Connected apps:** one "Calendar" row under "Your calendar", saying which calendar is chosen ("Not chosen
+  yet · Choose", or its name), whose window holds the two existing choices (which calendar you book in; FollowUp's
+  calendar or Google Calendar).
+- **Your free hours → Your business:** one row under the name and kind of business, opening the hours page (days,
+  hours, time zone only); on the computer, a branch under Your business on the stem.
+- **Write like me → Sending replies:** the same card and switch, after "How FollowUp talks to your customers".
+- **"How you work" → Sending replies, renamed "Learned from you":** the habits the owner said yes to on Today, each with
+  Undo; still hidden while there are none.
+**Unchanged:** the five groups and their order; the phone line stays off while texts are paused (its home is Connected
+apps when it returns); webhooks and routing stay in the back (R-115); "Only admins send" stays in Team; the rest of Your
+data stays.
+**Built 2026-10-22 (local, PR waiting for "merge"):** as drawn. Write like me stays admins only; two sentences lost a
+"below"/"above" that was no longer true; Today's calendar answer links to the calendar under Connected apps.
 

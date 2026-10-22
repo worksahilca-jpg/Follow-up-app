@@ -1,6 +1,7 @@
 # The app map: what lives where, and where new features go
 
-**Refreshed 2026-10-17** (founder: *"lets jut keep organising every thing we will design and chose the colour later"*).
+**Refreshed 2026-10-17** (founder: *"lets jut keep organising every thing we will design and chose the colour later"*);
+Settings re-sorted 2026-10-22 by the founder's rule "everything lives where its name says" (A-316).
 The section **"The app today (2026-10-17)"** below is the current truth. Older sections further down are kept for
 history; where they disagree, this first section wins.
 
@@ -30,11 +31,11 @@ talked to them", "Not a customer", details, delete.
 
 | Group | What's inside |
 |---|---|
-| **Connected apps** | Email (Gmail, Outlook) · Instagram, Messenger, WhatsApp · Facebook Lead Ads · website form · your CRM (HubSpot, GoHighLevel, Follow Up Boss) · each row ends in its state ("Connected", "Set up") |
-| **Sending replies** | Who sends (ask me / send by itself after your yes) · stop all sending · **When to check in** (follow-up plans, `/workflows`) · **Your free hours** (booking link and calendar) · team-only switches (only admins send, your team calls) |
+| **Connected apps** | Every app, nowhere else (A-316): Email (Gmail, Outlook) · Instagram, Messenger, WhatsApp · Facebook Lead Ads · website form · your CRM (HubSpot, GoHighLevel, Follow Up Boss) · **your calendar** (which one you book in; FollowUp's or Google's) · each row ends in its state ("Connected", "Set up", "Choose") |
+| **Sending replies** | Only how replies go out: who sends (ask me / send by itself after your yes) · how FollowUp talks to your customers (try it) · **Write like me** (admins) · **Learned from you** (habits said yes to on Today) · What FollowUp asks · **When to check in** (follow-up plans, `/workflows`) · stop all sending |
 | **Alerts** | Phone buzz, email, quiet hours, bursts become one |
-| **Your business** | Business profile · **What FollowUp knows** (facts; "Teach FollowUp", `/teach`) · who isn't a customer · write like me · help improve FollowUp |
-| **Account** | Team · Your plan · Sign-ins · Your data (download, delete) |
+| **Your business** | Business profile · **Your free hours** (when customers can book; the calendar it checks is under Connected apps) · **What FollowUp knows** (facts; "Tell FollowUp", `/tell`) · who isn't a customer |
+| **Account** | Team (with "only admins send" and "your team calls") · Your plan · Sign-ins · Your data (help improve FollowUp, download, practice customers, delete) |
 | *(hidden)* Advanced | Webhooks in and out, phone number, lead routing: no row leads here (A-253); a direct link still works |
 
 ### 4. Single tasks (small window on the computer, sheet on the phone)
@@ -141,6 +142,7 @@ of its own.
 | `/leads/[id]` | **A customer** | Conversation + side panel |
 | `/analytics` | **Results** | As drawn; first, when a CRM is connected, "Missed by your CRM" (A-315) |
 | `/analytics/missed` | Results › See who ("Not in {CRM}") | One Add per customer; its on/off switch lives in Settings › Connected apps › the CRM's window (A-315) |
+| `/settings#booking` | Settings › Your business › Your free hours | Hours only since A-316; the calendar is a row under Connected apps (`#calendar` lands there) |
 | `/settings` | **Settings window** | Five groups (A-220, build 4, 2026-10-10): Where customers write · How replies go out · Alerts · Your business · More. Phone: four rows + More, then Help and Sign out |
 | `/workflows` | Settings › How replies go out (the follow-up plan) | "Change" opens it in the window |
 | `/teach` | Settings › Your business › What FollowUp knows | Plus "Parking: not known yet" moments on Today |

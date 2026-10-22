@@ -12,7 +12,7 @@ import { BRAND, BrandTile, type Brand } from "@/components/brandLogos";
  * (CrmConfig.tsx) so every row reads the same.
  */
 
-export type Glyph = "email" | "gmail" | "outlook" | "instagram" | "messenger" | "facebook" | "whatsapp" | "web" | "crm";
+export type Glyph = "email" | "gmail" | "outlook" | "instagram" | "messenger" | "facebook" | "whatsapp" | "web" | "crm" | "calendar";
 
 /** The glyph, in currentColor (17px, white on its tile, A-273). */
 export function ConnectionGlyph({ glyph }: { glyph: Glyph }) {
@@ -64,6 +64,13 @@ export function ConnectionGlyph({ glyph }: { glyph: Glyph }) {
           <path d="M4 9.5h16M9.5 9.5V20" />
         </svg>
       );
+    case "calendar":
+      return (
+        <svg {...common} strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3.5" y="5" width="17" height="15.5" rx="2.5" />
+          <path d="M3.5 10h17M8 3v4M16 3v4" />
+        </svg>
+      );
   }
 }
 
@@ -79,6 +86,7 @@ export const GLYPH_BG: Record<Glyph, string> = {
   whatsapp: "#1e8e3e",
   web: "#5f6670",
   crm: "#0d6e3c",
+  calendar: "#57534e",
 };
 
 export function GlyphTile({ glyph }: { glyph: Glyph }) {

@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 
 /**
- * "How you work" (A-099, src/lib/habits.ts), under "What FollowUp knows" in
- * Settings → Your business. Every habit the owner said yes to on Today, each
+ * "Learned from you" (A-099, src/lib/habits.ts; called "How you work" under
+ * Your business until A-316 moved it to Settings → Sending replies, since every
+ * line is a rule for replies). Every habit the owner said yes to on Today, each
  * with when and why, and one Undo. Hidden while there are none: nothing is
  * ever added here without asking first.
  */
@@ -67,9 +68,9 @@ export default function HowYouWorkSection() {
   if (habits.length === 0) return null;
 
   return (
-    <div className="box p-5">
-      <p className="text-sm font-medium">How you work</p>
-      <p className="mt-1 text-[13px] text-ink-soft">
+    <div className="overflow-hidden rounded-[16px] border border-line bg-card px-4 py-3.5">
+      <p className="text-[16px] font-semibold">Learned from you</p>
+      <p className="mt-0.5 text-[14px] leading-snug text-ink-soft">
         Things FollowUp noticed you always do, and now does for you. Each one was your choice.
       </p>
       <ul className="mt-4 border-t border-line">

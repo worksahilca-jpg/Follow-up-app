@@ -5,7 +5,8 @@ import { groupHref, pageForId, settingsPlace, SETTINGS_BRANCHES } from "@/lib/se
 describe("settingsPlace", () => {
   it("puts a branch under its parent", () => {
     expect(settingsPlace("/settings", "#team")).toEqual({ group: "Account", branch: "Team" });
-    expect(settingsPlace("/settings", "#booking")).toEqual({ group: "Sending replies", branch: "Your free hours" });
+    // When customers can book is how the owner works: Your business, not Sending replies (A-316).
+    expect(settingsPlace("/settings", "#booking")).toEqual({ group: "Your business", branch: "Your free hours" });
   });
 
   it("puts a parent's own page on the parent", () => {
@@ -15,6 +16,7 @@ describe("settingsPlace", () => {
 
   it("keeps old email links landing", () => {
     expect(settingsPlace("/settings", "#integrations")).toEqual({ group: "Connected apps", branch: null });
+    expect(settingsPlace("/settings", "#calendar")).toEqual({ group: "Connected apps", branch: null });
     expect(settingsPlace("/settings", "#pause")).toEqual({ group: "Sending replies", branch: null });
   });
 
@@ -24,6 +26,12 @@ describe("settingsPlace", () => {
 
   it("treats the follow-up plans page as a branch of Sending replies", () => {
     expect(settingsPlace("/workflows", "")).toEqual({ group: "Sending replies", branch: "When to check in" });
+  });
+
+  // A-316: each thing where its name says. Sending replies keeps only how replies go out.
+  it("gives Sending replies one branch and Your business its free hours", () => {
+    expect(SETTINGS_BRANCHES["Sending replies"]?.map((b) => b.label)).toEqual(["When to check in"]);
+    expect(SETTINGS_BRANCHES["Your business"]?.map((b) => b.label)).toEqual(["Your free hours"]);
   });
 
   it("keeps What FollowUp asks under Sending replies (A-302)", () => {

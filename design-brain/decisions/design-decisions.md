@@ -15075,3 +15075,57 @@ own CRM automations (HubSpot workflows, GoHighLevel "contact created" triggers) 
 one-boss rule then steps back. Follow Up Boss's deduplicate flag and response shape are grade C (their reference
 doesn't load here): the first real add on a live account is the real test. No empty state when no CRM is connected.
 
+
+## 2026-10-22 — Settings organised by what each name says: drawn, waiting for the founder's yes
+
+**Why:** the founder's rule from the same day (brand-principles: "Everything lives where its name says"): *"All the
+applications should be right there. You cannot put it in your business or something like that … Everything should be
+organised properly according to what it is saying."*
+**Audit (read-only, every Settings page and the pages they open, on the local app):** most things already sit where
+their name says. Four don't:
+1. **The calendar** (which calendar you use, and FollowUp's calendar vs Google Calendar) sits in Sending replies ›
+   Your free hours. It is an app, so it goes to **Connected apps** as one "Calendar" row ("Not chosen yet · Choose" or
+   "✓ Connected"), whose window holds the same two choices as today.
+2. **Your free hours** (the days and hours customers can book) sits in Sending replies. It is about how the owner works,
+   not how replies go out, so it goes to **Your business**, as one row under the name and kind of business (and as a
+   branch under Your business on the computer's stem). Only the hours stay on its page.
+3. **Write like me** sits in Account › Your data (A-072). It changes how replies are written, so it goes to **Sending
+   replies**, same words, same switch.
+4. **"How you work"** (the habits the owner said yes to on Today: no reply to a plain thanks, weekend replies wait
+   until Monday) sits in Your business (A-099). Every line is a rule for replies, so it goes to **Sending replies**,
+   renamed **"Learned from you"** (the old name would not say what it is there). Still hidden while there are none.
+**Not moving:** the phone line for texts stays off while texts are paused (it joins Connected apps when it comes back);
+webhooks and routing stay in the back (R-115: not to be moved to another Settings page); "Only admins send" stays in
+Team (it is a rule about the team); Help improve FollowUp, Export, Practice customers and Delete stay in Your data.
+**Drawn** on the real local app (390×844 and 1280, test business masked; nothing saved): a map board of the five groups
+with the four moves marked, and before/after phone shots of Connected apps, Your free hours, Sending replies and Your
+data, plus the computer's Your business page with its new branch.
+**Would supersede, if approved:** the place (not the behaviour) given in A-072 (Your data), A-099 (Your business), A-253
+and A-257 (free hours and booking under How replies go out / Sending replies). Nothing about how FollowUp works changes.
+**Weak spots, honestly:** Sending replies grows from about one phone screen to about two when "Learned from you" has
+lines. "Your free hours" (when calls can be booked) and the "Hours" fact in What FollowUp knows (opening hours) now sit
+on the same page and can disagree; they mean different things, but the names don't say so yet. The Calendar row's
+window isn't drawn (it holds the two existing choices unchanged).
+
+## 2026-10-22 — Settings organised by what each name says: approved and built (A-316)
+
+**Approved:** *"merge it and yes build it"* (the merge was PR #585). **Built as drawn**, checked on the real local app at
+390×844 and 1280 (test business masked; the local data was put back): Connected apps shows "Your calendar · Calendar ·
+Not chosen yet · Choose"; its window holds which calendar you book in and where customers book (a real pick of Outlook
+on the local database showed "FollowUp can't book into Outlook yet…" and the row then read "Outlook"); Sending replies
+shows Write like me and Learned from you and no free-hours row; Your business opens Your free hours, whose page holds
+only the days, hours and time zone, says "Which calendar it checks is under Connected apps", and steps back to Your
+business; Your data no longer has Write like me; on the computer the stem shows "Your free hours" under Your business
+and only "When to check in" under Sending replies. No sideways scroll, no page errors.
+**Decided while building:**
+- Write like me stays **admins only**, as it was under Your data (its API already refuses anyone else).
+- The calendar row says the calendar's name once chosen, with "✓ Connected" only when bookings land in Google Calendar;
+  an owner who chose Google Calendar before the question existed (A-305) sees "Google Calendar", not "Not chosen".
+- Two sentences changed because "below" was no longer true: "Your booking hours below…" became "Your free hours…", and
+  "Requires Gmail connected above." became "Connect Gmail first."
+- Today's calendar question now links to "See your calendar" (Connected apps) instead of the free-hours page.
+**Weak spots, honestly:** Sending replies is about two phone screens when "Learned from you" has lines. The Calendar
+window is longer than the other app windows (two choices in one). "Learned from you" sits close in wording to "Learned
+from your 'Not a customer' answers" under Your business. The hours fact in What FollowUp knows and Your free hours still
+sit on the same page with different meanings.
+

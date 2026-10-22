@@ -37,7 +37,8 @@ type CalendarState =
   | { step: "done"; line: string; href: string; link: string };
 
 const CALENDAR_DONE: Record<Exclude<CalendarOutcome, "choose">, Omit<Extract<CalendarState, { step: "done" }>, "step">> = {
-  google: { line: "Saved. Customers book straight into your Google Calendar.", href: "/settings#booking", link: "See your booking settings" },
+  // The calendar lives under Connected apps, the hours under Your business (A-316).
+  google: { line: "Saved. Customers book straight into your Google Calendar.", href: "/settings#connections", link: "See your calendar" },
   connect_gmail: {
     line: "Saved. Connect Gmail and FollowUp books straight into your Google Calendar. Until then, customers book in FollowUp's calendar.",
     href: "/settings#connections",
@@ -97,8 +98,8 @@ export default function DailyQuestion({ question }: { question: DailyQuestionPro
     setCalendar({
       step: "done",
       line: source === "google" ? "Saved. Customers book in your Google Calendar." : "Saved. Customers book in FollowUp's calendar.",
-      href: "/settings#booking",
-      link: "See your booking settings",
+      href: "/settings#connections",
+      link: "See your calendar",
     });
     router.refresh();
   }

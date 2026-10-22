@@ -10,8 +10,8 @@ import { decideHabit, findHabitSuggestion, getHabits, HABIT_KINDS } from "@/lib/
  * GET/POST /api/business/habits — "FollowUp learns what you do" (A-099,
  * src/lib/habits.ts).
  *
- * GET: the habits this business has said yes to (Settings → Your business →
- * "How you work"), and the one question Today should ask, if any. Only an
+ * GET: the habits this business has said yes to (Settings → Sending replies →
+ * "Learned from you", A-316), and the one question Today should ask, if any. Only an
  * admin is asked, because a yes changes what FollowUp does for everyone.
  *
  * POST { kind, decision }: "on" / "declined" from Today, "off" from Undo in

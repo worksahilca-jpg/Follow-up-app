@@ -20,7 +20,8 @@ import OutboundWebhookConfig from "@/components/OutboundWebhookConfig";
 import TwilioConfig from "@/components/TwilioConfig";
 import Connections from "@/components/settings/Connections";
 import Switch from "@/components/Switch";
-import BookingCalendarConfig from "@/components/BookingCalendarConfig";
+import BookingHoursConfig from "@/components/BookingHoursConfig";
+import PastRepliesToggle from "@/components/PastRepliesToggle";
 import DataPrivacySection from "@/components/DataPrivacySection";
 import AlertsSection from "@/components/AlertsSection";
 import OnlyAdminsSendSetting from "@/components/OnlyAdminsSendSetting";
@@ -61,7 +62,7 @@ const PAGES: Record<string, SettingsPage> = {
   // One page each since A-253 (R-115: "Connect this or that … Connected, Okay, Done").
   connections: { title: "Connected apps", sections: PAGE_SECTIONS.connections },
   replies: { title: "Sending replies", sections: PAGE_SECTIONS.replies },
-  booking: { title: "Your free hours", lede: "When customers can book a call through your link, and which calendar it checks.", sections: PAGE_SECTIONS.booking },
+  booking: { title: "Your free hours", lede: "When customers can book a call through your link.", sections: PAGE_SECTIONS.booking },
   alerts: { title: "Alerts", lede: "How FollowUp tells you a customer needs you: on your phone, by email, or both.", sections: PAGE_SECTIONS.alerts },
   business: { title: "Your business", sections: PAGE_SECTIONS.business },
   team: { title: "Team", lede: "Admins can invite teammates, change roles and remove people.", sections: PAGE_SECTIONS.team },
@@ -304,7 +305,7 @@ function SettingsPageInner() {
       .catch(() => {});
   }, []);
 
-  // "Mon–Sat, 9:00 am–7:00 pm · Toronto" on the Booking hours row (A-253).
+  // "Mon–Sat, 9:00 am–7:00 pm · Toronto" on the Your free hours row, under Your business (A-253, A-316).
   const [bookingSummary, setBookingSummary] = useState("");
   useEffect(() => {
     fetch("/api/business/booking-hours")
@@ -605,7 +606,7 @@ function SettingsPageInner() {
         </div>
       ) : (
         <div className="max-w-[640px]">
-          {/* Back one step: to the page this one opened from (Booking hours → How replies go out), the page's
+          {/* Back one step: to the page this one opened from (Your free hours → Your business), the page's
               group, or Settings for a group that is this one page. */}
           <button
             type="button"
@@ -646,8 +647,9 @@ function SettingsPageInner() {
         </OnceOpen>
       </section>
 
-      {/* How replies go out (A-253): who sends, then the plan, booking hours and pause. The four "FollowUp writes"
-          switches live on the Follow-up plan page; the hours and days use their defaults. */}
+      {/* How replies go out (A-253): who sends, then the plan and pause. The four "FollowUp writes" switches live on the
+          Follow-up plan page; the hours and days use their defaults. Only how replies go out lives here (A-316): the
+          free hours moved to Your business, the calendar to Connected apps. */}
       <section id="replies-out" hidden={!visible("replies-out")} className="scroll-mt-16">
         <h2 className="sr-only">Sending replies</h2>
         <p id="who-sends" className="text-[14px] text-ink-faint">
@@ -700,6 +702,16 @@ function SettingsPageInner() {
             </Link>
           </div>
         </div>
+        {/* Write like me (A-072) and what FollowUp learned from the owner (A-099) change how replies are written, so
+            they live here, by A-316. Write like me stays admin-only, as it was under Your data. */}
+        {isAdmin && (
+          <div className="mt-3">
+            <OnceOpen open={visible("replies-out")}><PastRepliesToggle /></OnceOpen>
+          </div>
+        )}
+        <div className="mt-3 empty:hidden">
+          <OnceOpen open={visible("replies-out")}><HowYouWorkSection /></OnceOpen>
+        </div>
 
         <div className={BOX + " mt-6"}>
           {asksLine !== null && (
@@ -714,11 +726,6 @@ function SettingsPageInner() {
             <span className="min-w-0 flex-1 truncate text-right text-[15px] text-ink-faint">{planLine(followUpPlans, planFor(followUpPlans, "most"))}</span>
             <ChevronRight aria-hidden className="h-[18px] w-[18px] shrink-0 text-ink-faint" />
           </Link>
-          <button type="button" onClick={() => openMore("booking")} className={ROW + " border-t border-line-2 text-left hover:bg-card-2"}>
-            <span className="shrink-0 whitespace-nowrap">Your free hours</span>
-            <span className="min-w-0 flex-1 truncate text-right text-[15px] text-ink-faint">{bookingSummary}</span>
-            <ChevronRight aria-hidden className="h-[18px] w-[18px] shrink-0 text-ink-faint" />
-          </button>
           <div className={ROW + " border-t border-line-2"}>
             <span className="flex-1">Stop all sending</span>
             {/* Anyone can pause (it only ever holds messages); an admin turns it back off. */}
@@ -793,12 +800,12 @@ function SettingsPageInner() {
         )}
       </section>
 
-      {/* Booking hours have their own page (A-080's "How it writes" group);
-          they used to sit inside the Email page under the Gmail row. */}
+      {/* Your free hours: their own page, opened from Your business since A-316 (they used to sit under Sending
+          replies, and before that inside the Email page). The calendar it checks is under Connected apps. */}
       <section id="booking" hidden={!visible("booking")} className="scroll-mt-16">
         <h2 className={sectionLabel} style={SECTION_STYLE}>Your free hours</h2>
         <div className="mt-4">
-          <OnceOpen open={visible("booking")}><BookingCalendarConfig /></OnceOpen>
+          <OnceOpen open={visible("booking")}><BookingHoursConfig /></OnceOpen>
         </div>
       </section>
 
@@ -849,6 +856,14 @@ function SettingsPageInner() {
         <div className="mt-4">
           <OnceOpen open={visible("business")}><BusinessProfileSection /></OnceOpen>
         </div>
+        {/* Your free hours (A-316): when customers can book is how the owner works, so it opens from here. */}
+        <div className={BOX + " mt-4"}>
+          <button type="button" onClick={() => openMore("booking")} className={ROW + " text-left hover:bg-card-2"}>
+            <span className="shrink-0 whitespace-nowrap">Your free hours</span>
+            <span className="min-w-0 flex-1 truncate text-right text-[15px] text-ink-faint">{bookingSummary}</span>
+            <ChevronRight aria-hidden className="h-[18px] w-[18px] shrink-0 text-ink-faint" />
+          </button>
+        </div>
         {/* What FollowUp knows (A-096): what it will say about the business on its own. */}
         <div className="mt-4">
           <OnceOpen open={visible("business")}><BusinessFactsSection /></OnceOpen>
@@ -856,10 +871,6 @@ function SettingsPageInner() {
         {/* Who isn't a customer (A-259): what FollowUp learned from "Not a customer". */}
         <div className="mt-4 empty:hidden">
           <OnceOpen open={visible("business")}><NotCustomerSection /></OnceOpen>
-        </div>
-        {/* How you work (A-099): what FollowUp does for the owner because they said yes on Today. */}
-        <div className="mt-4 empty:hidden">
-          <OnceOpen open={visible("business")}><HowYouWorkSection /></OnceOpen>
         </div>
       </section>
 

@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import FilteredEmails from "@/components/FilteredEmails";
 import ChannelNotReceiving from "@/components/ChannelNotReceiving";
 import CrmConfig from "@/components/CrmConfig";
+import CalendarConnection from "./CalendarConnection";
 import { useWhatsAppSignup } from "@/lib/useWhatsAppSignup";
 import { safeBannerText } from "@/lib/bannerText";
 import { BOX, PILL, ConnectedAs, ConnectedMark, ConnectionRow, ConnectionSheet, NeedsMark, Soon } from "./connectionBits";
@@ -16,7 +17,9 @@ import { BOX, PILL, ConnectedAs, ConnectedMark, ConnectionRow, ConnectionSheet, 
  * who it's connected as, the messages FollowUp kept out, Done and
  * Disconnect. What used to be on these pages (access tokens, "Meta console
  * reference", Sync now, Scan spam, the raw embed code) is gone from the
- * screen (R-115); a place with no one-tap connect yet says "Soon".
+ * screen (R-115); a place with no one-tap connect yet says "Soon". Every app
+ * FollowUp works with is here and nowhere else (A-316): the CRM, and the
+ * calendar bookings land in.
  */
 
 type Social = { connected: boolean; receiving: boolean; name: string | null; oauthAvailable: boolean };
@@ -303,6 +306,9 @@ export default function Connections({
 
       <p className="mt-4 text-[14px] text-ink-faint">Use a CRM?</p>
       <CrmConfig />
+
+      <p className="mt-4 text-[14px] text-ink-faint">Your calendar</p>
+      <CalendarConnection isAdmin={isAdmin} />
 
       {open === "gmail" && (
         <ConnectionSheet

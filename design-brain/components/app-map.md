@@ -34,7 +34,7 @@ talked to them", "Not a customer", details, delete.
 | **Connected apps** | Every app, nowhere else (A-316): Email (Gmail, Outlook) · Instagram, Messenger, WhatsApp · Facebook Lead Ads · website form · your CRM (HubSpot, GoHighLevel, Follow Up Boss) · **your calendar** (which one you book in; FollowUp's or Google's) · each row ends in its state ("Connected", "Set up", "Choose") |
 | **Sending replies** | Only how replies go out: who sends (ask me / send by itself after your yes) · how FollowUp talks to your customers (try it) · **Write like me** (admins) · **Learned from you** (habits said yes to on Today) · What FollowUp asks · **When to check in** (follow-up plans, `/workflows`) · stop all sending |
 | **Alerts** | Phone buzz, email, quiet hours, bursts become one |
-| **Your business** | Business profile · **Your free hours** (when customers can book; the calendar it checks is under Connected apps) · **What FollowUp knows** (facts; "Tell FollowUp", `/tell`) · who isn't a customer |
+| **Your business** | Business profile · **Your free hours** (when customers can book; the calendar it checks is under Connected apps) · **What FollowUp knows** (facts; "Tell FollowUp", `/tell`, typed or talked, A-318) · who isn't a customer |
 | **Account** | Team (with "only admins send" and "your team calls") · Your plan · Sign-ins · Your data (help improve FollowUp, download, practice customers, delete) |
 | *(hidden)* Advanced | Webhooks in and out, phone number, lead routing: no row leads here (A-253); a direct link still works |
 
@@ -53,6 +53,8 @@ founder-only `/admin` and `/admin/office`.
 
 `/inbox` → Customers · `/pipeline` → Customers (all) · `/waiting` → Customers (waiting for their reply) ·
 `/coming-up` is still its own page, reached from Today's "Later" line (candidate to fold into Customers as a filter).
+`/calls` ("Calls this week", A-317) is its own page too, reached from Today's "Later" line "Calls this week": the
+calls booked through the owner's link for the next 7 days, by day (`?week=next` for the 7 after).
 
 ### 7. The back room (never on screen)
 

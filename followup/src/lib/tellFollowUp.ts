@@ -20,6 +20,7 @@
 import { labelKey, MAX_FACTS, MAX_LABEL, MAX_VALUE, squash, type FactLine } from "@/lib/factLines";
 import { teachQuestions, WHO_LABEL, type TeachQuestion } from "@/lib/teachQuestions";
 import { whatYouDoQuestion } from "@/lib/dailyQuestion";
+import { readTalk, type Talk } from "@/lib/tellTalk";
 
 export { exampleLine, knowsLine, MAX_ANSWER } from "@/lib/tellLines";
 
@@ -175,7 +176,7 @@ export function tellRows(topic: TellTopic, answer: string, proposed: ProposedTel
 }
 
 /** The meeting so far (A-314), as kept on the business: what FollowUp took from the answers, and its read of them. */
-export type TellDraft = { rows: FactLine[]; read?: string };
+export type TellDraft = { rows: FactLine[]; read?: string; talk?: Talk };
 
 /** The draft as stored, checked again: it comes back from the database as plain JSON. */
 export function parseTellDraft(raw: unknown): TellDraft {
@@ -191,7 +192,9 @@ export function parseTellDraft(raw: unknown): TellDraft {
     rows.push({ label, value });
   }
   const read = typeof o.read === "string" && o.read.trim() ? o.read : undefined;
-  return read ? { rows, read } : { rows };
+  // What the owner said out loud (A-318), kept with the draft until "Looks right" clears it.
+  const talk = readTalk(o.talk) ?? undefined;
+  return { rows, ...(read ? { read } : {}), ...(talk ? { talk } : {}) };
 }
 
 /** `add` over `base`: the same name is replaced where it stands, a new one goes at the end. */
@@ -217,6 +220,8 @@ export type Playback = {
   uses: [string, string][];
   /** Still to learn: skipped, left for when a customer asks (A-101). */
   skipped: string[];
+  /** What the owner said when they talked instead of typing (A-318): "From what you said · 2 min 14 s". */
+  talk: Talk | null;
 };
 
 /**
@@ -295,14 +300,15 @@ export function checkedRead(text: unknown, rows: readonly FactLine[]): string | 
 
 /**
  * What the owner's "Anything wrong or missing?" changes (A-314): each thing they stated, under a name FollowUp already
- * uses when it is the same thing, its value copied from what they wrote or dropped.
+ * uses when it is the same thing, its value copied from what they wrote or dropped. A talk (A-318) is read the same
+ * way, with room for a whole meeting's worth.
  */
-export function correctionRows(text: string, proposed: unknown, labels: readonly string[]): FactLine[] {
+export function correctionRows(text: string, proposed: unknown, labels: readonly string[], max = MAX_ROWS): FactLine[] {
   const haystack = squash(text).toLowerCase();
   const named = new Map(labels.map((l) => [labelKey(l), l]));
   const out: FactLine[] = [];
   for (const c of Array.isArray(proposed) ? proposed : []) {
-    if (out.length >= MAX_ROWS) break;
+    if (out.length >= max) break;
     if (!c || typeof c !== "object") continue;
     const rawLabel = typeof (c as FactLine).label === "string" ? squash((c as FactLine).label) : "";
     const value = typeof (c as FactLine).value === "string" ? squash((c as FactLine).value) : "";

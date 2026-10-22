@@ -151,6 +151,12 @@ const permissionsPolicy = [
   "browsing-topics=()",
 ].join(", ");
 
+/**
+ * "Talk to FollowUp about your business" (A-318) records the owner's voice on the meeting's page, so that one page, and
+ * only for itself, may ask for the microphone. Everywhere else it stays off.
+ */
+const tellPermissionsPolicy = permissionsPolicy.replace("microphone=()", "microphone=(self)");
+
 const commonHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
@@ -192,6 +198,11 @@ const nextConfig: NextConfig = {
         // the last matching rule's value for a repeated key).
         source: "/book/:path*",
         headers: [{ key: "Content-Security-Policy", value: bookCsp }],
+      },
+      {
+        // The meeting's page may ask for the microphone (A-318). Listed after the app's rule so this value wins.
+        source: "/tell",
+        headers: [{ key: "Permissions-Policy", value: tellPermissionsPolicy }],
       },
       {
         // The widget page customers put on their own sites: frameable by anyone.

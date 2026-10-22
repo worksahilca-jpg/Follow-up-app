@@ -2,10 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { Mic } from "lucide-react";
 import ScrollTitle from "@/components/app/ScrollTitle";
+import TellTalk, { useCanRecord } from "@/components/TellTalk";
 import type { FactLine } from "@/lib/factLines";
 import type { Playback, PlaybackRow, TellState, TellTopic } from "@/lib/tellFollowUp";
 import { exampleLine, MAX_ANSWER } from "@/lib/tellLines";
+import { talkLength } from "@/lib/tellTalk";
 
 /**
  * "Tell FollowUp about your business", a 5-minute meeting (A-311, A-314). FollowUp asks what a consultant would ask,
@@ -17,6 +20,9 @@ import { exampleLine, MAX_ANSWER } from "@/lib/tellLines";
  * The practice chat's bubbles (no avatar, no typing dots: brand principle 3), Today's quiet links. What was said this
  * visit lives only on this page; what FollowUp took from it waits on the server (the meeting's draft), so leaving
  * halfway loses nothing.
+ *
+ * "Rather talk?" (A-318): the same meeting said out loud (src/components/TellTalk.tsx), ending in the same play-back,
+ * with what was said and what the talk didn't cover.
  */
 type Exchange = { q: string; a: string };
 
@@ -118,6 +124,12 @@ export default function TellFollowUp({
   const [editing, setEditing] = useState<{ label: string; value: string } | null>(null);
   const [correction, setCorrection] = useState("");
   const [saved, setSaved] = useState<FactLine[] | null>(null);
+  // Talking instead of typing (A-318): offered once the page knows this browser can record; `talked` once a talk was
+  // played back on this visit, so its play-back shows even with questions still open.
+  const canTalk = useCanRecord();
+  const [talking, setTalking] = useState(false);
+  const [talked, setTalked] = useState(false);
+  const [showWords, setShowWords] = useState(false);
   const end = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
 
@@ -229,6 +241,25 @@ export default function TellFollowUp({
     setCorrection("");
   }
 
+  /** The talk was written down and read: its play-back, the same as the typed meeting's end. */
+  function talkDone(data: { state: TellState; playback: Playback | null }) {
+    setState(data.state);
+    setPlayback(data.playback);
+    setTalking(false);
+    setTalked(true);
+    setError(null);
+    window.scrollTo({ top: 0 });
+  }
+
+  /** "Answer them now": back to typing, at the first question the talk didn't cover. The draft keeps the talk. */
+  function typeTheRest() {
+    const next = state.topics.find((t) => t.label === state.open[0]) ?? null;
+    setTalked(false);
+    setPlayback(null);
+    setTopic(next);
+    window.scrollTo({ top: 0 });
+  }
+
   function value(row: PlaybackRow): string {
     return edits[row.label] ?? row.value;
   }
@@ -267,6 +298,11 @@ export default function TellFollowUp({
     </p>
   );
 
+  // Talking instead of typing (A-318).
+  if (talking) {
+    return <TellTalk topics={state.topics.map((t) => t.label)} again={again} onBack={() => setTalking(false)} onDone={talkDone} />;
+  }
+
   // After "Looks right".
   if (saved) {
     return (
@@ -293,14 +329,30 @@ export default function TellFollowUp({
     );
   }
 
-  // The end of the meeting: the whole business, played back once (A-314).
-  if (!topic && (playback || loadingPlayback)) {
+  // The end of the meeting: the whole business, played back once (A-314); after a talk, even with questions open.
+  if ((!topic || (talked && playback)) && (playback || loadingPlayback)) {
+    const notSaid = talked ? state.open : [];
     return (
       <div className="max-w-[640px] pb-10">
         <ScrollTitle title="Tell FollowUp" />
         {back}
         <p className="mt-2 text-[13px] text-ink-soft">Tell FollowUp about your business</p>
         <h1 className="title-serif ios-title1 mt-1">Here&apos;s your business, as FollowUp understands it.</h1>
+        {playback?.talk && (
+          <>
+            <p className="mt-1.5 text-[14.5px] leading-relaxed text-ink-soft">
+              From what you said · {talkLength(playback.talk.seconds)} ·{" "}
+              <button type="button" onClick={() => setShowWords((v) => !v)} aria-expanded={showWords} className="text-ink underline underline-offset-[3px]">
+                {showWords ? "Hide what you said" : "Read what you said"}
+              </button>
+            </p>
+            {showWords && (
+              <p className="mt-3 whitespace-pre-wrap rounded-[16px] border border-line bg-card px-3.5 py-3 text-[15px] leading-relaxed text-ink-soft">
+                {playback.talk.text}
+              </p>
+            )}
+          </>
+        )}
         {loadingPlayback || !playback ? (
           <p className="mt-6 px-1 text-[15px] text-ink-faint">FollowUp is putting it together…</p>
         ) : (
@@ -390,6 +442,20 @@ export default function TellFollowUp({
                     </li>
                   ))}
                 </ul>
+              </section>
+            )}
+
+            {notSaid.length > 0 && (
+              <section className="mt-6 flex flex-col gap-2" aria-labelledby="tell-not-said">
+                <h2 id="tell-not-said" className={SECTION}>
+                  Not in what you said
+                </h2>
+                <p className="px-1 text-[14.5px] leading-relaxed text-ink-soft">
+                  {listed(notSaid)}.{" "}
+                  <button type="button" onClick={typeTheRest} className="text-ink underline underline-offset-[3px]">
+                    Answer {notSaid.length === 1 ? "it" : "them"} now
+                  </button>
+                </p>
               </section>
             )}
 
@@ -523,6 +589,19 @@ export default function TellFollowUp({
         just answer in your own words. At the end it shows you what it understood, and nothing is used until you say it&apos;s
         right.
       </p>
+      {/* Talk instead (A-318): only where this browser can record. */}
+      {canTalk && (
+        <button
+          type="button"
+          onClick={() => setTalking(true)}
+          disabled={busy}
+          className={OUTLINED + " mt-4 gap-2"}
+          style={{ borderColor: "var(--line-strong)" }}
+        >
+          <Mic aria-hidden className="h-[18px] w-[18px]" strokeWidth={2} />
+          Rather talk? Talk for 2 minutes
+        </button>
+      )}
 
       <div className="mt-6 flex flex-col gap-4" aria-live="polite">
         {turns.map((t, i) => (

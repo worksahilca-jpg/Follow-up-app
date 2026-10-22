@@ -1,23 +1,20 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Reply } from "lucide-react";
 import Switch from "@/components/Switch";
 
 /**
  * "Write like me" — the consent switch for reading the owner's sent Gmail
  * replies from the last year so drafts sound like them (POST
- * /api/business/past-replies, src/lib/pastReplies.ts). Settings → Your data,
- * under "Help improve FollowUp".
+ * /api/business/past-replies, src/lib/pastReplies.ts). Settings → Sending
+ * replies since A-316 (it changes how replies are written), after "How
+ * FollowUp talks to your customers"; admins only, as it was under Your data.
  *
  * Its own switch, not folded into that one: that one keeps a draft beside
  * what was sent; this one reads a year of sent mail — a bigger ask, so it
  * gets its own yes. Off by default, never pre-ticked. Off deletes every copy
  * at once, and the copy says so, because that is the promise that makes
- * saying yes easy.
- *
- * The icon is a reply arrow: the owner's replies are the subject. Never a
- * sparkle (rejected.md S-13).
+ * saying yes easy. Never a sparkle (rejected.md S-13).
  */
 type State = {
   on: boolean;
@@ -84,24 +81,18 @@ export default function PastRepliesToggle() {
   const disabled = !state || busy || (!state.on && !state.gmailConnected);
 
   return (
-    <div className="box p-5">
-      <div className="flex items-center gap-4">
-        <div
-          className="h-9 w-9 rounded-[10px] flex items-center justify-center shrink-0"
-          style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}
-        >
-          <Reply className="h-4 w-4" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium">Write like me</p>
-          <p className="text-[13px] text-ink-soft mt-0.5">
+    <div className="overflow-hidden rounded-[16px] border border-line bg-card">
+      <div className="flex items-center gap-3.5 px-4 py-3.5">
+        <div className="min-w-0 flex-1">
+          <p className="text-[16px] font-semibold">Write like me</p>
+          <p className="mt-0.5 text-[14px] leading-snug text-ink-soft">
             {/* Shortened in the #16 cut (founder, 2026-10-05, A-094). */}
             Learns your style from the Gmail replies you sent this past year. Only your drafts use it. Turn it off to
             delete it.
           </p>
-          {line && <p className="text-[13px] text-ink mt-1.5">{line}</p>}
+          {line && <p className="mt-1.5 text-[14px] text-ink">{line}</p>}
           {error && (
-            <p className="mt-1 text-[13px]" style={{ color: "var(--coral)" }}>
+            <p role="alert" className="mt-1 text-[14px]" style={{ color: "var(--coral)" }}>
               {error}
             </p>
           )}

@@ -1,5 +1,5 @@
 /**
- * "Write like me" (Settings → Your data): with the owner's yes, read the
+ * "Write like me" (Settings → Sending replies, A-316): with the owner's yes, read the
  * replies they sent from Gmail in the last 12 months and keep a cleaned,
  * de-identified copy of each as a sample of how they write. src/lib/voice.ts
  * hands a few of them to THIS business's own drafts, so a draft sounds like

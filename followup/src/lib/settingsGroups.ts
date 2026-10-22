@@ -5,8 +5,10 @@
  * The same five on the phone's list and the desk's side list (A-222: same
  * words, each its own layout). Every setting's page (src/app/(app)/settings/
  * page.tsx, PAGES) sits in one group, so a link to any page (/settings#billing)
- * lights up the right one. The app map (design-brain/components/app-map.md) is
- * where new settings go.
+ * lights up the right one. Each thing sits in the group its name says (A-316):
+ * every app under Connected apps, only how replies go out under Sending
+ * replies. The app map (design-brain/components/app-map.md) is where new
+ * settings go.
  */
 export const SETTINGS_GROUPS = ["Connected apps", "Sending replies", "Alerts", "Your business", "Account"] as const;
 export type SettingsGroup = (typeof SETTINGS_GROUPS)[number];
@@ -15,7 +17,9 @@ const GROUP_OF_PAGE: Record<string, SettingsGroup> = {
   // out is two choices and three rows.
   connections: "Connected apps",
   replies: "Sending replies",
-  booking: "Sending replies",
+  // When customers can book is how the owner works, so it sits under Your business (A-316); the calendar it checks is
+  // an app, under Connected apps.
+  booking: "Your business",
   alerts: "Alerts",
   business: "Your business",
   team: "Account",
@@ -33,7 +37,7 @@ export const GROUP_PAGE: Partial<Record<SettingsGroup, string>> = {
   "Your business": "business",
 };
 /** A page opened from another page (not from a group's list): its "←" goes back there. */
-export const PARENT_PAGE: Record<string, string> = { booking: "replies" };
+export const PARENT_PAGE: Record<string, string> = { booking: "business" };
 /** Each group's address, so the phone's Back button steps from a page to its group to Settings. */
 export const GROUP_SLUG: Record<SettingsGroup, string> = {
   "Connected apps": "write",
@@ -82,6 +86,8 @@ const ALIASES: Record<string, string> = {
   write: "connections",
   automation: "replies",
   pause: "replies",
+  // The calendar's row, under Connected apps since A-316.
+  calendar: "connections",
 };
 
 /** Old section id (or a page id) → the page that shows it. */
@@ -94,15 +100,13 @@ export function pageForId(id: string): string | null {
 
 /**
  * Settings as a tree (A-257): the branches under a parent, which the desk's
- * stem shows under the parent you are in. A parent that is one page has
- * none. "When to check in" is the follow-up plans page, outside /settings.
+ * stem shows under the parent you are in. "When to check in" is the
+ * follow-up plans page, outside /settings.
  */
 export type SettingsBranch = { label: string; href: string; page: string | null };
 export const SETTINGS_BRANCHES: Partial<Record<SettingsGroup, SettingsBranch[]>> = {
-  "Sending replies": [
-    { label: "When to check in", href: "/workflows", page: null },
-    { label: "Your free hours", href: "/settings#booking", page: "booking" },
-  ],
+  "Sending replies": [{ label: "When to check in", href: "/workflows", page: null }],
+  "Your business": [{ label: "Your free hours", href: "/settings#booking", page: "booking" }],
   Account: [
     { label: "Team", href: "/settings#team", page: "team" },
     { label: "Your plan", href: "/settings#billing", page: "billing" },

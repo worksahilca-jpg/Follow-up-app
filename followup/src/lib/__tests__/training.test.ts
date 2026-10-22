@@ -131,6 +131,6 @@ describe("goodExamplesByTrade", () => {
       { trade: "Legal", _count: { _all: 3 } },
     ]);
     expect(await goodExamplesByTrade()).toEqual({ "Real estate": 12, Legal: 3 });
-    expect(prisma.trainingExample.groupBy.mock.calls[0][0].where).toEqual({ OR: [{ verdict: null }, { verdict: { not: "followup" } }] });
+    expect(prisma.trainingExample.groupBy.mock.calls[0][0].where).toEqual({ status: "ACTIVE", OR: [{ verdict: null }, { verdict: { not: "followup" } }] });
   });
 });

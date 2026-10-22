@@ -57,6 +57,7 @@ export interface BusinessExport {
   crmWrites: Record<string, unknown>[];
   stayInTouchNews: Record<string, unknown>[];
   ownerExamples: Record<string, unknown>[];
+  learningHistory: Record<string, unknown>[];
 }
 
 /**
@@ -103,6 +104,7 @@ export async function exportBusinessData(businessId: string): Promise<BusinessEx
     crmWrites,
     stayInTouchNews,
     ownerExamples,
+    learningHistory,
   ] = await Promise.all([
     prisma.user.findMany({
       where: { businessId },
@@ -151,6 +153,12 @@ export async function exportBusinessData(businessId: string): Promise<BusinessEx
     prisma.stayInTouchNews.findMany({ where: { businessId }, select: { text: true, fits: true, createdAt: true } }),
     // "Write it better" (A-290): replies the owner wrote to show how they answer.
     prisma.ownerExample.findMany({ where: { businessId }, select: { channel: true, customerSaid: true, reply: true, createdAt: true } }),
+    // What this business taught FollowUp, and every change to it (src/lib/learning.ts).
+    prisma.learningEvent.findMany({
+      where: { businessId },
+      orderBy: { createdAt: "asc" },
+      select: { kind: true, action: true, fromStatus: true, toStatus: true, version: true, before: true, after: true, note: true, createdAt: true },
+    }),
   ]);
 
   // Picked explicitly (rather than destructuring-and-omitting the secret
@@ -217,6 +225,7 @@ export async function exportBusinessData(businessId: string): Promise<BusinessEx
     crmWrites,
     stayInTouchNews,
     ownerExamples,
+    learningHistory,
   };
 }
 
@@ -343,6 +352,9 @@ export async function deleteBusinessData(
     prisma.stayInTouchNews.deleteMany({ where: { businessId } }),
     // "Write it better" (A-290). CASCADE too; listed so the erasure reads whole.
     prisma.ownerExample.deleteMany({ where: { businessId } }),
+    // What this business taught FollowUp, with the words (src/lib/learning.ts). CASCADE too; listed so the erasure
+    // reads whole. The founder's lessons for a kind of business have no businessId and are not this business's data.
+    prisma.learningEvent.deleteMany({ where: { businessId } }),
     prisma.crmConnection.deleteMany({ where: { businessId } }),
     prisma.notification.deleteMany({ where: { user: { businessId } } }),
     // Both cascade from User already; listed so the erasure reads as

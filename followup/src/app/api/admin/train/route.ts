@@ -9,10 +9,11 @@ import { cleanedText } from "@/lib/validation";
 import {
   clearVerdicts,
   deleteConversation,
-  deleteExample,
   getExample,
   nextToScore,
   readConversation,
+  restoreExample,
+  rollBackExample,
   saveConversation,
   saveFollowUpReply,
   saveTalkExample,
@@ -21,7 +22,14 @@ import {
 } from "@/lib/training";
 import { practiceReply, type PracticeChannel } from "@/lib/practiceReply";
 import { writeCoachRule } from "@/lib/integrations/openai";
-import { deleteTrainingRule, getTrainingRules, saveTrainingRule, updateTrainingRule } from "@/lib/trainingRules";
+import {
+  getTrainingRules,
+  restoreTrainingRule,
+  revertTrainingRuleWording,
+  rollBackTrainingRule,
+  saveTrainingRule,
+  updateTrainingRule,
+} from "@/lib/trainingRules";
 import { MAX_RULE_NOTE, MAX_RULE_TEXT } from "@/lib/trainingRuleLines";
 import { INDUSTRIES } from "@/lib/industries";
 
@@ -96,6 +104,11 @@ const bodySchema = z.discriminatedUnion("action", [
   }),
   z.object({ action: z.literal("rule-edit"), id: z.string().min(1).max(64), text: cleanedText(MAX_RULE_TEXT) }),
   z.object({ action: z.literal("rule-undo"), id: z.string().min(1).max(64) }),
+  // Milestone 1 (2026-10-22): nothing taught is lost. Put back an undone rule or example, or the words a rule had
+  // before its latest change (src/lib/learning.ts keeps the history).
+  z.object({ action: z.literal("rule-restore"), id: z.string().min(1).max(64) }),
+  z.object({ action: z.literal("rule-revert"), id: z.string().min(1).max(64) }),
+  z.object({ action: z.literal("example-restore"), id: z.string().min(1).max(64) }),
 ]);
 
 function fromAnotherSite(request: NextRequest): boolean {
@@ -120,7 +133,8 @@ async function founder(request: NextRequest) {
  * talk (FollowUp answers the founder playing a customer, as the chosen kind of business), teach (keep that answer, or
  * what it should have said, as an example), untrain (undo one); and "Tell FollowUp what's wrong" (A-297): coach (the
  * founder's words become a rule for that kind of business, and the answer is written again with it), rule-edit,
- * rule-undo.
+ * rule-undo. Undo rolls back rather than deletes (milestone 1): rule-restore, example-restore and rule-revert put
+ * things back.
  */
 export async function POST(request: NextRequest) {
   const { ctx, error } = await founder(request);
@@ -233,7 +247,12 @@ export async function POST(request: NextRequest) {
     }
 
     case "untrain": {
-      const ok = await deleteExample(body.id);
+      const ok = await rollBackExample(body.id, ctx.userId);
+      return NextResponse.json({ success: ok }, { status: ok ? 200 : 404 });
+    }
+
+    case "example-restore": {
+      const ok = await restoreExample(body.id, ctx.userId);
       return NextResponse.json({ success: ok }, { status: ok ? 200 : 404 });
     }
 
@@ -273,12 +292,22 @@ export async function POST(request: NextRequest) {
     }
 
     case "rule-edit": {
-      const ok = await updateTrainingRule(body.id, body.text);
+      const ok = await updateTrainingRule(body.id, body.text, ctx.userId);
       return NextResponse.json({ success: ok }, { status: ok ? 200 : 404 });
     }
 
     case "rule-undo": {
-      const ok = await deleteTrainingRule(body.id);
+      const ok = await rollBackTrainingRule(body.id, ctx.userId);
+      return NextResponse.json({ success: ok }, { status: ok ? 200 : 404 });
+    }
+
+    case "rule-restore": {
+      const ok = await restoreTrainingRule(body.id, ctx.userId);
+      return NextResponse.json({ success: ok }, { status: ok ? 200 : 404 });
+    }
+
+    case "rule-revert": {
+      const ok = await revertTrainingRuleWording(body.id, ctx.userId);
       return NextResponse.json({ success: ok }, { status: ok ? 200 : 404 });
     }
 
@@ -291,10 +320,10 @@ export async function POST(request: NextRequest) {
 
 /** DELETE ?id= — remove one conversation and every example taken from it. */
 export async function DELETE(request: NextRequest) {
-  const { error } = await founder(request);
+  const { ctx, error } = await founder(request);
   if (error) return error;
   const id = new URL(request.url).searchParams.get("id")?.slice(0, 64);
   if (!id) return NextResponse.json({ success: false, message: "Nothing to remove." }, { status: 400 });
-  const ok = await deleteConversation(id);
+  const ok = await deleteConversation(id, ctx.userId);
   return NextResponse.json({ success: ok }, { status: ok ? 200 : 404 });
 }

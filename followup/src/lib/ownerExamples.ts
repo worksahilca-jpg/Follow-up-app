@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { MAX_EXAMPLE_TEXT, PROMPT_EXAMPLES, type OwnerExampleLine } from "@/lib/ownerExampleLines";
+import { recordLearningEvent } from "@/lib/learning";
 
 /**
  * "Write it better" (A-290, founder 2026-10-18: "lets make a model and lets train it … i will make owners to train
@@ -11,6 +12,10 @@ import { MAX_EXAMPLE_TEXT, PROMPT_EXAMPLES, type OwnerExampleLine } from "@/lib/
  * Not a trained model: examples in the instructions work from one example and cost nothing to change. The rows are
  * also exactly what a trained model would need later, if the business ever asks for one. This business only, never
  * shared.
+ *
+ * Milestone 1 (2026-10-22): each example and each Undo is kept in this business's learning history
+ * (src/lib/learning.ts), and only an admin can teach (POST /api/practice/teach), because an example changes replies
+ * sent in the business's name (the same rule as A-100 and A-308).
  */
 
 /** At most this many per business; the oldest go first. */
@@ -48,6 +53,16 @@ export async function saveOwnerExample(
     },
     select: { id: true },
   });
+  await recordLearningEvent({
+    businessId,
+    kind: "owner_example",
+    targetId: row.id,
+    action: "created",
+    toStatus: "ACTIVE",
+    after: { channel: input.channel, customerSaid: input.customerSaid.trim().slice(0, MAX_EXAMPLE_TEXT), reply: input.reply.trim().slice(0, MAX_EXAMPLE_TEXT) },
+    byUserId: userId,
+    note: "Written on Try it yourself; the owner's own words, in use at once (A-290).",
+  });
   // Keep the newest MAX_KEPT.
   const old = await prisma.ownerExample.findMany({
     where: { businessId },
@@ -60,7 +75,10 @@ export async function saveOwnerExample(
 }
 
 /** Undo. Scoped to the business, so an id from another business deletes nothing. */
-export async function deleteOwnerExample(businessId: string, id: string): Promise<boolean> {
+export async function deleteOwnerExample(businessId: string, id: string, byUserId: string | null = null): Promise<boolean> {
   const { count } = await prisma.ownerExample.deleteMany({ where: { businessId, id } });
+  if (count > 0) {
+    await recordLearningEvent({ businessId, kind: "owner_example", targetId: id, action: "removed", fromStatus: "ACTIVE", byUserId });
+  }
   return count > 0;
 }

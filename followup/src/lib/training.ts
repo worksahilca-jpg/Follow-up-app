@@ -10,6 +10,7 @@ import {
   type TrainingChannel,
   type TrainingTurn,
 } from "@/lib/trainingParse";
+import { LIVE_STATUS, recordLearningEvent } from "@/lib/learning";
 
 /**
  * "Train FollowUp" (A-292, founder 2026-10-18: "I'll be asking Realtor and other owner to share their conversations
@@ -23,6 +24,11 @@ import {
  * founder says which answer is better. An example where FollowUp's answer was better stops being used.
  *
  * Only scrubbed text is stored (src/lib/trainingParse.ts). The callers are founder-only.
+ *
+ * Milestone 1 (2026-10-22): an example has a status (src/lib/learning.ts) and only an ACTIVE one reaches a draft.
+ * Undo rolls it back instead of deleting it, so it can be put back; every change is kept in its history. A pasted
+ * conversation keeps when its "I have permission" box was ticked, and by whom. Removing a whole conversation still
+ * deletes it and every example from it, for good: that is the founder's way to take a shared conversation out.
  */
 
 export type Verdict = "followup" | "same" | "agent";
@@ -57,23 +63,60 @@ export async function saveConversation(
   const turns = toTurns(lines, input.agent);
   const examples = toExamples(turns);
   if (examples.length === 0) throw new Error("no-examples");
+  const now = new Date();
   const row = await prisma.trainingConversation.create({
     data: {
       trade: input.trade,
       channel: input.channel,
       addedById,
       turnCount: turns.length,
+      // The route only saves with the permission box ticked (POST /api/admin/train, "save"); this keeps that answer.
+      source: "pasted",
+      consentConfirmedAt: now,
+      consentById: addedById,
       examples: {
-        create: examples.map((e) => ({ trade: input.trade, channel: input.channel, context: e.context, customerSaid: e.customerSaid, reply: e.reply })),
+        create: examples.map((e) => ({
+          trade: input.trade,
+          channel: input.channel,
+          context: e.context,
+          customerSaid: e.customerSaid,
+          reply: e.reply,
+          status: LIVE_STATUS,
+          approvedById: addedById,
+          approvedAt: now,
+        })),
       },
     },
     select: { id: true },
   });
+  await recordLearningEvent({
+    trade: input.trade,
+    kind: "training_conversation",
+    targetId: row.id,
+    action: "created",
+    toStatus: LIVE_STATUS,
+    after: { source: "pasted", examples: examples.length, permissionConfirmed: true },
+    byUserId: addedById,
+    note: "A pasted conversation, saved with the permission box ticked; its examples are in use at once (A-292).",
+  });
   return { id: row.id, examples: examples.length };
 }
 
-export async function deleteConversation(id: string): Promise<boolean> {
+/** Takes a conversation out for good, with every example from it. Only the fact that it happened is kept, no words. */
+export async function deleteConversation(id: string, byUserId: string | null = null): Promise<boolean> {
+  const found = await prisma.trainingConversation.findUnique({ where: { id }, select: { trade: true, _count: { select: { examples: true } } } });
   const { count } = await prisma.trainingConversation.deleteMany({ where: { id } });
+  if (count > 0) {
+    await recordLearningEvent({
+      trade: found?.trade ?? null,
+      kind: "training_conversation",
+      targetId: id,
+      action: "removed",
+      after: { examples: found?._count.examples ?? null },
+      byUserId,
+      note: "Removed with every example taken from it.",
+    });
+  }
   return count > 0;
 }
 
@@ -86,8 +129,8 @@ export type TrainingSummary = {
 export async function getTrainingSummary(): Promise<TrainingSummary> {
   const [conversations, examples, groups] = await Promise.all([
     prisma.trainingConversation.count(),
-    prisma.trainingExample.count(),
-    prisma.trainingExample.groupBy({ by: ["verdict"], _count: { _all: true } }),
+    prisma.trainingExample.count({ where: { status: LIVE_STATUS } }),
+    prisma.trainingExample.groupBy({ by: ["verdict"], where: { status: LIVE_STATUS }, _count: { _all: true } }),
   ]);
   const scored: Record<Verdict, number> = { followup: 0, same: 0, agent: 0 };
   for (const g of groups) if (g.verdict && (VERDICTS as readonly string[]).includes(g.verdict)) scored[g.verdict as Verdict] = g._count._all;
@@ -111,10 +154,10 @@ function readContext(v: unknown): TrainingTurn[] {
   );
 }
 
-/** The oldest example not judged yet. */
+/** The oldest example in use not judged yet. */
 export async function nextToScore(): Promise<ExampleToScore | null> {
   const row = await prisma.trainingExample.findFirst({
-    where: { verdict: null },
+    where: { verdict: null, status: LIVE_STATUS },
     orderBy: { createdAt: "asc" },
     select: { id: true, trade: true, channel: true, context: true, customerSaid: true, reply: true, followUpReply: true },
   });
@@ -148,6 +191,7 @@ export type ExampleRow = { id: string; conversationId: string; trade: string; ch
 
 export async function listExamples(take = 50): Promise<ExampleRow[]> {
   return prisma.trainingExample.findMany({
+    where: { status: LIVE_STATUS },
     orderBy: { createdAt: "desc" },
     take,
     select: { id: true, conversationId: true, trade: true, channel: true, customerSaid: true, reply: true, verdict: true },
@@ -165,6 +209,7 @@ export async function getTrainingExamples(trade: string | null, take: number, ex
     const rows = await prisma.trainingExample.findMany({
       where: {
         trade,
+        status: LIVE_STATUS,
         OR: [{ verdict: null }, { verdict: { not: "followup" } }],
         ...(excludeId ? { id: { not: excludeId } } : {}),
       },
@@ -205,7 +250,8 @@ export async function saveTalkExample(
   }
   if (!conversationId) {
     const row = await prisma.trainingConversation.create({
-      data: { trade: input.trade, channel: input.channel, addedById, turnCount: input.context.length + 2 },
+      // Made up by the founder playing the customer: nobody's conversation, so no permission to keep.
+      data: { trade: input.trade, channel: input.channel, addedById, turnCount: input.context.length + 2, source: "practice" },
       select: { id: true },
     });
     conversationId = row.id;
@@ -222,16 +268,43 @@ export async function saveTalkExample(
       followUpReply,
       verdict: input.taught ? "agent" : "same",
       scoredAt: new Date(),
+      status: LIVE_STATUS,
+      approvedById: addedById,
+      approvedAt: new Date(),
     },
     select: { id: true },
+  });
+  await recordLearningEvent({
+    trade: input.trade,
+    kind: "training_example",
+    targetId: example.id,
+    action: "created",
+    toStatus: LIVE_STATUS,
+    after: { customerSaid: clean(input.customerSaid), reply: input.taught ? clean(input.taught) : followUpReply, kept: input.taught ? "taught" : "good" },
+    byUserId: addedById,
+    note: "Kept on Talk to it; in use at once (A-294).",
   });
   return { id: example.id, conversationId };
 }
 
-/** Undo one taught or kept moment. */
-export async function deleteExample(id: string): Promise<boolean> {
-  const { count } = await prisma.trainingExample.deleteMany({ where: { id } });
-  return count > 0;
+/** Undo one taught or kept moment: it stops reaching drafts at once, and is kept so it can be put back. */
+export async function rollBackExample(id: string, byUserId: string | null = null): Promise<boolean> {
+  const found = await prisma.trainingExample.findFirst({ where: { id, status: LIVE_STATUS }, select: { trade: true } });
+  if (!found) return false;
+  const { count } = await prisma.trainingExample.updateMany({ where: { id, status: LIVE_STATUS }, data: { status: "ROLLED_BACK", endedAt: new Date() } });
+  if (count === 0) return false;
+  await recordLearningEvent({ trade: found.trade, kind: "training_example", targetId: id, action: "rolled_back", fromStatus: LIVE_STATUS, toStatus: "ROLLED_BACK", byUserId });
+  return true;
+}
+
+/** Put back an example that was undone. */
+export async function restoreExample(id: string, byUserId: string | null = null): Promise<boolean> {
+  const found = await prisma.trainingExample.findFirst({ where: { id, status: "ROLLED_BACK" }, select: { trade: true } });
+  if (!found) return false;
+  const { count } = await prisma.trainingExample.updateMany({ where: { id, status: "ROLLED_BACK" }, data: { status: LIVE_STATUS, endedAt: null } });
+  if (count === 0) return false;
+  await recordLearningEvent({ trade: found.trade, kind: "training_example", targetId: id, action: "restored", fromStatus: "ROLLED_BACK", toStatus: LIVE_STATUS, byUserId });
+  return true;
 }
 
 /** Good examples a kind of business needs before it gets a model of its own (founder, 2026-10-18). */
@@ -244,7 +317,7 @@ export const OWN_MODEL_AT = 500;
 export async function goodExamplesByTrade(): Promise<Record<string, number>> {
   const groups = await prisma.trainingExample.groupBy({
     by: ["trade"],
-    where: { OR: [{ verdict: null }, { verdict: { not: "followup" } }] },
+    where: { status: LIVE_STATUS, OR: [{ verdict: null }, { verdict: { not: "followup" } }] },
     _count: { _all: true },
   });
   const out: Record<string, number> = {};

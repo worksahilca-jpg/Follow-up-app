@@ -9,7 +9,9 @@ const { getSessionContext, practiceReply, training, writeCoachRule, rules } = vi
     getTrainingRules: vi.fn(async () => ["Offer a call early."]),
     saveTrainingRule: vi.fn(async (input: { text: string }) => ({ id: "r1", text: input.text })),
     updateTrainingRule: vi.fn(async () => true),
-    deleteTrainingRule: vi.fn(async () => true),
+    rollBackTrainingRule: vi.fn(async () => true),
+    restoreTrainingRule: vi.fn(async () => true),
+    revertTrainingRuleWording: vi.fn(async () => true),
   },
   training: {
     readConversation: vi.fn(() => ({ speakers: ["A", "B"], agent: "B", turns: [], examples: 1 })),
@@ -21,7 +23,8 @@ const { getSessionContext, practiceReply, training, writeCoachRule, rules } = vi
     setVerdict: vi.fn(),
     clearVerdicts: vi.fn(),
     saveTalkExample: vi.fn<(input: unknown, userId: unknown) => Promise<{ id: string; conversationId: string }>>(async () => ({ id: "e1", conversationId: "c1" })),
-    deleteExample: vi.fn(async () => true),
+    rollBackExample: vi.fn(async () => true),
+    restoreExample: vi.fn(async () => true),
     VERDICTS: ["followup", "same", "agent"],
   },
 }));
@@ -150,10 +153,14 @@ describe("POST /api/admin/train", () => {
     expect(training.saveTalkExample).not.toHaveBeenCalled();
   });
 
-  it("untrain removes one example", async () => {
+  it("untrain rolls one example back (kept, so it can be put back), and example-restore puts it back", async () => {
     const { POST } = await import("@/app/api/admin/train/route");
     expect((await POST(req({ action: "untrain", id: "e1" }))).status).toBe(200);
-    expect(training.deleteExample).toHaveBeenCalledWith("e1");
+    expect(training.rollBackExample).toHaveBeenCalledWith("e1", "u");
+    expect((await POST(req({ action: "example-restore", id: "e1" }))).status).toBe(200);
+    expect(training.restoreExample).toHaveBeenCalledWith("e1", "u");
+    training.restoreExample.mockResolvedValueOnce(false);
+    expect((await POST(req({ action: "example-restore", id: "gone" }))).status).toBe(404);
   });
 
   // A-297, "Tell FollowUp what's wrong": the founder's words become a rule for that kind, and the answer is written again.
@@ -229,13 +236,30 @@ describe("POST /api/admin/train", () => {
     delete process.env.OPENAI_API_KEY;
   });
 
-  it("rule-edit and rule-undo change or remove one rule, and say when it's gone", async () => {
+  it("rule-edit and rule-undo change or roll back one rule, by whom, and say when it's gone", async () => {
     const { POST } = await import("@/app/api/admin/train/route");
     expect((await POST(req({ action: "rule-edit", id: "r1", text: "Offer a viewing first." }))).status).toBe(200);
-    expect(rules.updateTrainingRule).toHaveBeenCalledWith("r1", "Offer a viewing first.");
+    expect(rules.updateTrainingRule).toHaveBeenCalledWith("r1", "Offer a viewing first.", "u");
     expect((await POST(req({ action: "rule-undo", id: "r1" }))).status).toBe(200);
-    expect(rules.deleteTrainingRule).toHaveBeenCalledWith("r1");
-    rules.deleteTrainingRule.mockResolvedValueOnce(false);
+    expect(rules.rollBackTrainingRule).toHaveBeenCalledWith("r1", "u");
+    rules.rollBackTrainingRule.mockResolvedValueOnce(false);
     expect((await POST(req({ action: "rule-undo", id: "gone" }))).status).toBe(404);
+  });
+
+  it("rule-restore puts an undone rule back; rule-revert brings back the words before the latest change", async () => {
+    const { POST } = await import("@/app/api/admin/train/route");
+    expect((await POST(req({ action: "rule-restore", id: "r1" }))).status).toBe(200);
+    expect(rules.restoreTrainingRule).toHaveBeenCalledWith("r1", "u");
+    expect((await POST(req({ action: "rule-revert", id: "r1" }))).status).toBe(200);
+    expect(rules.revertTrainingRuleWording).toHaveBeenCalledWith("r1", "u");
+    rules.revertTrainingRuleWording.mockResolvedValueOnce(false);
+    expect((await POST(req({ action: "rule-revert", id: "never-edited" }))).status).toBe(404);
+  });
+
+  it("restoring is founder-only, like everything else here", async () => {
+    getSessionContext.mockResolvedValue({ userId: "u", businessId: "b", email: "owner@example.com", authTime: 0 });
+    const { POST } = await import("@/app/api/admin/train/route");
+    expect((await POST(req({ action: "rule-restore", id: "r1" }))).status).toBe(404);
+    expect(rules.restoreTrainingRule).not.toHaveBeenCalled();
   });
 });

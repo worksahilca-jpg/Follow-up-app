@@ -149,7 +149,7 @@ before the call).
 | Booking | Attendance | Incomplete | only the owner's one-tap answer (`Booking.outcome`) |
 | Learning | Owner examples, voice from edits | Works, **automatic** | apply to that owner's next draft immediately |
 | Learning | Founder's trained rules (per trade) | **Risky** | `TrainingRule` has no status, version or test; the newest 20 reach every business of that trade at once |
-| Learning | Founder's trained examples (per trade) | **Risky** | `TrainingExample`: same, up to 3 per draft; no consent field for pasted real conversations |
+| Learning | Founder's trained examples (per trade) | **Risky** | `TrainingExample`: same, up to 3 per draft; saving a pasted real conversation needs a ticked permission box, but the answer isn't stored |
 | Learning | Changes to training logged | **Missing** | no `AuditEvent` for adding or removing a rule or example |
 | Evaluation | 4 accuracy tests on the real model | Works | `lib/classifierEval.ts`, `dmJudgeEval.ts`, `qualificationEval.ts`, `replyEval.ts` |
 | Evaluation | Test messages from real customers or realtors | **Missing** | all four sets are invented; the realtor judging sheet (30 messages) has no answers yet |
@@ -176,7 +176,7 @@ before the call).
 | 5. GTA / Ontario playbooks | `followup/playbook/real-estate.md` (PR #582), trade question order | No area-specific knowledge (neighbourhoods, condo vs freehold, pre-construction, rentals by city); objection answers are generic |
 | 6. Booking reliability | Safe slot holding, no double booking | Offer times in the chat, confirm, move, cancel, remind the customer, mark no-shows, tell the owner at once |
 | 7. Follow-ups | Plans, caps, window, stops, their moment | Objection-aware follow-ups; a record of which follow-up brought someone back |
-| 8. Approval and feedback | Today queue, owner edits teach drafts | Founder training goes live with no test; no versions; no rollback; no consent record |
+| 8. Approval and feedback | Today queue, owner edits teach drafts | Founder training goes live with no test; no versions; no rollback; the permission box isn't stored |
 | 9. Evaluation | 4 invented test sets on the real model | Real labelled data, held-out split, stored runs, Ready precision/recall, a gate before release |
 | 10. Outcome dashboard | Results, pilot numbers | Funnel by source and by call (Ready → booked → met), speed to first reply, measured not estimated |
 

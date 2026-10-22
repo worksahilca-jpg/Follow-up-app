@@ -74,6 +74,15 @@ a booked call or visit; the owner closes.
 
 **Last updated: 2026-10-22**
 
+- **Personal AI assistant brief, milestone 1 built (Oct 22, PR #582, not merged):** the founder's brief (parts 1–22) is
+  audited in `followup/research/product/2026-10-22-ai-assistant-system-plan.md`: Train It and Talk to It exist but are
+  founder-only (Admin → Train); owners have Try it yourself + Write it better, Teach FollowUp, What FollowUp knows,
+  Teach it your way. Milestone 1 (no screen changes): founder rules and examples have statuses, versions and a history
+  (`LearningEvent`), Undo rolls back and can be restored, pasted-conversation permission is stored, owner examples are
+  admin-only, and `src/lib/actionPolicy.ts` lists every action with who must allow it (a test fails if an automatic
+  sender ignores "ask me first"). Waiting: the founder's answers to the 5 decisions in section 6 (onboarding vs R-027,
+  a test step for founder rules, owner Talk to It vs R-136, corrections vs R-137, identity), then drawings for
+  milestones 2–3.
 - **Sales engine, phase 1 audit (Oct 22, PR #582, no code changed):** the founder's "AI sales assistant engine" brief
   (phases 1–10). `followup/research/product/2026-10-22-sales-engine-audit.md`: one message traced through the code,
   every feature marked works / incomplete / missing / risky, the gaps per phase, proposed tables (all additive, each

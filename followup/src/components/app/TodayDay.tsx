@@ -21,11 +21,23 @@ export type TodayRow = {
   href: string | null;
   /** The customer's name: the row shows their initials instead of an icon (A-266, friendlier than a symbol). */
   person?: string | null;
-  /** A quiet word beside the name, "Ready" (A-286): an outline, no colour. */
+  /** A quiet word beside the name, where they stand: "Ready", "Warm" (A-286, A-310): an outline, no colour. */
   tag?: string | null;
 };
 
 const ICON = { reply: MessageCircle, call: Phone, booking: CalendarDays, checkin: MessageCircle } as const;
+
+/**
+ * Where a customer stands, as one quiet word beside their name: "Ready", "Warm", "Later", "Has an agent" (A-286,
+ * FollowUp's call A-310). An outline, no colour (A-281): status colours are for broken or done.
+ */
+export function TierTag({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="shrink-0 rounded-full border px-[7px] text-[12px] font-semibold leading-[18px] text-ink" style={{ borderColor: "var(--line-strong)" }}>
+      {children}
+    </span>
+  );
+}
 
 /** A section title in the day: a plain heading and, on the right, a short count or date. */
 export function DayHeading({ title, aside }: { title: string; aside?: string | null }) {
@@ -53,11 +65,7 @@ export function DayRow({ row, onClick, expanded }: { row: TodayRow; /** No longe
       <span className="min-w-0 flex-1">
         <span className="flex items-baseline gap-2">
           <span className="truncate text-[15.5px] font-semibold leading-snug">{row.title}</span>
-          {row.tag && (
-            <span className="shrink-0 rounded-full border px-[7px] text-[12px] font-semibold leading-[18px]" style={{ borderColor: "var(--line-strong)" }}>
-              {row.tag}
-            </span>
-          )}
+          {row.tag && <TierTag>{row.tag}</TierTag>}
         </span>
         {row.sub && <span className="mt-0.5 block text-[13.5px] leading-snug text-ink-soft">{row.sub}</span>}
       </span>

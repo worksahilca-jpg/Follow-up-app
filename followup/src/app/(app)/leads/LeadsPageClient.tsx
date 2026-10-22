@@ -17,6 +17,7 @@ import { motion } from "framer-motion";
 import { MOTION } from "@/lib/motion";
 import { Search, Plus, Upload, Phone, Inbox, SlidersHorizontal, X, ChevronLeft, MoreHorizontal } from "lucide-react";
 import { Initials, shortAge } from "@/components/app/canvasBits";
+import { TierTag } from "@/components/app/TodayDay";
 
 /**
  * The filters on Everyone. The pipeline's stages are filters here now
@@ -124,6 +125,8 @@ function LeadsMoreMenu({ onAdd, onLogCall, onImport, wide = false }: { onAdd: ()
 export type Show = "needs" | "ready" | "booked" | "quiet" | "waiting" | "all";
 /** The line under a name when its group has something better to say than their last message. */
 export type GroupLines = Record<string, string>;
+/** FollowUp's call (A-310): where each open customer stands, "Ready", "Warm", "Later", "Has an agent", by id. */
+export type Tags = Record<string, string>;
 type Groups = { needs: string[]; ready: string[]; booked: string[]; quiet: string[]; waiting: string[] };
 
 const TITLE: Record<Show, string> = {
@@ -154,7 +157,7 @@ const said = (l: Lead) => {
 type Status = "needs" | "ready" | "booked" | "quiet" | "waiting";
 
 /** One customer: their name, one line, where they are in words, and (for Ready to book) a Call button beside the row. */
-function Row({ lead, href, line, meta, selected, call = false, status = null, when = null }: { lead: Lead; href: string; line: string; meta?: string | null; selected?: boolean; first?: boolean; call?: boolean; status?: Status | null; when?: string | null }) {
+function Row({ lead, href, line, meta, selected, call = false, status = null, when = null, tag = null }: { lead: Lead; href: string; line: string; meta?: string | null; selected?: boolean; first?: boolean; call?: boolean; status?: Status | null; when?: string | null; tag?: string | null }) {
   return (
     // A row in a white group (A-307): the group draws the thin line between rows.
     <li
@@ -171,7 +174,10 @@ function Row({ lead, href, line, meta, selected, call = false, status = null, wh
       >
         <Initials name={lead.name} size={40} />
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-[15px] font-semibold">{lead.name}</span>
+          <span className="flex min-w-0 items-baseline gap-2">
+            <span className="truncate text-[15px] font-semibold">{lead.name}</span>
+            {tag && <TierTag>{tag}</TierTag>}
+          </span>
           <span className="block truncate text-[13.5px] text-ink-soft">{line.replace(/\s+/g, " ")}</span>
           {status && <StatusLine status={status} when={when} />}
         </span>
@@ -214,6 +220,7 @@ export default function LeadsPageClient({
   leads,
   groups,
   lines,
+  tags = {},
   show = null,
   stage = null,
   openId = null,
@@ -222,6 +229,7 @@ export default function LeadsPageClient({
   /** Who is in which group, worked out on the server from the same sources Today uses. */
   groups: Groups;
   lines: GroupLines;
+  tags?: Tags;
   /** A group opened as a list (?show=), or null for the groups. */
   show?: Show | null;
   /** A pipeline stage to filter Everyone by (?stage=, where /pipeline now lands). */
@@ -341,7 +349,9 @@ export default function LeadsPageClient({
     const call = where === "ready" || state === "ready";
     // A row in a labelled group doesn't repeat the label (A-307): "Your reply is ready" says it once.
     const status = sayStatus ? state : null;
-    return <Row key={lead.id} lead={lead} href={rowHref(lead.id)} line={line} meta={meta} selected={lead.id === openId} call={call} status={status} when={status === "booked" ? lines[lead.id] ?? null : null} />;
+    // Where they stand (A-310), unless the row already says it: "Ready to book" is the same call in words.
+    const tag = call ? null : (tags[lead.id] ?? null);
+    return <Row key={lead.id} lead={lead} href={rowHref(lead.id)} line={line} meta={meta} selected={lead.id === openId} call={call} status={status} when={status === "booked" ? lines[lead.id] ?? null : null} tag={tag} />;
   };
 
   const searchBox = (where = "mt-3") => (

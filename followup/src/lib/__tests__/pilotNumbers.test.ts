@@ -67,6 +67,20 @@ describe("calls", () => {
     expect(c.rightPercent).toBe(80);
   });
 
+  it("counts every kind of call, and the customers whose plan the owner changed (A-310)", () => {
+    const c = countCalls(
+      [
+        { tier: "ready", won: false, booked: false },
+        { tier: "warm", won: false, booked: false, planPicked: true },
+        { tier: "later", won: false, booked: false },
+        { tier: "later", won: false, booked: false },
+        { tier: "agent", won: false, booked: false },
+      ],
+      { setAside: 0, keptOut: 0, broughtBack: 0 }
+    );
+    expect(c).toMatchObject({ ready: 1, warm: 1, later: 2, agent: 1, planPicked: 1 });
+  });
+
   it("has no percent before any call", () => {
     expect(countCalls([], { setAside: 0, keptOut: 0, broughtBack: 0 }).rightPercent).toBeNull();
   });

@@ -833,7 +833,9 @@ group the founder can get three owners from is the pilot; the founder hasn't sai
 **What the pilot measures, per business, on /admin → Testers → "The pilot"** (founder-only, numbers only, last 30
 days, never the practice customer):
 1. **Were FollowUp's calls right?** Customers it let in that the owner set aside; messages it kept out that the owner
-   brought back; the share of calls the owner didn't correct. Customers it called Ready, and how many booked or were won.
+   brought back; the share of calls the owner didn't correct. FollowUp's calls (A-310): Ready, Warm, Later, Has an agent,
+   how many Ready ones booked or were won, and how many customers' plans the owner changed. Measured from what happens;
+   owners are never asked to grade a call (R-137).
 2. **How much of the owner's work did it take?** Replies sent as written, changed first, or sent on its own, and
    "about N minutes saved". The minutes are a stated guess (4 to write, ½ to check, 2 to change) until testers time
    themselves.

@@ -14841,6 +14841,8 @@ founder's stuck-testers email still leaves out testers quiet for more than two w
 
 ## 2026-10-22 — "FollowUp's call" drawn; waiting for the founder
 
+**SUPERSEDED (2026-10-22)** by the entry below and A-310 / R-137: built fully automatic, without the Yes/No question.
+
 **Founder:** *"yes go ahead"* to drawing it, and *"make it so accurate and effective that business owners should think,
 'Oh yeah, this is the job that I needed'"* (now a brand principle, "The job they needed").
 
@@ -14859,3 +14861,18 @@ right/changed calls.
 **Weak points, named:** a second "change" control on Warm/Later cards ("Change plan" and "No"); Ready is a green pill on
 the customer page but an outline tag on Today (an older mismatch, not new); Results numbers mean little before about 5
 calls; realtors only, since only the realtor checklist sorts customers today.
+
+## 2026-10-22 — FollowUp's call built, fully automatic (A-310, R-137)
+
+**Founder:** build it, fix the weak spots, *"totally automated … we are judging if it is warm or cold"*.
+**Built:** `src/lib/followUpCall.ts` (the words, from the tier and the plan the engine sends by), Today's open person and
+row tags, the customer's card, Customers row tags, Results "FollowUp's calls", and the pilot's counts.
+**The four weak spots from the drawing:**
+1. Two change links on Warm cards: gone with the Yes/No (R-137); "Change plan" is the only one.
+2. Green Ready on the card, outline on Today: one outline tag everywhere now (A-281).
+3. Results numbers meaningless with few customers: the box waits for 5 sorted customers.
+4. Realtors only: still true, on purpose. Sorting other kinds of business needs their own checklist (open task); the
+   card and tags simply don't show for them, so nothing false appears.
+**Also found and fixed while building:** a customer with an agent had "Has an agent" twice on their Today row.
+**Weak points:** "call Raj today" is said even when the Ready call is days old (still the right step, but "today" can
+repeat); the Results sentence can read as "0 of your 2 Ready customers booked" early in a month, which is honest but flat.

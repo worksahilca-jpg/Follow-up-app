@@ -5414,3 +5414,32 @@ Amends brand principle 2 ("urgency is stated once") for this one case.
   week, then stops."
 - Why: two testers' Gmail sat disconnected for weeks (since Sep 13 and Oct 6) after one notice each. The owner who
   stopped opening FollowUp is the one who never sees the line inside it.
+
+## A-310 — FollowUp's call: where each customer stands and the one next step, judged by FollowUp alone ^A-310
+
+**Date:** 2026-10-22. **Founder, verbatim:** *"Can you please fix all the weak spots and also build this follow-up call?
+Keep in mind that it should be totally automated. We are judging if it is warm or cold. The business owner … will not
+come again and again to ping you up or to select whether it is a warm lead or a hot lead … We're going to judge it
+accurately."* Drawn the same day (scratchpad `call/board-*.png`); built without the drawing's Yes/No question (R-137).
+**What specifically:**
+- **Today, the open person:** under who they are, one quiet tag (Ready, Warm, Later, Has an agent), "FollowUp's call"
+  beside it, and one line: what to do with the reply that waits and what comes after. Ready: "Send this, then call Raj
+  today to set up the showing." Warm or Later: "Send this. Then FollowUp follows up on the Fast plan. Nothing more for you
+  to do." (or "Each one waits for your OK", or the plan's own paused reason). Has an agent: "… After this, FollowUp stops
+  following up." The three facts under it are the reason.
+- **Rows** on Today and Customers carry the same tag for every tier, not only Ready; never twice (a row whose line already
+  says it, or a "Ready to book" row with its Call button, has no tag).
+- **The customer's card (A-246):** the same tag and "FollowUp's call" at the top of every tier. Ready gains "Next: call
+  Raj today to set up the showing." (or "reply to Raj with a time" with no number; a seller: "call Linda today to book a
+  visit to 18 Birch Cres"; already booked: "the showing is booked. Nothing to do before it."). Warm and Later keep the
+  plan line, which already is the next step. Ready is no longer a green pill: one outline tag for every tier (A-281, no
+  colour for status that isn't broken or done).
+- **Results:** "FollowUp's calls · last 30 days": Ready (You call them), Warm (FollowUp follows up), Later (FollowUp
+  checks in), Has an agent (FollowUp stopped), then "2 of your 3 Ready customers booked a time with you." Shown only once
+  FollowUp has sorted 5 customers in the window.
+- **The pilot (admin):** "FollowUp's calls" counts every tier, the Ready ones that booked or bought, and "Owner changed the
+  plan on N": the automatic sign a call was off. Nobody grades anything.
+- **Accurate by construction:** the step comes from the same plan the engine sends by (planCard.ts), so it never promises a
+  message that won't go; the tier is sorted again each time the customer writes and from the owner's CRM call notes (A-303).
+- **Realtors only for now:** only the realtor checklist sorts customers; other kinds of business show no tag until they
+  have their own (open task: memory for every kind).

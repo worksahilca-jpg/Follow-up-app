@@ -73,6 +73,10 @@ a booked call or visit; the owner closes.
 
 **Last updated: 2026-10-22**
 
+- **FollowUp's call (A-310, Oct 22, PR open):** every customer shows where they stand (Ready, Warm, Later, Has an agent)
+  and the one next step, on Today, their page and Customers; Results shows what the calls came to. Fully automatic: the
+  founder rejected asking owners to grade it (R-137). New brand principle: "The job they needed".
+
 - **Reconnect reminders (A-309, Oct 22, PR open):** an owner whose Gmail or Outlook stays disconnected gets one email at
   day 2 and one at day 7, then nothing. Found because 2 of 3 testers' Gmail had been broken for weeks (Google's old 7-day
   test-mode limit; connections made since Oct 3 last). YC application paused by the founder; the draft is kept.

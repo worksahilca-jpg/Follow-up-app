@@ -11,7 +11,7 @@ import { plainHoldReason } from "@/lib/holdReasons";
 import { STAY_IN_TOUCH_TRIGGER } from "@/lib/stayInTouch";
 import { THEIR_MOMENT_TRIGGER } from "@/lib/theirMoment";
 import { isBookingLinkReason } from "@/lib/bookingOffer";
-import { DayHeading, DayRow, type TodayRow } from "@/components/app/TodayDay";
+import { DayHeading, DayRow, TierTag, type TodayRow } from "@/components/app/TodayDay";
 import { Initials } from "@/components/app/canvasBits";
 import MeetingOutcomeCard, { type MeetingToLookBackOn } from "@/components/app/MeetingOutcomeCard";
 import CallBriefCard, { type CallToPrepare } from "@/components/app/CallBriefCard";
@@ -93,6 +93,11 @@ export type ApprovalItem = PendingApproval & {
   line?: string | null;
   /** FollowUp knows everything it needs: a quiet "Ready" on their row (A-286). */
   ready?: boolean;
+  /**
+   * FollowUp's call (A-310): where they stand ("Ready", "Warm", "Later", "Has an agent") for their row and the open
+   * person, and the one next step after this reply, from the plan the engine sends by. Judged by FollowUp alone.
+   */
+  call?: { tag: string; next: string | null } | null;
   /** Up to three known facts for the open person (A-286). */
   facts?: [string, string][];
   /** How many messages FollowUp or the owner has sent them (A-286): "FollowUp has replied 3 times". */
@@ -319,6 +324,17 @@ function ApprovalCard({
         </p>
       )}
 
+      {/* FollowUp's call (A-310): where they stand and the one next step, judged by FollowUp alone. The facts under it
+          are the reason. Never a question for the owner. */}
+      {bare && item.call && (
+        <div className="mt-4">
+          <p className="flex items-center gap-2.5">
+            <TierTag>{item.call.tag}</TierTag>
+            <span className="text-[13px] text-ink-faint">FollowUp&rsquo;s call</span>
+          </p>
+          {item.call.next && <p className="mt-1.5 text-[16px] font-semibold leading-snug">{item.call.next}</p>}
+        </div>
+      )}
       {/* Who they are, at a glance (A-286): at most three facts from their own words, known ones only, then the way to
           everything else. No box: hairlines, like a Mac settings list. */}
       {bare && item.facts && item.facts.length > 0 && (
@@ -1037,7 +1053,9 @@ const REPLY_ROWS = 4;
 
 /** One person in Then (A-266): their name, then one plain sentence of what is ready and how long they have waited. */
 function replyRow(item: ApprovalItem): TodayRow {
-  const base = { key: item.leadId, kind: "reply" as const, title: item.leadName, person: item.leadName, time: null, href: null, tag: item.ready ? "Ready" : null };
+  // Where they stand (A-310), unless their line already says it ("Buying · Has an agent").
+  const tag = item.call?.tag ?? (item.ready ? "Ready" : null);
+  const base = { key: item.leadId, kind: "reply" as const, title: item.leadName, person: item.leadName, time: null, href: null, tag: tag && !item.line?.includes(tag) ? tag : null };
   // Who they are, from their own words (A-286), whenever FollowUp knows; what is waiting is said when they open.
   if (item.line) return { ...base, sub: item.line };
   // A note to someone staying in touch (A-260) answers nothing: the row says what it is.

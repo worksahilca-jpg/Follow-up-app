@@ -22,7 +22,7 @@ export const PILOT_WINDOW_DAYS = 30;
 const DAY = 86_400_000;
 /** The practice customer (POST /api/leads/test-lead) is never counted. */
 const PRACTICE_SOURCE = "Test lead";
-const REAL_CUSTOMER = { OR: [{ source: null }, { source: { not: PRACTICE_SOURCE } }] };
+export const REAL_CUSTOMER = { OR: [{ source: null }, { source: { not: PRACTICE_SOURCE } }] };
 /** Enough for a small business's 90 days before FollowUp plus the window; a bigger inbox is counted from its newest. */
 const MAX_MESSAGES = 20_000;
 const MAX_BUSINESSES = 40;
@@ -84,7 +84,7 @@ async function pilotFor(
     }),
     prisma.lead.findMany({
       where: { businessId, createdAt: { gte: since }, ...REAL_CUSTOMER },
-      select: { qualification: true, stage: true, bookings: { where: { status: "confirmed" }, select: { id: true }, take: 1 } },
+      select: { qualification: true, stage: true, followUpPlan: true, bookings: { where: { status: "confirmed" }, select: { id: true }, take: 1 } },
       take: MAX_MESSAGES,
     }),
     prisma.auditEvent.groupBy({
@@ -136,6 +136,7 @@ async function pilotFor(
         tier: readQualification(c.qualification)?.tier ?? null,
         won: c.stage === "WON",
         booked: c.bookings.length > 0,
+        planPicked: c.followUpPlan !== null,
       })),
       { setAside: corrected("lead.not_customer"), keptOut, broughtBack: corrected("lead.classification_overridden") }
     ),

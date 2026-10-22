@@ -19,7 +19,10 @@ import { getSessionContext } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { getPendingApprovals, onTodayNow } from "@/lib/pendingApprovals";
 import { getCallsToMake } from "@/lib/calls";
-import { ordinalCall } from "@/lib/callPlan";
+import { isCallablePhone, ordinalCall } from "@/lib/callPlan";
+import { getBusinessAutomationRules } from "@/lib/automationStatus";
+import { planCard } from "@/lib/planCard";
+import { readyFacts, TIER_WORD, todayCall } from "@/lib/followUpCall";
 import type { CallCard } from "@/components/app/CallsToMake";
 import { getIncompleteSetupSteps } from "@/lib/setupStatus";
 import { getGmailStatus } from "@/lib/integrations/gmail";
@@ -173,7 +176,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   // Who each waiting person is, from their own words (A-286): one line for the row, up to three facts for the open
   // person, and how many times FollowUp or the owner has written to them. Scoped to this business.
   const waitingIds = withBasisItems.map((a) => a.leadId);
-  const [waitingQuals, waitingConvs] =
+  const [waitingQuals, waitingConvs, rules] =
     ctx && waitingIds.length > 0
       ? await Promise.all([
           prisma.lead.findMany({ where: { id: { in: waitingIds }, businessId: ctx.businessId }, select: { id: true, qualification: true } }),
@@ -181,13 +184,30 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             where: { leadId: { in: waitingIds }, lead: { businessId: ctx.businessId } },
             select: { leadId: true, _count: { select: { messages: { where: { direction: "outbound" } } } } },
           }),
+          // FollowUp's call (A-310): what comes after the reply, from the same plan the engine sends by.
+          getBusinessAutomationRules(ctx.businessId),
         ])
-      : [[], []];
+      : [[], [], null];
   const qualOf = new Map(waitingQuals.map((l) => [l.id, readQualification(l.qualification)]));
   const repliesTo = new Map<string, number>();
   for (const c of waitingConvs) repliesTo.set(c.leadId, (repliesTo.get(c.leadId) ?? 0) + c._count.messages);
+  const leadById = new Map(leads.map((l) => [l.id, l]));
+  // FollowUp's call (A-310): where each waiting person stands and the one next step, judged by FollowUp alone.
+  const callFor = (leadId: string, name: string): ApprovalItem["call"] => {
+    const q = qualOf.get(leadId) ?? null;
+    if (!q?.tier) return null;
+    const lead = leadById.get(leadId);
+    const first = name.split(" ")[0] || name;
+    const canCall = isCallablePhone(lead?.phone) || isCallablePhone(lead?.dmPhone);
+    const plan = lead && rules ? planCard(lead, rules, now, timezone) : null;
+    return {
+      tag: TIER_WORD[q.tier],
+      next: todayCall(q.tier, { first, ready: q.tier === "ready" ? readyFacts(q, first, canCall) : null, plan, holdAll: rules?.holdAllForApproval ?? true }),
+    };
+  };
   const approvalItems: ApprovalItem[] = withBasisItems.map((a) => ({
     ...a,
+    call: callFor(a.leadId, a.leadName),
     line: personLine(qualOf.get(a.leadId) ?? null),
     ready: qualOf.get(a.leadId)?.tier === "ready",
     facts: knownGlanceFacts(qualOf.get(a.leadId) ?? null),

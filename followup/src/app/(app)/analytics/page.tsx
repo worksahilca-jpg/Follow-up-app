@@ -5,7 +5,7 @@ import { ChevronRight } from "lucide-react";
 import { GROUP } from "@/components/app/IosList";
 import { getAnalytics } from "@/lib/analytics-data";
 import { getLeads } from "@/lib/leads-data";
-import { getSessionContext } from "@/lib/session";
+import { getSessionContext, requireAdmin } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { formatCurrency } from "@/lib/demo-data";
 import { formatSpan } from "@/lib/activation";
@@ -16,6 +16,9 @@ import { sentAsWritten } from "@/lib/showTheWork";
 import { startOfLocalDay } from "@/lib/calmToday";
 import { getCallTally } from "@/lib/callResultsData";
 import { CALLS_SHOWN_FROM, readyOutcome } from "@/lib/followUpCall";
+import { loadMissedByCrm } from "@/lib/missedByCrmData";
+import { checkedAgo } from "@/lib/missedByCrm";
+import { MissedByCrmCard } from "@/components/MissedByCrm";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +26,8 @@ const DAY = 24 * 60 * 60 * 1000;
 const WEEKS = 8;
 
 /**
- * Results (A-220, the phone redesign, build 5; laid out like a Mac app, A-285): one number for the week,
+ * Results (A-220, the phone redesign, build 5; laid out like a Mac app, A-285): first, who the owner's CRM missed
+ * (A-315), when a CRM is connected; then one number for the week,
  * customers answered, beside last week; then Booked, First reply and Won;
  * then a way to see everything FollowUp did. Below, as before (A-066): eight
  * weeks of customers answered on the desk, and everything else as a quiet
@@ -39,7 +43,7 @@ export default async function NumbersPage() {
   // day it happened, and the date line names the days the number covers.
   const weekStart = startOfLocalDay(new Date(now.getTime() - 6 * DAY), timeZone);
 
-  const [data, leads, report, written, booked, won, calls] = await Promise.all([
+  const [data, leads, report, written, booked, won, calls, missed, isAdmin] = await Promise.all([
     getAnalytics(),
     getLeads(),
     getRescueReport(ctx.businessId, 7, now),
@@ -50,6 +54,9 @@ export default async function NumbersPage() {
     prisma.deal.findMany({ where: { wonAt: { gte: weekStart, lt: now }, lead: { businessId: ctx.businessId } }, select: { leadId: true }, distinct: ["leadId"] }),
     // FollowUp's calls (A-310): how it sorted the month's new customers, and what came of the Ready ones.
     getCallTally(ctx.businessId, now),
+    // Missed by your CRM (A-315): who wrote and never reached the owner's CRM. null without a CRM checked end to end.
+    loadMissedByCrm(ctx.businessId, now),
+    requireAdmin(ctx),
   ]);
   if (!data) return null;
 
@@ -109,6 +116,20 @@ export default async function NumbersPage() {
           weeks under it; everything else on the right. On the phone it is one column, the eight weeks left out (R-015). */}
       <div className="mt-5 grid gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] lg:items-start lg:gap-x-6">
         <div className="flex min-w-0 flex-col gap-6">
+          {/* First, because only FollowUp can show it: the CRM never sees the inbox or the DMs (A-315). */}
+          {missed && missed.state.kind !== "none" && (
+            <MissedByCrmCard
+              crmLabel={missed.crmLabel}
+              checked={checkedAgo(missed.checkedAt, now, timeZone)}
+              kind={missed.state.kind}
+              count={missed.state.kind === "missing" ? missed.state.missing.length : missed.state.caught}
+              places={missed.state.places}
+              autoAdd={missed.autoAdd}
+              paused={missed.paused}
+              canAdd={isAdmin}
+            />
+          )}
+
           <section>
             <h2 className={HEAD}>Customers answered</h2>
             <div className={GROUP + " mt-1.5 px-[18px] pb-4 pt-3.5"}>

@@ -413,3 +413,26 @@ stuff to the users … so that we can help them grow their businesses."*
 - Every judgment must be accurate enough to act on, say why in the customer's own words, and let the owner correct it in
   one tap.
 - The results come back to the owner in their own numbers: what came of FollowUp's calls, not how many messages went.
+
+## Build what only FollowUp can see, so a CRM can't copy it (founder, 2026-10-22)
+
+**Founder, verbatim:** *"we have to focus more on the differentiation we are creating, I don't want CRMs to get all these
+features and eat us."*
+
+- Every new feature should lean on what only FollowUp sees: the owner's inbox, DMs and forms, and what was said there.
+  A CRM never sees those, so it can't add the same thing next quarter (first case: "Missed by your CRM", A-315).
+- Writing replies, sequences and reminders are what every CRM already has; they are not where FollowUp wins.
+
+## Everything lives where its name says (founder, 2026-10-22)
+
+**Founder, verbatim:** *"keep everything organise bro we should have proper spaces for everything … All the
+applications should be right there. You cannot put it in your business or something like that … Everything should be
+organised properly according to what it is saying."*
+
+- Each thing has one home, and the home's name says what is in it. Every app FollowUp connects to (email, Instagram,
+  Facebook, WhatsApp, the website form, the CRM, the calendar, the phone line) is under **Connected apps**, nowhere else.
+- "Your business" holds only things about the business (who you are, what FollowUp knows, how you work). "Sending
+  replies" holds only how replies go out. A setting that fits two places goes in the one its name matches, and the other
+  place may link to it; it is never kept in two places.
+- A new setting is placed by this rule before it is built, and the app map (design-brain/components/app-map.md) says
+  where.

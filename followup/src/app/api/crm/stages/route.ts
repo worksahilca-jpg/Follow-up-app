@@ -26,7 +26,7 @@ const putSchema = z.union([
 async function connection(businessId: string) {
   const conn = await prisma.crmConnection.findUnique({
     where: { businessId },
-    select: { provider: true, apiKey: true, bookedStage: true, bookedStageLabel: true, tierStages: true, readNotes: true },
+    select: { provider: true, apiKey: true, bookedStage: true, bookedStageLabel: true, tierStages: true, readNotes: true, autoAddSince: true },
   });
   if (!conn?.apiKey || !isCrmProvider(conn.provider)) return null;
   return { ...conn, provider: conn.provider, apiKey: conn.apiKey };
@@ -56,6 +56,8 @@ export async function GET() {
     dontMove: conn.bookedStage === "",
     tiers,
     readNotes: conn.readNotes,
+    // "Missed by your CRM" (A-315): new customers go into the CRM by themselves.
+    autoAdd: Boolean(conn.autoAddSince),
     notesAvailable: Boolean(CRM_PROVIDERS[conn.provider].client.listNotes),
     // A GoHighLevel key is given its permissions one by one; without Opportunities it lists no stages.
     stagesHelp:

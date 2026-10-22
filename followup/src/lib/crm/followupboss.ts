@@ -1,5 +1,5 @@
 import { CRM_TIMEOUT_MS, type CrmClient, type CrmPerson } from "./types";
-import { readWhen } from "./dates";
+import { addRefused, readWhen } from "./dates";
 
 /**
  * Follow Up Boss (docs.followupboss.com/reference) — Basic auth with the
@@ -146,6 +146,35 @@ export const followUpBossClient: CrmClient = {
         .filter((s): s is { id: string; name: string } => s !== null);
     } catch {
       return [];
+    }
+  },
+
+  // "Missed by your CRM" (A-315). POST /v1/people with ?deduplicate=true (grade C: Follow Up Boss's docs say the flag
+  // goes in the query string and makes an existing match the answer instead of a second person; their reference
+  // doesn't load here). Deliberately /people, not /events: an event starts the owner's action plans, and this is
+  // someone FollowUp is already talking to, so Follow Up Boss texting them too would be a second voice. The response
+  // is the person, read defensively for its id.
+  async createPerson(apiKey, person) {
+    try {
+      const res = await fetch(`${BASE}/people?deduplicate=true`, {
+        method: "POST",
+        headers: { Authorization: authHeader(apiKey), "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...(person.firstName ? { firstName: person.firstName } : {}),
+          ...(person.lastName ? { lastName: person.lastName } : {}),
+          ...(person.email ? { emails: [{ value: person.email }] } : {}),
+          ...(person.phone ? { phones: [{ value: person.phone }] } : {}),
+          source: "FollowUp",
+        }),
+        signal: AbortSignal.timeout(CRM_TIMEOUT_MS),
+      });
+      if (!res.ok) return { ok: false, message: addRefused("Follow Up Boss", res.status) };
+      const data = (await res.json().catch(() => null)) as Record<string, unknown> | null;
+      const id = data?.id ?? (data?.person as Record<string, unknown> | undefined)?.id;
+      if (id === undefined || id === null || id === "") return { ok: false, message: "Follow Up Boss didn't say who it added. Try again in a minute." };
+      return { ok: true, externalId: String(id) };
+    } catch {
+      return { ok: false, message: "Couldn't reach Follow Up Boss. Try again in a minute." };
     }
   },
 

@@ -1,5 +1,5 @@
 import { CRM_TIMEOUT_MS, type CrmClient, type CrmNote, type CrmPerson } from "./types";
-import { readWhen } from "./dates";
+import { addRefused, readWhen } from "./dates";
 
 /**
  * GoHighLevel (founder, 2026-10-16: "lets build ghl too", then "ok go with A"): the owner makes a Private
@@ -170,6 +170,35 @@ export const goHighLevelClient: CrmClient = {
       return { ok: true };
     } catch (err) {
       return { ok: false, message: err instanceof Error ? err.message : "note push failed" };
+    }
+  },
+
+  // "Missed by your CRM" (A-315): POST /contacts/upsert with the locationId (HighLevel's SDK 3.1.1, read 2026-10-22:
+  // UpsertContactDto, answer { new, contact: { id } }). An upsert, so the sub-account's own duplicate rule finds a
+  // contact it already has by email or phone instead of making a second one.
+  async createPerson(apiKey, person) {
+    const k = parseGhlKey(apiKey);
+    if (!k) return { ok: false, message: "GoHighLevel key is not in the expected shape." };
+    try {
+      const res = await fetch(`${BASE}/contacts/upsert`, {
+        method: "POST",
+        headers: headers(k.token, true),
+        body: JSON.stringify({
+          locationId: k.locationId,
+          ...(person.firstName ? { firstName: person.firstName } : {}),
+          ...(person.lastName ? { lastName: person.lastName } : {}),
+          ...(person.email ? { email: person.email } : {}),
+          ...(person.phone ? { phone: person.phone } : {}),
+          source: "FollowUp",
+        }),
+        signal: AbortSignal.timeout(CRM_TIMEOUT_MS),
+      });
+      if (!res.ok) return { ok: false, message: addRefused("GoHighLevel", res.status) };
+      const data = (await res.json().catch(() => null)) as { contact?: Record<string, unknown> } | null;
+      const id = str(data?.contact?.id);
+      return id ? { ok: true, externalId: id } : { ok: false, message: "GoHighLevel didn't say who it added. Try again in a minute." };
+    } catch {
+      return { ok: false, message: "Couldn't reach GoHighLevel. Try again in a minute." };
     }
   },
 

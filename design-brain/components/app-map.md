@@ -139,7 +139,8 @@ of its own.
 | `/pipeline` | Customers | A "by stage" view of the same list (a filter, not a place) |
 | `/activity` | Customer side panel + Results | "What FollowUp did" per customer; totals on Results |
 | `/leads/[id]` | **A customer** | Conversation + side panel |
-| `/analytics` | **Results** | As drawn |
+| `/analytics` | **Results** | As drawn; first, when a CRM is connected, "Missed by your CRM" (A-315) |
+| `/analytics/missed` | Results › See who ("Not in {CRM}") | One Add per customer; its on/off switch lives in Settings › Connected apps › the CRM's window (A-315) |
 | `/settings` | **Settings window** | Five groups (A-220, build 4, 2026-10-10): Where customers write · How replies go out · Alerts · Your business · More. Phone: four rows + More, then Help and Sign out |
 | `/workflows` | Settings › How replies go out (the follow-up plan) | "Change" opens it in the window |
 | `/teach` | Settings › Your business › What FollowUp knows | Plus "Parking: not known yet" moments on Today |

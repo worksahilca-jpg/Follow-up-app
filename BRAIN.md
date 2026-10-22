@@ -74,7 +74,20 @@ a booked call or visit; the owner closes.
 
 **Last updated: 2026-10-22**
 
-- **"Tell FollowUp" as a 5-minute meeting built (A-314, Oct 22, not merged):** the founder rejected the check after every
+- **"Missed by your CRM" BUILT (A-315, Oct 22, local, PR waiting for the founder's "merge"):** the founder's
+  differentiation ask (*"I don't want CRMs to get all these features and eat us"*, option A, "yes build it"). Results
+  opens with the customers who wrote by email, DM or form in the last 30 days and still aren't in the owner's CRM, by
+  place, with **Add all** and **See who** (one Add each); each add creates the contact (Follow Up Boss /people with
+  deduplicate, so no action plans fire; HubSpot contacts, using the one it has on a 409; GoHighLevel upsert) and writes
+  their messages as a note. The first Add turns on "new ones go in by themselves" (after each full CRM check, 10 a run,
+  only customers newer than the switch); Turn off on Results and a switch in the CRM's own window under Connected apps.
+  Only counted once the whole CRM was checked, never anyone who said no or stop, never the practice customer. Chat
+  customers now match the CRM by the email they gave in the chat. Two columns (`Lead.crmAddedAt`,
+  `CrmConnection.autoAddSince/autoAddOff`). Privacy page says it. Same PR: **Next.js 16.4.2 + Sentry 10.76.2**
+  (2 critical advisories Oct 22; not reachable here, but CI's audit fails on them).
+- **Founder's rule, Oct 22: everything lives where its name says** (all apps under Connected apps; "Your business" only
+  about the business). Recorded in brand-principles. Next: audit every screen, draw the map, wait for a yes.
+- **"Tell FollowUp" as a 5-minute meeting LIVE (A-314, Oct 22, PR #584 → fc5da24, merged at the founder's "merge"; deploy green; `tellDraft` column + migration confirmed in production, read-only):** the founder rejected the check after every
   answer (R-139) and approved the drawing as "a 5-minute meeting just to get to know what their business is". Only
   questions and answers; answers wait in a draft (`Business.tellDraft`, one new column); the end plays the whole
   business back (FollowUp's checked read, the owner's lines with Edit, how FollowUp will use it, still to learn,

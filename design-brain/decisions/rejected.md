@@ -1781,3 +1781,13 @@ answers. Its understanding is shown once, at the end, over the whole business, a
 (Inferred, to confirm on the drawing: one check of that whole picture still comes before anything is quoted to
 customers, because facts go into replies word for word in the owner's name.) **Do not propose again:** a confirm step
 after each answer in this conversation, in any form.
+
+## R-140 — Any message an Assisted account sends without the owner, even a fixed "let me check" ^R-140
+
+**Rejected:** 2026-10-23, founder, after the 30-minute "let me check" (A-077) went out on their own Instagram at 10:40 am:
+*"the message went out bro whyyy withount my consent"* and *"I don't want it to send messages on my Instagram
+automatically, because I don't trust it right now."* **What is rejected:** the one exception to "nothing goes out
+without you" on Assisted. **Principle:** trust comes before any automatic message. While an owner holds every reply,
+FollowUp sends nothing in their name, however harmless the words; a fixed line is still a message the owner didn't
+send. Automatic sending is earned, and turned on by the owner, later. **Do not propose again:** an automatic
+placeholder, acknowledgement or "we got you" on an account that holds every reply.

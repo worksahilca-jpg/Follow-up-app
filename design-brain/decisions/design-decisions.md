@@ -15380,3 +15380,52 @@ gains `kind`, `blocked`, `targeted`; `TrainingRule` gains `testMessages`.
 - The chance check is one run of 20 messages: a rough number, not a precise one.
 - A code check can still fail twice in three by chance; then the founder tests again.
 
+
+## 2026-10-23 — Check the checker (plan step 4): drawn, then approved (A-321)
+
+**Approved** the same day: *"yes build it"* (A-321), with the bar as proposed plus "Too few to tell" under 5 flags.
+
+**What.** A new Train tab, **Mark replies**, admin-only. FollowUp writes 3 replies to each of the kind's 20 test messages
+with the lessons in use (60 replies). The founder answers "Would you send this as it is?" one reply at a time. On No, they
+tap what's wrong. The chips are the grader's own checks, in the words the app already uses: didn't answer their question,
+made something up, pushed or rushed them, wrong language, could have gone to anyone, praised the business, missed or made
+up a feeling. There is also "Something else". The checker's reading stays hidden until the end, so it can't anchor the
+founder. The results list each check in one plain line ("You flagged 6. The checker caught 5 and missed 1. It flagged 1
+you were fine with.") and give a status: Trusted, Advice only, or Too few to tell.
+
+**Why it doesn't break R-137.** R-137 says owners are never asked to grade FollowUp's calls. This page is founder-only,
+on invented messages, and it grades the grader, not a customer's call.
+
+**Behaviour change proposed (the founder's call).** Today every grader check counts against a lesson in the test. With
+this, a check that disagrees with the founder too often becomes "advice only": its reading still shows, but a lesson
+isn't marked worse because of it. The proposed bar: it catches at least 8 in 10 of what the founder flags, and wrongly
+flags no more than 1 in 10 of what they pass. Code-decided checks (message rules, a fact given, echo) aren't marked and
+don't change.
+
+**Drawn** on the real local Train page, computer and phone; no sideways scroll at 390px. Every number is an example.
+
+**Weak, honestly:**
+- On the phone the tab row scrolls, so "Talk to it" sits off-screen when Mark replies is open. That's the existing tab
+  row, not new.
+- 60 marks gives few flags per check (a check with 3 flags can't really prove "8 in 10"). "Too few to tell" covers it,
+  but most checks may sit there until the founder marks a second round.
+- "About 10 minutes" is a guess at ~10 seconds a reply.
+
+## 2026-10-23 — Assisted sends nothing on its own (A-322, R-140)
+
+The 30-minute "let me check" (A-077) went out on the founder's own Instagram at 10:40 am: a customer asked about a time
+at 10:05, nobody answered for 30 minutes, the account is Assisted, so the fixed line went. Working as A-077 designed it,
+and still not what the founder wants: "I don't trust it right now ... let's just develop it, and then we'll do it."
+Built: `runHoldingMessagesForBusiness` returns at once on a holding account; the outbound retry drops a queued holding
+line once the account holds everything; setup's Assisted card and Today's empty state lose the exception. Tests pin all
+three, and `trustCopy.test.ts` fails if "let me check" comes back into setup or Today. The other two messages to that
+customer (12:41 pm) were typed by the founder in Instagram, not sent by FollowUp. Read-only check on production:
+opaque ids, times and booleans only; the customer's name was not read.
+
+## 2026-10-23 — Customers: new customers on top (A-323)
+
+The founder asked how Today puts people in order (answered: ready to book, then wrote in the last day, then waiting
+longer, then check-ins; longest wait first inside each) and asked that every new customer be on top of Customers.
+Built as a "New" group above the others, worked out on the server (`newArrivals` in `customerPlaces.ts`) so the
+server's and the browser's lists agree. **Weak, honestly:** a big import (CSV or a CRM sync) lands everyone in "New"
+for a day; the list still stops at 50 rows.

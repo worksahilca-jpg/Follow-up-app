@@ -54,3 +54,18 @@ export function customerGroups(g: {
   const waiting = take(g.waiting);
   return { needs, ready, booked, quiet, waiting };
 }
+
+/**
+ * New customers on top (founder, 2026-10-23: "in customers page every new lead comes should be on the top"): everyone
+ * who arrived in the last day and is still open, newest first. Shown above every other group on Customers, each row
+ * still saying where they stand ("Your reply is ready"), so nobody new sits under someone who wrote days ago.
+ */
+export const NEW_CUSTOMER_MS = 24 * 60 * 60_000;
+
+export function newArrivals(leads: readonly { id: string; createdAtMs: number; stage: string }[], now: Date): string[] {
+  const since = now.getTime() - NEW_CUSTOMER_MS;
+  return leads
+    .filter((l) => l.createdAtMs >= since && l.stage !== "won" && l.stage !== "lost")
+    .sort((a, b) => b.createdAtMs - a.createdAtMs)
+    .map((l) => l.id);
+}

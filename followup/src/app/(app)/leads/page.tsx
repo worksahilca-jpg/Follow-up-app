@@ -4,7 +4,7 @@ import { getPendingApprovals } from "@/lib/pendingApprovals";
 import { getBusinessAutomationRules } from "@/lib/automationStatus";
 import { getWaitingOn } from "@/lib/waitingOn";
 import { getAtRiskLeads } from "@/lib/rescue";
-import { customerGroups } from "@/lib/customerPlaces";
+import { customerGroups, newArrivals } from "@/lib/customerPlaces";
 import { readQualification, readyWhy, templateFor } from "@/lib/qualification";
 import { tierFromScore, TIER_WORD } from "@/lib/followUpCall";
 import { prisma } from "@/lib/db";
@@ -77,6 +77,11 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
     waiting: waitingItems.map((w) => w.leadId),
   });
   const { quiet, waiting } = groups;
+  // New customers on top (founder, 2026-10-23), worked out here so the server's and the browser's lists agree.
+  const fresh = newArrivals(
+    leads.map((l) => ({ id: l.id, stage: l.stage, createdAtMs: l.followUp?.createdAtMs ?? 0 })),
+    now
+  );
 
   // The line under each name, where the group has something better to say
   // than their last message: why they're ready, why they're going quiet,
@@ -110,7 +115,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
   // A customer opened beside the list (A-025, the canvas App board). Only
   // one of this business's own customers: getLeads is already scoped.
   const open = p ? leads.find((l) => l.id === p) ?? null : null;
-  if (!open) return <LeadsPageClient leads={leads} groups={groups} lines={lines} tags={tags} show={show} stage={stage ?? null} />;
+  if (!open) return <LeadsPageClient leads={leads} groups={groups} fresh={fresh} lines={lines} tags={tags} show={show} stage={stage ?? null} />;
 
   const approval = approvals.find((a) => a.leadId === open.id) ?? null;
   const place: { state: StateKey; label: string } = needs.has(open.id)
@@ -130,7 +135,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
     // the right edge, the Inbox's frame (A-025). Phone: the customer alone.
     <div className="app-bleed lg:grid lg:h-screen lg:grid-cols-[minmax(0,1fr)_400px]">
       <div className="hidden min-w-0 lg:block lg:overflow-y-auto lg:px-7 lg:pb-12 lg:pt-9">
-        <LeadsPageClient leads={leads} groups={groups} lines={lines} tags={tags} show={show} stage={stage ?? null} openId={open.id} />
+        <LeadsPageClient leads={leads} groups={groups} fresh={fresh} lines={lines} tags={tags} show={show} stage={stage ?? null} openId={open.id} />
       </div>
       <aside aria-label={open.name} className="lg:overflow-y-auto lg:border-l lg:border-line lg:bg-card">
         <Link href={show ? `/leads?show=${show}` : "/leads"} data-nav="pop" className="mb-3 inline-flex min-h-11 items-center text-[13px] text-ink-faint lg:hidden">

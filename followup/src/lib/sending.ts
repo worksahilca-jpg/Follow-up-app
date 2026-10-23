@@ -16,7 +16,6 @@
 import { prisma } from "@/lib/db";
 import { dmSuppressionKey, isSuppressed } from "@/lib/suppression";
 import { checkSendCap } from "@/lib/sendCaps";
-import { HOLDING_TRIGGER } from "@/lib/notAnAnswer";
 import { claimSend, releaseSendClaim, SEND_CLAIM_WINDOW_MS } from "@/lib/sendClaim";
 import { getGmailReplyHeaders, getGmailStatus, resolveGmailInbox, sendEmail } from "@/lib/integrations/gmail";
 import { getOutlookStatus, sendOutlookEmail } from "@/lib/integrations/outlook";
@@ -1417,12 +1416,9 @@ async function retryNoLongerWanted(row: { leadId: string; createdAt: Date; trigg
     select: { stage: true, talkedAt: true, business: { select: { holdAllForApproval: true } } },
   });
   if (!lead) return "The lead no longer exists, so nothing was sent.";
-  // The 30-minute "let me check" is the one message a holding account sends
-  // on its own (A-077), so holding is not a reason to drop ITS retry: with
-  // the claim already stamped on the customer's message, a cancelled retry
-  // meant they never got it (code review, 2026-10-01). Paused accounts are
-  // caught by the funnel on the re-attempt, as for any send.
-  if (lead.business?.holdAllForApproval && row.trigger !== HOLDING_TRIGGER) return "Sending was paused before the retry, so nothing was sent.";
+  // Holding everything stops every automated retry, the 30-minute "let me check" included: an Assisted account sends
+  // nothing on its own (founder, 2026-10-23; A-077 superseded).
+  if (lead.business?.holdAllForApproval) return "Sending was paused before the retry, so nothing was sent.";
   if (lead.stage === "WON" || lead.stage === "LOST") return "The lead was closed before the retry, so nothing was sent.";
   if (lead.talkedAt && lead.talkedAt > row.createdAt) return "You talked with them before the retry, so nothing was sent.";
   const moved = await prisma.message.findFirst({

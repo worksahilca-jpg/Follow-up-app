@@ -463,7 +463,7 @@ function HowItShouldWork({ reading, sentFrom, onChosen }: { reading: boolean; se
       id: "assisted" as const,
       title: "Assisted",
       badge: null,
-      body: "Every reply waits for you. If a price question sits 30 minutes, the customer gets a short “let me check”; the answer still waits for you.",
+      body: "Every reply waits for you. Nothing goes out until you send it.",
     },
   ];
 

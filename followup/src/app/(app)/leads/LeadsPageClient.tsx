@@ -219,6 +219,7 @@ function StatusLine({ status, when }: { status: Status; when: string | null }) {
 export default function LeadsPageClient({
   leads,
   groups,
+  fresh = [],
   lines,
   tags = {},
   show = null,
@@ -228,6 +229,8 @@ export default function LeadsPageClient({
   leads: Lead[];
   /** Who is in which group, worked out on the server from the same sources Today uses. */
   groups: Groups;
+  /** Customers who arrived in the last day, newest first: the New group on top (founder, 2026-10-23). */
+  fresh?: string[];
   lines: GroupLines;
   tags?: Tags;
   /** A group opened as a list (?show=), or null for the groups. */
@@ -524,15 +527,22 @@ export default function LeadsPageClient({
     );
   }
 
-  // ---- Everyone (A-267), in labelled white groups (A-307): reply ready first (in Today's order), then ready to book,
-  // then everyone else, newest message first. Still no counts. ----
-  const firstIds = [...groups.needs, ...groups.ready.filter((id) => !groups.needs.includes(id))];
+  // ---- Everyone (A-267), in labelled white groups (A-307): new customers first, newest on top (founder, 2026-10-23),
+  // each row saying where they stand; then reply ready (in Today's order), ready to book, and everyone else, newest
+  // message first. Still no counts. ----
+  const isNew = new Set(fresh);
+  const firstIds = [...new Set([...fresh, ...groups.needs, ...groups.ready])];
   const rest = inGroup.filter((l) => !firstIds.includes(l.id));
   const everyone = [...firstIds.map((id) => byId.get(id)).filter((l): l is Lead => Boolean(l)), ...rest];
   const listed = everyone.slice(0, LIST_MAX);
   const sections: { label: string; leads: Lead[]; sayStatus: boolean }[] = [
-    { label: "Your reply is ready", leads: listed.filter((l) => groups.needs.includes(l.id)), sayStatus: false },
-    { label: "Ready to book", leads: listed.filter((l) => !groups.needs.includes(l.id) && groups.ready.includes(l.id)), sayStatus: false },
+    { label: "New", leads: listed.filter((l) => isNew.has(l.id)), sayStatus: true },
+    { label: "Your reply is ready", leads: listed.filter((l) => !isNew.has(l.id) && groups.needs.includes(l.id)), sayStatus: false },
+    {
+      label: "Ready to book",
+      leads: listed.filter((l) => !isNew.has(l.id) && !groups.needs.includes(l.id) && groups.ready.includes(l.id)),
+      sayStatus: false,
+    },
     { label: "Everyone else", leads: listed.filter((l) => !firstIds.includes(l.id)), sayStatus: true },
   ].filter((g) => g.leads.length > 0);
   // With only one group there is nothing to tell apart: no label above it.

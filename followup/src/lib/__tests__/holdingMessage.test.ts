@@ -1,8 +1,8 @@
 /**
  * The "we got you" message (src/lib/holdingMessage.ts, founder 2026-09-26).
  *
- * Trust guarantees, each pinned here: it goes on Automatic and (since the
- * founder's 2026-10-01 call) on Assisted, only for a price or date the
+ * Trust guarantees, each pinned here: it goes on Automatic only (never on
+ * Assisted since the founder's 2026-10-23 call), only for a price or date the
  * owner hasn't answered in 30 minutes, never for a tense conversation,
  * never twice, never after anything else already went to the customer,
  * never on a thread FollowUp only inherited, and it says only the fixed
@@ -104,15 +104,6 @@ describe("the holding message goes out", () => {
     expect(send.mock.calls[0][2].channel).toBe("email");
   });
 
-  // Founder, 2026-10-01: the one message that goes out on an Assisted
-  // account without the owner's OK. Such an account has never turned
-  // sending on, so autoSendAllowedAt is null and must not be required.
-  it("on an account that holds everything for approval (Assisted), with sending never turned on", async () => {
-    p.business.findUnique.mockResolvedValue({ holdAllForApproval: true, sendingPausedAt: null, autoSendAllowedAt: null });
-    const r = await runHoldingMessagesForBusiness("biz1", NOW);
-    expect(r.sent).toBe(1);
-    expect(send.mock.calls[0][1]).toBe(HOLDING_LINES.price);
-  });
 });
 
 describe("the fixed lines promise nothing", () => {
@@ -131,12 +122,21 @@ describe("the holding message does NOT go out", () => {
     expect(send).not.toHaveBeenCalled();
   });
 
+  // Founder, 2026-10-23, after one went out on their own Instagram: Assisted means nothing goes out without the
+  // owner, this line included (A-077 superseded). Sending turned on long ago changes nothing.
+  it("on an account that holds everything for approval (Assisted)", async () => {
+    for (const autoSendAllowedAt of [null, minsAgo(24 * 60 * 3)]) {
+      p.business.findUnique.mockResolvedValue({ holdAllForApproval: true, sendingPausedAt: null, autoSendAllowedAt });
+      expect((await runHoldingMessagesForBusiness("biz1", NOW)).sent).toBe(0);
+    }
+    expect(send).not.toHaveBeenCalled();
+    expect(p.lead.updateMany).not.toHaveBeenCalled();
+  });
+
   // The Gmail import brings in threads whose last message predates the lead
   // row: FollowUp never saw them live and has no idea what the owner did.
-  // On Assisted there is no "sending turned on at" floor, so this is the
-  // guard that keeps "let me check" off a conversation it only inherited.
-  it("on a thread FollowUp inherited from the inbox import, on Assisted", async () => {
-    p.business.findUnique.mockResolvedValue({ holdAllForApproval: true, sendingPausedAt: null, autoSendAllowedAt: null });
+  it("on a thread FollowUp inherited from the inbox import", async () => {
+    p.business.findUnique.mockResolvedValue({ holdAllForApproval: false, sendingPausedAt: null, autoSendAllowedAt: minsAgo(24 * 60 * 3) });
     p.lead.findMany.mockResolvedValue([lead({ createdAt: minsAgo(35), lastContacted: minsAgo(40) })]);
     await runHoldingMessagesForBusiness("biz1", NOW);
     expect(send).not.toHaveBeenCalled();

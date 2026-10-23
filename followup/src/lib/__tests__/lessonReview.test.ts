@@ -50,6 +50,8 @@ function test(over: Partial<LessonTestRow> = {}): LessonTestRow {
     passedWith: 13,
     better: 1,
     worse: 0,
+    blocked: 0,
+    targeted: 0,
     results: [],
     error: null,
     createdAt: new Date(),
@@ -112,6 +114,16 @@ describe("putToWork", () => {
     expect(await putToWork("Real estate", "founder")).toEqual({ ok: false, reason: "worse" });
     expect(await putToWork("Real estate", "founder", { anyway: true })).toEqual({ ok: true, count: 1 });
     expect(events()[0].note).toMatch(/worse on 1, put to work anyway/);
+  });
+
+  it("refuses outright when the lessons broke one of FollowUp's own checks, anyway or not (plan step 3)", async () => {
+    prisma.trainingRule.findMany.mockResolvedValue([waitingRule()]);
+    prisma.lessonTest.findFirst.mockResolvedValue(test({ worse: 1, blocked: 1 }));
+    expect(await putToWork("Real estate", "founder")).toEqual({ ok: false, reason: "blocked" });
+    expect(await putToWork("Real estate", "founder", { anyway: true })).toEqual({ ok: false, reason: "blocked" });
+    expect(prisma.trainingRule.updateMany).not.toHaveBeenCalled();
+    // A chance check is never mistaken for a test of the lessons.
+    expect(prisma.lessonTest.findFirst.mock.calls[0][0].where).toMatchObject({ trade: "Real estate", kind: "lessons", status: "done" });
   });
 
   it("puts every waiting lesson in use, approved by the founder, with the test in its history", async () => {
@@ -192,5 +204,18 @@ describe("what the Train page shows", () => {
     prisma.lessonTest.findMany.mockResolvedValue([]);
     const views = await trainWaitingViews();
     expect(views["Real estate"]).toMatchObject({ hasTest: true, testSize: 20, dropsOut: ["Rule 1", "Rule 2"] });
+  });
+
+  it("carries what blocked, the rule messages and the chance check for the model in use (plan step 3)", async () => {
+    prisma.trainingRule.findMany.mockResolvedValue([waitingRule()]);
+    prisma.lessonTest.findMany.mockImplementation(async ({ where }: { where: { kind: string; model?: string } }) =>
+      where.kind === "chance"
+        ? [{ trade: "Real estate", cases: 20, better: 2, worse: 1, createdAt: at(0) }]
+        : [test({ worse: 1, blocked: 1, targeted: 3 })]
+    );
+    const view = (await trainWaitingViews())["Real estate"].test;
+    expect(view).toMatchObject({ blocked: 1, targeted: 3, chance: { cases: 20, flips: 3 } });
+    const chanceQuery = prisma.lessonTest.findMany.mock.calls.find((c) => c[0].where.kind === "chance")?.[0];
+    expect(chanceQuery.where).toMatchObject({ status: "done", model: expect.any(String) });
   });
 });

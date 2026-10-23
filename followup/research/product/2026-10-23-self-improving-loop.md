@@ -4,7 +4,8 @@
 accuracy, what to say, what next step it should take"* and *"yes start step 1 and find all the solutions too"*.
 **What this is:** the short version, for the repo, of a longer research report kept outside it (about 11,000 words, 13
 build steps, sources marked by strength). The honest test (part of step 3 below) is live as [A-319](../../../design-brain/decisions/approved.md), and
-the decision log (step 1) is live and the outcome records (step 2) are built; nothing else here is built or approved yet. Every law or platform point needs a lawyer's read before it drives a
+the decision log (step 1) and the outcome records (step 2) are live, and the rest of the honest test (step 3) is built;
+nothing else here is built or approved yet. Every law or platform point needs a lawyer's read before it drives a
 decision.
 
 ---
@@ -38,8 +39,8 @@ decision.
 - A test counts only for exactly what it covered: add, change or drop a lesson and it needs a new test.
 - One test run is about 120 drafts and 120 checks, roughly $0.60 at small-model prices. Cost isn't the limit; the
   founder's attention is.
-- Still to add (step 3 below): one "A/A" run (the same lessons against themselves) to learn how many messages flip on
-  chance alone, and 2–5 messages written for each new rule.
+- Added in step 3 (A-320): a chance check (the same lessons against themselves) to learn how many messages flip on
+  chance alone, 2 messages plus 1 reworded written for each new rule, and code checks that block.
 
 ## Already enforced in code (checked 2026-10-23)
 
@@ -59,6 +60,9 @@ decision.
    is linked to its AI call, with the owner's action, the edit size and the customer's outcome (3 days to reply, 14 to
    book). No screen until the weekly review (step 7).*
 3. **Finish the honest test.** A/A run, targeted messages per rule, code checks that block.
+   *Built 2026-10-23 ([A-320](../../../design-brain/decisions/approved.md)): a chance check once per kind per model,
+   2 messages plus 1 reworded for each of the first 3 new rules, and code checks that fail on 2 of 3 tries with the
+   changes block them, with no "anyway".*
 4. **Check the checker.** The founder labels about 60 drafts; the AI grader's catch and false-alarm rates are recorded;
    checks that disagree with the founder stay advisory.
 5. **Next-step answer key + a "no" safety layer** (any of several tries says no → stop or hand over). Changes behaviour:

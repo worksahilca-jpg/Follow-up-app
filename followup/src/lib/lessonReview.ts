@@ -5,6 +5,7 @@ import { dropTrainingRule } from "@/lib/trainingRules";
 import { changeViews, coversExactly, hasLessonTest, type CaseOutcome, type ChangeView } from "@/lib/lessonTestResult";
 import { RULES_IN_PROMPT } from "@/lib/trainingRuleLines";
 import { REPLY_CASES } from "@/lib/replyEval";
+import { MODEL } from "@/lib/integrations/openaiClient";
 
 /**
  * A-319 (2026-10-23): "Waiting for your OK" on Admin → Train → Talk to it. Every rule and example the founder teaches
@@ -123,6 +124,8 @@ export type LessonTestRow = {
   passedWith: number | null;
   better: number | null;
   worse: number | null;
+  blocked: number | null;
+  targeted: number | null;
   results: unknown;
   error: string | null;
   createdAt: Date;
@@ -131,9 +134,27 @@ export type LessonTestRow = {
 
 /** The newest test for each kind, finished or not. */
 export async function latestTests(): Promise<Map<string, LessonTestRow>> {
-  const rows = await prisma.lessonTest.findMany({ orderBy: { createdAt: "desc" }, take: 50 });
+  const rows = await prisma.lessonTest.findMany({ where: { kind: "lessons" }, orderBy: { createdAt: "desc" }, take: 50 });
   const out = new Map<string, LessonTestRow>();
   for (const r of rows) if (!out.has(r.trade)) out.set(r.trade, r);
+  return out;
+}
+
+/** How many of a kind's messages came out differently when answered twice with nothing changed (plan step 3). */
+export type ChanceView = { cases: number; flips: number; at: string };
+
+/** The newest chance check for each kind, on the model in use (src/lib/lessonTest.ts). */
+export async function latestChance(): Promise<Map<string, ChanceView>> {
+  const rows = await prisma.lessonTest.findMany({
+    where: { kind: "chance", status: "done", model: MODEL },
+    orderBy: { createdAt: "desc" },
+    take: 50,
+    select: { trade: true, cases: true, better: true, worse: true, createdAt: true },
+  });
+  const out = new Map<string, ChanceView>();
+  for (const r of rows) {
+    if (!out.has(r.trade)) out.set(r.trade, { cases: r.cases, flips: (r.better ?? 0) + (r.worse ?? 0), at: r.createdAt.toISOString() });
+  }
   return out;
 }
 
@@ -150,13 +171,19 @@ export type TestView = {
   passedWith: number;
   better: number;
   worse: number;
+  /** Messages where the lessons broke a code check: no "anyway" for these (plan step 3). */
+  blocked: number;
+  /** Messages written for the waiting rules, on top of `cases`. */
+  targeted: number;
+  /** The chance check for this kind, when there is one on the model in use. */
+  chance: ChanceView | null;
   /** It covered exactly what waits now; otherwise the founder has to test again. */
   current: boolean;
   error: string | null;
   changes: ChangeView[];
 };
 
-export function testView(row: LessonTestRow, waitingKeys: readonly string[], now = Date.now()): TestView {
+export function testView(row: LessonTestRow, waitingKeys: readonly string[], now = Date.now(), chance: ChanceView | null = null): TestView {
   const stale = row.status === "running" && now - row.createdAt.getTime() > TEST_STALE_MS;
   const status = stale ? "failed" : row.status === "done" ? "done" : row.status === "running" ? "running" : "failed";
   const cases = Array.isArray(row.results) ? (row.results as CaseOutcome[]) : [];
@@ -170,17 +197,21 @@ export function testView(row: LessonTestRow, waitingKeys: readonly string[], now
     passedWith: row.passedWith ?? 0,
     better: row.better ?? 0,
     worse: row.worse ?? 0,
+    blocked: row.blocked ?? 0,
+    targeted: row.targeted ?? 0,
+    chance,
     current: status === "done" && coversExactly(row.lessons, waitingKeys),
     error: stale ? "The test stopped before it finished. Test again." : row.error,
     changes: status === "done" ? changeViews(cases) : [],
   };
 }
 
-export type PutToWorkResult = { ok: true; count: number } | { ok: false; reason: "nothing" | "untested" | "worse" };
+export type PutToWorkResult = { ok: true; count: number } | { ok: false; reason: "nothing" | "untested" | "blocked" | "worse" };
 
 /**
  * "Put them to work": every waiting lesson of this kind becomes ACTIVE at once, in one transaction with its history.
- * New wording takes over from the rule it replaces, which is rolled back (kept, so it can be put back).
+ * New wording takes over from the rule it replaces, which is rolled back (kept, so it can be put back). A test where
+ * the lessons broke one of FollowUp's own code checks blocks this outright, "anyway" or not (plan step 3).
  */
 export async function putToWork(trade: string, byUserId: string | null, opts: { anyway?: boolean } = {}): Promise<PutToWorkResult> {
   const waiting = await listWaiting(trade);
@@ -188,8 +219,9 @@ export async function putToWork(trade: string, byUserId: string | null, opts: { 
   let note = "Put to work by the founder; there is no reply test for this kind yet (A-319).";
   let tested: string | null = null;
   if (hasLessonTest(trade)) {
-    const test = await prisma.lessonTest.findFirst({ where: { trade, status: "done" }, orderBy: { createdAt: "desc" } });
+    const test = await prisma.lessonTest.findFirst({ where: { trade, kind: "lessons", status: "done" }, orderBy: { createdAt: "desc" } });
     if (!test || !coversExactly(test.lessons, waiting.map((w) => w.key))) return { ok: false, reason: "untested" };
+    if ((test.blocked ?? 0) > 0) return { ok: false, reason: "blocked" };
     if ((test.worse ?? 0) > 0 && !opts.anyway) return { ok: false, reason: "worse" };
     tested = `${test.passedWith ?? 0} of ${test.cases}`;
     note =
@@ -259,7 +291,12 @@ export async function dropAllWaiting(trade: string, byUserId: string | null): Pr
 
 /** For each kind with lessons waiting: how many, and its newest test in a few numbers (Admin → Decide). */
 export async function waitingSummary(): Promise<
-  { trade: string; waiting: number; hasTest: boolean; test: Pick<TestView, "status" | "current" | "passedWithout" | "passedWith" | "cases" | "worse"> | null }[]
+  {
+    trade: string;
+    waiting: number;
+    hasTest: boolean;
+    test: Pick<TestView, "status" | "current" | "passedWithout" | "passedWith" | "cases" | "worse" | "blocked"> | null;
+  }[]
 > {
   const [items, tests] = await Promise.all([listWaiting(), latestTests()]);
   const byTrade = new Map<string, WaitingItem[]>();
@@ -271,7 +308,17 @@ export async function waitingSummary(): Promise<
       trade,
       waiting: list.length,
       hasTest: hasLessonTest(trade),
-      test: view ? { status: view.status, current: view.current, passedWithout: view.passedWithout, passedWith: view.passedWith, cases: view.cases, worse: view.worse } : null,
+      test: view
+        ? {
+            status: view.status,
+            current: view.current,
+            passedWithout: view.passedWithout,
+            passedWith: view.passedWith,
+            cases: view.cases,
+            worse: view.worse,
+            blocked: view.blocked,
+          }
+        : null,
     };
   });
 }
@@ -289,7 +336,7 @@ export type WaitingView = {
 
 /** Every kind with something waiting, keyed by kind (Admin → Train → Talk to it). */
 export async function trainWaitingViews(): Promise<Record<string, WaitingView>> {
-  const [items, tests] = await Promise.all([listWaiting(), latestTests()]);
+  const [items, tests, chance] = await Promise.all([listWaiting(), latestTests(), latestChance()]);
   const byTrade = new Map<string, WaitingItem[]>();
   for (const w of items) byTrade.set(w.trade, [...(byTrade.get(w.trade) ?? []), w]);
   const out: Record<string, WaitingView> = {};
@@ -308,7 +355,7 @@ export async function trainWaitingViews(): Promise<Record<string, WaitingView>> 
     }
     out[trade] = {
       items: list.map((w) => ({ ...w, at: w.at.toISOString() })),
-      test: row ? testView(row, list.map((w) => w.key)) : null,
+      test: row ? testView(row, list.map((w) => w.key), Date.now(), chance.get(trade) ?? null) : null,
       hasTest: hasLessonTest(trade),
       testSize: hasLessonTest(trade) ? REPLY_CASES.length : 0,
       dropsOut,

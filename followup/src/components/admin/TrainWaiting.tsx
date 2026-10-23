@@ -9,7 +9,9 @@ import { verdictSentence } from "@/lib/lessonTestResult";
  * "Waiting for your OK" on Admin → Train → Talk to it (A-319). What the founder taught a kind of business waits here,
  * used only in the practice chat, until they put it to work. With a test (realtors today): Test them, then both scores,
  * what changed with both replies, FollowUp's recommendation, and Put them to work or Drop them. Without one: their OK.
- * Keyed by kind on Talk to it, so another kind starts clean.
+ * Keyed by kind on Talk to it, so another kind starts clean. Plan step 3 (2026-10-23): messages written for the new
+ * rules join the list of what changed, a broken code check takes "anyway" away, and the chance check says how many
+ * messages move on their own.
  */
 
 const solid = "inline-flex min-h-11 items-center rounded-full px-5 text-[15px] font-semibold disabled:opacity-40";
@@ -71,6 +73,7 @@ export default function TrainWaiting({ trade, short, view }: { trade: string; sh
   const current = !!test?.current;
   const rules = items.filter((w) => w.kind === "rule");
   const worse = current ? (test?.worse ?? 0) : 0;
+  const blocked = current ? (test?.blocked ?? 0) : 0;
 
   async function runTest() {
     setTesting(true);
@@ -265,14 +268,15 @@ export default function TrainWaiting({ trade, short, view }: { trade: string; sh
         <div className="mt-3.5 flex flex-wrap items-center gap-3" aria-live="polite">
           {running ? (
             <p className="text-[15px] text-ink-soft">
-              Testing… FollowUp is answering the {size} messages three times each way. About 2 minutes.
+              Testing… FollowUp is answering the {size} messages{rules.length > 0 ? ", and a few written for your new rules," : ""} three
+              times each way. About 3 minutes.
             </p>
           ) : (
             <>
               <button type="button" onClick={runTest} disabled={busy} className={solid} style={solidStyle}>
                 Test {one ? "it" : "them"}
               </button>
-              <span className="text-sm text-ink-soft">About 2 minutes. You can keep talking to it meanwhile.</span>
+              <span className="text-sm text-ink-soft">About 3 minutes. You can keep talking to it meanwhile.</span>
             </>
           )}
         </div>
@@ -283,14 +287,21 @@ export default function TrainWaiting({ trade, short, view }: { trade: string; sh
   // A test that covered exactly what is waiting.
   const t = test!;
   const verdict = verdictSentence(t);
-  const same = t.cases - t.changes.filter((c) => c.change !== "same_fail").length;
+  const same = t.cases + t.targeted - t.changes.filter((c) => c.change !== "same_fail").length;
+  const chance = t.chance;
+  const chanceLine = !chance
+    ? "One message either way can still be chance."
+    : chance.flips === 0
+      ? `When FollowUp answered the same ${chance.cases} messages twice with nothing changed, every one came out the same.`
+      : `When FollowUp answered the same ${chance.cases} messages twice with nothing changed, ${chance.flips} came out differently, so a change of ${chance.flips === 1 ? "one message" : `${chance.flips} or fewer`} can be chance.`;
   const onlyRule = rules.length === 1 ? rules[0] : null;
   return (
     <section className="mt-8 border-t border-line pt-5" aria-labelledby="talk-waiting">
       {header}
       <div className="mt-3.5 rounded-2xl border border-line bg-card">
         <p className="px-4 pt-3.5 text-[13px] text-ink-soft">
-          Tested {when(t.at)} on {t.cases} realtor Instagram messages, each answered {t.tries} times both ways
+          Tested {when(t.at)} on {t.cases} realtor Instagram messages{t.targeted > 0 ? ` and ${t.targeted} written for your rules` : ""}, each
+          answered {t.tries} times both ways
         </p>
         <div className="flex flex-wrap">
           {[
@@ -335,7 +346,7 @@ export default function TrainWaiting({ trade, short, view }: { trade: string; sh
         </>
       )}
       <p className="mt-2.5 max-w-[62ch] text-[13.5px] text-ink-soft">
-        A message passes only when all {t.tries} of its replies pass. One message either way can still be chance. The other {same}{" "}
+        A message passes only when all {t.tries} of its replies pass. {chanceLine} The other {same}{" "}
         {same === 1 ? "message came" : "messages came"} out the same both ways.
       </p>
 
@@ -368,9 +379,11 @@ export default function TrainWaiting({ trade, short, view }: { trade: string; sh
               Change the rule&apos;s wording
             </button>
           )}
-          <button type="button" onClick={() => approve(true)} disabled={busy} className={`${quiet} text-[15px] text-ink-soft`}>
-            Put {one ? "it" : "them"} to work anyway
-          </button>
+          {blocked === 0 && (
+            <button type="button" onClick={() => approve(true)} disabled={busy} className={`${quiet} text-[15px] text-ink-soft`}>
+              Put {one ? "it" : "them"} to work anyway
+            </button>
+          )}
           <button type="button" onClick={dropAll} disabled={busy} className={`${quiet} text-[15px] text-ink-soft`}>
             Drop {one ? "it" : "them"}
           </button>

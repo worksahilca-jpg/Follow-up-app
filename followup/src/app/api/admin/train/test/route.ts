@@ -7,11 +7,12 @@ import { tooManyRecentActions } from "@/lib/rateLimit";
 import { INDUSTRIES } from "@/lib/industries";
 import { runLessonTest } from "@/lib/lessonTest";
 
-// Twenty test messages, answered three times without and three times with the waiting lessons: about 120 drafts and
-// 120 checks.
+// Twenty test messages, plus up to nine written for the waiting rules, answered three times without and three times
+// with the waiting lessons; once a month a chance check answers the twenty a third time. About 120 drafts and checks,
+// up to about 230 with rules and a chance check.
 export const maxDuration = 300;
 
-/** Each test is about 250 paid model calls; this keeps a stuck page from running up the bill. */
+/** Each test is about 250 paid model calls, up to about 550; this keeps a stuck page from running up the bill. */
 const TESTS_PER_DAY = 20;
 
 const bodySchema = z.object({ trade: z.enum(INDUSTRIES) });
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest) {
     {
       no_test: "There's no reply test for this kind of business yet.",
       nothing: "Nothing is waiting for a test.",
-      running: "A test is already running. It takes about 2 minutes.",
+      running: "A test is already running. It takes about 3 minutes.",
       failed: "The test stopped before it finished. Test again.",
     }[result.reason];
   return NextResponse.json({ success: false, reason: result.reason, message }, { status: result.reason === "failed" ? 502 : 409 });

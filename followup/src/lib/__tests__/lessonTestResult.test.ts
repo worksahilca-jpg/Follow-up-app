@@ -3,7 +3,9 @@
  */
 import { describe, it, expect } from "vitest";
 import {
+  blockingChecks,
   caseChange,
+  chanceSummary,
   changeViews,
   coversExactly,
   hasLessonTest,
@@ -55,7 +57,50 @@ describe("summarize", () => {
       c("c", [pass()], [fail()]),
       c("d", [fail()], [err]),
     ]);
-    expect(s).toEqual({ cases: 4, passedWithout: 2, passedWith: 2, better: 1, worse: 1, errors: 1 });
+    expect(s).toEqual({ cases: 4, passedWithout: 2, passedWith: 2, better: 1, worse: 1, blocked: 0, targeted: 0, errors: 1 });
+  });
+
+  it("scores the fixed messages out of their own number, and counts what the rule's messages moved in better and worse", () => {
+    const s = summarize([
+      c("a", [pass()], [pass()]),
+      { ...c("for the rule", [fail("x", ["rule"])], [pass()]), rule: "Say when the owner will confirm." },
+    ]);
+    expect(s).toMatchObject({ cases: 1, passedWithout: 1, passedWith: 1, better: 1, worse: 0, targeted: 1 });
+  });
+});
+
+// Plan step 3: a check code decides, broken by the lessons on most tries and never without them.
+const hardFail = (problem = "shape"): TryOutcome => ({ reply: "Two questions? Really?", problems: [problem], hard: [problem] });
+
+describe("blockingChecks", () => {
+  it("blocks a code check the lessons broke on most tries and never without them", () => {
+    expect(blockingChecks(c("a", [pass(), pass(), pass()], [hardFail(), hardFail(), pass()]))).toEqual(["shape"]);
+  });
+
+  it("leaves a single slip to 'worse', where the founder can still overrule it", () => {
+    const once = c("a", [pass(), pass(), pass()], [hardFail(), pass(), pass()]);
+    expect(blockingChecks(once)).toEqual([]);
+    expect(caseChange(once)).toBe("worse");
+  });
+
+  it("never blames the lessons for a check that fails without them too, or for what only a model's reading found", () => {
+    expect(blockingChecks(c("a", [hardFail(), pass(), pass()], [hardFail(), hardFail(), hardFail()]))).toEqual([]);
+    expect(blockingChecks(c("a", [pass(), pass(), pass()], [fail(), fail(), fail()]))).toEqual([]);
+  });
+
+  it("counts as worse even when the two sides' scores look the same", () => {
+    const sameScore = c("a", [fail(), pass(), pass()], [hardFail(), hardFail(), pass()]);
+    expect(caseChange(sameScore)).toBe("worse");
+    expect(summarize([sameScore])).toMatchObject({ worse: 1, blocked: 1 });
+  });
+});
+
+describe("chanceSummary", () => {
+  it("counts the messages that came out differently when nothing changed, either way", () => {
+    const first = [[pass(), pass(), pass()], [fail(), fail(), fail()], [pass(), pass(), pass()]];
+    const second = [[pass(), fail(), pass()], [pass(), pass(), pass()], [pass(), pass(), pass()]];
+    expect(chanceSummary(first, second)).toEqual({ cases: 3, up: 1, down: 1, flips: 2, errors: 0 });
+    expect(chanceSummary([[err]], [[pass()]]).errors).toBe(1);
   });
 });
 
@@ -82,6 +127,22 @@ describe("changeViews", () => {
     expect(v.sentence).toBe("Now passes every time. Before, it sometimes didn't answer their question.");
     expect(v.without).toBe("bad");
   });
+
+  it("names the code check the lessons broke, how often, and that it can't be overruled, with a reply that broke it", () => {
+    const [v] = changeViews([c("two questions", [pass("One question?"), pass(), pass()], [hardFail(), pass("fine"), hardFail()])]);
+    expect(v).toMatchObject({ change: "worse", blocked: true, with: "Two questions? Really?" });
+    expect(v.sentence).toBe(
+      "With your changes it broke a message rule on 2 of 3 tries, and never without them. FollowUp checks that itself, so these changes can't be put to work."
+    );
+  });
+
+  it("says plainly when a rule didn't do its job on a message written for it", () => {
+    const rule = { ...c("“Say when the owner will confirm.” · message 1", [fail("x", ["rule"])], [fail("y", ["rule"])]), rule: "Say when the owner will confirm." };
+    const [v] = changeViews([rule]);
+    expect(v.sentence).toBe("Your rule didn't do its job here: with and without it, the reply didn't follow your rule.");
+    const [better] = changeViews([{ ...rule, with: [pass()] }]);
+    expect(better.sentence).toBe("Now passes every time. Before, it didn't follow your rule.");
+  });
 });
 
 describe("the words", () => {
@@ -100,6 +161,13 @@ describe("the words", () => {
       rest: "FollowUp recommends changing the wording, or dropping a change, then testing again.",
     });
     expect(verdictSentence({ better: 0, worse: 1 }).lead).toBe("Better on none, worse on 1.");
+  });
+
+  it("says a broken code check stops them, with no recommendation to go ahead", () => {
+    expect(verdictSentence({ better: 3, worse: 1, blocked: 1 })).toEqual({
+      lead: "Better on 3, worse on 1.",
+      rest: "On one of them a reply broke one of FollowUp's own checks, so these changes can't be put to work. Change the wording or drop a change, then test again.",
+    });
   });
 });
 

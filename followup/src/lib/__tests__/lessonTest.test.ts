@@ -3,14 +3,16 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { prisma, replyEval, review } = vi.hoisted(() => ({
-  prisma: { lessonTest: { findFirst: vi.fn(), create: vi.fn(), update: vi.fn() } },
-  replyEval: { runReplyTries: vi.fn(), tradeLessons: vi.fn() },
+const { prisma, replyEval, review, ruleMessages } = vi.hoisted(() => ({
+  prisma: { lessonTest: { findFirst: vi.fn(), create: vi.fn(), update: vi.fn() }, trainingRule: { findMany: vi.fn() } },
+  replyEval: { runReplyTries: vi.fn(), tradeLessons: vi.fn(), REPLY_CASES: [{ name: "a" }, { name: "b" }] },
   review: { listWaiting: vi.fn(), TEST_STALE_MS: 6 * 60_000 },
+  ruleMessages: { targetedCases: vi.fn() },
 }));
 vi.mock("@/lib/db", () => ({ prisma }));
 vi.mock("@/lib/replyEval", () => replyEval);
 vi.mock("@/lib/lessonReview", () => review);
+vi.mock("@/lib/ruleTestMessages", () => ruleMessages);
 vi.mock("@/lib/integrations/openaiClient", () => ({ MODEL: "test-model" }));
 
 import { runLessonTest } from "@/lib/lessonTest";
@@ -20,8 +22,11 @@ const tries = (...ok: boolean[]) => ok.map((p) => ({ reply: p ? "good" : "bad", 
 
 beforeEach(() => {
   vi.clearAllMocks();
-  review.listWaiting.mockResolvedValue([{ key: "rule:r1:1" }, { key: "example:e1" }]);
-  prisma.lessonTest.findFirst.mockResolvedValue(null);
+  review.listWaiting.mockResolvedValue([{ key: "rule:r1:1", kind: "rule", id: "r1" }, { key: "example:e1", kind: "example", id: "e1" }]);
+  prisma.trainingRule.findMany.mockResolvedValue([{ id: "r1", text: "Say when the owner will confirm.", version: 1, testMessages: null }]);
+  ruleMessages.targetedCases.mockResolvedValue([]);
+  // No test running, and a chance check from this month on this model: most tests run without one.
+  prisma.lessonTest.findFirst.mockImplementation(async ({ where }: { where: { kind?: string } }) => (where.kind === "chance" ? { id: "c0" } : null));
   prisma.lessonTest.create.mockResolvedValue({ id: "t1" });
   prisma.lessonTest.update.mockResolvedValue({});
   // Each half reads the kind's lessons as a live draft would; inside the "with" half the waiting ones count too.
@@ -68,8 +73,68 @@ describe("runLessonTest", () => {
     expect(await runLessonTest("Legal", "founder")).toEqual({ ok: false, reason: "no_test" });
     review.listWaiting.mockResolvedValueOnce([]);
     expect(await runLessonTest("Real estate", "founder")).toEqual({ ok: false, reason: "nothing" });
-    prisma.lessonTest.findFirst.mockResolvedValueOnce({ id: "t0" });
+    prisma.lessonTest.findFirst.mockResolvedValue({ id: "t0" });
     expect(await runLessonTest("Real estate", "founder")).toEqual({ ok: false, reason: "running" });
     expect(prisma.lessonTest.create).not.toHaveBeenCalled();
+  });
+
+  it("answers the messages written for each waiting rule too, both ways, and counts them apart from the 20", async () => {
+    const forRule = { name: "“Say when the owner will confirm.” · message 1", lines: [["in", "Is Sunday open?"]], asks: [], rule: "Say when the owner will confirm." };
+    ruleMessages.targetedCases.mockResolvedValue([forRule]);
+    replyEval.runReplyTries.mockImplementation(async (lessons: { rules: string[] }) => [
+      { name: "a", said: "a?", tries: tries(true, true, true) },
+      { name: "b", said: "b?", tries: tries(true, true, true) },
+      { name: forRule.name, said: "Is Sunday open?", rule: forRule.rule, tries: lessons.rules[0] === '"ACTIVE"' ? tries(false, false, false) : tries(true, true, true) },
+    ]);
+    await runLessonTest("Real estate", "founder");
+    expect(ruleMessages.targetedCases.mock.calls[0]).toEqual(["Real estate", [{ id: "r1", text: "Say when the owner will confirm.", version: 1, testMessages: null }]]);
+    expect(replyEval.runReplyTries.mock.calls[0][1].cases).toEqual([{ name: "a" }, { name: "b" }, forRule]);
+    const data = prisma.lessonTest.update.mock.calls[0][0].data;
+    expect(data).toMatchObject({ cases: 2, passedWithout: 2, passedWith: 2, better: 1, worse: 0, targeted: 1, blocked: 0 });
+    expect(data.results[2]).toMatchObject({ rule: "Say when the owner will confirm." });
+  });
+
+  it("keeps a code check the lessons broke as blocked", async () => {
+    const broken = [0, 1, 2].map(() => ({ reply: "Two? Questions?", problems: ["shape"], hard: ["shape"], detail: "" }));
+    replyEval.runReplyTries.mockImplementation(async (lessons: { rules: string[] }) => [
+      { name: "a", said: "a?", tries: lessons.rules[0] === '"ACTIVE"' ? tries(true, true, true) : broken },
+      { name: "b", said: "b?", tries: tries(true, true, true) },
+    ]);
+    await runLessonTest("Real estate", "founder");
+    expect(prisma.lessonTest.update.mock.calls[0][0].data).toMatchObject({ worse: 1, blocked: 1 });
+  });
+
+  it("runs a chance check alongside when this kind has none on the model in use, and keeps how many messages moved", async () => {
+    prisma.lessonTest.findFirst.mockResolvedValue(null);
+    let n = 0;
+    replyEval.runReplyTries.mockImplementation(async (lessons: { rules: string[] }) => {
+      if (lessons.rules[0] !== '"ACTIVE"') return [{ name: "a", said: "a?", tries: tries(true, true, true) }, { name: "b", said: "b?", tries: tries(true, true, true) }];
+      n += 1;
+      // The first run without the lessons fails "a"; the second, with nothing changed, passes it: one message moved.
+      return [{ name: "a", said: "a?", tries: tries(n !== 1, true, true) }, { name: "b", said: "b?", tries: tries(true, true, true) }];
+    });
+    await runLessonTest("Real estate", "founder");
+    expect(replyEval.runReplyTries).toHaveBeenCalledTimes(3);
+    expect(replyEval.runReplyTries.mock.calls[2][1].cases).toEqual([{ name: "a" }, { name: "b" }]);
+    const chanceRow = prisma.lessonTest.create.mock.calls.find((c) => c[0].data.kind === "chance")?.[0].data;
+    expect(chanceRow).toMatchObject({ trade: "Real estate", kind: "chance", status: "done", cases: 2, better: 1, worse: 0, model: "test-model" });
+  });
+
+  it("skips the chance check when there's a recent one, and never keeps one that lost a reply", async () => {
+    await runLessonTest("Real estate", "founder");
+    expect(replyEval.runReplyTries).toHaveBeenCalledTimes(2);
+    prisma.lessonTest.findFirst.mockResolvedValue(null);
+    vi.clearAllMocks();
+    prisma.lessonTest.create.mockResolvedValue({ id: "t1" });
+    prisma.lessonTest.update.mockResolvedValue({});
+    review.listWaiting.mockResolvedValue([{ key: "example:e1", kind: "example", id: "e1" }]);
+    ruleMessages.targetedCases.mockResolvedValue([]);
+    replyEval.tradeLessons.mockResolvedValue({ examples: [], rules: [] });
+    replyEval.runReplyTries
+      .mockResolvedValueOnce([{ name: "a", said: "a?", tries: tries(true) }])
+      .mockResolvedValueOnce([{ name: "a", said: "a?", tries: tries(true) }])
+      .mockResolvedValueOnce([{ name: "a", said: "a?", tries: [{ reply: "", problems: [], detail: "", error: "429" }] }]);
+    await runLessonTest("Real estate", "founder");
+    expect(prisma.lessonTest.create.mock.calls.some((c) => c[0].data.kind === "chance")).toBe(false);
   });
 });

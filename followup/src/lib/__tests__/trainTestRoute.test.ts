@@ -52,7 +52,7 @@ describe("POST /api/admin/train/test", () => {
     runLessonTest.mockResolvedValueOnce({ ok: false, reason: "running" });
     const busy = await POST(req({ trade: "Real estate" }));
     expect(busy.status).toBe(409);
-    expect((await busy.json()).message).toBe("A test is already running. It takes about 2 minutes.");
+    expect((await busy.json()).message).toBe("A test is already running. It takes about 3 minutes.");
 
     runLessonTest.mockResolvedValueOnce({ ok: false, reason: "failed", message: "FollowUp couldn't write 2 of the 120 replies. Test again." });
     const failed = await POST(req({ trade: "Real estate" }));

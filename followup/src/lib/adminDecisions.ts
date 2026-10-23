@@ -21,7 +21,7 @@ export type WaitingLessons = {
   trade: string;
   waiting: number;
   hasTest: boolean;
-  test: { status: string; current: boolean; passedWithout: number; passedWith: number; cases: number; worse: number } | null;
+  test: { status: string; current: boolean; passedWithout: number; passedWith: number; cases: number; worse: number; blocked?: number } | null;
 };
 
 export type DecisionFacts = {
@@ -52,7 +52,13 @@ export function buildDecisions({ health, usage, notCustomer, lessons = [] }: Dec
     const why = !l.hasTest
       ? `There's no reply test for this kind yet. Your OK puts ${them} to work.`
       : t && t.current && t.status === "done"
-        ? `Tested: ${t.passedWith} of ${t.cases} pass with ${them}, ${t.passedWithout} of ${t.cases} without. ${t.worse > 0 ? `Worse on ${t.worse}.` : "Nothing got worse."}`
+        ? `Tested: ${t.passedWith} of ${t.cases} pass with ${them}, ${t.passedWithout} of ${t.cases} without. ${
+              (t.blocked ?? 0) > 0
+                ? `A reply broke one of FollowUp's own checks, so ${l.waiting === 1 ? "it can't" : "they can't"} go in use as ${l.waiting === 1 ? "it is" : "they are"}.`
+                : t.worse > 0
+                  ? `Worse on ${t.worse}.`
+                  : "Nothing got worse."
+            }`
         : `Not tested yet. Test ${them} on Train before ${l.waiting === 1 ? "it goes" : "they go"} in use.`;
     out.push({
       key: `lessons-${l.trade}`,

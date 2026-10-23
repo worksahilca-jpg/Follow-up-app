@@ -86,6 +86,11 @@ export type ReplyCase = {
    * ten failures in the first run were this).
    */
   noDetail?: boolean;
+  /**
+   * Written for one waiting rule (plan step 3, src/lib/ruleTestMessages.ts): the reply must also follow it. Without
+   * the rule it usually doesn't, so these show whether the rule does its job.
+   */
+  rule?: string;
 };
 
 /** The customer's profile name, which the drafter is given as a live DM's would be. */
@@ -195,7 +200,9 @@ export type ReplyProblem =
   | "pressure"
   | "brag"
   | "feeling"
-  | "generic";
+  | "generic"
+  // Plan step 3: a message written for a rule, and the reply didn't follow it.
+  | "rule";
 
 export type ReplyEvalResult = {
   cases: number;
@@ -327,14 +334,59 @@ export const gradeReply: Grader = async (c, reply) => {
   };
 };
 
+/** Did the reply follow the rule a message was written for? A second, narrow reading, so the main checklist stays as it was. */
+export type RuleGrader = (rule: string, c: ReplyCase, reply: string) => Promise<boolean>;
+
+export const gradeRule: RuleGrader = async (rule, c, reply) => {
+  const client = getClient("grade_rule");
+  const chat = c.lines.map(([who, text]) => `${who === "in" ? "CUSTOMER" : "BUSINESS"}: ${text}`).join("\n");
+  const completion = await client.chat.completions.create({
+    model: MODEL,
+    temperature: 0,
+    max_tokens: 60,
+    messages: [
+      {
+        role: "system",
+        content:
+          "A small business set a rule for the replies FollowUp writes to its customers. You check one reply against " +
+          "that rule. You only grade; you never rewrite. followed: true when the reply does what the rule asks, or the " +
+          "rule doesn't apply to this conversation; false when the reply breaks it or ignores it.",
+      },
+      { role: "user", content: `RULE:\n${rule}\n\nCONVERSATION:\n${chat}\n\nREPLY TO CHECK:\n${reply}` },
+    ],
+    response_format: {
+      type: "json_schema",
+      json_schema: {
+        name: "rule_check",
+        strict: true,
+        schema: { type: "object", properties: { followed: { type: "boolean" } }, required: ["followed"], additionalProperties: false },
+      },
+    },
+  });
+  const raw = completion.choices[0]?.message?.content;
+  if (!raw) throw new Error("The rule check returned nothing.");
+  return !!(JSON.parse(raw) as { followed?: unknown }).followed;
+};
+
 /** Two at a time: each case is up to three model calls (a draft, a retry, a grade). */
 export const REPLY_EVAL_CONCURRENCY = 2;
 
-/** One reply to one case, and what was wrong with it. */
-export type CaseTry = { reply: string; problems: ReplyProblem[]; detail: string; error?: string };
+/**
+ * One reply to one case, and what was wrong with it. `hard` is the part of `problems` that code decided, not a model's
+ * reading: the message rules, a reply that hands their words back, a fact left out, the pressure and bragging words
+ * src/lib/replyTone.ts looks for, a question after a no. Plan step 3: these can block a lesson outright.
+ */
+export type CaseTry = { reply: string; problems: ReplyProblem[]; hard: ReplyProblem[]; detail: string; error?: string };
 
 /** Drafts one case with the real drafter and checks it. Throws when a model call fails. */
-async function tryCase(c: ReplyCase, draft: Drafter, grade: Grader, lessons: Lessons, retry?: RateLimitRetryOptions): Promise<CaseTry> {
+async function tryCase(
+  c: ReplyCase,
+  draft: Drafter,
+  grade: Grader,
+  lessons: Lessons,
+  retry?: RateLimitRetryOptions,
+  ruleGrade: RuleGrader = gradeRule
+): Promise<CaseTry> {
   // The same call a live DM reply makes (automation.ts, scoring.ts), for a realtor.
   const drafted = await withRateLimitRetry(
     () => draft(LEAD_NAME, toConversation(c.lines), [], undefined, "reply", null, c.facts ?? [], null, REPLY_EVAL_TRADE, lessons.examples, lessons.rules),
@@ -344,12 +396,17 @@ async function tryCase(c: ReplyCase, draft: Drafter, grade: Grader, lessons: Les
   const g = await withRateLimitRetry(() => grade(c, reply), retry);
 
   const problems: ReplyProblem[] = [];
+  const hard = new Set<ReplyProblem>();
   const details: string[] = [];
   if (drafted.shapeFailed) {
     problems.push("shape");
+    hard.add("shape");
     details.push(`shape rule: ${drafted.shapeFailed}`);
   }
-  if (ECHO_RE.test(reply)) problems.push("echo");
+  if (ECHO_RE.test(reply)) {
+    problems.push("echo");
+    hard.add("echo");
+  }
   const missed = c.asks.filter((_, i) => g.answered[i] !== true);
   if (missed.length) {
     problems.push("unanswered");
@@ -363,6 +420,7 @@ async function tryCase(c: ReplyCase, draft: Drafter, grade: Grader, lessons: Les
   const absent = (c.mustInclude ?? []).filter((w) => !reply.includes(w));
   if (absent.length) {
     problems.push("missing_fact");
+    hard.add("missing_fact");
     details.push(`missing: ${absent.join(", ")}`);
   }
   // A-247. The code check (src/lib/replyTone.ts) and the reader both
@@ -371,10 +429,12 @@ async function tryCase(c: ReplyCase, draft: Drafter, grade: Grader, lessons: Les
   const askedAgain = c.closing && /[?？؟]/.test(reply);
   if (g.pushy || tone === "pressure" || askedAgain) {
     problems.push("pressure");
+    if (tone === "pressure" || askedAgain) hard.add("pressure");
     details.push(askedAgain ? "asked again after a no" : "pushed or rushed them");
   }
   if (g.bragged || tone === "brag") {
     problems.push("brag");
+    if (tone === "brag") hard.add("brag");
     details.push("praised the business");
   }
   if ((c.feeling && !g.acknowledgedFeeling) || g.inventedFeeling) {
@@ -385,7 +445,11 @@ async function tryCase(c: ReplyCase, draft: Drafter, grade: Grader, lessons: Les
     problems.push("generic");
     details.push(g.robotic ? "read like a template" : "could go to anyone");
   }
-  return { reply, problems, detail: details.join(" · ") };
+  if (c.rule && !(await withRateLimitRetry(() => ruleGrade(c.rule!, c, reply), retry))) {
+    problems.push("rule");
+    details.push("didn't follow the rule");
+  }
+  return { reply, problems, hard: [...hard], detail: details.join(" · ") };
 }
 
 const NO_LESSONS: Lessons = { examples: [], rules: [] };
@@ -400,7 +464,7 @@ export async function runReplyEval(
     cases: cases.length,
     passed: 0,
     errors: 0,
-    problems: { shape: 0, unanswered: 0, invented: 0, language: 0, missing_fact: 0, echo: 0, pressure: 0, brag: 0, feeling: 0, generic: 0 },
+    problems: { shape: 0, unanswered: 0, invented: 0, language: 0, missing_fact: 0, echo: 0, pressure: 0, brag: 0, feeling: 0, generic: 0, rule: 0 },
     failures: [],
   };
   // Logged as "test:…" in the decision log, apart from real customers' replies.
@@ -418,8 +482,8 @@ export async function runReplyEval(
   return result;
 }
 
-/** Every reply to one case: the customer's last words and each try. */
-export type CaseTries = { name: string; said: string; tries: CaseTry[] };
+/** Every reply to one case: the customer's last words and each try, and the rule it was written for, if any. */
+export type CaseTries = { name: string; said: string; rule?: string; tries: CaseTry[] };
 
 /**
  * Drafts every case `tries` times with the given lessons (A-319). A failed model call counts as a try that didn't
@@ -427,16 +491,24 @@ export type CaseTries = { name: string; said: string; tries: CaseTry[] };
  */
 export async function runReplyTries(
   lessons: Lessons,
-  options: { tries: number; concurrency: number; draft?: Drafter; grade?: Grader; cases?: ReplyCase[]; retry?: RateLimitRetryOptions }
+  options: {
+    tries: number;
+    concurrency: number;
+    draft?: Drafter;
+    grade?: Grader;
+    ruleGrade?: RuleGrader;
+    cases?: ReplyCase[];
+    retry?: RateLimitRetryOptions;
+  }
 ): Promise<CaseTries[]> {
   const cases = options.cases ?? REPLY_CASES;
   const jobs = cases.flatMap((c, ci) => Array.from({ length: options.tries }, (_, t) => ({ c, ci, t })));
-  const out: CaseTries[] = cases.map((c) => ({ name: c.name, said: lastInbound(c), tries: [] }));
+  const out: CaseTries[] = cases.map((c) => ({ name: c.name, said: lastInbound(c), ...(c.rule ? { rule: c.rule } : {}), tries: [] }));
   const results = await withAiContext({ tag: "test" }, () => mapWithConcurrency(jobs, options.concurrency, async ({ c }) => {
     try {
-      return await tryCase(c, options.draft ?? draftDm, options.grade ?? gradeReply, lessons, options.retry);
+      return await tryCase(c, options.draft ?? draftDm, options.grade ?? gradeReply, lessons, options.retry, options.ruleGrade);
     } catch (err) {
-      return { reply: "", problems: [], detail: "", error: err instanceof Error ? err.message : "unknown error" } satisfies CaseTry;
+      return { reply: "", problems: [], hard: [], detail: "", error: err instanceof Error ? err.message : "unknown error" } satisfies CaseTry;
     }
   }));
   jobs.forEach((j, i) => {

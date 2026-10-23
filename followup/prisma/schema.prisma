@@ -2493,6 +2493,10 @@ model TrainingRule {
   // A-319 (2026-10-23): new wording for a rule in use waits as a rule of its own; this is the rule it takes over from
   // when it is put to work. Plain id, no relation.
   replacesId   String?
+  // Plan step 3 (2026-10-23): customer messages written for this wording of the rule, so the test can see whether the
+  // rule does its job (src/lib/ruleTestMessages.ts): { version, messages: [{ text, asks, reworded }] }. Kept, so every
+  // test of the same wording uses the same messages.
+  testMessages Json?
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
@@ -2541,6 +2545,9 @@ model AiDecision {
 model LessonTest {
   id            String    @id @default(cuid())
   trade         String
+  // Plan step 3 (2026-10-23): "lessons" is a test of what waits; "chance" answers the same messages twice with nothing
+  // changed, to learn how many come out differently on their own (better and worse then count those flips).
+  kind          String    @default("lessons")
   // What was tested, one key per waiting lesson: "rule:<id>:<version>", "example:<id>", "conversation:<id>:<examples>".
   lessons       String[]
   // "running", "done" or "failed".
@@ -2551,6 +2558,11 @@ model LessonTest {
   passedWith    Int?
   better        Int?
   worse         Int?
+  // Messages where one of FollowUp's own code checks failed only with the lessons, on most tries: these block
+  // "Put them to work", with no "anyway" (plan step 3).
+  blocked       Int?
+  // Messages written for the waiting rules (TrainingRule.testMessages), on top of the kind's fixed set.
+  targeted      Int?
   // Each test message's replies and checks, without and with (src/lib/lessonTestResult.ts).
   results       Json?
   error         String?

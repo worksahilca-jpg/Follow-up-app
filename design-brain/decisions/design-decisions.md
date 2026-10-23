@@ -15347,3 +15347,36 @@ design loop first); no owner rating anything (R-137).
 - A reply counts for the most recent message before it; with two messages close together, both can claim it.
 - FollowUp's next-step calls (A-310) aren't linked to outcomes yet; that is step 5.
 - "Booked" means a booking FollowUp knows about; one made in a CRM it doesn't read isn't seen.
+
+## 2026-10-23 — The honest test (plan step 3): built after the founder's "Go"
+
+**What:** step 3 of `followup/research/product/2026-10-23-self-improving-loop.md`, recorded as
+[A-320](approved.md#^A-320). Code: `src/lib/replyEval.ts` (which failures code decided, the rule check),
+`src/lib/lessonTestResult.ts` (blocking, chance, the words), `src/lib/ruleTestMessages.ts` (new),
+`src/lib/lessonTest.ts`, `src/lib/lessonReview.ts`, `src/components/admin/TrainWaiting.tsx`. Migration: `LessonTest`
+gains `kind`, `blocked`, `targeted`; `TrainingRule` gains `testMessages`.
+
+**Choices made, and why:**
+- **Blocking needs 2 of 3 tries.** One slip in three is often chance (the research: a model doesn't give the same reply
+  twice), so it stays "worse", which the founder can overrule. Twice in three, and never without the changes, is the
+  changes' doing.
+- **Only code-decided checks block.** The research: "Code checks block; the AI grader advises until it has earned
+  trust." The model's reading (answered, invented, pushy, generic) still counts as worse, overrulable, as in A-319.
+- **The chance check runs beside a test, not on a button,** once per kind per model and then monthly, so there is no
+  new control. It reuses the test's own first run as one side.
+- **Rule messages are kept per wording,** so two tests of the same wording ask the same things, and a change of wording
+  gets new ones.
+
+**Checked:** 4,806 tests pass; tsc and eslint clean; the Train page drawn from seeded local data on computer and phone
+(blocked state, rule messages, chance line), no sideways scroll; nothing run against production.
+
+**Weak spots, said plainly:**
+- Not run against the real model yet: the rule messages, the rule check and the timing are untested live. A first test
+  with 3 rules and a chance check is about 87 replies each way plus 60, checked; it should fit the 5-minute limit but
+  hasn't been timed.
+- Only the first 3 waiting rules get messages; more wait for the fixed 20 alone.
+- The rule check is a model's reading, so "did its job" is advisory, like the rest of the grader (step 4 checks the
+  checker).
+- The chance check is one run of 20 messages: a rough number, not a precise one.
+- A code check can still fail twice in three by chance; then the founder tests again.
+

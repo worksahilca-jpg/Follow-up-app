@@ -74,7 +74,14 @@ a booked call or visit; the owner closes.
 
 **Last updated: 2026-10-23**
 
-- **What happened after each draft (plan step 2, Oct 23; built, PR open, not merged):** a sent reply now names the
+- **The honest test (plan step 3, A-320, Oct 23; built, PR open, not merged):** the lesson test on Admin → Train now
+  blocks outright (no "anyway") when the changes break one of FollowUp's own code checks on 2 of 3 tries and never
+  without them; writes 2 customer messages plus 1 reworded for each of the first 3 new rules (kept per wording,
+  `src/lib/ruleTestMessages.ts`) and reads those replies against the rule; and once per kind per model, then monthly,
+  answers the 20 messages a second time with nothing changed to say how many move by chance. Migration: 3 LessonTest
+  columns + TrainingRule.testMessages.
+- **What happened after each draft (plan step 2, Oct 23) LIVE (PR #591 → 494020f, merged at the founder's "Merge";
+  columns, index and migration confirmed in production, read-only):** a sent reply now names the
   AI answer whose draft it used (`FollowUp.responseId`) and how much a person changed it (`editSize`, 0 to 1, a
   number, never the words); a "Don't send" keeps the answer's id in its audit row. `src/lib/decisionOutcome.ts` turns
   that into what the owner did (sent by itself / sent as written / edited / rewritten at half the words or more / not

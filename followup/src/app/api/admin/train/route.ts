@@ -332,6 +332,7 @@ export async function POST(request: NextRequest) {
       const message = {
         nothing: "Nothing is waiting for your OK.",
         untested: "Something changed since the test. Test them again first.",
+        blocked: "A reply broke one of FollowUp's own checks in the test. Change the wording or drop a change, then test again.",
         worse: "A reply got worse in the test. Change the wording and test again, or put them to work anyway.",
       }[result.reason];
       return NextResponse.json({ success: false, reason: result.reason, message }, { status: 409 });

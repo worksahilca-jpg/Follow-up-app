@@ -5644,7 +5644,8 @@ kind until it has been tested and the founder has put it to work.
   message whose result changed or that fails both times, a line that one reply either way can be chance, then "Put them
   to work" (solid) · "Drop them".
 - **Something got worse:** the worse message first; FollowUp recommends changing the rule's wording and testing again;
-  "Put them to work anyway" and "Drop them" stay as quiet links.
+  "Put them to work anyway" and "Drop them" stay as quiet links. *(NARROWED 2026-10-23 by [A-320](#^A-320): no
+  "anyway" when one of FollowUp's own code checks failed only with the changes, on most tries.)*
 - **A kind with no test yet:** it says so plainly; the founder's OK alone puts it to work.
 - **After:** the rule joins "Your rules for <kind>" with when it went in use and its test result. Admin → Decide shows
   one "Needs you" line while changes wait ("3 changes to Real estate replies wait for your OK · Look and decide").
@@ -5656,3 +5657,30 @@ when all 3 pass; a reply that couldn't be written fails the whole test; a test c
 new wording for a rule in use waits as its own change and the old words stay in use until the OK; the result warns
 which rules in use would stop being read past the newest 20; the reply test on Admin also uses the kind's rules and
 examples in use. Details and weak spots in design-decisions (2026-10-23, "approved and built").
+
+## A-320 — The honest test: a chance check, messages for each rule, and code checks that block ^A-320
+
+**Date:** 2026-10-23. **Founder, verbatim:** *"Go"*, to step 3 of the self-improving plan as put to them: "a chance
+check (one run with the same lessons on both sides, to learn how many messages change by chance alone); messages for
+each rule (2 to 5 test messages written for each new rule, so a narrow rule can be judged on its own); automatic checks
+that block (checks in code that stop a lesson before it can be put to work). There's no screen change in step 3."
+**What specifically was approved, and how it was built:**
+- **Code checks block.** The test now knows which failures code decided (a message rule broken, their words handed
+  back, a fact left out, the pressure and bragging words FollowUp looks for, a question after a no) and which a model's
+  reading found. When the changes break a code check on at least 2 of the 3 tries and never without them, "Put them to
+  work anyway" is gone: FollowUp says "On one of them a reply broke one of FollowUp's own checks, so these changes can't
+  be put to work. Change the wording or drop a change, then test again." One slip in three stays "worse", which the
+  founder can still overrule (A-319).
+- **Messages for each rule.** For each new rule (the first 3 waiting), FollowUp writes 2 customer messages where the rule
+  matters and the first one again in other words, keeps them with that wording, and answers them both ways too, each
+  read against the rule. They join "What changed" under the rule's words ("“When a customer says they saw your
+  listing…” · message 1"); a rule that didn't do its job says so ("Your rule didn't do its job here…"). The "of 20"
+  scores stay the fixed messages only.
+- **The chance check.** The first test for a kind on a model (and then once a month) also answers the 20 messages a
+  second time with nothing changed. The line under "What changed" then says how many came out differently ("When
+  FollowUp answered the same 20 messages twice with nothing changed, 2 came out differently, so a change of 2 or fewer
+  can be chance."), in place of "One message either way can still be chance."
+- **Wording only, on the founder's Train page:** the box line names the rule messages ("on 20 realtor Instagram messages
+  and 3 written for your rules"), the test now says "About 3 minutes", and the Decide row says when a broken check
+  stops the changes. No new parts on screen. ("No screen change" was slightly wrong: these lines changed.)
+

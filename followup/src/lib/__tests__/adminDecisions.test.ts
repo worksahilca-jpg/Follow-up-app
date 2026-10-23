@@ -86,6 +86,14 @@ describe("buildDecisions", () => {
     ]);
   });
 
+  it("says when a broken check means the lessons can't go in use as they are (plan step 3)", () => {
+    const [d] = buildDecisions({
+      ...facts(),
+      lessons: [{ trade: "Real estate", waiting: 2, hasTest: true, test: { status: "done", current: true, passedWithout: 12, passedWith: 14, cases: 20, worse: 1, blocked: 1 } }],
+    });
+    expect(d.why).toBe("Tested: 14 of 20 pass with them, 12 of 20 without. A reply broke one of FollowUp's own checks, so they can't go in use as they are.");
+  });
+
   it("a test that no longer covers what is waiting reads as not tested", () => {
     const [d] = buildDecisions({
       ...facts(),

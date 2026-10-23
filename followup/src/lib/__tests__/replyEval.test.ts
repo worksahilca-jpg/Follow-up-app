@@ -85,7 +85,7 @@ describe("runReplyEval scoring", () => {
       noWait
     );
     expect(r.passed).toBe(0);
-    expect(r.problems).toEqual({ shape: 1, unanswered: 1, invented: 1, language: 1, missing_fact: 1, echo: 1, pressure: 0, brag: 0, feeling: 0, generic: 0 });
+    expect(r.problems).toEqual({ shape: 1, unanswered: 1, invented: 1, language: 1, missing_fact: 1, echo: 1, pressure: 0, brag: 0, feeling: 0, generic: 0, rule: 0 });
     expect(r.failures[0]).toMatchObject({ name: "fee", reply: "Noted. I'm free Thursday, what area are you in?" });
     expect(r.failures[0].detail).toMatch(/not answered: fee/);
     expect(r.failures[0].detail).toMatch(/invented: free Thursday/);
@@ -175,5 +175,34 @@ describe("runReplyEval scoring", () => {
   it("an error is an error, never a pass", async () => {
     const r = await runReplyEval(vi.fn(async () => Promise.reject(new Error("boom"))) as never, gradeOf({}), [fee], noWait);
     expect(r).toMatchObject({ passed: 0, errors: 1 });
+  });
+});
+
+describe("plan step 3: what code decided, and messages written for a rule", () => {
+  const base = { tries: 1, concurrency: 1, retry: noWait.retry };
+
+  it("marks the failures code decided apart from the ones a model read", async () => {
+    // "Noted." is code's echo check; the shape rule is the drafter's own; the made-up detail is the reader's.
+    const out = await runReplyTries({ examples: [], rules: [] }, { ...base, draft: draftOf("Noted. 2.5%", "two_questions"), grade: gradeOf({ invented: true }), cases: [fee] });
+    expect(out[0].tries[0].problems).toEqual(expect.arrayContaining(["shape", "echo", "invented"]));
+    expect(out[0].tries[0].hard.sort()).toEqual(["echo", "shape"]);
+  });
+
+  it("pressure counts as code's only when code found it, not when only the reader thought so", async () => {
+    const out = await runReplyTries({ examples: [], rules: [] }, { ...base, draft: draftOf("I charge 2.5%. Free Thursday?"), grade: gradeOf({ pushy: true }), cases: [fee] });
+    expect(out[0].tries[0].problems).toContain("pressure");
+    expect(out[0].tries[0].hard).not.toContain("pressure");
+  });
+
+  it("reads a reply against the rule only for a message written for it, and keeps the rule on the result", async () => {
+    const ruleGrade = vi.fn(async () => false);
+    const forRule: ReplyCase = { name: "rule", lines: [["in", "Is the Elm St semi still open on Sunday?"]], asks: [], rule: "Say when the owner will confirm." };
+    const out = await runReplyTries({ examples: [], rules: [] }, { ...base, draft: draftOf("Yes, Sunday works."), grade: gradeOf({}), ruleGrade, cases: [fee, forRule] });
+    expect(ruleGrade).toHaveBeenCalledTimes(1);
+    expect(ruleGrade.mock.calls[0]).toEqual(["Say when the owner will confirm.", forRule, "Yes, Sunday works."]);
+    expect(out[1]).toMatchObject({ rule: "Say when the owner will confirm." });
+    expect(out[1].tries[0].problems).toContain("rule");
+    expect(out[1].tries[0].hard).not.toContain("rule");
+    expect(out[0].rule).toBeUndefined();
   });
 });

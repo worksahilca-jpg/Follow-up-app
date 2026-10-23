@@ -74,11 +74,11 @@ a booked call or visit; the owner closes.
 
 **Last updated: 2026-10-23**
 
-- **Assisted sends nothing on its own; new customers on top (A-322, A-323, R-140, Oct 23; built, PR open, not
-  merged):** the 30-minute "let me check" went out on the founder's own Instagram at 10:40 am and they don't trust
+- **Assisted sends nothing on its own; new customers on top (A-322, A-323, R-140, Oct 23) LIVE (PR #593 → 39c2b8b,
+  merged at the founder's "merge"; deploy green; no migration):** the 30-minute "let me check" went out on the founder's own Instagram at 10:40 am and they don't trust
   automatic messages yet, so on an Assisted account FollowUp now sends nothing by itself (the line stays for Automatic
   only). Customers opens with a "New" group: everyone who arrived in the last day, newest first.
-- **Check the checker (plan step 4, A-321, Oct 23): built and checked, its own PR after the one above.** Admin →
+- **Check the checker (plan step 4, A-321, Oct 23): built and checked, PR open, not merged.** Admin →
   Train → Mark replies: the founder marks 60 test replies; each check shows how often it agrees; checks that disagree
   too often become advice only in the lesson test. Migration: 2 tables (RLS on) + LessonTest.advisory.
 - **The honest test (plan step 3, A-320, Oct 23) LIVE (PR #592 → 68b7ce8, merged at the founder's "merge";

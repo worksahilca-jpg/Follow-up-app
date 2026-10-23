@@ -938,6 +938,11 @@ model Lead {
   // whose step-1 nudge sat unapproved until day 45 has a draft that is
   // perfectly current and exactly the wrong message for a welcome back.
   suggestedDraftKind    String?
+  // OpenAI's id for the answer that wrote suggestedMessage: its row in the decision log (AiDecision.responseId), so
+  // what the owner did with the draft and what the customer did next can be traced to the AI call (step 2 of
+  // research/product/2026-10-23-self-improving-loop.md). Cleared by src/lib/db.ts whenever suggestedMessage is written
+  // without it, so a hand-made or template draft never points at an old AI answer.
+  suggestedResponseId   String?
   // Why FollowUp did NOT read this lead or write anything for it — set
   // whenever checkAiEligibility (@/lib/billing) refuses, cleared the
   // moment a score/draft actually lands (src/lib/scoring.ts).
@@ -1488,6 +1493,11 @@ model FollowUp {
   // no metric can. Read through the de-identification boundary
   // (src/lib/deidentify.ts) before it is shown anywhere.
   draftText      String?
+  // The AI answer this send's draft came from (Lead.suggestedResponseId at send time; AiDecision.responseId), and
+  // how much a person changed it: 0 sent as written, 1 every word replaced (src/lib/decisionOutcome.ts). A number
+  // only, never the words. Null when there was no draft (typed from scratch, an instant acknowledgement).
+  responseId     String?
+  editSize       Float?
   // The lead's language at the moment this went out (Lead.language,
   // copied, not joined). Without it the draft-versus-sent pairs above —
   // the most valuable per-language accuracy signal FollowUp will ever
@@ -1518,6 +1528,7 @@ model FollowUp {
   @@index([status, repliedAt])
   // The fact-learning job's "sent, not read yet" sweep.
   @@index([status, factsCheckedAt])
+  @@index([responseId])
 }
 
 /**

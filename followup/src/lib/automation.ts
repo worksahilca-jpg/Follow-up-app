@@ -1304,6 +1304,7 @@ export async function runAutomationForBusiness(
 
       let subject = lead.suggestedSubject ?? undefined;
       let message = lead.suggestedMessage;
+      let responseId = lead.suggestedResponseId ?? null;
       let quickReplies: StoredQuickReplies | null = isDm ? readStoredQuickReplies(lead.suggestedQuickReplies) : null;
       let regenerated = false;
       let dmShapeFailed: string | null = null;
@@ -1364,11 +1365,13 @@ export async function runAutomationForBusiness(
           const { trade, facts, examples, rules } = await draftingContext(lead.businessId);
           const dm = await draftDm(lead.name, conversation, await voiceFor(leadLanguageOf(lead)), messageHint, undefined, leadLanguageOf(lead), facts, null, trade, examples, rules);
           message = dm.body;
+          responseId = dm.responseId ?? null;
           subject = undefined;
           quickReplies = dm.quickReplies;
           dmShapeFailed = dm.shapeFailed;
         } else {
           const draft = await generateFollowUpMessage({ name: lead.name, conversation, ...(await draftingContext(lead.businessId)) }, await voiceFor(leadLanguageOf(lead)), messageHint, undefined, leadLanguageOf(lead));
+          responseId = draft.responseId ?? null;
           subject = draft.subject;
           // The same invariant the ack and the DM have always had, on the
           // one path that never had it: no price, date or figure the
@@ -1454,7 +1457,7 @@ export async function runAutomationForBusiness(
         if (regenerated) {
           await prisma.lead.update({
             where: { id: lead.id },
-            data: { suggestedMessage: message, suggestedSubject: null, suggestedQuickReplies: { question: "shape_failed", buttons: [] }, suggestedDraftedFor: newestMessageAt, suggestedDraftKind: draftKind, suggestedRiskLevel: null, suggestedRiskReason: null, suggestedRiskTopic: null },
+            data: { suggestedMessage: message, suggestedResponseId: responseId, suggestedSubject: null, suggestedQuickReplies: { question: "shape_failed", buttons: [] }, suggestedDraftedFor: newestMessageAt, suggestedDraftKind: draftKind, suggestedRiskLevel: null, suggestedRiskReason: null, suggestedRiskTopic: null },
           });
         }
         // A grounding failure says which part to distrust; only a real shape
@@ -1484,7 +1487,7 @@ export async function runAutomationForBusiness(
         if (regenerated) {
           await prisma.lead.update({
             where: { id: lead.id },
-            data: { suggestedMessage: message, suggestedSubject: subject ?? null, suggestedDraftedFor: newestMessageAt, suggestedDraftKind: draftKind, suggestedRiskLevel: null, suggestedRiskReason: null, suggestedRiskTopic: null },
+            data: { suggestedMessage: message, suggestedResponseId: responseId, suggestedSubject: subject ?? null, suggestedDraftedFor: newestMessageAt, suggestedDraftKind: draftKind, suggestedRiskLevel: null, suggestedRiskReason: null, suggestedRiskTopic: null },
           });
         }
         const reason = UNGROUNDED_DRAFT_REASONS[emailShapeFailed] ?? UNGROUNDED_DRAFT_REASONS.digits;
@@ -1742,6 +1745,7 @@ export async function runAutomationForBusiness(
                 ...(regenerated
                   ? {
                       suggestedMessage: message,
+                      suggestedResponseId: responseId,
                       suggestedSubject: subject ?? null,
                       suggestedQuickReplies: quickReplies ? (quickReplies as unknown as Prisma.InputJsonValue) : Prisma.JsonNull,
                       suggestedDraftedFor: newestMessageAt,
@@ -1925,6 +1929,7 @@ export async function runAutomationForBusiness(
               ...(regenerated
                 ? {
                     suggestedMessage: message,
+                    suggestedResponseId: responseId,
                     suggestedSubject: subject ?? null,
                     suggestedQuickReplies: quickReplies ? (quickReplies as unknown as Prisma.InputJsonValue) : Prisma.JsonNull,
                     suggestedDraftedFor: newestMessageAt,
@@ -2185,6 +2190,7 @@ export async function draftDmHandoffs(
         where: { id: lead.id },
         data: {
           suggestedMessage: dm.body,
+          suggestedResponseId: dm.responseId ?? null,
           suggestedSubject: null,
           suggestedQuickReplies: { question: DM_HANDOFF_QUESTION, buttons: [] },
           suggestedDraftedFor: new Date(inbound.date),

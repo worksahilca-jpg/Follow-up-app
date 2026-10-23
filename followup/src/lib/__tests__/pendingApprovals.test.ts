@@ -293,6 +293,12 @@ describe("dismissHold", () => {
     );
   });
 
+  it("remembers which AI answer was turned down, by id only", async () => {
+    p.lead.findFirst.mockResolvedValue({ id: "lead1", suggestedResponseId: "chatcmpl-5" });
+    await dismissHold("lead1", "biz1", "user1");
+    expect(audit.mock.calls.at(-1)?.[2]).toMatchObject({ meta: { responseId: "chatcmpl-5" } });
+  });
+
   it("refuses a lead that doesn't belong to this business, without writing an audit event", async () => {
     p.lead.findFirst.mockResolvedValue(null);
     const result = await dismissHold("lead1", "biz1", "user1");

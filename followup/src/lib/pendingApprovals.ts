@@ -441,7 +441,7 @@ export async function dismissHold(
   businessId: string,
   userId: string | null
 ): Promise<{ success: boolean; message?: string }> {
-  const lead = await prisma.lead.findFirst({ where: { id: leadId, businessId }, select: { id: true, thanksOnlyAt: true } });
+  const lead = await prisma.lead.findFirst({ where: { id: leadId, businessId }, select: { id: true, thanksOnlyAt: true, suggestedResponseId: true } });
   if (!lead) return { success: false, message: "Lead not found." };
   const newestInbound = lead.thanksOnlyAt
     ? await prisma.message.findFirst({
@@ -459,7 +459,10 @@ export async function dismissHold(
   await recordAudit({ businessId, userId }, "ai.hold_dismissed", {
     targetType: "lead",
     targetId: leadId,
-    ...(thanksOnly ? { meta: { thanksOnly: true } } : {}),
+    // Which AI answer was turned down, for what happened after each draft (src/lib/decisionOutcomeData.ts).
+    ...(thanksOnly || lead.suggestedResponseId
+      ? { meta: { ...(thanksOnly ? { thanksOnly: true } : {}), ...(lead.suggestedResponseId ? { responseId: lead.suggestedResponseId } : {}) } }
+      : {}),
   });
   return { success: true };
 }

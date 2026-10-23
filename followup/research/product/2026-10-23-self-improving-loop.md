@@ -4,7 +4,7 @@
 accuracy, what to say, what next step it should take"* and *"yes start step 1 and find all the solutions too"*.
 **What this is:** the short version, for the repo, of a longer research report kept outside it (about 11,000 words, 13
 build steps, sources marked by strength). The honest test (part of step 3 below) is live as [A-319](../../../design-brain/decisions/approved.md), and
-the decision log (step 1) is built; nothing else here is built or approved yet. Every law or platform point needs a lawyer's read before it drives a
+the decision log (step 1) is live and the outcome records (step 2) are built; nothing else here is built or approved yet. Every law or platform point needs a lawyer's read before it drives a
 decision.
 
 ---
@@ -51,10 +51,13 @@ decision.
 
 1. **Decision log + pinned model.** Record each AI decision and its inputs; pin a dated model in `OPENAI_MODEL` and check
    the provider's retirement page monthly. Everything below depends on this.
-   *Built 2026-10-23 (`AiDecision`, src/lib/aiDecisionLog.ts): ids, models, time, tokens, cost and choices, never the
-   words. Still to do: read which dated model answers once it's live, and the founder pins it.*
+   *Live 2026-10-23 (`AiDecision`, src/lib/aiDecisionLog.ts, PR #590): ids, models, time, tokens, cost and choices,
+   never the words. Still to do: read which dated model answers, and the founder pins it.*
 2. **Outcome events and edit records.** Reply, booking, "no", complaint and "went quiet" as timed events with windows;
    each draft's edit size and the owner's action.
+   *Built 2026-10-23 (`src/lib/decisionOutcome.ts`, `src/lib/decisionOutcomeData.ts`): each sent or turned-down draft
+   is linked to its AI call, with the owner's action, the edit size and the customer's outcome (3 days to reply, 14 to
+   book). No screen until the weekly review (step 7).*
 3. **Finish the honest test.** A/A run, targeted messages per rule, code checks that block.
 4. **Check the checker.** The founder labels about 60 drafts; the AI grader's catch and false-alarm rates are recorded;
    checks that disagree with the founder stay advisory.
@@ -74,7 +77,7 @@ rating buttons for owners ([R-137](../../../design-brain/decisions/rejected.md))
 
 ## Open questions
 
-**For the founder:** reply and booking windows for realtors (72 hours, 14 days?); drafts-only during a one-business
+**For the founder:** ~~reply and booking windows~~ (decided 2026-10-23: 3 days to reply, 14 days to book); drafts-only during a one-business
 trial; "any try says no → stop"; a second OK before one business becomes everyone (changes A-319); a different model as
 the grader; may de-identified Train conversations be examples for other businesses or only tests; 30 minutes a week for
 the review.

@@ -15313,3 +15313,37 @@ job, and later linking each draft to what the owner did with it (step 2).
 - No probability for a choice yet (step 5 of the plan uses several tries instead), and no owner action yet (step 2).
 - Voice transcription isn't logged (it isn't a chat call).
 - Rows are kept with no end date for now; how long to keep them is a question for the lawyer (plan step 11).
+
+## 2026-10-23 — How long FollowUp waits before it decides what happened (plan step 2): founder's choice
+
+**Asked:** what counts as "went quiet" after a message, for the outcome records of step 2 in
+`followup/research/product/2026-10-23-self-improving-loop.md`. **Founder's answer** (picked from three, the
+recommended one): **3 days to reply, 14 days to book.** Until a window closes, the outcome is "waiting", never "no
+reply": a customer who hasn't answered yet hasn't said no.
+
+## 2026-10-23 — What happened after each draft (plan step 2): built, no screen
+
+**What:** the second step of `followup/research/product/2026-10-23-self-improving-loop.md`, after the founder's "go".
+Every draft FollowUp writes carries the id of the AI answer that wrote it (`Lead.suggestedResponseId`, set wherever
+an AI draft is stored; any other write of a draft clears it, in `src/lib/db.ts`, so a template or hand-made draft is
+never traced to an AI call). When a reply goes out using that draft, the sent row keeps the id and how much a person
+changed it (`FollowUp.responseId`, `FollowUp.editSize`: share of words changed, 0 to 1; punctuation, case and "it's"
+versus "its" don't count). An instant ack or holding line sent while a draft waits is a different message and isn't
+linked. "Don't send" keeps the id in its audit row.
+
+**How it reads:** `src/lib/decisionOutcome.ts` (pure) and `src/lib/decisionOutcomeData.ts` (reads the database):
+- What the owner did: sent by itself, sent as written, edited, rewritten (half the words or more changed), not sent.
+- What the customer did next, with the founder's windows: replied within 3 days, booked within 14, said no, asked
+  to stop, went quiet (3 days, no reply), or waiting. Strongest signal wins: stopped, then said no, then booked, then
+  replied. Only what happened after that message counts.
+
+**Not built, on purpose:** no screen (the founder's weekly review, step 7, is the place, and it goes through the
+design loop first); no owner rating anything (R-137).
+
+**Weak spots, said plainly:**
+- It starts from the deploy: earlier sends and turn-downs have no id, so the first weeks are thin.
+- Outcomes are worked out each time they are read, not stored; fine at today's volume, worth storing past a few
+  thousand drafts a month.
+- A reply counts for the most recent message before it; with two messages close together, both can claim it.
+- FollowUp's next-step calls (A-310) aren't linked to outcomes yet; that is step 5.
+- "Booked" means a booking FollowUp knows about; one made in a CRM it doesn't read isn't seen.

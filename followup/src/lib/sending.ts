@@ -48,6 +48,7 @@ import {
 } from "@/lib/sendQueue";
 import { filledAnswer, filledPrice, hasPriceSlot, isFilledDraft, PRICE_SLOT, slotOf } from "@/lib/priceSlot";
 import { customerGreetingName } from "@/lib/leadName";
+import { editSize } from "@/lib/decisionOutcome";
 
 /**
  * SMS and WhatsApp both live on Lead.phone (the same phone number
@@ -1280,6 +1281,11 @@ export async function sendFollowUpToLead(
         trigger,
         draftEdited,
         draftText: keepDraft ? lead.suggestedMessage : null,
+        // The AI answer the draft came from, and how much a person changed it: a number, never the words (step 2 of
+        // research/product/2026-10-23-self-improving-loop.md, src/lib/decisionOutcome.ts). Only a send that used the
+        // draft: an instant ack or a holding line sent while a draft waits is a different message, not a rewrite of it.
+        responseId: draftSpent ? (lead.suggestedResponseId ?? null) : null,
+        editSize: !draftSpent ? null : draftEdited === false ? 0 : editSize(lead.suggestedMessage ?? "", body),
         // The lead's language as it stood at THIS send, copied rather
         // than joined. Without it the draft-versus-sent pairs above have
         // no grouping key, and "our Spanish drafts get rewritten twice as

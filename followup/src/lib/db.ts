@@ -50,6 +50,24 @@ function decryptResult(result: unknown, fields: string[]): void {
   else mapFields(result, fields, decryptSecret);
 }
 
+/**
+ * Lead.suggestedResponseId names the AI answer that wrote Lead.suggestedMessage (the decision log, step 2 of
+ * research/product/2026-10-23-self-improving-loop.md). Any write of a new draft that doesn't name its answer clears
+ * the old one, so a template, a hand-made or a cleared draft can never be traced to an AI call that didn't write it.
+ */
+export function clearStaleDraftLink(args: Rec): void {
+  const clear = (d: unknown) => {
+    if (d && typeof d === "object" && "suggestedMessage" in (d as Rec) && !("suggestedResponseId" in (d as Rec))) {
+      (d as Rec).suggestedResponseId = null;
+    }
+  };
+  for (const key of ["data", "create", "update"]) {
+    const v = args[key];
+    if (Array.isArray(v)) v.forEach(clear);
+    else clear(v);
+  }
+}
+
 function createClient() {
   return new PrismaClient({
     log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
@@ -58,6 +76,9 @@ function createClient() {
     query: {
       $allModels: {
         async $allOperations({ model, operation, args, query }) {
+          if (model === "Lead" && ["create", "update", "upsert", "createMany", "updateMany"].includes(operation)) {
+            clearStaleDraftLink(args as Rec);
+          }
           const fields = ENCRYPTED_FIELDS[model];
           if (!fields) return query(args);
           const a = args as Rec;

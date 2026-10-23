@@ -110,7 +110,7 @@ export async function draftDm(
   rules: readonly string[] = [],
   // What the customer has already told FollowUp, and whether the checklist has nothing for this reply (knownPromptBlock).
   told: { qualification: Qualification | null; nothingToAsk: boolean } | null = null
-): Promise<{ body: string; quickReplies: StoredQuickReplies; shapeFailed: string | null }> {
+): Promise<{ body: string; quickReplies: StoredQuickReplies; shapeFailed: string | null; responseId?: string }> {
   const situation = pickDmSituation(conversation, touch);
   const known = factsText(facts);
   const text = known ? `${conversationText(conversation)}\n${known}` : conversationText(conversation);
@@ -124,14 +124,14 @@ export async function draftDm(
     // has to read it in that language — an English-only day list would be
     // the exact shortcut the founder rejected on the WhatsApp filter.
     const shape = checkDmDraftShape({ body: draft.body, buttons }, text, leadLanguage?.language, saidByBusiness);
-    if (shape.ok) return { body: draft.body, quickReplies: { question: situation.id, buttons }, shapeFailed: null };
+    if (shape.ok) return { body: draft.body, quickReplies: { question: situation.id, buttons }, shapeFailed: null, responseId: draft.responseId };
     // Only the buttons broke a rule (the accuracy test, 2026-10-17: "Which day would suit you best?" with Saturday
     // and Sunday chips, when the customer only said "this weekend"). Buttons are optional; the reply goes without them.
     if (buttons.length > 0 && checkDmDraftShape({ body: draft.body, buttons: [] }, text, leadLanguage?.language, saidByBusiness).ok) {
-      return { body: draft.body, quickReplies: { question: situation.id, buttons: [] }, shapeFailed: null };
+      return { body: draft.body, quickReplies: { question: situation.id, buttons: [] }, shapeFailed: null, responseId: draft.responseId };
     }
     lastRule = shape.rule;
-    if (attempt === 1) return { body: draft.body, quickReplies: { question: situation.id, buttons: [] }, shapeFailed: lastRule };
+    if (attempt === 1) return { body: draft.body, quickReplies: { question: situation.id, buttons: [] }, shapeFailed: lastRule, responseId: draft.responseId };
     ask = { ...situation, hint: `${situation.hint}\n\n${retryNote(shape.rule)}` };
   }
   /* istanbul ignore next -- unreachable, the loop always returns */

@@ -51,3 +51,29 @@ describe("customerGroups (A-220)", () => {
     expect(customerGroups({ needs: ["z", "y"], ready: [], booked: [], quiet: [], waiting: [] }).needs).toEqual(["z", "y"]);
   });
 });
+
+describe("newArrivals (founder, 2026-10-23: new customers on top)", () => {
+  const now = new Date("2026-10-23T18:00:00Z");
+  const h = (n: number) => now.getTime() - n * 3_600_000;
+
+  it("lists everyone who arrived in the last day, newest first", async () => {
+    const { newArrivals } = await import("@/lib/customerPlaces");
+    const leads = [
+      { id: "old", createdAtMs: h(30), stage: "new" },
+      { id: "morning", createdAtMs: h(8), stage: "contacted" },
+      { id: "justNow", createdAtMs: h(0.1), stage: "new" },
+      { id: "edge", createdAtMs: h(24), stage: "new" },
+    ];
+    expect(newArrivals(leads, now)).toEqual(["justNow", "morning", "edge"]);
+  });
+
+  it("leaves out someone already closed as won or lost", async () => {
+    const { newArrivals } = await import("@/lib/customerPlaces");
+    const leads = [
+      { id: "won", createdAtMs: h(1), stage: "won" },
+      { id: "lost", createdAtMs: h(2), stage: "lost" },
+      { id: "open", createdAtMs: h(3), stage: "qualified" },
+    ];
+    expect(newArrivals(leads, now)).toEqual(["open"]);
+  });
+});

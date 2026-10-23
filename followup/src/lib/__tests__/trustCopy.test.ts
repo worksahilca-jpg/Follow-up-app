@@ -115,6 +115,16 @@ describe("the guarantee on a holding account", () => {
   it("is not contradicted by a summary that says 'sends'", () => {
     expect(settings()).not.toMatch(/sends an instant acknowledgement/);
   });
+
+  // Founder, 2026-10-23: Assisted sends nothing on its own, the 30-minute "let me check" included (A-077
+  // superseded). Setup and Today's empty state said it was the one exception; neither may say so again.
+  it("has no 'let me check' exception in setup or on Today", () => {
+    const queue = readFileSync(join(__dirname, "..", "..", "components", "ApprovalQueue.tsx"), "utf8");
+    const setup = readFileSync(join(__dirname, "..", "..", "components", "OnboardingForm.tsx"), "utf8");
+    expect(setup, "setup still names an exception on Assisted").not.toMatch(/let me check/i);
+    expect(queue, "Today still names an exception on Assisted").not.toMatch(/apart from a short/i);
+    expect(queue).toMatch(/Nothing goes out until you send it\./);
+  });
 });
 
 /**
@@ -220,7 +230,7 @@ describe("what the landing page says about sending", () => {
   });
 
   it("does not claim nothing ever sends unasked", () => {
-    // False on Automatic, and the holding message sends on every account.
+    // False on Automatic: it answers on its own there.
     expect(landingCopy(), "the page promises every message waits").not.toMatch(/nothing (sends|is sent) without your (ok|okay|approval)/i);
   });
 

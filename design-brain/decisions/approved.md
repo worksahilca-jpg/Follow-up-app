@@ -1503,6 +1503,9 @@ won't do. Once something is due, the existing coral "Paused — your auto follow
 
 ## A-077 — The 30-minute "let me check" also goes out on Assisted ^A-077
 
+**SUPERSEDED (2026-10-23)** by [[approved#^A-322|A-322]] and [[rejected#^R-140|R-140]]: Assisted sends nothing on its own,
+this line included.
+
 **Approved 2026-10-01.** Founder: "fix all", then "Yes, send it on holding accounts too". When a customer asks a
 price or a date and the owner hasn't answered in 30 minutes, the fixed holding line ("Thanks for asking! Let me check
 and I'll send you the price soon.", translated, never a number or a day) now goes out on an Assisted account as well
@@ -5384,6 +5387,7 @@ or assets; the calm look (A-282) and the sidebar stay.
 - **Customers:** search and one black "Add a customer" button in the title row on a computer (the phone keeps its round
   + and full-width search); one line under the title, "Everyone who wrote to you. Newest first."; the list grouped
   "Your reply is ready", then the rest. A row in a labelled group doesn't repeat the label.
+  **PARTLY SUPERSEDED (2026-10-23)** by [[approved#^A-323|A-323]]: a "New" group now comes first.
 - **Activity:** by day, the time in a column on the left, one line each.
 - Day groups are still not used on Today (Today is ordered by who needs you; tried and dropped 2026-10-09).
 
@@ -5660,6 +5664,9 @@ examples in use. Details and weak spots in design-decisions (2026-10-23, "approv
 
 ## A-320 — The honest test: a chance check, messages for each rule, and code checks that block ^A-320
 
+**LIVE** (PR #592 → 68b7ce8, merged 2026-10-23 at the founder's "merge"; columns and migration confirmed in
+production, read-only).
+
 **Date:** 2026-10-23. **Founder, verbatim:** *"Go"*, to step 3 of the self-improving plan as put to them: "a chance
 check (one run with the same lessons on both sides, to learn how many messages change by chance alone); messages for
 each rule (2 to 5 test messages written for each new rule, so a narrow rule can be judged on its own); automatic checks
@@ -5684,3 +5691,44 @@ that block (checks in code that stop a lesson before it can be put to work). The
   and 3 written for your rules"), the test now says "About 3 minutes", and the Decide row says when a broken check
   stops the changes. No new parts on screen. ("No screen change" was slightly wrong: these lines changed.)
 
+
+## A-321 — Check the checker: the founder marks test replies, and checks that disagree become advice (plan step 4) ^A-321
+
+**Date:** 2026-10-23. **Founder, verbatim:** *"yes build it"*, to the drawing (scratchpad `step4/draw/board-1-computer.png`,
+`board-2-phone.png`) and to the question "Is the drawing a yes, and is 'advice only' with that bar a yes?"
+**What specifically was approved:**
+- **Admin → Train → a new tab, "Mark replies"**, founder-only, on made-up realtor messages (so not against R-137:
+  owners are never asked to grade FollowUp). One button writes 3 replies to each of the kind's 20 test messages with
+  the lessons in use: 60 replies, "About 2 minutes". You can stop and come back.
+- **One reply at a time:** the customer's words, FollowUp's reply, "Would you send this as it is?" with **Yes, send it**
+  and **No**; on No, chips for what's wrong, in the checker's own check names (didn't answer their question, made
+  something up, pushed or rushed them, wrong language, could have gone to anyone, praised the business, missed or made
+  up a feeling, something else). **Next** and a quiet **Skip this one**. The checker's reading stays hidden until the
+  end so it can't sway the founder.
+- **Results, check by check, in one plain line each** ("You flagged 6. The checker caught 5 and missed 1. It flagged 1
+  you were fine with.") and a status: **Trusted**, **Advice only**, **Too few to tell**.
+- **The behaviour change:** an **advice only** check still shows its reading in the lesson test, but a lesson is no
+  longer marked worse because of it. A check is trusted when it catches at least 8 in 10 of what the founder flags
+  and wrongly flags no more than 1 in 10 of what they pass. Under 5 flags either way it is "Too few to tell" and keeps
+  counting, as now. Code checks (message rules, a fact given, their words handed back) aren't marked and don't change.
+
+## A-322 — Assisted sends nothing on its own, not even the 30-minute "let me check" ^A-322
+
+**Date:** 2026-10-23. **Founder, verbatim:** *"the message went out bro whyyy withount my consent on insta"*, then, asked
+whether to keep the line: *"I don't want it to send messages on my Instagram automatically, because I don't trust it
+right now. I don't even have trust right now, right? Let's just develop it, and then we'll do it."*
+**What specifically was approved:** on an account where every reply waits for the owner ("Assisted", "I check each
+one first"), FollowUp sends nothing by itself. The fixed "let me check" line after 30 minutes on a price or time
+question now goes out only on Automatic, as before A-077, and a queued retry of it is dropped once the owner holds
+everything. Setup's Assisted card says "Every reply waits for you. Nothing goes out until you send it." and Today's
+empty state "Nothing goes out until you send it." with no exception. The line stays built for later, when the owner
+trusts FollowUp enough to turn sending on. **Supersedes** A-077.
+
+## A-323 — Customers: new customers on top ^A-323
+
+**Date:** 2026-10-23. **Founder, verbatim:** *"in customers page every new lea comes should be on the top"*, then
+*"New on the top"* when offered a "New" group on top or one list newest first.
+**What specifically was approved:** Customers opens with a **New** group: everyone who arrived in the last 24 hours and
+is still open, newest first, each row saying where they stand ("Your reply is ready" and the rest). Then "Your reply is
+ready" (Today's order), "Ready to book", "Everyone else" (newest message first), as A-307. A customer is in one group
+only. **Partly supersedes** A-307's Customers order.

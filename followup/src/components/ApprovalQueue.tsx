@@ -908,7 +908,7 @@ export default function ApprovalQueue({
           : handled > 0
             ? `You handled ${handled} ${handled === 1 ? "person" : "people"} today. FollowUp keeps watching, and will tell you when someone writes.`
             : holdAll
-              ? "Every reply FollowUp writes shows up here first. Nothing goes out until you send it, apart from a short “let me check” when a price or date question has waited 30 minutes."
+              ? "Every reply FollowUp writes shows up here first. Nothing goes out until you send it."
               : "Anything FollowUp isn't sure about will show up here before it sends."}
         {dayAhead === 0 && answeredForYou > 0 &&
           ` It answered ${answeredForYou} ${answeredForYou === 1 ? "customer" : "customers"} on its own this week.`}

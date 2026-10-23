@@ -74,7 +74,13 @@ a booked call or visit; the owner closes.
 
 **Last updated: 2026-10-23**
 
-- **The honest test (plan step 3, A-320, Oct 23; built, PR open, not merged):** the lesson test on Admin → Train now
+- **Assisted sends nothing on its own; new customers on top (A-322, A-323, R-140, Oct 23; built, PR open, not
+  merged):** the 30-minute "let me check" went out on the founder's own Instagram at 10:40 am and they don't trust
+  automatic messages yet, so on an Assisted account FollowUp now sends nothing by itself (the line stays for Automatic
+  only). Customers opens with a "New" group: everyone who arrived in the last day, newest first.
+- **Check the checker (plan step 4, A-321, Oct 23): approved, being built next** (its own PR after the one above).
+- **The honest test (plan step 3, A-320, Oct 23) LIVE (PR #592 → 68b7ce8, merged at the founder's "merge";
+  columns and migration confirmed in production, read-only):** the lesson test on Admin → Train now
   blocks outright (no "anyway") when the changes break one of FollowUp's own code checks on 2 of 3 tries and never
   without them; writes 2 customer messages plus 1 reworded for each of the first 3 new rules (kept per wording,
   `src/lib/ruleTestMessages.ts`) and reads those replies against the rule; and once per kind per model, then monthly,

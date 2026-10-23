@@ -1404,6 +1404,8 @@ export interface FollowUpDraft {
   body: string;
   /** Present only for a DM draft: the reply chips, at most DM_MAX_BUTTONS. */
   buttons?: DmButton[];
+  /** OpenAI's id for the answer that wrote it: the decision log's row (src/lib/aiDecisionLog.ts) for this draft. */
+  responseId?: string;
 }
 
 export async function generateFollowUpMessage(
@@ -1780,9 +1782,9 @@ export async function generateFollowUpMessage(
       .filter((b) => typeof b?.title === "string" && b.title.trim())
       .slice(0, DM_MAX_BUTTONS)
       .map((b) => ({ title: b.title.trim(), exit: b.kind === "no" }));
-    return { subject: "", body: cleanBody, buttons };
+    return { subject: "", body: cleanBody, buttons, responseId: completion.id };
   }
-  return { subject: parsed.subject?.trim() || "Following up", body: cleanBody };
+  return { subject: parsed.subject?.trim() || "Following up", body: cleanBody, responseId: completion.id };
 }
 
 /**

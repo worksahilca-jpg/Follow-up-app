@@ -42,4 +42,9 @@ describe("DM drafts and what FollowUp knows", () => {
     expect((await draftDm("Ivy Sohal", thread, [], undefined, "reply", null)).shapeFailed).toBe("digits");
     expect(generate.mock.calls[0][0]).toEqual(expect.objectContaining({ facts: [] }));
   });
+
+  it("passes on the id of the AI answer that wrote the reply", async () => {
+    generate.mockResolvedValue({ subject: "", body: "Thanks for asking! Happy to walk you through it. Want to chat this week?", buttons: [], responseId: "chatcmpl-3" });
+    expect((await draftDm("Ivy Sohal", thread, [], undefined, "reply", null, FACTS)).responseId).toBe("chatcmpl-3");
+  });
 });

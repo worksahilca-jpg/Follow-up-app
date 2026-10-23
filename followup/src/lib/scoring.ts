@@ -284,12 +284,14 @@ async function scoreAndDraft(leadId: string): Promise<boolean> {
   // "Hi <name>," and a sign-off, and that is what the automation pass sent
   // into their Instagram inbox (research 2026-09-16, verified).
   let suggestedMessage: string;
+  let suggestedResponseId: string | null;
   let suggestedSubject: string | null;
   let suggestedQuickReplies: Prisma.InputJsonValue | typeof Prisma.JsonNull;
   if (dmChannel) {
     const { trade, facts, examples, rules } = await draftingContext(lead.businessId);
     const dm = await draftDm(lead.name, conversation, voiceSamples, undefined, undefined, leadLanguage, facts, askContact ? DM_CONTACT_ASK : qualify, trade, examples, rules, known);
     suggestedMessage = dm.body;
+    suggestedResponseId = dm.responseId ?? null;
     suggestedSubject = null;
     // Buttons only when the draft passed the shape check — an owner may
     // still send a draft that failed it (they can edit), but never with
@@ -302,6 +304,7 @@ async function scoreAndDraft(leadId: string): Promise<boolean> {
     // draft that carries it, so the owner always sees it go.
     const bookingLink = customerJustWrote && saidYesToMeeting(conversation) ? `${appUrl()}/book/${lead.id}` : null;
     const draft = await generateFollowUpMessage({ name: lead.name, conversation, ...(await draftingContext(lead.businessId)), qualify, bookingLink, known: known?.qualification ?? null, nothingToAsk: known?.nothingToAsk ?? false }, voiceSamples, undefined, undefined, leadLanguage);
+    suggestedResponseId = draft.responseId ?? null;
     suggestedMessage = await composeFollowUpEmail(lead.name.split(" ")[0], lead.businessId, draft.body, {
       languageSample: latestInboundText(conversation),
       leadLanguage,
@@ -344,6 +347,7 @@ async function scoreAndDraft(leadId: string): Promise<boolean> {
       scoreFactors: scoreResult.factors as unknown as Prisma.InputJsonValue,
       priority: newPriority,
       suggestedMessage,
+      suggestedResponseId,
       suggestedSubject,
       suggestedQuickReplies,
       // A new draft is an unjudged draft. The risk verdict belonged to the

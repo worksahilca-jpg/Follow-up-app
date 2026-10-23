@@ -49,6 +49,11 @@ describe("the draft", () => {
     await generateFollowUpMessage({ name: "Ivy Sohal", conversation: thread });
     expect(create.mock.calls[0][0].messages[0].content).not.toContain("<business_facts>");
   });
+
+  it("carries the id of the AI answer that wrote it, so the send can be traced to its decision-log row", async () => {
+    create.mockResolvedValue({ id: "chatcmpl-7", choices: [{ message: { content: JSON.stringify({ subject: "Selling your condo", body: "Happy to help." }) } }] });
+    expect((await generateFollowUpMessage({ name: "Ivy Sohal", conversation: thread })).responseId).toBe("chatcmpl-7");
+  });
 });
 
 describe("the risk judge", () => {

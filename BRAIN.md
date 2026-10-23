@@ -74,7 +74,15 @@ a booked call or visit; the owner closes.
 
 **Last updated: 2026-10-23**
 
-- **The decision log (plan step 1, Oct 23; built, PR open, not merged):** every AI call gets a row in `AiDecision`
+- **What happened after each draft (plan step 2, Oct 23; built, PR open, not merged):** a sent reply now names the
+  AI answer whose draft it used (`FollowUp.responseId`) and how much a person changed it (`editSize`, 0 to 1, a
+  number, never the words); a "Don't send" keeps the answer's id in its audit row. `src/lib/decisionOutcome.ts` turns
+  that into what the owner did (sent by itself / sent as written / edited / rewritten at half the words or more / not
+  sent) and what the customer did next with the founder's windows: replied within 3 days, booked within 14, said no,
+  stopped, went quiet, or "waiting" (never "no" while a window is open). `loadDraftOutcomes` reads it for the weekly
+  review (step 7); no screen yet. Migration: 3 columns + 1 index on existing tables.
+- **The decision log (plan step 1, Oct 23) LIVE (PR #590 → 16dc818, merged at the founder's "merge"; AiDecision +
+  RLS confirmed in production, read-only):** every AI call gets a row in `AiDecision`
   (src/lib/aiDecisionLog.ts, recorded where every call already passes, `getClient`): the job, the business and
   customer where known, the model asked and the dated version that answered, time, tokens, estimated cost, and what a
   deciding call chose. Never the words: the prompt is a fingerprint. Test runs log as "test:…", practice as

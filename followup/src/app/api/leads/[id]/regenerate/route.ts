@@ -100,6 +100,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
     let newMessage: string;
     let newSubject: string | null;
     let newQuickReplies: Prisma.InputJsonValue | typeof Prisma.JsonNull;
+    let newResponseId: string | null;
     if (dmChannel) {
       const { trade, facts, examples, rules } = await draftingContext(lead.businessId);
       // In the language and register already decided for this customer
@@ -110,6 +111,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
         draftDm(lead.name, conversation, voiceSamples, undefined, undefined, language, facts, null, trade, examples, rules)
       );
       newMessage = dm.body;
+      newResponseId = dm.responseId ?? null;
       newSubject = null;
       newQuickReplies = (dm.shapeFailed ? { question: dm.quickReplies.question, buttons: [] } : dm.quickReplies) as unknown as Prisma.InputJsonValue;
     } else {
@@ -124,12 +126,14 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
         leadLanguage: language,
       });
       newSubject = draft.subject;
+      newResponseId = draft.responseId ?? null;
       newQuickReplies = Prisma.JsonNull;
     }
     await prisma.lead.update({
       where: { id: lead.id },
       data: {
         suggestedMessage: newMessage,
+        suggestedResponseId: newResponseId,
         suggestedSubject: newSubject,
         suggestedQuickReplies: newQuickReplies,
         // The old verdict judged the old words (audit 2026-09-25 F2).

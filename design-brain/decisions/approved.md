@@ -5711,6 +5711,11 @@ that block (checks in code that stop a lesson before it can be put to work). The
   longer marked worse because of it. A check is trusted when it catches at least 8 in 10 of what the founder flags
   and wrongly flags no more than 1 in 10 of what they pass. Under 5 flags either way it is "Too few to tell" and keeps
   counting, as now. Code checks (message rules, a fact given, their words handed back) aren't marked and don't change.
+- **As built (2026-10-23, its own PR after A-322/A-323):** "Yes, send it" moves on in one tap; "No" opens the chips and
+  Next. A check that wrongly flags more than 1 in 10 of at least 10 replies the founder would send is advice only even
+  before it has 5 flags (the drawing's "Reads like a bot" row). Marks add up across rounds ("Mark 60 more") and count for
+  the model they were made on. A lesson test notes the advice-only checks under its numbers ("Advice only, so not
+  counted (from Mark replies): could have gone to anyone."). "See the N you disagreed on" opens the list in place.
 
 ## A-322 — Assisted sends nothing on its own, not even the 30-minute "let me check" ^A-322
 

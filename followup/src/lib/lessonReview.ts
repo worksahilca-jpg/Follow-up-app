@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { CHECK_WORDS, isMarkCheck } from "@/lib/checkerTrust";
 import { LIVE_STATUS, WAITING_STATUS, learningEventWrite } from "@/lib/learning";
 import { deleteConversation, rollBackExample } from "@/lib/training";
 import { dropTrainingRule } from "@/lib/trainingRules";
@@ -126,6 +127,8 @@ export type LessonTestRow = {
   worse: number | null;
   blocked: number | null;
   targeted: number | null;
+  /** Checks that were advice only in this test (plan step 4); absent on rows read before it. */
+  advisory?: string[];
   results: unknown;
   error: string | null;
   createdAt: Date;
@@ -177,6 +180,8 @@ export type TestView = {
   targeted: number;
   /** The chance check for this kind, when there is one on the model in use. */
   chance: ChanceView | null;
+  /** The checks that were advice only in this test, in the founder's words (plan step 4, A-321). */
+  advisory: string[];
   /** It covered exactly what waits now; otherwise the founder has to test again. */
   current: boolean;
   error: string | null;
@@ -200,6 +205,7 @@ export function testView(row: LessonTestRow, waitingKeys: readonly string[], now
     blocked: row.blocked ?? 0,
     targeted: row.targeted ?? 0,
     chance,
+    advisory: (row.advisory ?? []).filter(isMarkCheck).map((k) => CHECK_WORDS[k]),
     current: status === "done" && coversExactly(row.lessons, waitingKeys),
     error: stale ? "The test stopped before it finished. Test again." : row.error,
     changes: status === "done" ? changeViews(cases) : [],

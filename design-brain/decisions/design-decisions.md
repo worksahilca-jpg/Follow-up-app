@@ -15429,3 +15429,24 @@ longer, then check-ins; longest wait first inside each) and asked that every new
 Built as a "New" group above the others, worked out on the server (`newArrivals` in `customerPlaces.ts`) so the
 server's and the browser's lists agree. **Weak, honestly:** a big import (CSV or a CRM sync) lands everyone in "New"
 for a day; the list still stops at 50 rows.
+
+## 2026-10-23 — Check the checker built (A-321)
+
+Built as drawn, on Admin → Train → **Mark replies**. Data: `CheckerRound` and `CheckerReply` (RLS on), and
+`LessonTest.advisory`. Logic: `src/lib/checkerTrust.ts` (pure: which checks are trusted, advice only or too few to
+tell; the one-line wording; `withAdvice`, which moves an advice-only check's finding out of a try's problems unless code
+decided it) and `src/lib/checkerRounds.ts` (writes 60 replies with the lessons in use, keeps marks, builds the page; the
+checker's reading of a reply never leaves the server until it is marked). The lesson test reads the advice-only checks
+before it compares, so "worse" and the scores ignore them, and keeps which ones they were.
+
+Checked in a real browser on the local database with invented rounds: start, Reply 12 of 60 with No and a chip, Next to
+Reply 13, the results (44 of 60 agreed; Didn't answer and Made something up trusted; Could have gone to anyone advice
+only) and the 16 disagreements, on computer and phone. No sideways scroll, no page errors. 4,835 tests pass.
+
+**Weak, honestly:**
+- On the phone the Train tab row scrolls, so "Mark replies" sits off-screen to the right (the existing tab row).
+- "Yes, send it" saves in one tap with no undo; a mis-tap is one wrong mark in 60.
+- The first round will mostly read "Too few to tell": the founder flags only what's wrong, and 60 replies rarely give
+  5 flags per check. Marking a second round is what makes the statuses meaningful.
+- A disagreement is judged on the whole reply (send or not). A reply where both said "don't send" for different reasons
+  counts as agreement there, though the per-check lines show the difference.

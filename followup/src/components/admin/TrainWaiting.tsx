@@ -348,6 +348,8 @@ export default function TrainWaiting({ trade, short, view }: { trade: string; sh
       <p className="mt-2.5 max-w-[62ch] text-[13.5px] text-ink-soft">
         A message passes only when all {t.tries} of its replies pass. {chanceLine} The other {same}{" "}
         {same === 1 ? "message came" : "messages came"} out the same both ways.
+        {t.advisory.length > 0 &&
+          ` Advice only, so not counted (from Mark replies): ${t.advisory.map((w) => w.toLowerCase()).join(", ")}.`}
       </p>
 
       {worse > 0 ? (

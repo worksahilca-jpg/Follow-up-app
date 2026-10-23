@@ -78,7 +78,9 @@ a booked call or visit; the owner closes.
   merged):** the 30-minute "let me check" went out on the founder's own Instagram at 10:40 am and they don't trust
   automatic messages yet, so on an Assisted account FollowUp now sends nothing by itself (the line stays for Automatic
   only). Customers opens with a "New" group: everyone who arrived in the last day, newest first.
-- **Check the checker (plan step 4, A-321, Oct 23): approved, being built next** (its own PR after the one above).
+- **Check the checker (plan step 4, A-321, Oct 23): built and checked, its own PR after the one above.** Admin →
+  Train → Mark replies: the founder marks 60 test replies; each check shows how often it agrees; checks that disagree
+  too often become advice only in the lesson test. Migration: 2 tables (RLS on) + LessonTest.advisory.
 - **The honest test (plan step 3, A-320, Oct 23) LIVE (PR #592 → 68b7ce8, merged at the founder's "merge";
   columns and migration confirmed in production, read-only):** the lesson test on Admin → Train now
   blocks outright (no "anyway") when the changes break one of FollowUp's own code checks on 2 of 3 tries and never

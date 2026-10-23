@@ -13,6 +13,10 @@ export async function register() {
     await import("./sentry.edge.config");
   } else {
     await import("./sentry.server.config");
+    // The decision log: every AI call this server makes gets a row (src/lib/aiDecisionLog.ts). Installed here, once,
+    // so tests and scripts that run the AI code outside the server never write to it.
+    const { installAiDecisionLog } = await import("@/lib/aiDecisionLog");
+    installAiDecisionLog();
   }
 }
 

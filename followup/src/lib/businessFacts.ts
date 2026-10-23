@@ -147,7 +147,7 @@ const FACTS_SCHEMA = {
 
 /** One model call: the facts about the business in one sent reply. */
 async function proposeFacts(reply: string, ownerFilled: string | null, labelsInUse: string[]): Promise<unknown[]> {
-  const client = getClient();
+  const client = getClient("learn_facts");
   const completion = await client.chat.completions.create({
     model: MODEL,
     messages: [

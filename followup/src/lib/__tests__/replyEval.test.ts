@@ -6,7 +6,11 @@
 import { describe, it, expect, vi } from "vitest";
 
 vi.mock("@/lib/dmDrafting", () => ({ draftDm: vi.fn() }));
-vi.mock("@/lib/integrations/openaiClient", () => ({ getClient: vi.fn(), MODEL: "test" }));
+vi.mock("@/lib/integrations/openaiClient", () => ({
+  getClient: vi.fn(),
+  MODEL: "test",
+  withAiContext: (_where: unknown, run: () => Promise<unknown>) => run(),
+}));
 
 import { REPLY_CASES, runReplyEval, runReplyTries, type ReplyCase } from "@/lib/replyEval";
 

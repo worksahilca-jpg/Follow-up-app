@@ -15281,3 +15281,35 @@ the database showed the rule and examples in use, each with an "approved" histor
   for now" until the page reloads.
 - Still missing from the plan's step 3: an A/A run to learn how many messages flip on chance alone, and messages written
   for each new rule.
+
+## 2026-10-23 — The decision log (plan step 1): built, no screen
+
+**Asked:** *"merge and hop on the next one"* after A-319 went live: the next step of the plan in
+`followup/research/product/2026-10-23-self-improving-loop.md`, the decision log and the model check. No screen, so
+nothing was drawn; this records what it keeps and why, for future sessions.
+**Built:**
+- **One row per AI call** (`AiDecision`, written by `src/lib/aiDecisionLog.ts`). Every call already goes through one
+  function (`getClient` in `src/lib/integrations/openaiClient.ts`), so it is recorded there, answered or not. Each row
+  holds which job it was ("draft_reply", "score_lead", "check_send_risk"…), the business and customer where the caller
+  knows them, the model asked for and the dated version that actually answered, whether it fell back, how long it
+  took, the tokens and an estimated cost, and for the calls that decide something, what they decided ("score:72:no",
+  "high:price", "customer", "ok").
+- **Never the words.** The prompt is kept only as a fingerprint (the same prompt twice has the same one; it can't be
+  read back), and the rules and examples a draft carried as a fingerprint and two counts. Plain ids, no links to other
+  tables.
+- **Test and practice runs are marked apart:** the reply tests log as "test:…", the practice chat and the founder's
+  Train as "practice:…", a rule's example as "example:…".
+- **Installed once per server** at start-up (`src/instrumentation.ts`), so the automatic tests and scripts never write
+  to it. The log gets two seconds per row and its errors are swallowed: it can never hold up or stop a reply.
+- **Checked on the local app** with a fake AI key: one practice message wrote two rows (the first reply and its
+  translation check), with the business, the job, the 3 rules in use and a fingerprint; the AI call itself failed, as
+  it should, and was logged as failed.
+**What it's for next:** reading which dated model really answers (so the founder can pin it), cost per business and per
+job, and later linking each draft to what the owner did with it (step 2).
+**Weak spots, honestly:**
+- Some calls don't know their customer yet: ones made outside the main paths (the "Before your call" note, the stay-in-touch
+  notes, the 5-minute meeting) log the job and cost but no business or customer.
+- Prices are an estimate from a table written today; an unlisted model gets no cost rather than a guess.
+- No probability for a choice yet (step 5 of the plan uses several tries instead), and no owner action yet (step 2).
+- Voice transcription isn't logged (it isn't a chat call).
+- Rows are kept with no end date for now; how long to keep them is a question for the lawyer (plan step 11).

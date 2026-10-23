@@ -16,7 +16,7 @@ import { ungroundedSpecifics, unconfirmedClaim } from "@/lib/grounding";
 import { timingBucketFromWords } from "@/lib/timingBucket";
 // The client and model name live in their own leaf module so this file
 // and leadLanguage.ts don't import each other — see openaiClient.ts.
-import { MODEL, TRANSCRIBE_MODEL, getClient } from "@/lib/integrations/openaiClient";
+import { MODEL, TRANSCRIBE_MODEL, getClient, noteAiChoice } from "@/lib/integrations/openaiClient";
 import { firstAskFor, playbookFor } from "@/lib/tradePlaybooks";
 import { factsPromptBlock, factsText, type FactLine } from "@/lib/factLines";
 import { examplesPromptBlock, type OwnerExampleLine } from "@/lib/ownerExampleLines";
@@ -57,7 +57,7 @@ function promptFirstName(name: string | null | undefined): string {
  * per business.
  */
 export async function transcribeAudio(audio: Buffer, filename: string): Promise<string> {
-  const client = getClient();
+  const client = getClient("transcribe");
   const file = await toFile(audio, filename);
   const transcription = await client.audio.transcriptions.create({ file, model: TRANSCRIBE_MODEL });
   return transcription.text.trim();
@@ -327,7 +327,7 @@ const SCORE_JSON_SCHEMA = {
 export async function scoreLead(
   lead: Pick<Lead, "conversation" | "dealValue" | "lastContacted">
 ): Promise<{ score: number; reason: string; factors: ScoreFactor[]; saysNo: boolean; asksIfAutomated: boolean; onlyThanks: boolean }> {
-  const client = getClient();
+  const client = getClient("score_lead");
 
   const daysSinceContact = Math.floor(
     (Date.now() - new Date(lead.lastContacted).getTime()) / 86400000
@@ -413,8 +413,14 @@ export async function scoreLead(
   if (!raw) throw new Error("OpenAI returned no content for scoreLead.");
 
   const parsed = JSON.parse(raw) as { score: number; reason: string; factors: ScoreFactor[]; saysNo?: unknown; asksIfAutomated?: unknown; onlyThanks?: unknown };
+  const score = Math.max(0, Math.min(100, Math.round(parsed.score)));
+  // In the decision log: the score, and the stops it raised.
+  await noteAiChoice(
+    completion.id,
+    [`score:${score}`, parsed.saysNo === true && "no", parsed.asksIfAutomated === true && "bot?", parsed.onlyThanks === true && "thanks"].filter(Boolean).join(":")
+  );
   return {
-    score: Math.max(0, Math.min(100, Math.round(parsed.score))),
+    score,
     reason: parsed.reason,
     factors: parsed.factors,
     saysNo: parsed.saysNo === true,
@@ -693,7 +699,7 @@ export async function classifyAsProspect(
   // so and asked to look specifically for what the first one missed.
   options?: { maxMessages?: number; secondLook?: { priorReason: string } }
 ): Promise<{ isProspect: boolean; reason: string }> {
-  const client = getClient();
+  const client = getClient("classify_customer");
 
   // The first read's own sentence is model output written after reading a
   // stranger's email, so it goes in quoted and length-capped, as evidence,
@@ -854,6 +860,7 @@ export async function classifyAsProspect(
   // automated notification and a newsletter are both "neither" — so
   // "neither" is never promoted. Only the model's own BUYER is (below).
   if (parsed.whoIsSelling === SELLER && parsed.isProspect) {
+    await noteAiChoice(completion.id, "not_customer:selling");
     return {
       isProspect: false,
       reason: parsed.reason || "The sender is offering their own services to this business, not asking about its.",
@@ -871,9 +878,11 @@ export async function classifyAsProspect(
   // is still never promoted — a newsletter is not selling to us, and it is
   // not a customer either.
   if (parsed.whoIsSelling === BUYER && !parsed.isProspect) {
+    await noteAiChoice(completion.id, "customer:buyer");
     return { isProspect: true, reason: parsed.reason };
   }
 
+  await noteAiChoice(completion.id, parsed.isProspect ? "customer" : "not_customer");
   return { isProspect: parsed.isProspect, reason: parsed.reason };
 }
 
@@ -996,7 +1005,7 @@ export async function classifyThreadOutcome(
     lastMessageFrom?: "business" | "lead";
   } = {}
 ): Promise<{ outcome: ThreadOutcome; reason: string }> {
-  const client = getClient();
+  const client = getClient("classify_outcome");
   const { business, daysQuiet, lastMessageFrom } = context;
 
   // First + last three, de-duplicated (a short thread overlaps), quoted
@@ -1084,6 +1093,7 @@ export async function classifyThreadOutcome(
   if (typeof parsed.reason !== "string" || parsed.reason.trim() === "") {
     throw new Error("OpenAI returned a thread outcome with no reason.");
   }
+  await noteAiChoice(completion.id, parsed.outcome as ThreadOutcome);
   return { outcome: parsed.outcome as ThreadOutcome, reason: parsed.reason };
 }
 
@@ -1155,7 +1165,7 @@ export async function assessSendRisk(
     return { riskLevel: "high", reason: slotReason(slot), topic: slot.kind === "price" ? "price" : "other" };
   }
 
-  const client = getClient();
+  const client = getClient("check_send_risk");
 
   const completion = await client.chat.completions.create({
     model: MODEL,
@@ -1215,6 +1225,7 @@ export async function assessSendRisk(
   // for price and date), so anything unexpected reads as "other", which
   // unlocks nothing.
   const topic = RISK_TOPICS.includes(parsed.topic as RiskTopic) ? (parsed.topic as RiskTopic) : "other";
+  await noteAiChoice(completion.id, `${parsed.riskLevel}:${topic}`);
   return { riskLevel: parsed.riskLevel, reason: parsed.reason, topic };
 }
 
@@ -1431,7 +1442,7 @@ export async function generateFollowUpMessage(
   // lead's most recent message, exactly as every draft did before this.
   leadLanguage?: Partial<LeadLanguage> | null
 ): Promise<FollowUpDraft> {
-  const client = getClient();
+  const client = getClient("draft_reply", lead.rules || lead.examples ? { rules: lead.rules, examples: lead.examples } : undefined);
 
   // A reading of the lead's newest message, offered to the paragraph
   // below rather than overriding it.
@@ -1798,7 +1809,7 @@ export async function localizeFixedText(
   const decided = registerInstruction(leadLanguage);
   if (!process.env.OPENAI_API_KEY || (!decided && !sampleOfLeadMessage.trim())) return text;
   try {
-    const client = getClient();
+    const client = getClient("translate_fixed_text");
     // Once the language is decided the customer's words have nothing left
     // to contribute, so they are not sent at all (security audit
     // 2026-09-27, residual): the guards below catch an injected number or
@@ -1958,7 +1969,7 @@ export async function generateInstantReply(input: {
   /** The founder's rules for this kind of business (A-297), under every rule of this first reply. */
   rules?: readonly string[];
 }): Promise<string> {
-  const client = getClient();
+  const client = getClient("draft_first_reply", input.rules ? { rules: input.rules } : undefined);
   // The founder's Talk test, 2026-10-18: "hi" got "Send me your questions, and I'll make sure someone comes back to
   // you personally shortly". A first reply that asks nothing stops the conversation (R-135), so it now asks the
   // first step of the business's plan: a question asserts nothing about the business.
@@ -2114,7 +2125,7 @@ export async function writeCoachRule(input: {
   note: string;
   existing: readonly string[];
 }): Promise<string> {
-  const client = getClient();
+  const client = getClient("train_write_rule");
   const existing = input.existing.slice(0, 20).map((r) => `- ${r}`).join("\n");
   const completion = await client.chat.completions.create({
     model: MODEL,
@@ -2201,7 +2212,7 @@ export async function assessAckRisk(
   inboundText: string,
   reply: string
 ): Promise<{ verdict: "ok" | "not_ok"; reason: string }> {
-  const client = getClient();
+  const client = getClient("check_first_reply");
 
   const completion = await client.chat.completions.create({
     model: MODEL,
@@ -2260,6 +2271,7 @@ export async function assessAckRisk(
   if (!raw) throw new Error("OpenAI returned no content for assessAckRisk.");
 
   const parsed = JSON.parse(raw) as { reasoning: string; verdict: "ok" | "not_ok"; reason: string };
+  await noteAiChoice(completion.id, parsed.verdict);
   return { verdict: parsed.verdict, reason: parsed.reason };
 }
 
@@ -2289,7 +2301,7 @@ export async function rewriteReply(
   leadLanguage?: Partial<LeadLanguage> | null
 ): Promise<string> {
   if (!process.env.OPENAI_API_KEY || !text.trim()) return text;
-  const client = getClient();
+  const client = getClient("rewrite_reply");
   const decided = style === "language" ? registerInstruction(leadLanguage) : "";
   const completion = await client.chat.completions.create({
     model: MODEL,
@@ -2334,7 +2346,7 @@ export async function rewriteReply(
  */
 export async function summarizeConversation(conversation: Message[], leadFirstName: string): Promise<string | null> {
   if (!process.env.OPENAI_API_KEY || conversation.length === 0) return null;
-  const client = getClient();
+  const client = getClient("summarize");
   const completion = await client.chat.completions.create({
     model: MODEL,
     messages: [
@@ -2368,7 +2380,7 @@ export async function summarizeConversation(conversation: Message[], leadFirstNa
 export async function extractCallBrief(conversation: Message[], leadFirstName: string): Promise<ProposedLine[] | null> {
   if (!process.env.OPENAI_API_KEY || conversation.length === 0) return null;
   const first = leadFirstName || "the customer";
-  const client = getClient();
+  const client = getClient("call_brief");
   const completion = await client.chat.completions.create({
     model: MODEL,
     messages: [
@@ -2493,7 +2505,7 @@ export async function extractQualificationFacts(
     return d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" });
   };
   const day = longDate(today);
-  const client = getClient();
+  const client = getClient("read_checklist");
   const completion = await client.chat.completions.create({
     model: MODEL,
     messages: [
@@ -2617,7 +2629,7 @@ export async function extractQualificationFacts(
  */
 export async function proposeAskPlan(words: string): Promise<ProposedPlan | null> {
   if (!process.env.OPENAI_API_KEY || !words.trim()) return null;
-  const client = getClient();
+  const client = getClient("plan_questions");
   const completion = await client.chat.completions.create({
     model: MODEL,
     messages: [
@@ -2717,7 +2729,7 @@ export async function proposeTellFacts(
   previous?: string
 ): Promise<{ main: string; also: { label: string; value: string }[]; vague: boolean; dig: string; digExample: string } | null> {
   if (!process.env.OPENAI_API_KEY || !answer.trim()) return null;
-  const client = getClient();
+  const client = getClient("tell_facts");
   const before = previous?.trim() ? `Their first answer, which was too vague to use: ${previous.replace(/<\/?answer>/gi, "").slice(0, 400)}\n` : "";
   const completion = await client.chat.completions.create({
     model: MODEL,
@@ -2804,7 +2816,7 @@ export async function wordTellQuestion(
   known: readonly { label: string; value: string }[]
 ): Promise<{ question: string; example: string } | null> {
   if (!process.env.OPENAI_API_KEY) return null;
-  const client = getClient();
+  const client = getClient("tell_question");
   const said = known
     .slice(0, 12)
     .map((f) => `${f.label.replace(/[<>]/g, " ").slice(0, 40)}: ${f.value.replace(/[<>]/g, " ").slice(0, 200)}`)
@@ -2865,7 +2877,7 @@ function saidLines(rows: readonly { label: string; value: string }[], max: numbe
  */
 export async function summarizeTellProfile(rows: readonly { label: string; value: string }[]): Promise<string | null> {
   if (!process.env.OPENAI_API_KEY || rows.length === 0) return null;
-  const client = getClient();
+  const client = getClient("tell_summary");
   const completion = await client.chat.completions.create({
     model: MODEL,
     messages: [
@@ -2909,7 +2921,7 @@ export async function proposeTellCorrection(
   labels: readonly string[]
 ): Promise<{ label: string; value: string }[] | null> {
   if (!process.env.OPENAI_API_KEY || !text.trim()) return null;
-  const client = getClient();
+  const client = getClient("tell_correction");
   const completion = await client.chat.completions.create({
     model: MODEL,
     messages: [
@@ -2977,7 +2989,7 @@ export async function proposeTellTalk(
   labels: readonly string[]
 ): Promise<{ label: string; value: string }[] | null> {
   if (!process.env.OPENAI_API_KEY || !said.trim()) return null;
-  const client = getClient();
+  const client = getClient("tell_talk");
   const completion = await client.chat.completions.create({
     model: MODEL,
     messages: [
@@ -3070,7 +3082,7 @@ const STAY_ANSWER_SCHEMA = {
  * nothing.
  */
 export async function classifyStayInTouchAnswer(input: { asked: string; reply: Message[] }): Promise<StayAnswer> {
-  const client = getClient();
+  const client = getClient("classify_stay_answer");
   const completion = await client.chat.completions.create({
     model: MODEL,
     temperature: 0,
@@ -3099,6 +3111,7 @@ export async function classifyStayInTouchAnswer(input: { asked: string; reply: M
   if (!STAY_ANSWERS.includes(parsed.answer as StayAnswer)) {
     throw new Error(`OpenAI returned an unrecognised stay-in-touch answer: ${JSON.stringify(parsed.answer)}`);
   }
+  await noteAiChoice(completion.id, parsed.answer as StayAnswer);
   return parsed.answer as StayAnswer;
 }
 
@@ -3145,7 +3158,7 @@ export async function writeStayInTouchNote(input: {
   dm: boolean;
   leadLanguage?: Partial<LeadLanguage> | null;
 }): Promise<{ fits: boolean; why: string; note: string }> {
-  const client = getClient();
+  const client = getClient("stay_in_touch_note");
   const language = registerInstruction(input.leadLanguage);
   const completion = await client.chat.completions.create({
     model: MODEL,
@@ -3235,7 +3248,7 @@ export async function writeMomentNote(input: {
   dm: boolean;
   leadLanguage?: Partial<LeadLanguage> | null;
 }): Promise<{ why: string; note: string }> {
-  const client = getClient();
+  const client = getClient("moment_note");
   const language = registerInstruction(input.leadLanguage);
   const completion = await client.chat.completions.create({
     model: MODEL,

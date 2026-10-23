@@ -183,7 +183,7 @@ export function readDemoAnswer(raw: unknown): DemoReply | null {
  */
 export async function writeDemoReply(question: string): Promise<DemoReply | null> {
   try {
-    const client = getClient();
+    const client = getClient("demo_reply");
     const res = await client.chat.completions.create(
       {
         model: DEMO_MODEL,

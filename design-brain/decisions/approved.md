@@ -5651,7 +5651,7 @@ kind until it has been tested and the founder has put it to work.
 - **The founder decides** (asked: should passing changes go live by themselves?): nothing goes live without the
   founder's tap, as drawn.
 
-**Built 2026-10-23 (not merged yet):** as drawn, plus: each test message is answered 3 times per side and passes only
+**Built 2026-10-23, LIVE (PR #589 → 231f663, merged at the founder's "merge"; LessonTest table, replacesId column and RLS confirmed in production, read-only):** as drawn, plus: each test message is answered 3 times per side and passes only
 when all 3 pass; a reply that couldn't be written fails the whole test; a test counts only for exactly what is waiting;
 new wording for a rule in use waits as its own change and the old words stay in use until the OK; the result warns
 which rules in use would stop being read past the newest 20; the reply test on Admin also uses the kind's rules and

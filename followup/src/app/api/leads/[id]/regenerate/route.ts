@@ -16,6 +16,7 @@ import { publicErrorMessage } from "@/lib/publicError";
 import { draftingContext } from "@/lib/businessFacts";
 import { saidYesToMeeting } from "@/lib/bookingOffer";
 import { appUrl } from "@/lib/stripe";
+import { withAiContext } from "@/lib/integrations/openaiClient";
 
 // POST /api/leads/[id]/regenerate — asks the AI for a fresh draft against
 // this lead's real conversation, and saves it as the new suggested message.
@@ -105,14 +106,19 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
       // (src/lib/leadLanguage.ts), the same as every automatic draft: a new
       // draft asked for by hand used to come back in whatever the model
       // guessed (app analysis, 2026-10-14).
-      const dm = await draftDm(lead.name, conversation, voiceSamples, undefined, undefined, language, facts, null, trade, examples, rules);
+      const dm = await withAiContext({ businessId: lead.businessId, leadId: lead.id }, () =>
+        draftDm(lead.name, conversation, voiceSamples, undefined, undefined, language, facts, null, trade, examples, rules)
+      );
       newMessage = dm.body;
       newSubject = null;
       newQuickReplies = (dm.shapeFailed ? { question: dm.quickReplies.question, buttons: [] } : dm.quickReplies) as unknown as Prisma.InputJsonValue;
     } else {
       // They said yes to meeting (A-263): a new draft keeps the one job, the booking link.
       const bookingLink = saidYesToMeeting(conversation) ? `${appUrl()}/book/${lead.id}` : null;
-      const draft = await generateFollowUpMessage({ name: lead.name, conversation, ...(await draftingContext(lead.businessId)), bookingLink }, voiceSamples, undefined, undefined, language);
+      const context = await draftingContext(lead.businessId);
+      const draft = await withAiContext({ businessId: lead.businessId, leadId: lead.id }, () =>
+        generateFollowUpMessage({ name: lead.name, conversation, ...context, bookingLink }, voiceSamples, undefined, undefined, language)
+      );
       newMessage = await composeFollowUpEmail(lead.name.split(" ")[0], lead.businessId, draft.body, {
         languageSample: latestInboundText(conversation),
         leadLanguage: language,

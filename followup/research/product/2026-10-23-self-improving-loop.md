@@ -3,8 +3,8 @@
 **Date:** 2026-10-23. **Asked for by:** the founder's *"find out how we can let the app develop itself: its judgment,
 accuracy, what to say, what next step it should take"* and *"yes start step 1 and find all the solutions too"*.
 **What this is:** the short version, for the repo, of a longer research report kept outside it (about 11,000 words, 13
-build steps, sources marked by strength). Step 1 of the plan below is built as [A-319](../../../design-brain/decisions/approved.md);
-nothing else here is built or approved yet. Every law or platform point needs a lawyer's read before it drives a
+build steps, sources marked by strength). The honest test (part of step 3 below) is live as [A-319](../../../design-brain/decisions/approved.md), and
+the decision log (step 1) is built; nothing else here is built or approved yet. Every law or platform point needs a lawyer's read before it drives a
 decision.
 
 ---
@@ -51,6 +51,8 @@ decision.
 
 1. **Decision log + pinned model.** Record each AI decision and its inputs; pin a dated model in `OPENAI_MODEL` and check
    the provider's retirement page monthly. Everything below depends on this.
+   *Built 2026-10-23 (`AiDecision`, src/lib/aiDecisionLog.ts): ids, models, time, tokens, cost and choices, never the
+   words. Still to do: read which dated model answers once it's live, and the founder pins it.*
 2. **Outcome events and edit records.** Reply, booking, "no", complaint and "went quiet" as timed events with windows;
    each draft's edit size and the owner's action.
 3. **Finish the honest test.** A/A run, targeted messages per rule, code checks that block.

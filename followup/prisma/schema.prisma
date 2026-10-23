@@ -2488,6 +2488,41 @@ model TrainingRule {
   @@index([trade, createdAt])
 }
 
+/// The decision log (2026-10-23, step 1 of research/product/2026-10-23-self-improving-loop.md): one row per AI call,
+/// written by src/lib/aiDecisionLog.ts. Which job, for which business and customer, which model was asked and which
+/// dated version answered, how long it took, the tokens and an estimated cost, and for a call that decides something,
+/// what it decided. Never the words of the prompt or the answer: the prompt is a fingerprint. Plain ids, no relations,
+/// so a row outlives nothing it points to and holds nothing a person said.
+model AiDecision {
+  id             String   @id @default(cuid())
+  createdAt      DateTime @default(now())
+  purpose        String
+  businessId     String?
+  leadId         String?
+  modelRequested String
+  modelUsed      String?
+  fellBack       Boolean  @default(false)
+  ok             Boolean
+  errorStatus    Int?
+  latencyMs      Int
+  inputTokens    Int?
+  outputTokens   Int?
+  /// Estimated, in millionths of a US dollar; null for a model with no known price.
+  costMicros     Int?
+  promptHash     String
+  lessonsHash    String?
+  rules          Int?
+  examples       Int?
+  responseId     String?
+  /// A short label ("hot", "hold", "customer"), added once the caller has read the answer.
+  choice         String?
+
+  @@index([createdAt])
+  @@index([businessId, createdAt])
+  @@index([purpose, createdAt])
+  @@index([responseId])
+}
+
 /// A-319 (2026-10-23): one test of the lessons waiting for a kind of business (src/lib/lessonTest.ts). FollowUp writes
 /// that kind's test replies without and with the waiting lessons; the founder puts them to work only after a test that
 /// covered exactly what is waiting (src/lib/lessonReview.ts). The test messages are invented, so nothing here is a

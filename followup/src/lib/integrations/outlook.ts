@@ -44,6 +44,7 @@ import { applySourceRouting } from "@/lib/sourceRouting";
 import { acknowledgeNewLead } from "@/lib/acknowledge";
 import { isFollowUpSender, ownAddressSet, TEAM_ADDRESS_SELECT, teamAddresses } from "@/lib/ownSenders";
 import { isUniqueViolation } from "@/lib/uniqueViolation";
+import { withAiContext } from "@/lib/integrations/openaiClient";
 
 const AUTHORITY = "https://login.microsoftonline.com/common/oauth2/v2.0";
 const GRAPH = "https://graph.microsoft.com/v1.0";
@@ -698,7 +699,7 @@ async function processConversations(
           date: m.sentAt.toISOString(),
           opened: false,
         }));
-        const { isProspect, reason } = await classifyWithSecondLook(transcript, counterpart, businessContext ?? undefined);
+        const { isProspect, reason } = await withAiContext({ businessId }, () => classifyWithSecondLook(transcript, counterpart, businessContext ?? undefined));
         if (!isProspect) {
           await prisma.filteredEmail.upsert({
             where: { businessId_threadId: { businessId, threadId: conversationId } },

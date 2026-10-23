@@ -12,6 +12,7 @@ vi.mock("@/lib/integrations/openaiClient", () => ({
   MODEL: "test-model",
   TRANSCRIBE_MODEL: "test-transcribe",
   getClient: () => ({ chat: { completions: { create } } }),
+  noteAiChoice: async () => {},
 }));
 const { factRows } = vi.hoisted(() => ({ factRows: vi.fn() }));
 vi.mock("@/lib/db", () => ({

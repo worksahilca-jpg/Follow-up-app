@@ -10,6 +10,7 @@ import type { Lead, Message } from "@/lib/types";
 import { draftingContext } from "@/lib/businessFacts";
 import { businessTrade } from "@/lib/tradePlaybooks";
 import { getTrainingRules } from "@/lib/trainingRules";
+import { withAiContext } from "@/lib/integrations/openaiClient";
 
 /**
  * "See an example" on a follow-up rule (design brain A-044, the Zapier
@@ -46,7 +47,12 @@ function timeline(l: Lead): TimelineMessage[] {
 }
 
 /** Writes the example. Throws if the model call fails; the caller says so. */
-export async function writeRuleExample(
+/** Logged as "example:…" in the decision log, against this business, apart from real customers' replies. */
+export function writeRuleExample(...args: Parameters<typeof writeExampleNow>): ReturnType<typeof writeExampleNow> {
+  return withAiContext({ businessId: args[0], tag: "example" }, () => writeExampleNow(...args));
+}
+
+async function writeExampleNow(
   businessId: string,
   lead: Lead,
   rule: ExampleRule,

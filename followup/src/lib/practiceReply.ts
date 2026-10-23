@@ -13,6 +13,7 @@ import { draftDm } from "@/lib/dmDrafting";
 import { DM_CONTACT_ASK, findEmail } from "@/lib/dmContact";
 import { UNGROUNDED_DRAFT_REASONS } from "@/lib/holdReasons";
 import type { Message } from "@/lib/types";
+import { withAiContext } from "@/lib/integrations/openaiClient";
 
 /**
  * "How FollowUp talks to your customers" (A-288, founder 2026-10-18: "it should use all the rules and strategies … that we use for
@@ -64,7 +65,12 @@ export function practiceConversation(turns: readonly PracticeTurn[], now: Date =
   }));
 }
 
-export async function practiceReply(
+/** Logged as "practice:…" in the decision log, against this business, apart from real customers' replies. */
+export function practiceReply(...args: Parameters<typeof writePracticeReply>): ReturnType<typeof writePracticeReply> {
+  return withAiContext({ businessId: args[0], tag: "practice" }, () => writePracticeReply(...args));
+}
+
+async function writePracticeReply(
   businessId: string,
   customerName: string,
   turns: readonly PracticeTurn[],

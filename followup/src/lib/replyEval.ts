@@ -1,6 +1,6 @@
 import { draftDm } from "@/lib/dmDrafting";
 import { salesPressure } from "@/lib/replyTone";
-import { getClient, MODEL } from "@/lib/integrations/openaiClient";
+import { getClient, MODEL, withAiContext } from "@/lib/integrations/openaiClient";
 import { mapWithConcurrency } from "@/lib/concurrency";
 import { withRateLimitRetry, type RateLimitRetryOptions } from "@/lib/rateLimitRetry";
 import type { FactLine } from "@/lib/factLines";
@@ -240,7 +240,7 @@ const ECHO_RE = /^(?:noted|got it)\b[.!,]?/i;
  * gets the same grade.
  */
 export const gradeReply: Grader = async (c, reply) => {
-  const client = getClient();
+  const client = getClient("grade_reply");
   const facts = (c.facts ?? []).map((f) => `- ${f.label}: ${f.value}`).join("\n") || "(none)";
   const chat = c.lines.map(([who, text]) => `${who === "in" ? "CUSTOMER" : "BUSINESS"}: ${text}`).join("\n");
   const completion = await client.chat.completions.create({
@@ -403,7 +403,8 @@ export async function runReplyEval(
     problems: { shape: 0, unanswered: 0, invented: 0, language: 0, missing_fact: 0, echo: 0, pressure: 0, brag: 0, feeling: 0, generic: 0 },
     failures: [],
   };
-  await mapWithConcurrency(cases, REPLY_EVAL_CONCURRENCY, async (c) => {
+  // Logged as "test:…" in the decision log, apart from real customers' replies.
+  await withAiContext({ tag: "test" }, () => mapWithConcurrency(cases, REPLY_EVAL_CONCURRENCY, async (c) => {
     try {
       const { reply, problems, detail } = await tryCase(c, draft, grade, options.lessons ?? NO_LESSONS, options.retry);
       for (const p of problems) result.problems[p] += 1;
@@ -413,7 +414,7 @@ export async function runReplyEval(
       result.errors += 1;
       result.failures.push({ name: c.name, problems: [], reply: "", detail: err instanceof Error ? err.message : "unknown error" });
     }
-  });
+  }));
   return result;
 }
 
@@ -431,13 +432,13 @@ export async function runReplyTries(
   const cases = options.cases ?? REPLY_CASES;
   const jobs = cases.flatMap((c, ci) => Array.from({ length: options.tries }, (_, t) => ({ c, ci, t })));
   const out: CaseTries[] = cases.map((c) => ({ name: c.name, said: lastInbound(c), tries: [] }));
-  const results = await mapWithConcurrency(jobs, options.concurrency, async ({ c }) => {
+  const results = await withAiContext({ tag: "test" }, () => mapWithConcurrency(jobs, options.concurrency, async ({ c }) => {
     try {
       return await tryCase(c, options.draft ?? draftDm, options.grade ?? gradeReply, lessons, options.retry);
     } catch (err) {
       return { reply: "", problems: [], detail: "", error: err instanceof Error ? err.message : "unknown error" } satisfies CaseTry;
     }
-  });
+  }));
   jobs.forEach((j, i) => {
     out[j.ci].tries[j.t] = results[i];
   });

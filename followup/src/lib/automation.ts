@@ -277,6 +277,7 @@ import {
   type TimelineMessage,
 } from "@/lib/followUpPlans";
 import { readQualification } from "@/lib/qualification";
+import { withAiContext } from "@/lib/integrations/openaiClient";
 export { SILENCE_DEFAULT_TRIGGER_DAYS, reactivationAlreadySent, type TimelineMessage };
 
 function isAckMessage(m: { direction: string; trigger?: string | null }): boolean {
@@ -1034,7 +1035,7 @@ export async function runAutomationForBusiness(
   // Kept modest (vs. the 5 used for sync/cleanup) — this loop calls Gmail's
   // send API per lead, which has its own tighter per-account send quota,
   // not just a "how fast can we finish" budget.
-  const outcomes = await mapWithConcurrency(eligible, 3, async (lead): Promise<LeadOutcome> => {
+  const outcomes = await mapWithConcurrency(eligible, 3, (lead): Promise<LeadOutcome> => withAiContext({ businessId, leadId: lead.id }, async () => {
     try {
       // Atomic check-and-claim, same shape as claimLead()/acknowledgeNewLead()/
       // checkRapidEngagement() elsewhere in this codebase — a plain update
@@ -2013,7 +2014,7 @@ export async function runAutomationForBusiness(
       }
       return { kind: "skipped", note: `${lead.name}: ${err instanceof Error ? err.message : "unknown error"}` };
     }
-  });
+  }));
 
   // After the loop, before the summary: every held lead is known, so the
   // burst can be collapsed into one line per person rather than a hundred.
@@ -2177,7 +2178,9 @@ export async function draftDmHandoffs(
 
     try {
       const { trade, facts, examples, rules } = await draftingContext(lead.businessId);
-      const dm = await draftDm(lead.name, conversation, await voiceFor(leadLanguageOf(lead)), undefined, "handoff", undefined, facts, null, trade, examples, rules);
+      const dm = await withAiContext({ businessId: lead.businessId, leadId: lead.id }, async () =>
+        draftDm(lead.name, conversation, await voiceFor(leadLanguageOf(lead)), undefined, "handoff", undefined, facts, null, trade, examples, rules)
+      );
       await prisma.lead.update({
         where: { id: lead.id },
         data: {

@@ -11,6 +11,7 @@ import { greetingFirstName, businessDisplayName } from "@/lib/leadName";
 import { recordAudit } from "@/lib/audit";
 import { HOLD_ALL_FIRST_REPLY_REASON, isUnconfirmedSpamSource } from "@/lib/holdReasons";
 import { getTrainingRules } from "@/lib/trainingRules";
+import { withAiContext } from "@/lib/integrations/openaiClient";
 
 /**
  * Instant acknowledgement — the first half of "no lead is lost to LATE
@@ -653,7 +654,7 @@ export async function acknowledgeNewLead(
     const owner = await getSenderFirstName(lead.businessId);
     const leadFirstName = greetingFirstName(lead.name);
 
-    const decision = await buildAckLine({
+    const decision = await withAiContext({ businessId: lead.businessId, leadId }, async () => buildAckLine({
       leadFirstName,
       ownerFirstName: owner,
       businessName,
@@ -663,7 +664,7 @@ export async function acknowledgeNewLead(
       locale: lead.language,
       trade: business?.industry ?? null,
       rules: await getTrainingRules(business?.industry),
-    });
+    }));
 
     // The lead's own message decides the language of everything that
     // goes out: a generated reply is already in their language, but the

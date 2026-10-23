@@ -48,6 +48,7 @@ import { emailGreetingOf } from "@/lib/dmDrafts";
 import { checkUnreviewedDraft } from "@/lib/unreviewedDraftCheck";
 import { draftingContext, getBusinessFacts } from "@/lib/businessFacts";
 import { sixMonthsAfter, withinSendLimits } from "@/lib/followUpPlans";
+import { withAiContext } from "@/lib/integrations/openaiClient";
 
 export interface SequenceStepInput {
   /** Hours after the previous step (or enrollment). Preferred. */
@@ -504,7 +505,7 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
   // actionable — which lead, and what went wrong.
   const heldNotices: HoldNotice[] = [];
 
-  const outcomes = await mapWithConcurrency(active, 3, async (lead) => {
+  const outcomes = await mapWithConcurrency(active, 3, (lead) => withAiContext({ businessId, leadId: lead.id }, async () => {
     // Atomic check-and-claim before anything else — same reasoning as
     // runAutomationForBusiness()'s claim, and the same missing-guard shape
     // this file used to have: the eligibility query above is a plain SELECT,
@@ -1035,7 +1036,7 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
     } catch (err) {
       return { kind: "skipped" as const, note: `${lead.name}: ${err instanceof Error ? err.message : "unknown error"}` };
     }
-  });
+  }));
 
   // One line per person when several steps were held at once, each lead
   // named when only a few were. Never allowed to fail the run.

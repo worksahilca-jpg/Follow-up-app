@@ -46,6 +46,7 @@ import {
   type Criterion,
   type Qualification,
 } from "@/lib/qualification";
+import { withAiContext } from "@/lib/integrations/openaiClient";
 
 // Cut-points come from @/lib/scoreThresholds, shared with ScoreBadge —
 // the two used to carry their own copies (70/40 here, 75/45 there) and
@@ -64,6 +65,10 @@ export const AI_RUNS_PER_LEAD_PER_DAY = { windowMinutes: 24 * 60, max: 30 } as c
 export const AI_RUNS_PER_BUSINESS_PER_DAY = { windowMinutes: 24 * 60, max: 500 } as const;
 
 export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
+  return withAiContext({ leadId }, () => scoreAndDraft(leadId));
+}
+
+async function scoreAndDraft(leadId: string): Promise<boolean> {
   if (!process.env.OPENAI_API_KEY) return false;
 
   const lead = await prisma.lead.findUnique({

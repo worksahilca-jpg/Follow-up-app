@@ -144,7 +144,7 @@ export async function detectLeadLanguage(inboundText: string): Promise<LeadLangu
   if (sample.length < MIN_CHARS_TO_JUDGE) return null;
 
   try {
-    const completion = await getClient().chat.completions.create({
+    const completion = await getClient("detect_language").chat.completions.create({
       model: MODEL,
       messages: [
         {

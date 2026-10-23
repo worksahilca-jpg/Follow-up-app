@@ -74,15 +74,19 @@ a booked call or visit; the owner closes.
 
 **Last updated: 2026-10-23**
 
-- **A new lesson waits for a test and the founder's OK (A-319, Oct 23, approved with "Yes"; built, PR open, not
-  merged):** step 1 of the self-improving plan. Rules, taught answers and pasted conversations on Admin → Train wait in
-  "Waiting for your OK" (only the practice chat uses them) until "Test them" answers the kind's 20 test messages 3 times
-  without and 3 times with them, and the founder taps "Put them to work" (blocked if a reply got worse, unless
-  "anyway"). Kinds with no test (all but Real estate) go in on the founder's OK alone. Admin → Decide shows one line
-  per kind while changes wait. The reply test now drafts with the kind's rules and examples, as live replies do.
-  Migration: `TrainingRule.replacesId` + `LessonTest` table (RLS on). Research and the 13-step plan:
-  `followup/research/product/2026-10-23-self-improving-loop.md` (full report kept outside the repo). Next in the plan,
-  each needing the founder's go: decision log + pinned model, outcome events, A/A run, grader check.
+- **The decision log (plan step 1, Oct 23; built, PR open, not merged):** every AI call gets a row in `AiDecision`
+  (src/lib/aiDecisionLog.ts, recorded where every call already passes, `getClient`): the job, the business and
+  customer where known, the model asked and the dated version that answered, time, tokens, estimated cost, and what a
+  deciding call chose. Never the words: the prompt is a fingerprint. Test runs log as "test:…", practice as
+  "practice:…". Installed at server start, so tests never write. Migration: one table (RLS on). After it's live: read
+  which dated model answers and ask the founder to pin it in OPENAI_MODEL.
+- **A new lesson waits for a test and the founder's OK (A-319, Oct 23) LIVE (PR #589 → 231f663, merged at the
+  founder's "merge"; LessonTest + replacesId + RLS confirmed in production, read-only):** step 1 of the self-improving
+  plan. Rules, taught answers and pasted conversations on Admin → Train wait in "Waiting for your OK" (only the
+  practice chat uses them) until "Test them" answers the kind's 20 test messages 3 times without and 3 times with
+  them, and the founder taps "Put them to work" (blocked if a reply got worse, unless "anyway"). Kinds with no test
+  (all but Real estate) go in on the founder's OK alone. Research and the 13-step plan:
+  `followup/research/product/2026-10-23-self-improving-loop.md`.
 - **"Calls this week" + "Talk to FollowUp about your business" LIVE (A-317, A-318, Oct 22, PR #588 → bc8ae52, merged at the founder's
   "merge it"; no migration):** both drawn and approved with "yes build both". Today's Later has "Calls this week · N booked", opening
   `/calls`: the calls booked through the owner's link for the next 7 days, by day, one sentence naming the quiet days,

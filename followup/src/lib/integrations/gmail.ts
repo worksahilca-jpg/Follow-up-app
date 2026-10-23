@@ -49,6 +49,7 @@ import { GMAIL_INBOX_ORDER } from "@/lib/gmailInboxOrder";
 import { isUniqueViolation } from "@/lib/uniqueViolation";
 import { isBulkMail, isNewsletterThread, NEWSLETTER_REASON } from "@/lib/bulkMail";
 import { isGoogleRateLimitError, withRateLimitRetry, type RateLimitRetryOptions } from "@/lib/rateLimitRetry";
+import { withAiContext } from "@/lib/integrations/openaiClient";
 
 /**
  * Gmail's "slow down" (a per-minute quota): wait twice, about 2–4 then 4–8 seconds, then give up on this run. A
@@ -830,7 +831,7 @@ async function processThreadRefs(
           date: m.sentAt.toISOString(),
           opened: false,
         }));
-        const { isProspect, reason } = await classifyWithSecondLook(transcript, counterpart, businessContext ?? undefined);
+        const { isProspect, reason } = await withAiContext({ businessId }, () => classifyWithSecondLook(transcript, counterpart, businessContext ?? undefined));
         if (!isProspect) {
           // Not a lead — but never silently. Record the verdict where the
           // owner can see it and overrule it (Settings → Gmail).

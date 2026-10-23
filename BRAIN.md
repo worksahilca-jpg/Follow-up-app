@@ -72,10 +72,19 @@ a booked call or visit; the owner closes.
 
 ## Where we are (update at the end of every task)
 
-**Last updated: 2026-10-22**
+**Last updated: 2026-10-23**
 
-- **"Calls this week" + "Talk to FollowUp about your business" BUILT (A-317, A-318, Oct 22, PR waiting for the founder's
-  "merge"):** both drawn and approved with "yes build both". Today's Later has "Calls this week · N booked", opening
+- **A new lesson waits for a test and the founder's OK (A-319, Oct 23, approved with "Yes"; built, PR open, not
+  merged):** step 1 of the self-improving plan. Rules, taught answers and pasted conversations on Admin → Train wait in
+  "Waiting for your OK" (only the practice chat uses them) until "Test them" answers the kind's 20 test messages 3 times
+  without and 3 times with them, and the founder taps "Put them to work" (blocked if a reply got worse, unless
+  "anyway"). Kinds with no test (all but Real estate) go in on the founder's OK alone. Admin → Decide shows one line
+  per kind while changes wait. The reply test now drafts with the kind's rules and examples, as live replies do.
+  Migration: `TrainingRule.replacesId` + `LessonTest` table (RLS on). Research and the 13-step plan:
+  `followup/research/product/2026-10-23-self-improving-loop.md` (full report kept outside the repo). Next in the plan,
+  each needing the founder's go: decision log + pinned model, outcome events, A/A run, grader check.
+- **"Calls this week" + "Talk to FollowUp about your business" LIVE (A-317, A-318, Oct 22, PR #588 → bc8ae52, merged at the founder's
+  "merge it"; no migration):** both drawn and approved with "yes build both". Today's Later has "Calls this week · N booked", opening
   `/calls`: the calls booked through the owner's link for the next 7 days, by day, one sentence naming the quiet days,
   "Next week". The 5-minute meeting has "Rather talk? Talk for 2 minutes": the owner talks (up to 5 minutes), the
   recording is written down (same transcription as voicemails) and never stored, FollowUp reads the words against the

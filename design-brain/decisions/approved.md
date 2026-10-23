@@ -5062,6 +5062,8 @@ each answer: **Good** (kept as an example, scored "Same") or **Teach a better re
 Save · Cancel; kept as an example, scored "Business better", and it replaces the answer in the chat so the conversation
 carries on from it). One line after: "Kept…/Taught. <Kind> businesses answer like this now. Undo". Changing the kind
 or the channel starts the chat over.
+**SUPERSEDED in part (2026-10-23) by [A-319](#^A-319):** a kept or taught answer no longer reaches other businesses at
+once; it waits in "Waiting for your OK" ("Waiting for your OK below. Undo") until it is tested and put to work.
 
 ## A-295 — Each kind's own model: progress on the Scorecard tab ^A-295
 
@@ -5110,7 +5112,8 @@ screenshots."*
 - **The rule shows under it:** "FollowUp's new rule · <kind>", the rule in bold, "Every <kind> business answers this way
   now. Undo · Change the wording".
 - **"Your rules for <kind>"** under the chat: the count, each rule with its date, Change and Undo.
-- **Live at once, kept for good.** Rules are saved in FollowUp's database (`TrainingRule`), so nothing depends on anyone's
+- **Live at once, kept for good.** *(SUPERSEDED 2026-10-23 by [A-319](#^A-319): a new rule, or new wording for one in
+use, now waits for a test and the founder's OK; "kept for good" stands.)* Rules are saved in FollowUp's database (`TrainingRule`), so nothing depends on anyone's
   memory. The newest 20 for a kind go into every first reply, draft and DM for businesses of that kind, under the safety
   rules (facts, prices, dates, pressure, a no, honesty about automation always win).
 Built in `src/lib/trainingRules.ts`, `src/lib/trainingRuleLines.ts`, `writeCoachRule` in
@@ -5598,7 +5601,7 @@ and "Calls this week"): *"yes build both"*. Asked before: *"do we have our own i
   row opens the customer.
 - **Under the list:** "Next week" and "Your free hours".
 - Only calls booked through the owner's link (FollowUp's bookings); nothing about how booking works changes.
-**Built 2026-10-22 (local, PR waiting for "merge"):** as drawn; the row on Today is always there ("None yet" when
+**Built 2026-10-22, LIVE (PR #588 → bc8ae52, merged at the founder's "merge it"):** as drawn; the row on Today is always there ("None yet" when
 empty); every Later line that opens a page shows the chevron; each call's line is the call note's "wants", else where the
 customer stands, else their latest words in quotes. Details in design-decisions.
 
@@ -5618,6 +5621,38 @@ when approving A-314: talk about the business "like Wispr", transcribed and anal
   what you said · {length} · Read what you said".
 - **Privacy:** the recording is turned into words and deleted; only the words are kept, with the draft. The privacy
   page says so.
-**Built 2026-10-22 (local, PR waiting for "merge"):** as drawn; "Things to mention" uses the meeting's own question
+**Built 2026-10-22, LIVE (PR #588 → bc8ae52, merged at the founder's "merge it"):** as drawn; "Things to mention" uses the meeting's own question
 names; after a talk, "Not in what you said … Answer them now" returns to typing; only the meeting's page may use the
 microphone. Not yet tried with a real voice (no AI key locally). Details in design-decisions.
+
+## A-319 — A new lesson waits for a test and the founder's OK before every business of that kind gets it ^A-319
+
+**Date:** 2026-10-23. **Founder, verbatim:** *"yes start step 1"*, then *"Yes"* to the two drawings ("A new rule waits
+for a test and your OK"). Step 1 of the self-improving plan: nothing taught on Admin → Train reaches every business of a
+kind until it has been tested and the founder has put it to work.
+**What specifically was approved:**
+- **Waiting, not live.** A new rule ("Tell FollowUp what's wrong"), a taught or kept answer, and a pasted conversation
+  are used only in the founder's practice chat until they are put to work. The rule card says "Only this practice chat
+  uses it for now. Test it below before every <kind> business does. Change the wording · Drop it"; a kept or taught
+  answer says "Waiting for your OK below. Undo".
+- **"Waiting for your OK"** under the chat, for the chosen kind: each waiting change with Drop, and one solid "Test
+  them" ("About 2 minutes. You can keep talking to it meanwhile.").
+- **The test:** FollowUp's replies to the kind's test messages (20 realtor Instagram messages today; the drawing said
+  14 by mistake), written without and with the waiting changes, the way a live reply is written (with the kind's rules
+  and examples). The result: one box, "Without your changes N of 20 pass / With them M of 20 pass", one sentence ("Better on 1, worse on none.
+  FollowUp recommends putting them to work."), "What changed" with the customer's words and both replies for each
+  message whose result changed or that fails both times, a line that one reply either way can be chance, then "Put them
+  to work" (solid) · "Drop them".
+- **Something got worse:** the worse message first; FollowUp recommends changing the rule's wording and testing again;
+  "Put them to work anyway" and "Drop them" stay as quiet links.
+- **A kind with no test yet:** it says so plainly; the founder's OK alone puts it to work.
+- **After:** the rule joins "Your rules for <kind>" with when it went in use and its test result. Admin → Decide shows
+  one "Needs you" line while changes wait ("3 changes to Real estate replies wait for your OK · Look and decide").
+- **The founder decides** (asked: should passing changes go live by themselves?): nothing goes live without the
+  founder's tap, as drawn.
+
+**Built 2026-10-23 (not merged yet):** as drawn, plus: each test message is answered 3 times per side and passes only
+when all 3 pass; a reply that couldn't be written fails the whole test; a test counts only for exactly what is waiting;
+new wording for a rule in use waits as its own change and the old words stay in use until the OK; the result warns
+which rules in use would stop being read past the newest 20; the reply test on Admin also uses the kind's rules and
+examples in use. Details and weak spots in design-decisions (2026-10-23, "approved and built").

@@ -15,7 +15,15 @@ const { runDmJudgeEval, runReplyEval } = vi.hoisted(() => ({
   runReplyEval: vi.fn(async () => ({ cases: 2, passed: 2, errors: 0, problems: {}, failures: [] })),
 }));
 vi.mock("@/lib/dmJudgeEval", () => ({ runDmJudgeEval }));
-vi.mock("@/lib/replyEval", () => ({ runReplyEval }));
+// The reply test drafts with the realtor rules and examples in use (A-319): none here.
+vi.mock("@/lib/replyEval", () => ({
+  runReplyEval,
+  gradeReply: vi.fn(),
+  REPLY_CASES: [],
+  REPLY_EVAL_TRADE: "Real estate",
+  tradeLessons: vi.fn(async () => ({ examples: [], rules: [] })),
+}));
+vi.mock("@/lib/dmDrafting", () => ({ draftDm: vi.fn() }));
 
 const ADMIN = { user: { email: "founder@example.com" } };
 const post = (secFetchSite?: string) =>

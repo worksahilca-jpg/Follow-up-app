@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import { MAX_RULE_NOTE, MAX_RULE_TEXT, RULES_IN_PROMPT } from "@/lib/trainingRuleLines";
 import { scrub } from "@/lib/trainingParse";
-import { LIVE_STATUS, learningEventWrite, recordLearningEvent } from "@/lib/learning";
+import { LIVE_STATUS, WAITING_STATUS, learningEventWrite, lessonStatusWhere, recordLearningEvent } from "@/lib/learning";
 
 /**
  * "Tell FollowUp what's wrong" (A-297, founder 2026-10-19: "deploy an agent whom I can talk to and help that model to
@@ -15,20 +15,28 @@ import { LIVE_STATUS, learningEventWrite, recordLearningEvent } from "@/lib/lear
  * (src/lib/learning.ts). Only an ACTIVE rule reaches a reply. "Change the wording" keeps the old words in the history
  * and can be reverted; "Undo" rolls the rule back instead of deleting it, so it can be put back.
  *
+ * A-319 (2026-10-23): a new rule waits (TESTING) until a test and the founder's "Put them to work" make it ACTIVE
+ * (src/lib/lessonReview.ts); only the practice chat and the test read it before then. New wording for a rule in use
+ * waits the same way, as a new rule that replaces the old one when it is put to work; the old words stay in use until
+ * then.
+ *
  * Emails, phone numbers, addresses and links are taken out of both the rule and the founder's words before they are
  * kept. The callers are founder-only.
  */
 
-export type TrainingRuleRow = { id: string; trade: string; text: string; createdAt: Date };
+export type TrainingRuleRow = { id: string; trade: string; text: string; createdAt: Date; approvedAt: Date | null };
 
 const clean = (t: string, max: number) => scrub(t, [], "").replace(/\s+/g, " ").trim().slice(0, max);
 
-/** The newest active rules for this kind of business, for a reply's instructions. Never throws: a draft never stops over them. */
+/**
+ * The newest active rules for this kind of business, for a reply's instructions, and the waiting ones too inside the
+ * practice chat or the test (withWaitingLessons). Never throws: a draft never stops over them.
+ */
 export async function getTrainingRules(trade: string | null | undefined): Promise<string[]> {
   if (!trade) return [];
   try {
     const rows = await prisma.trainingRule.findMany({
-      where: { trade, status: LIVE_STATUS },
+      where: { trade, status: lessonStatusWhere(trade) },
       orderBy: { createdAt: "desc" },
       take: RULES_IN_PROMPT,
       select: { text: true },
@@ -45,13 +53,16 @@ export async function listTrainingRules(): Promise<TrainingRuleRow[]> {
     where: { status: LIVE_STATUS },
     orderBy: { createdAt: "desc" },
     take: 200,
-    select: { id: true, trade: true, text: true, createdAt: true },
+    select: { id: true, trade: true, text: true, createdAt: true, approvedAt: true },
   });
 }
 
-/** A new rule. The founder writing it is the approval (A-297), so it is active at once, and recorded as such. */
+/**
+ * A new rule. It waits for a test and the founder's OK (A-319): the founder's practice chat uses it at once, real
+ * replies only once it is put to work. `replacesId` is a rule in use that this new wording takes over from.
+ */
 export async function saveTrainingRule(
-  input: { trade: string; text: string; note: string },
+  input: { trade: string; text: string; note: string; replacesId?: string | null },
   addedById: string | null
 ): Promise<{ id: string; text: string }> {
   const row = await prisma.trainingRule.create({
@@ -60,10 +71,9 @@ export async function saveTrainingRule(
       text: clean(input.text, MAX_RULE_TEXT),
       note: clean(input.note, MAX_RULE_NOTE),
       addedById,
-      status: LIVE_STATUS,
+      status: WAITING_STATUS,
       version: 1,
-      approvedById: addedById,
-      approvedAt: new Date(),
+      replacesId: input.replacesId ?? null,
     },
     select: { id: true, text: true },
   });
@@ -72,40 +82,50 @@ export async function saveTrainingRule(
     kind: "training_rule",
     targetId: row.id,
     action: "created",
-    toStatus: LIVE_STATUS,
+    toStatus: WAITING_STATUS,
     version: 1,
     after: { text: row.text },
     byUserId: addedById,
-    note: "Set by the founder on Talk to it; in use at once (A-297).",
+    note: input.replacesId
+      ? `New wording for rule ${input.replacesId}; waits for a test and the founder's OK (A-319).`
+      : "Set by the founder on Talk to it; waits for a test and the founder's OK (A-319).",
   });
   return row;
 }
 
 /**
- * "Change the wording". The new words and their history are written in one transaction, so the old words are never
- * lost: if the history can't be written, the wording doesn't change either. A second change racing this one finds the
- * version moved and changes nothing.
+ * "Change the wording". A waiting rule changes in place: the new words and their history are written in one
+ * transaction, so the old words are never lost, and a second change racing this one finds the version moved and
+ * changes nothing. A rule in use keeps its words until the new ones are put to work (A-319): they wait as a new rule
+ * that replaces it, and changing them again changes that waiting rule.
  */
 export async function updateTrainingRule(id: string, text: string, byUserId: string | null = null): Promise<boolean> {
   const value = clean(text, MAX_RULE_TEXT);
   if (!value) return false;
   const current = await prisma.trainingRule.findFirst({
-    where: { id, status: LIVE_STATUS },
-    select: { text: true, version: true, trade: true },
+    where: { id, status: { in: [WAITING_STATUS, LIVE_STATUS] } },
+    select: { text: true, version: true, trade: true, note: true, status: true },
   });
   if (!current) return false;
+  if (current.status === LIVE_STATUS) {
+    const waiting = await prisma.trainingRule.findFirst({ where: { replacesId: id, status: WAITING_STATUS }, select: { id: true } });
+    if (waiting) return updateTrainingRule(waiting.id, value, byUserId);
+    if (current.text === value) return true;
+    await saveTrainingRule({ trade: current.trade, text: value, note: current.note, replacesId: id }, byUserId);
+    return true;
+  }
   if (current.text === value) return true;
   const version = current.version + 1;
   return prisma.$transaction(async (tx) => {
-    const { count } = await tx.trainingRule.updateMany({ where: { id, status: LIVE_STATUS, version: current.version }, data: { text: value, version } });
+    const { count } = await tx.trainingRule.updateMany({ where: { id, status: WAITING_STATUS, version: current.version }, data: { text: value, version } });
     if (count === 0) return false;
     await learningEventWrite(tx, {
       trade: current.trade,
       kind: "training_rule",
       targetId: id,
       action: "edited",
-      fromStatus: LIVE_STATUS,
-      toStatus: LIVE_STATUS,
+      fromStatus: WAITING_STATUS,
+      toStatus: WAITING_STATUS,
       version,
       before: { text: current.text },
       after: { text: value },
@@ -133,6 +153,9 @@ export async function rollBackTrainingRule(id: string, byUserId: string | null =
   if (!rule) return false;
   const { count } = await prisma.trainingRule.updateMany({ where: { id, status: LIVE_STATUS }, data: { status: "ROLLED_BACK", endedAt: new Date() } });
   if (count === 0) return false;
+  // New wording waiting to replace it goes too: it would otherwise come back as a rule of its own.
+  const waiting = await prisma.trainingRule.findMany({ where: { replacesId: id, status: WAITING_STATUS }, select: { id: true } });
+  for (const w of waiting) await dropTrainingRule(w.id, byUserId);
   await recordLearningEvent({
     trade: rule.trade,
     kind: "training_rule",
@@ -161,6 +184,26 @@ export async function restoreTrainingRule(id: string, byUserId: string | null = 
     toStatus: LIVE_STATUS,
     version: rule.version,
     byUserId,
+  });
+  return true;
+}
+
+/** "Drop it": a waiting rule never goes in use. Kept, as REJECTED, with its history. */
+export async function dropTrainingRule(id: string, byUserId: string | null = null): Promise<boolean> {
+  const rule = await prisma.trainingRule.findFirst({ where: { id, status: WAITING_STATUS }, select: { trade: true, version: true } });
+  if (!rule) return false;
+  const { count } = await prisma.trainingRule.updateMany({ where: { id, status: WAITING_STATUS }, data: { status: "REJECTED", endedAt: new Date() } });
+  if (count === 0) return false;
+  await recordLearningEvent({
+    trade: rule.trade,
+    kind: "training_rule",
+    targetId: id,
+    action: "removed",
+    fromStatus: WAITING_STATUS,
+    toStatus: "REJECTED",
+    version: rule.version,
+    byUserId,
+    note: "Dropped by the founder before it went in use (A-319).",
   });
   return true;
 }

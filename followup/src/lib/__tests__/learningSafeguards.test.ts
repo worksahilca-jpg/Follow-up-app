@@ -20,7 +20,7 @@ const { prisma } = vi.hoisted(() => {
 });
 vi.mock("@/lib/db", () => ({ prisma }));
 
-import { canMove, isLive, LEARNING_STATUSES, learningHistory, recordLearningEvent } from "@/lib/learning";
+import { canMove, isLive, LEARNING_STATUSES, learningHistory, recordLearningEvent, withWaitingLessons } from "@/lib/learning";
 import {
   getTrainingRules,
   listTrainingRules,
@@ -92,24 +92,35 @@ describe("the founder's rules (A-297)", () => {
     expect(prisma.trainingRule.findMany.mock.calls[1][0].where).toEqual({ status: "ACTIVE" });
   });
 
-  it("a new rule is active at once, approved by the founder who wrote it, version 1, and recorded with its words", async () => {
+  it("the practice chat and the test read the waiting rules of their own kind too, and only theirs (A-319)", async () => {
+    prisma.trainingRule.findMany.mockResolvedValue([]);
+    await withWaitingLessons("Real estate", async () => {
+      await getTrainingRules("Real estate");
+      await getTrainingRules("Legal");
+    });
+    await getTrainingRules("Real estate");
+    expect(prisma.trainingRule.findMany.mock.calls.map((c) => c[0].where.status)).toEqual([{ in: ["ACTIVE", "TESTING"] }, "ACTIVE", "ACTIVE"]);
+  });
+
+  it("a new rule waits for a test and the founder's OK, not approved yet, version 1, recorded with its words (A-319)", async () => {
     prisma.trainingRule.create.mockResolvedValue({ id: "r1", text: "Ask which listing they saw." });
     await saveTrainingRule({ trade: "Real estate", text: "Ask which listing they saw.", note: "ask which one" }, "founder");
     const data = prisma.trainingRule.create.mock.calls[0][0].data;
-    expect(data).toMatchObject({ status: "ACTIVE", version: 1, approvedById: "founder", addedById: "founder" });
-    expect(data.approvedAt).toBeInstanceOf(Date);
+    expect(data).toMatchObject({ status: "TESTING", version: 1, addedById: "founder", replacesId: null });
+    expect(data.approvedById).toBeUndefined();
+    expect(data.approvedAt).toBeUndefined();
     expect(events()).toEqual([
-      expect.objectContaining({ kind: "training_rule", targetId: "r1", action: "created", toStatus: "ACTIVE", version: 1, trade: "Real estate", businessId: null, byUserId: "founder", after: { text: "Ask which listing they saw." } }),
+      expect.objectContaining({ kind: "training_rule", targetId: "r1", action: "created", toStatus: "TESTING", version: 1, trade: "Real estate", businessId: null, byUserId: "founder", after: { text: "Ask which listing they saw." } }),
     ]);
   });
 
-  it("changing the wording keeps the old words, raises the version, and writes both together", async () => {
-    prisma.trainingRule.findFirst.mockResolvedValue({ text: "Offer a call early.", version: 2, trade: "Legal" });
+  it("changing a waiting rule's wording keeps the old words, raises the version, and writes both together", async () => {
+    prisma.trainingRule.findFirst.mockResolvedValue({ text: "Offer a call early.", version: 2, trade: "Legal", note: "n", status: "TESTING" });
     prisma.trainingRule.updateMany.mockResolvedValue({ count: 1 });
     expect(await updateTrainingRule("r1", "Offer a call in the first reply.", "founder")).toBe(true);
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     expect(prisma.trainingRule.updateMany.mock.calls[0][0]).toEqual({
-      where: { id: "r1", status: "ACTIVE", version: 2 },
+      where: { id: "r1", status: "TESTING", version: 2 },
       data: { text: "Offer a call in the first reply.", version: 3 },
     });
     expect(events()).toEqual([
@@ -117,15 +128,36 @@ describe("the founder's rules (A-297)", () => {
     ]);
   });
 
+  it("new wording for a rule in use waits as a rule that replaces it; the old words stay in use (A-319)", async () => {
+    prisma.trainingRule.findFirst
+      .mockResolvedValueOnce({ text: "Offer a call early.", version: 1, trade: "Legal", note: "too slow", status: "ACTIVE" })
+      .mockResolvedValueOnce(null);
+    prisma.trainingRule.create.mockResolvedValue({ id: "r2", text: "Offer a call in the first reply." });
+    expect(await updateTrainingRule("r1", "Offer a call in the first reply.", "founder")).toBe(true);
+    expect(prisma.trainingRule.updateMany).not.toHaveBeenCalled();
+    expect(prisma.trainingRule.create.mock.calls[0][0].data).toMatchObject({ status: "TESTING", replacesId: "r1", trade: "Legal", text: "Offer a call in the first reply." });
+  });
+
+  it("changing it again changes the waiting new wording, not the rule in use", async () => {
+    prisma.trainingRule.findFirst
+      .mockResolvedValueOnce({ text: "Offer a call early.", version: 1, trade: "Legal", note: "n", status: "ACTIVE" })
+      .mockResolvedValueOnce({ id: "r2" })
+      .mockResolvedValueOnce({ text: "Offer a call soon.", version: 1, trade: "Legal", note: "n", status: "TESTING" });
+    prisma.trainingRule.updateMany.mockResolvedValue({ count: 1 });
+    expect(await updateTrainingRule("r1", "Offer a call in the first reply.", "founder")).toBe(true);
+    expect(prisma.trainingRule.create).not.toHaveBeenCalled();
+    expect(prisma.trainingRule.updateMany.mock.calls[0][0].where).toEqual({ id: "r2", status: "TESTING", version: 1 });
+  });
+
   it("a change racing another one changes nothing and records nothing", async () => {
-    prisma.trainingRule.findFirst.mockResolvedValue({ text: "Old.", version: 2, trade: "Legal" });
+    prisma.trainingRule.findFirst.mockResolvedValue({ text: "Old.", version: 2, trade: "Legal", note: "n", status: "TESTING" });
     prisma.trainingRule.updateMany.mockResolvedValue({ count: 0 });
     expect(await updateTrainingRule("r1", "New.")).toBe(false);
     expect(prisma.learningEvent.create).not.toHaveBeenCalled();
   });
 
   it("if the history can't be written, the wording doesn't change either", async () => {
-    prisma.trainingRule.findFirst.mockResolvedValue({ text: "Old.", version: 1, trade: "Legal" });
+    prisma.trainingRule.findFirst.mockResolvedValue({ text: "Old.", version: 1, trade: "Legal", note: "n", status: "TESTING" });
     prisma.trainingRule.updateMany.mockResolvedValue({ count: 1 });
     prisma.learningEvent.create.mockRejectedValueOnce(new Error("down"));
     await expect(updateTrainingRule("r1", "New.")).rejects.toThrow("down");
@@ -185,7 +217,9 @@ describe("the founder's examples (A-292, A-294)", () => {
     const data = prisma.trainingConversation.create.mock.calls[0][0].data;
     expect(data).toMatchObject({ source: "pasted", consentById: "founder" });
     expect(data.consentConfirmedAt).toBeInstanceOf(Date);
-    expect(data.examples.create[0]).toMatchObject({ status: "ACTIVE", approvedById: "founder" });
+    // A-319: its examples wait for a test and the founder's OK.
+    expect(data.examples.create[0]).toMatchObject({ status: "TESTING" });
+    expect(data.examples.create[0].approvedById).toBeUndefined();
     const [event] = events();
     expect(event).toMatchObject({ kind: "training_conversation", targetId: "c1", action: "created", after: { source: "pasted", examples: 1, permissionConfirmed: true } });
     expect(JSON.stringify(event)).not.toMatch(/Hello|Maya|Ravi/);
@@ -197,12 +231,21 @@ describe("the founder's examples (A-292, A-294)", () => {
     await saveTalkExample({ trade: "Legal", channel: "email", context: [], customerSaid: "hi", followUpReply: "Hello!", taught: null }, "founder");
     expect(prisma.trainingConversation.create.mock.calls[0][0].data).toMatchObject({ source: "practice" });
     expect(prisma.trainingConversation.create.mock.calls[0][0].data.consentConfirmedAt).toBeUndefined();
-    expect(prisma.trainingExample.create.mock.calls[0][0].data).toMatchObject({ status: "ACTIVE", approvedById: "founder" });
+    expect(prisma.trainingExample.create.mock.calls[0][0].data).toMatchObject({ status: "TESTING" });
     expect(events()).toEqual([expect.objectContaining({ kind: "training_example", targetId: "e2", action: "created", after: { customerSaid: "hi", reply: "Hello!", kept: "good" } })]);
   });
 
+  it("Undo on a waiting example drops it: it never goes in use, and stays in the history (A-319)", async () => {
+    prisma.trainingExample.findFirst.mockResolvedValueOnce({ trade: "Legal", status: "TESTING" });
+    prisma.trainingExample.updateMany.mockResolvedValue({ count: 1 });
+    expect(await rollBackExample("e1", "founder")).toBe(true);
+    expect(prisma.trainingExample.updateMany.mock.calls[0][0].where).toEqual({ id: "e1", status: "TESTING" });
+    expect(prisma.trainingExample.updateMany.mock.calls[0][0].data).toMatchObject({ status: "REJECTED" });
+    expect(events()).toEqual([expect.objectContaining({ action: "removed", fromStatus: "TESTING", toStatus: "REJECTED" })]);
+  });
+
   it("Undo rolls an example back instead of deleting it, and it can be put back", async () => {
-    prisma.trainingExample.findFirst.mockResolvedValueOnce({ trade: "Legal" });
+    prisma.trainingExample.findFirst.mockResolvedValueOnce({ trade: "Legal", status: "ACTIVE" });
     prisma.trainingExample.updateMany.mockResolvedValue({ count: 1 });
     expect(await rollBackExample("e1", "founder")).toBe(true);
     expect(prisma.trainingExample.updateMany.mock.calls[0][0].data).toMatchObject({ status: "ROLLED_BACK" });

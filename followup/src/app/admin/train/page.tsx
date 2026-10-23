@@ -8,6 +8,8 @@ import TrainProgress from "@/components/admin/TrainProgress";
 import { requirePlatformAdmin } from "@/lib/platformAdmin";
 import { getTrainingSummary, goodExamplesByTrade, listExamples } from "@/lib/training";
 import { listTrainingRules } from "@/lib/trainingRules";
+import { testedWhenPutToWork, trainWaitingViews, type WaitingView } from "@/lib/lessonReview";
+import { INDUSTRIES } from "@/lib/industries";
 
 export const dynamic = "force-dynamic";
 
@@ -26,16 +28,20 @@ const CHANNEL: Record<string, string> = { email: "Email", instagram: "Instagram"
  * /admin/train — "Train FollowUp" (A-292). Real conversations from businesses teach the drafts of businesses of the
  * same kind; the scorecard shows how close FollowUp gets. Founder only (the layout checks, and so does this page).
  */
-export default async function TrainPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
+export default async function TrainPage({ searchParams }: { searchParams: Promise<{ tab?: string; kind?: string }> }) {
   await requirePlatformAdmin();
-  const { tab: asked } = await searchParams;
+  const { tab: asked, kind } = await searchParams;
   const tab: Tab = TABS.some((t) => t.key === asked) ? (asked as Tab) : "talk";
-  const [summary, examples, byTrade, rules] = await Promise.all([
+  const [summary, examples, byTrade, rules, waiting] = await Promise.all([
     getTrainingSummary(),
     tab === "examples" ? listExamples(100) : Promise.resolve([]),
     tab === "score" ? goodExamplesByTrade() : Promise.resolve({} as Record<string, number>),
     tab === "talk" ? listTrainingRules() : Promise.resolve([]),
+    // A-319: what waits for the founder's OK, by kind, with its newest test.
+    tab === "talk" ? trainWaitingViews() : Promise.resolve({} as Record<string, WaitingView>),
   ]);
+  const tested = tab === "talk" ? await testedWhenPutToWork(rules.map((r) => r.id)) : new Map<string, string>();
+  const startKind = INDUSTRIES.find((i) => i === kind);
   const perConversation = new Map<string, number>();
   for (const e of examples) perConversation.set(e.conversationId, (perConversation.get(e.conversationId) ?? 0) + 1);
 
@@ -65,7 +71,19 @@ export default async function TrainPage({ searchParams }: { searchParams: Promis
         ))}
       </nav>
 
-      {tab === "talk" && <TrainTalk rules={rules.map((r) => ({ id: r.id, trade: r.trade, text: r.text, when: r.createdAt.toISOString() }))} />}
+      {tab === "talk" && (
+        <TrainTalk
+          rules={rules.map((r) => ({
+            id: r.id,
+            trade: r.trade,
+            text: r.text,
+            when: (r.approvedAt ?? r.createdAt).toISOString(),
+            tested: tested.get(r.id) ?? null,
+          }))}
+          waiting={waiting}
+          startKind={startKind}
+        />
+      )}
       {tab === "add" && <TrainAdd />}
       {tab === "score" && (
         <>

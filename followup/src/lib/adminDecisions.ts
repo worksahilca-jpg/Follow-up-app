@@ -16,10 +16,19 @@ export type Decision = {
   action: { label: string; href: string };
 };
 
+/** One kind of business with lessons waiting for the founder's OK on Train (A-319), and its newest test. */
+export type WaitingLessons = {
+  trade: string;
+  waiting: number;
+  hasTest: boolean;
+  test: { status: string; current: boolean; passedWithout: number; passedWith: number; cases: number; worse: number } | null;
+};
+
 export type DecisionFacts = {
   health: Pick<TesterHealthReport, "testers">;
   usage: Pick<ProductUsage, "thisWeek" | "waitingNow">;
   notCustomer: Pick<NotCustomerStats, "days" | "table">;
+  lessons?: WaitingLessons[];
 };
 
 const CHANNEL: Record<string, string> = { email: "email", instagram: "Instagram", messenger: "Messenger" };
@@ -31,9 +40,27 @@ function plural(n: number, one: string, many: string): string {
   return `${n} ${n === 1 ? one : many}`;
 }
 
-export function buildDecisions({ health, usage, notCustomer }: DecisionFacts): Decision[] {
+export function buildDecisions({ health, usage, notCustomer, lessons = [] }: DecisionFacts): Decision[] {
   const out: Decision[] = [];
   const testers = health.testers;
+
+  // A-319: what the founder taught reaches no business until they put it to work, so it must not be forgotten.
+  for (const l of lessons) {
+    if (l.waiting === 0) continue;
+    const t = l.test;
+    const them = l.waiting === 1 ? "it" : "them";
+    const why = !l.hasTest
+      ? `There's no reply test for this kind yet. Your OK puts ${them} to work.`
+      : t && t.current && t.status === "done"
+        ? `Tested: ${t.passedWith} of ${t.cases} pass with ${them}, ${t.passedWithout} of ${t.cases} without. ${t.worse > 0 ? `Worse on ${t.worse}.` : "Nothing got worse."}`
+        : `Not tested yet. Test ${them} on Train before ${l.waiting === 1 ? "it goes" : "they go"} in use.`;
+    out.push({
+      key: `lessons-${l.trade}`,
+      title: `${plural(l.waiting, "change", "changes")} to ${l.trade} replies ${l.waiting === 1 ? "waits" : "wait"} for your OK`,
+      why,
+      action: { label: "Look and decide", href: `/admin/train?tab=talk&kind=${encodeURIComponent(l.trade)}` },
+    });
+  }
 
   if (testers.length === 0) {
     out.push({

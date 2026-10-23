@@ -15207,3 +15207,77 @@ errors.
 - The "Listening" dot uses the error colour (coral), as drawn: the usual recording red, but off-token.
 - Words from a talk the owner never finishes stay in the draft until they finish or start over, as typed answers do.
 - "Calls this week" only knows calls booked through FollowUp's link, and adds a line to Today even when it's empty.
+
+## 2026-10-23 — A new lesson waits for a test and the founder's OK: drawn, waiting for the founder's yes
+
+**Asked:** *"yes start step 1"*: step 1 of the self-improving plan, so a rule or example the founder teaches on
+Admin → Train goes through a test and the founder's OK before it reaches every business of that kind. This would replace "live at
+once" in [A-297](approved#^A-297) and the "answer like this now" lines of [A-294](approved#^A-294); the drawing says
+so, and nothing changes until the founder says yes.
+**Found while reading the code:** the reply test (`runReplyEval`, 20 realtor Instagram cases; the drawing said 14 by
+mistake) drafts with no rules and no
+saved examples, so today it cannot show whether a lesson helps or hurts. Step 1 has to make it draft the way a live
+realtor reply does.
+**Drawn** (real local Train page, changes injected; numbers and replies made up), in
+`step1/draw/board-1-computer.png` and `board-2-phone-and-cases.png`:
+- The rule card under a fixed reply says "Only this practice chat uses it for now. Test it below before every Real estate
+  business does. Change the wording · Drop it". Kept and taught answers say "Waiting for your OK below. Undo".
+- A new "Waiting for your OK" section between the chat and "Your rules": the changes for that kind (rule, taught reply,
+  good answer), each with Drop, and one solid "Test them" ("About 2 minutes").
+- After the test: one box with "Without your changes 12 of 14 pass / With them 13 of 14 pass" and one sentence ("Better
+  on 1, worse on none. FollowUp recommends putting them to work."); "What changed" lists only the cases whose result
+  changed, or that fail both times, each with the customer's words and both replies; a line that one reply either way
+  can be chance; then "Put them to work" (solid) · "Drop them".
+- Something got worse: the worse case first, the recommendation to change the rule's wording and test again as the solid
+  button, "Put them to work anyway" and "Drop them" as quiet links.
+- A kind with no reply test yet (Mortgage, Clinic, …): it says so plainly; the founder's OK alone puts it to work.
+- After: the rule joins "Your rules" with "In use since today · tested 13 of 14". Admin → Decide gets one "Needs you"
+  line while changes wait ("3 changes to Real estate replies wait for your OK · Look and decide").
+**Recommended, not drawn:** one test for all waiting changes of a kind (one paid run of about 80 model calls, a few
+cents, instead of one per change); the test result is kept with the changes it covered, and putting them to work needs
+a test newer than the newest change.
+**Weak spots, honestly:**
+- 20 cases is small: a difference of one reply can be chance, and the test only covers realtor Instagram replies, not
+  emails or first replies.
+- One test for a batch can't say which change made a reply worse; Drop one and test again is the way to find out.
+- More words on the screen than most of the app; it's the founder's own page, and the reasons are what the founder decides on.
+
+## 2026-10-23 — A new lesson waits for a test and the founder's OK: approved and built (A-319)
+
+**Approved:** *"Yes"* to the two drawings: nothing goes live without the founder's tap. **Built as drawn**, checked on
+the real local app at 390×844 and 1440 (test business masked; invented rules, examples and test results stored in the
+local database, then put to work by tapping "Put them to work"), no sideways scroll, no new page errors. After the tap
+the database showed the rule and examples in use, each with an "approved" history line carrying "tested 19 of 20".
+**Decided while building:**
+- **Three tries per message.** The research found 20 messages swing about 20 points on chance and the same prompt
+  rarely gives the same reply twice, so each message is answered 3 times without and 3 times with the changes; it
+  passes only if all 3 pass ("A message passes only when all 3 of its replies pass."). Better and worse compare each
+  message with itself. One run is about 120 drafts and 120 checks (the drawing's recommendation said about 80).
+- **A reply that couldn't be written fails the whole test** ("FollowUp couldn't write N of the M replies. Test again."):
+  a gap must never make a change look harmless. A test still "running" after 6 minutes reads as failed.
+- **A test counts only for exactly what was waiting.** Add, change or drop anything and "Put them to work" asks for a new
+  test; a worse result needs "Put them to work anyway".
+- **The reply test now writes the way a live realtor reply is written**, with the kind's rules and examples in use, both
+  here and in the founder's existing "Replies" run on Admin; the practice chat (Talk to it, and the coach that writes a
+  rule) also uses the waiting changes, for that kind only.
+- **New wording for a rule already in use** waits as its own change ("New wording", naming the words it replaces); the
+  old words stay in use until the founder's OK, then are rolled back and kept. Changing a waiting rule's words edits it
+  in place, so it needs a new test.
+- **A pasted conversation** shows as one change ("Conversation added · Instagram · 2 examples"); dropping it asks first
+  and removes it for good, as Delete did before.
+- **A warning when rules would stop being read:** drafts read the newest 20 rules, so the result names any rule in use
+  that the waiting ones would push out.
+- **Admin → Decide** says "1 change … waits", "puts it to work" for a single change, and gives the test numbers when
+  there is a current test. Train's count of conversations in use counts only conversations with an example in use.
+- Founder only, from this site only, at most 20 tests a day; the page polls every 10 seconds while a test runs.
+**Weak spots, honestly:**
+- Never run with a real AI key: this computer has none, so the test itself was checked with stand-ins and the screens
+  with stored example results. The first real test will be on the live app (about 2 minutes).
+- 20 messages × 3 tries is still small and covers only realtor Instagram replies; every other kind goes in on the
+  founder's OK alone, and email or first replies aren't tested.
+- One test per batch can't say which change made a reply worse; drop one and test again.
+- Every wording change means another test (about 240 paid calls), by design.
+- After "Put them to work", a rule card earlier in the same practice chat still says "Only this practice chat uses it
+  for now" until the page reloads.
+- Still missing from the plan's step 3: an A/A run to learn how many messages flip on chance alone, and messages written
+  for each new rule.

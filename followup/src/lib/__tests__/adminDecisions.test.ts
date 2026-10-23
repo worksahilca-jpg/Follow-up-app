@@ -60,4 +60,37 @@ describe("buildDecisions", () => {
     expect(d[0].title).toBe("3 sellers and spammers got through on Instagram");
     expect(d[0].action.href).toBe("/admin/usage#not-a-customer");
   });
+
+  it("names each kind with lessons waiting for the founder's OK, with its test in a few numbers (A-319)", () => {
+    const decisions = buildDecisions({
+      ...facts(),
+      lessons: [
+        { trade: "Real estate", waiting: 3, hasTest: true, test: { status: "done", current: true, passedWithout: 12, passedWith: 13, cases: 20, worse: 0 } },
+        { trade: "Legal", waiting: 1, hasTest: false, test: null },
+        { trade: "Clinic", waiting: 0, hasTest: false, test: null },
+      ],
+    });
+    expect(decisions).toEqual([
+      {
+        key: "lessons-Real estate",
+        title: "3 changes to Real estate replies wait for your OK",
+        why: "Tested: 13 of 20 pass with them, 12 of 20 without. Nothing got worse.",
+        action: { label: "Look and decide", href: "/admin/train?tab=talk&kind=Real%20estate" },
+      },
+      {
+        key: "lessons-Legal",
+        title: "1 change to Legal replies waits for your OK",
+        why: "There's no reply test for this kind yet. Your OK puts it to work.",
+        action: { label: "Look and decide", href: "/admin/train?tab=talk&kind=Legal" },
+      },
+    ]);
+  });
+
+  it("a test that no longer covers what is waiting reads as not tested", () => {
+    const [d] = buildDecisions({
+      ...facts(),
+      lessons: [{ trade: "Real estate", waiting: 2, hasTest: true, test: { status: "done", current: false, passedWithout: 12, passedWith: 13, cases: 20, worse: 0 } }],
+    });
+    expect(d.why).toBe("Not tested yet. Test them on Train before they go in use.");
+  });
 });

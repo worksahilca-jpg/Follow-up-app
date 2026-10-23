@@ -32,6 +32,8 @@ import {
 } from "@/lib/trainingRules";
 import { MAX_RULE_NOTE, MAX_RULE_TEXT } from "@/lib/trainingRuleLines";
 import { INDUSTRIES } from "@/lib/industries";
+import { withWaitingLessons } from "@/lib/learning";
+import { dropAllWaiting, dropWaiting, putToWork } from "@/lib/lessonReview";
 
 // One FollowUp reply per call: a reply and its send check.
 export const maxDuration = 60;
@@ -109,6 +111,11 @@ const bodySchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("rule-restore"), id: z.string().min(1).max(64) }),
   z.object({ action: z.literal("rule-revert"), id: z.string().min(1).max(64) }),
   z.object({ action: z.literal("example-restore"), id: z.string().min(1).max(64) }),
+  // A-319: what waits for the founder's OK on Talk to it. Put it all to work (after a test that covered exactly it,
+  // for a kind that has one), drop one change, or drop them all. The test itself is POST /api/admin/train/test.
+  z.object({ action: z.literal("lessons-approve"), trade: z.enum(INDUSTRIES), anyway: z.boolean().optional() }),
+  z.object({ action: z.literal("lessons-drop"), key: z.string().min(1).max(160) }),
+  z.object({ action: z.literal("lessons-drop-all"), trade: z.enum(INDUSTRIES) }),
 ]);
 
 function fromAnotherSite(request: NextRequest): boolean {
@@ -134,7 +141,8 @@ async function founder(request: NextRequest) {
  * what it should have said, as an example), untrain (undo one); and "Tell FollowUp what's wrong" (A-297): coach (the
  * founder's words become a rule for that kind of business, and the answer is written again with it), rule-edit,
  * rule-undo. Undo rolls back rather than deletes (milestone 1): rule-restore, example-restore and rule-revert put
- * things back.
+ * things back. A-319: what the founder teaches waits for their OK; the practice chat reads it (withWaitingLessons),
+ * real replies don't until lessons-approve; lessons-drop and lessons-drop-all take it out.
  */
 export async function POST(request: NextRequest) {
   const { ctx, error } = await founder(request);
@@ -214,9 +222,10 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ success: false, message: "That's a lot for one day. Try again tomorrow." }, { status: 429 });
       }
       try {
-        const result = await practiceReply(ctx.businessId, "there", body.turns, body.qualification, body.channel, body.contactAsked ?? false, {
-          industry: body.trade,
-        });
+        // The practice chat answers with what waits for the founder's OK too, so they see what it changes (A-319).
+        const result = await withWaitingLessons(body.trade, () =>
+          practiceReply(ctx.businessId, "there", body.turns, body.qualification, body.channel, body.contactAsked ?? false, { industry: body.trade })
+        );
         return NextResponse.json({ success: true, ...result });
       } catch {
         return NextResponse.json({ success: false, message: "FollowUp couldn't answer just now. Try again." }, { status: 502 });
@@ -273,7 +282,8 @@ export async function POST(request: NextRequest) {
           customerSaid: body.customerSaid,
           followUpReply: body.followUpReply,
           note: body.note,
-          existing: await getTrainingRules(body.trade),
+          // The rules waiting for an OK count too: a new one is merged with a waiting one that says the same thing.
+          existing: await withWaitingLessons(body.trade, () => getTrainingRules(body.trade)),
         });
         rule = await saveTrainingRule({ trade: body.trade, text, note: body.note }, ctx.userId);
       } catch {
@@ -282,9 +292,9 @@ export async function POST(request: NextRequest) {
       // The answer again, for the same moment, now that the rule is in place.
       try {
         const turns = [...body.context, { from: "customer" as const, text: body.customerSaid }];
-        const result = await practiceReply(ctx.businessId, "there", turns, body.qualification ?? null, body.channel, body.contactAsked ?? false, {
-          industry: body.trade,
-        });
+        const result = await withWaitingLessons(body.trade, () =>
+          practiceReply(ctx.businessId, "there", turns, body.qualification ?? null, body.channel, body.contactAsked ?? false, { industry: body.trade })
+        );
         return NextResponse.json({ success: true, rule, reply: result.reply, qualification: result.qualification, contactAsked: result.contactAsked });
       } catch {
         return NextResponse.json({ success: true, rule, reply: null, message: "The rule is saved. FollowUp couldn't write the reply again just now." });
@@ -313,6 +323,27 @@ export async function POST(request: NextRequest) {
 
     case "reset": {
       const count = await clearVerdicts();
+      return NextResponse.json({ success: true, count });
+    }
+
+    case "lessons-approve": {
+      const result = await putToWork(body.trade, ctx.userId, { anyway: body.anyway });
+      if (result.ok) return NextResponse.json({ success: true, count: result.count });
+      const message = {
+        nothing: "Nothing is waiting for your OK.",
+        untested: "Something changed since the test. Test them again first.",
+        worse: "A reply got worse in the test. Change the wording and test again, or put them to work anyway.",
+      }[result.reason];
+      return NextResponse.json({ success: false, reason: result.reason, message }, { status: 409 });
+    }
+
+    case "lessons-drop": {
+      const ok = await dropWaiting(body.key, ctx.userId);
+      return NextResponse.json({ success: ok }, { status: ok ? 200 : 404 });
+    }
+
+    case "lessons-drop-all": {
+      const count = await dropAllWaiting(body.trade, ctx.userId);
       return NextResponse.json({ success: true, count });
     }
   }

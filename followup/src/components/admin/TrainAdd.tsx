@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { INDUSTRIES, INDUSTRY_SHORT } from "@/lib/industries";
 
@@ -48,6 +49,7 @@ export default function TrainAdd() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState<number | null>(null);
+  const [savedTrade, setSavedTrade] = useState<string | null>(null);
   const file = useRef<HTMLInputElement>(null);
 
   async function readIt(agent?: string | null) {
@@ -76,6 +78,7 @@ export default function TrainAdd() {
       return;
     }
     setSaved(Number(data.examples ?? 0));
+    setSavedTrade(trade);
     setRaw("");
     setRead(null);
     setPermission(false);
@@ -146,7 +149,11 @@ export default function TrainAdd() {
         )}
         {saved !== null && (
           <p role="status" className="mt-3 text-sm">
-            Saved {saved} {saved === 1 ? "example" : "examples"}. Businesses of this kind use them from the next reply on.
+            Saved {saved} {saved === 1 ? "example" : "examples"}. {saved === 1 ? "It waits" : "They wait"} for your OK on{" "}
+            <Link href={`/admin/train?tab=talk&kind=${encodeURIComponent(savedTrade ?? "")}`} className="underline underline-offset-4">
+              Talk to it
+            </Link>
+            : test them there, then put them to work.
           </p>
         )}
       </section>

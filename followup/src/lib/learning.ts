@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from "node:async_hooks";
 import { prisma } from "@/lib/db";
 import type { Prisma } from "@prisma/client";
 
@@ -7,10 +8,10 @@ import type { Prisma } from "@prisma/client";
  * item"; "do not silently overwrite").
  *
  * A lesson (a rule, an example) has a status, and only an ACTIVE one reaches a reply. Every change is one
- * LearningEvent row with the words before and after it, so any change can be read back and undone. Today the
- * founder's own save on Admin → Train is the approval (A-297, A-294), so those lessons go straight to ACTIVE; the
- * statuses in between are for the review and test steps that come with milestone 3, and the moves between them are
- * fixed here so no caller can skip one.
+ * LearningEvent row with the words before and after it, so any change can be read back and undone. The founder's save
+ * on Admin → Train puts a lesson in TESTING (A-319): only the founder's practice chat and the test use it, until a test
+ * and the founder's "Put them to work" make it ACTIVE. The moves between statuses are fixed here so no caller can skip
+ * one.
  */
 
 export const LEARNING_STATUSES = ["DRAFT", "AWAITING_APPROVAL", "APPROVED", "TESTING", "ACTIVE", "REJECTED", "ROLLED_BACK"] as const;
@@ -19,7 +20,7 @@ export type LearningStatus = (typeof LEARNING_STATUSES)[number];
 export const LEARNING_KINDS = ["training_rule", "training_example", "training_conversation", "owner_example"] as const;
 export type LearningKind = (typeof LEARNING_KINDS)[number];
 
-export const LEARNING_ACTIONS = ["created", "edited", "rolled_back", "restored", "removed"] as const;
+export const LEARNING_ACTIONS = ["created", "edited", "approved", "rolled_back", "restored", "removed"] as const;
 export type LearningAction = (typeof LEARNING_ACTIONS)[number];
 
 /**
@@ -52,6 +53,25 @@ export function isLive(status: unknown): boolean {
 
 /** The status a reply reads lessons with: one place, so a new status can never leak into replies by default. */
 export const LIVE_STATUS: LearningStatus = "ACTIVE";
+
+/** A lesson the founder taught that waits for a test and their OK (A-319). Never read by a real customer's reply. */
+export const WAITING_STATUS: LearningStatus = "TESTING";
+
+/**
+ * While this runs for a kind of business, that kind's waiting lessons are read as if in use: the founder's practice
+ * chat on Talk to it, and the "with your changes" half of the test (A-319). Everything outside it, every real
+ * customer's reply among it, reads only ACTIVE lessons; another kind's waiting lessons are never read.
+ */
+const waitingFor = new AsyncLocalStorage<{ trade: string }>();
+
+export function withWaitingLessons<T>(trade: string, run: () => Promise<T>): Promise<T> {
+  return waitingFor.run({ trade }, run);
+}
+
+/** The statuses a draft reads this kind's lessons with: ACTIVE, plus the waiting ones inside withWaitingLessons. */
+export function lessonStatusWhere(trade: string | null | undefined): LearningStatus | { in: LearningStatus[] } {
+  return trade && waitingFor.getStore()?.trade === trade ? { in: [LIVE_STATUS, WAITING_STATUS] } : LIVE_STATUS;
+}
 
 export type LearningEventInput = {
   businessId?: string | null;

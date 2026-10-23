@@ -10,7 +10,7 @@ import {
   type TrainingChannel,
   type TrainingTurn,
 } from "@/lib/trainingParse";
-import { LIVE_STATUS, recordLearningEvent } from "@/lib/learning";
+import { LIVE_STATUS, WAITING_STATUS, lessonStatusWhere, recordLearningEvent } from "@/lib/learning";
 
 /**
  * "Train FollowUp" (A-292, founder 2026-10-18: "I'll be asking Realtor and other owner to share their conversations
@@ -29,6 +29,9 @@ import { LIVE_STATUS, recordLearningEvent } from "@/lib/learning";
  * Undo rolls it back instead of deleting it, so it can be put back; every change is kept in its history. A pasted
  * conversation keeps when its "I have permission" box was ticked, and by whom. Removing a whole conversation still
  * deletes it and every example from it, for good: that is the founder's way to take a shared conversation out.
+ *
+ * A-319 (2026-10-23): a new example, pasted or taught on Talk to it, waits (TESTING) until a test and the founder's "Put
+ * them to work" make it ACTIVE (src/lib/lessonReview.ts). Only the practice chat and the test read it before then.
  */
 
 export type Verdict = "followup" | "same" | "agent";
@@ -81,9 +84,7 @@ export async function saveConversation(
           context: e.context,
           customerSaid: e.customerSaid,
           reply: e.reply,
-          status: LIVE_STATUS,
-          approvedById: addedById,
-          approvedAt: now,
+          status: WAITING_STATUS,
         })),
       },
     },
@@ -94,10 +95,10 @@ export async function saveConversation(
     kind: "training_conversation",
     targetId: row.id,
     action: "created",
-    toStatus: LIVE_STATUS,
+    toStatus: WAITING_STATUS,
     after: { source: "pasted", examples: examples.length, permissionConfirmed: true },
     byUserId: addedById,
-    note: "A pasted conversation, saved with the permission box ticked; its examples are in use at once (A-292).",
+    note: "A pasted conversation, saved with the permission box ticked; its examples wait for a test and the founder's OK (A-319).",
   });
   return { id: row.id, examples: examples.length };
 }
@@ -128,7 +129,8 @@ export type TrainingSummary = {
 
 export async function getTrainingSummary(): Promise<TrainingSummary> {
   const [conversations, examples, groups] = await Promise.all([
-    prisma.trainingConversation.count(),
+    // Only conversations with an example in use: one still waiting for the founder's OK (A-319) isn't teaching yet.
+    prisma.trainingConversation.count({ where: { examples: { some: { status: LIVE_STATUS } } } }),
     prisma.trainingExample.count({ where: { status: LIVE_STATUS } }),
     prisma.trainingExample.groupBy({ by: ["verdict"], where: { status: LIVE_STATUS }, _count: { _all: true } }),
   ]);
@@ -200,8 +202,8 @@ export async function listExamples(take = 50): Promise<ExampleRow[]> {
 
 /**
  * The newest examples a draft can learn from, from this kind of business only: never one where FollowUp's own answer
- * was judged better, and never the one being scored (it would be answering with the answer in front of it).
- * Never throws.
+ * was judged better, and never the one being scored (it would be answering with the answer in front of it). Active
+ * ones, and the waiting ones too inside the practice chat or the test (withWaitingLessons). Never throws.
  */
 export async function getTrainingExamples(trade: string | null, take: number, excludeId?: string): Promise<OwnerExampleLine[]> {
   if (!trade || take <= 0) return [];
@@ -209,7 +211,7 @@ export async function getTrainingExamples(trade: string | null, take: number, ex
     const rows = await prisma.trainingExample.findMany({
       where: {
         trade,
-        status: LIVE_STATUS,
+        status: lessonStatusWhere(trade),
         OR: [{ verdict: null }, { verdict: { not: "followup" } }],
         ...(excludeId ? { id: { not: excludeId } } : {}),
       },
@@ -268,9 +270,7 @@ export async function saveTalkExample(
       followUpReply,
       verdict: input.taught ? "agent" : "same",
       scoredAt: new Date(),
-      status: LIVE_STATUS,
-      approvedById: addedById,
-      approvedAt: new Date(),
+      status: WAITING_STATUS,
     },
     select: { id: true },
   });
@@ -279,21 +279,35 @@ export async function saveTalkExample(
     kind: "training_example",
     targetId: example.id,
     action: "created",
-    toStatus: LIVE_STATUS,
+    toStatus: WAITING_STATUS,
     after: { customerSaid: clean(input.customerSaid), reply: input.taught ? clean(input.taught) : followUpReply, kept: input.taught ? "taught" : "good" },
     byUserId: addedById,
-    note: "Kept on Talk to it; in use at once (A-294).",
+    note: "Kept on Talk to it; waits for a test and the founder's OK (A-319).",
   });
   return { id: example.id, conversationId };
 }
 
-/** Undo one taught or kept moment: it stops reaching drafts at once, and is kept so it can be put back. */
+/**
+ * Undo one taught or kept moment. One in use stops reaching drafts at once and is kept so it can be put back; one still
+ * waiting for the founder's OK is dropped (REJECTED) and never goes in use. Either way it stays in the history.
+ */
 export async function rollBackExample(id: string, byUserId: string | null = null): Promise<boolean> {
-  const found = await prisma.trainingExample.findFirst({ where: { id, status: LIVE_STATUS }, select: { trade: true } });
+  const found = await prisma.trainingExample.findFirst({ where: { id, status: { in: [LIVE_STATUS, WAITING_STATUS] } }, select: { trade: true, status: true } });
   if (!found) return false;
-  const { count } = await prisma.trainingExample.updateMany({ where: { id, status: LIVE_STATUS }, data: { status: "ROLLED_BACK", endedAt: new Date() } });
+  const waiting = found.status === WAITING_STATUS;
+  const to = waiting ? "REJECTED" : "ROLLED_BACK";
+  const { count } = await prisma.trainingExample.updateMany({ where: { id, status: found.status }, data: { status: to, endedAt: new Date() } });
   if (count === 0) return false;
-  await recordLearningEvent({ trade: found.trade, kind: "training_example", targetId: id, action: "rolled_back", fromStatus: LIVE_STATUS, toStatus: "ROLLED_BACK", byUserId });
+  await recordLearningEvent({
+    trade: found.trade,
+    kind: "training_example",
+    targetId: id,
+    action: waiting ? "removed" : "rolled_back",
+    fromStatus: waiting ? WAITING_STATUS : LIVE_STATUS,
+    toStatus: to,
+    byUserId,
+    ...(waiting ? { note: "Dropped by the founder before it went in use (A-319)." } : {}),
+  });
   return true;
 }
 

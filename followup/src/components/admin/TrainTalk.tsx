@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { INDUSTRIES, INDUSTRY_SHORT } from "@/lib/industries";
+import TrainWaiting from "@/components/admin/TrainWaiting";
+import type { WaitingView } from "@/lib/lessonReview";
 
 /**
  * /admin/train → Talk to it (A-294, founder 2026-10-18: "Add a section where I will be talking to follow up, and I will
@@ -11,10 +13,14 @@ import { INDUSTRIES, INDUSTRY_SHORT } from "@/lib/industries";
  * should say), or Tell FollowUp what's wrong (A-297: say it your way; FollowUp turns it into a rule for that kind of
  * business and writes the answer again with it, the old one crossed out above). Examples and rules have Undo; the
  * kind's rules are listed under the chat with Change the wording and Undo.
+ *
+ * A-319: what is taught here waits for the founder's OK ("Waiting for your OK", TrainWaiting) and only this practice
+ * chat uses it until then; the rules in use are listed last.
  */
 
 type Channel = "instagram" | "messenger" | "email";
-type Rule = { id: string; trade: string; text: string; when: string };
+/** A rule in use: when it went in use, and its test then ("13 of 20") when it had one. */
+type Rule = { id: string; trade: string; text: string; when: string; tested: string | null };
 type Before = { qualification: unknown; contactAsked: boolean };
 type Turn = {
   from: "customer" | "followup";
@@ -53,16 +59,25 @@ async function post(body: unknown): Promise<{ ok: boolean; data: Record<string, 
   }
 }
 
-function day(iso: string): string {
+/** "today", "Oct 19": when a rule went in use. */
+function since(iso: string): string {
   const d = new Date(iso);
-  const today = new Date();
-  if (d.toDateString() === today.toDateString()) return "Today";
+  if (d.toDateString() === new Date().toDateString()) return "today";
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-export default function TrainTalk({ rules = [] }: { rules?: Rule[] }) {
+export default function TrainTalk({
+  rules = [],
+  waiting = {},
+  startKind,
+}: {
+  rules?: Rule[];
+  waiting?: Record<string, WaitingView>;
+  /** The kind to open on: Admin → Decide links straight to the kind with changes waiting. */
+  startKind?: (typeof INDUSTRIES)[number];
+}) {
   const router = useRouter();
-  const [trade, setTrade] = useState<(typeof INDUSTRIES)[number]>("Real estate");
+  const [trade, setTrade] = useState<(typeof INDUSTRIES)[number]>(startKind ?? "Real estate");
   const [channel, setChannel] = useState<Channel>("instagram");
   const [turns, setTurns] = useState<Turn[]>([]);
   const [qualification, setQualification] = useState<unknown>(null);
@@ -77,6 +92,8 @@ export default function TrainTalk({ rules = [] }: { rules?: Rule[] }) {
   const [note, setNote] = useState("");
   const [rewording, setRewording] = useState<string | null>(null);
   const [wording, setWording] = useState("");
+  // An in-use rule given new words: they wait for the founder's OK, and the old words stay in use until then.
+  const [reworded, setReworded] = useState<string | null>(null);
   const end = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -228,7 +245,21 @@ export default function TrainTalk({ rules = [] }: { rules?: Rule[] }) {
       return;
     }
     setTurns((ts) => ts.map((t) => (t.rule?.id === id ? { ...t, rule: { id, text } } : t)));
+    if (rules.some((r) => r.id === id)) setReworded(id);
     setRewording(null);
+    router.refresh();
+  }
+
+  /** "Drop it" on a new rule: it never goes in use. */
+  async function dropRule(id: string) {
+    setBusy(true);
+    const { ok } = await post({ action: "lessons-drop", key: `rule:${id}` });
+    setBusy(false);
+    if (!ok) {
+      setError("That didn't drop. If it's in use already, undo it under Your rules.");
+      return;
+    }
+    setTurns((ts) => ts.map((t) => (t.rule?.id === id ? { ...t, rule: undefined } : t)));
     router.refresh();
   }
 
@@ -340,11 +371,7 @@ export default function TrainTalk({ rules = [] }: { rules?: Rule[] }) {
                     <>
                       <p className="mt-1 font-semibold">{t.rule.text}</p>
                       <p className="mt-1 text-[13.5px] text-ink-soft">
-                        Every {short} business answers this way now.{" "}
-                        <button type="button" onClick={() => undoRule(t.rule!.id)} disabled={busy} className={quiet}>
-                          Undo
-                        </button>
-                        {" · "}
+                        Only this practice chat uses it for now. Test it below before every {short} business does.{" "}
                         <button
                           type="button"
                           onClick={() => {
@@ -356,6 +383,10 @@ export default function TrainTalk({ rules = [] }: { rules?: Rule[] }) {
                         >
                           Change the wording
                         </button>
+                        {" · "}
+                        <button type="button" onClick={() => dropRule(t.rule!.id)} disabled={busy} className={quiet}>
+                          Drop it
+                        </button>
                       </p>
                     </>
                   )}
@@ -364,7 +395,7 @@ export default function TrainTalk({ rules = [] }: { rules?: Rule[] }) {
 
               {t.saved ? (
                 <p className="mt-1.5 text-[13.5px] text-ink-soft">
-                  {t.saved.kind === "good" ? "Kept as a good answer." : "Taught."} {short} businesses answer like this now.{" "}
+                  {t.saved.kind === "good" ? "Kept as a good answer." : "Taught."} Waiting for your OK below.{" "}
                   <button type="button" onClick={() => undo(i)} disabled={busy} className={quiet}>
                     Undo
                   </button>
@@ -500,17 +531,19 @@ export default function TrainTalk({ rules = [] }: { rules?: Rule[] }) {
         </button>
       )}
 
+      <TrainWaiting key={trade} trade={trade} short={short} view={waiting[trade]} />
+
       <section className="mt-8 border-t border-line pt-5" aria-labelledby="talk-rules">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h2 id="talk-rules" className="text-lg font-semibold">
             Your rules for {short}
           </h2>
           <span className="text-sm text-ink-soft">
-            {kindRules.length} {kindRules.length === 1 ? "rule" : "rules"}
+            {kindRules.length} {kindRules.length === 1 ? "rule" : "rules"} in use
           </span>
         </div>
         {kindRules.length === 0 ? (
-          <p className="mt-2 text-sm text-ink-soft">None yet. Under any reply, tap “Tell FollowUp what’s wrong” and say it your way.</p>
+          <p className="mt-2 text-sm text-ink-soft">None in use yet. Under any reply, tap “Tell FollowUp what’s wrong” and say it your way.</p>
         ) : (
           <>
             <p className="mt-1.5 text-sm text-ink-soft">Every {short} business follows these. They’re saved for good; nothing is forgotten.</p>
@@ -523,7 +556,11 @@ export default function TrainTalk({ rules = [] }: { rules?: Rule[] }) {
                     <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
                       <div className="min-w-0">
                         <p className="break-words">{r.text}</p>
-                        <p className="mt-1 text-[12.5px] text-ink-faint">{day(r.when)}</p>
+                        <p className="mt-1 text-[12.5px] text-ink-faint">
+                          In use since {since(r.when)}
+                          {r.tested ? ` · tested ${r.tested}` : ""}
+                        </p>
+                        {reworded === r.id && <p className="mt-1 text-[13.5px] text-ink-soft">The new wording waits for your OK above.</p>}
                       </div>
                       <div className="flex gap-3 text-sm text-ink-soft">
                         <button

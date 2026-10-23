@@ -5,6 +5,10 @@ import { mapWithConcurrency } from "@/lib/concurrency";
 import { withRateLimitRetry, type RateLimitRetryOptions } from "@/lib/rateLimitRetry";
 import type { FactLine } from "@/lib/factLines";
 import type { Message } from "@/lib/types";
+import type { OwnerExampleLine } from "@/lib/ownerExampleLines";
+import { PROMPT_EXAMPLES } from "@/lib/ownerExampleLines";
+import { getTrainingExamples, TRAINING_IN_PROMPT } from "@/lib/training";
+import { getTrainingRules } from "@/lib/trainingRules";
 
 /**
  * How good FollowUp's Instagram and Messenger replies are: a fixed set of
@@ -37,7 +41,29 @@ import type { Message } from "@/lib/types";
  *
  * Every case is invented. To run it: POST /api/admin/reply-eval, or the
  * Run button on /admin.
+ *
+ * A-319 (2026-10-23): each reply is drafted the way a live realtor's is, with
+ * the founder's rules and examples for realtors (tradeLessons). Until then the
+ * test drafted with none, so it couldn't show what a lesson changed. The test
+ * on Train → Talk to it (src/lib/lessonTest.ts) drafts every case more than
+ * once (runReplyTries), without and with the lessons waiting for an OK.
  */
+
+/** The kind of business these cases are written for. */
+export const REPLY_EVAL_TRADE = "Real estate";
+
+/** What a kind of business has been taught, as a live draft for it gets it (draftingContext, src/lib/businessFacts.ts). */
+export type Lessons = { examples: OwnerExampleLine[]; rules: string[] };
+
+/**
+ * The kind's lessons, read the way a live draft reads them: active ones, plus the waiting ones inside
+ * withWaitingLessons (src/lib/learning.ts). A test business has no examples of its own, so the shared ones get all of
+ * their room.
+ */
+export async function tradeLessons(trade: string): Promise<Lessons> {
+  const [examples, rules] = await Promise.all([getTrainingExamples(trade, Math.min(TRAINING_IN_PROMPT, PROMPT_EXAMPLES)), getTrainingRules(trade)]);
+  return { examples, rules };
+}
 
 export type ReplyCase = {
   name: string;
@@ -304,11 +330,71 @@ export const gradeReply: Grader = async (c, reply) => {
 /** Two at a time: each case is up to three model calls (a draft, a retry, a grade). */
 export const REPLY_EVAL_CONCURRENCY = 2;
 
+/** One reply to one case, and what was wrong with it. */
+export type CaseTry = { reply: string; problems: ReplyProblem[]; detail: string; error?: string };
+
+/** Drafts one case with the real drafter and checks it. Throws when a model call fails. */
+async function tryCase(c: ReplyCase, draft: Drafter, grade: Grader, lessons: Lessons, retry?: RateLimitRetryOptions): Promise<CaseTry> {
+  // The same call a live DM reply makes (automation.ts, scoring.ts), for a realtor.
+  const drafted = await withRateLimitRetry(
+    () => draft(LEAD_NAME, toConversation(c.lines), [], undefined, "reply", null, c.facts ?? [], null, REPLY_EVAL_TRADE, lessons.examples, lessons.rules),
+    retry
+  );
+  const reply = drafted.body.trim();
+  const g = await withRateLimitRetry(() => grade(c, reply), retry);
+
+  const problems: ReplyProblem[] = [];
+  const details: string[] = [];
+  if (drafted.shapeFailed) {
+    problems.push("shape");
+    details.push(`shape rule: ${drafted.shapeFailed}`);
+  }
+  if (ECHO_RE.test(reply)) problems.push("echo");
+  const missed = c.asks.filter((_, i) => g.answered[i] !== true);
+  if (missed.length) {
+    problems.push("unanswered");
+    details.push(`not answered: ${missed.join("; ")}`);
+  }
+  if (g.invented) {
+    problems.push("invented");
+    details.push(`invented: ${g.inventedWhat}`);
+  }
+  if (!g.sameLanguage) problems.push("language");
+  const absent = (c.mustInclude ?? []).filter((w) => !reply.includes(w));
+  if (absent.length) {
+    problems.push("missing_fact");
+    details.push(`missing: ${absent.join(", ")}`);
+  }
+  // A-247. The code check (src/lib/replyTone.ts) and the reader both
+  // count: the check is narrow on purpose, the reader catches the rest.
+  const tone = salesPressure(reply, { said: (c.facts ?? []).map((f) => f.value).join("\n") });
+  const askedAgain = c.closing && /[?？؟]/.test(reply);
+  if (g.pushy || tone === "pressure" || askedAgain) {
+    problems.push("pressure");
+    details.push(askedAgain ? "asked again after a no" : "pushed or rushed them");
+  }
+  if (g.bragged || tone === "brag") {
+    problems.push("brag");
+    details.push("praised the business");
+  }
+  if ((c.feeling && !g.acknowledgedFeeling) || g.inventedFeeling) {
+    problems.push("feeling");
+    details.push(g.inventedFeeling ? "made up a feeling" : "missed the feeling they named");
+  }
+  if ((!g.usedDetail && !c.noDetail) || g.robotic) {
+    problems.push("generic");
+    details.push(g.robotic ? "read like a template" : "could go to anyone");
+  }
+  return { reply, problems, detail: details.join(" · ") };
+}
+
+const NO_LESSONS: Lessons = { examples: [], rules: [] };
+
 export async function runReplyEval(
   draft: Drafter = draftDm,
   grade: Grader = gradeReply,
   cases = REPLY_CASES,
-  options: { retry?: RateLimitRetryOptions } = {}
+  options: { retry?: RateLimitRetryOptions; lessons?: Lessons } = {}
 ): Promise<ReplyEvalResult> {
   const result: ReplyEvalResult = {
     cases: cases.length,
@@ -319,64 +405,47 @@ export async function runReplyEval(
   };
   await mapWithConcurrency(cases, REPLY_EVAL_CONCURRENCY, async (c) => {
     try {
-      // The same call a live DM reply makes (automation.ts, scoring.ts), for a realtor.
-      const drafted = await withRateLimitRetry(
-        () => draft(LEAD_NAME, toConversation(c.lines), [], undefined, "reply", null, c.facts ?? [], null, "Real estate"),
-        options.retry
-      );
-      const reply = drafted.body.trim();
-      const g = await withRateLimitRetry(() => grade(c, reply), options.retry);
-
-      const problems: ReplyProblem[] = [];
-      const details: string[] = [];
-      if (drafted.shapeFailed) {
-        problems.push("shape");
-        details.push(`shape rule: ${drafted.shapeFailed}`);
-      }
-      if (ECHO_RE.test(reply)) problems.push("echo");
-      const missed = c.asks.filter((_, i) => g.answered[i] !== true);
-      if (missed.length) {
-        problems.push("unanswered");
-        details.push(`not answered: ${missed.join("; ")}`);
-      }
-      if (g.invented) {
-        problems.push("invented");
-        details.push(`invented: ${g.inventedWhat}`);
-      }
-      if (!g.sameLanguage) problems.push("language");
-      const absent = (c.mustInclude ?? []).filter((w) => !reply.includes(w));
-      if (absent.length) {
-        problems.push("missing_fact");
-        details.push(`missing: ${absent.join(", ")}`);
-      }
-      // A-247. The code check (src/lib/replyTone.ts) and the reader both
-      // count: the check is narrow on purpose, the reader catches the rest.
-      const tone = salesPressure(reply, { said: (c.facts ?? []).map((f) => f.value).join("\n") });
-      const askedAgain = c.closing && /[?？؟]/.test(reply);
-      if (g.pushy || tone === "pressure" || askedAgain) {
-        problems.push("pressure");
-        details.push(askedAgain ? "asked again after a no" : "pushed or rushed them");
-      }
-      if (g.bragged || tone === "brag") {
-        problems.push("brag");
-        details.push("praised the business");
-      }
-      if ((c.feeling && !g.acknowledgedFeeling) || g.inventedFeeling) {
-        problems.push("feeling");
-        details.push(g.inventedFeeling ? "made up a feeling" : "missed the feeling they named");
-      }
-      if ((!g.usedDetail && !c.noDetail) || g.robotic) {
-        problems.push("generic");
-        details.push(g.robotic ? "read like a template" : "could go to anyone");
-      }
-
+      const { reply, problems, detail } = await tryCase(c, draft, grade, options.lessons ?? NO_LESSONS, options.retry);
       for (const p of problems) result.problems[p] += 1;
       if (problems.length === 0) result.passed += 1;
-      else result.failures.push({ name: c.name, problems, reply, detail: details.join(" · ") });
+      else result.failures.push({ name: c.name, problems, reply, detail });
     } catch (err) {
       result.errors += 1;
       result.failures.push({ name: c.name, problems: [], reply: "", detail: err instanceof Error ? err.message : "unknown error" });
     }
   });
   return result;
+}
+
+/** Every reply to one case: the customer's last words and each try. */
+export type CaseTries = { name: string; said: string; tries: CaseTry[] };
+
+/**
+ * Drafts every case `tries` times with the given lessons (A-319). A failed model call counts as a try that didn't
+ * pass, with its error, so one hiccup never makes a lesson look better than it is.
+ */
+export async function runReplyTries(
+  lessons: Lessons,
+  options: { tries: number; concurrency: number; draft?: Drafter; grade?: Grader; cases?: ReplyCase[]; retry?: RateLimitRetryOptions }
+): Promise<CaseTries[]> {
+  const cases = options.cases ?? REPLY_CASES;
+  const jobs = cases.flatMap((c, ci) => Array.from({ length: options.tries }, (_, t) => ({ c, ci, t })));
+  const out: CaseTries[] = cases.map((c) => ({ name: c.name, said: lastInbound(c), tries: [] }));
+  const results = await mapWithConcurrency(jobs, options.concurrency, async ({ c }) => {
+    try {
+      return await tryCase(c, options.draft ?? draftDm, options.grade ?? gradeReply, lessons, options.retry);
+    } catch (err) {
+      return { reply: "", problems: [], detail: "", error: err instanceof Error ? err.message : "unknown error" } satisfies CaseTry;
+    }
+  });
+  jobs.forEach((j, i) => {
+    out[j.ci].tries[j.t] = results[i];
+  });
+  return out;
+}
+
+/** What the customer said last in a case: the words a person reads first. */
+function lastInbound(c: ReplyCase): string {
+  for (let i = c.lines.length - 1; i >= 0; i--) if (c.lines[i][0] === "in") return c.lines[i][1];
+  return "";
 }

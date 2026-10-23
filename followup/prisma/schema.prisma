@@ -2479,8 +2479,39 @@ model TrainingRule {
   approvedById String?
   approvedAt   DateTime?
   endedAt      DateTime?
+  // A-319 (2026-10-23): new wording for a rule in use waits as a rule of its own; this is the rule it takes over from
+  // when it is put to work. Plain id, no relation.
+  replacesId   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
+
+  @@index([trade, createdAt])
+}
+
+/// A-319 (2026-10-23): one test of the lessons waiting for a kind of business (src/lib/lessonTest.ts). FollowUp writes
+/// that kind's test replies without and with the waiting lessons; the founder puts them to work only after a test that
+/// covered exactly what is waiting (src/lib/lessonReview.ts). The test messages are invented, so nothing here is a
+/// customer's.
+model LessonTest {
+  id            String    @id @default(cuid())
+  trade         String
+  // What was tested, one key per waiting lesson: "rule:<id>:<version>", "example:<id>", "conversation:<id>:<examples>".
+  lessons       String[]
+  // "running", "done" or "failed".
+  status        String    @default("running")
+  cases         Int       @default(0)
+  tries         Int       @default(0)
+  passedWithout Int?
+  passedWith    Int?
+  better        Int?
+  worse         Int?
+  // Each test message's replies and checks, without and with (src/lib/lessonTestResult.ts).
+  results       Json?
+  error         String?
+  model         String?
+  byUserId      String?
+  createdAt     DateTime  @default(now())
+  finishedAt    DateTime?
 
   @@index([trade, createdAt])
 }

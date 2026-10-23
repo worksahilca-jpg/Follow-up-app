@@ -8,7 +8,7 @@ import { describe, it, expect, vi } from "vitest";
 vi.mock("@/lib/dmDrafting", () => ({ draftDm: vi.fn() }));
 vi.mock("@/lib/integrations/openaiClient", () => ({ getClient: vi.fn(), MODEL: "test" }));
 
-import { REPLY_CASES, runReplyEval, type ReplyCase } from "@/lib/replyEval";
+import { REPLY_CASES, runReplyEval, runReplyTries, type ReplyCase } from "@/lib/replyEval";
 
 const noWait = { retry: { maxRetries: 0, sleep: async () => {} } };
 const fee: ReplyCase = {
@@ -143,7 +143,29 @@ describe("runReplyEval scoring", () => {
   it("drafts the way a live realtor DM reply is drafted", async () => {
     const draft = draftOf("My commission is 2.5%, what area are you selling in?");
     await runReplyEval(draft, gradeOf({}), [fee], noWait);
-    expect(draft).toHaveBeenCalledWith("Sam", [expect.objectContaining({ direction: "inbound", channel: "instagram" })], [], undefined, "reply", null, fee.facts, null, "Real estate");
+    expect(draft).toHaveBeenCalledWith("Sam", [expect.objectContaining({ direction: "inbound", channel: "instagram" })], [], undefined, "reply", null, fee.facts, null, "Real estate", [], []);
+  });
+
+  it("drafts with the realtor rules and examples it is given, as a live reply does (A-319)", async () => {
+    const draft = draftOf("My commission is 2.5%, what area are you selling in?");
+    const lessons = { examples: [{ customerSaid: "hi", reply: "Hi! Buying or selling?" }], rules: ["Answer about the home they named first."] };
+    await runReplyEval(draft, gradeOf({}), [fee], { ...noWait, lessons });
+    expect(draft).toHaveBeenCalledWith("Sam", expect.anything(), [], undefined, "reply", null, fee.facts, null, "Real estate", lessons.examples, lessons.rules);
+  });
+
+  it("answers each case as many times as asked, and keeps every try in order (A-319)", async () => {
+    const draft = draftOf("My commission is 2.5%, what area are you selling in?");
+    const out = await runReplyTries({ examples: [], rules: [] }, { tries: 3, concurrency: 2, draft, grade: gradeOf({}), cases: [fee], retry: noWait.retry });
+    expect(draft).toHaveBeenCalledTimes(3);
+    expect(out).toHaveLength(1);
+    expect(out[0].tries).toHaveLength(3);
+    expect(out[0].said).toBe(fee.lines[fee.lines.length - 1][1]);
+  });
+
+  it("a try that couldn't be written is kept as an error, never as a pass (A-319)", async () => {
+    const draft = vi.fn(async () => Promise.reject(new Error("boom"))) as never;
+    const out = await runReplyTries({ examples: [], rules: [] }, { tries: 2, concurrency: 2, draft, grade: gradeOf({}), cases: [fee], retry: noWait.retry });
+    expect(out[0].tries.map((t) => t.error)).toEqual(["boom", "boom"]);
   });
 
   it("an error is an error, never a pass", async () => {

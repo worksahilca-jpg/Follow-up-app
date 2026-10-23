@@ -1,7 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 
-const { getSessionContext, practiceReply, training, writeCoachRule, rules } = vi.hoisted(() => ({
+const { getSessionContext, practiceReply, training, writeCoachRule, rules, review } = vi.hoisted(() => ({
+  review: {
+    putToWork: vi.fn(),
+    dropWaiting: vi.fn(async () => true),
+    dropAllWaiting: vi.fn(async () => 2),
+  },
   getSessionContext: vi.fn(),
   practiceReply: vi.fn(),
   writeCoachRule: vi.fn(),
@@ -34,6 +39,7 @@ vi.mock("@/lib/training", () => training);
 vi.mock("@/lib/integrations/openai", () => ({ writeCoachRule }));
 vi.mock("@/lib/trainingRules", () => rules);
 vi.mock("@/lib/rateLimit", () => ({ tooManyRecentActions: vi.fn().mockResolvedValue(false) }));
+vi.mock("@/lib/lessonReview", () => review);
 
 process.env.PLATFORM_ADMIN_EMAILS = "founder@example.com";
 
@@ -261,5 +267,45 @@ describe("POST /api/admin/train", () => {
     const { POST } = await import("@/app/api/admin/train/route");
     expect((await POST(req({ action: "rule-restore", id: "r1" }))).status).toBe(404);
     expect(rules.restoreTrainingRule).not.toHaveBeenCalled();
+  });
+
+  it("the practice chat answers with the lessons waiting for this kind too, and only this kind (A-319)", async () => {
+    process.env.OPENAI_API_KEY = "test";
+    const { lessonStatusWhere } = await import("@/lib/learning");
+    const seen: unknown[] = [];
+    practiceReply.mockImplementation(async () => {
+      seen.push(lessonStatusWhere("Real estate"), lessonStatusWhere("Legal"));
+      return { reply: "Hi!", verdict: { sends: true, reason: null }, qualification: null, buttons: [], contactAsked: false };
+    });
+    const { POST } = await import("@/app/api/admin/train/route");
+    const res = await POST(req({ action: "talk", trade: "Real estate", channel: "instagram", turns: [{ from: "customer", text: "hi" }] }));
+    expect(res.status).toBe(200);
+    expect(seen).toEqual([{ in: ["ACTIVE", "TESTING"] }, "ACTIVE"]);
+    expect(lessonStatusWhere("Real estate")).toBe("ACTIVE");
+  });
+
+  it("puts the waiting lessons to work, or says plainly why not (A-319)", async () => {
+    const { POST } = await import("@/app/api/admin/train/route");
+    review.putToWork.mockResolvedValueOnce({ ok: true, count: 3 });
+    const ok = await POST(req({ action: "lessons-approve", trade: "Real estate" }));
+    expect(await ok.json()).toEqual({ success: true, count: 3 });
+    expect(review.putToWork).toHaveBeenCalledWith("Real estate", "u", { anyway: undefined });
+
+    review.putToWork.mockResolvedValueOnce({ ok: false, reason: "untested" });
+    const no = await POST(req({ action: "lessons-approve", trade: "Real estate" }));
+    expect(no.status).toBe(409);
+    expect(await no.json()).toMatchObject({ success: false, reason: "untested", message: "Something changed since the test. Test them again first." });
+
+    review.putToWork.mockResolvedValueOnce({ ok: true, count: 3 });
+    await POST(req({ action: "lessons-approve", trade: "Real estate", anyway: true }));
+    expect(review.putToWork).toHaveBeenLastCalledWith("Real estate", "u", { anyway: true });
+  });
+
+  it("drops one waiting change, or all of a kind's (A-319)", async () => {
+    const { POST } = await import("@/app/api/admin/train/route");
+    expect((await POST(req({ action: "lessons-drop", key: "rule:r1:1" }))).status).toBe(200);
+    expect(review.dropWaiting).toHaveBeenCalledWith("rule:r1:1", "u");
+    expect(await (await POST(req({ action: "lessons-drop-all", trade: "Legal" }))).json()).toEqual({ success: true, count: 2 });
+    expect(review.dropAllWaiting).toHaveBeenCalledWith("Legal", "u");
   });
 });

@@ -5,11 +5,14 @@ import TrainTalk from "@/components/admin/TrainTalk";
 import TrainScorecard from "@/components/admin/TrainScorecard";
 import TrainRemove from "@/components/admin/TrainRemove";
 import TrainProgress from "@/components/admin/TrainProgress";
+import TrainMark from "@/components/admin/TrainMark";
 import { requirePlatformAdmin } from "@/lib/platformAdmin";
 import { getTrainingSummary, goodExamplesByTrade, listExamples } from "@/lib/training";
 import { listTrainingRules } from "@/lib/trainingRules";
 import { testedWhenPutToWork, trainWaitingViews, type WaitingView } from "@/lib/lessonReview";
 import { INDUSTRIES } from "@/lib/industries";
+import { markView, type MarkView } from "@/lib/checkerRounds";
+import { TESTED_TRADES } from "@/lib/lessonTestResult";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +21,8 @@ const TABS = [
   { key: "add", label: "Add a conversation" },
   { key: "score", label: "Scorecard" },
   { key: "examples", label: "Examples" },
+  // Plan step 4 (A-321): the founder marks test replies, and FollowUp shows how often its checker agrees.
+  { key: "mark", label: "Mark replies" },
 ] as const;
 type Tab = (typeof TABS)[number]["key"];
 
@@ -41,6 +46,13 @@ export default async function TrainPage({ searchParams }: { searchParams: Promis
     tab === "talk" ? trainWaitingViews() : Promise.resolve({} as Record<string, WaitingView>),
   ]);
   const tested = tab === "talk" ? await testedWhenPutToWork(rules.map((r) => r.id)) : new Map<string, string>();
+  // Mark replies works on the kinds that have test messages: realtors today.
+  const markTrade = TESTED_TRADES[0];
+  const mark: MarkView | null = tab === "mark" ? await markView(markTrade) : null;
+  const markedAt =
+    mark?.state === "results" && mark.lastMarkedAt
+      ? new Date(mark.lastMarkedAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "America/Toronto" })
+      : null;
   const startKind = INDUSTRIES.find((i) => i === kind);
   const perConversation = new Map<string, number>();
   for (const e of examples) perConversation.set(e.conversationId, (perConversation.get(e.conversationId) ?? 0) + 1);
@@ -85,6 +97,7 @@ export default async function TrainPage({ searchParams }: { searchParams: Promis
         />
       )}
       {tab === "add" && <TrainAdd />}
+      {tab === "mark" && mark && <TrainMark trade={markTrade} view={mark} markedAt={markedAt} />}
       {tab === "score" && (
         <>
           <TrainProgress counts={byTrade} />

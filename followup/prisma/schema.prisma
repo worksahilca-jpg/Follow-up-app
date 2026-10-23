@@ -2565,6 +2565,9 @@ model LessonTest {
   targeted      Int?
   // Each test message's replies and checks, without and with (src/lib/lessonTestResult.ts).
   results       Json?
+  // Plan step 4 (A-321): the checks that were advice only in this test, so a lesson wasn't marked worse because of
+  // them (src/lib/checkerTrust.ts). Empty before step 4, and while every check is trusted or too new to judge.
+  advisory      String[]  @default([])
   error         String?
   model         String?
   byUserId      String?
@@ -2572,6 +2575,50 @@ model LessonTest {
   finishedAt    DateTime?
 
   @@index([trade, createdAt])
+}
+
+/// Plan step 4 (A-321): one round of "Mark replies" on Admin → Train. FollowUp writes three replies to each of a
+/// kind's test messages with the lessons in use; the founder says whether they'd send each one, and FollowUp keeps
+/// its checker's reading beside it, shown only once the founder has marked it (src/lib/checkerRounds.ts). The
+/// messages are invented; no business's customer is in here.
+model CheckerRound {
+  id         String         @id @default(cuid())
+  trade      String
+  // "writing", "ready" or "failed".
+  status     String         @default("writing")
+  // The model that wrote and checked the replies: a check is trusted for the model it was marked on.
+  model      String?
+  byUserId   String?
+  error      String?
+  createdAt  DateTime       @default(now())
+  // When the replies were written.
+  finishedAt DateTime?
+  replies    CheckerReply[]
+
+  @@index([trade, createdAt])
+}
+
+/// One reply in a round: the made-up customer's words, FollowUp's reply, what its checker found, and what the founder
+/// said about it.
+model CheckerReply {
+  id       String       @id @default(cuid())
+  roundId  String
+  round    CheckerRound @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  // The order the founder sees them in.
+  position Int
+  caseName String
+  said     String
+  reply    String
+  // Every check that failed (src/lib/replyEval.ts ReplyProblem), and the part code decided.
+  checker  String[]
+  hard     String[]
+  // "send" (would send it as it is), "fix" (wouldn't) or "skip"; null until marked.
+  verdict  String?
+  // What the founder said was wrong, on "fix": check names, and "other".
+  marked   String[]     @default([])
+  markedAt DateTime?
+
+  @@index([roundId, position])
 }
 
 /// Everything FollowUp learns, and every change to it, in one history (milestone 1, 2026-10-22; part 16 of the founder's

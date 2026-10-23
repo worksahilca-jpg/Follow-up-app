@@ -6,6 +6,8 @@ import { REPLY_CASES, runReplyTries, tradeLessons, type CaseTries } from "@/lib/
 import { chanceSummary, hasLessonTest, LESSON_TEST_TRIES, summarize, type CaseOutcome, type TryOutcome } from "@/lib/lessonTestResult";
 import { listWaiting, TEST_STALE_MS } from "@/lib/lessonReview";
 import { targetedCases } from "@/lib/ruleTestMessages";
+import { advisoryFor } from "@/lib/checkerRounds";
+import { withAdvice } from "@/lib/checkerTrust";
 
 /**
  * "Test them" (A-319, 2026-10-23). FollowUp writes the kind's test replies (src/lib/replyEval.ts, 20 realtor Instagram
@@ -18,6 +20,9 @@ import { targetedCases } from "@/lib/ruleTestMessages";
  * answered the same way, each read against its rule too. And when this kind has no chance check for the model in use
  * from the last CHANCE_FRESH_MS, the fixed messages are answered a third time without the lessons, alongside: how many
  * come out differently on their own is kept as a "chance" row and shown with every test after it.
+ *
+ * Plan step 4 (A-321): a check the founder found wrong too often on Mark replies (src/lib/checkerTrust.ts) is advice
+ * only. What it found stays on the reply, but it doesn't make a message fail, so a lesson isn't marked worse for it.
  */
 
 /** Five drafts at a time on each side, ten in all (fifteen with the chance check). */
@@ -28,17 +33,19 @@ export const CHANCE_FRESH_MS = 30 * 24 * 60 * 60_000;
 
 export type RunTestResult = { ok: true; id: string } | { ok: false; reason: "no_test" | "nothing" | "running" | "failed"; message?: string };
 
-function tryOutcomes(c: CaseTries | undefined): TryOutcome[] {
-  return (c?.tries ?? []).map((t) => ({ reply: t.reply, problems: t.problems, hard: t.hard, ...(t.error ? { error: t.error } : {}) }));
+const NO_ADVICE: ReadonlySet<string> = new Set();
+
+function tryOutcomes(c: CaseTries | undefined, advisory: ReadonlySet<string> = NO_ADVICE): TryOutcome[] {
+  return (c?.tries ?? []).map((t) => withAdvice({ reply: t.reply, problems: t.problems, hard: t.hard, ...(t.error ? { error: t.error } : {}) }, advisory));
 }
 
-function outcomes(without: CaseTries[], withLessons: CaseTries[]): CaseOutcome[] {
+function outcomes(without: CaseTries[], withLessons: CaseTries[], advisory: ReadonlySet<string>): CaseOutcome[] {
   return without.map((c, i) => ({
     name: c.name,
     said: c.said,
     ...(c.rule ? { rule: c.rule } : {}),
-    without: tryOutcomes(c),
-    with: tryOutcomes(withLessons[i]),
+    without: tryOutcomes(c, advisory),
+    with: tryOutcomes(withLessons[i], advisory),
   }));
 }
 
@@ -71,9 +78,10 @@ export async function runLessonTest(trade: string, byUserId: string | null): Pro
     const rules = ruleIds.length
       ? await prisma.trainingRule.findMany({ where: { id: { in: ruleIds }, status: WAITING_STATUS }, select: { id: true, text: true, version: true, testMessages: true } })
       : [];
-    const [targeted, chance] = await Promise.all([
+    const [targeted, chance, advisory] = await Promise.all([
       targetedCases(trade, ruleIds.map((id) => rules.find((r) => r.id === id)).filter((r): r is (typeof rules)[number] => !!r)),
       needsChanceCheck(trade),
+      advisoryFor(trade),
     ]);
     const testCases = [...REPLY_CASES, ...targeted];
     const options = { tries: LESSON_TEST_TRIES, concurrency: LESSON_TEST_CONCURRENCY, cases: testCases };
@@ -82,8 +90,9 @@ export async function runLessonTest(trade: string, byUserId: string | null): Pro
       withWaitingLessons(trade, async () => runReplyTries(await tradeLessons(trade), options)),
       chance ? tradeLessons(trade).then((lessons) => runReplyTries(lessons, { ...options, cases: REPLY_CASES })) : Promise.resolve(null),
     ]);
-    if (again) await saveChanceCheck(trade, without.slice(0, REPLY_CASES.length), again, byUserId);
-    const cases = outcomes(without, withLessons);
+    const advice = new Set(advisory);
+    if (again) await saveChanceCheck(trade, without.slice(0, REPLY_CASES.length), again, byUserId, advice);
+    const cases = outcomes(without, withLessons, advice);
     const summary = summarize(cases);
     if (summary.errors > 0) {
       const message = `FollowUp couldn't write ${summary.errors} of the ${(summary.cases + summary.targeted) * LESSON_TEST_TRIES * 2} replies. Test again.`;
@@ -101,6 +110,7 @@ export async function runLessonTest(trade: string, byUserId: string | null): Pro
         worse: summary.worse,
         blocked: summary.blocked,
         targeted: summary.targeted,
+        advisory,
         results: cases as unknown as Prisma.InputJsonValue,
         finishedAt: new Date(),
       },
@@ -118,8 +128,17 @@ export async function runLessonTest(trade: string, byUserId: string | null): Pro
  * Keeps the chance check: the fixed messages answered twice with nothing changed. One that lost a reply isn't kept (the
  * next test runs another); it never fails the lesson test it ran beside.
  */
-async function saveChanceCheck(trade: string, first: CaseTries[], second: CaseTries[], byUserId: string | null): Promise<void> {
-  const chance = chanceSummary(first.map(tryOutcomes), second.map(tryOutcomes));
+async function saveChanceCheck(
+  trade: string,
+  first: CaseTries[],
+  second: CaseTries[],
+  byUserId: string | null,
+  advisory: ReadonlySet<string>
+): Promise<void> {
+  const chance = chanceSummary(
+    first.map((c) => tryOutcomes(c, advisory)),
+    second.map((c) => tryOutcomes(c, advisory))
+  );
   if (chance.errors > 0) return;
   await prisma.lessonTest
     .create({

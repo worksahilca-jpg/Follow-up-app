@@ -26,9 +26,10 @@ export const LESSON_TEST_TRIES = 3;
 
 /**
  * One reply and what was wrong with it (src/lib/replyEval.ts). `hard` is the part code decided. An error is a reply that
- * couldn't be written. Tests from before plan step 3 have no `hard`.
+ * couldn't be written. Tests from before plan step 3 have no `hard`. `advice` is what an advice-only check found (plan
+ * step 4, src/lib/checkerTrust.ts): shown, but not counted in `problems`.
  */
-export type TryOutcome = { reply: string; problems: string[]; hard?: string[]; error?: string };
+export type TryOutcome = { reply: string; problems: string[]; hard?: string[]; advice?: string[]; error?: string };
 /**
  * One test message: the customer's last words, and its replies without and with the waiting lessons. `rule` is set on
  * a message written for one of the waiting rules.

@@ -3,16 +3,18 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { prisma, replyEval, review, ruleMessages } = vi.hoisted(() => ({
+const { prisma, replyEval, review, ruleMessages, rounds } = vi.hoisted(() => ({
   prisma: { lessonTest: { findFirst: vi.fn(), create: vi.fn(), update: vi.fn() }, trainingRule: { findMany: vi.fn() } },
   replyEval: { runReplyTries: vi.fn(), tradeLessons: vi.fn(), REPLY_CASES: [{ name: "a" }, { name: "b" }] },
   review: { listWaiting: vi.fn(), TEST_STALE_MS: 6 * 60_000 },
   ruleMessages: { targetedCases: vi.fn() },
+  rounds: { advisoryFor: vi.fn() },
 }));
 vi.mock("@/lib/db", () => ({ prisma }));
 vi.mock("@/lib/replyEval", () => replyEval);
 vi.mock("@/lib/lessonReview", () => review);
 vi.mock("@/lib/ruleTestMessages", () => ruleMessages);
+vi.mock("@/lib/checkerRounds", () => rounds);
 vi.mock("@/lib/integrations/openaiClient", () => ({ MODEL: "test-model" }));
 
 import { runLessonTest } from "@/lib/lessonTest";
@@ -25,6 +27,7 @@ beforeEach(() => {
   review.listWaiting.mockResolvedValue([{ key: "rule:r1:1", kind: "rule", id: "r1" }, { key: "example:e1", kind: "example", id: "e1" }]);
   prisma.trainingRule.findMany.mockResolvedValue([{ id: "r1", text: "Say when the owner will confirm.", version: 1, testMessages: null }]);
   ruleMessages.targetedCases.mockResolvedValue([]);
+  rounds.advisoryFor.mockResolvedValue([]);
   // No test running, and a chance check from this month on this model: most tests run without one.
   prisma.lessonTest.findFirst.mockImplementation(async ({ where }: { where: { kind?: string } }) => (where.kind === "chance" ? { id: "c0" } : null));
   prisma.lessonTest.create.mockResolvedValue({ id: "t1" });
@@ -39,6 +42,28 @@ beforeEach(() => {
 });
 
 describe("runLessonTest", () => {
+  // Plan step 4 (A-321): a check the founder found wrong too often on Mark replies is advice only. What it found stays
+  // on the reply, but the message doesn't fail for it.
+  it("sets advice-only checks aside, keeps what they found, and keeps which ones they were", async () => {
+    rounds.advisoryFor.mockResolvedValue(["unanswered"]);
+    expect(await runLessonTest("Real estate", "founder")).toEqual({ ok: true, id: "t1" });
+    expect(rounds.advisoryFor).toHaveBeenCalledWith("Real estate");
+    const data = prisma.lessonTest.update.mock.calls[0][0].data;
+    expect(data).toMatchObject({ status: "done", passedWithout: 2, passedWith: 2, better: 0, worse: 0, advisory: ["unanswered"] });
+    expect(data.results[0].without[0]).toMatchObject({ reply: "bad", problems: [], advice: ["unanswered"] });
+  });
+
+  it("never sets aside a problem code decided", async () => {
+    rounds.advisoryFor.mockResolvedValue(["pressure"]);
+    replyEval.runReplyTries.mockResolvedValue([
+      { name: "a", said: "a?", tries: [{ reply: "Book today!", problems: ["pressure"], hard: ["pressure"], detail: "" }, ...tries(true, true)] },
+    ]);
+    await runLessonTest("Real estate", "founder");
+    const data = prisma.lessonTest.update.mock.calls[0][0].data;
+    expect(data.results[0].without[0]).toMatchObject({ problems: ["pressure"] });
+    expect(data.results[0].without[0].advice).toBeUndefined();
+  });
+
   it("writes the replies without and with the waiting lessons, three times each, and keeps the comparison", async () => {
     expect(await runLessonTest("Real estate", "founder")).toEqual({ ok: true, id: "t1" });
     expect(prisma.lessonTest.create.mock.calls[0][0].data).toMatchObject({

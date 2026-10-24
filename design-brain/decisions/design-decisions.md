@@ -15486,3 +15486,14 @@ same rows.
   the same line covers CSV imports and people added by hand, who didn't write.
 - The dot sits far right of the words on a wide computer screen, and shows charcoal under the calm look (A-282).
 
+## 2026-10-24 — Customers rows say the action in words (R-141, A-325)
+
+The founder rejected the A-324 dot the day it went live: *"Dots should not be there. We should say what action
+needed."* It also broke our own rule that the dot is never the only signal; the words were only for screen readers.
+Built: `todo` in `rowFor` (`LeadsPageClient.tsx`) picks "Check and send your reply" (reply ready) or "Ready to book.
+Call them" (ready to book, in the one list) and the row shows it in bold in place of their last words; the dot is gone.
+A source test (`customersRowWords.test.ts`) keeps the words in and the dot out.
+**Weak, said plainly:** the action replaces their last words, so the owner sees what to do but not what the customer
+said until they open the chat (Instagram does the same with "new messages"). If the owner wants both, the next step is
+a second line, which costs row height.
+

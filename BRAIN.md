@@ -78,9 +78,12 @@ a booked call or visit; the owner closes.
   merged at the founder's "merge"; deploy green; no migration):** the 30-minute "let me check" went out on the founder's own Instagram at 10:40 am and they don't trust
   automatic messages yet, so on an Assisted account FollowUp now sends nothing by itself (the line stays for Automatic
   only). Customers opens with a "New" group: everyone who arrived in the last day, newest first.
-- **Customers like a phone's message list (A-324, Oct 24): built, PR open, not merged.** One list, newest message on
-  top, no groups or white box; bold with a dot = your reply is ready; "New" pill on a customer's first day; Call stays
-  on Ready to book. Supersedes A-307's Customers groups and A-323's New group. No migration.
+- **Customers rows say what to do, in words (A-325, R-141, Oct 24): built, PR open, not merged.** The founder
+  rejected the dot: a row whose reply is ready now says "Check and send your reply" in bold, a ready-to-book row
+  "Ready to book. Call them" beside Call. No dots. No migration.
+- **Customers like a phone's message list (A-324, Oct 24) LIVE (PR #595 → 19684b7, merged at the founder's "merge";
+  deploy green; no migration):** one list, newest message on top, no groups or white box; "New" pill on a customer's
+  first day; Call stays on Ready to book. Supersedes A-307's Customers groups and A-323's New group.
 - **Check the checker (plan step 4, A-321, Oct 23) LIVE (PR #594 → f73782e, merged at the founder's "MERGE";
   tables, column and migration confirmed in production, read-only):** Admin → Train → Mark replies: the founder marks
   60 test replies; each check shows how often it agrees; checks that disagree too often become advice only in the

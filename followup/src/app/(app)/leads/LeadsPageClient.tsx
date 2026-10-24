@@ -158,10 +158,10 @@ type Status = "needs" | "ready" | "booked" | "quiet" | "waiting";
 
 /**
  * One customer, the way a phone's message list shows a chat (A-324): a face, the name, and one line of their last words
- * with how long ago. A reply that's ready reads like an unread chat: bold, with a dot on the right. Ready to book keeps
- * a Call button beside the row.
+ * with how long ago. When the owner has something to do, the line says it in words, in bold (R-141: never a dot alone).
+ * Ready to book keeps a Call button beside the row.
  */
-function Row({ lead, href, line, time, selected, yourTurn = false, isNew = false, call = false, tag = null }: { lead: Lead; href: string; line: string; time?: string | null; selected?: boolean; yourTurn?: boolean; isNew?: boolean; call?: boolean; tag?: string | null }) {
+function Row({ lead, href, line, time, selected, todo = false, isNew = false, call = false, tag = null }: { lead: Lead; href: string; line: string; time?: string | null; selected?: boolean; todo?: boolean; isNew?: boolean; call?: boolean; tag?: string | null }) {
   return (
     <li className={"flex min-w-0 items-center gap-3 rounded-[14px] px-4 lg:hover:bg-card-2" + (selected ? " bg-card-2" : "")}>
       {/* On a phone the row opens the customer's own page, sliding in (A-222, A-264); on a computer, the panel beside the list. */}
@@ -176,17 +176,16 @@ function Row({ lead, href, line, time, selected, yourTurn = false, isNew = false
         <Initials name={lead.name} size={56} />
         <span className="min-w-0 flex-1">
           <span className="flex min-w-0 items-center gap-2">
-            <span className={"truncate text-[16px] text-ink " + (yourTurn || isNew ? "font-bold" : "font-medium")}>{lead.name}</span>
+            <span className={"truncate text-[16px] text-ink " + (todo || isNew ? "font-bold" : "font-medium")}>{lead.name}</span>
             {/* A customer's first day says "New"; after that, FollowUp's call (A-310) when there is one. */}
             {isNew ? <TierTag>New</TierTag> : tag && <TierTag>{tag}</TierTag>}
           </span>
-          <span className={"mt-0.5 flex min-w-0 gap-1.5 text-[14.5px] " + (yourTurn ? "font-semibold text-ink" : "text-ink-soft")}>
+          <span className={"mt-0.5 flex min-w-0 gap-1.5 text-[14.5px] " + (todo ? "font-semibold text-ink" : "text-ink-soft")}>
             <span className="truncate">{line.replace(/\s+/g, " ")}</span>
             {/* The time stays when the words are cut. */}
             {time && <span className="shrink-0 font-normal text-ink-faint tabular-nums">· {time}</span>}
           </span>
         </span>
-        {yourTurn && <span role="img" aria-label="Your reply is ready" className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: "var(--state-needs)" }} />}
       </Link>
       {/* Outlined, never black (one black button per screen); a 48px target around the 32px pill. */}
       {call && lead.phone && (
@@ -333,11 +332,13 @@ export default function LeadsPageClient({
     // The one list and search (A-324): where they stand, as a phone's message list would show it.
     const state = where ? null : statusOf(lead.id);
     const booked = state === "booked" && Boolean(lines[lead.id]);
-    // What the line says (A-220): in a list behind a link, why they're there (why they're ready, when the booking is);
-    // in the one list, their last words, or when they're booked; otherwise their last message.
-    const line = where && where !== "all" && where !== "needs" ? (lines[lead.id] ?? said(lead)) : booked ? `Booked · ${lines[lead.id]}` : said(lead);
-    const time = !booked && (where === "needs" || where === "all" || !where) && last ? shortAge(last.date) : null;
     const call = where === "ready" || state === "ready";
+    // What the owner has to do, in words (founder, 2026-10-24: "We should say what action needed", R-141).
+    const todo = groups.needs.includes(lead.id) ? "Check and send your reply" : state === "ready" ? "Ready to book. Call them" : null;
+    // What the line says (A-220): in a list behind a link, why they're there (why they're ready, when the booking is);
+    // elsewhere what to do, when they're booked, or their last words.
+    const line = where && where !== "all" && where !== "needs" ? (lines[lead.id] ?? said(lead)) : (todo ?? (booked ? `Booked · ${lines[lead.id]}` : said(lead)));
+    const time = !booked && (where === "needs" || where === "all" || !where) && last ? shortAge(last.date) : null;
     // Where they stand (A-310), unless the row already says it: "Ready to book" is the same call in words.
     const tag = call ? null : (tags[lead.id] ?? null);
     return (
@@ -348,7 +349,7 @@ export default function LeadsPageClient({
         line={line}
         time={time}
         selected={lead.id === openId}
-        yourTurn={groups.needs.includes(lead.id)}
+        todo={Boolean(todo) && line === todo}
         isNew={isNew.has(lead.id)}
         call={call}
         tag={tag}

@@ -56,9 +56,9 @@ export function customerGroups(g: {
 }
 
 /**
- * New customers on top (founder, 2026-10-23: "in customers page every new lead comes should be on the top"): everyone
- * who arrived in the last day and is still open, newest first. Shown above every other group on Customers, each row
- * still saying where they stand ("Your reply is ready"), so nobody new sits under someone who wrote days ago.
+ * New customers (founder, 2026-10-23: "in customers page every new lead comes should be on the top"): everyone who
+ * arrived in the last day and is still open, newest first. Customers is one list newest message first (A-324), so they
+ * are on top because they wrote last; this list gives their row its "New" pill.
  */
 export const NEW_CUSTOMER_MS = 24 * 60 * 60_000;
 

@@ -77,7 +77,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
     waiting: waitingItems.map((w) => w.leadId),
   });
   const { quiet, waiting } = groups;
-  // New customers on top (founder, 2026-10-23), worked out here so the server's and the browser's lists agree.
+  // Who gets the "New" pill (A-324), worked out here so the server's and the browser's lists agree.
   const fresh = newArrivals(
     leads.map((l) => ({ id: l.id, stage: l.stage, createdAtMs: l.followUp?.createdAtMs ?? 0 })),
     now

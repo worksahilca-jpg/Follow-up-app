@@ -5752,6 +5752,8 @@ only. **Partly supersedes** A-307's Customers order.
 
 ## A-324 — Customers like a phone's message list (Instagram-style) ^A-324
 
+**LIVE** (PR #595 → 19684b7, merged 2026-10-24; deploy green; no migration).
+
 **Date:** 2026-10-24. **Founder, verbatim:** *"MAKE IT LIKE INSTA NO IS IT FINE OR THIS IS NOT THAT WE SHOULD DO IN OUR
 APP???"*, "Customers list" when asked which part, then *"yes build it"* to the drawing (scratchpad
 `insta/insta-board.png`: phone and computer, today vs. like Instagram, on the real app with test customers).
@@ -5764,10 +5766,23 @@ Patterns only (A-111, A-277): how a message list works; never Instagram's colour
   visible when the words are cut.
 - **Your reply is ready = unread:** the name and the line in bold, and a dot on the right in the app's "your turn"
   colour. The dot has a label for screen readers.
+  **SUPERSEDED (2026-10-24)** by [[rejected#^R-141|R-141]]: no dot; the row says in words what the owner must do.
 - **"New" pill** beside the name for a customer's first day (in place of FollowUp's call tag that day).
 - **Ready to book keeps its Call button.** Booked says "Booked · {when}" in place of their last words. "Waiting for
   their reply" and "Stopped replying" lines are dropped: "You: …" already says who spoke last.
 - The line under the title: "Newest message on top."
 **Supersedes** A-307's Customers groups and A-323's New group. Today is unchanged and still lists everyone whose
 reply is ready first.
+
+## A-325 — Customers rows say what to do, in words ^A-325
+
+**Date:** 2026-10-24. **Founder, verbatim:** *"Dots should not be there. We should say what action needed"* (R-141), then
+*"yes build it"* to the drawing (scratchpad `insta/words/after-phone.png`, on the real app with test customers), after
+asking how the list is ordered (answer: Customers newest message first like Instagram; Today the customer you'd lose
+soonest first).
+**What specifically was approved:**
+- Where the owner has something to do, the row's line says it in bold instead of their last words: **"Check and send
+  your reply"** when a reply is ready, **"Ready to book. Call them"** beside the Call button. The time stays (" · 8d").
+- No dot anywhere on the row. Everyone else keeps their last words, like a message list.
+- Same rows in search and in the lists behind a link (the Ready to book list still says why they're ready).
 

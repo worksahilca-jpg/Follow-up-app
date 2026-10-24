@@ -1791,3 +1791,13 @@ without you" on Assisted. **Principle:** trust comes before any automatic messag
 FollowUp sends nothing in their name, however harmless the words; a fixed line is still a message the owner didn't
 send. Automatic sending is earned, and turned on by the owner, later. **Do not propose again:** an automatic
 placeholder, acknowledgement or "we got you" on an account that holds every reply.
+
+## R-141 — A dot (and bold) as the only sign that a customer needs the owner, on Customers ^R-141
+
+**Rejected:** 2026-10-24, founder, the day A-324 went live: *"Bro i meant that it should like Instagram, not just even
+dots. Dots should not be there. We should say what action needed."* **What is rejected:** the A-324 row that marked
+"your reply is ready" with a dot on the right and bold text, with the words only for screen readers. It also broke the
+standing rule that the dot is never the only signal. **Principle (stated):** a row that needs the owner says, in words,
+what to do. A symbol or weight alone is decoration the owner has to decode. **Do not propose again:** a dot, badge,
+colour or bold as the only way a Customers row says the owner must act.
+

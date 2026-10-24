@@ -15450,3 +15450,39 @@ only) and the 16 disagreements, on computer and phone. No sideways scroll, no pa
   5 flags per check. Marking a second round is what makes the statuses meaningful.
 - A disagreement is judged on the whole reply (send or not). A reply where both said "don't send" for different reasons
   counts as agreement there, though the per-check lines show the difference.
+
+## 2026-10-23 — Customers like a phone's message list: drawn (approved 2026-10-24 as A-324)
+
+**Founder, verbatim:** *"MAKE IT LIKE INSTA NO IS IT FINE OR THIS IS NOT THAT WE SHOULD DO IN OUR APP???"*, then
+"Customers list" when asked which part. **Answer given:** borrowing how a message list works is fine and already the
+direction (A-267 "like a phone's messages", A-277 "Customers like Messages", A-111 patterns not looks); Instagram's
+colours, logo, stories or hearts are not borrowed.
+**Drawn** on the real local Customers page with test customers (scratchpad `insta/insta-board.png`, phone + computer,
+before/after): one list, newest message on top (no group labels); 56px faces; no white box or lines around the list;
+name and last words bold with a dot on the right when the reply is ready (the "unread" of a message list); "last words
+· 5d" on one line; "New" pill beside the name for the first day; Call stays on Ready to book; "Waiting for their
+reply" and "Stopped replying" lines dropped (the "You: …" line already says who spoke last); Booked keeps its line.
+**Would supersede** the Customers part of A-307 (labelled white groups) and A-323 (a New group): new customers still
+land on top because they wrote last.
+**Weak, said plainly:** someone whose reply is ready but who wrote days ago sits lower than in the groups (bold + dot
+keeps them findable; Today still lists them first). On a wide computer screen the dot sits far right of the words.
+The dot uses the app's own "your turn" colour, which the calm look (A-282) shows as charcoal, not orange.
+
+## 2026-10-24 — Customers like a phone's message list built (A-324)
+
+**Founder:** *"yes build it"* to the drawing. Built in `src/app/(app)/leads/LeadsPageClient.tsx`: one `Row` for every
+Customers list (the one list, search, and the lists behind a link such as `?show=needs`), so they all read the same.
+No group labels, no white box (the lists sit edge to edge with the title, `-mx-4`); 56px faces; the name and one line
+of last words with " · 5d" that stays when the words are cut; bold and a labelled dot for a reply that's ready; "New"
+pill on the first day in place of FollowUp's call tag; Call kept for Ready to book; "Booked · {when}" for a booking.
+The "Waiting for their reply" / "Stopped replying" lines are gone. `newArrivals` now only decides the pill.
+**Checked** on the local app at 390×844 and 1440×900: no sideways scroll, rows 76px, a phone tap opens the customer's
+own page, a computer click opens the panel beside the list with the row highlighted, search and `?show=needs` use the
+same rows.
+**Weak, said plainly:**
+- The one list shows the 50 newest, as before. A customer whose reply is ready but who wrote before those 50 sits behind
+  "Show everyone" (the groups used to pull them up). Today still lists them first.
+- A new customer with no message yet shows where they came from ("Instagram"), not the drawing's "Wrote on Instagram":
+  the same line covers CSV imports and people added by hand, who didn't write.
+- The dot sits far right of the words on a wide computer screen, and shows charcoal under the calm look (A-282).
+

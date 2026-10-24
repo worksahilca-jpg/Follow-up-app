@@ -5388,6 +5388,8 @@ or assets; the calm look (A-282) and the sidebar stay.
   + and full-width search); one line under the title, "Everyone who wrote to you. Newest first."; the list grouped
   "Your reply is ready", then the rest. A row in a labelled group doesn't repeat the label.
   **PARTLY SUPERSEDED (2026-10-23)** by [[approved#^A-323|A-323]]: a "New" group now comes first.
+  **SUPERSEDED (2026-10-24)** for Customers by [[approved#^A-324|A-324]]: one list like a phone's messages, no groups,
+  no white box.
 - **Activity:** by day, the time in a column on the left, one line each.
 - Day groups are still not used on Today (Today is ordered by who needs you; tried and dropped 2026-10-09).
 
@@ -5694,6 +5696,9 @@ that block (checks in code that stop a lesson before it can be put to work). The
 
 ## A-321 — Check the checker: the founder marks test replies, and checks that disagree become advice (plan step 4) ^A-321
 
+**LIVE** (PR #594 → f73782e, merged 2026-10-23; deploy green; CheckerRound and CheckerReply with row security, LessonTest.advisory
+and the migration confirmed in production, read-only).
+
 **Date:** 2026-10-23. **Founder, verbatim:** *"yes build it"*, to the drawing (scratchpad `step4/draw/board-1-computer.png`,
 `board-2-phone.png`) and to the question "Is the drawing a yes, and is 'advice only' with that bar a yes?"
 **What specifically was approved:**
@@ -5733,6 +5738,9 @@ trusts FollowUp enough to turn sending on. **Supersedes** A-077.
 
 ## A-323 — Customers: new customers on top ^A-323
 
+**SUPERSEDED (2026-10-24)** by [[approved#^A-324|A-324]]: no New group; new customers land on top because they wrote
+last, with a "New" pill for their first day.
+
 **LIVE** (PR #593 → 39c2b8b, merged 2026-10-23; deploy green).
 
 **Date:** 2026-10-23. **Founder, verbatim:** *"in customers page every new lea comes should be on the top"*, then
@@ -5741,3 +5749,25 @@ trusts FollowUp enough to turn sending on. **Supersedes** A-077.
 is still open, newest first, each row saying where they stand ("Your reply is ready" and the rest). Then "Your reply is
 ready" (Today's order), "Ready to book", "Everyone else" (newest message first), as A-307. A customer is in one group
 only. **Partly supersedes** A-307's Customers order.
+
+## A-324 — Customers like a phone's message list (Instagram-style) ^A-324
+
+**Date:** 2026-10-24. **Founder, verbatim:** *"MAKE IT LIKE INSTA NO IS IT FINE OR THIS IS NOT THAT WE SHOULD DO IN OUR
+APP???"*, "Customers list" when asked which part, then *"yes build it"* to the drawing (scratchpad
+`insta/insta-board.png`: phone and computer, today vs. like Instagram, on the real app with test customers).
+Patterns only (A-111, A-277): how a message list works; never Instagram's colours, logo, stories or hearts.
+**What specifically was approved:**
+- **One list, newest message on top.** No group labels ("New", "Your reply is ready", "Ready to book", "Everyone
+  else"). A new customer is on top because they wrote last.
+- **No white box or lines around the list:** rows sit on the page, edge to edge with the title.
+- **Each row:** a 56px face, the name, and one line: their last words (or "You: …") then " · 5d". The time stays
+  visible when the words are cut.
+- **Your reply is ready = unread:** the name and the line in bold, and a dot on the right in the app's "your turn"
+  colour. The dot has a label for screen readers.
+- **"New" pill** beside the name for a customer's first day (in place of FollowUp's call tag that day).
+- **Ready to book keeps its Call button.** Booked says "Booked · {when}" in place of their last words. "Waiting for
+  their reply" and "Stopped replying" lines are dropped: "You: …" already says who spoke last.
+- The line under the title: "Newest message on top."
+**Supersedes** A-307's Customers groups and A-323's New group. Today is unchanged and still lists everyone whose
+reply is ready first.
+

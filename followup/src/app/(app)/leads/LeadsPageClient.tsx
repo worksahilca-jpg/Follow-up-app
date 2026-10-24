@@ -156,13 +156,14 @@ const said = (l: Lead) => {
 /** Where a customer is, in words, under their last message (A-267). */
 type Status = "needs" | "ready" | "booked" | "quiet" | "waiting";
 
-/** One customer: their name, one line, where they are in words, and (for Ready to book) a Call button beside the row. */
-function Row({ lead, href, line, meta, selected, call = false, status = null, when = null, tag = null }: { lead: Lead; href: string; line: string; meta?: string | null; selected?: boolean; first?: boolean; call?: boolean; status?: Status | null; when?: string | null; tag?: string | null }) {
+/**
+ * One customer, the way a phone's message list shows a chat (A-324): a face, the name, and one line of their last words
+ * with how long ago. A reply that's ready reads like an unread chat: bold, with a dot on the right. Ready to book keeps
+ * a Call button beside the row.
+ */
+function Row({ lead, href, line, time, selected, yourTurn = false, isNew = false, call = false, tag = null }: { lead: Lead; href: string; line: string; time?: string | null; selected?: boolean; yourTurn?: boolean; isNew?: boolean; call?: boolean; tag?: string | null }) {
   return (
-    // A row in a white group (A-307): the group draws the thin line between rows.
-    <li
-      className={"flex min-w-0 items-center gap-2.5 px-4" + (selected ? " bg-card-2" : "")}
-    >
+    <li className={"flex min-w-0 items-center gap-3 rounded-[14px] px-4 lg:hover:bg-card-2" + (selected ? " bg-card-2" : "")}>
       {/* On a phone the row opens the customer's own page, sliding in (A-222, A-264); on a computer, the panel beside the list. */}
       <Link
         href={href}
@@ -170,18 +171,22 @@ function Row({ lead, href, line, meta, selected, call = false, status = null, wh
         data-phone-href={`/leads/${lead.id}`}
         scroll={false}
         aria-current={selected ? "true" : undefined}
-        className="flex min-h-[60px] min-w-0 flex-1 items-center gap-3 py-2.5"
+        className="flex min-h-[76px] min-w-0 flex-1 items-center gap-3.5 py-2"
       >
-        <Initials name={lead.name} size={40} />
+        <Initials name={lead.name} size={56} />
         <span className="min-w-0 flex-1">
-          <span className="flex min-w-0 items-baseline gap-2">
-            <span className="truncate text-[15px] font-semibold">{lead.name}</span>
-            {tag && <TierTag>{tag}</TierTag>}
+          <span className="flex min-w-0 items-center gap-2">
+            <span className={"truncate text-[16px] text-ink " + (yourTurn || isNew ? "font-bold" : "font-medium")}>{lead.name}</span>
+            {/* A customer's first day says "New"; after that, FollowUp's call (A-310) when there is one. */}
+            {isNew ? <TierTag>New</TierTag> : tag && <TierTag>{tag}</TierTag>}
           </span>
-          <span className="block truncate text-[13.5px] text-ink-soft">{line.replace(/\s+/g, " ")}</span>
-          {status && <StatusLine status={status} when={when} />}
+          <span className={"mt-0.5 flex min-w-0 gap-1.5 text-[14.5px] " + (yourTurn ? "font-semibold text-ink" : "text-ink-soft")}>
+            <span className="truncate">{line.replace(/\s+/g, " ")}</span>
+            {/* The time stays when the words are cut. */}
+            {time && <span className="shrink-0 font-normal text-ink-faint tabular-nums">· {time}</span>}
+          </span>
         </span>
-        {meta && <span className="shrink-0 self-start pt-0.5 text-[12px] text-ink-faint tabular-nums">{meta}</span>}
+        {yourTurn && <span role="img" aria-label="Your reply is ready" className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: "var(--state-needs)" }} />}
       </Link>
       {/* Outlined, never black (one black button per screen); a 48px target around the 32px pill. */}
       {call && lead.phone && (
@@ -194,25 +199,6 @@ function Row({ lead, href, line, meta, selected, call = false, status = null, wh
         </a>
       )}
     </li>
-  );
-}
-
-/** The status in words (A-267): an orange dot only for "your turn"; green for ready to book; plain grey otherwise. */
-function StatusLine({ status, when }: { status: Status; when: string | null }) {
-  if (status === "needs") {
-    return (
-      <span className="mt-0.5 flex items-center gap-1.5 text-[13px] text-ink-faint">
-        <span aria-hidden="true" className="h-[7px] w-[7px] shrink-0 rounded-full" style={{ background: "var(--state-needs)" }} />
-        Your reply is ready
-      </span>
-    );
-  }
-  const words =
-    status === "ready" ? "Ready to book. Time for a call." : status === "booked" ? `Booked${when ? ` · ${when}` : ""}` : status === "quiet" ? "Stopped replying" : "Waiting for their reply";
-  return (
-    <span className="mt-0.5 block truncate text-[13px]" style={{ color: status === "ready" ? "var(--sage)" : "var(--ink-faint)" }}>
-      {words}
-    </span>
   );
 }
 
@@ -229,7 +215,7 @@ export default function LeadsPageClient({
   leads: Lead[];
   /** Who is in which group, worked out on the server from the same sources Today uses. */
   groups: Groups;
-  /** Customers who arrived in the last day, newest first: the New group on top (founder, 2026-10-23). */
+  /** Customers who arrived in the last day: their row says "New" (A-324). */
   fresh?: string[];
   lines: GroupLines;
   tags?: Tags;
@@ -339,22 +325,35 @@ export default function LeadsPageClient({
   const stageTotal = show === "all" && filter.startsWith("stage:") && !activeSavedFilter && !customCriteria ? filtered.reduce((sum, l) => sum + (l.dealValue || 0), 0) : 0;
 
   const rowHref = (id: string) => `/leads?${show ? `show=${show}&` : ""}p=${id}`;
-  // What a row says depends on where it is (A-220): why they're ready, why they're going quiet,
-  // what happens next, when the booking is; otherwise their last message.
+  const isNew = useMemo(() => new Set(fresh), [fresh]);
   const statusOf = (id: string): Status | null =>
     groups.needs.includes(id) ? "needs" : groups.ready.includes(id) ? "ready" : groups.booked.includes(id) ? "booked" : groups.quiet.includes(id) ? "quiet" : groups.waiting.includes(id) ? "waiting" : null;
-  const rowFor = (lead: Lead, where: Show | null, sayStatus = true) => {
+  const rowFor = (lead: Lead, where: Show | null) => {
     const last = lastOf(lead);
-    const line = where && where !== "all" && where !== "needs" ? (lines[lead.id] ?? said(lead)) : said(lead);
-    const meta = where === "needs" || where === "all" || !where ? (last ? shortAge(last.date) : null) : null;
-    // The one list and search (A-267): their last words, then where they are in words.
+    // The one list and search (A-324): where they stand, as a phone's message list would show it.
     const state = where ? null : statusOf(lead.id);
+    const booked = state === "booked" && Boolean(lines[lead.id]);
+    // What the line says (A-220): in a list behind a link, why they're there (why they're ready, when the booking is);
+    // in the one list, their last words, or when they're booked; otherwise their last message.
+    const line = where && where !== "all" && where !== "needs" ? (lines[lead.id] ?? said(lead)) : booked ? `Booked · ${lines[lead.id]}` : said(lead);
+    const time = !booked && (where === "needs" || where === "all" || !where) && last ? shortAge(last.date) : null;
     const call = where === "ready" || state === "ready";
-    // A row in a labelled group doesn't repeat the label (A-307): "Your reply is ready" says it once.
-    const status = sayStatus ? state : null;
     // Where they stand (A-310), unless the row already says it: "Ready to book" is the same call in words.
     const tag = call ? null : (tags[lead.id] ?? null);
-    return <Row key={lead.id} lead={lead} href={rowHref(lead.id)} line={line} meta={meta} selected={lead.id === openId} call={call} status={status} when={status === "booked" ? lines[lead.id] ?? null : null} tag={tag} />;
+    return (
+      <Row
+        key={lead.id}
+        lead={lead}
+        href={rowHref(lead.id)}
+        line={line}
+        time={time}
+        selected={lead.id === openId}
+        yourTurn={groups.needs.includes(lead.id)}
+        isNew={isNew.has(lead.id)}
+        call={call}
+        tag={tag}
+      />
+    );
   };
 
   const searchBox = (where = "mt-3") => (
@@ -501,7 +500,7 @@ export default function LeadsPageClient({
         )}
 
         {filtered.length > 0 && (
-          <ul className="list-group mt-3">{filtered.map((l) => rowFor(l, show))}</ul>
+          <ul className="-mx-4 mt-3">{filtered.map((l) => rowFor(l, show))}</ul>
         )}
         {filtered.length === 0 && leads.length > 0 && (
           <p className="py-8 text-center text-[14px] text-ink-soft">
@@ -527,26 +526,9 @@ export default function LeadsPageClient({
     );
   }
 
-  // ---- Everyone (A-267), in labelled white groups (A-307): new customers first, newest on top (founder, 2026-10-23),
-  // each row saying where they stand; then reply ready (in Today's order), ready to book, and everyone else, newest
-  // message first. Still no counts. ----
-  const isNew = new Set(fresh);
-  const firstIds = [...new Set([...fresh, ...groups.needs, ...groups.ready])];
-  const rest = inGroup.filter((l) => !firstIds.includes(l.id));
-  const everyone = [...firstIds.map((id) => byId.get(id)).filter((l): l is Lead => Boolean(l)), ...rest];
-  const listed = everyone.slice(0, LIST_MAX);
-  const sections: { label: string; leads: Lead[]; sayStatus: boolean }[] = [
-    { label: "New", leads: listed.filter((l) => isNew.has(l.id)), sayStatus: true },
-    { label: "Your reply is ready", leads: listed.filter((l) => !isNew.has(l.id) && groups.needs.includes(l.id)), sayStatus: false },
-    {
-      label: "Ready to book",
-      leads: listed.filter((l) => !isNew.has(l.id) && !groups.needs.includes(l.id) && groups.ready.includes(l.id)),
-      sayStatus: false,
-    },
-    { label: "Everyone else", leads: listed.filter((l) => !firstIds.includes(l.id)), sayStatus: true },
-  ].filter((g) => g.leads.length > 0);
-  // With only one group there is nothing to tell apart: no label above it.
-  const oneGroup = sections.length === 1;
+  // ---- Everyone (A-324): one list like a phone's messages, newest message on top, no groups and no box. A new
+  // customer is on top because they wrote last; a reply that's ready reads bold, like an unread chat. ----
+  const listed = inGroup.slice(0, LIST_MAX);
 
   return (
     <div className="max-w-[720px]">
@@ -565,7 +547,7 @@ export default function LeadsPageClient({
             <LeadsMoreMenu wide onAdd={() => setShowAddLead(true)} onLogCall={() => setShowLogCall(true)} onImport={() => setShowImport(true)} />
           </div>
         </div>
-        <p className="order-3 basis-full text-[15px] text-ink-soft lg:order-4">All your customers in one place.</p>
+        <p className="order-3 basis-full text-[15px] text-ink-soft lg:order-4">Newest message on top.</p>
         {leads.length > 0 && searchBox("order-4 mt-2.5 basis-full lg:order-2 lg:mt-0 lg:basis-[320px]")}
       </div>
       {forms}
@@ -577,19 +559,16 @@ export default function LeadsPageClient({
             <p className="group-label mb-2 px-1">
               {filtered.length} {filtered.length === 1 ? "customer" : "customers"} found
             </p>
-            {filtered.length > 0 && <ul className="list-group">{filtered.map((l) => rowFor(l, null))}</ul>}
+            {filtered.length > 0 && <ul className="-mx-4">{filtered.map((l) => rowFor(l, null))}</ul>}
           </section>
         ) : (
           <>
-            {sections.map((g) => (
-              <section key={g.label} aria-label={g.label} className="mt-6">
-                {!oneGroup && <h2 className="group-label mb-2 px-1">{g.label}</h2>}
-                <ul className="list-group">{g.leads.map((l) => rowFor(l, null, oneGroup || g.sayStatus))}</ul>
-              </section>
-            ))}
-            {everyone.length > listed.length && (
+            <ul aria-label="Customers" className="-mx-4 mt-4">
+              {listed.map((l) => rowFor(l, null))}
+            </ul>
+            {inGroup.length > listed.length && (
               <Link href="/leads?show=all" className="mt-2 flex min-h-11 items-center text-[13.5px] text-ink-soft underline underline-offset-[3px]">
-                Show everyone ({everyone.length})
+                Show everyone ({inGroup.length})
               </Link>
             )}
           </>

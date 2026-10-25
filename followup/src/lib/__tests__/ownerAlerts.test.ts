@@ -167,7 +167,8 @@ vi.mock("@/lib/webPush", () => ({
   sendPushToUser: h.sendPushToUser,
 }));
 
-import { runOwnerAlerts, judgeWait, quote, ALERT_QUOTE_LIMIT, ALERT_RECENT_MS, BACKFILL_SLACK_MS, DAILY_EMAIL_CAP, inQuietHours, newsSince, waitStart, NEW_WAIT_GAP_MS } from "@/lib/ownerAlerts";
+import { runOwnerAlerts, judgeWait, quote, ALERT_QUOTE_LIMIT, ALERT_RECENT_MS, BACKFILL_SLACK_MS, DAILY_EMAIL_CAP, inQuietHours, newsSince, waitStart, NEW_WAIT_GAP_MS, needsOwner } from "@/lib/ownerAlerts";
+import { HOLD_ALL_AUTOMATION_REASON } from "@/lib/holdReasons";
 import { __resetAlertEmailLogForTests } from "@/lib/alertEmail";
 
 const NOW = new Date("2026-09-25T15:00:00Z");
@@ -177,7 +178,7 @@ const DRAFT = "Hi Jane, yes it's still available — we can do Saturday at 11.";
 const RISK_REASON = "the draft quotes a price nobody in this conversation mentioned";
 
 /** One customer who wrote five minutes ago and has a held reply to that message. */
-function addCustomer(n: number, opts: { businessId?: string; assignedToId?: string | null; message?: string; name?: string } = {}) {
+function addCustomer(n: number, opts: { businessId?: string; assignedToId?: string | null; message?: string; name?: string; reason?: string } = {}) {
   const businessId = opts.businessId ?? "biz1";
   const leadId = `lead${n}`;
   const wroteAt = minutesAgo(5);
@@ -186,7 +187,7 @@ function addCustomer(n: number, opts: { businessId?: string; assignedToId?: stri
     leadId,
     leadName: opts.name ?? `Jane${n} Cooper`,
     heldAt: minutesAgo(4),
-    reason: RISK_REASON,
+    reason: opts.reason ?? RISK_REASON,
     draftMessage: DRAFT,
     leadLastMessage: opts.message ?? `Is the flat still available? (${n})`,
     leadLastMessageChannel: "whatsapp",
@@ -457,7 +458,7 @@ describe("the burst", () => {
     for (let i = 1; i <= 12; i++) addCustomer(i);
     await runOwnerAlerts(NOW);
     expect(emails()).toHaveLength(1);
-    expect(emails()[0].subject).toBe("12 customers are waiting for your OK");
+    expect(emails()[0].subject).toBe("12 customers need you");
     expect(h.sendPushToUser).toHaveBeenCalledTimes(1);
     expect(h.sendPushToUser.mock.calls[0][1]).toMatchObject({ title: "12 customers are waiting", url: "/dashboard" });
 
@@ -513,7 +514,7 @@ describe("what the owner reads", () => {
     expect(mail.from).toBe("FollowUp <alerts@followupbase.io>");
     expect(mail.headers.Authorization).toBe("Bearer re_test_key");
     expect(mail.text).toContain("Jane Cooper wrote on WhatsApp:");
-    expect(mail.text).toContain("FollowUp's reply is ready — open it to send.");
+    expect(mail.text).toContain("FollowUp's reply needs you before it goes. Open it to check and send.");
     expect(mail.text).toContain("https://www.followupbase.io/leads/lead1");
     const quoted = mail.text.split("\n").find((l: string) => l.startsWith('"'))!;
     expect(quoted.length - 2).toBeLessThanOrEqual(ALERT_QUOTE_LIMIT);
@@ -891,5 +892,81 @@ describe("the note by email, an hour before a booked call (A-268)", () => {
     expect(emails()).toHaveLength(4);
     await runOwnerAlerts(new Date(NOW.getTime() + 60_000));
     expect(emails()).toHaveLength(6);
+  });
+});
+
+// Founder, 2026-10-24 (A-327): "Do not send mails for every single message of every leads." A reply that only needs
+// an OK buzzes the phone and stays on Today; only one that needs the owner is emailed.
+describe("email only when the owner is needed (A-327)", () => {
+  const ROUTINE = HOLD_ALL_AUTOMATION_REASON;
+
+  it("buzzes the phone for a routine reply, sends no email, and keeps it told", async () => {
+    addCustomer(1, { reason: ROUTINE });
+    await runOwnerAlerts(NOW);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(h.sendPushToUser).toHaveBeenCalledTimes(1);
+    const rows = h.rows.filter((r) => r.kind === "customer");
+    expect(rows).toHaveLength(1);
+    expect(rows[0].emailedAt ?? null).toBeNull();
+    expect(rows[0].pushedAt).not.toBeNull();
+    await runOwnerAlerts(new Date(NOW.getTime() + 60_000));
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("stays quiet, without retrying, for a routine reply when there is no phone to buzz", async () => {
+    addCustomer(1, { reason: ROUTINE });
+    h.sendPushToUser.mockResolvedValue({ delivered: 0, removed: 0, failed: 0 });
+    await runOwnerAlerts(NOW);
+    await runOwnerAlerts(NOW);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(h.rows.filter((r) => r.kind === "customer")).toHaveLength(1);
+  });
+
+  it("still emails a reply that needs something only the owner knows", async () => {
+    addCustomer(1, { name: "Jane Cooper" });
+    addCustomer(2, { reason: ROUTINE });
+    await runOwnerAlerts(NOW);
+    expect(emails()).toHaveLength(1);
+    expect(emails()[0].subject).toBe("Jane is waiting for your reply");
+    expect(h.sendPushToUser).toHaveBeenCalledTimes(2);
+  });
+
+  it("in a burst, emails only the ones who need the owner: none, one by name, or a count", async () => {
+    for (let i = 1; i <= 12; i++) addCustomer(i, { reason: ROUTINE });
+    await runOwnerAlerts(NOW);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(h.sendPushToUser.mock.calls[0][1]).toMatchObject({ title: "12 customers are waiting" });
+
+    h.rows.length = 0;
+    h.approvals.clear();
+    h.leads.length = 0;
+    h.sendPushToUser.mockClear();
+    for (let i = 1; i <= 11; i++) addCustomer(i, { reason: ROUTINE });
+    addCustomer(12, { name: "Nadia Khan" });
+    await runOwnerAlerts(NOW);
+    expect(emails()).toHaveLength(1);
+    expect(emails()[0].subject).toBe("Nadia is waiting for your reply");
+    expect(h.sendPushToUser.mock.calls[0][1]).toMatchObject({ title: "12 customers are waiting" });
+  });
+});
+
+describe("needsOwner (A-327)", () => {
+  const routine = { reason: HOLD_ALL_AUTOMATION_REASON, riskTopic: null, draftRiskLevel: "low", askedIfPerson: false, saidNoHow: null, draftMessage: "Saturday works. See you at 11." };
+
+  it("leaves a reply that only needs an OK out of the inbox", () => {
+    expect(needsOwner(routine)).toBe(false);
+    expect(needsOwner({ ...routine, draftRiskLevel: null, riskTopic: "none" })).toBe(false);
+    expect(needsOwner({ ...routine, saidNoHow: "clear" })).toBe(false);
+  });
+
+  it("emails anything the owner has to decide", () => {
+    expect(needsOwner({ ...routine, reason: RISK_REASON })).toBe(true);
+    expect(needsOwner({ ...routine, reason: "" })).toBe(true);
+    expect(needsOwner({ ...routine, askedIfPerson: true })).toBe(true);
+    expect(needsOwner({ ...routine, saidNoHow: "unsure" })).toBe(true);
+    expect(needsOwner({ ...routine, riskTopic: "price" })).toBe(true);
+    expect(needsOwner({ ...routine, riskTopic: "tense" })).toBe(true);
+    expect(needsOwner({ ...routine, draftRiskLevel: "medium" })).toBe(true);
+    expect(needsOwner({ ...routine, draftMessage: "It's [PRICE] for the full package." })).toBe(true);
   });
 });

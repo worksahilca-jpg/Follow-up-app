@@ -72,15 +72,21 @@ a booked call or visit; the owner closes.
 
 ## Where we are (update at the end of every task)
 
-**Last updated: 2026-10-24**
+**Last updated: 2026-10-25**
 
 - **Assisted sends nothing on its own; new customers on top (A-322, A-323, R-140, Oct 23) LIVE (PR #593 → 39c2b8b,
   merged at the founder's "merge"; deploy green; no migration):** the 30-minute "let me check" went out on the founder's own Instagram at 10:40 am and they don't trust
   automatic messages yet, so on an Assisted account FollowUp now sends nothing by itself (the line stays for Automatic
   only). Customers opens with a "New" group: everyone who arrived in the last day, newest first.
-- **Customers rows say what to do, in words (A-325, R-141, Oct 24): built, PR open, not merged.** The founder
-  rejected the dot: a row whose reply is ready now says "Check and send your reply" in bold, a ready-to-book row
-  "Ready to book. Call them" beside Call. No dots. No migration.
+- **The "no" safety net + email only when needed (A-326, A-327, Oct 25): built, PR open, not merged.** Every new
+  message is read three ways (their own words, the scoring read, five AI readings); any one that says stop stops the
+  follow-ups. A maybe-no's reply always waits; Today and the customer's page say "said no" / "might be saying no" in
+  words with "Keep following up". Owner emails now go only when a reply needs them, a customer is ready, a call is
+  coming or something broke; routine replies buzz the phone only. Migration: Lead.saidNoHow + keepFollowingAt.
+  Next: the 50 test conversations for the founder to check.
+- **Customers rows say what to do, in words (A-325, R-141, Oct 24) LIVE (PR #596 → 6e3d2ca, merged at the
+  founder's "help me and merge"; deploy green; no migration):** a row whose reply is ready says "Check and send your
+  reply" in bold, a ready-to-book row "Ready to book. Call them" beside Call. No dots.
 - **Customers like a phone's message list (A-324, Oct 24) LIVE (PR #595 → 19684b7, merged at the founder's "merge";
   deploy green; no migration):** one list, newest message on top, no groups or white box; "New" pill on a customer's
   first day; Call stays on Ready to book. Supersedes A-307's Customers groups and A-323's New group.

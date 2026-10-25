@@ -60,7 +60,7 @@ import { recordAudit } from "@/lib/audit";
 import { isWithinSendWindow } from "@/lib/sendWindow";
 import { checkAiEligibility } from "@/lib/billing";
 import { runAutomationForBusiness, DEAD_LEAD_ACTION } from "@/lib/automation";
-import { UNTOUCHED_LEAD_REASON, UNGROUNDED_DRAFT_REASONS } from "@/lib/holdReasons";
+import { UNTOUCHED_LEAD_REASON, UNGROUNDED_DRAFT_REASONS, MAYBE_NO_REASON } from "@/lib/holdReasons";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const p = prisma as any;
@@ -2431,6 +2431,25 @@ describe("customers who said no, or asked if they're talking to a person", () =>
 
   it("still sends as before when they didn't ask", async () => {
     p.lead.findMany.mockResolvedValueOnce([lead({ askedIfPersonAt: null })]).mockResolvedValueOnce([]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+    expect((await runAutomationForBusiness("biz1")).sent).toBe(1);
+  });
+  // The "no" safety net (A-326): when only some readings said stop, FollowUp stops and the owner reads it.
+  it("holds the reply to a maybe-no for the owner, even on Autonomous and even when the risk check says low", async () => {
+    p.lead.findMany.mockResolvedValueOnce([lead({ automationTier: "AUTONOMOUS", saidNoHow: "unsure" })]).mockResolvedValueOnce([]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+    const r = await runAutomationForBusiness("biz1");
+    expect(r.sent).toBe(0);
+    expect(send).not.toHaveBeenCalled();
+    expect(audit).toHaveBeenCalledWith(
+      expect.anything(),
+      "ai.hold",
+      expect.objectContaining({ targetId: "lead1", meta: expect.objectContaining({ reason: MAYBE_NO_REASON }) })
+    );
+  });
+
+  it("lets a clear no's last reply go as before", async () => {
+    p.lead.findMany.mockResolvedValueOnce([lead({ automationTier: "AUTONOMOUS", saidNoHow: "clear" })]).mockResolvedValueOnce([]);
     risk.mockResolvedValue({ riskLevel: "low", reason: "" });
     expect((await runAutomationForBusiness("biz1")).sent).toBe(1);
   });

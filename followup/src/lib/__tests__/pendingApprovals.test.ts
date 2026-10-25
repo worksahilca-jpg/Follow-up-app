@@ -175,6 +175,7 @@ describe("getPendingApprovals", () => {
         laterUntil: null,
         customerToldAt: null,
         saidNo: false,
+        saidNoHow: null,
         askedIfPerson: false,
         site: null,
       },
@@ -444,5 +445,15 @@ describe("habits the owner said yes to (A-099, src/lib/habits.ts)", () => {
     p.message.findFirst.mockResolvedValue({ sentAt: new Date("2026-09-10T11:30:00Z") });
     await dismissHold("lead1", "biz1", "user1");
     expect(audit.mock.calls.at(-1)?.[2]).not.toHaveProperty("meta");
+  });
+});
+
+describe("readReason (A-326)", () => {
+  it("keeps a maybe-no while it is still one, and says the owner's choice once they overruled it", async () => {
+    const { readReason } = await import("@/lib/pendingApprovals");
+    const { MAYBE_NO_REASON, NO_OVERRULED_REASON } = await import("@/lib/holdReasons");
+    expect(readReason(MAYBE_NO_REASON, "unsure")).toBe(MAYBE_NO_REASON);
+    expect(readReason(MAYBE_NO_REASON, null)).toBe(NO_OVERRULED_REASON);
+    expect(readReason("the draft quotes a price", null)).toBe("the draft quotes a price");
   });
 });

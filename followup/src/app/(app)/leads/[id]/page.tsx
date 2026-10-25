@@ -40,6 +40,8 @@ import CallBox from "@/components/app/CallBox";
 import { isCallablePhone, telHref } from "@/lib/callPlan";
 import { displayChannel } from "@/lib/displayChannel";
 import CustomerStanding, { GeneralCall } from "@/components/app/CustomerStanding";
+import SaidNoCard from "@/components/app/SaidNoCard";
+import type { NoHow } from "@/lib/declinePhrases";
 import { tierFromScore } from "@/lib/followUpCall";
 import CallBriefCard, { type CallToPrepare } from "@/components/app/CallBriefCard";
 import { callNotOver, readCallBrief } from "@/lib/callBrief";
@@ -71,7 +73,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
     ? await Promise.all([
         getPendingApprovals(ctx.businessId).then((all) => all.find((a) => a.leadId === lead.id) ?? null),
         prisma.business.findUnique({ where: { id: ctx.businessId }, select: { timezone: true, teamCalls: true, industry: true, askPlan: true } }),
-        prisma.lead.findFirst({ where: { id: lead.id, businessId: ctx.businessId }, select: { qualification: true, qualifiedAt: true, crmProvider: true, sequenceId: true } }),
+        prisma.lead.findFirst({ where: { id: lead.id, businessId: ctx.businessId }, select: { qualification: true, qualifiedAt: true, crmProvider: true, sequenceId: true, saidNoAt: true, saidNoHow: true } }),
         getBusinessAutomationRules(ctx.businessId),
         prisma.crmConnection.findUnique({ where: { businessId: ctx.businessId }, select: { provider: true } }),
       ])
@@ -188,8 +190,13 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
         }
       : null;
 
+  // They said no (A-326): FollowUp stopped, and the way back stays here after their reply has gone.
+  const saidNo =
+    checklist?.saidNoAt && dealOpen ? (
+      <SaidNoCard leadId={lead.id} leadName={lead.name} how={(checklist.saidNoHow as NoHow | null) ?? "clear"} />
+    ) : null;
   // One box at the top, never two (A-269): the call note while a call is coming, otherwise where they stand.
-  const topBox = prep ? <CallBriefCard call={prep} onTheirPage /> : (standing ?? generalCall);
+  const topBox = prep ? <CallBriefCard call={prep} onTheirPage /> : (saidNo ?? standing ?? generalCall);
 
   // Why the reply waits, said inside the reply card on a phone (A-222), where the side column isn't.
   const holdWhy = approval

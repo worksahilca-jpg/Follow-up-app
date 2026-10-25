@@ -429,6 +429,76 @@ export async function scoreLead(
   };
 }
 
+/** How many times the stop question is asked (A-326). */
+export const STOP_TRIES = 5;
+
+const STOP_CHECK_SCHEMA = {
+  name: "stop_check",
+  strict: true,
+  schema: {
+    type: "object",
+    properties: {
+      // Reason first: under strict output the fields are written in order, so the verdict comes after the reading.
+      reason: { type: "string", description: "One short sentence on what the newest message says." },
+      stop: { type: "boolean", description: "True when the newest message is a stop, or might be one." },
+    },
+    required: ["reason", "stop"],
+    additionalProperties: false,
+  },
+} as const;
+
+/**
+ * The "no" safety net (step 5 of the self-improving plan, A-326; founder 2026-10-24: "yes to both"). One question
+ * about the customer's newest message, asked STOP_TRIES times at the model's normal sampling: do they want this to
+ * stop? scoreLead asks it once, among other things, and says no only when sure; a missed no is a customer followed up
+ * after they asked us not to, so here any try that reads a stop counts (src/lib/scoring.ts). The tries run side by
+ * side; one that fails is left out of the count, never counted as "keep going".
+ */
+export async function checkForStop(conversation: Message[]): Promise<{ tries: number; stops: number }> {
+  const client = getClient("stop_check");
+  const ask = () =>
+    client.chat.completions.create({
+      model: MODEL,
+      messages: [
+        {
+          role: "system",
+          content:
+            "You check one thing about a small business's conversation with a customer: does the customer's newest " +
+            "message mean the business should stop following up? Answer stop: true when it turns the business down " +
+            "(not interested, no longer needed, found or bought a place elsewhere), says they already have an agent " +
+            "or went with someone else, or asks not to be contacted. Answer stop: false for 'not right now', 'maybe " +
+            "later', a day to check back, a question, a complaint, a thanks, or anything that keeps the conversation " +
+            "going. If you can't tell whether it is a stop, answer true: the owner can undo a pause, but not a " +
+            "message sent after a no." +
+            UNTRUSTED_CONVERSATION_NOTICE,
+        },
+        { role: "user", content: `Conversation:\n${formatTranscript(conversation)}` },
+      ],
+      // Five readings, not one answer five times: the normal sampling (a model that thinks first takes only that).
+      temperature: 1,
+      max_tokens: 120,
+      response_format: { type: "json_schema", json_schema: STOP_CHECK_SCHEMA },
+    });
+  const settled = await Promise.allSettled(Array.from({ length: STOP_TRIES }, ask));
+  let tries = 0;
+  let stops = 0;
+  for (const s of settled) {
+    if (s.status !== "fulfilled") continue;
+    const raw = s.value.choices[0]?.message?.content;
+    if (!raw) continue;
+    let stop: unknown;
+    try {
+      stop = (JSON.parse(raw) as { stop?: unknown }).stop;
+    } catch {
+      continue;
+    }
+    tries++;
+    if (stop === true) stops++;
+    await noteAiChoice(s.value.id, stop === true ? "stop" : "go");
+  }
+  return { tries, stops };
+}
+
 const PROSPECT_CLASSIFICATION_SCHEMA = {
   name: "prospect_classification",
   strict: true,

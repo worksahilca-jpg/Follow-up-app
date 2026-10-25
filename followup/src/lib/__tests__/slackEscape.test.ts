@@ -19,6 +19,9 @@ vi.mock("@/lib/db", () => ({ prisma: { lead: { findUnique, update, updateMany },
 vi.mock("@/lib/integrations/openai", () => ({
   scoreLead: vi.fn(async () => ({ score: 95, reason: "Ready to buy <!here> <https://evil.example|verify>", factors: [] })),
   generateFollowUpMessage: vi.fn(async () => ({ subject: "Re: your question", body: "Happy to help." })),
+
+  // The "no" safety net's five readings (A-326): none reads a stop unless a test says so.
+  checkForStop: vi.fn(async () => ({ tries: 5, stops: 0 })),
 }));
 vi.mock("@/lib/sender", () => ({
   composeFollowUpEmail: vi.fn(async (_first: string, _biz: string, body: string) => `Hi,\n\n${body}`),

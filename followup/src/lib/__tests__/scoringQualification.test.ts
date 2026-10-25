@@ -33,6 +33,9 @@ vi.mock("@/lib/integrations/openai", () => ({
   scoreLead: vi.fn(async () => ({ score: 50, reason: "Asked about a listing", factors: [], saysNo: false, asksIfAutomated: false, onlyThanks: false })),
   generateFollowUpMessage: h.generate,
   extractQualificationFacts: h.extract,
+
+  // The "no" safety net's five readings (A-326): none reads a stop unless a test says so.
+  checkForStop: vi.fn(async () => ({ tries: 5, stops: 0 })),
 }));
 vi.mock("@/lib/sender", () => ({
   composeFollowUpEmail: vi.fn(async (_n: string, _b: string, body: string) => body),

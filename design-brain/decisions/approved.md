@@ -5776,6 +5776,8 @@ reply is ready first.
 
 ## A-325 — Customers rows say what to do, in words ^A-325
 
+**LIVE** (PR #596 → 6e3d2ca, merged 2026-10-24; deploy green; no migration).
+
 **Date:** 2026-10-24. **Founder, verbatim:** *"Dots should not be there. We should say what action needed"* (R-141), then
 *"yes build it"* to the drawing (scratchpad `insta/words/after-phone.png`, on the real app with test customers), after
 asking how the list is ordered (answer: Customers newest message first like Instagram; Today the customer you'd lose
@@ -5786,3 +5788,37 @@ soonest first).
 - No dot anywhere on the row. Everyone else keeps their last words, like a message list.
 - Same rows in search and in the lists behind a link (the Ready to book list still says why they're ready).
 
+## A-326 — When a customer says no: stop, say so, and one way back ^A-326
+
+**Date:** 2026-10-25. **Founder, verbatim:** *"Yes to both"* to plan step 5 (any reading that says no stops FollowUp
+and tells the owner; Claude writes the 50 test conversations, the founder checks them), then *"yes to both, build it"*
+to the drawing (scratchpad `no5/no-board.png`, on the real app with test customers).
+**What specifically was approved:**
+- **Every new message is read three ways:** their own plain words (a short list: "not interested", "remove me",
+  "we went with someone else", in English and French), the scoring read, and five separate AI readings. Any one that
+  says stop stops the follow-ups.
+- **A clear no** (their own words, a sure reading, or most of the five): the last reply goes as usual, then no more.
+- **A maybe-no** (only some of the five): FollowUp stops to be safe, and the reply **always waits for the owner**,
+  on every tier.
+- **Today's row says it in words** (A-325, no dot): "Said no. Your last reply is ready." / "Might be saying no.
+  Check your reply." / "Has an agent. Your last reply is ready."
+- **Today's card**, under the reply, in the card's note style with no dot: "Karan said no. After this reply, FollowUp
+  won't remind them again." or "Karan might be saying no. To be safe, FollowUp stopped reminding them.", then one
+  quiet link: "Keep following up anyway" / "Not a no? Keep following up".
+- **Their page** has the same in a box at the top (where "where they stand" sits, A-246): "Karan said no" / "Karan
+  might be saying no", one sentence, the same link. The way back once their reply has gone.
+- The owner's "Keep following up" sticks to that message: re-reading it never stops them again; a newer message is
+  read fresh.
+
+## A-327 — Email the owner only when they're needed ^A-327
+
+**Date:** 2026-10-25. **Founder, verbatim:** *"Do not send mails for every single message of every leads. You just
+have to push the mail when it's necessary, when actually we actually needed, or the customer actually needed, the
+business owner or the user."* then *"yes to both, build it"* to the proposed rule.
+**What specifically was approved:**
+- **Email only when** a reply needs something only the owner knows (a price, a day or time, an unhappy customer,
+  "is this a real person?", a maybe-no), a customer is ready to book, a call is coming up, or something stopped
+  working (Gmail disconnected).
+- **No email** for a routine reply FollowUp wrote that only needs an OK: it stays on Today, and the phone still buzzes.
+- Several at once: one email naming the one who needs the owner, or "N customers need you". The Settings switch reads
+  "Email me when a customer needs me".

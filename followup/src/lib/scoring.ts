@@ -13,7 +13,8 @@ import { appUrl } from "@/lib/stripe";
 import { prisma } from "@/lib/db";
 import { tooManyRecentActions } from "@/lib/rateLimit";
 import { byTranscriptOrder } from "@/lib/transcript";
-import { scoreLead, generateFollowUpMessage, extractQualificationFacts } from "@/lib/integrations/openai";
+import { scoreLead, generateFollowUpMessage, extractQualificationFacts, checkForStop } from "@/lib/integrations/openai";
+import { declineIn, readNo, type NoHow } from "@/lib/declinePhrases";
 import { composeFollowUpEmail, latestInboundText } from "@/lib/sender";
 import { dmChannelOf } from "@/lib/dmDrafts";
 import { draftDm } from "@/lib/dmDrafting";
@@ -205,7 +206,10 @@ async function scoreAndDraft(leadId: string): Promise<boolean> {
   // read; it runs beside the score, which takes longer, so this costs no
   // time. A read that finds nothing falls back to the language on file.
   const detecting = detectLeadLanguage(latestInboundText(conversation) ?? "");
-  const [scoreResult, voiceSamples, detected, extracted, booking] = await Promise.all([
+  // The "no" safety net (A-326): their own plain words first, then, when those don't settle it, five AI readings of
+  // the one question. Run only when the customer is the one who just wrote.
+  const phrase = customerJustWrote ? declineIn(newest.body) : null;
+  const [scoreResult, voiceSamples, detected, extracted, booking, stopCheck] = await Promise.all([
     scoreLead({
       conversation,
       dealValue: lead.dealValue,
@@ -228,6 +232,12 @@ async function scoreAndDraft(leadId: string): Promise<boolean> {
           })
           .catch(() => null)
       : Promise.resolve(null),
+    customerJustWrote && !phrase
+      ? checkForStop(conversation).catch((err) => {
+          console.error(`Stop check failed for lead ${lead.id}:`, err);
+          return { tries: 0, stops: 0 };
+        })
+      : Promise.resolve({ tries: 0, stops: 0 }),
   ]);
 
   // An Instagram or Messenger customer who has been answered once and
@@ -339,6 +349,16 @@ async function scoreAndDraft(leadId: string): Promise<boolean> {
   // problem like those two were.
   const becameHot = lead.priority !== "HIGH" && newPriority === "HIGH";
 
+  // Did their newest message say no (A-326)? Any reading that says stop counts. A message already read as a no stays
+  // one when read again without the customer writing (a later pass, the owner's own reply), and a message the owner
+  // overruled with "Keep following up" stays theirs.
+  const sameMessage = Boolean(lead.saidNoAt && latestInboundAt && lead.saidNoAt.getTime() === latestInboundAt.getTime());
+  const overruled = Boolean(lead.keepFollowingAt && latestInboundAt && latestInboundAt.getTime() <= lead.keepFollowingAt.getTime());
+  const noHow: NoHow | null = overruled
+    ? null
+    : (readNo({ phrase: phrase?.kind ?? null, aiSure: scoreResult.saysNo, hasAgent, ...stopCheck }) ??
+      (sameMessage ? ((lead.saidNoHow as NoHow | null) ?? "clear") : null));
+
   await prisma.lead.update({
     where: { id: lead.id },
     data: {
@@ -387,7 +407,8 @@ async function scoreAndDraft(leadId: string): Promise<boolean> {
       // fresh every time, so a customer who writes again is read again.
       ...(latestInboundAt
         ? {
-            saidNoAt: scoreResult.saysNo || hasAgent ? latestInboundAt : null,
+            saidNoAt: noHow ? latestInboundAt : null,
+            saidNoHow: noHow,
             askedIfPersonAt: scoreResult.asksIfAutomated ? latestInboundAt : null,
             // Only "thanks" / "ok": what the skip_thanks habit keys on (src/lib/habits.ts).
             thanksOnlyAt: scoreResult.onlyThanks ? latestInboundAt : null,

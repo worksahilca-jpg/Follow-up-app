@@ -15497,3 +15497,56 @@ A source test (`customersRowWords.test.ts`) keeps the words in and the dot out.
 said until they open the chat (Instagram does the same with "new messages"). If the owner wants both, the next step is
 a second line, which costs row height.
 
+
+## 2026-10-24 — "When a customer says no" drawn (A-326, approved 2026-10-25)
+
+Step 5 of the self-improving plan: the founder said *"Yes to both"* (any reading that says no stops FollowUp and tells
+the owner; Claude writes the 50 test conversations, the founder checks them). The engine reads every new message three
+ways: their own words (`src/lib/declinePhrases.ts`), the scoring read, and five separate AI readings
+(`checkForStop`). Any one that says stop stops the reminders. Drawn on the local app (injected, nothing saved):
+- **Today row** says it in words (A-325): "Said no. Your last reply is ready." / "Might be saying no. Check your reply."
+- **Today card**, under the reply, in the card's note style with no dot (R-141): a clear no keeps today's line, "Karan
+  said no. After this reply, FollowUp won't remind them again." plus a quiet "Keep following up anyway". A maybe-no
+  says "Karan might be saying no. To be safe, FollowUp stopped reminding them." plus "Not a no? Keep following up".
+- **Customer page**, top of the side column on a computer and top of the page on a phone (A-246's place): "Karan said
+  no" / "Karan might be saying no", one sentence, the same link. The way back once the reply has gone.
+**Weak, said plainly:** the card note is 13px like the other card notes, under our 14px rule for words a decision rests
+on; a maybe-no reply still waits on Today only when the reply waits anyway, so the plan is to hold it there too.
+Board: scratchpad `no5/no-board.png`.
+
+## 2026-10-24 — Founder: email the owner only when they're needed (A-327, approved 2026-10-25)
+
+**Founder:** *"Do not send mails for every single message of every leads. You just have to push the mail when it's
+necessary, when actually we actually needed, or the customer actually needed, the business owner or the user."*
+Principle (his words, generalised): an email to the owner is for something only the owner can do, never a copy of
+Today. Today (`src/lib/ownerAlerts.ts`) emails once per "wait": every time a customer writes and a reply waits for
+the OK, up to 20 a day. On an Assisted account every reply waits, so that is nearly every customer message.
+Production, last 14 days (read-only count): 13 such emails to 2 owners, no other alert kind.
+**Proposed rule:** email only when (1) a reply needs something only the owner knows (any hold reason other than the
+every-reply-waits setting, `isHeldOnlyByApprovalSetting`: a price, a day, an unhappy customer, "is this a real
+person?", a maybe-no), (2) a customer is ready to book, (3) a call is coming up (A-268), or (4) something stopped
+working (Gmail disconnected). A routine reply FollowUp wrote and the owner only has to OK stays on Today and buzzes
+the phone, with no email. The phone buzz is unchanged.
+
+## 2026-10-25 — A-326 and A-327 built
+
+**Founder:** *"yes to both, build it"*.
+**A-326, the "no" safety net.** Reading: `src/lib/declinePhrases.ts` (their own words), `checkForStop` in
+`src/lib/integrations/openai.ts` (five readings), `readNo` puts them together; `src/lib/scoring.ts` writes
+`Lead.saidNoAt` + `saidNoHow` per message and honours `keepFollowingAt`. A maybe-no holds the reply on every tier
+(`MAYBE_NO_REASON`, `src/lib/automation.ts`). Screens: `src/lib/saidNoWords.ts` holds every sentence; Today's row and
+card (`ApprovalQueue.tsx`), the box at the top of their page (`SaidNoCard.tsx`), and the link
+(`KeepFollowingButton`, now worded per case). Once the owner overrules a maybe-no while its reply still waits, the
+queue reads the hold as "You said to keep following up with Karan. Send this when you're ready." (`readReason`).
+**A-327, email only when needed.** `needsOwner` in `src/lib/ownerAlerts.ts`: a hold reason other than the
+every-reply-waits setting, a price/day/tense flag, a risky draft, a price blank, "real person?", or a maybe-no. Routine
+waits push only; a burst emails one by name or "N customers need you". Settings: "Email me when a customer needs me".
+**Checked** on the local app at 390×844 and 1440×900 with two test customers marked as a maybe-no and a clear no:
+rows, card lines, links, the box on their page, no sideways scroll, no page errors; tapping "Not a no? Keep following
+up" removes the box and the row goes back to normal.
+**Weak, said plainly:**
+- The card's no line is 13px like the other card notes, under our 14px rule for words a decision rests on.
+- On a computer their page says "might be saying no" twice: the box at the top and "Why it needs you" beside it.
+- An owner with no phone set up for buzzes now hears about a routine reply only when they open FollowUp.
+- The phrase list is short on purpose; the five readings carry the rest. The 50 test conversations (next) will show
+  how often each misses.

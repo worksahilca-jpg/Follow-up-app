@@ -170,6 +170,19 @@ export const MEETING_MISSED_REASON = "the call didn't happen, so this offers a n
 export const ASKED_IF_PERSON_REASON = "they asked whether they're talking to a real person, so this one is for you to answer";
 
 /**
+ * Their newest message might be a no (Lead.saidNoHow "unsure", A-326): some of FollowUp's readings said stop and some
+ * didn't. FollowUp stopped following up to be safe, and the reply waits for the owner on every tier (founder,
+ * 2026-10-24: "if any try says no, stop and tell me").
+ */
+export const MAYBE_NO_REASON = "their message might be a no, so FollowUp stopped following up and this one waits for you";
+
+/**
+ * A maybe-no the owner overruled with "Keep following up" (A-326) while its reply still waits. Never stored: the
+ * queue reads the hold this way once the no is lifted (getPendingApprovals), so the card stops saying "might be a no".
+ */
+export const NO_OVERRULED_REASON = "you said to keep following up, so this one waits for you to send";
+
+/**
  * assessSendRisk threw. Held rather than sent, in both schedulers: an
  * unchecked message going out is worse than a review nobody needed.
  */
@@ -302,6 +315,8 @@ const PLAIN_BY_REASON: Record<string, (first: string) => string> = {
   [NO_ANSWER_REASON]: (first) => `No answer when you called. This asks ${first} for a good time to talk.`,
   [MEETING_MISSED_REASON]: (first) => `The call didn't happen. This offers ${first} a new time from your free hours.`,
   [ASKED_IF_PERSON_REASON]: (first) => `${first} asked if they're talking to a real person. Answer this one yourself.`,
+  [MAYBE_NO_REASON]: (first) => `${first} might be saying no. Read their message before this goes.`,
+  [NO_OVERRULED_REASON]: (first) => `You said to keep following up with ${first}. Send this when you're ready.`,
   "this conversation was already in your inbox before FollowUp started watching it, so it hasn't seen what you may have already done about it":
     () => "This was in your inbox before FollowUp started. Check you haven't already answered.",
   [PRICE_SLOT_REASON]: () => "Add the price, then send.",

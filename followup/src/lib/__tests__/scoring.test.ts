@@ -20,6 +20,9 @@ vi.mock("@/lib/db", () => ({ prisma: { lead: { findUnique, update, updateMany } 
 vi.mock("@/lib/integrations/openai", () => ({
   scoreLead: vi.fn(async () => ({ score: 80, reason: "Asked about pricing", factors: [] })),
   generateFollowUpMessage: vi.fn(async () => ({ subject: "Re: your question", body: "Happy to help." })),
+
+  // The "no" safety net's five readings (A-326): none reads a stop unless a test says so.
+  checkForStop: vi.fn(async () => ({ tries: 5, stops: 0 })),
 }));
 vi.mock("@/lib/sender", () => ({
   composeFollowUpEmail: vi.fn(async (_first: string, _biz: string, body: string) => `Hi,\n\n${body}`),
@@ -364,6 +367,81 @@ describe("scoreAndDraftForLead — a no, or 'am I talking to a person?'", () => 
     await scoreAndDraftForLead("lead1");
     const data = updateCalls().find((c) => "score" in c.data)!.data;
     expect(data.saidNoAt).toBeNull();
+    expect(data.saidNoHow).toBeNull();
     expect(data.askedIfPersonAt).toBeNull();
+  });
+});
+
+describe("scoreAndDraftForLead — the \"no\" safety net (A-326)", () => {
+  const sentAt = new Date("2026-10-24T10:00:00Z");
+  const saying = (body: string, extra: Record<string, unknown> = {}) =>
+    leadRow({ conversations: [{ channel: "email", messages: [{ id: "m1", direction: "inbound", body, sentAt, opened: false }] }], ...extra });
+  const stopCheck = async () => (await import("@/lib/integrations/openai")).checkForStop as unknown as ReturnType<typeof vi.fn>;
+  const written = () => updateCalls().find((c) => "score" in c.data)!.data;
+
+  it("stops on their own plain words, even when the AI reading missed it, and skips the five readings", async () => {
+    findUnique.mockResolvedValue(saying("Thanks, but we're not interested anymore."));
+    const check = await stopCheck();
+    check.mockClear();
+    await scoreAndDraftForLead("lead1");
+    expect(written().saidNoAt).toEqual(sentAt);
+    expect(written().saidNoHow).toBe("clear");
+    expect(check).not.toHaveBeenCalled();
+  });
+
+  it("stops when even one of the five readings says stop, and says it is unsure", async () => {
+    findUnique.mockResolvedValue(saying("Hmm, I'll think about it"));
+    (await stopCheck()).mockResolvedValueOnce({ tries: 5, stops: 1 });
+    await scoreAndDraftForLead("lead1");
+    expect(written().saidNoAt).toEqual(sentAt);
+    expect(written().saidNoHow).toBe("unsure");
+  });
+
+  it("calls it clear when most of the readings agree", async () => {
+    findUnique.mockResolvedValue(saying("We're going a different direction"));
+    (await stopCheck()).mockResolvedValueOnce({ tries: 5, stops: 3 });
+    await scoreAndDraftForLead("lead1");
+    expect(written().saidNoHow).toBe("clear");
+  });
+
+  it("keeps following up when nothing reads a stop, and a failed check never stops anyone by itself", async () => {
+    findUnique.mockResolvedValue(saying("Is Saturday at 10 ok?"));
+    (await stopCheck()).mockRejectedValueOnce(new Error("timeout"));
+    await scoreAndDraftForLead("lead1");
+    expect(written().saidNoAt).toBeNull();
+  });
+
+  it("leaves a no the owner overruled with Keep following up, for that same message", async () => {
+    findUnique.mockResolvedValue(saying("Not interested", { keepFollowingAt: new Date("2026-10-24T11:00:00Z") }));
+    await scoreAndDraftForLead("lead1");
+    expect(written().saidNoAt).toBeNull();
+    expect(written().saidNoHow).toBeNull();
+  });
+
+  it("reads a newer message fresh after the owner overruled an older one", async () => {
+    findUnique.mockResolvedValue(saying("Please stop messaging me", { keepFollowingAt: new Date("2026-10-24T09:00:00Z") }));
+    await scoreAndDraftForLead("lead1");
+    expect(written().saidNoAt).toEqual(sentAt);
+  });
+
+  it("keeps a no already read for the same message when it's read again after the owner wrote", async () => {
+    findUnique.mockResolvedValue(
+      leadRow({
+        saidNoAt: sentAt,
+        saidNoHow: "unsure",
+        conversations: [
+          {
+            channel: "email",
+            messages: [
+              { id: "m1", direction: "inbound", body: "Hmm, I'll think about it", sentAt, opened: false },
+              { id: "m2", direction: "outbound", body: "No problem, take your time.", sentAt: new Date("2026-10-24T12:00:00Z"), opened: false },
+            ],
+          },
+        ],
+      })
+    );
+    await scoreAndDraftForLead("lead1");
+    expect(written().saidNoAt).toEqual(sentAt);
+    expect(written().saidNoHow).toBe("unsure");
   });
 });

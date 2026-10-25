@@ -86,7 +86,7 @@ export const UNANSWERED_FIRST_REPLY_HOURS = 3;
 import { META_DM_WINDOW_HOURS, META_HUMAN_AGENT_MAX_HOURS, META_NUDGE_GAP_HOURS, UNANSWERED_CEILING_CHANNELS, UNANSWERED_META_DM_MAX_HOURS } from "@/lib/metaWindow";
 export { META_DM_WINDOW_HOURS, UNANSWERED_META_DM_MAX_HOURS };
 import { isInstagramLeadId, isMessengerLeadId } from "@/lib/instagramId";
-import { HOLD_ALL_AUTOMATION_REASON, BACKLOG_BEFORE_PERMISSION_REASON, RISK_CHECK_FAILED_REASON, UNTOUCHED_LEAD_REASON, NEVER_WROTE_REASON, FOUND_IN_SPAM_REASON, FORM_SPAM_CHECK_REASON, FORM_SPAM_CHECK_SOURCE, isUnconfirmedSpamSource, IN_CRM_REASON, UNGROUNDED_DRAFT_REASONS, ASKED_IF_PERSON_REASON } from "@/lib/holdReasons";
+import { HOLD_ALL_AUTOMATION_REASON, BACKLOG_BEFORE_PERMISSION_REASON, RISK_CHECK_FAILED_REASON, UNTOUCHED_LEAD_REASON, NEVER_WROTE_REASON, FOUND_IN_SPAM_REASON, FORM_SPAM_CHECK_REASON, FORM_SPAM_CHECK_SOURCE, isUnconfirmedSpamSource, IN_CRM_REASON, UNGROUNDED_DRAFT_REASONS, ASKED_IF_PERSON_REASON, MAYBE_NO_REASON } from "@/lib/holdReasons";
 import { bookingLinkReason, carriesBookingLink } from "@/lib/bookingOffer";
 import { isSharedContentOnly } from "@/lib/sharedContent";
 
@@ -1579,9 +1579,11 @@ export async function runAutomationForBusiness(
       // They asked if they're talking to a real person (Lead.askedIfPersonAt):
       // the only honest reply is a person's, so it waits on every tier.
       const askedIfPerson = lead.askedIfPersonAt != null;
+      // Their newest message might be a no (A-326): FollowUp stopped following up to be safe, and the owner reads it.
+      const maybeNo = lead.saidNoHow === "unsure";
       // Their booking link in the reply (A-263) always waits for the owner.
       const offersBooking = carriesBookingLink(message, lead.id);
-      if (holdAll || isUntouched || phoneNeverWrote || unconfirmedSpam || effectiveTier !== "AUTONOMOUS" || tier === "free" || needsPrice || askedIfPerson || offersBooking) {
+      if (holdAll || isUntouched || phoneNeverWrote || unconfirmedSpam || effectiveTier !== "AUTONOMOUS" || tier === "free" || needsPrice || askedIfPerson || maybeNo || offersBooking) {
         /**
          * Every draft that reaches here gets a verdict, including ones
          * that are going to be held no matter what it says.
@@ -1667,6 +1669,10 @@ export async function runAutomationForBusiness(
         // off this topic). Stored, because it is a true verdict.
         if (blank) {
           risk = { riskLevel: "high", reason: slotReason(blank), topic: blank.kind === "price" ? "price" : "other" };
+          riskAssessed = true;
+        }
+        if (maybeNo) {
+          risk = { riskLevel: "high", reason: MAYBE_NO_REASON, topic: "other" };
           riskAssessed = true;
         }
         if (askedIfPerson) {

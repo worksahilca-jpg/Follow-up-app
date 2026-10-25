@@ -117,12 +117,12 @@ export default function AlertsSection() {
       <div className="box p-5">
         {status.email.available && (
           <div className="flex items-center justify-between gap-4">
-            <p className="font-medium text-sm">Email me when a customer is waiting</p>
+            <p className="font-medium text-sm">Email me when a customer needs me</p>
             <Switch
               checked={status.email.enabled}
               onChange={toggleEmail}
               disabled={emailSaving}
-              label="Email me when a customer is waiting"
+              label="Email me when a customer needs me"
             />
           </div>
         )}

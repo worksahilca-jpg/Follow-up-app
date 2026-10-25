@@ -4,7 +4,8 @@ import { HOLDING_TRIGGER, NOT_AN_ANSWER_TRIGGERS, isNotAnAnswer } from "@/lib/no
 import { prisma } from "@/lib/db";
 import { getHabits, habitOn, thanksIsNewest, weekendWaitUntil } from "@/lib/habits";
 import { recordAudit } from "@/lib/audit";
-import { isHeldOnlyByApprovalSetting } from "@/lib/holdReasons";
+import { isHeldOnlyByApprovalSetting, MAYBE_NO_REASON, NO_OVERRULED_REASON } from "@/lib/holdReasons";
+import type { NoHow } from "@/lib/declinePhrases";
 import { NO_ANSWER_TEXT } from "@/lib/callPlan";
 import { displayChannel } from "@/lib/displayChannel";
 
@@ -141,6 +142,8 @@ export type PendingApproval = {
   leadLastMessageAt: string | null;
   /** Their newest message said no (Lead.saidNoAt): Today says FollowUp won't remind them again. */
   saidNo?: boolean;
+  /** How that no was read (Lead.saidNoHow, A-326): a clear no, a maybe, or an agent. Null when they didn't say no. */
+  saidNoHow?: NoHow | null;
   /** Their newest message asked if they're talking to a real person (Lead.askedIfPersonAt). */
   askedIfPerson?: boolean;
   /**
@@ -172,6 +175,14 @@ export type PendingApproval = {
    */
   textTo?: string | null;
 };
+
+/**
+ * The hold's reason as the queue shows it. A maybe-no the owner has since overruled ("Keep following up", A-326) no
+ * longer says "might be a no": the reply still waits for them, now because they chose to keep going.
+ */
+export function readReason(stored: string, saidNoHow: string | null): string {
+  return stored === MAYBE_NO_REASON && saidNoHow !== "unsure" ? NO_OVERRULED_REASON : stored;
+}
 
 /**
  * Exported so its tests drive the real thing. A copy of this logic in a
@@ -242,6 +253,7 @@ export async function getPendingApprovals(businessId: string, now: Date = new Da
       suggestedDraftKind: true,
       phone: true,
       saidNoAt: true,
+      saidNoHow: true,
       askedIfPersonAt: true,
       thanksOnlyAt: true,
       // One inbound message per conversation (the most recent), not the
@@ -371,7 +383,7 @@ export async function getPendingApprovals(businessId: string, now: Date = new Da
       draftRiskLevel: lead.suggestedRiskLevel,
       riskTopic: lead.suggestedRiskTopic,
       riskLevel: typeof meta.riskLevel === "string" ? meta.riskLevel : "medium",
-      reason: typeof meta.reason === "string" ? meta.reason : "",
+      reason: readReason(typeof meta.reason === "string" ? meta.reason : "", lead.saidNoHow),
       trigger: typeof meta.trigger === "string" ? meta.trigger : "silence",
       heldAt: event.createdAt,
       draftSubject: lead.suggestedSubject,
@@ -380,6 +392,7 @@ export async function getPendingApprovals(businessId: string, now: Date = new Da
       leadLastMessageChannel: displayChannel(lastInbound?.channel, lead.source),
       leadLastMessageAt: lastInbound ? lastInbound.sentAt.toISOString() : null,
       saidNo: lead.saidNoAt != null,
+      saidNoHow: lead.saidNoAt ? ((lead.saidNoHow as NoHow | null) ?? "clear") : null,
       ...(typeof meta.quote === "string" && meta.quote
         ? { said: { quote: meta.quote, when: saidWhen(typeof meta.saidOn === "string" ? new Date(meta.saidOn) : event.createdAt, now, timezone) } }
         : {}),

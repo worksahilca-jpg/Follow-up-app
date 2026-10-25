@@ -7,7 +7,9 @@ import { Check } from "lucide-react";
 import { WARM_CARD } from "@/components/app/ReplyCard";
 import { oneQueue, summariseGroups, UNKNOWN_SOURCE_LABEL, WHOLE_QUEUE } from "@/lib/approvalGroups";
 import type { TodayTier } from "@/lib/calmToday";
-import { plainHoldReason } from "@/lib/holdReasons";
+import { MAYBE_NO_REASON, plainHoldReason } from "@/lib/holdReasons";
+import { saidNoWords } from "@/lib/saidNoWords";
+import KeepFollowingButton from "@/components/app/KeepFollowingButton";
 import { STAY_IN_TOUCH_TRIGGER } from "@/lib/stayInTouch";
 import { THEIR_MOMENT_TRIGGER } from "@/lib/theirMoment";
 import { isBookingLinkReason } from "@/lib/bookingOffer";
@@ -181,7 +183,8 @@ function ApprovalCard({
   useEffect(() => {
     if (restored.current) keepEdit(item.leadId, item.draftMessage, { text, mine, price });
   }, [item.leadId, item.draftMessage, text, mine, price]);
-  const plainReason = plainHoldReason(item.reason, { firstName, topic: item.riskTopic });
+  // A maybe-no says itself in the no line below (A-326), not twice.
+  const plainReason = item.reason === MAYBE_NO_REASON ? null : plainHoldReason(item.reason, { firstName, topic: item.riskTopic });
   // Their booking link in the reply (A-263): information, not a check, so no dot.
   const offersBooking = isBookingLinkReason(item.reason);
   // With the words underlined, the line under the reply points at them (#1).
@@ -530,9 +533,13 @@ function ApprovalCard({
           {firstName} asked if they&apos;re talking to a real person. Answer this one yourself.
         </p>
       )}
-      {/* They said no: information, not a task, so no dot. */}
+      {/* They said no (A-326): what FollowUp did, in words with no dot (R-141), and the one way back. A maybe-no says
+          FollowUp isn't sure and stopped to be safe. */}
       {item.saidNo && !editing && (
-        <p className="mt-2.5 text-[13px] leading-snug text-ink">{firstName} said no. After this reply, FollowUp won&apos;t remind them again.</p>
+        <div>
+          <p className="mt-2.5 text-[13px] leading-snug text-ink">{saidNoWords(item.saidNoHow ?? "clear", firstName).line}</p>
+          <KeepFollowingButton leadId={item.leadId} label={saidNoWords(item.saidNoHow ?? "clear", firstName).link} className="mt-0.5" />
+        </div>
       )}
       {/* Why it waits, in the owner's words (A-087): what to check, or
           nothing when the every-reply-waits setting is the only reason.
@@ -1057,6 +1064,8 @@ function replyRow(item: ApprovalItem): TodayRow {
   // Where they stand (A-310), unless their line already says it ("Buying · Has an agent").
   const tag = item.call?.tag ?? (item.ready ? "Ready" : null);
   const base = { key: item.leadId, kind: "reply" as const, title: item.leadName, person: item.leadName, time: null, href: null, tag: tag && !item.line?.includes(tag) ? tag : null };
+  // They said no (A-326): the row says it in words before anything else about them.
+  if (item.saidNo) return { ...base, sub: saidNoWords(item.saidNoHow ?? "clear", item.leadName).row };
   // Who they are, from their own words (A-286), whenever FollowUp knows; what is waiting is said when they open.
   if (item.line) return { ...base, sub: item.line };
   // A note to someone staying in touch (A-260) answers nothing: the row says what it is.

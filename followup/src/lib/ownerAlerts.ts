@@ -2,7 +2,9 @@ import { NOT_AN_ANSWER_TRIGGERS } from "@/lib/notAnAnswer";
 import { isSharedContentOnly } from "@/lib/sharedContent";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { getPendingApprovals } from "@/lib/pendingApprovals";
+import { getPendingApprovals, type PendingApproval } from "@/lib/pendingApprovals";
+import { isHeldOnlyByApprovalSetting } from "@/lib/holdReasons";
+import { hasPriceSlot } from "@/lib/priceSlot";
 import { groupByRecipient, HOLD_BURST_THRESHOLD } from "@/lib/holdNotices";
 import { greetingFirstName } from "@/lib/leadName";
 import { inboundBaseUrl } from "@/lib/siteUrl";
@@ -66,6 +68,13 @@ import { clockTime } from "@/lib/todayWords";
  * after their last message, answered or not (NEW_WAIT_GAP_MS): someone who
  * comes back after two weeks is news, not the same old wait. The OwnerAlert row's unique index is the
  * claim, so two overlapping ticks cannot both alert it.
+ *
+ * ## Email only when the owner is needed
+ *
+ * Founder, 2026-10-24 (A-327): "Do not send mails for every single message of every leads … push the mail when it's
+ * necessary." Every waiting customer still buzzes the phone, but only a reply that needs something only the owner
+ * knows (needsOwner: a price, a day, an unhappy customer, "is this a real person?", a maybe-no) is emailed. A routine
+ * reply FollowUp wrote, waiting only for an OK, stays on Today with no email.
  *
  * ## Many at once
  *
@@ -154,7 +163,25 @@ export type WaitingCustomer = {
   channel: string | null;
   /** The customer's first message since the owner last acted. The wait's identity. */
   waitStartedAt: Date;
+  /** Their reply needs the owner for more than an OK (needsOwner, A-327): only these are emailed. */
+  needsYou: boolean;
 };
+
+/**
+ * Does this waiting reply need the owner for more than an OK (founder, 2026-10-24, A-327)? Anything held for a reason
+ * other than the every-reply-waits setting does, as does a check the card asks for: a price blank, a price, day or
+ * unhappy customer the risk judge flagged, a risky draft, "is this a real person?", or a maybe-no (A-326). Exported so
+ * the tests drive the real rule.
+ */
+export function needsOwner(
+  a: Pick<PendingApproval, "reason" | "riskTopic" | "draftRiskLevel" | "askedIfPerson" | "saidNoHow" | "draftMessage">
+): boolean {
+  if (!isHeldOnlyByApprovalSetting(a.reason)) return true;
+  if (a.askedIfPerson || a.saidNoHow === "unsure") return true;
+  if (a.riskTopic === "price" || a.riskTopic === "date" || a.riskTopic === "tense") return true;
+  if (a.draftRiskLevel === "medium" || a.draftRiskLevel === "high") return true;
+  return hasPriceSlot(a.draftMessage);
+}
 
 /**
  * A customer who writes again this long after their previous message has started a new wait, even if nobody
@@ -303,6 +330,7 @@ async function waitingCustomersFor(businessId: string, now: Date): Promise<Waiti
       lastMessage: approval.leadLastMessage ?? "",
       channel: approval.leadLastMessageChannel,
       waitStartedAt: startedAt,
+      needsYou: needsOwner(approval),
     });
   }
   return out;
@@ -408,7 +436,7 @@ export function customerEmail(c: WaitingCustomer, base: string, opts: EmailOptio
   const open = first === "A customer" ? "Open the conversation" : `Open ${first}'s conversation`;
   return {
     subject: `${first} is waiting for your reply`,
-    text: [wrote, ...(said ? ["", `"${said}"`] : []), "", "FollowUp's reply is ready — open it to send.", url, "", foot.text].join("\n"),
+    text: [wrote, ...(said ? ["", `"${said}"`] : []), "", "FollowUp's reply needs you before it goes. Open it to check and send.", url, "", foot.text].join("\n"),
     html: renderNoticeEmailHtml({
       base,
       label: "Waiting for your reply",
@@ -416,7 +444,7 @@ export function customerEmail(c: WaitingCustomer, base: string, opts: EmailOptio
       date: noticeDate(new Date(), opts.timeZone ?? "America/New_York"),
       before: [],
       sub: { kind: "person", initials: initialsOf(full, first), name: full, channel: where ? `wrote ${where}` : "wrote", when: null, quote: said || null },
-      after: ["FollowUp's reply is ready. Open it to send."],
+      after: ["FollowUp's reply needs you before it goes. Open it to check and send."],
       button: { text: open, href: url },
       why: "Nothing goes out until you send it.",
       footnote: FOOTNOTE,
@@ -428,14 +456,14 @@ export function customerEmail(c: WaitingCustomer, base: string, opts: EmailOptio
 export function summaryEmail(count: number, base: string, opts: EmailOptions = {}): EmailContent {
   const url = `${base}/dashboard`;
   const foot = footer(base);
-  const line = `${count} customers wrote, and FollowUp's replies to them are ready. Open FollowUp to read them and send.`;
+  const line = `${count} customers wrote, and FollowUp's replies to them need you before they go. Open FollowUp to check them and send.`;
   return {
-    subject: `${count} customers are waiting for your OK`,
+    subject: `${count} customers need you`,
     text: [line, url, "", foot.text].join("\n"),
     html: renderNoticeEmailHtml({
       base,
-      label: "Waiting for your OK",
-      title: `${count} customers are waiting for your OK`,
+      label: "Needs you",
+      title: `${count} customers need you`,
       date: noticeDate(new Date(), opts.timeZone ?? "America/New_York"),
       before: [line],
       button: { text: "Open FollowUp", href: url },
@@ -940,7 +968,17 @@ async function alertOne(
       select: { id: true },
     });
     attemptFailed = false;
-    const emailed = await email(summaryEmail(claimed.length, base, { timeZone: user.business?.timezone }), summary.id);
+    // Emailed only for the ones who need the owner (A-327): one by name, several as a count, none not at all.
+    const needYou = claimed.filter((c) => c.customer.needsYou).map((c) => c.customer);
+    const emailed =
+      needYou.length === 0
+        ? false
+        : await email(
+            needYou.length === 1
+              ? customerEmail(needYou[0], base, { timeZone: user.business?.timezone })
+              : summaryEmail(needYou.length, base, { timeZone: user.business?.timezone }),
+            summary.id
+          );
     const pushed = await push(summaryPush(claimed.length));
     if (emailed || pushed) {
       await prisma.ownerAlert.update({
@@ -960,7 +998,8 @@ async function alertOne(
 
   for (const { customer, rowId } of claimed) {
     attemptFailed = false;
-    const emailed = await email(customerEmail(customer, base, { timeZone: user.business?.timezone }), rowId);
+    // A routine reply waiting only for an OK buzzes the phone, never the inbox (A-327).
+    const emailed = customer.needsYou ? await email(customerEmail(customer, base, { timeZone: user.business?.timezone }), rowId) : false;
     const pushed = await push(customerPush(customer));
     if (emailed || pushed) {
       await prisma.ownerAlert.update({

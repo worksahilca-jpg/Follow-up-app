@@ -27,6 +27,8 @@ vi.mock("@/lib/sender", () => ({ composeFollowUpEmail: vi.fn(async (_n: string, 
 vi.mock("@/lib/integrations/openai", () => ({
   scoreLead: vi.fn(async () => ({ score: 80, reason: "Wants a viewing", factors: [] })),
   generateFollowUpMessage: vi.fn(async () => ({ subject: "The condo", body: "I'll confirm it's available. Which days suit you?" })),
+
+  checkForStop: vi.fn(async () => ({ tries: 5, stops: 0 })),
 }));
 
 import { scoreAndDraftForLead } from "@/lib/scoring";

@@ -5485,6 +5485,8 @@ conversation covering about 15 topics; R-027 rejected questions between setup an
   Settings → Your business → What FollowUp knows.
 - **Nothing from it is used before the owner checks it:** what FollowUp took from each answer is shown, and saved only on
   the owner's OK (A-308's pattern).
+**Partly SUPERSEDED (2026-10-26) by [[#^A-328|A-328]]:** setup gains one optional website line on its step-3 waiting
+screen, at the founder's word ("we can ask them in orboarding too"). Still no row of questions (R-027).
 
 ## A-312 — "Tell FollowUp about your business", built as drawn ^A-312
 
@@ -5790,6 +5792,8 @@ soonest first).
 
 ## A-326 — When a customer says no: stop, say so, and one way back ^A-326
 
+**LIVE 2026-10-26** (PR #597, deployed with #599 after the Vercel pause).
+
 **Date:** 2026-10-25. **Founder, verbatim:** *"Yes to both"* to plan step 5 (any reading that says no stops FollowUp
 and tells the owner; Claude writes the 50 test conversations, the founder checks them), then *"yes to both, build it"*
 to the drawing (scratchpad `no5/no-board.png`, on the real app with test customers).
@@ -5812,6 +5816,8 @@ to the drawing (scratchpad `no5/no-board.png`, on the real app with test custome
 
 ## A-327 — Email the owner only when they're needed ^A-327
 
+**LIVE 2026-10-26** (PR #597, deployed with #599 after the Vercel pause).
+
 **Date:** 2026-10-25. **Founder, verbatim:** *"Do not send mails for every single message of every leads. You just
 have to push the mail when it's necessary, when actually we actually needed, or the customer actually needed, the
 business owner or the user."* then *"yes to both, build it"* to the proposed rule.
@@ -5822,3 +5828,26 @@ business owner or the user."* then *"yes to both, build it"* to the proposed rul
 - **No email** for a routine reply FollowUp wrote that only needs an OK: it stays on Today, and the phone still buzzes.
 - Several at once: one email naming the one who needs the owner, or "N customers need you". The Settings switch reads
   "Email me when a customer needs me".
+
+## A-328 — FollowUp reads the owner's website and Instagram, in "Tell FollowUp" and in setup ^A-328
+
+**Date:** 2026-10-26. **Founder, verbatim:** *"i got i more idea to read their busineesses that is reading their
+websites"*, *"we should also read their social media to get to know more about their businesses"*, *"we can ask them in
+orboarding too bro"*, then *"yes build it"* to both drawings (design-decisions, 2026-10-26; boards `web6/website-board.png`
+and `web6/setup-board.png` in the session scratchpad).
+**What specifically was approved:**
+- **In "Tell FollowUp" (A-314), before the questions:** FollowUp's first bubble asks for the website ("Paste the link,
+  and the questions skip whatever it already answers."), "Also read your Instagram posts" ticked when Instagram is
+  connected (only the owner's own posts and bio, never comments or messages), the answer box takes the link with
+  **Read it**, and **No website, skip this** · **Finish later**.
+- **After reading:** one plain line on what was read and how many questions are left; the meeting asks only those, and
+  may name what the site said.
+- **The play-back:** "From yourwebsite.ca (N pages), N Instagram posts and your N answers · See what it read", and under
+  each new line where it came from: "From your website", "From your Instagram", "You said". Nothing is used before
+  **Looks right** (A-314, A-308); values are the business's own words, copied word for word (A-312).
+- **In setup (A-272), with no new screen:** on step 3's "Still reading your inbox…", one optional line "While you wait:
+  does your business have a website?", a link box with **Add**, and Instagram read too when connected. What it finds
+  waits for the meeting's play-back. It never moves on while the box has text.
+- **Supersedes in part** A-311's "Setup is unchanged": one optional line on a waiting screen, at the founder's word.
+  R-027 stands (no row of questions after setup).
+

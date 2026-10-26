@@ -5,10 +5,12 @@ import Link from "next/link";
 import { Mic } from "lucide-react";
 import ScrollTitle from "@/components/app/ScrollTitle";
 import TellTalk, { useCanRecord } from "@/components/TellTalk";
+import { BrandTile } from "@/components/brandLogos";
 import type { FactLine } from "@/lib/factLines";
 import type { Playback, PlaybackRow, TellState, TellTopic } from "@/lib/tellFollowUp";
 import { exampleLine, MAX_ANSWER } from "@/lib/tellLines";
 import { talkLength } from "@/lib/tellTalk";
+import { fromLine, siteName, type ReadSource, type SiteNote } from "@/lib/siteRead";
 
 /**
  * "Tell FollowUp about your business", a 5-minute meeting (A-311, A-314). FollowUp asks what a consultant would ask,
@@ -23,6 +25,10 @@ import { talkLength } from "@/lib/tellTalk";
  *
  * "Rather talk?" (A-318): the same meeting said out loud (src/components/TellTalk.tsx), ending in the same play-back,
  * with what was said and what the talk didn't cover.
+ *
+ * Before the first question (A-328), FollowUp asks for the business's website once, and reads the owner's own Instagram
+ * posts too when Instagram is connected; the meeting then asks only what that didn't answer, and the play-back says
+ * where each line came from.
  */
 type Exchange = { q: string; a: string };
 
@@ -36,9 +42,29 @@ const QUIET = "inline-flex min-h-11 items-center text-[14px] text-ink-soft under
 const OUTLINED = "inline-flex min-h-11 items-center rounded-full border bg-card px-[18px] text-[15px] font-medium disabled:opacity-50";
 const SECTION = "px-1 text-[13px] font-semibold text-ink-soft";
 
-async function post(body: unknown): Promise<{ ok: true; data: Record<string, unknown> } | { ok: false; message: string }> {
+/** FollowUp's ask before the questions (A-328), kept on screen once answered or skipped. */
+const SITE_ASK = "Before the questions: does your business have a website? Paste the link, and the questions skip whatever it already answers.";
+/** Under a line of the play-back: where it came from (A-328). */
+const SOURCE: Record<ReadSource | "said", string> = { website: "From your website", instagram: "From your Instagram", said: "You said" };
+
+/** The website step, from the page (A-328). */
+export type TellSite = {
+  /** Ask for the website before the first question: once, never on "Answer them now". */
+  ask: boolean;
+  /** Instagram's handle when it's connected ("" when the handle isn't known), else null. */
+  instagram: string | null;
+  /** How many of the meeting's questions what was read already answered. */
+  readCount: number;
+  /** What was read before this visit (setup's line), when the owner hasn't answered anything since. */
+  readSaid: string | null;
+};
+
+/** The website step once done: the link the owner gave (null for Instagram alone) and the line on what was read. */
+type SiteTurn = { said: string | null; asked: boolean; line: string };
+
+async function post(body: unknown, url = "/api/business/tell"): Promise<{ ok: true; data: Record<string, unknown> } | { ok: false; message: string }> {
   try {
-    const res = await fetch("/api/business/tell", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
     const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
     if (!res.ok || !data.success) return { ok: false, message: typeof data.message === "string" ? data.message : "That didn't save. Try again." };
     return { ok: true, data };
@@ -100,11 +126,13 @@ export default function TellFollowUp({
   first,
   again,
   doneHref,
+  site,
 }: {
   initial: TellState;
   first: TellTopic | null;
   again: boolean;
   doneHref: string;
+  site: TellSite;
 }) {
   const [state, setState] = useState(initial);
   // The question to answer now, worded for this business by the server (A-313); null when there is nothing left.
@@ -130,11 +158,20 @@ export default function TellFollowUp({
   const [talking, setTalking] = useState(false);
   const [talked, setTalked] = useState(false);
   const [showWords, setShowWords] = useState(false);
+  // The website step (A-328): asked first, the Instagram tick, what's being read, and the line once it's read.
+  const [askSite, setAskSite] = useState(site.ask);
+  const [readInstagram, setReadInstagram] = useState(true);
+  const [reading, setReading] = useState<string | null>(null);
+  const [siteTurn, setSiteTurn] = useState<SiteTurn | null>(site.readSaid ? { said: null, asked: false, line: site.readSaid } : null);
+  const [siteSkipped, setSiteSkipped] = useState(false);
+  const [readCount, setReadCount] = useState(site.readCount);
+  const [showRead, setShowRead] = useState(false);
   const end = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
 
   const remaining = state.open.filter((l) => !setAside.includes(l));
-  const total = state.topics.length;
+  // What the website and Instagram answered isn't asked, so the counter counts only the rest (A-328).
+  const total = Math.max(1, state.topics.length - readCount);
   const position = Math.min(total, Math.max(1, total - remaining.length + 1));
   const last = remaining.length <= 1;
 
@@ -154,9 +191,10 @@ export default function TellFollowUp({
   }, [loadingPlayback, again]);
 
   // Each new step comes into view, as a chat does; the first question is already on screen.
+  const siteDone = Boolean(siteTurn?.asked) || siteSkipped;
   useEffect(() => {
-    if (turns.length > 0 || pending) end.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-  }, [turns.length, pending]);
+    if (turns.length > 0 || pending || siteDone) end.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [turns.length, pending, siteDone]);
 
   function focusBox() {
     // After the box is enabled again, on the next frame.
@@ -210,6 +248,40 @@ export default function TellFollowUp({
     setTurns((t) => [...t, { exchanges }]);
     setPending(null);
     moveOn(r.data);
+  }
+
+  /** "Read it": FollowUp reads the website (and the posts, when ticked), then asks only what's left (A-328). */
+  async function readSite() {
+    const link = text.trim();
+    const withInstagram = site.instagram !== null && readInstagram;
+    if (busy || (!link && !withInstagram)) return;
+    setBusy(true);
+    setError(null);
+    setReading(link);
+    const r = await post({ action: "read", ...(link ? { url: link } : {}), instagram: withInstagram, again }, "/api/business/tell/read");
+    setBusy(false);
+    setReading(null);
+    // The link stays in the box, so the owner can fix it or skip.
+    if (!r.ok) return setError(r.message);
+    setAskSite(false);
+    setText("");
+    setReadCount(typeof r.data.readCount === "number" ? r.data.readCount : 0);
+    setSiteTurn({ said: link || null, asked: true, line: typeof r.data.line === "string" ? r.data.line : "" });
+    moveOn(r.data);
+  }
+
+  /** "No website, skip this": not asked again. */
+  async function skipSite() {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    const r = await post({ action: "skip" }, "/api/business/tell/read");
+    setBusy(false);
+    if (!r.ok) return setError(r.message);
+    setAskSite(false);
+    setSiteSkipped(true);
+    setText("");
+    focusBox();
   }
 
   async function skip() {
@@ -353,6 +425,17 @@ export default function TellFollowUp({
             )}
           </>
         )}
+        {playback?.site && (
+          <>
+            <p className="mt-1.5 text-[14.5px] leading-relaxed text-ink-soft">
+              {fromLine(playback.site, playback.rows.filter((r) => r.from === "said").length)} ·{" "}
+              <button type="button" onClick={() => setShowRead((v) => !v)} aria-expanded={showRead} className="text-ink underline underline-offset-[3px]">
+                {showRead ? "Hide what it read" : "See what it read"}
+              </button>
+            </p>
+            {showRead && <WhatItRead site={playback.site} />}
+          </>
+        )}
         {loadingPlayback || !playback ? (
           <p className="mt-6 px-1 text-[15px] text-ink-faint">FollowUp is putting it together…</p>
         ) : (
@@ -409,7 +492,13 @@ export default function TellFollowUp({
                             </div>
                           </form>
                         ) : v ? (
-                          <p className="mt-0.5 text-[15px] leading-snug">{v}</p>
+                          <>
+                            <p className="mt-0.5 text-[15px] leading-snug">{v}</p>
+                            {/* Where it came from, once something was read (A-328). An edit makes it the owner's. */}
+                            {playback.site && row.from && (
+                              <p className="mt-0.5 text-[12.5px] text-ink-faint">{v !== row.value ? "You changed it" : SOURCE[row.from]}</p>
+                            )}
+                          </>
                         ) : (
                           <p className="mt-0.5 text-[15px] leading-snug text-ink-faint">Left out.</p>
                         )}
@@ -580,9 +669,12 @@ export default function TellFollowUp({
       {back}
       <div className="flex items-start justify-between gap-3">
         <h1 className="title-serif ios-title1">Tell FollowUp about your business</h1>
-        <span className="mt-2 shrink-0 whitespace-nowrap text-[13px] text-ink-soft">
-          {position} of {total}
-        </span>
+        {/* No counter while it asks for the website: that isn't one of the questions. */}
+        {!askSite && (
+          <span className="mt-2 shrink-0 whitespace-nowrap text-[13px] text-ink-soft">
+            {position} of {total}
+          </span>
+        )}
       </div>
       <p className="mt-1.5 text-[15px] leading-relaxed text-ink-soft">
         A 5-minute meeting so FollowUp gets to know your business. It asks what a consultant would ask, one thing at a time;
@@ -604,6 +696,50 @@ export default function TellFollowUp({
       )}
 
       <div className="mt-6 flex flex-col gap-4" aria-live="polite">
+        {/* The website step (A-328): the ask, the link, and one plain line on what was read (not a bubble, A-313). */}
+        {(askSite || siteSkipped || siteTurn?.asked) && <FollowUpSays text={SITE_ASK} />}
+        {askSite && reading === null && (
+          <>
+            <p className="-mt-2 px-1 text-[13.5px] text-ink-faint">{exampleLine("e.g. yourwebsite.ca")}</p>
+            {site.instagram !== null && (
+              <label htmlFor="tell-instagram" className="flex cursor-pointer items-start gap-3 rounded-[16px] border border-line bg-card px-3.5 py-3">
+                <input
+                  id="tell-instagram"
+                  type="checkbox"
+                  checked={readInstagram}
+                  onChange={(e) => setReadInstagram(e.target.checked)}
+                  className="mt-1 h-5 w-5 shrink-0 accent-[var(--ink)]"
+                />
+                <span className="flex flex-col gap-0.5">
+                  <span className="flex items-center gap-2 text-[15px] font-medium">
+                    <BrandTile brand="instagram" />
+                    Also read your Instagram posts
+                  </span>
+                  <span className="text-[13.5px] leading-snug text-ink-soft">
+                    {site.instagram ? `@${site.instagram}, already connected.` : "Already connected."} Only your own posts and bio,
+                    never comments or messages.
+                  </span>
+                </span>
+              </label>
+            )}
+          </>
+        )}
+        {reading !== null && (
+          <>
+            {reading && <YouSay text={reading} />}
+            <p className="px-1 text-[14px] text-ink-faint">
+              {reading ? `FollowUp is reading ${siteName(reading.includes("://") ? reading : `https://${reading}`)}…` : "FollowUp is reading your Instagram posts…"}
+            </p>
+          </>
+        )}
+        {siteSkipped && <p className="-mt-2 px-1 text-[13.5px] text-ink-faint">Skipped.</p>}
+        {siteTurn && (
+          <>
+            {siteTurn.said && <YouSay text={siteTurn.said} />}
+            {siteTurn.line && <p className="px-1 text-[14.5px] leading-relaxed text-ink-soft">{siteTurn.line}</p>}
+          </>
+        )}
+
         {turns.map((t, i) => (
           <div key={i} className="flex flex-col gap-4">
             <Said exchanges={t.exchanges} />
@@ -616,8 +752,8 @@ export default function TellFollowUp({
           </div>
         ))}
 
-        {!pending && <FollowUpSays text={topic.question} />}
-        {!pending && example && <p className="-mt-2 px-1 text-[13.5px] text-ink-faint">{example}</p>}
+        {!pending && !askSite && <FollowUpSays text={topic.question} />}
+        {!pending && !askSite && example && <p className="-mt-2 px-1 text-[13.5px] text-ink-faint">{example}</p>}
         {pending && <Said exchanges={pending.exchanges} />}
         {/* FollowUp's one more question, while it waits for the answer (A-313). */}
         {pending?.dig && !busy && pending.exchanges.length === 1 && (
@@ -637,40 +773,72 @@ export default function TellFollowUp({
         style={{ borderColor: "var(--line-strong)" }}
         onSubmit={(e) => {
           e.preventDefault();
-          void send();
+          void (askSite ? readSite() : send());
         }}
       >
         <label htmlFor="tell-answer" className="sr-only">
-          Your answer
+          {askSite ? "Your website link" : "Your answer"}
         </label>
         <input
           id="tell-answer"
           ref={input}
           value={text}
           onChange={(e) => setText(e.target.value)}
-          maxLength={MAX_ANSWER}
-          placeholder="Answer in your own words…"
+          maxLength={askSite ? 200 : MAX_ANSWER}
+          placeholder={askSite ? "Your website link…" : "Answer in your own words…"}
           autoComplete="off"
+          {...(askSite ? { inputMode: "url" as const, autoCapitalize: "none", autoCorrect: "off", spellCheck: false } : {})}
           className="min-h-10 min-w-0 flex-1 bg-transparent text-[16px] outline-none placeholder:text-ink-faint"
         />
         <button
           type="submit"
-          disabled={busy || !text.trim()}
+          disabled={busy || (askSite ? !text.trim() && !(site.instagram !== null && readInstagram) : !text.trim())}
           className="min-h-10 shrink-0 rounded-full px-[18px] text-[15px] font-medium disabled:opacity-50"
           style={{ background: "var(--accent)", color: "var(--on-accent)" }}
         >
-          Send
+          {/* No link, Instagram ticked: it reads the posts alone, and says so. */}
+          {askSite ? (busy ? "Reading…" : text.trim() || site.instagram === null || !readInstagram ? "Read it" : "Read Instagram") : "Send"}
         </button>
       </form>
       {errorLine}
       <div className="mt-2 flex items-center justify-between px-1">
-        <button type="button" onClick={() => void skip()} disabled={busy} className={QUIET}>
-          Skip this one
-        </button>
+        {askSite ? (
+          <button type="button" onClick={() => void skipSite()} disabled={busy} className={QUIET}>
+            No website, skip this
+          </button>
+        ) : (
+          <button type="button" onClick={() => void skip()} disabled={busy} className={QUIET}>
+            Skip this one
+          </button>
+        )}
         <Link href={doneHref} className={QUIET}>
           Finish later
         </Link>
       </div>
+    </div>
+  );
+}
+
+/** "See what it read" (A-328): the owner's own pages, as people say them, and how many posts. Plain text, not links. */
+function WhatItRead({ site }: { site: SiteNote }) {
+  return (
+    <div className="mt-3 flex flex-col gap-2 rounded-[16px] border border-line bg-card px-3.5 py-3 text-[14.5px] leading-relaxed text-ink-soft">
+      {site.url && site.pages.length > 0 && (
+        <div>
+          <p>
+            {site.pages.length === 1 ? "1 page" : `${site.pages.length} pages`} of {siteName(site.url)}:
+          </p>
+          <ul className="mt-1 list-disc pl-5">
+            {site.pages.map((p) => (
+              <li key={p} className="break-all">
+                {p.replace(/^https?:\/\/(www\.)?/i, "").replace(/\/$/, "")}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {site.posts > 0 && <p>Your last {site.posts === 1 ? "Instagram post" : `${site.posts} Instagram posts`}.</p>}
+      <p className="text-[13px] text-ink-faint">Only what anyone can see. Nothing from comments or messages.</p>
     </div>
   );
 }

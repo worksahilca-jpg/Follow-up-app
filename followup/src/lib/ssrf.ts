@@ -244,3 +244,78 @@ export async function postJsonToTenantUrl(
     req.end(body);
   });
 }
+
+/** What getPageFromTenantUrl hands back: the address it ended on (after redirects) and the page as text. */
+export type TenantPage = { url: string; body: string };
+
+/**
+ * GET one public web page a tenant pointed FollowUp at (the owner's own website, A-328), as text.
+ *
+ * The same guard as postJsonToTenantUrl: the URL is checked (scheme, IP literal, every resolved address) and the socket
+ * dials through guardedLookup, so the address connected to is the one checked. Redirects are followed by hand, at most
+ * `maxRedirects`, each new address checked again the same way (a site moving http to https, or to www, is ordinary; a
+ * public host answering 302 to an internal one gets nothing). Only HTML or plain text is read, and never more than
+ * `maxBytes`: the rest of a large page is cut off, not downloaded. `timeoutMs` is for the whole call, redirects
+ * included. Throws on anything else.
+ */
+export async function getPageFromTenantUrl(
+  raw: string,
+  { timeoutMs = 8000, maxBytes = 512 * 1024, maxRedirects = 3 }: { timeoutMs?: number; maxBytes?: number; maxRedirects?: number } = {}
+): Promise<TenantPage> {
+  let current = raw;
+  const signal = AbortSignal.timeout(timeoutMs);
+  for (let hop = 0; hop <= maxRedirects; hop++) {
+    const url = await assertSafeWebhookUrl(current);
+    const client = url.protocol === "https:" ? https : http;
+    const result = await new Promise<{ redirect: string } | TenantPage>((resolve, reject) => {
+      const req = client.request(
+        url,
+        {
+          method: "GET",
+          headers: { Accept: "text/html,text/plain;q=0.9", "User-Agent": "FollowUp/1.0 (reads a business's own site at the owner's request)" },
+          lookup: guardedLookup as unknown as net.LookupFunction,
+          signal,
+        },
+        (res) => {
+          const status = res.statusCode ?? 0;
+          if (status >= 300 && status < 400 && res.headers.location) {
+            res.destroy();
+            resolve({ redirect: new URL(res.headers.location, url).toString() });
+            return;
+          }
+          const type = String(res.headers["content-type"] ?? "").toLowerCase();
+          if (status < 200 || status >= 300) {
+            res.destroy();
+            reject(new UnsafeWebhookUrlError(`That page answered ${status}.`));
+            return;
+          }
+          if (!/text\/html|text\/plain|application\/xhtml\+xml/.test(type)) {
+            res.destroy();
+            reject(new UnsafeWebhookUrlError("That link isn't a web page."));
+            return;
+          }
+          const chunks: Buffer[] = [];
+          let size = 0;
+          res.on("data", (chunk: Buffer) => {
+            if (size >= maxBytes) return;
+            chunks.push(chunk);
+            size += chunk.length;
+            if (size >= maxBytes) res.destroy();
+          });
+          const done = () => resolve({ url: url.toString(), body: Buffer.concat(chunks).subarray(0, maxBytes).toString("utf8") });
+          res.on("end", done);
+          res.on("close", done);
+          res.on("error", reject);
+        }
+      );
+      req.on("error", reject);
+      req.end();
+    });
+    if ("redirect" in result) {
+      current = result.redirect;
+      continue;
+    }
+    return result;
+  }
+  throw new UnsafeWebhookUrlError("That page sends visitors around too many times.");
+}

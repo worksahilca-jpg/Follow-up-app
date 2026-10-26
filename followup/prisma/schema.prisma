@@ -320,6 +320,10 @@ model Business {
   // The meeting so far (A-314): what FollowUp took from each answer, { rows: [{ label, value }], read? }, waiting for
   // the owner's one "Looks right" at the end. Nothing here is quoted to a customer. Cleared when they confirm.
   tellDraft            Json?
+  // The owner's own website (A-328, src/lib/siteRead.ts), as they typed it in "Tell FollowUp" or setup, and when they
+  // answered that ask (read it, or "No website"), so it is asked once. FollowUp reads only these public pages.
+  website              String?
+  websiteAskedAt       DateTime?
   // What the owner asks a new buyer, in their own words and order (A-302, src/lib/askPlan.ts). Null: FollowUp's order.
   askPlan              Json?
   // The pilot (founder, 2026-10-22): what the owner said on the setup call about how they work today, before

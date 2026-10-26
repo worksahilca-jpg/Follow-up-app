@@ -459,6 +459,8 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
       stage: { notIn: ["WON", "LOST"] },
       // They said no (Lead.saidNoAt): the workflow waits until they write again.
       saidNoAt: null,
+      // "Not now" with the owner asking when (A-329): only the one check-back note goes.
+      notNowAt: null,
     },
     include: {
       sequence: { include: { steps: { orderBy: { order: "asc" } } } },

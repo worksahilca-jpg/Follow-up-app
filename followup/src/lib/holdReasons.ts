@@ -177,6 +177,12 @@ export const ASKED_IF_PERSON_REASON = "they asked whether they're talking to a r
 export const MAYBE_NO_REASON = "their message might be a no, so FollowUp stopped following up and this one waits for you";
 
 /**
+ * On the "not now" path (Lead.notNowAt, A-329): they said not now and the owner chose to ask when and check back once.
+ * Every reply on the path waits for the owner, their answer about when included.
+ */
+export const NOT_NOW_REASON = "they said not now, so FollowUp checks back once and this one waits for you";
+
+/**
  * A maybe-no the owner overruled with "Keep following up" (A-326) while its reply still waits. Never stored: the
  * queue reads the hold this way once the no is lifted (getPendingApprovals), so the card stops saying "might be a no".
  */
@@ -316,6 +322,7 @@ const PLAIN_BY_REASON: Record<string, (first: string) => string> = {
   [MEETING_MISSED_REASON]: (first) => `The call didn't happen. This offers ${first} a new time from your free hours.`,
   [ASKED_IF_PERSON_REASON]: (first) => `${first} asked if they're talking to a real person. Answer this one yourself.`,
   [MAYBE_NO_REASON]: (first) => `${first} might be saying no. Read their message before this goes.`,
+  [NOT_NOW_REASON]: (first) => `${first} said not now. FollowUp checks back once, at the time they gave. Read this before it goes.`,
   [NO_OVERRULED_REASON]: (first) => `You said to keep following up with ${first}. Send this when you're ready.`,
   "this conversation was already in your inbox before FollowUp started watching it, so it hasn't seen what you may have already done about it":
     () => "This was in your inbox before FollowUp started. Check you haven't already answered.",

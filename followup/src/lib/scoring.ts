@@ -15,6 +15,7 @@ import { tooManyRecentActions } from "@/lib/rateLimit";
 import { byTranscriptOrder } from "@/lib/transcript";
 import { scoreLead, generateFollowUpMessage, extractQualificationFacts, checkForStop } from "@/lib/integrations/openai";
 import { declineIn, readNo, type NoHow } from "@/lib/declinePhrases";
+import { notNowQuote, notNowStep, readNotNowPlan } from "@/lib/notNow";
 import { composeFollowUpEmail, latestInboundText } from "@/lib/sender";
 import { dmChannelOf } from "@/lib/dmDrafts";
 import { draftDm } from "@/lib/dmDrafting";
@@ -76,7 +77,7 @@ async function scoreAndDraft(leadId: string): Promise<boolean> {
     where: { id: leadId },
     include: {
       conversations: { include: { messages: { orderBy: { sentAt: "asc" } } } },
-      business: { select: { tier: true, name: true, industry: true, timezone: true, followUpPlans: true, askPlan: true } },
+      business: { select: { tier: true, name: true, industry: true, timezone: true, followUpPlans: true, askPlan: true, notNowPlan: true } },
     },
   });
   if (!lead) return false;
@@ -240,14 +241,7 @@ async function scoreAndDraft(leadId: string): Promise<boolean> {
       : Promise.resolve({ tries: 0, stops: 0 }),
   ]);
 
-  // An Instagram or Messenger customer who has been answered once and
-  // writes again is asked, once, for the best email and mobile to reach them
-  // (src/lib/dmContact.ts, A-238): Meta stops automatic DMs 24 hours after
-  // their last message, and the email is where a later follow-up goes. It
-  // takes this reply's one question; the next qualifying question waits for
-  // the reply after.
   const dmChannel = dmChannelOf(conversation);
-  const askContact = Boolean(dmChannel) && customerJustWrote && shouldAskForContact(lead, conversation);
 
   // What FollowUp now knows, where the customer stands (A-246), and what
   // this reply may ask about: one round, at most two things, in one
@@ -269,15 +263,46 @@ async function scoreAndDraft(leadId: string): Promise<boolean> {
       customerTexts(conversation),
       booking ? bookingWhen(booking.scheduledAt, lead.business.timezone ?? "America/New_York") : null
     );
-    const next = customerJustWrote && !askContact ? nextToAsk(template, qualification) : [];
-    qualify = askFor(next);
-    known = { qualification, nothingToAsk: customerJustWrote && !askContact && next.length === 0 };
-    if (next.length) qualification = markOffered(qualification, ...next.map((c) => c.key));
   }
-  const becameReady = Boolean(template && !lead.qualifiedAt && isReady(template, qualification));
   // "I'm already working with an agent" (A-246): FollowUp stops following
   // up, the same way it does after a no, until the owner says otherwise.
   const hasAgent = qualification?.tier === "agent";
+
+  const latestInbound = [...conversation].reverse().find((m) => m.direction === "inbound");
+  const latestInboundAt = latestInbound ? new Date(latestInbound.date) : null;
+  // Did their newest message say no (A-326)? Any reading that says stop counts. A message already read as a no stays
+  // one when read again without the customer writing (a later pass, the owner's own reply), and a message the owner
+  // overruled with "Keep following up" stays theirs.
+  const sameMessage = Boolean(lead.saidNoAt && latestInboundAt && lead.saidNoAt.getTime() === latestInboundAt.getTime());
+  const overruled = Boolean(lead.keepFollowingAt && latestInboundAt && latestInboundAt.getTime() <= lead.keepFollowingAt.getTime());
+  const noHow: NoHow | null = overruled
+    ? null
+    : (readNo({ phrase: phrase?.kind ?? null, aiSure: scoreResult.saysNo, hasAgent, ...stopCheck }) ??
+      (sameMessage ? ((lead.saidNoHow as NoHow | null) ?? "clear") : null));
+  // "Not now" (A-329, src/lib/notNow.ts), read only when the customer is the one who just wrote: the owner's choice
+  // decides this reply (a warm thanks, or the one question about when), in place of any question the checklist or
+  // the contact ask would add.
+  const notNow =
+    customerJustWrote && latestInbound && latestInboundAt
+      ? notNowStep({ plan: readNotNowPlan(lead.business.notNowPlan), noHow, text: latestInbound.body, sentAt: latestInboundAt, onPath: lead.notNowAt })
+      : null;
+  const notNowHint = notNow?.hint ?? undefined;
+
+  // An Instagram or Messenger customer who has been answered once and
+  // writes again is asked, once, for the best email and mobile to reach them
+  // (src/lib/dmContact.ts, A-238): Meta stops automatic DMs 24 hours after
+  // their last message, and the email is where a later follow-up goes. It
+  // takes this reply's one question; the next qualifying question waits for
+  // the reply after.
+  const askContact = Boolean(dmChannel) && customerJustWrote && !notNowHint && shouldAskForContact(lead, conversation);
+
+  if (template && qualification) {
+    const next = customerJustWrote && !askContact && !notNowHint ? nextToAsk(template, qualification) : [];
+    qualify = askFor(next);
+    known = { qualification, nothingToAsk: customerJustWrote && !askContact && !notNowHint && next.length === 0 };
+    if (next.length) qualification = markOffered(qualification, ...next.map((c) => c.key));
+  }
+  const becameReady = Boolean(template && !lead.qualifiedAt && isReady(template, qualification));
 
   // The newest reading wins. Falling back to the stored one only covers
   // the case where THIS message was too short to judge ("ok", "thanks")
@@ -299,7 +324,7 @@ async function scoreAndDraft(leadId: string): Promise<boolean> {
   let suggestedQuickReplies: Prisma.InputJsonValue | typeof Prisma.JsonNull;
   if (dmChannel) {
     const { trade, facts, examples, rules } = await draftingContext(lead.businessId);
-    const dm = await draftDm(lead.name, conversation, voiceSamples, undefined, undefined, leadLanguage, facts, askContact ? DM_CONTACT_ASK : qualify, trade, examples, rules, known);
+    const dm = await draftDm(lead.name, conversation, voiceSamples, notNowHint, undefined, leadLanguage, facts, askContact ? DM_CONTACT_ASK : qualify, trade, examples, rules, known);
     suggestedMessage = dm.body;
     suggestedResponseId = dm.responseId ?? null;
     suggestedSubject = null;
@@ -313,7 +338,7 @@ async function scoreAndDraft(leadId: string): Promise<boolean> {
     // a DM refuses every link (src/lib/dmDrafts.ts). The send pass holds a
     // draft that carries it, so the owner always sees it go.
     const bookingLink = customerJustWrote && saidYesToMeeting(conversation) ? `${appUrl()}/book/${lead.id}` : null;
-    const draft = await generateFollowUpMessage({ name: lead.name, conversation, ...(await draftingContext(lead.businessId)), qualify, bookingLink, known: known?.qualification ?? null, nothingToAsk: known?.nothingToAsk ?? false }, voiceSamples, undefined, undefined, leadLanguage);
+    const draft = await generateFollowUpMessage({ name: lead.name, conversation, ...(await draftingContext(lead.businessId)), qualify, bookingLink, known: known?.qualification ?? null, nothingToAsk: known?.nothingToAsk ?? false }, voiceSamples, notNowHint, undefined, leadLanguage);
     suggestedResponseId = draft.responseId ?? null;
     suggestedMessage = await composeFollowUpEmail(lead.name.split(" ")[0], lead.businessId, draft.body, {
       languageSample: latestInboundText(conversation),
@@ -324,8 +349,6 @@ async function scoreAndDraft(leadId: string): Promise<boolean> {
   }
 
   const newPriority = priorityFromScore(scoreResult.score);
-  const latestInbound = [...conversation].reverse().find((m) => m.direction === "inbound");
-  const latestInboundAt = latestInbound ? new Date(latestInbound.date) : null;
   // A day they asked to hear back, read from their own words and counted
   // from when they wrote (src/lib/followUpPlans.ts).
   const askedDay = latestInbound && latestInboundAt ? checkBackDate(latestInbound.body, latestInboundAt.getTime()) : null;
@@ -348,16 +371,6 @@ async function scoreAndDraft(leadId: string): Promise<boolean> {
   // occasional duplicate notification is cosmetic, not a data-integrity
   // problem like those two were.
   const becameHot = lead.priority !== "HIGH" && newPriority === "HIGH";
-
-  // Did their newest message say no (A-326)? Any reading that says stop counts. A message already read as a no stays
-  // one when read again without the customer writing (a later pass, the owner's own reply), and a message the owner
-  // overruled with "Keep following up" stays theirs.
-  const sameMessage = Boolean(lead.saidNoAt && latestInboundAt && lead.saidNoAt.getTime() === latestInboundAt.getTime());
-  const overruled = Boolean(lead.keepFollowingAt && latestInboundAt && latestInboundAt.getTime() <= lead.keepFollowingAt.getTime());
-  const noHow: NoHow | null = overruled
-    ? null
-    : (readNo({ phrase: phrase?.kind ?? null, aiSure: scoreResult.saysNo, hasAgent, ...stopCheck }) ??
-      (sameMessage ? ((lead.saidNoHow as NoHow | null) ?? "clear") : null));
 
   await prisma.lead.update({
     where: { id: lead.id },
@@ -416,7 +429,14 @@ async function scoreAndDraft(leadId: string): Promise<boolean> {
             // asked for. A newer day replaces it, a plain thanks keeps it,
             // and anything else they write means they're back, so it goes.
             ...(askedDay !== null ? { followUpNotBefore: new Date(askedDay) } : scoreResult.onlyThanks ? {} : { followUpNotBefore: null }),
-            ...(moment ? { momentAt: new Date(moment.at), momentQuote: moment.quote, momentSaidAt: latestInboundAt, momentNoteAt: null } : {}),
+            // The one check-back on the "not now" path (A-329) takes the place of a moment read from the same message, and
+            // like it is read once per message, so a re-score never brings back a note already written.
+            ...(notNow?.day != null && lead.momentSaidAt?.getTime() !== latestInboundAt.getTime()
+              ? { momentAt: new Date(notNow.day), momentQuote: notNowQuote(latestInbound?.body ?? ""), momentSaidAt: latestInboundAt, momentNoteAt: null }
+              : moment
+                ? { momentAt: new Date(moment.at), momentQuote: moment.quote, momentSaidAt: latestInboundAt, momentNoteAt: null }
+                : {}),
+            ...(notNow && notNow.notNowAt !== undefined ? { notNowAt: notNow.notNowAt } : {}),
           }
         : {}),
       ...(qualification ? { qualification: qualification as unknown as Prisma.InputJsonValue } : {}),

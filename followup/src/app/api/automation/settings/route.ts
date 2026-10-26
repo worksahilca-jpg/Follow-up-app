@@ -26,6 +26,8 @@ async function getDeadLeadReactivationSetting(businessId: string): Promise<{ ena
 }
 import { requireAdmin } from "@/lib/session";
 import { recordAudit } from "@/lib/audit";
+import { readNotNowPlan } from "@/lib/notNow";
+import { scoreAndDraftForLead } from "@/lib/scoring";
 
 const AUTOMATION_NAME = "Auto follow-up on silence";
 const AUTOMATION_ACTION = "auto_send";
@@ -57,6 +59,10 @@ const settingsSchema = z.object({
   onlyAdminsSend: z.boolean().optional(),
   // Business.teamCalls (A-103): "Your team calls customers". Saved on its own.
   teamCalls: z.boolean().optional(),
+  // Business.notNowPlan (A-329): what FollowUp does when a customer says "not now". Saved on its own; asked on Today
+  // with the customer whose card asked it, whose reply is written again under the answer.
+  notNowPlan: z.enum(["stop", "ask"]).optional(),
+  notNowLeadId: z.string().min(1).max(64).optional(),
   unansweredReply: z
     .object({
       enabled: z.boolean().optional(),
@@ -100,7 +106,7 @@ export async function GET() {
   // fact, so it is the one place that has to know.
   const business = await prisma.business.findUnique({
     where: { id: ctx.businessId },
-    select: { holdAllForApproval: true, autonomousAllowed: true, sendingPausedAt: true, onlyAdminsSend: true, teamCalls: true },
+    select: { holdAllForApproval: true, autonomousAllowed: true, sendingPausedAt: true, onlyAdminsSend: true, teamCalls: true, notNowPlan: true },
   });
   return NextResponse.json({
     enabled: automation?.enabled ?? true,
@@ -116,6 +122,8 @@ export async function GET() {
     sendingPaused: Boolean(business?.sendingPausedAt),
     onlyAdminsSend: business?.onlyAdminsSend ?? false,
     teamCalls: business?.teamCalls ?? false,
+    // Null until the owner answers: FollowUp stops meanwhile, and Settings shows Stop ticked.
+    notNowPlan: readNotNowPlan(business?.notNowPlan),
     isAdmin: await requireAdmin(ctx),
   });
 }
@@ -202,6 +210,19 @@ export async function POST(request: NextRequest) {
     await prisma.business.update({ where: { id: ctx.businessId }, data: { teamCalls: on } });
     void recordAudit(ctx, on ? "team.calls.on" : "team.calls.off");
     return NextResponse.json({ success: true, teamCalls: on });
+  }
+
+  if (body.notNowPlan) {
+    const plan = body.notNowPlan;
+    await prisma.business.update({ where: { id: ctx.businessId }, data: { notNowPlan: plan } });
+    void recordAudit(ctx, `automation.not_now.${plan}`);
+    // Asked on a customer's card: with Ask, their waiting reply is written again to ask when (Stop is what it already
+    // says). Only this business's own customer, and only while their message is still read as a maybe-no.
+    if (plan === "ask" && body.notNowLeadId) {
+      const lead = await prisma.lead.findFirst({ where: { id: body.notNowLeadId, businessId: ctx.businessId, saidNoHow: "unsure" }, select: { id: true } });
+      if (lead) await scoreAndDraftForLead(lead.id).catch((err) => console.error(`Could not rewrite the not-now reply for lead ${lead.id}:`, err));
+    }
+    return NextResponse.json({ success: true, notNowPlan: plan });
   }
 
   if (typeof body.onlyAdminsSend === "boolean") {

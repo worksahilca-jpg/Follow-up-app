@@ -52,12 +52,14 @@ export function readMoment(text: string, sentAtMs: number): { at: number; quote:
  * or wrote within the window; and nothing they said since says stop.
  */
 export function mayWriteMoment(
-  lead: { stayInTouchAt: Date | null; optedOutAt: Date | null; saidNoAt: Date | null; momentSaidAt: Date | null },
+  lead: { stayInTouchAt: Date | null; optedOutAt: Date | null; saidNoAt: Date | null; momentSaidAt: Date | null; notNowAt?: Date | null },
   lastInboundAt: Date | null,
   now: Date = new Date()
 ): boolean {
   if (lead.optedOutAt) return false;
-  if (lead.saidNoAt && (!lead.momentSaidAt || lead.saidNoAt > lead.momentSaidAt)) return false;
+  // A no stops it, said after the moment or in the same message (A-329: "Stop" means nothing more is sent). The one
+  // exception is the "not now" path, where the owner chose to check back once at the time the customer gave.
+  if (lead.saidNoAt && (!lead.momentSaidAt || lead.saidNoAt > lead.momentSaidAt || (lead.saidNoAt.getTime() === lead.momentSaidAt.getTime() && !lead.notNowAt))) return false;
   if (lead.stayInTouchAt) return true;
   return lastInboundAt != null && now.getTime() - lastInboundAt.getTime() <= MOMENT_WINDOW_DAYS * DAY;
 }

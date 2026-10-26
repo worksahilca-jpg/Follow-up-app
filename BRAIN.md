@@ -74,7 +74,14 @@ a booked call or visit; the owner closes.
 
 **Last updated: 2026-10-26**
 
-- **"Not now" and the "no" word list (A-329, Oct 26): fix built, PR open, not merged.** The founder: how FollowUp
+- **"Not now" choice built (A-329, Oct 26): PR open, not merged.** Drawn, then approved ("merge and yes build it").
+  The first time a maybe-no reads as "not now", that customer's Today card asks an admin once: Stop (the default) or
+  Ask when, then check back once; Settings › Sending replies changes it. Ask = one short question, one check-back note
+  at the time they give (Their moment, A-262), nothing else: no plan step, workflow or win-back while `Lead.notNowAt` is
+  set, every reply waits for the owner, consent window and STOP still win. Stop = a warm thanks with no question. One
+  migration (`Business.notNowPlan`, `Lead.notNowAt`). The founder, same day: *"YES WE SHOULD RESPECT THE CUSTOMER BRO"*.
+- **The "no" word-list fix is LIVE** (PR #602 → 0b68f4b, deploy green, Oct 26).
+- **"Not now" and the "no" word list (A-329, Oct 26): word-list fix LIVE (see above).** The founder: how FollowUp
   reacts comes from what realtors do, not from him (brand principle, same day). A "not now" still stops by default;
   each owner will choose (stop, or ask when and check back), and FollowUp learns it; the ask is drawn next. 50 made-up
   test conversations (`src/lib/noConversations.ts`) found the plain-words list stopping on 8 that aren't a no ("not

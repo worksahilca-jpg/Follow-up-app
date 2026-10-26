@@ -55,6 +55,7 @@ function updateCalls(): Array<{ data: Record<string, unknown> }> {
 import { scoreAndDraftForLead } from "@/lib/scoring";
 import { generateFollowUpMessage as generateFollowUpMessageMock } from "@/lib/integrations/openai";
 import { Prisma } from "@prisma/client";
+import { NOT_NOW_HINT } from "@/lib/notNow";
 
 const generateFollowUpMessage = generateFollowUpMessageMock as unknown as ReturnType<typeof vi.fn>;
 
@@ -369,6 +370,74 @@ describe("scoreAndDraftForLead — a no, or 'am I talking to a person?'", () => 
     expect(data.saidNoAt).toBeNull();
     expect(data.saidNoHow).toBeNull();
     expect(data.askedIfPersonAt).toBeNull();
+  });
+});
+
+describe("scoreAndDraftForLead — \"not now\" (A-329)", () => {
+  const sentAt = new Date("2026-10-24T10:00:00Z");
+  const saying = (body: string, extra: Record<string, unknown> = {}, plan: string | null = null) =>
+    leadRow({
+      business: { tier: "plus", notNowPlan: plan },
+      conversations: [{ channel: "email", messages: [{ id: "m1", direction: "inbound", body, sentAt, opened: false }] }],
+      ...extra,
+    });
+  const maybe = async () =>
+    ((await import("@/lib/integrations/openai")).checkForStop as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ tries: 5, stops: 1 });
+  const written = () => updateCalls().find((c) => "score" in c.data)!.data;
+  const hint = () => generateFollowUpMessage.mock.calls[0][2];
+
+  it("by default, writes a warm thanks with no question and starts nothing", async () => {
+    findUnique.mockResolvedValue(saying("Not right now, thanks."));
+    await maybe();
+    await scoreAndDraftForLead("lead1");
+    expect(written().saidNoHow).toBe("unsure");
+    expect(hint()).toBe(NOT_NOW_HINT.close);
+    expect("notNowAt" in written()).toBe(false);
+    expect(written().momentAt).toBeUndefined();
+  });
+
+  it("when the owner chose to ask, asks once when and starts the path", async () => {
+    findUnique.mockResolvedValue(saying("Not right now, thanks.", {}, "ask"));
+    await maybe();
+    await scoreAndDraftForLead("lead1");
+    expect(hint()).toBe(NOT_NOW_HINT.ask);
+    expect(written().notNowAt).toEqual(sentAt);
+  });
+
+  it("when they already gave a time, confirms it and keeps it for the one check-back", async () => {
+    findUnique.mockResolvedValue(saying("Not right now. Maybe next spring.", {}, "ask"));
+    await maybe();
+    await scoreAndDraftForLead("lead1");
+    expect(hint()).toBe(NOT_NOW_HINT.confirm);
+    expect(written().notNowAt).toEqual(sentAt);
+    expect(written().momentAt).toBeInstanceOf(Date);
+    expect(written().momentQuote).toBe("Not right now. Maybe next spring.");
+    expect(written().momentSaidAt).toEqual(sentAt);
+  });
+
+  it("their answer with a time sets the one check-back and keeps them on the path", async () => {
+    const asked = new Date("2026-10-20T10:00:00Z");
+    findUnique.mockResolvedValue(saying("Maybe in March works.", { notNowAt: asked }, "ask"));
+    await scoreAndDraftForLead("lead1");
+    expect(written().saidNoHow).toBeNull();
+    expect(hint()).toBe(NOT_NOW_HINT.confirm);
+    expect(written().notNowAt).toEqual(asked);
+    expect(written().momentAt).toBeInstanceOf(Date);
+  });
+
+  it("tells the Instagram writer the same thing", async () => {
+    findUnique.mockResolvedValue(
+      leadRow({
+        business: { tier: "plus", notNowPlan: "ask" },
+        phone: "ig:123",
+        conversations: [{ channel: "instagram", messages: [{ id: "m1", direction: "inbound", body: "Not right now, thanks.", sentAt, opened: false }] }],
+      })
+    );
+    generateFollowUpMessage.mockResolvedValue({ subject: "", body: "No rush at all. When would be a good time to check back?", buttons: [] });
+    await maybe();
+    await scoreAndDraftForLead("lead1");
+    expect(hint()).toBe(NOT_NOW_HINT.ask);
+    expect(generateFollowUpMessage.mock.calls[0][0]).toEqual(expect.objectContaining({ qualify: null }));
   });
 });
 

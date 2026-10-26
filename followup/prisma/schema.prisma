@@ -324,6 +324,9 @@ model Business {
   // answered that ask (read it, or "No website"), so it is asked once. FollowUp reads only these public pages.
   website              String?
   websiteAskedAt       DateTime?
+  // What FollowUp does when a customer says "not now" (A-329, src/lib/notNow.ts): "stop" or "ask" (ask when, then
+  // check back once). Null until the owner answers the one question on Today; FollowUp stops meanwhile.
+  notNowPlan           String?
   // What the owner asks a new buyer, in their own words and order (A-302, src/lib/askPlan.ts). Null: FollowUp's order.
   askPlan              Json?
   // The pilot (founder, 2026-10-22): what the owner said on the setup call about how they work today, before
@@ -1116,6 +1119,11 @@ model Lead {
   // When the owner tapped "Keep following up" (A-326): the message that was read as a no up to then is theirs to
   // overrule, so a later read of that same message doesn't stop the follow-ups again. A newer message is read fresh.
   keepFollowingAt DateTime?
+  // On the "not now" path (A-329, src/lib/notNow.ts): when their "not now" came in, with the owner's rule set to ask
+  // when and check back once. While set, no plan step, workflow or win-back goes; only the one check-back note
+  // (momentAt) and the replies to them, which wait for the owner. Cleared by a clear no, by them writing about
+  // something else, or by "Keep following up".
+  notNowAt        DateTime?
   // Their newest message asked whether they're talking to a real person or
   // a bot. Set and cleared the same way. While set, the reply to it never
   // sends on its own: it waits for the owner on Today.

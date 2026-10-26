@@ -5831,6 +5831,8 @@ business owner or the user."* then *"yes to both, build it"* to the proposed rul
 
 ## A-328 — FollowUp reads the owner's website and Instagram, in "Tell FollowUp" and in setup ^A-328
 
+**LIVE 2026-10-26** (PR #601 → 1ae6d22).
+
 **Date:** 2026-10-26. **Founder, verbatim:** *"i got i more idea to read their busineesses that is reading their
 websites"*, *"we should also read their social media to get to know more about their businesses"*, *"we can ask them in
 orboarding too bro"*, then *"yes build it"* to both drawings (design-decisions, 2026-10-26; boards `web6/website-board.png`
@@ -5851,3 +5853,18 @@ and `web6/setup-board.png` in the session scratchpad).
 - **Supersedes in part** A-311's "Setup is unchanged": one optional line on a waiting screen, at the founder's word.
   R-027 stands (no row of questions after setup).
 
+
+## A-329 — "Not now" stops by default; each owner chooses, and FollowUp learns it ^A-329
+
+**Date:** 2026-10-26. **Founder, verbatim:** *"for this we need to know how that business owner or realtors react, not
+me"*, then *"We need to get information about what the user will do in this situation so we should learn it and maybe
+we can ask them, put it by default at no, though we should respect the leads and customers so that they don't get
+banned or spammed."* (Asked whether a customer who says "not now, maybe next spring" should get a check-back later,
+the way realtors do, instead of FollowUp stopping.)
+**What specifically was decided (direction; the screen is drawn before it is built):**
+- **Default stays as A-326:** a "not now" (a maybe-no) stops the follow-ups and the reply waits for the owner.
+- **The owner chooses** what FollowUp does on a "not now": keep it stopped (default), or ask the customer when, then
+  check back at that time. FollowUp asks the owner rather than deciding for them.
+- **FollowUp learns** from what the owner does with these customers (for example tapping "Keep following up").
+- **Customers come first:** whatever the owner picks, nothing that could read as spam or get the owner's account
+  restricted: the existing caps, quiet hours, STOP and the 6-month consent limit (A-245, A-260) still bind.

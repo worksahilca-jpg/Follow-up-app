@@ -436,3 +436,15 @@ organised properly according to what it is saying."*
   place may link to it; it is never kept in two places.
 - A new setting is placed by this rule before it is built, and the app map (design-brain/components/app-map.md) says
   where.
+
+## How FollowUp reacts comes from what realtors do, not from the founder's guess (founder, 2026-10-26)
+
+*"For this we need to know how that business owner or realtors react, not me. If they say no for these situations we go
+no; if they have any other strategy we should use that."* (Said when asked to judge 50 test conversations about
+customers saying no.)
+- When FollowUp decides how to act on a customer (stop, wait, check back, hand to the owner), the answer comes from what
+  working realtors actually do: published practice (`reports/Realtor follow up conversations.md`) and real realtors'
+  checks. The founder is not the judge of a realtor's craft; a test set is labelled from realtor practice, then a
+  realtor checks the hardest cases.
+- Where realtors stop, FollowUp stops. Where they have another move ("not now" becomes "when should I check back?"),
+  FollowUp uses that move instead of a blanket rule.

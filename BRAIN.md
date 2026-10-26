@@ -74,7 +74,14 @@ a booked call or visit; the owner closes.
 
 **Last updated: 2026-10-26**
 
-- **FollowUp reads the owner's website and Instagram (A-328, Oct 26): built, PR open, not merged.** In "Tell
+- **"Not now" and the "no" word list (A-329, Oct 26): fix built, PR open, not merged.** The founder: how FollowUp
+  reacts comes from what realtors do, not from him (brand principle, same day). A "not now" still stops by default;
+  each owner will choose (stop, or ask when and check back), and FollowUp learns it; the ask is drawn next. 50 made-up
+  test conversations (`src/lib/noConversations.ts`) found the plain-words list stopping on 8 that aren't a no ("not
+  interested in condos, only detached", "found a place… can you book a showing?", "stop emailing, text me"): now the
+  list steps aside when the same message asks for something or moves channel, and the AI readings decide.
+- **FollowUp reads the owner's website and Instagram (A-328, Oct 26) LIVE (PR #601 → 1ae6d22, merged at the founder's
+  "merge"; Business.website + websiteAskedAt and the migration confirmed in production, read-only).** In "Tell
   FollowUp", before the questions: "does your business have a website?", the owner's own Instagram posts and bio too
   when it's connected; the meeting then asks only what that didn't answer ("1 of 3"), and the play-back says under each
   line "From your website", "From your Instagram" or "You said", with "See what it read". Setup's step-3 waiting screen

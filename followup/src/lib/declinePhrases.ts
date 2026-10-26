@@ -9,7 +9,10 @@
  *
  * A phrase inside a longer message counts ("Thanks, but we're not interested anymore"). It doesn't count when a
  * negation, an "if" or a "you" sits just before it: "I don't have an agent", "if we're not interested we'll say",
- * "do you have an agent who speaks Punjabi?". Zero imports, like optOutKeywords.ts.
+ * "do you have an agent who speaks Punjabi?". Nor when the same message goes on to ask for something ("not interested
+ * in condos, only detached", "we found a place we like, can you book a showing?") or moves to another channel ("text
+ * please, you can stop emailing me"): that is a preference, not a no, and the AI readings decide (the 50 test
+ * conversations, src/lib/noConversations.ts). Zero imports, like optOutKeywords.ts.
  */
 
 export type DeclineKind = "no" | "agent" | "stop";
@@ -46,6 +49,15 @@ const GUARD = /\b(?:not|no|never|don'?t|do not|doesn'?t|haven'?t|without|if|unle
 /** For "have an agent": also a question about the business's own agents ("do you have an agent who…"). */
 const AGENT_GUARD = /\b(?:not|no|never|don'?t|do not|doesn'?t|haven'?t|without|if|unless|whether|you|u)\b[^.!?]{0,12}$/;
 
+/**
+ * After a "no" or "stop" phrase, words that show the customer still wants something: a narrower choice, a request, a
+ * price limit. "Not interested in condos, only detached"; "take me off the condo alerts but keep the houses coming".
+ */
+const STILL_WANTS =
+  /\b(?:only|instead|rather|prefer|but keep|keep (?:the|me|sending|them|it|those)|can you|could you|would you|can we|we want|i want|we'?d like|i'?d like|looking for|send me|book|showing|any ?thing (?:else|closer|cheaper|bigger|smaller)|(?:above|over|under|below) \$?\d|is fine|are fine|works for (?:me|us))\b/;
+/** Anywhere else in the message: a move to another channel ("text please, you can stop emailing me"). */
+const OTHER_CHANNEL = /\b(?:text|call|whatsapp|email|dm) (?:me|please|instead)\b|\bby (?:text|email|phone)\b/;
+
 /** The first plain way of saying no in this message, or null. */
 export function declineIn(body: string): { kind: DeclineKind; phrase: string } | null {
   const text = body.toLowerCase().replace(/[’‘]/g, "'").replace(/\s+/g, " ");
@@ -55,6 +67,9 @@ export function declineIn(body: string): { kind: DeclineKind; phrase: string } |
     const before = text.slice(Math.max(0, m.index - 24), m.index);
     // The phrase itself may start with "not" or "don't"; only what comes before it can turn it around.
     if ((kind === "agent" ? AGENT_GUARD : GUARD).test(before)) continue;
+    // A preference or a change of channel, not a no: the AI readings decide. An agent stays an agent.
+    const after = text.slice(m.index + m[0].length);
+    if (kind !== "agent" && (STILL_WANTS.test(after) || OTHER_CHANNEL.test(text.slice(0, m.index) + " " + after))) continue;
     return { kind, phrase: m[0] };
   }
   return null;

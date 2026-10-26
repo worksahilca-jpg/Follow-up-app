@@ -15629,3 +15629,15 @@ holds it under 1 s). Page addresses are kept without anything after "?".
 - Not checked yet: whether Meta's approved Instagram permission covers reading the owner's own posts. Until it's
   checked, the Instagram read is best effort; when it fails the owner sees "couldn't read your Instagram posts".
 
+
+## 2026-10-26 — "Not now": the owner decides, default stop (A-329)
+
+While writing the 50 test conversations for the "no" safety net (A-326), the founder said the labels must come from
+what realtors actually do, not from him (principle recorded in `brand/brand-principles.md`). Research
+(`reports/Realtor follow up conversations.md`) says realtors treat "not now" as timing, not a refusal: they ask when
+and check back. The founder's decision (A-329): keep stopping by default, ask each owner what they want, learn from
+what they do, and never let it read as spam. Next: draw where FollowUp asks the owner (proposal: the first time a
+"not now" happens, on that customer's card on Today, then a line in Settings), for the founder's yes.
+The 50 conversations stay as written for the default; a realtor checks the hardest ones. Eight of them show today's
+word list stopping on messages that aren't a no ("not interested in condos", "found a place… can you book a
+showing?", "stop emailing, text me"): a bug against A-326, fixed separately.

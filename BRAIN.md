@@ -72,13 +72,27 @@ a booked call or visit; the owner closes.
 
 ## Where we are (update at the end of every task)
 
-**Last updated: 2026-10-25**
+**Last updated: 2026-10-26**
+
+- **FollowUp reads the owner's website and Instagram (A-328, Oct 26): built, PR open, not merged.** In "Tell
+  FollowUp", before the questions: "does your business have a website?", the owner's own Instagram posts and bio too
+  when it's connected; the meeting then asks only what that didn't answer ("1 of 3"), and the play-back says under each
+  line "From your website", "From your Instagram" or "You said", with "See what it read". Setup's step-3 waiting screen
+  has one optional website line and never moves on while the box has a link in it. Values are copied word for word,
+  nothing is used before "Looks right". Every page is fetched through the SSRF guard (public addresses only, checked
+  again at connect time, at most 3 redirects, HTML only, 512 KB a page, 6 pages). Limits: 6 reads an hour, 12 a day,
+  plus the daily AI ceiling. Migration: Business.website + websiteAskedAt. Before relying on the Instagram part: check
+  that reading the owner's own posts fits the Instagram permission Meta approved, and mention it in the next review.
+- **Vercel builds `main` only (Oct 26) LIVE (PR #598 + fix #599 → 27ad691):** the spending cap paused the app on
+  Oct 25; previews are now skipped by `scripts/vercel-ignore-build.mjs`, which builds whenever it can't tell. Open:
+  the founder sets Deployment Retention in Vercel (old stored copies cost ~$1.90/day).
 
 - **Assisted sends nothing on its own; new customers on top (A-322, A-323, R-140, Oct 23) LIVE (PR #593 → 39c2b8b,
   merged at the founder's "merge"; deploy green; no migration):** the 30-minute "let me check" went out on the founder's own Instagram at 10:40 am and they don't trust
   automatic messages yet, so on an Assisted account FollowUp now sends nothing by itself (the line stays for Automatic
   only). Customers opens with a "New" group: everyone who arrived in the last day, newest first.
-- **The "no" safety net + email only when needed (A-326, A-327, Oct 25): built, PR open, not merged.** Every new
+- **The "no" safety net + email only when needed (A-326, A-327, Oct 25) LIVE (PR #597, deployed with #599 on Oct 26
+  after the Vercel pause; Lead.saidNoHow + keepFollowingAt confirmed in production, read-only).** Every new
   message is read three ways (their own words, the scoring read, five AI readings); any one that says stop stops the
   follow-ups. A maybe-no's reply always waits; Today and the customer's page say "said no" / "might be saying no" in
   words with "Keep following up". Owner emails now go only when a reply needs them, a customer is ready, a call is

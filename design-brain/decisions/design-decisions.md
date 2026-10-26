@@ -15550,3 +15550,82 @@ up" removes the box and the row goes back to normal.
 - An owner with no phone set up for buzzes now hears about a routine reply only when they open FollowUp.
 - The phrase list is short on purpose; the five readings carry the rest. The 50 test conversations (next) will show
   how often each misses.
+
+## 2026-10-26 — "Tell FollowUp" reads the owner's website and Instagram first (drawn, waiting for the founder's yes)
+
+**Founder, verbatim:** *"i got i more idea to read their busineesses that is reading their websites"*, then *"we
+should also read their social media to get to know more about their businesses"*, then *"draw it"*.
+**Where it lives:** inside the 5-minute meeting (A-314), not in setup (R-027 stands: no questions before FollowUp has
+shown it works). A third way in beside typing and talking (A-318); everything still ends in the same one play-back
+(A-314, R-139), nothing used before **Looks right**.
+**Drawn on the real app** (`/tell`, local test business, placeholder site and handle; board in the session scratchpad,
+`web6/website-board.png`), phone 390×844 and computer 1440×900:
+1. **Before the questions:** FollowUp's first bubble asks for the website ("Paste the link, and the questions skip
+   whatever it already answers."), an example line, one ticked line "Also read your Instagram posts" (shown only when
+   Instagram is connected; "Only your own posts and bio, never comments or messages."), the answer box taking the link
+   with **Read it**, and the quiet links **No website, skip this** · **Finish later**. No counter yet.
+2. **Only what's missing:** the link as the owner's bubble, one plain line (not a bubble: no personality, A-313) saying
+   what was read and how many questions are left ("Read 6 pages … They answered 6 of the 9 questions, so 3 are left. You
+   check all of it at the end."), then the meeting goes on with "1 of 3". The next question can name what the site said
+   ("Your website says sites start at $950, but not how people pay.").
+3. **The play-back:** one line under the title, "From yourwebsite.ca (6 pages), 30 Instagram posts and your 3 answers ·
+   See what it read", and under each value a faint source: "From your website", "From your Instagram" or "You said".
+**Rules carried over:** the rows stay the business's own words, word for word (A-312); a price only after the owner
+checks it (A-096, A-308); only the owner's own public pages and own posts, never comments, DMs or other people's pages.
+**Weak, said plainly:**
+- Step 1 now offers three ways in on one screen (talk pill, website, typing after it). Hick's law says that's one
+  choice too many; the talk pill could move under the website step when it's built.
+- The Instagram tick is a second white box on a screen that already has the bubble and the answer box.
+- "6 of the 9 questions" reads a little mechanical.
+- Not checked yet: whether reading the owner's own posts fits the Instagram permission Meta already approved, or needs
+  saying in the next App Review. Checked before building, not after.
+
+**Same day, founder:** *"we can ask them in onboarding too bro"*. This touches A-311 ("Setup is unchanged … No
+questions are added before the owner sees FollowUp work") and R-027 (no row of questions after setup); said to the
+founder. **Drawn to keep both principles:** no new screen and no extra step. The ask sits on setup step 3, the
+"Still reading your inbox…" screen the owner already waits on: "While you wait: does your business have a website?",
+one sentence of why ("so it asks you less later. You check what it found before it's ever used."), a link box with an
+outlined **Add**, a line saying Instagram posts are read too when it's connected, and the footnote "No website? Leave
+it. This screen moves on by itself." What it finds waits for the meeting's play-back; the meeting then asks only
+what's missing. Board: `web6/setup-board.png`.
+**Weak:** the screen moves on by itself when the inbox is read, so a half-typed link could be lost; when built, it
+must not move on while the box has text. A fast inbox may move on before the owner reads the line at all (then the
+meeting asks for the website as drawn before).
+
+## 2026-10-26 — Website and Instagram reading (A-328), built
+
+**Built as approved** (A-328), checked on the local app at 390×844 and 1440×900 with a local test business (the
+read's success simulated in the browser; the real route was run for the error and skip paths, and its logic is
+covered by tests):
+- **"Tell FollowUp":** the ask before the questions, the Instagram tick (checked by default, only when Instagram is
+  connected), **Read it**, **No website, skip this** · **Finish later**, no counter until the questions start. While
+  reading: the link as the owner's bubble and "FollowUp is reading yourwebsite.ca…". After: the plain line, then
+  "1 of N" counting only what's left. Coming back later, before the owner has answered anything, the meeting opens
+  with the same line.
+- **Play-back:** "From yourwebsite.ca (6 pages), 30 Instagram posts and your 3 answers · See what it read"; the list
+  shows the pages as plain text (never links) and the post count. Under each new line its source; a line the owner
+  edits says "You changed it". A meeting where nothing was read looks exactly as before.
+- **Setup step 3:** the optional line, an outlined **Add**, the Instagram line when connected, the footnote. Added:
+  a check mark and what was read. Held: when the list is ready but the box still has a link, the title becomes "Your
+  list is ready." and the line under it "It opens once your website is added, or when you clear the box."
+**Decided while building (not in the drawing, for the founder's eye):**
+- With Instagram ticked and no link typed, the button says **Read Instagram** and reads the posts alone, so an owner
+  with no website still gets the Instagram read.
+- Errors say the fix: "FollowUp couldn't open that website. Check the link, or skip it and answer the questions." (in
+  setup: "…or leave it.").
+- After **Add** in setup, the line stays 4 seconds before the screen moves on, so it can be read.
+**Safety (founder, same day: "do safety checks too so that we are not pushing anything that has a bug or a security
+issue"):** the CONTRIBUTING six points, plus three fixes found by reading the change: one time limit for a page and
+its redirects together, a 20-second limit on the reading itself so the whole read fits the server's 60 seconds, and a
+page reader that stays fast on a page built to be slow (the old patterns took ~10 s a page on such a page; a test
+holds it under 1 s). Page addresses are kept without anything after "?".
+**Weak, said plainly:**
+- The meeting's first screen now offers three ways in (talk, website, and the questions after). Hick's law says one
+  too many; worth watching with the first real owner.
+- The next question doesn't say "Your website says…" as drawn: the wording model isn't told where a line came from,
+  so it may word it as if the owner said it. The play-back's source lines are right.
+- The success path was seen in the browser with a simulated answer: this sandbox can't open outside websites and has
+  no AI key. The first real read happens after the merge.
+- Not checked yet: whether Meta's approved Instagram permission covers reading the owner's own posts. Until it's
+  checked, the Instagram read is best effort; when it fails the owner sees "couldn't read your Instagram posts".
+

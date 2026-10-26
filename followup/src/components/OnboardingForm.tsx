@@ -14,6 +14,7 @@ import { AlertsSetupStep } from "@/components/app/AlertsSetup";
 import CrmConfig from "@/components/CrmConfig";
 import { GROUP, ListRow } from "@/components/app/IosList";
 import { GlyphTile } from "@/components/settings/connectionBits";
+import { BrandTile } from "@/components/brandLogos";
 
 /** The one full-width black button at the foot of each setup step. */
 const PRIMARY =
@@ -224,7 +225,13 @@ function OnboardingFormInner({ sources }: OnboardingFormProps) {
           )}
           {step === 2 && <HowItShouldWork reading={autoSyncState === "syncing"} sentFrom={connectedName} onChosen={() => setStep(3)} />}
           {step === 3 && (
-            <WaitingCustomers syncDone={autoSyncState !== "syncing"} readsPast={inboxConnected} onDone={finishOnboarding} finishing={finishing} />
+            <WaitingCustomers
+              syncDone={autoSyncState !== "syncing"}
+              readsPast={inboxConnected}
+              instagram={sources.instagramConnected}
+              onDone={finishOnboarding}
+              finishing={finishing}
+            />
           )}
           {step === 4 && <AlertsSetupStep onDone={openToday} />}
         </main>
@@ -606,19 +613,138 @@ type WaitingSummary = {
  * account, or if writing them fails, the screen says so and moves on:
  * nobody should be stuck at the end of setup.
  */
+/**
+ * One optional line on the screen the owner already waits on (A-328, founder 2026-10-26: "we can ask them in onboarding
+ * too"): the business's website, and its Instagram posts when Instagram is connected. What FollowUp finds waits in the
+ * "Tell FollowUp" meeting's draft for the owner's check; the meeting then asks only what's missing. No new step and no
+ * questions here (R-027).
+ */
+function SetupWebsite({ instagram, onHold }: { instagram: boolean; onHold: (hold: boolean) => void }) {
+  const [link, setLink] = useState("");
+  const [reading, setReading] = useState(false);
+  const [added, setAdded] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  // Long enough to read the line after Add before the screen moves on.
+  const [justAdded, setJustAdded] = useState(false);
+
+  useEffect(() => {
+    onHold(reading || justAdded || link.trim() !== "");
+  }, [reading, justAdded, link, onHold]);
+
+  useEffect(() => {
+    if (!justAdded) return;
+    const t = setTimeout(() => setJustAdded(false), 4000);
+    return () => clearTimeout(t);
+  }, [justAdded]);
+
+  async function add() {
+    const url = link.trim();
+    if (!url || reading) return;
+    setReading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/business/tell/read", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "read", url, instagram, setup: true }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { success?: boolean; message?: unknown; line?: unknown };
+      if (!res.ok || !data.success) {
+        setError(typeof data.message === "string" ? data.message : "That didn't go through. Try again, or leave it.");
+      } else {
+        setAdded(typeof data.line === "string" ? data.line : "Added.");
+        setJustAdded(true);
+        setLink("");
+      }
+    } catch {
+      setError("That didn't go through. Check your connection, or leave it.");
+    }
+    setReading(false);
+  }
+
+  if (added) {
+    return (
+      <div className="mt-9 flex items-start gap-2">
+        <Check className="mt-1 h-4 w-4 shrink-0" style={{ color: "var(--sage)" }} aria-hidden="true" />
+        <p className="text-[14.5px] leading-snug text-ink-soft" role="status">
+          {added}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-9">
+      <p className="text-[15.5px] font-medium">While you wait: does your business have a website?</p>
+      <p className="mt-1 text-[14.5px] leading-snug text-ink-soft">
+        FollowUp reads it to learn what you do, so it asks you less later. You check what it found before it&apos;s ever used.
+      </p>
+      <form
+        className="mt-3 flex items-center gap-2 rounded-full border bg-card py-1.5 pl-4 pr-1.5"
+        style={{ borderColor: "var(--line-strong)" }}
+        onSubmit={(e) => {
+          e.preventDefault();
+          void add();
+        }}
+      >
+        <label htmlFor="setup-website" className="sr-only">
+          Your website link
+        </label>
+        <input
+          id="setup-website"
+          value={link}
+          onChange={(e) => setLink(e.target.value)}
+          maxLength={200}
+          placeholder="yourwebsite.ca"
+          autoComplete="off"
+          inputMode="url"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
+          className="min-h-10 min-w-0 flex-1 bg-transparent text-[16px] outline-none placeholder:text-ink-faint"
+        />
+        <button
+          type="submit"
+          disabled={reading || !link.trim()}
+          className="min-h-10 shrink-0 rounded-full border bg-card px-[18px] text-[15px] font-medium disabled:opacity-50"
+          style={{ borderColor: "var(--line-strong)" }}
+        >
+          {reading ? "Reading…" : "Add"}
+        </button>
+      </form>
+      {error && (
+        <p role="alert" className="mt-2 px-1 text-[14px]" style={{ color: "var(--coral)" }}>
+          {error}
+        </p>
+      )}
+      {instagram && (
+        <p className="mt-2.5 flex items-center gap-2 px-1 text-[13.5px] text-ink-soft">
+          <BrandTile brand="instagram" />
+          Your Instagram posts are read too, since it&apos;s connected.
+        </p>
+      )}
+    </div>
+  );
+}
+
 function WaitingCustomers({
   syncDone,
   readsPast,
+  instagram,
   onDone,
   finishing,
 }: {
   syncDone: boolean;
   /** An inbox reads back 90 days; Instagram starts from the moment it connects (instagramPoll.ts). */
   readsPast: boolean;
+  /** Instagram is connected: its posts are read with the website (A-328). */
+  instagram: boolean;
   onDone: () => void;
   finishing: boolean;
 }) {
   const [state, setState] = useState<"loading" | "ready">("loading");
+  // The website line (A-328) holds this screen while its box has a link in it or it's reading: never lost by moving on.
+  const [holdForSite, setHoldForSite] = useState(false);
   const [summary, setSummary] = useState<WaitingSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [skipped, setSkipped] = useState<Set<string>>(() => new Set());
@@ -673,14 +799,25 @@ function WaitingCustomers({
     })();
   }, [syncDone]);
 
-  if (state === "loading") {
+  if (state === "loading" || holdForSite) {
+    const held = state === "ready";
     return (
       <div className="flex flex-1 flex-col">
-        <h1 className={H1}>{syncDone ? "Finding who’s waiting on a reply…" : "Still reading your inbox…"}</h1>
+        <h1 className={H1}>{held ? "Your list is ready." : syncDone ? "Finding who’s waiting on a reply…" : "Still reading your inbox…"}</h1>
         <p className={LEDE + " flex items-center gap-2"}>
-          <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-          {!syncDone ? "A big inbox takes a minute. Nothing is sent." : readsPast ? "Reading the last 90 days. Nothing is sent." : "Nothing is sent."}
+          {!held && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+          {held
+            ? "It opens once your website is added, or when you clear the box."
+            : !syncDone
+              ? "A big inbox takes a minute. Nothing is sent."
+              : readsPast
+                ? "Reading the last 90 days. Nothing is sent."
+                : "Nothing is sent."}
         </p>
+        <SetupWebsite instagram={instagram} onHold={setHoldForSite} />
+        <div className="mt-auto pb-7 pt-6">
+          <p className="ios-footnote text-center text-ink-faint">No website? Leave it. This screen moves on by itself.</p>
+        </div>
       </div>
     );
   }

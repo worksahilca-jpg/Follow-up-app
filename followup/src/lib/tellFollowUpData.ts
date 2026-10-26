@@ -12,6 +12,8 @@ import {
   parseTellDraft,
   playbackRows,
   showTellCard,
+  siteAfterOwnLines,
+  withSources,
   tellState,
   usageLines,
   type Playback,
@@ -19,6 +21,7 @@ import {
   type TellTopic,
 } from "@/lib/tellFollowUp";
 import type { Talk } from "@/lib/tellTalk";
+import type { SiteNote } from "@/lib/siteRead";
 
 /** How long the owner waits for a question worded for their business before the plain one is asked instead. */
 const WORDING_WAIT_MS = 4000;
@@ -68,14 +71,18 @@ export async function loadTellState(businessId: string, again = false): Promise<
 /**
  * Adds what FollowUp took from an answer to the meeting's draft (A-314). Its read of the business is made again. With
  * `talk` (A-318), what the owner said out loud is kept with it, replacing an earlier talk; a typed answer keeps it.
+ * With `read` (A-328), the rows came from the owner's website and Instagram, and the note says what was read and where
+ * each came from; otherwise the rows are the owner's own, and stop saying they came from the website.
  */
-export async function addToDraft(businessId: string, rows: readonly FactLine[], talk?: Talk): Promise<void> {
+export async function addToDraft(businessId: string, rows: readonly FactLine[], talk?: Talk, read?: SiteNote): Promise<void> {
   const business = await prisma.business.findUnique({ where: { id: businessId }, select: { tellDraft: true } });
   const draft = parseTellDraft(business?.tellDraft);
   const said = talk ?? draft.talk;
+  // A second read (setup's line, then again) keeps where the first one's lines came from.
+  const site = read ? { ...read, from: { ...draft.site?.from, ...read.from } } : siteAfterOwnLines(draft.site, rows);
   await prisma.business.update({
     where: { id: businessId },
-    data: { tellDraft: { rows: mergeRows(draft.rows, rows), ...(said ? { talk: said } : {}) } },
+    data: { tellDraft: { rows: mergeRows(draft.rows, rows), ...(said ? { talk: said } : {}), ...(site ? { site } : {}) } },
   });
 }
 
@@ -111,7 +118,7 @@ export async function tellPlayback(businessId: string, state: TellState): Promis
         if (read) {
           await prisma.business.update({
             where: { id: businessId },
-            data: { tellDraft: { rows: draft.rows, read, ...(draft.talk ? { talk: draft.talk } : {}) } },
+            data: { tellDraft: { rows: draft.rows, read, ...(draft.talk ? { talk: draft.talk } : {}), ...(draft.site ? { site: draft.site } : {}) } },
           });
         }
       }
@@ -122,7 +129,14 @@ export async function tellPlayback(businessId: string, state: TellState): Promis
       if (timer) clearTimeout(timer);
     }
   }
-  return { read, rows, uses: usageLines(rows, state.skipped), skipped: state.skipped, talk: draft.talk ?? null };
+  return {
+    read,
+    rows: withSources(rows, draft.site),
+    uses: usageLines(rows, state.skipped),
+    skipped: state.skipped,
+    talk: draft.talk ?? null,
+    site: draft.site ?? null,
+  };
 }
 
 export type TellCardProps = { knows: string };

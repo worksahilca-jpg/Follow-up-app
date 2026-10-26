@@ -36,7 +36,7 @@ export default function PrivacyPage() {
 
       <main className="max-w-3xl mx-auto px-6 py-16">
         <h1 className="font-display text-3xl">Privacy Policy</h1>
-        <p className="text-sm text-ink-soft mt-2">Last updated: October 22, 2026</p>
+        <p className="text-sm text-ink-soft mt-2">Last updated: October 26, 2026</p>
 
         <div className="mt-10 space-y-10 text-sm leading-relaxed text-ink-soft">
           <section>
@@ -87,6 +87,14 @@ export default function PrivacyPage() {
                 draft replies. By default, FollowUp never sends anything until you approve it. If you choose to turn on
                 sending without asking (in Settings, or for a specific lead), FollowUp sends only simple,
                 low-risk follow-ups for you; anything about price or anything sensitive still waits for you.
+              </li>
+              <li>
+                <strong className="text-ink">Your website and Instagram posts (only if you add them)</strong> — when you
+                give FollowUp your business&apos;s website, we read up to six of its public pages; when your Instagram is
+                connected and you tick it, we read your own bio and your last 30 posts. Never comments, never messages,
+                never anyone else&apos;s pages. FollowUp copies only what answers its questions about your business, word
+                for word, and nothing is used in a reply until you check it and tap Looks right. We keep the link and the
+                addresses of the pages read, not the pages themselves.
               </li>
               <li>
                 <strong className="text-ink">WhatsApp data</strong> — when you connect your WhatsApp Business
@@ -177,7 +185,7 @@ export default function PrivacyPage() {
               . Specifically:
             </p>
             <ul className="mt-2 space-y-2 list-disc pl-5">
-              <li>We only request the permissions needed to receive Instagram/Messenger DMs, WhatsApp messages and Facebook Lead Ads submissions, and to reply to them on your behalf.</li>
+              <li>We only request the permissions needed to receive Instagram/Messenger DMs, WhatsApp messages and Facebook Lead Ads submissions, to reply to them on your behalf, and, when you ask, to read your own Instagram bio and posts so FollowUp learns about your business.</li>
               <li>We only reply to people who have messaged your business first. We never message people who haven&apos;t contacted you.</li>
               <li>We never use this data for advertising, and never sell it.</li>
               <li>We never allow humans to read it except: (a) with your explicit consent, (b) to investigate abuse or a security issue, or (c) to comply with the law.</li>

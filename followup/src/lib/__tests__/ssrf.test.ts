@@ -14,7 +14,7 @@ vi.mock("node:dns/promises", () => ({ default: { lookup } }));
 
 import http from "node:http";
 import type { AddressInfo } from "node:net";
-import { assertSafeWebhookUrl, guardedLookup, postJsonToTenantUrl, UnsafeWebhookUrlError } from "@/lib/ssrf";
+import { assertSafeWebhookUrl, getPageFromTenantUrl, guardedLookup, postJsonToTenantUrl, UnsafeWebhookUrlError } from "@/lib/ssrf";
 
 beforeEach(() => {
   lookup.mockReset();
@@ -170,5 +170,34 @@ describe("postJsonToTenantUrl — DNS rebinding", () => {
 
   it("refuses an internal IP literal before opening any socket", async () => {
     await expect(postJsonToTenantUrl("http://[::ffff:7f00:1]:1/x", {})).rejects.toBeInstanceOf(UnsafeWebhookUrlError);
+  });
+});
+
+describe("getPageFromTenantUrl — reading the owner's website (A-328)", () => {
+  it("never connects when the hostname was public at check time and private at connect time", async () => {
+    let hits = 0;
+    const server = http.createServer((_req, res) => {
+      hits += 1;
+      res.setHeader("Content-Type", "text/html");
+      res.end("<p>internal</p>");
+    });
+    await new Promise<void>((r) => server.listen(0, "127.0.0.1", () => r()));
+    const { port } = server.address() as AddressInfo;
+    lookup.mockResolvedValueOnce([{ address: "203.0.113.10", family: 4 }]);
+    lookup.mockResolvedValue([{ address: "127.0.0.1", family: 4 }]);
+    try {
+      await expect(getPageFromTenantUrl(`http://rebind.example.com:${port}/`, { timeoutMs: 2000 })).rejects.toBeTruthy();
+      expect(hits).toBe(0);
+    } finally {
+      await new Promise<void>((r) => server.close(() => r()));
+    }
+  });
+
+  it("refuses an internal address, a metadata address and a non-web scheme before opening any socket", async () => {
+    await expect(getPageFromTenantUrl("http://127.0.0.1/")).rejects.toBeInstanceOf(UnsafeWebhookUrlError);
+    await expect(getPageFromTenantUrl("http://169.254.169.254/latest/meta-data/")).rejects.toBeInstanceOf(UnsafeWebhookUrlError);
+    await expect(getPageFromTenantUrl("file:///etc/passwd")).rejects.toBeInstanceOf(UnsafeWebhookUrlError);
+    lookup.mockResolvedValue([{ address: "10.0.0.5" }]);
+    await expect(getPageFromTenantUrl("https://intranet.example.com/")).rejects.toBeInstanceOf(UnsafeWebhookUrlError);
   });
 });

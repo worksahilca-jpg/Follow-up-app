@@ -21,6 +21,7 @@ import { labelKey, MAX_FACTS, MAX_LABEL, MAX_VALUE, squash, type FactLine } from
 import { teachQuestions, WHO_LABEL, type TeachQuestion } from "@/lib/teachQuestions";
 import { whatYouDoQuestion } from "@/lib/dailyQuestion";
 import { readTalk, type Talk } from "@/lib/tellTalk";
+import { readSiteNote, type ReadSource, type SiteNote } from "@/lib/siteRead";
 
 export { exampleLine, knowsLine, MAX_ANSWER } from "@/lib/tellLines";
 
@@ -175,8 +176,11 @@ export function tellRows(topic: TellTopic, answer: string, proposed: ProposedTel
   return rows;
 }
 
-/** The meeting so far (A-314), as kept on the business: what FollowUp took from the answers, and its read of them. */
-export type TellDraft = { rows: FactLine[]; read?: string; talk?: Talk };
+/**
+ * The meeting so far (A-314), as kept on the business: what FollowUp took from the answers, and its read of them. With
+ * `site` (A-328), what FollowUp read on the owner's website and Instagram, and where each line it took came from.
+ */
+export type TellDraft = { rows: FactLine[]; read?: string; talk?: Talk; site?: SiteNote };
 
 /** The draft as stored, checked again: it comes back from the database as plain JSON. */
 export function parseTellDraft(raw: unknown): TellDraft {
@@ -194,7 +198,8 @@ export function parseTellDraft(raw: unknown): TellDraft {
   const read = typeof o.read === "string" && o.read.trim() ? o.read : undefined;
   // What the owner said out loud (A-318), kept with the draft until "Looks right" clears it.
   const talk = readTalk(o.talk) ?? undefined;
-  return { rows, ...(read ? { read } : {}), ...(talk ? { talk } : {}) };
+  const site = readSiteNote(o.site) ?? undefined;
+  return { rows, ...(read ? { read } : {}), ...(talk ? { talk } : {}), ...(site ? { site } : {}) };
 }
 
 /** `add` over `base`: the same name is replaced where it stands, a new one goes at the end. */
@@ -208,8 +213,11 @@ export function mergeRows(base: readonly FactLine[], add: readonly FactLine[]): 
   return out;
 }
 
-/** One line of the play-back: `fresh` when it comes from this meeting (new, or a new value for a known name). */
-export type PlaybackRow = FactLine & { fresh: boolean };
+/**
+ * One line of the play-back: `fresh` when it comes from this meeting (new, or a new value for a known name), and for
+ * a fresh line where it came from (A-328): the owner's website, their Instagram, or what they said.
+ */
+export type PlaybackRow = FactLine & { fresh: boolean; from?: ReadSource | "said" };
 
 /** The end of the meeting (A-314): the whole business as FollowUp understands it. */
 export type Playback = {
@@ -222,7 +230,35 @@ export type Playback = {
   skipped: string[];
   /** What the owner said when they talked instead of typing (A-318): "From what you said · 2 min 14 s". */
   talk: Talk | null;
+  /** What FollowUp read on the owner's website and Instagram (A-328): "From yourwebsite.ca (6 pages) … · See what it read". */
+  site: SiteNote | null;
 };
+
+/**
+ * Each fresh line marked with where it came from (A-328): what was read, else what the owner said. Nothing was read:
+ * the lines stay as they are, every one the owner's.
+ */
+export function withSources(rows: readonly PlaybackRow[], site: SiteNote | null | undefined): PlaybackRow[] {
+  if (!site) return [...rows];
+  return rows.map((r) => (r.fresh ? { ...r, from: site.from[labelKey(r.label)] ?? "said" } : r));
+}
+
+/** How many of the meeting's questions what was read answered (A-328): the meeting counts "1 of N" over the rest. */
+export function answeredByRead(topics: readonly TellTopic[], site: SiteNote | null | undefined): number {
+  if (!site) return 0;
+  return topics.filter((t) => site.from[labelKey(t.label)]).length;
+}
+
+/**
+ * The site note after the owner gave lines of their own: a line they answered, said or corrected is theirs now, so it
+ * no longer says it came from the website. Undefined when there is no note.
+ */
+export function siteAfterOwnLines(site: SiteNote | undefined, own: readonly FactLine[]): SiteNote | undefined {
+  if (!site) return undefined;
+  const from = { ...site.from };
+  for (const r of own) delete from[labelKey(r.label)];
+  return { ...site, from };
+}
 
 /**
  * Everything FollowUp knows plus what this meeting took, the meeting's words winning, in the order the questions are

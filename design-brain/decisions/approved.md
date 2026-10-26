@@ -5868,3 +5868,12 @@ the way realtors do, instead of FollowUp stopping.)
 - **FollowUp learns** from what the owner does with these customers (for example tapping "Keep following up").
 - **Customers come first:** whatever the owner picks, nothing that could read as spam or get the owner's account
   restricted: the existing caps, quiet hours, STOP and the 6-month consent limit (A-245, A-260) still bind.
+- **Said again the same day, verbatim:** *"YES WE SHOULD RESPECT THE CUSTOMER BRO"* (while the owner question was
+  being drawn). Read as: customers first outranks anything an owner can turn on.
+- **The screen, drawn and approved (2026-10-26, founder: *"merge and yes build it"*):** the first time a maybe-no
+  that reads as "not now" comes in, that customer's card on Today asks the admin once: *When a customer says "not
+  now", what should FollowUp do?* with two Settings-style choice rows, **Stop. I'll check myself** ("What FollowUp
+  just did. Nothing more is sent.") and **Ask when, then check back once** ("One short question. If they give a
+  time, one message then. Nothing else."), then "FollowUp asks you this once. Change it any time in Settings."
+  The same two rows sit in Settings › Sending replies under *When a customer says "not now"*, Stop ticked by
+  default, with "A clear no or STOP always ends it, whatever you pick." Board: `not-now-board.png`.

@@ -15641,3 +15641,34 @@ what they do, and never let it read as spam. Next: draw where FollowUp asks the 
 The 50 conversations stay as written for the default; a realtor checks the hardest ones. Eight of them show today's
 word list stopping on messages that aren't a no ("not interested in condos", "found a place… can you book a
 showing?", "stop emailing, text me"): a bug against A-326, fixed separately.
+
+**Drawn, then approved the same day ("merge and yes build it"); built in the next PR.** On the real app, phone and computer, by injecting
+into the live page (board: `not-now-board.png`, sent to the founder). Two places, reusing the Settings choice rows
+(`ChoiceRow` in a `BOX`), no new component:
+- **Today, on that customer's card, the first time a "not now" comes in:** under the existing maybe-no line
+  ("Karan might be saying no. To be safe, FollowUp stopped reminding them.") one question, *When a customer says
+  "not now", what should FollowUp do?*, two rows, neither ticked: **Stop. I'll check myself** ("What FollowUp just
+  did. Nothing more is sent.") and **Ask when, then check back once** ("One short question. If they give a time, one
+  message then. Nothing else."), then "FollowUp asks you this once. Change it any time in Settings." The existing
+  "Not a no? Keep following up" link stays under it. Tapping a row saves; the question never comes back.
+- **Settings › Sending replies**, under the When to check in / Stop all sending box: *When a customer says "not
+  now"*, the same two rows with Stop ticked as the default, and "A clear no or STOP always ends it, whatever you pick."
+- **Customers first (the founder's "respect the customer"):** the second choice is deliberately small: one question,
+  one check-back at the time the customer names, then nothing. It never restarts the 1/3/7/14/30 plan, and caps,
+  quiet hours, STOP and the 6-month limit still apply.
+
+**Weak, honestly:** the card gets about 280px taller on the phone, so Send drops below the first screen for that one
+card (acceptable only because it is asked once); "Stop. I'll check myself" sits near "Stop all sending" in Settings,
+two different stops on one page; the example message and reply in the drawing are written for it (the local test
+customer's own words are not a "not now"). Open for the build: what counts as a "not now" (the "maybe" group of the
+50, not every maybe-no), and what FollowUp does if the customer answers the question with no time.
+
+**Built (same day, PR open).** As drawn, reusing the Settings choice row (Today and Settings now
+share `src/components/app/ChoiceRow.tsx`). The two open questions, answered in code (`src/lib/notNow.ts`):
+a "not now" is a maybe-no whose words say timing ("not right now", "holding off for now", "abhi nahi") and that
+doesn't leave the next move with them ("I'll reach out when I'm ready", "we'll let you know") or ask for something
+now; an answer with no time gets a thanks and nothing more. Two things the drawing implied, now true for every owner:
+on Stop (and before anyone answers) the waiting reply to a "not now" is a warm thanks with no question, where the
+reply writer used to ask when; and a no in the same message as a named time no longer gets a "Their moment" note
+unless the owner chose Ask. Checked on the real app, phone and computer: question shown, answered, gone, and changed
+in Settings both ways.

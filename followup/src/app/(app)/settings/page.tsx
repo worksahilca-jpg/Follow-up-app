@@ -28,6 +28,8 @@ import OnlyAdminsSendSetting from "@/components/OnlyAdminsSendSetting";
 import TeamCallsSetting from "@/components/TeamCallsSetting";
 import TeamWeek from "@/components/TeamWeek";
 import SignInsSection from "@/components/SignInsSection";
+import ChoiceRow from "@/components/app/ChoiceRow";
+import { NOT_NOW_WORDS, readNotNowPlan, type NotNowPlan } from "@/lib/notNow";
 import { TIER_INFO, VOICE_ADDON_INFO, VOICE_ADDON_AVAILABLE, CARRIER_CHANNELS_AVAILABLE, FREE_TIER_LEAD_CAP } from "@/lib/pricing";
 import { ChevronRight, CreditCard } from "lucide-react";
 
@@ -180,6 +182,10 @@ function SettingsPageInner() {
   // kept saying it for a day after the exemption was withdrawn.
   // The thank-you rule's wording reads this ("writes" vs "thanks them").
   const [holdAllForApproval, setHoldAllForApproval] = useState(false);
+  // What FollowUp does when a customer says "not now" (A-329). Null until the owner answers: Stop is ticked, as it acts.
+  const [notNowPlan, setNotNowPlan] = useState<NotNowPlan | null>(null);
+  const [notNowSaving, setNotNowSaving] = useState(false);
+  const [notNowError, setNotNowError] = useState<string | null>(null);
 
   const [billingActive, setBillingActive] = useState(false);
   const [billingStatus, setBillingStatus] = useState<string | null>(null);
@@ -282,8 +288,9 @@ function SettingsPageInner() {
     fetch("/api/automation/settings")
       .then((r) => r.json())
       .then(
-        (data: { holdAllForApproval?: boolean; sendingPaused?: boolean; onlyAdminsSend?: boolean; isAdmin?: boolean }) => {
+        (data: { holdAllForApproval?: boolean; sendingPaused?: boolean; onlyAdminsSend?: boolean; isAdmin?: boolean; notNowPlan?: string | null }) => {
           setHoldAllForApproval(data.holdAllForApproval ?? false);
+          setNotNowPlan(readNotNowPlan(data.notNowPlan));
           setSendingPaused(data.sendingPaused ?? false);
           setOnlyAdminsSend(data.onlyAdminsSend ?? false);
           setIsAdmin(data.isAdmin ?? false);
@@ -418,6 +425,29 @@ function SettingsPageInner() {
       setPermissionError("Couldn't reach the server — try again.");
     } finally {
       setPauseSaving(false);
+    }
+  }
+
+  // "Not now" (A-329): saved on its own, like the switches above.
+  async function saveNotNow(plan: NotNowPlan) {
+    setNotNowSaving(true);
+    setNotNowError(null);
+    try {
+      const res = await fetch("/api/automation/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notNowPlan: plan }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) {
+        setNotNowError(data.message ?? "Couldn't save that. Try again.");
+        return;
+      }
+      setNotNowPlan(plan);
+    } catch {
+      setNotNowError("Couldn't reach the server. Try again.");
+    } finally {
+      setNotNowSaving(false);
     }
   }
 
@@ -740,6 +770,35 @@ function SettingsPageInner() {
         {permissionError && !confirmingPermission && (
           <p role="alert" className="mt-2 text-[14px]" style={{ color: "var(--coral)" }}>
             {permissionError}
+          </p>
+        )}
+
+        {/* When a customer says "not now" (A-329, drawn and approved 2026-10-26): Stop by default, or ask when and check
+            back once. The same two rows Today asks with, once. Customers first: a clear no or STOP always ends it. */}
+        <p id="not-now" className="mt-6 text-[14px] text-ink-faint">
+          {NOT_NOW_WORDS.label}
+        </p>
+        <div role="radiogroup" aria-labelledby="not-now" className={BOX + " mt-3"}>
+          <ChoiceRow
+            first
+            checked={notNowPlan !== "ask"}
+            title={NOT_NOW_WORDS.stop}
+            sub={NOT_NOW_WORDS.stopInSettings}
+            disabled={!isAdmin || notNowSaving}
+            onSelect={() => notNowPlan !== "stop" && saveNotNow("stop")}
+          />
+          <ChoiceRow
+            checked={notNowPlan === "ask"}
+            title={NOT_NOW_WORDS.ask}
+            sub={NOT_NOW_WORDS.askSub}
+            disabled={!isAdmin || notNowSaving}
+            onSelect={() => notNowPlan !== "ask" && saveNotNow("ask")}
+          />
+        </div>
+        <p className="mt-2 text-[14px] text-ink-soft">{NOT_NOW_WORDS.always}</p>
+        {notNowError && (
+          <p role="alert" className="mt-1 text-[14px]" style={{ color: "var(--coral)" }}>
+            {notNowError}
           </p>
         )}
 
@@ -1089,43 +1148,6 @@ const BOX = "overflow-hidden rounded-[16px] border border-line bg-card";
 /** A row in it: the label, what's set in grey, and a chevron or a switch. */
 const ROW = "flex min-h-[56px] w-full items-center gap-3 px-4 py-2.5 text-[16px]";
 
-/** One of "Who sends your replies?": a radio the whole row presses. */
-function ChoiceRow({
-  checked,
-  title,
-  sub,
-  first = false,
-  disabled,
-  onSelect,
-}: {
-  checked: boolean;
-  title: string;
-  sub?: string;
-  first?: boolean;
-  disabled: boolean;
-  onSelect: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      role="radio"
-      aria-checked={checked}
-      disabled={disabled}
-      onClick={onSelect}
-      className={"flex min-h-[60px] w-full items-start gap-3.5 px-4 py-4 text-left hover:bg-card-2 disabled:cursor-not-allowed disabled:hover:bg-transparent" + (first ? "" : " border-t border-line-2")}
-    >
-      <span
-        aria-hidden
-        className="mt-px h-[22px] w-[22px] shrink-0 rounded-full"
-        style={checked ? { border: "7px solid var(--ink)" } : { border: "1.5px solid var(--ink-faint)" }}
-      />
-      <span className="min-w-0">
-        <span className="block text-[17px] font-semibold">{title}</span>
-        {sub && <span className="mt-0.5 block text-[14px] text-ink-soft">{sub}</span>}
-      </span>
-    </button>
-  );
-}
 
 /**
  * Where a page sits, on a computer ("Settings › Account", A-257): the stem

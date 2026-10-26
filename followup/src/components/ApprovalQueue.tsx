@@ -9,6 +9,8 @@ import { oneQueue, summariseGroups, UNKNOWN_SOURCE_LABEL, WHOLE_QUEUE } from "@/
 import type { TodayTier } from "@/lib/calmToday";
 import { MAYBE_NO_REASON, plainHoldReason } from "@/lib/holdReasons";
 import { saidNoWords } from "@/lib/saidNoWords";
+import { notNowIn } from "@/lib/notNow";
+import NotNowQuestion from "@/components/app/NotNowQuestion";
 import KeepFollowingButton from "@/components/app/KeepFollowingButton";
 import { STAY_IN_TOUCH_TRIGGER } from "@/lib/stayInTouch";
 import { THEIR_MOMENT_TRIGGER } from "@/lib/theirMoment";
@@ -129,10 +131,13 @@ function ApprovalCard({
   onResolved,
   sendLocked = false,
   onSkip,
+  askNotNow = false,
 }: {
   item: ApprovalItem;
   /** Inside "Do this first" (A-244), which is the box: no box of its own. */
   bare?: boolean;
+  /** Ask the one "not now" question on a maybe-no that reads as not now (A-329): an admin whose business hasn't answered. */
+  askNotNow?: boolean;
   /** Done with this card. `result` is what happened, said for a moment before it leaves (A-048). */
   onResolved: (leadId: string, result: string | null, sent?: boolean) => void;
   /** Only admins send, and this person isn't one (A-041). */
@@ -538,6 +543,7 @@ function ApprovalCard({
       {item.saidNo && !editing && (
         <div>
           <p className="mt-2.5 text-[13px] leading-snug text-ink">{saidNoWords(item.saidNoHow ?? "clear", firstName).line}</p>
+          {askNotNow && item.saidNoHow === "unsure" && notNowIn(item.leadLastMessage ?? "") && <NotNowQuestion leadId={item.leadId} />}
           <KeepFollowingButton leadId={item.leadId} label={saidNoWords(item.saidNoHow ?? "clear", firstName).link} className="mt-0.5" />
         </div>
       )}
@@ -672,8 +678,11 @@ export default function ApprovalQueue({
   meetings = [],
   calls = [],
   quiet = null,
+  askNotNow = false,
 }: {
   items: ApprovalItem[];
+  /** The one "not now" question (A-329) may be asked on a card: an admin, and the business hasn't answered it. */
+  askNotNow?: boolean;
   /** Calls booked for today and not over yet (A-268): a row each, first in Then, opening "Before your call" in place. */
   calls?: CallToPrepare[];
   /** Calls to look back on (A-263): a row each in Then, opening the four answers in place (A-266). */
@@ -874,6 +883,7 @@ export default function ApprovalQueue({
           onResolved={resolve}
           sendLocked={sendLocked}
           onSkip={queue.length > 1 ? () => skip(selected.leadId) : undefined}
+          askNotNow={askNotNow}
         />
       </motion.div>
       {/* Anything else waiting for the same person sits with them, not as another row (A-286). */}

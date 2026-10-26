@@ -56,6 +56,15 @@ describe("who may be written to when the moment comes", () => {
     expect(mayWriteMoment({ ...base, stayInTouchAt: new Date(OCT13), saidNoAt: new Date(OCT13 - 5 * D) }, new Date(now.getTime() - D), now)).toBe(true);
     expect(mayWriteMoment({ ...base, optedOutAt: new Date(OCT13) }, new Date(now.getTime() - D), now)).toBe(false);
   });
+
+  it("a no in the same message stops it, unless the owner chose to check back once (A-329)", () => {
+    const same = { ...base, saidNoAt: new Date(OCT13) };
+    expect(mayWriteMoment(same, new Date(now.getTime() - 30 * D), now)).toBe(false);
+    expect(mayWriteMoment({ ...same, notNowAt: new Date(OCT13) }, new Date(now.getTime() - 30 * D), now)).toBe(true);
+    // The path never outlasts consent or an opt-out.
+    expect(mayWriteMoment({ ...same, notNowAt: new Date(OCT13) }, new Date(now.getTime() - (MOMENT_WINDOW_DAYS + 1) * D), now)).toBe(false);
+    expect(mayWriteMoment({ ...same, notNowAt: new Date(OCT13), optedOutAt: new Date(OCT13) }, new Date(now.getTime() - D), now)).toBe(false);
+  });
 });
 
 describe("what the screens say", () => {

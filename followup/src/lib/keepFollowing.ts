@@ -27,7 +27,8 @@ export async function keepFollowing(
   if (!lead) return { success: false, message: "Customer not found." };
   const template = templateFor(lead.business.industry, lead.business.askPlan);
   const before = readQualification(lead.qualification);
-  const overrule = { saidNoAt: null, saidNoHow: null, keepFollowingAt: new Date() };
+  // "Keep following up" also ends the "not now" path (A-329): the owner wants the plan back.
+  const overrule = { saidNoAt: null, saidNoHow: null, notNowAt: null, keepFollowingAt: new Date() };
   if (!template || !before) {
     // No checklist to re-sort (every kind of business but real estate today): the no is simply lifted.
     if (!lead.saidNoAt) return { success: false, message: "Nothing to change for this customer." };

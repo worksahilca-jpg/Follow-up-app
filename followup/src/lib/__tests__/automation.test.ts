@@ -60,7 +60,7 @@ import { recordAudit } from "@/lib/audit";
 import { isWithinSendWindow } from "@/lib/sendWindow";
 import { checkAiEligibility } from "@/lib/billing";
 import { runAutomationForBusiness, DEAD_LEAD_ACTION } from "@/lib/automation";
-import { UNTOUCHED_LEAD_REASON, UNGROUNDED_DRAFT_REASONS, MAYBE_NO_REASON } from "@/lib/holdReasons";
+import { UNTOUCHED_LEAD_REASON, UNGROUNDED_DRAFT_REASONS, MAYBE_NO_REASON, NOT_NOW_REASON } from "@/lib/holdReasons";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const p = prisma as any;
@@ -2445,6 +2445,20 @@ describe("customers who said no, or asked if they're talking to a person", () =>
       expect.anything(),
       "ai.hold",
       expect.objectContaining({ targetId: "lead1", meta: expect.objectContaining({ reason: MAYBE_NO_REASON }) })
+    );
+  });
+
+  // "Not now" (A-329): on the ask-and-check-back-once path, their answer waits for the owner too, said in its own words.
+  it("holds a reply on the not-now path for the owner, even on Autonomous", async () => {
+    p.lead.findMany.mockResolvedValueOnce([lead({ automationTier: "AUTONOMOUS", notNowAt: new Date("2026-10-20T10:00:00Z") })]).mockResolvedValueOnce([]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+    const r = await runAutomationForBusiness("biz1");
+    expect(r.sent).toBe(0);
+    expect(send).not.toHaveBeenCalled();
+    expect(audit).toHaveBeenCalledWith(
+      expect.anything(),
+      "ai.hold",
+      expect.objectContaining({ targetId: "lead1", meta: expect.objectContaining({ reason: NOT_NOW_REASON }) })
     );
   });
 

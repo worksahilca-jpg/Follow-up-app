@@ -114,7 +114,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     // component, so without it "Good morning" came from the server's
     // clock — UTC on Vercel — and greeted a Toronto owner at 8pm with it.
     ctx
-      ? prisma.business.findUnique({ where: { id: ctx.businessId }, select: { timezone: true, holdAllForApproval: true, sendingPausedAt: true, onlyAdminsSend: true, instagramUsername: true, followUpPlans: true, industry: true } })
+      ? prisma.business.findUnique({ where: { id: ctx.businessId }, select: { timezone: true, holdAllForApproval: true, sendingPausedAt: true, onlyAdminsSend: true, instagramUsername: true, followUpPlans: true, industry: true, notNowPlan: true } })
       : null,
     // Pause all sending, and Only admins send (A-041). The role is read here
     // rather than trusted from the session, which doesn't carry it.
@@ -583,6 +583,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             sendLocked={sendLocked}
             handledToday={handledToday}
             holdAll={holdAll}
+            askNotNow={isAdmin && !business?.notNowPlan}
             meetings={meetingCards}
             quiet={atRisk.length > 0 ? { id: atRisk[0].id, name: atRisk[0].name, total: lost.total } : null}
           />

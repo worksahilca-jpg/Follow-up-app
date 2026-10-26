@@ -86,7 +86,7 @@ export const UNANSWERED_FIRST_REPLY_HOURS = 3;
 import { META_DM_WINDOW_HOURS, META_HUMAN_AGENT_MAX_HOURS, META_NUDGE_GAP_HOURS, UNANSWERED_CEILING_CHANNELS, UNANSWERED_META_DM_MAX_HOURS } from "@/lib/metaWindow";
 export { META_DM_WINDOW_HOURS, UNANSWERED_META_DM_MAX_HOURS };
 import { isInstagramLeadId, isMessengerLeadId } from "@/lib/instagramId";
-import { HOLD_ALL_AUTOMATION_REASON, BACKLOG_BEFORE_PERMISSION_REASON, RISK_CHECK_FAILED_REASON, UNTOUCHED_LEAD_REASON, NEVER_WROTE_REASON, FOUND_IN_SPAM_REASON, FORM_SPAM_CHECK_REASON, FORM_SPAM_CHECK_SOURCE, isUnconfirmedSpamSource, IN_CRM_REASON, UNGROUNDED_DRAFT_REASONS, ASKED_IF_PERSON_REASON, MAYBE_NO_REASON } from "@/lib/holdReasons";
+import { HOLD_ALL_AUTOMATION_REASON, BACKLOG_BEFORE_PERMISSION_REASON, RISK_CHECK_FAILED_REASON, UNTOUCHED_LEAD_REASON, NEVER_WROTE_REASON, FOUND_IN_SPAM_REASON, FORM_SPAM_CHECK_REASON, FORM_SPAM_CHECK_SOURCE, isUnconfirmedSpamSource, IN_CRM_REASON, UNGROUNDED_DRAFT_REASONS, ASKED_IF_PERSON_REASON, MAYBE_NO_REASON, NOT_NOW_REASON } from "@/lib/holdReasons";
 import { bookingLinkReason, carriesBookingLink } from "@/lib/bookingOffer";
 import { isSharedContentOnly } from "@/lib/sharedContent";
 
@@ -911,6 +911,8 @@ export async function runAutomationForBusiness(
         AND: [quietSince(cutoff, deadLeadEnabled ? deadCutoff : undefined), HAS_CONVERSATION_IF_FROM_CRM],
         // They said no (Lead.saidNoAt): no reminder, ever, until they write again.
         saidNoAt: null,
+        // They said "not now" and the owner asks when (A-329): only the one check-back note, never a plan step.
+        notNowAt: null,
         // They said STOP: no reminder on any channel (sendFollowUpToLead refuses it too; this saves the draft).
         optedOutAt: null,
         OR: [{ lastAutomationCheckedAt: null }, { lastAutomationCheckedAt: { lt: recheckCutoff } }],
@@ -926,6 +928,7 @@ export async function runAutomationForBusiness(
             sequenceId: null,
             AND: [quietSince(deadCutoff), HAS_CONVERSATION_IF_FROM_CRM],
             saidNoAt: null,
+            notNowAt: null,
             optedOutAt: null,
             OR: [{ lastAutomationCheckedAt: null }, { lastAutomationCheckedAt: { lt: recheckCutoff } }],
           },
@@ -950,6 +953,7 @@ export async function runAutomationForBusiness(
             stage: { notIn: ["WON", "LOST"] },
             sequenceId: null,
             saidNoAt: null,
+            notNowAt: null,
             optedOutAt: null,
             OR: [{ phone: { startsWith: "ig:" } }, { phone: { startsWith: "fb:" } }],
             AND: [
@@ -1581,9 +1585,11 @@ export async function runAutomationForBusiness(
       const askedIfPerson = lead.askedIfPersonAt != null;
       // Their newest message might be a no (A-326): FollowUp stopped following up to be safe, and the owner reads it.
       const maybeNo = lead.saidNoHow === "unsure";
+      // On the "not now" path (A-329) every reply waits for the owner too, their answer about when included.
+      const notNow = !maybeNo && lead.notNowAt != null;
       // Their booking link in the reply (A-263) always waits for the owner.
       const offersBooking = carriesBookingLink(message, lead.id);
-      if (holdAll || isUntouched || phoneNeverWrote || unconfirmedSpam || effectiveTier !== "AUTONOMOUS" || tier === "free" || needsPrice || askedIfPerson || maybeNo || offersBooking) {
+      if (holdAll || isUntouched || phoneNeverWrote || unconfirmedSpam || effectiveTier !== "AUTONOMOUS" || tier === "free" || needsPrice || askedIfPerson || maybeNo || notNow || offersBooking) {
         /**
          * Every draft that reaches here gets a verdict, including ones
          * that are going to be held no matter what it says.
@@ -1673,6 +1679,10 @@ export async function runAutomationForBusiness(
         }
         if (maybeNo) {
           risk = { riskLevel: "high", reason: MAYBE_NO_REASON, topic: "other" };
+          riskAssessed = true;
+        }
+        if (notNow) {
+          risk = { riskLevel: "high", reason: NOT_NOW_REASON, topic: "other" };
           riskAssessed = true;
         }
         if (askedIfPerson) {

@@ -59,9 +59,11 @@ domain. The founder's ceiling is $50/month. Changes made that day on team North 
   **2026-10-26:** that dashboard setting had stopped working. Every PR push was building
   previews again (often two per commit), and storing all those copies cost ~$1.90 a day
   ("Function Storage", 573 GB on Oct 22). The spending cap paused the app from Oct 25 01:04
-  to Oct 26 14:45 UTC. The rule now lives in `followup/vercel.json` as an `ignoreCommand`
-  (build only when `VERCEL_ENV` is `production`), so it is in the code and can't be lost in
-  the dashboard.
+  to Oct 26 14:45 UTC. The rule now lives in `followup/vercel.json` as an `ignoreCommand`,
+  so it is in the code and can't be lost in the dashboard. The first version (#598, an inline
+  `[ "$VERCEL_ENV" != "production" ]`) also skipped the production build of its own merge.
+  It now runs `scripts/vercel-ignore-build.mjs`: build when `VERCEL_ENV` is `production` or
+  the branch is `main`, skip only a known preview or another branch, and build when unsure.
 - `followup-voice-agent` stays paused (spend management paused it; nobody uses it yet).
 - Members dipesh, pransh, vansh → **Viewer**. Founder stays Owner.
 - Spend Management: budget **$30**, pause production deployments on (set 2026-10-14; was $140).

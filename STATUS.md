@@ -56,9 +56,16 @@ domain. The founder's ceiling is $50/month. Changes made that day on team North 
   `if [ "$VERCEL_GIT_COMMIT_REF" = "main" ]; then exit 1; else exit 0; fi`
   → **only `main` builds. There are no preview deployments for PR branches any more.**
   Reviewers read the diff on GitHub; the founder's session verifies locally before a merge.
+  **2026-10-26:** that dashboard setting had stopped working. Every PR push was building
+  previews again (often two per commit), and storing all those copies cost ~$1.90 a day
+  ("Function Storage", 573 GB on Oct 22). The spending cap paused the app from Oct 25 01:04
+  to Oct 26 14:45 UTC. The rule now lives in `followup/vercel.json` as an `ignoreCommand`
+  (build only when `VERCEL_ENV` is `production`), so it is in the code and can't be lost in
+  the dashboard.
 - `followup-voice-agent` stays paused (spend management paused it; nobody uses it yet).
 - Members dipesh, pransh, vansh → **Viewer**. Founder stays Owner.
 - Spend Management: budget **$30**, pause production deployments on (set 2026-10-14; was $140).
+  Raised to **$80** on 2026-10-25 after the cap paused the app.
   At the Oct 8 – Nov 8 pace (mostly build minutes) it could be reached in late October, so batch
   merges; Vercel emails at 50% and 75% before it pauses.
 

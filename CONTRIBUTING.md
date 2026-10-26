@@ -70,8 +70,15 @@ a feature that's broken.
 - **CI must be green**: typecheck, lint, build, and the test suite. A red check is never merged
   around — fix it or explain why it's not your PR's failure (see below).
 - **One check fails on every PR and always will**: `Vercel – followup-voice-agent` reports
-  "Deployment was blocked". That project is deliberately parked. The check that matters is
-  `Vercel – follow-up-app`. Nobody should spend an afternoon on this one — it is expected.
+  "Deployment was blocked". That project is deliberately parked. Nobody should spend an
+  afternoon on this one — it is expected.
+- **Vercel builds `main` only.** Since 2026-10-26 `followup/vercel.json` has an
+  `ignoreCommand` that skips every preview build, so a PR gets no preview link and
+  `Vercel – follow-up-app` on it is not a build result. The founder's Vercel spending cap paused the whole app
+  on 2026-10-25, and building and storing a copy of every push was most of that spend. The
+  PR's proof is the GitHub Actions check (typecheck, lint, test, `next build`, audit); the
+  production build runs once, on merge. Don't remove the `ignoreCommand` to get a preview link:
+  run the app locally instead.
 - If you're touching a file that another area also owns — the integrations layer and the
   backend overlap most often, see `TEAM.md` — say so explicitly in the PR description so it
   isn't a surprise in review.

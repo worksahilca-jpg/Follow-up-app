@@ -1,5 +1,6 @@
 "use client";
 
+import { fetchOnOpen } from "@/lib/pageCopies";
 import { useEffect, useState } from "react";
 import { signOut } from "next-auth/react";
 
@@ -23,7 +24,7 @@ export default function SignInsSection() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/account/sign-ins")
+    fetchOnOpen("/api/account/sign-ins")
       .then((r) => r.json())
       .then((d: { success?: boolean; signIns?: Row[]; emailsOn?: boolean }) => {
         if (d.success) {

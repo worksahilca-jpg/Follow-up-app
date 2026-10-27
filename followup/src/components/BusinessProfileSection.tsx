@@ -1,5 +1,6 @@
 "use client";
 
+import { fetchOnOpen } from "@/lib/pageCopies";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Building2, Check } from "lucide-react";
@@ -41,7 +42,7 @@ export default function BusinessProfileSection() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/onboarding")
+    fetchOnOpen("/api/onboarding")
       .then((r) => r.json())
       .then((data: { success: boolean; name?: string; industry?: string | null; namePlaceholder?: boolean; isAdmin?: boolean }) => {
         if (!data.success) return;

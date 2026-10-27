@@ -1,5 +1,6 @@
 "use client";
 
+import { fetchOnOpen } from "@/lib/pageCopies";
 import { useEffect, useState } from "react";
 
 /**
@@ -36,7 +37,7 @@ export default function HowYouWorkSection() {
   const [version, setVersion] = useState(0);
 
   useEffect(() => {
-    fetch("/api/business/habits")
+    (version === 0 ? fetchOnOpen : fetch)("/api/business/habits")
       .then((r) => r.json())
       .then((data: { success?: boolean; habits?: Habit[]; isAdmin?: boolean }) => {
         if (!data.success) return;

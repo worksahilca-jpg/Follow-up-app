@@ -8,7 +8,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { GROUP_PAGE, GROUP_SLUG, PAGE_SECTIONS, PARENT_PAGE, SETTINGS_GROUPS, groupOfPage, groupOfSlug, pageForId } from "@/lib/settingsGroups";
 
-const source = readFileSync(join(__dirname, "..", "..", "app", "(app)", "settings", "page.tsx"), "utf8");
+const source = readFileSync(join(__dirname, "..", "..", "app", "(app)", "settings", "SettingsClient.tsx"), "utf8");
 const pagesStart = source.indexOf("const PAGES");
 const pagesBlock = source.slice(pagesStart, source.indexOf("\n};\n", pagesStart));
 const pages = [...pagesBlock.matchAll(/^\s{2}([a-z]+): \{ title:/gm)].map((m) => m[1]);

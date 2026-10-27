@@ -9,6 +9,7 @@
  * remove button (never on themselves — see src/lib/team.ts's guardrails).
  */
 
+import { fetchOnOpen } from "@/lib/pageCopies";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { UserPlus, X } from "lucide-react";
@@ -61,8 +62,8 @@ export default function TeamSection({ onlyAdminsSend = false }: { onlyAdminsSend
   // in src/lib/auth.ts. While the beta allowlist is set, it does not.
   const [inviteAloneIsEnough, setInviteAloneIsEnough] = useState(false);
 
-  function load() {
-    fetch("/api/team")
+  function load(opening = false) {
+    (opening ? fetchOnOpen : fetch)("/api/team")
       .then((r) => r.json())
       .then(
         (data: {
@@ -86,7 +87,7 @@ export default function TeamSection({ onlyAdminsSend = false }: { onlyAdminsSend
       .finally(() => setLoaded(true));
   }
 
-  useEffect(load, []);
+  useEffect(() => load(true), []);
 
   const isAdmin = currentUserRole === "ADMIN";
   const selfId = session?.user?.id;

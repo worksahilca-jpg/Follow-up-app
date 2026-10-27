@@ -25,7 +25,7 @@ import { join } from "node:path";
 // collapsed before matching — otherwise a reflow by a formatter would
 // break the test without changing a word the customer reads.
 const settings = () =>
-  readFileSync(join(__dirname, "..", "..", "app", "(app)", "settings", "page.tsx"), "utf8").replace(/\s+/g, " ");
+  readFileSync(join(__dirname, "..", "..", "app", "(app)", "settings", "SettingsClient.tsx"), "utf8").replace(/\s+/g, " ");
 // Since A-253 (2026-10-14) the four things FollowUp writes on its own are one line each on the
 // Follow-up plans page, with no number beside them. Their promises are checked there.
 const switches = () => readFileSync(join(__dirname, "..", "..", "components", "app", "FollowUpSwitches.tsx"), "utf8").replace(/\s+/g, " ");
@@ -87,7 +87,7 @@ describe("the unanswered-rule promise", () => {
     // automation.ts imports Prisma. Pulling it into a "use client" component
     // ships the database client to the browser (issue #93).
     for (const file of [
-      ["app", "(app)", "settings", "page.tsx"],
+      ["app", "(app)", "settings", "SettingsClient.tsx"],
       ["components", "app", "FollowUpSwitches.tsx"],
       ["components", "settings", "Connections.tsx"],
     ]) {

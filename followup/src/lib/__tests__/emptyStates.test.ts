@@ -98,7 +98,7 @@ describe("the Settings inbox panel", () => {
     // panel so naming the inbox is right — but the dashboard fills from any
     // of eight sources, and a business capturing through the website widget
     // was told its working setup produced nothing.
-    const source = app("(app)/settings/page.tsx");
+    const source = app("(app)/settings/SettingsClient.tsx");
     const lines = source.split("\n").filter((l) => !l.trimStart().startsWith("*") && !l.trimStart().startsWith("//"));
     expect(lines.join("\n")).not.toMatch(/until then the dashboard stays empty/);
   });

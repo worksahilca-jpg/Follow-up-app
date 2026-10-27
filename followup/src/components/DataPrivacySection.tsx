@@ -7,6 +7,7 @@
  * name back — see /api/business/export and /api/business/delete.
  */
 
+import { fetchOnOpen } from "@/lib/pageCopies";
 import { useEffect, useState } from "react";
 import { signOut } from "next-auth/react";
 import { Download, Eraser, TriangleAlert } from "lucide-react";
@@ -85,7 +86,7 @@ export default function DataPrivacySection() {
         }
       })
       .finally(() => setLoaded(true));
-    fetch("/api/leads/practice")
+    fetchOnOpen("/api/leads/practice")
       .then((r) => r.json())
       .then((data: { success: boolean; count?: number }) => {
         if (data.success) setPracticeCount(data.count ?? 0);

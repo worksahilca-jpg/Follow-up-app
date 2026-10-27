@@ -1,5 +1,6 @@
 "use client";
 
+import { fetchOnOpen } from "@/lib/pageCopies";
 import { useEffect, useState } from "react";
 import { signOut, useSession } from "next-auth/react";
 import { Bell, ChevronRight, CircleHelp, Ellipsis, Inbox, Send, Store, type LucideIcon } from "lucide-react";
@@ -76,7 +77,7 @@ export default function SettingsList({
   const [alerts, setAlerts] = useState<string>("");
   useEffect(() => {
     const get = (url: string) =>
-      fetch(url)
+      fetchOnOpen(url)
         .then((r) => r.json())
         .catch(() => ({}));
     Promise.all([get("/api/instagram/config"), get("/api/facebook/config"), get("/api/whatsapp/config")]).then(([ig, fb, wa]) =>

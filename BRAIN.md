@@ -74,7 +74,14 @@ a booked call or visit; the owner closes.
 
 **Last updated: 2026-10-27**
 
-- **Settings opens with its answers (Oct 27), PR open, not merged.** The founder: Settings "responds after about 10
+- **Pages kept awake (Oct 27), PR open, not merged.** The founder: "our app is very slow". Vercel's numbers that
+  morning: each page answers in 0.04–0.08 s once awake, but sleeps after a few quiet minutes, and the first tap
+  after that took 1–2.4 s (Today 2.4 s, Activity 2.1 s, Customers 1.7 s, the sign-in check 1.2–1.5 s). The scheduled
+  jobs that run every minute or two were never asleep. So `/api/cron/keep-warm` (every 3 minutes, `src/lib/keepWarm.ts`)
+  opens the 9 owner pages signed out; each checks the sign-in first and redirects, so a visit reads nothing. Check the
+  cold-start numbers in Vercel a day after it goes live. If the app still feels slow on second taps, the cause is the
+  browser side (no real-user speed data yet: Speed Insights would be a new package, his call).
+- **Settings opens with its answers (Oct 27) LIVE (PR #605 → 9ff21a2).** The founder: Settings "responds after about 10
   seconds". Vercel's numbers (Oct 27) showed why: the Settings page itself answered in about 0.1 s (it's opened all
   day), but each of its ~20 data routes is rarely called, so each started cold, 1.3–3.6 s apiece. Now the page's server
   render runs those same handlers and hands the answers down (`src/lib/pageCopies.ts`, list in

@@ -20,8 +20,9 @@ import type { Lead } from "@/lib/types";
 // Re-seeing a thread is cheap (known threads skip the classifier).
 const SYNC_OVERLAP_MS = 15 * 60_000;
 // How often the automatic sync does a DEEP pass (the same 180-day,
-// 100-thread pull as the manual "Sync now") instead of the incremental
-// tick. Nobody should ever have to press "Sync now": a new connection
+// 100-thread pull as the manual "Sync now") after the incremental tick
+// (never instead of it: see syncGmailForAllBusinesses). Nobody should
+// ever have to press "Sync now": a new connection
 // gets its first deep pass on the very next tick, and after that once a
 // day — which is also how a classifier improvement re-judges an entire
 // inbox on its own (known and previously-rejected threads skip the AI
@@ -36,7 +37,8 @@ const DEEP_SYNC_INTERVAL_MS = 24 * 60 * 60_000;
 const MAX_CLASSIFICATIONS_PER_RUN = 25;
 const MAX_SCORES_PER_RUN = 15;
 
-export type GmailSyncResult = { count: number; scored: number; repliesDetected: number; truncated: boolean; leads: Lead[] };
+/** `leftUnread`: Google's limit kept this run from reading some threads (it is in `truncated` too). */
+export type GmailSyncResult = { count: number; scored: number; repliesDetected: number; truncated: boolean; leftUnread: boolean; leads: Lead[] };
 
 /**
  * Self-healing scoring: any lead that exists with messages but was never
@@ -157,7 +159,7 @@ export async function syncGmailForBusiness(
     },
   });
 
-  return { count: leads.length, scored, repliesDetected, truncated: truncated || unread, leads };
+  return { count: leads.length, scored, repliesDetected, truncated: truncated || unread, leftUnread: unread, leads };
 }
 
 /**
@@ -209,14 +211,23 @@ export async function syncGmailForAllBusinesses(): Promise<{ businesses: number;
     // One inbox at a time: they write to the same business's leads.
     let anySynced = false;
     for (const inbox of inboxes) {
-      // Deep pass (no `since`) when this inbox has never had one or its
-      // last one is a day old; otherwise the cheap incremental tick.
+      // The cheap incremental tick, then a deep pass (no `since`) when
+      // this inbox has never had one or its last one is a day old.
+      //
+      // New mail first, every tick. A deep pass reads up to 150 threads,
+      // and Google's limit can cut it short; one that ran instead of the
+      // tick was cut short at the same point every time and left the clock
+      // still, so a busy inbox took in no new email from Oct 21 to Oct 27
+      // while Settings said Connected. Reads are spaced out now too
+      // (GMAIL_READ_GAP_MS in integrations/gmail.ts), and when the tick
+      // itself met the limit the deep pass waits for the next one.
       const deepDue = !inbox.deepSyncedAt || Date.now() - inbox.deepSyncedAt.getTime() > DEEP_SYNC_INTERVAL_MS;
-      const since = deepDue ? undefined : new Date((inbox.lastSyncedAt ?? new Date()).getTime() - SYNC_OVERLAP_MS);
+      const since = new Date((inbox.lastSyncedAt ?? new Date()).getTime() - SYNC_OVERLAP_MS);
       try {
-        const result = await syncGmailForBusiness(businessId, { ...(since ? { since } : {}), integrationId: inbox.id });
-        synced += 1;
+        const result = await syncGmailForBusiness(businessId, { since, integrationId: inbox.id });
         newLeads += result.count;
+        if (deepDue && !result.leftUnread) newLeads += (await syncGmailForBusiness(businessId, { integrationId: inbox.id })).count;
+        synced += 1;
         anySynced = true;
       } catch (err) {
         failed += 1;

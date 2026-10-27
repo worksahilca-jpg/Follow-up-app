@@ -72,9 +72,18 @@ a booked call or visit; the owner closes.
 
 ## Where we are (update at the end of every task)
 
-**Last updated: 2026-10-26**
+**Last updated: 2026-10-27**
 
-- **"Not now" choice built (A-329, Oct 26): PR open, not merged.** Drawn, then approved ("merge and yes build it").
+- **Night check (Oct 27), PR open, not merged.** Asked by the founder ("bugs, security checks, waste code… keep the
+  code organised"). Found: all 4,967 tests pass, type check clean, no failed sends or sync errors in the live data
+  (30 days), 0 known package holes, no keys in 666 commits of history, every database table locked (Supabase reports
+  only the expected "locked, no public policy" note), every public route checks who is calling. Removed 19 files
+  nothing used (the old React home page, the old composer and thread, and other parked-then-replaced pieces) and one
+  unused package (`clsx`). Kept on purpose: the parked Inbox (A-027's guard). The app's 10-second lag on the founder's
+  laptop that evening: the code answers in under 0.1 s once running; the first click after the app sits unused took
+  3.5 s even locally, so it's the server waking up. The live logs (to confirm) are blocked for the Vercel connector.
+- **"Not now" choice (A-329, Oct 26) LIVE (PR #603 → af91948; `Business.notNowPlan` + `Lead.notNowAt` confirmed in
+  production, read-only).** Drawn, then approved ("merge and yes build it").
   The first time a maybe-no reads as "not now", that customer's Today card asks an admin once: Stop (the default) or
   Ask when, then check back once; Settings › Sending replies changes it. Ask = one short question, one check-back note
   at the time they give (Their moment, A-262), nothing else: no plan step, workflow or win-back while `Lead.notNowAt` is

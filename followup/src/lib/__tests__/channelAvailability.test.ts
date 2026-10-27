@@ -105,11 +105,8 @@ describe("dropped channels", () => {
  */
 describe("the landing page's components make the same promises as the page", () => {
   const LANDING = [
-    "../src/components/landing/dark/HeroFlow.tsx",
-    "../src/components/landing/dark/NavDark.tsx",
-    "../src/components/landing/dark/FaqDark.tsx",
-    "../src/components/landing/dark/StickyCta.tsx",
-    // The home page, one document since 2026-10-09 (A-204 → A-206).
+    // The home page, one document since 2026-10-09 (A-204 → A-206). The
+    // component landing it replaced was removed on 2026-10-27.
     "../src/landing/home.html",
   ];
   const visible = (p: string) =>
@@ -129,39 +126,10 @@ describe("the landing page's components make the same promises as the page", () 
   });
 
   /**
-   * The narrow guarantee, stated as the reader meets it: the hero's phone
-   * row is marked. Asserted on the row's own data rather than on the file
-   * containing the word "Soon" somewhere, which a second unmarked source
-   * would pass.
-   */
-  it("marks the hero's phone-line source as not yet available", () => {
-    if (CARRIER_CHANNELS_AVAILABLE) return;
-    const hero = read("../src/components/landing/dark/HeroFlow.tsx");
-    const row = hero.slice(hero.indexOf("const SOURCES"), hero.indexOf("const REPLIES"));
-    const phone = row.split("\n").find((l) => l.includes("phone line"));
-    expect(phone, "the hero no longer lists the phone line at all").toBeTruthy();
-    expect(phone, "the hero lists the phone line as a live source again").toMatch(/soon:\s*true/);
-
-    // …and the mark is rendered, not just declared. A `soon` field nothing
-    // reads would pass the assertion above and show the visitor nothing.
-    expect(hero, "the hero reads no `soon` flag when it draws a source").toMatch(/soon\s*&&/);
-  });
-
-  it("does not quietly mark a channel that does work", () => {
-    const hero = read("../src/components/landing/dark/HeroFlow.tsx");
-    const row = hero.slice(hero.indexOf("const SOURCES"), hero.indexOf("const REPLIES"));
-    for (const live of ["Gmail", "Instagram", "WhatsApp", "your website"]) {
-      const line = row.split("\n").find((l) => l.includes(live));
-      expect(line, `the hero no longer shows ${live}`).toBeTruthy();
-      expect(line, `the hero says ${live} is coming soon — it works today`).not.toMatch(/soon:\s*true/);
-    }
-  });
-
-  /**
-   * The pill says "Soon" on the old hero above; a visitor deciding whether
-   * to sign up needs to know what happens to their phone in the meantime.
-   * The home page since 2026-10-09 has no FAQ to answer that, so it must
-   * not raise the question: it names no phone line or missed call at all.
+   * The old hero carried a "Soon" pill; a visitor deciding whether to sign
+   * up needs to know what happens to their phone in the meantime. The home
+   * page since 2026-10-09 has no FAQ to answer that, so it must not raise
+   * the question: it names no phone line or missed call at all.
    */
   it("does not offer the phone line on the home page", () => {
     if (CARRIER_CHANNELS_AVAILABLE) return;

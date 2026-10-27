@@ -150,9 +150,8 @@ export function replySubject(original: string): string | null {
 /**
  * Which channel an AUTOMATED send (automation.ts, sequences.ts) should
  * use — always pass this explicitly rather than relying on
- * sendFollowUpToLead()'s own default below, which the manual-send
- * composer UI (MessageComposer.tsx's `isEmail = Boolean(leadEmail)`) is
- * built around and this deliberately leaves untouched.
+ * sendFollowUpToLead()'s own default below, which manual sends from the
+ * app are built around and this deliberately leaves untouched.
  *
  * The bug this fixes: that default always picks "email" whenever the
  * lead has one on file, regardless of what channel the lead is actually

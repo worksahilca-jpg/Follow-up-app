@@ -5877,3 +5877,7 @@ the way realtors do, instead of FollowUp stopping.)
   time, one message then. Nothing else."), then "FollowUp asks you this once. Change it any time in Settings."
   The same two rows sit in Settings › Sending replies under *When a customer says "not now"*, Stop ticked by
   default, with "A clear no or STOP always ends it, whatever you pick." Board: `not-now-board.png`.
+**Built 2026-10-26, LIVE (PR #603 → af91948, merged at the founder's "merge"; `Business.notNowPlan`, `Lead.notNowAt`
+and the migration confirmed in production, read-only):** as drawn. Stop (and an owner who hasn't answered) writes a
+warm thanks with no question; Ask writes one light "when would be a good time?", or confirms a time they gave, and
+brings them up on Today that day with one note. While they are on this path nothing else goes, and every reply waits.

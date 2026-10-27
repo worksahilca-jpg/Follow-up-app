@@ -42,8 +42,8 @@ import { dropKeptEdit, keepEdit, readKeptEdit } from "@/lib/keptEdit";
  * with the actual drafted reply inline and a one-click resolution —
  * Approve & send, Edit (in place, A-087), or Don't send.
  *
- * Reuses the same POST /api/leads/[id]/send that a human clicking
- * "Send now" in MessageComposer already uses — approving here IS sending
+ * Reuses the same POST /api/leads/[id]/send that every manual send
+ * uses — approving here IS sending
  * the exact drafted text, nothing new to trust.
  *
  * 2026-09-14 revisit (founder: dashboard reads as "weird" — layout,

@@ -1,5 +1,6 @@
 "use client";
 
+import { fetchOnOpen } from "@/lib/pageCopies";
 import { useEffect, useState } from "react";
 import { Check } from "lucide-react";
 import { calendarFootnote, calendarLabel, calendarQuestion, calendarsFor, type CalendarKey } from "@/lib/calendarUsed";
@@ -25,7 +26,7 @@ export default function CalendarConnection({ isAdmin }: { isAdmin: boolean }) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/business/booking-source")
+    fetchOnOpen("/api/business/booking-source")
       .then((r) => r.json())
       .then((data: { success: boolean; bookingCalendarSource?: Source; gmailConnected?: boolean; calendarUsed?: CalendarKey | null; realtor?: boolean }) => {
         if (!data.success) return;

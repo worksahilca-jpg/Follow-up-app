@@ -1,5 +1,6 @@
 "use client";
 
+import { fetchOnOpen } from "@/lib/pageCopies";
 import { useEffect, useState } from "react";
 import Switch from "@/components/Switch";
 import { isStandalone, readPushState, turnOffPush, turnOnPush, type PushState } from "@/lib/pushDevice";
@@ -34,7 +35,7 @@ export default function AlertsSection() {
   const [standalone, setStandalone] = useState(false);
 
   useEffect(() => {
-    fetch("/api/alerts")
+    fetchOnOpen("/api/alerts")
       .then((r) => r.json())
       .then((d) => {
         if (d?.success) setStatus({ email: d.email, push: d.push });

@@ -1,5 +1,6 @@
 "use client";
 
+import { fetchOnOpen } from "@/lib/pageCopies";
 import { useEffect, useState } from "react";
 import { PenLine } from "lucide-react";
 import Switch from "@/components/Switch";
@@ -28,7 +29,7 @@ export default function ImproveFollowUpToggle({ compact = false }: { compact?: b
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/business/privacy")
+    fetchOnOpen("/api/business/privacy")
       .then((r) => r.json())
       .then((data: { success: boolean; allowModelTraining?: boolean }) => {
         if (data.success) setOn(!!data.allowModelTraining);

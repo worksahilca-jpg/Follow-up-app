@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { fetchOnOpen } from "@/lib/pageCopies";
 
 /**
  * Connecting a WhatsApp number, wherever the owner is standing.
@@ -104,9 +105,9 @@ export function useWhatsAppSignup(): WhatsAppSignup {
    * function to tell that its body starts with an `await`, and flags it.
    * This is the shape WhatsAppConfig's own loader already used.
    */
-  const reload = useCallback(
-    () =>
-      fetch("/api/whatsapp/config")
+  const load = useCallback(
+    (get: (path: string) => Promise<Response>) =>
+      get("/api/whatsapp/config")
         .then((res) => res.json() as Promise<WhatsAppConfigResponse>)
         .then((data) => {
           if (!data.success) return;
@@ -123,10 +124,12 @@ export function useWhatsAppSignup(): WhatsAppSignup {
         .finally(() => setLoaded(true)),
     []
   );
+  // After a change: always the server. Opening: the copy Settings brought (src/lib/pageCopies.ts).
+  const reload = useCallback(() => load(fetch), [load]);
 
   useEffect(() => {
-    void reload();
-  }, [reload]);
+    void load(fetchOnOpen);
+  }, [load]);
 
   // Meta's SDK, loaded only once a caller knows it can use it. Readiness
   // is deliberately not state: `start` checks window.FB when pressed,

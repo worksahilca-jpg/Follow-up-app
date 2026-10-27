@@ -182,7 +182,7 @@ describe("WhatsApp is set up without the carrier channels", () => {
 
   // Read per test, not at collection time: a missing page should fail as
   // the assertion it is, not as a crash that reports "no tests".
-  const readSettings = () => stripComments(read("app/(app)/settings/page.tsx"));
+  const readSettings = () => stripComments(read("app/(app)/settings/SettingsClient.tsx"));
   const readConnections = () => {
     let source: string;
     try {

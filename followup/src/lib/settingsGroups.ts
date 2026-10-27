@@ -56,7 +56,7 @@ export function groupOfSlug(slug: string): SettingsGroup | null {
   return g && !GROUP_PAGE[g] ? g : null;
 }
 
-/** The sections each page shows, by page id (the page's titles and words live in settings/page.tsx). */
+/** The sections each page shows, by page id (the page's titles and words live in settings/SettingsClient.tsx). */
 export const PAGE_SECTIONS: Record<string, string[]> = {
   connections: ["connections"],
   replies: ["replies-out"],

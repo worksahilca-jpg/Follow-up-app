@@ -74,14 +74,22 @@ a booked call or visit; the owner closes.
 
 **Last updated: 2026-10-27**
 
-- **Night check (Oct 27), PR open, not merged.** Asked by the founder ("bugs, security checks, waste code… keep the
+- **Settings opens with its answers (Oct 27), PR open, not merged.** The founder: Settings "responds after about 10
+  seconds". Vercel's numbers (Oct 27) showed why: the Settings page itself answered in about 0.1 s (it's opened all
+  day), but each of its ~20 data routes is rarely called, so each started cold, 1.3–3.6 s apiece. Now the page's server
+  render runs those same handlers and hands the answers down (`src/lib/pageCopies.ts`, list in
+  `src/lib/settingsCopies.ts`); a part that opens takes the page's copy, and anything after a change still asks the
+  server. Locally: opening Settings went from 20 server calls (13 on a phone, then 7 more on Connected apps) to 0, and
+  the whole walk through every Settings page from 36 to 2 (both kept on purpose). Screens are pixel-identical to the
+  live version. Measure again on Vercel after it goes live.
+- **Night check (Oct 27) LIVE (PR #604 → 6a7c9c1).** Asked by the founder ("bugs, security checks, waste code… keep the
   code organised"). Found: all 4,967 tests pass, type check clean, no failed sends or sync errors in the live data
   (30 days), 0 known package holes, no keys in 666 commits of history, every database table locked (Supabase reports
   only the expected "locked, no public policy" note), every public route checks who is calling. Removed 19 files
   nothing used (the old React home page, the old composer and thread, and other parked-then-replaced pieces) and one
   unused package (`clsx`). Kept on purpose: the parked Inbox (A-027's guard). The app's 10-second lag on the founder's
   laptop that evening: the code answers in under 0.1 s once running; the first click after the app sits unused took
-  3.5 s even locally, so it's the server waking up. The live logs (to confirm) are blocked for the Vercel connector.
+  3.5 s even locally, so it's the server waking up. Confirmed with Vercel's own numbers the same night; fixed in the entry above.
 - **"Not now" choice (A-329, Oct 26) LIVE (PR #603 → af91948; `Business.notNowPlan` + `Lead.notNowAt` confirmed in
   production, read-only).** Drawn, then approved ("merge and yes build it").
   The first time a maybe-no reads as "not now", that customer's Today card asks an admin once: Stop (the default) or

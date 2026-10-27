@@ -1,5 +1,6 @@
 "use client";
 
+import { fetchOnOpen } from "@/lib/pageCopies";
 import { useEffect, useState } from "react";
 
 /**
@@ -61,7 +62,7 @@ export default function BusinessFactsSection() {
   const [version, setVersion] = useState(0);
 
   useEffect(() => {
-    fetch("/api/business/facts")
+    (version === 0 ? fetchOnOpen : fetch)("/api/business/facts")
       .then((r) => r.json())
       .then((data: { success?: boolean; facts?: Fact[]; isAdmin?: boolean }) => {
         if (!data.success) return;

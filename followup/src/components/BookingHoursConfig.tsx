@@ -1,5 +1,6 @@
 "use client";
 
+import { fetchOnOpen } from "@/lib/pageCopies";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Check } from "lucide-react";
@@ -34,7 +35,7 @@ export default function BookingHoursConfig() {
   const confirmed = useRef<{ hours: BookingHours; timezone: string }>({ hours: DEFAULT_BOOKING_HOURS, timezone: "America/New_York" });
 
   useEffect(() => {
-    fetch("/api/business/booking-hours")
+    fetchOnOpen("/api/business/booking-hours")
       .then((r) => r.json())
       .then((data: { success: boolean; timezone?: string; days?: number[]; startMinute?: number; endMinute?: number }) => {
         if (data.success && data.days && data.startMinute !== undefined && data.endMinute !== undefined) {

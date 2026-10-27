@@ -1,5 +1,6 @@
 "use client";
 
+import { fetchOnOpen } from "@/lib/pageCopies";
 import { useEffect, useState } from "react";
 import type { TeamWeek as Week } from "@/lib/calls";
 
@@ -17,7 +18,7 @@ export default function TeamWeek() {
   const [week, setWeek] = useState<Week | null>(null);
 
   useEffect(() => {
-    fetch("/api/team/week")
+    fetchOnOpen("/api/team/week")
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => setWeek(d?.week ?? null))
       .catch(() => {});

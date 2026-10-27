@@ -1,5 +1,6 @@
 "use client";
 
+import { fetchOnOpen } from "@/lib/pageCopies";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import FilteredEmails from "@/components/FilteredEmails";
@@ -65,15 +66,15 @@ export default function Connections({
   const [pages, setPages] = useState<{ id: string; name: string }[] | null>(null);
   const [pageError, setPageError] = useState<string | null>(null);
 
-  const loadInstagram = () =>
-    fetch("/api/instagram/config")
+  const loadInstagram = (opening = false) =>
+    (opening ? fetchOnOpen : fetch)("/api/instagram/config")
       .then((r) => r.json())
       .then((d: { connected?: boolean; receiving?: boolean; instagramUsername?: string | null; oauthAvailable?: boolean }) =>
         setInstagram({ connected: !!d.connected, receiving: d.receiving !== false, name: d.instagramUsername ? `@${d.instagramUsername}` : null, oauthAvailable: !!d.oauthAvailable })
       )
       .catch(() => setInstagram({ connected: false, receiving: true, name: null, oauthAvailable: false }));
-  const loadFacebook = () =>
-    fetch("/api/facebook/config")
+  const loadFacebook = (opening = false) =>
+    (opening ? fetchOnOpen : fetch)("/api/facebook/config")
       .then((r) => r.json())
       .then((d: { connected?: boolean; receiving?: boolean; pageName?: string | null; oauthAvailable?: boolean }) =>
         setFacebook({ connected: !!d.connected, receiving: d.receiving !== false, name: d.pageName ?? null, oauthAvailable: !!d.oauthAvailable })
@@ -81,14 +82,14 @@ export default function Connections({
       .catch(() => setFacebook({ connected: false, receiving: true, name: null, oauthAvailable: false }));
 
   useEffect(() => {
-    void loadInstagram();
-    void loadFacebook();
-    fetch("/api/embed/config")
+    void loadInstagram(true);
+    void loadFacebook(true);
+    fetchOnOpen("/api/embed/config")
       .then((r) => r.json())
       .then((d: { success?: boolean; embedUrl?: string }) => d.success && d.embedUrl && setEmbedUrl(d.embedUrl))
       .catch(() => {});
     // How many messages each place kept out, for the "Not customers" row in its window.
-    fetch("/api/integrations/gmail/filtered")
+    fetchOnOpen("/api/integrations/gmail/filtered")
       .then((r) => r.json())
       .then((d: { success?: boolean; filtered?: { provider: string }[] }) => {
         const n: Record<string, number> = {};

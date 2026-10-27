@@ -1,5 +1,6 @@
 "use client";
 
+import { fetchOnOpen } from "@/lib/pageCopies";
 import { useEffect, useState } from "react";
 import { Check } from "lucide-react";
 import AppWindow from "@/components/app/AppWindow";
@@ -184,9 +185,9 @@ export default function CrmConfig({ setup }: { setup?: { onConnected: (name: str
     }
   }
 
-  async function load() {
+  async function load(opening = false) {
     try {
-      const data = (await (await fetch("/api/crm/config")).json()) as { success: boolean } & Config;
+      const data = (await (await (opening ? fetchOnOpen : fetch)("/api/crm/config")).json()) as { success: boolean } & Config;
       if (data.success) setConfig(data);
     } finally {
       setLoading(false);
@@ -194,7 +195,7 @@ export default function CrmConfig({ setup }: { setup?: { onConnected: (name: str
   }
 
   useEffect(() => {
-    void load();
+    void load(true);
   }, []);
 
   async function connect(provider: Provider) {

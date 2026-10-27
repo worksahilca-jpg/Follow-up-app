@@ -203,7 +203,7 @@ describe("the setup strip never offers a step nobody can complete", () => {
     // {CARRIER_CHANNELS_AVAILABLE && (...)}, so the link opened Settings,
     // scrolled nowhere and raised nothing — indistinguishable from a page
     // that simply ignored the click.
-    const settings = readFileSync(join(__dirname, "..", "..", "app", "(app)", "settings", "page.tsx"), "utf8");
+    const settings = readFileSync(join(__dirname, "..", "..", "app", "(app)", "settings", "SettingsClient.tsx"), "utf8");
     const gatedStart = settings.indexOf("CARRIER_CHANNELS_AVAILABLE && (");
     const steps = await getIncompleteSetupSteps("biz1");
     for (const step of steps) {

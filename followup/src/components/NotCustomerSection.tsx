@@ -1,5 +1,6 @@
 "use client";
 
+import { fetchOnOpen } from "@/lib/pageCopies";
 import { useEffect, useState } from "react";
 import { REASON_GROUP, isSetAsideKind, type NotCustomerReason } from "@/lib/notCustomerReasons";
 
@@ -34,7 +35,7 @@ export default function NotCustomerSection() {
   const [version, setVersion] = useState(0);
 
   useEffect(() => {
-    fetch("/api/not-customers")
+    (version === 0 ? fetchOnOpen : fetch)("/api/not-customers")
       .then((r) => r.json())
       .then((data: { success?: boolean; rows?: Row[]; isAdmin?: boolean }) => {
         if (!data.success) return;

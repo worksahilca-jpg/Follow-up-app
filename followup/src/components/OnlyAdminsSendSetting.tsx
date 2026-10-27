@@ -1,5 +1,6 @@
 "use client";
 
+import { fetchOnOpen } from "@/lib/pageCopies";
 import { useEffect, useState } from "react";
 import Switch from "@/components/Switch";
 
@@ -20,7 +21,7 @@ export default function OnlyAdminsSendSetting({ onChange, bare = false }: { onCh
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/automation/settings")
+    fetchOnOpen("/api/automation/settings")
       .then((r) => r.json())
       .then((d: { onlyAdminsSend?: boolean; isAdmin?: boolean }) => {
         setOn(Boolean(d.onlyAdminsSend));

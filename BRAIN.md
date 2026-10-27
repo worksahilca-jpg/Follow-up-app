@@ -74,7 +74,12 @@ a booked call or visit; the owner closes.
 
 **Last updated: 2026-10-27**
 
-- **Gmail inbox stuck while it said Connected (Oct 27), PR open, not merged.** Checking the app before the realtor
+- **One practice reply a day on Today (Oct 27, A-330), PR open, not merged.** The founder wanted FollowUp trained
+  "more accurately and every day". On a quiet day (nobody waiting, no setup step open, admins only, the daily question's
+  slot), Today shows one made-up customer message for the owner's kind of business and the reply FollowUp would write.
+  Looks right, Change it (the owner's version is kept like "Write it better", so later replies read it) or Not now.
+  Nothing is sent and nothing about the made-up customer is stored. At most 6 replies a business a day.
+- **Gmail inbox stuck while it said Connected (Oct 27), LIVE (PR #607 → 8b02ed4).** Checking the app before the realtor
   messages: one of the two connected Gmails had taken in no new email since Oct 21, and every two-minute sync took
   ~15 s instead of 0.5 s. Cause: the daily full read (up to 150 threads, five at a time) met Google's per-mailbox
   limit at the same point every tick, and since PR #572 a read cut short keeps its clock, so the full read was due

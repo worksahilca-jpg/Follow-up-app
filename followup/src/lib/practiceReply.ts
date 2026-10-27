@@ -78,8 +78,9 @@ async function writePracticeReply(
   channel: PracticeChannel = "email",
   contactAskedBefore = false,
   // The Train scorecard (A-292) replays a moment from another business: it answers as that kind of business, and that
-  // example must not be in its own prompt.
-  opts: { excludeTrainingId?: string; industry?: string } = {}
+  // example must not be in its own prompt. `answerFirst`: the daily practice card (A-330) shows the reply the owner
+  // would get on Today for a first message, not the instant reply sent before it.
+  opts: { excludeTrainingId?: string; industry?: string; answerFirst?: boolean } = {}
 ): Promise<PracticeReply> {
   const conversation = practiceConversation(turns, new Date(), channel);
   const dm = channel !== "email";
@@ -88,7 +89,7 @@ async function writePracticeReply(
   const business = await prisma.business.findUnique({ where: { id: businessId }, select: { name: true, industry: true, askPlan: true } });
 
   // Their first message: the instant reply every new customer gets.
-  if (!conversation.some((m) => m.direction === "outbound")) {
+  if (!opts.answerFirst && !conversation.some((m) => m.direction === "outbound")) {
     const ack = await buildAckLine({
       leadFirstName: first,
       ownerFirstName: await getSenderFirstName(businessId),

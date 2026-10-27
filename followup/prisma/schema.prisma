@@ -1990,6 +1990,12 @@ model Integration {
   // never has to press a button — and a classifier improvement re-judges
   // the whole inbox on its own within a day instead of only new mail.
   deepSyncedAt      DateTime?
+  // Where Google's limit stopped the last full pass, as a position in its
+  // newest-first thread list (src/lib/gmailSync.ts). The next pass picks up
+  // there instead of starting over: from Oct 21 a busy inbox's full pass
+  // was stopped at the same point on every tick and never finished. Null
+  // when the last full pass finished, or none has been stopped yet.
+  deepSyncOffset    Int?
   // The last automatic sync failure for this connection (timestamp +
   // message), cleared by the next successful run — so a sync that keeps
   // dying shows up on the row, not only in a serverless log.

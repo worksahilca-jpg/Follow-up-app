@@ -74,6 +74,14 @@ a booked call or visit; the owner closes.
 
 **Last updated: 2026-10-27**
 
+- **Gmail's daily full read finishes again (Oct 27), PR open (with the practice card), not merged.** After #607 new
+  mail came in, but the busy inbox's daily 90-day read had not finished since Oct 20. Vercel's record of calls to Google:
+  every two-minute run, about 64 reads went through, then Google answered 403 ("units per minute per user") about 16
+  times and the read stopped, ~5,500 refusals every 12 hours since Oct 21. The read always started over from the
+  newest email, so it re-read the same ~50 it already had and never reached the rest. Fix: it remembers where Google
+  stopped it (`Integration.deepSyncOffset`, new column) and the next run starts there; a finished read clears it. An
+  inbox Google never stops still reads everything in one run. After it goes live: that inbox's `deepSyncedAt` should
+  move within about 10 minutes and the 403s to gmail.googleapis.com should stop.
 - **One practice reply a day on Today (Oct 27, A-330), PR open, not merged.** The founder wanted FollowUp trained
   "more accurately and every day". On a quiet day (nobody waiting, no setup step open, admins only, the daily question's
   slot), Today shows one made-up customer message for the owner's kind of business and the reply FollowUp would write.
@@ -85,7 +93,7 @@ a booked call or visit; the owner closes.
   limit at the same point every tick, and since PR #572 a read cut short keeps its clock, so the full read was due
   again on every tick and ran *instead of* the check for new mail. Fix: every tick checks new mail first, the full
   read only follows a check Google let finish, and thread reads start 100 ms apart (10 a second, under Google's 25).
-  After it goes live, confirm that inbox's `lastSyncedAt` moves and the gmail-sync run time drops in Vercel.
+  Confirmed live: both inboxes' `lastSyncedAt` move every two minutes.
 - **Pages kept awake (Oct 27), LIVE (PR #606 → 6186db0).** The founder: "our app is very slow". Vercel's numbers that
   morning: each page answers in 0.04–0.08 s once awake, but sleeps after a few quiet minutes, and the first tap
   after that took 1–2.4 s (Today 2.4 s, Activity 2.1 s, Customers 1.7 s, the sign-in check 1.2–1.5 s). The scheduled

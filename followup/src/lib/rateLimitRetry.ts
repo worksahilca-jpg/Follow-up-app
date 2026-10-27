@@ -156,3 +156,18 @@ export async function withRateLimitRetry<T>(fn: () => Promise<T>, options: RateL
     }
   }
 }
+
+/**
+ * Keeps calls that share it from bunching up: each one starts no sooner than `gapMs` after the one before it,
+ * however many run at once. A limit is cheaper to stay under than to wait out (see GMAIL_READ_GAP_MS in
+ * src/lib/integrations/gmail.ts).
+ */
+export function pacer(gapMs: number, sleep: (ms: number) => Promise<void> = realSleep): () => Promise<void> {
+  let next = 0;
+  return async () => {
+    const now = Date.now();
+    const at = Math.max(now, next);
+    next = at + gapMs;
+    if (at > now) await sleep(at - now);
+  };
+}

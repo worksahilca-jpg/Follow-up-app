@@ -48,7 +48,7 @@ import type { InlineImage } from "@/lib/emailAssets";
 import { GMAIL_INBOX_ORDER } from "@/lib/gmailInboxOrder";
 import { isUniqueViolation } from "@/lib/uniqueViolation";
 import { isBulkMail, isNewsletterThread, NEWSLETTER_REASON } from "@/lib/bulkMail";
-import { isGoogleRateLimitError, withRateLimitRetry, type RateLimitRetryOptions } from "@/lib/rateLimitRetry";
+import { isGoogleRateLimitError, pacer, withRateLimitRetry, type RateLimitRetryOptions } from "@/lib/rateLimitRetry";
 import { withAiContext } from "@/lib/integrations/openaiClient";
 
 /**
@@ -57,6 +57,16 @@ import { withAiContext } from "@/lib/integrations/openaiClient";
  * cron's time limit (see processThreadRefs).
  */
 const GMAIL_LIMIT_RETRY: RateLimitRetryOptions = { isRetryable: isGoogleRateLimitError, maxRetries: 2, baseDelayMs: 4_000, maxDelayMs: 20_000 };
+
+/**
+ * How far apart one sync starts its thread reads: ten a second. Google lets each mailbox spend 250 quota units a
+ * second and a thread read costs 10, so 25 reads a second is the ceiling
+ * (developers.google.com/workspace/gmail/api/reference/quota). Five reads at once, each back in a fraction of a
+ * second, went past it: from Oct 21 a full pass over a busy inbox (up to 150 threads) was cut short at the same
+ * point every time, and that inbox took in no new email for six days (gmailSync.ts). At ten a second a full pass
+ * takes about 15 seconds and a two-minute check about 4.
+ */
+const GMAIL_READ_GAP_MS = 100;
 
 const SCOPES = [
   "https://www.googleapis.com/auth/gmail.readonly",
@@ -657,6 +667,7 @@ async function processThreadRefs(
   // minutes on, reads them.
   let limited = false;
   let skippedForLimit = 0;
+  const nextRead = pacer(GMAIL_READ_GAP_MS);
   const results = await mapWithConcurrency(threadRefs, 5, async (ref): Promise<SyncedLead | null> => {
     if (limited) {
       skippedForLimit++;
@@ -683,6 +694,7 @@ async function processThreadRefs(
     if (!ref.id) return null;
 
     const threadId = ref.id;
+    await nextRead();
     const { data: thread } = await withRateLimitRetry(
       () => gmail.users.threads.get({ userId: "me", id: threadId, format: "full" }),
       GMAIL_LIMIT_RETRY

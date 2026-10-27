@@ -74,7 +74,14 @@ a booked call or visit; the owner closes.
 
 **Last updated: 2026-10-27**
 
-- **Pages kept awake (Oct 27), PR open, not merged.** The founder: "our app is very slow". Vercel's numbers that
+- **Gmail inbox stuck while it said Connected (Oct 27), PR open, not merged.** Checking the app before the realtor
+  messages: one of the two connected Gmails had taken in no new email since Oct 21, and every two-minute sync took
+  ~15 s instead of 0.5 s. Cause: the daily full read (up to 150 threads, five at a time) met Google's per-mailbox
+  limit at the same point every tick, and since PR #572 a read cut short keeps its clock, so the full read was due
+  again on every tick and ran *instead of* the check for new mail. Fix: every tick checks new mail first, the full
+  read only follows a check Google let finish, and thread reads start 100 ms apart (10 a second, under Google's 25).
+  After it goes live, confirm that inbox's `lastSyncedAt` moves and the gmail-sync run time drops in Vercel.
+- **Pages kept awake (Oct 27), LIVE (PR #606 → 6186db0).** The founder: "our app is very slow". Vercel's numbers that
   morning: each page answers in 0.04–0.08 s once awake, but sleeps after a few quiet minutes, and the first tap
   after that took 1–2.4 s (Today 2.4 s, Activity 2.1 s, Customers 1.7 s, the sign-in check 1.2–1.5 s). The scheduled
   jobs that run every minute or two were never asleep. So `/api/cron/keep-warm` (every 3 minutes, `src/lib/keepWarm.ts`)

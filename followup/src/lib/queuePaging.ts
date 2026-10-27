@@ -35,8 +35,8 @@
  * waiting on every channel instead of one loud channel burying the
  * others.
  *
- * Deliberately NOT a "show all" button, which is the pattern
- * `ConversationThread.tsx` uses for a conversation of thirty messages.
+ * Deliberately NOT a "show all" button, which suits a conversation of
+ * thirty messages.
  * Pressing "show all" on 500 is the original bug with a click in front
  * of it.
  */

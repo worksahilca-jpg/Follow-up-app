@@ -7,7 +7,7 @@ export const contentType = "image/png";
 // The card a link to followupbase.io shows on WhatsApp, iMessage, Slack,
 // LinkedIn. Rendered via Satori, which needs display:flex on every
 // container (no block layout). Same charcoal ground, white ink and grey
-// secondary as the landing page's dark theme (landing-dark.module.css) —
+// secondary as the old landing page's dark theme —
 // a share card is seen next to other people's, so it always shows the
 // brand's own ground rather than following a device theme. The mark is
 // the two-leaf symbol from public/brand/followup-symbol.svg, same path

@@ -4083,6 +4083,16 @@ confirms a time on its own.
   "try it first" (the owner writes as a customer and sees the reply before turning on "reply for me").
 - Not chosen: FollowUp booking a time by itself (Appointwise's way). A calendar can be empty while the realtor is
   busy, so a person confirms every booking.
+- **Built, part 1 (2026-10-28, founder: *"build it"* on the redrawn board):** steps 1–3 and the booked state. The
+  reply offers two free times from the owner's hours (and Google Calendar when it is the source) when a customer
+  asks to meet or says yes to meeting; a DM offer is fixed words with the two times as buttons, an email offer is
+  the writer's words with both times checked and added if dropped. Their pick is read from their words (day, time,
+  button, "the first one"; never from "can't do Thursday" or a time that wasn't offered); FollowUp answers "Great.
+  Let me confirm that and get right back to you.", the owner gets one buzz and the card ("Raj picked a time", the
+  grey box, Confirm Saturday 11 AM / Another time / I'll call Raj instead) on the customer page, Customers and
+  Inbox. Confirm books through the booking page's own check and sends "Booked: Saturday, Oct 31 at 11 am. See you
+  then." Not said: "I'll send a reminder the day before" (the drawing had it; no customer reminder exists, so the
+  message doesn't promise one). Part 2, change and cancel, is next.
 
 ## A-243 — Today says what to do: one customer, one sentence, one black button ^A-243
 
@@ -5991,8 +6001,19 @@ different pages on the same single page."* → on P3b: *"build it"* (boards: scr
   with R-142.
 **Why two separate panels (P3) were not taken:** the founder read them as two pages on one screen; one window with a
 seam reads as one app with a sidebar, the way a Mac window does.
+**Seen live, founder (2026-10-28, #611 → 1b53a40):** *"yes looks good"*.
 **Built 2026-10-28** (same day): `--desk`, `--window-line`, `--window-seam`, `--window-shadow` in globals.css (light +
 dark), the `.app-shell`/`aside`/`.app-sheet` rules at `lg`; `DayLight.tsx` and the two wash photos deleted. Measured in
 a real browser, light and dark, 1440×900: the page itself never scrolls, the sheet does, the sidebar and the sheet start
 at 8 px and end 8 px from the edge, the seam is 0 px of gap, no background image anywhere; phone 390×844: no `::before`
 layer, bars still frosted; no page errors.
+
+## A-334 — A Customers row reads bold only until the owner opens it ^A-334
+
+**Approved:** 2026-10-28, founder, as a bug: *"there is a glitch on customers page too when i click on the customers
+it stays unread make it accurate too bro"*. Built the same day (in the A-242 PR).
+- A row on Customers (and in the Inbox list) reads bold, like an unread chat, only while the customer's newest
+  message is newer than the last time the owner opened them (`Lead.openedAt`, set by opening the panel, the Inbox
+  pane or the customer's page). The action words stay ("Check and send your reply"); only the bold goes.
+- Nothing else changes: the reply still waits, Today still counts it, the orange dot on Today still means "your turn".
+  Read is a fact about the owner, not a decision about the customer.

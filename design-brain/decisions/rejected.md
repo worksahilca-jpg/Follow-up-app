@@ -1817,3 +1817,21 @@ means nothing stays rejected (R-030), and a blurred one now reads unfinished. Th
 not covered by this; he spoke of the app.)*
 
 **Do not propose again:** a blurred photo, a blurred colour field or a grain texture as the app's background.
+
+## R-143 — The app as it feels today: "dead", "too complex", and Today "not what I'm expecting" ^R-143
+
+**Rejected:** 2026-10-28, founder, unprompted, while the booking build was in progress: *"the app feels dead bro and
+too complex like how today should look like is not what i am expecting we gotta fix that as well"*. Same message
+thread: *"there is a glitch on customers page too when i click on the customers it stays unread make it accurate too"*.
+
+**What was rejected:** the overall feel of the app as of today (A-333's window, A-307's Today, A-324's Customers): it
+reads lifeless and busy to him, and Today in particular is not the screen he pictures.
+
+**Principle (inferred, to be confirmed with one question):** "dead" is most likely the absence of any motion or
+warmth (every screen is still, grey text on white, nothing moves when something happens) and "too complex" is the
+number of things on Today (numbers, a card, rows, Later lines, questions). The fix is not more decoration (R-142
+still stands: crisp, premium) but fewer things and a little life where something changes. *The reason is not yet
+his words: ask "is it the look, or how much is on the screen?" before drawing.*
+
+**What this does not reopen:** the crisp window (A-333, "yes looks good" the same day) and the ban on gimmicks
+(brand principles). A Today redesign is drawn first, built after his yes.

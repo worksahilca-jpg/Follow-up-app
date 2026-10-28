@@ -11,6 +11,9 @@ import { ChannelIcon, channelFromSource } from "./ChannelIcon";
 import { displayChannel } from "@/lib/displayChannel";
 import { Eyebrow, Initials, StatePill, waitingFor, type StateKey } from "./canvasBits";
 import { plainHoldReason } from "@/lib/holdReasons";
+import PickedTimeCard from "@/components/app/PickedTimeCard";
+import MarkOpened from "@/components/app/MarkOpened";
+import { offerLineFor, pickedCardWords } from "@/lib/bookingTimes";
 
 /**
  * One customer, opened beside the Customers list (A-025; the canvas App
@@ -67,6 +70,9 @@ export default function PersonPanel({
   const channel = CHANNEL[channelKey ?? ""] ?? lead.source;
   // A lead site that keeps the contact private: answered there (b018, A-075).
   const siteReply = siteReplyFor(lead);
+  // Booking in the chat (A-242): their picked time waiting for Confirm; the line under a reply that offers times.
+  const picked = pickedCardWords(lead, timeZone, now);
+  const offerLine = offerLineFor(lead, timeZone, now);
   const basis = lead.suggestedMessage
     ? describeBasis({
         draft: lead.suggestedMessage,
@@ -117,6 +123,7 @@ export default function PersonPanel({
 
   return (
     <div className="flex min-h-full flex-col">
+      <MarkOpened leadId={lead.id} />
       <div className="flex items-start gap-3 border-b border-line px-5 py-5">
         <Initials name={lead.name} size={40} />
         <div className="min-w-0 flex-1">
@@ -189,9 +196,11 @@ export default function PersonPanel({
         )}
       </div>
 
-      {approval && (
+      {(approval || picked) && (
         <div className="px-5 pb-5">
-          {siteReply ? (
+          {picked ? (
+            <PickedTimeCard key={`picked-${lead.pickedTime}`} leadId={lead.id} {...picked} />
+          ) : siteReply ? (
             <SiteReplyCard key={lead.id} leadId={lead.id} leadName={lead.name} site={siteReply} draft={lead.suggestedMessage} waiting={true} />
           ) : (
             <ReplyCard
@@ -204,7 +213,7 @@ export default function PersonPanel({
               waiting
               seenInboundAt={lastIn?.date}
               sendLocked={sendLocked}
-              basis={basis}
+              basis={offerLine ?? basis}
               languageName={replyLanguage}
             />
           )}

@@ -8,6 +8,7 @@ import type { Lead } from "@/lib/types";
 import { prisma } from "@/lib/db";
 import { sendLockedForSession } from "@/lib/sendingControl";
 import ConversationPane from "@/components/app/ConversationPane";
+import { openedSince } from "@/lib/openedSince";
 
 export const dynamic = "force-dynamic";
 
@@ -87,6 +88,7 @@ export default async function InboxList({ searchParams }: { searchParams: Promis
                 preview={approval.leadLastMessage ?? approval.reason}
                 state="needs"
                 first={i === 0}
+                opened={lead.id === openId || openedSince(lead)}
               />
             ))}
           </ul>
@@ -156,6 +158,7 @@ function Row({
   preview,
   state,
   first,
+  opened = false,
 }: {
   href: string;
   name: string;
@@ -165,8 +168,10 @@ function Row({
   state: StateKey;
   first: boolean;
   active?: boolean;
+  /** The owner has opened this customer since their newest message: the row reads like a read chat. */
+  opened?: boolean;
 }) {
-  const unread = state === "needs";
+  const unread = state === "needs" && !opened;
   return (
     <li className={(first ? "" : "border-t border-line-2 ") + "lg:border-t-0 lg:border-b lg:border-line-2"}>
       <Link

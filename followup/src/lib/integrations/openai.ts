@@ -26,6 +26,7 @@ import { knownPromptBlock, qualifyPromptBlock, type Criterion, type CriterionKey
 import { KNOWN_KEYS, type ProposedPlan, type ProposedStep } from "@/lib/askPlan";
 import { BRIEF_SECTIONS, type BriefSection, type ProposedLine } from "@/lib/callBrief";
 import { bookingLinkPromptBlock } from "@/lib/bookingOffer";
+import { offerTimesPromptBlock } from "@/lib/bookingTimes";
 import { checkerPhrase, cleanKinds, standingRuleNotice, type NotCustomerReason, type SetAsideKind } from "@/lib/notCustomerReasons";
 
 /**
@@ -1494,6 +1495,8 @@ export async function generateFollowUpMessage(
     nothingToAsk?: boolean;
     /** They said yes to meeting (A-263, src/lib/bookingOffer.ts): their booking page, for this reply's one job. */
     bookingLink?: string | null;
+    /** Booking in the chat (A-242, src/lib/bookingTimes.ts): the two free times this reply offers, word for word. */
+    offerTimes?: readonly string[] | null;
     /** How the owner answers, by example ("Write it better", A-290, src/lib/ownerExamples.ts). */
     examples?: readonly OwnerExampleLine[];
     /** The founder's rules for this kind of business ("Tell FollowUp what's wrong", A-297, src/lib/trainingRules.ts). */
@@ -1815,8 +1818,12 @@ export async function generateFollowUpMessage(
           VOICE_AGENT_TRUST_NOTICE +
           (playbookFor(lead.trade) ? "\n\n" + playbookFor(lead.trade) : "") +
           rulesPromptBlock(lead.rules ?? []) +
-          knownPromptBlock(lead.known ?? null, Boolean(lead.nothingToAsk && !lead.bookingLink && !lead.qualify)) +
-          (lead.bookingLink ? bookingLinkPromptBlock(lead.bookingLink) : qualifyPromptBlock(lead.qualify ?? null)) +
+          knownPromptBlock(lead.known ?? null, Boolean(lead.nothingToAsk && !lead.bookingLink && !lead.offerTimes?.length && !lead.qualify)) +
+          (lead.offerTimes?.length
+            ? offerTimesPromptBlock(lead.offerTimes)
+            : lead.bookingLink
+              ? bookingLinkPromptBlock(lead.bookingLink)
+              : qualifyPromptBlock(lead.qualify ?? null)) +
           factsPromptBlock(lead.facts ?? []) +
           examplesPromptBlock(lead.examples ?? []) +
           languageDecisionBlock +

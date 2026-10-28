@@ -6,6 +6,9 @@ import { languageName } from "@/lib/leadLanguage";
 import SiteReplyCard from "@/components/app/SiteReplyCard";
 import { siteReplyFor } from "@/lib/siteReply";
 import ReplyCard from "./ReplyCard";
+import PickedTimeCard from "@/components/app/PickedTimeCard";
+import MarkOpened from "@/components/app/MarkOpened";
+import { offerLineFor, pickedCardWords } from "@/lib/bookingTimes";
 import Thread from "./Thread";
 import { Initials, StatePill } from "./canvasBits";
 import { ChannelIcon, channelFromSource } from "./ChannelIcon";
@@ -53,6 +56,9 @@ export default function ConversationPane({
   const channel = CHANNEL[channelKey ?? ""] ?? lead.source;
   // A lead site that keeps the contact private: answered there (b018, A-075).
   const siteReply = siteReplyFor(lead);
+  // Booking in the chat (A-242): their picked time waiting for Confirm; the line under a reply that offers times.
+  const picked = pickedCardWords(lead, timeZone, now);
+  const offerLine = offerLineFor(lead, timeZone, now);
   const basis = lead.suggestedMessage
     ? describeBasis({
         draft: lead.suggestedMessage,
@@ -106,6 +112,7 @@ export default function ConversationPane({
         <ChannelIcon channel={channelKey} className="h-[13px] w-[13px] shrink-0 text-ink-faint" />
         <span>{meta}</span>
       </div>
+      <MarkOpened leadId={lead.id} />
       <div className="flex-1 px-1 py-6 lg:px-6 lg:py-7">
         <div className={COLUMN}>
           <Thread messages={lead.conversation} leadName={lead.name} timeZone={timeZone} now={now} dense stayYesId={lead.stayInTouch?.messageId ?? null} />
@@ -114,12 +121,14 @@ export default function ConversationPane({
       {/* Pinned under the thread on desktop; on the phone it follows the thread, clear of the tab bar. */}
       <div className="bg-paper px-1 pb-6 pt-2 lg:sticky lg:bottom-0 lg:px-6">
         <div className={COLUMN}>
-          {approval && plainHoldReason(approval.reason, { firstName: lead.name.split(" ")[0] || lead.name, topic: approval.riskTopic }) && (
+          {approval && !picked && plainHoldReason(approval.reason, { firstName: lead.name.split(" ")[0] || lead.name, topic: approval.riskTopic }) && (
             <p className="mb-2 text-[13px] leading-snug text-ink-soft">
               {plainHoldReason(approval.reason, { firstName: lead.name.split(" ")[0] || lead.name, topic: approval.riskTopic })}
             </p>
           )}
-          {siteReply ? (
+          {picked ? (
+            <PickedTimeCard key={`picked-${lead.pickedTime}`} leadId={lead.id} {...picked} dense />
+          ) : siteReply ? (
             <SiteReplyCard key={lead.id} leadId={lead.id} leadName={lead.name} site={siteReply} draft={lead.suggestedMessage} waiting={Boolean(approval)} dense />
           ) : (
             <ReplyCard
@@ -132,7 +141,7 @@ export default function ConversationPane({
               waiting={Boolean(approval)}
               seenInboundAt={lastIn?.date}
               sendLocked={sendLocked}
-              basis={basis}
+              basis={offerLine ?? basis}
               languageName={replyLanguage}
               dense
             />

@@ -18,6 +18,7 @@ import { MOTION } from "@/lib/motion";
 import { Search, Plus, Upload, Phone, Inbox, SlidersHorizontal, X, ChevronLeft, MoreHorizontal } from "lucide-react";
 import { Initials, shortAge } from "@/components/app/canvasBits";
 import { TierTag } from "@/components/app/TodayDay";
+import { openedSince } from "@/lib/openedSince";
 
 /**
  * The filters on Everyone. The pipeline's stages are filters here now
@@ -325,6 +326,9 @@ export default function LeadsPageClient({
 
   const rowHref = (id: string) => `/leads?${show ? `show=${show}&` : ""}p=${id}`;
   const isNew = useMemo(() => new Set(fresh), [fresh]);
+  // Opening a customer reads them (founder, 2026-10-28: "when i click on the customers it stays unread"): the open
+  // row stops reading bold at once; the panel's MarkOpened tells the server (Lead.openedAt), and every later visit
+  // or navigation reads it back with the list.
   const statusOf = (id: string): Status | null =>
     groups.needs.includes(id) ? "needs" : groups.ready.includes(id) ? "ready" : groups.booked.includes(id) ? "booked" : groups.quiet.includes(id) ? "quiet" : groups.waiting.includes(id) ? "waiting" : null;
   const rowFor = (lead: Lead, where: Show | null) => {
@@ -335,6 +339,8 @@ export default function LeadsPageClient({
     const call = where === "ready" || state === "ready";
     // What the owner has to do, in words (founder, 2026-10-24: "We should say what action needed", R-141).
     const todo = groups.needs.includes(lead.id) ? "Check and send your reply" : state === "ready" ? "Ready to book. Call them" : null;
+    // Read: the owner has opened them since their newest message. The words stay; only the bold goes.
+    const read = lead.id === openId || openedSince(lead);
     // What the line says (A-220): in a list behind a link, why they're there (why they're ready, when the booking is);
     // elsewhere what to do, when they're booked, or their last words.
     const line = where && where !== "all" && where !== "needs" ? (lines[lead.id] ?? said(lead)) : (todo ?? (booked ? `Booked · ${lines[lead.id]}` : said(lead)));
@@ -349,8 +355,8 @@ export default function LeadsPageClient({
         line={line}
         time={time}
         selected={lead.id === openId}
-        todo={Boolean(todo) && line === todo}
-        isNew={isNew.has(lead.id)}
+        todo={Boolean(todo) && line === todo && !read}
+        isNew={isNew.has(lead.id) && !read}
         call={call}
         tag={tag}
       />

@@ -23,8 +23,9 @@ import type { Prisma } from "@prisma/client";
 import { getAtRiskLeads } from "@/lib/rescue";
 import { computeAutomationStatus, getBusinessAutomationRules, type BusinessAutomationRules } from "@/lib/automationStatus";
 import { leadLanguageOf } from "@/lib/leadLanguage";
-import { readQualification } from "@/lib/qualification";
+import { readQualification, homeOf } from "@/lib/qualification";
 import type { PlanLead } from "@/lib/followUpPlans";
+import { readOfferedTimes } from "@/lib/bookingTimes";
 
 type DbLead = Prisma.LeadGetPayload<{
   include: {
@@ -148,6 +149,13 @@ export function mapDbLeadToUiLead(dbLead: DbLead, rules: BusinessAutomationRules
     ),
     followUp,
     stayInTouch: dbLead.stayInTouchAt ? { since: dbLead.stayInTouchAt.toISOString(), messageId: dbLead.stayInTouchMessageId ?? null } : null,
+    pickedTime: dbLead.pickedTime ? dbLead.pickedTime.toISOString() : null,
+    offeredTimes: (() => {
+      const o = readOfferedTimes(dbLead.offeredTimes);
+      return o ? { at: o.at, said: o.said } : null;
+    })(),
+    sellerHome: homeOf(readQualification(dbLead.qualification)),
+    openedAt: dbLead.openedAt ? dbLead.openedAt.toISOString() : null,
     moment:
       dbLead.momentAt && dbLead.momentQuote && !dbLead.momentNoteAt
         ? { at: dbLead.momentAt.toISOString(), quote: dbLead.momentQuote, saidAt: dbLead.momentSaidAt ? dbLead.momentSaidAt.toISOString() : null }

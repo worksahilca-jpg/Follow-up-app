@@ -15841,3 +15841,73 @@ rounded, hairline on three sides), the sheet its right zone (right corners round
 day/evening switch and the two wash photos are deleted. A-331 amended. What's weak, named: the admin pages still sit on
 the plain `--sidebar` tone, not the desk (out of scope, one line to change later); the premium reads in the edges at full
 size, not in a thumbnail, as said before he picked.
+
+**Live the same day (#611 → 1b53a40); founder on the live app: *"yes looks good"*.** The look question that opened the
+day ("boring… like scrolling code") closes here: a still frame, one crisp window on a plain desk, no photo, light and
+dark alike.
+
+## 2026-10-28 — Booking in the chat (A-242) redrawn on today's app, before the November build
+
+**Founder:** *"ok what else can we improve"* → three options given, booking in the chat recommended → *"draw it and lets
+do all one by one"*. A-242 (Oct 13, "Yes, this is it") stands word for word; the app has changed since (A-307's Today,
+A-310's "FollowUp's call" card, A-333's window), so it is drawn again on the real customer page and Today
+(scratchpad `booking/booking-board.png`, computer 1440×900 + phone 390×844, Raj in the local test business):
+1. **The chat.** FollowUp's draft offers two times ("Saturday at 11 am or Sunday at 2 pm. Which works for you?") with
+   one grey line under it: both are inside the free hours and free in Google Calendar; it never says "booked" until
+   the owner confirms. With "reply for me" on it sends by itself (A-236).
+2. **Raj picks one.** FollowUp answers "Great. Let me confirm that and get right back to you." The owner gets the
+   one-line buzz ("Raj wants Saturday at 11 am · Viewing at 42 Elm St. Your calendar is free. Tap to confirm.") and
+   the card in place of the reply card: "Raj picked a time", a grey box (what · where / day · time / ✓ Your calendar
+   is free then), one sentence, **Confirm Saturday 11 AM** (black), **Another time** (outlined), *I'll call Raj
+   instead* (quiet).
+3. **Booked.** Only after Confirm: Raj's bubble "Booked: Saturday, Nov 1 at 11 am, 42 Elm St, Oakville. See you
+   then. I'll send a reminder the day before."; the card reads Booked with *Change · Cancel*; the viewing is in
+   Google Calendar; the "Before your call" note (A-268) is written on Friday; Calls this week (A-317) counts it.
+4. **Change.** Raj asks to move it; FollowUp offers two new free times; on his pick the card reads "Raj wants to
+   move the viewing" with the old time struck through, **Confirm Sunday 2 PM** / **Another time** / *Keep Saturday*;
+   Confirm moves the calendar entry. Cancel: FollowUp acknowledges, the slot is freed, the owner sees one line on
+   Today with *Offer another time*.
+**Already in the code** (from Oct 13's check, still true): booking hours, Google Calendar free/busy and event creation,
+`getAvailableSlots`, `createBooking`, the public booking link, A-305's calendar choice, A-317's calls page. **Missing:**
+offering concrete times inside a reply, reading the customer's pick, the "picked a time" card and buzz, confirm →
+booking + calendar + the customer's confirmation message, change/cancel.
+**Weak, named:** on the board, step 3's right-hand card still reads "Raj is ready to view" (the drawing didn't replace
+it; built, it turns into the booked card); on the phone frames the bottom tabs sit over the Confirm button in the
+screenshot (a scroll artefact, not the design). Proposed build order, one PR each: (a) times in the reply + the pick
++ the card + confirm/booked, (b) change/cancel. Waiting for the founder's yes.
+
+## 2026-10-28 — Booking in the chat (A-242) built, part 1: offer two times, read the pick, the owner confirms
+
+**Founder:** *"build it"* on the redrawn board (same day, above). Built in one PR as proposed: (a) times in the reply,
+the pick, the card, confirm → booked. Change/cancel is the next PR.
+- **Data:** `Lead.offeredTimes` (the two times and their words, kept while the offer is the last thing FollowUp
+  said), `Lead.pickedTime` + `pickedTimeAt` (the pick, waiting for Confirm; a newer message from them clears it).
+- **Logic (`src/lib/bookingTimes.ts`, pure, 22 tests):** `asksToMeet` (see/visit/call/book + "?" or a day word, never
+  a plain no), `chooseTwo` (two days, a whole hour from mid-morning then early afternoon, the day they named first),
+  `sayTime` ("tomorrow at 10 am", "Friday at 1 pm", "Friday, Nov 6 at 11:30 am"), `readPick` (day, time, button title,
+  ordinal, "either"; null on "neither", "can't do Thursday", a bare number, a time or day that wasn't offered, a tie).
+- **Engine (`scoring.ts`, 9 tests):** the pick is read before any AI runs and costs none; the ack is FollowUp's own
+  words, stamped low-risk, so it sends by itself on AUTONOMOUS and waits on ASSISTED like any reply. The offer replaces
+  the checklist question and the booking link; a thin calendar falls back to the link. On a DM the offer is fixed
+  words (the shape check refuses days the customer didn't say first), with "Sat 11 am" / "Mon 2 pm" buttons.
+- **Owner's side:** `POST /api/leads/[id]/picked-time` {confirm | another | call} (11 tests); `PickedTimeCard` in
+  place of the reply card on the customer page, the Customers panel and the Inbox pane; a grey line under a reply
+  that offers times ("FollowUp offered Raj two times from your free hours. Nothing is booked until you confirm.").
+- **Checked:** computer + phone on the local test business (scratchpad `booking/built/*.png`); Confirm pressed on the
+  phone made the Booking row and cleared the pick.
+- **Weak, named honestly:** (1) the buzz and the box don't carry the place for a buyer (the checklist stores the
+  listing's day, not its address): "Viewing" alone, "Home visit · <address>" for a seller; (2) a customer who
+  answers "can't do Thursday, Friday is fine" is read as no pick (safe, not clever), and the normal reply answers;
+  (3) Today's row still says "reply waiting" for a picked time rather than "picked a time"; (4) the fixed sentences
+  are English only; (5) no customer reminder is sent, so the booked message no longer promises one.
+
+## 2026-10-28 — Founder, mid-build: "the app feels dead and too complex"; Customers rows stay "unread"
+
+Two messages while the booking build was running. (1) *"there is a glitch on customers page too when i click on the
+customers it stays unread make it accurate too bro"*: a row reads bold while a reply waits (A-324/A-325), with no
+notion of "I've opened this one", so opening a customer changes nothing. Fix (built in the booking PR, small and
+separate in the code): `Lead.openedAt`, set when the owner opens the customer (Customers panel, Inbox pane, the
+customer page); a row is bold only while their newest message is newer than the last open; the action words stay.
+(2) *"the app feels dead bro and too complex like how today should look like is not what i am expecting we gotta
+fix that as well"*: recorded as R-143 with an inferred principle; one clarifying question goes to him before Today is
+drawn again (look vs amount), per the brain's rule on unclear reasons.

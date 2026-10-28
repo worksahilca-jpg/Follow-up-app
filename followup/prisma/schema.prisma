@@ -1133,6 +1133,18 @@ model Lead {
   // (src/lib/habits.ts) and to learn it from "Don't send".
   thanksOnlyAt    DateTime?
 
+  // Booking in the chat (A-242, src/lib/bookingTimes.ts). `offeredTimes`: the two free times FollowUp last offered
+  // them in a reply ({ at: ISO[], said: string[], offeredAt }), kept while that offer is the last thing it said.
+  // `pickedTime`: the one they chose, waiting for the owner's Confirm on the customer page; `pickedTimeAt` is when
+  // their message picked it, so a newer message from them clears the pick. Confirm books it (Booking) and clears both.
+  offeredTimes Json?
+  pickedTime   DateTime?
+  pickedTimeAt DateTime?
+  // When the owner last opened this customer (Customers panel, Inbox pane or the customer's page). A row reads bold,
+  // like an unread chat, only while their newest message is newer than this (founder, 2026-10-28: "when i click on
+  // the customers it stays unread"). Never changes what FollowUp does; only how the row reads.
+  openedAt     DateTime?
+
   // A caller who hid their number (founder, 2026-09-30): each such call is
   // its own customer, found again by Twilio's id for that call, so the
   // voicemail lands on the right card. phone stays empty and nothing is

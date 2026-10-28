@@ -9,6 +9,9 @@
 import { judgeStayInTouchReply } from "@/lib/stayInTouchData";
 import { readMoment } from "@/lib/theirMoment";
 import { saidYesToMeeting } from "@/lib/bookingOffer";
+import { asksToMeet, carriesOffer, lastOurs, offerButtons, offerText, pickAck, pickedBuzz, readOfferedTimes, readPick, wantedDay, type OfferedTimes } from "@/lib/bookingTimes";
+import { offerTwoTimes } from "@/lib/booking";
+import { isPushConfigured, sendPushToUser } from "@/lib/webPush";
 import { appUrl } from "@/lib/stripe";
 import { prisma } from "@/lib/db";
 import { tooManyRecentActions } from "@/lib/rateLimit";
@@ -202,6 +205,22 @@ async function scoreAndDraft(leadId: string): Promise<boolean> {
   // With the owner's own questions, a buyer is asked those, in the owner's order (A-302).
   const template = templateFor(lead.business.industry, lead.business.askPlan);
   const customerJustWrote = newest.direction === "inbound";
+
+  // Booking in the chat (A-242, src/lib/bookingTimes.ts). FollowUp's last message offered two free times and their
+  // newest one picks one: no AI runs. The pick is stored for the owner's Confirm, the customer gets "Great. Let me
+  // confirm that and get right back to you." as the draft, and the owner gets one buzz. Nothing is booked yet.
+  const timeZone = lead.business.timezone ?? "America/New_York";
+  const offer = readOfferedTimes(lead.offeredTimes);
+  const offerStands = Boolean(offer && carriesOffer(lastOurs(conversation)?.body ?? "", offer, timeZone, new Date()));
+  if (customerJustWrote && offer && offerStands) {
+    const pick = readPick(newest.body, offer, timeZone, new Date());
+    if (pick !== null) {
+      await recordPickedTime(lead, offer, pick, newest, Boolean(dmChannelOf(conversation)));
+      return true;
+    }
+  }
+  // Their pick is on the owner's card: until they write again, there is nothing new to draft.
+  if (lead.pickedTime && lead.pickedTimeAt && !(customerJustWrote && new Date(newest.date) > lead.pickedTimeAt)) return false;
   // The owner's past replies in the language this one will be written in
   // come first (src/lib/voice.ts), so the samples wait for the language
   // read; it runs beside the score, which takes longer, so this costs no
@@ -322,7 +341,25 @@ async function scoreAndDraft(leadId: string): Promise<boolean> {
   let suggestedResponseId: string | null;
   let suggestedSubject: string | null;
   let suggestedQuickReplies: Prisma.InputJsonValue | typeof Prisma.JsonNull;
-  if (dmChannel) {
+  // Booking in the chat (A-242): they want to meet (asked to, or said yes to FollowUp's offer), so this reply offers
+  // two free times from the owner's calendar instead of the next question or the booking link. Not on the "not now"
+  // path, not beside the one-time contact ask, not after a no. A thin calendar (no free time in the next days)
+  // falls back to the booking link, as before. The offer sends by itself where replies do (A-236).
+  const wantsTimes = customerJustWrote && !notNowHint && !askContact && !noHow && (saidYesToMeeting(conversation) || asksToMeet(conversation));
+  const offered = wantsTimes
+    ? await offerTwoTimes(lead.id, new Date(), timeZone, { wantDay: wantedDay(newest.body, new Date(), timeZone), avoid: offer?.at ?? [] }).catch((err) => {
+        console.error(`Could not pick times to offer lead ${lead.id}:`, err);
+        return null;
+      })
+    : null;
+  if (dmChannel && offered) {
+    // Fixed words, not the writer's: a DM that names days and times must name only these two, and the shape
+    // check (src/lib/dmDrafts.ts) refuses any day the customer didn't say first. The buttons are the two times.
+    suggestedMessage = offerText(offered.said);
+    suggestedResponseId = null;
+    suggestedSubject = null;
+    suggestedQuickReplies = { question: "offer_times", buttons: offerButtons(offered, timeZone, new Date()).map((title) => ({ title, exit: false })) } as unknown as Prisma.InputJsonValue;
+  } else if (dmChannel) {
     const { trade, facts, examples, rules } = await draftingContext(lead.businessId);
     const dm = await draftDm(lead.name, conversation, voiceSamples, notNowHint, undefined, leadLanguage, facts, askContact ? DM_CONTACT_ASK : qualify, trade, examples, rules, known);
     suggestedMessage = dm.body;
@@ -336,11 +373,15 @@ async function scoreAndDraft(leadId: string): Promise<boolean> {
     // They said yes to meeting (A-263): the reply carries their booking
     // page instead of the next qualifying question. An email or text only;
     // a DM refuses every link (src/lib/dmDrafts.ts). The send pass holds a
-    // draft that carries it, so the owner always sees it go.
-    const bookingLink = customerJustWrote && saidYesToMeeting(conversation) ? `${appUrl()}/book/${lead.id}` : null;
-    const draft = await generateFollowUpMessage({ name: lead.name, conversation, ...(await draftingContext(lead.businessId)), qualify, bookingLink, known: known?.qualification ?? null, nothingToAsk: known?.nothingToAsk ?? false }, voiceSamples, notNowHint, undefined, leadLanguage);
+    // draft that carries it, so the owner always sees it go. With two free
+    // times to offer (A-242), those go instead of the link.
+    const bookingLink = !offered && customerJustWrote && saidYesToMeeting(conversation) ? `${appUrl()}/book/${lead.id}` : null;
+    const draft = await generateFollowUpMessage({ name: lead.name, conversation, ...(await draftingContext(lead.businessId)), qualify: offered ? null : qualify, bookingLink, offerTimes: offered?.said ?? null, known: known?.qualification ?? null, nothingToAsk: known?.nothingToAsk ?? false }, voiceSamples, notNowHint, undefined, leadLanguage);
     suggestedResponseId = draft.responseId ?? null;
-    suggestedMessage = await composeFollowUpEmail(lead.name.split(" ")[0], lead.businessId, draft.body, {
+    // The writer was told the two times word for word; when it dropped or changed one, the fixed sentence is added
+    // under its words, so what the customer reads is always what the owner's calendar has.
+    const body = offered && !carriesOffer(draft.body, offered, timeZone, new Date()) ? `${draft.body.trim()}\n\n${offerText(offered.said)}` : draft.body;
+    suggestedMessage = await composeFollowUpEmail(lead.name.split(" ")[0], lead.businessId, body, {
       languageSample: latestInboundText(conversation),
       leadLanguage,
     });
@@ -397,6 +438,10 @@ async function scoreAndDraft(leadId: string): Promise<boolean> {
       // mistake it for one of its own purpose-written drafts
       // (Lead.suggestedDraftKind).
       suggestedDraftKind: null,
+      // Booking in the chat (A-242): the two times this reply offers, kept while it is the last thing FollowUp said;
+      // a pick that was waiting is cleared the moment they write something newer.
+      ...(offered ? { offeredTimes: { at: offered.at, said: offered.said, offeredAt: new Date().toISOString() } as Prisma.InputJsonValue } : {}),
+      ...(lead.pickedTime && customerJustWrote ? { pickedTime: null, pickedTimeAt: null } : {}),
       // What their newest message was written in, refreshed every pass.
       // `languageSetAt` is therefore "when we last read it", not "when we
       // decided" — a lead who switches from Hinglish to English is a lead
@@ -528,4 +573,48 @@ async function scoreAndDraft(leadId: string): Promise<boolean> {
   }
 
   return true;
+}
+
+
+/**
+ * The customer picked one of the two offered times (A-242): keep it for the
+ * owner's Confirm, answer them with the fixed acknowledgement as this reply's
+ * draft (it sends where replies do; FollowUp's own words, so judged low),
+ * and buzz the business's people once. Never books anything.
+ */
+async function recordPickedTime(
+  lead: { id: string; name: string; businessId: string },
+  offer: OfferedTimes,
+  pick: number,
+  newest: { body: string; date: string },
+  dm: boolean
+): Promise<void> {
+  const first = lead.name.trim().split(/\s+/)[0] || lead.name;
+  const at = new Date(offer.at[pick]);
+  const ack = dm ? pickAck() : await composeFollowUpEmail(first, lead.businessId, pickAck(), { languageSample: newest.body });
+  await prisma.lead.update({
+    where: { id: lead.id },
+    data: {
+      pickedTime: at,
+      pickedTimeAt: new Date(newest.date),
+      offeredTimes: Prisma.JsonNull,
+      suggestedMessage: ack,
+      suggestedSubject: null,
+      suggestedResponseId: null,
+      suggestedQuickReplies: dm ? ({ question: "picked_time", buttons: [] } as unknown as Prisma.InputJsonValue) : Prisma.JsonNull,
+      suggestedRiskLevel: "low",
+      suggestedRiskReason: null,
+      suggestedRiskTopic: null,
+      suggestedDraftedFor: new Date(newest.date),
+      suggestedDraftKind: null,
+    },
+  });
+  if (!isPushConfigured()) return;
+  try {
+    const users = await prisma.user.findMany({ where: { businessId: lead.businessId }, select: { id: true } });
+    const buzz = pickedBuzz(first, offer.said[pick]);
+    await Promise.all(users.map((u) => sendPushToUser(u.id, { ...buzz, url: `/leads/${lead.id}`, tag: `picked-${lead.id}` }).catch(() => null)));
+  } catch (err) {
+    console.error(`Could not buzz about a picked time for lead ${lead.id}:`, err);
+  }
 }

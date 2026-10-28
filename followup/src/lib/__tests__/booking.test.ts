@@ -12,7 +12,7 @@ vi.mock("@/lib/db", () => {
   const prisma = {
     lead: { findUnique: vi.fn(), update: vi.fn() },
     business: { findUnique: vi.fn() },
-    booking: { findMany: vi.fn(), create: vi.fn(), findFirst: vi.fn(async () => null) },
+    booking: { findMany: vi.fn(), create: vi.fn(), findFirst: vi.fn(async () => null), updateMany: vi.fn(async () => ({ count: 1 })), update: vi.fn(async () => ({})) },
     $executeRaw: vi.fn(async () => 0),
     // The booking check-and-insert runs in one transaction under a
     // per-lead lock; the mock hands the callback the same client.
@@ -22,12 +22,13 @@ vi.mock("@/lib/db", () => {
 });
 vi.mock("@/lib/integrations/gmail", () => ({
   createCalendarEvent: vi.fn(async () => ({ created: true })),
+  deleteCalendarEvent: vi.fn(async () => ({ deleted: true })),
   getGoogleCalendarBusyTimes: vi.fn(async () => []),
 }));
 
 import { prisma } from "@/lib/db";
-import { getGoogleCalendarBusyTimes } from "@/lib/integrations/gmail";
-import { getAvailableSlots, createBooking, getBookingContext } from "@/lib/booking";
+import { createCalendarEvent, deleteCalendarEvent, getGoogleCalendarBusyTimes } from "@/lib/integrations/gmail";
+import { getAvailableSlots, createBooking, cancelBooking, getBookingContext } from "@/lib/booking";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const p = prisma as any;
@@ -310,5 +311,52 @@ describe("getBookingContext — what an unauthenticated link holder learns", () 
   it("is null for an unknown id", async () => {
     p.lead.findUnique.mockResolvedValue(null);
     await expect(getBookingContext("nope")).resolves.toBeNull();
+  });
+});
+
+describe("change or cancel (A-242, part 2)", () => {
+  function lead() {
+    return { id: "lead1", name: "Jamie", email: "jamie@example.com", businessId: "biz1", business: { name: "Acme", timezone: "America/New_York" } };
+  }
+  it("a move cancels the old booking inside the same transaction and takes its calendar event off", async () => {
+    p.lead.findUnique.mockResolvedValue(lead());
+    p.booking.findFirst.mockImplementation(async (args: { where: { id?: string } }) => (args.where.id === "old" ? { googleEventId: "ev-old" } : null));
+    p.booking.create.mockResolvedValue({ id: "new", scheduledAt: new Date("2026-09-14T13:00:00.000Z") });
+    p.lead.update.mockResolvedValue({});
+    const result = await createBooking("lead1", "2026-09-14T13:00:00.000Z", { replace: { id: "old", by: "customer" } });
+    expect(result).toEqual({ success: true, scheduledAt: "2026-09-14T13:00:00.000Z", bookingId: "new" });
+    expect(p.booking.updateMany).toHaveBeenCalledWith({ where: { id: "old", status: "confirmed" }, data: expect.objectContaining({ status: "canceled", canceledBy: "customer" }) });
+    expect(deleteCalendarEvent).toHaveBeenCalledWith("biz1", "ev-old");
+    p.booking.findFirst.mockReset();
+    p.booking.findFirst.mockResolvedValue(null);
+  });
+  it("keeps the new event's id so a later move or cancel can take it off", async () => {
+    (createCalendarEvent as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ created: true, eventId: "ev-new" });
+    p.lead.findUnique.mockResolvedValue(lead());
+    p.booking.create.mockResolvedValue({ id: "new", scheduledAt: new Date("2026-09-14T13:00:00.000Z") });
+    p.lead.update.mockResolvedValue({});
+    await createBooking("lead1", "2026-09-14T13:00:00.000Z");
+    expect(p.booking.update).toHaveBeenCalledWith({ where: { id: "new" }, data: { googleEventId: "ev-new" } });
+  });
+  it("cancelBooking marks the row, frees the lead's next-follow-up marker, clears the checklist's booked line and removes the event", async () => {
+    p.lead.updateMany = vi.fn(async () => ({ count: 1 }));
+    p.lead.findUnique.mockResolvedValue({
+      qualification: { v: 2, template: "realtor", items: [{ key: "side", value: "Buying", quote: "we're buying", bucket: "buy" }, { key: "viewing", value: "Mon, Sep 14, 9:00 AM", quote: "", source: "booking" }], tier: "ready" },
+      business: { industry: "Real estate", askPlan: null },
+    });
+    p.lead.update.mockResolvedValue({});
+    p.booking.findFirst.mockResolvedValueOnce({ id: "b1", leadId: "lead1", scheduledAt: new Date("2026-09-14T13:00:00.000Z"), googleEventId: "ev1" });
+    const out = await cancelBooking("b1", "biz1", "owner");
+    expect(out).toEqual({ id: "b1", leadId: "lead1", scheduledAt: new Date("2026-09-14T13:00:00.000Z") });
+    expect(p.booking.updateMany).toHaveBeenCalledWith({ where: { id: "b1", status: "confirmed" }, data: expect.objectContaining({ status: "canceled", canceledBy: "owner" }) });
+    expect(p.lead.updateMany).toHaveBeenCalledWith({ where: { id: "lead1", nextFollowUp: new Date("2026-09-14T13:00:00.000Z") }, data: { nextFollowUp: null } });
+    const written = p.lead.update.mock.calls.at(-1)[0].data.qualification as { items: { key: string }[] };
+    expect(written.items.map((i) => i.key)).toEqual(["side"]);
+    expect(deleteCalendarEvent).toHaveBeenCalledWith("biz1", "ev1");
+  });
+  it("cancelBooking answers null for a booking that isn't this business's or isn't confirmed", async () => {
+    p.booking.findFirst.mockResolvedValueOnce(null);
+    expect(await cancelBooking("b9", "biz1", "owner")).toBeNull();
+    expect(p.booking.updateMany).not.toHaveBeenCalled();
   });
 });

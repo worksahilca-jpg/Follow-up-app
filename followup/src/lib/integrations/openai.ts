@@ -1497,6 +1497,8 @@ export async function generateFollowUpMessage(
     bookingLink?: string | null;
     /** Booking in the chat (A-242, src/lib/bookingTimes.ts): the two free times this reply offers, word for word. */
     offerTimes?: readonly string[] | null;
+    /** The two times answer a request to move a booked time (A-242, part 2): the writer says that's fine first. */
+    offerTimesMoving?: boolean;
     /** How the owner answers, by example ("Write it better", A-290, src/lib/ownerExamples.ts). */
     examples?: readonly OwnerExampleLine[];
     /** The founder's rules for this kind of business ("Tell FollowUp what's wrong", A-297, src/lib/trainingRules.ts). */
@@ -1820,7 +1822,7 @@ export async function generateFollowUpMessage(
           rulesPromptBlock(lead.rules ?? []) +
           knownPromptBlock(lead.known ?? null, Boolean(lead.nothingToAsk && !lead.bookingLink && !lead.offerTimes?.length && !lead.qualify)) +
           (lead.offerTimes?.length
-            ? offerTimesPromptBlock(lead.offerTimes)
+            ? offerTimesPromptBlock(lead.offerTimes, Boolean(lead.offerTimesMoving))
             : lead.bookingLink
               ? bookingLinkPromptBlock(lead.bookingLink)
               : qualifyPromptBlock(lead.qualify ?? null)) +

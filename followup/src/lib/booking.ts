@@ -13,7 +13,7 @@
  */
 
 import { prisma } from "@/lib/db";
-import { createCalendarEvent, getGoogleCalendarBusyTimes } from "@/lib/integrations/gmail";
+import { createCalendarEvent, deleteCalendarEvent, getGoogleCalendarBusyTimes } from "@/lib/integrations/gmail";
 import { SLOT_MINUTES, bookingHoursOf, type BookingHours } from "@/lib/bookingHours";
 import { isUniqueViolation } from "@/lib/uniqueViolation";
 import { moveBookedLead } from "@/lib/crm/stages";
@@ -168,8 +168,48 @@ export async function offerTwoTimes(
 }
 
 type CreateBookingResult =
-  | { success: true; scheduledAt: string }
+  | { success: true; scheduledAt: string; bookingId: string }
   | { success: false; message: string };
+
+/** Who asked for a booking to be moved or cancelled (Booking.canceledBy). */
+export type CancelledBy = "customer" | "owner";
+
+/** The lead's next confirmed booking, if one is coming up. */
+export async function upcomingBookingFor(leadId: string, businessId: string): Promise<{ id: string; scheduledAt: Date } | null> {
+  return prisma.booking.findFirst({
+    where: { leadId, businessId, status: "confirmed", scheduledAt: { gte: new Date() } },
+    orderBy: { scheduledAt: "asc" },
+    select: { id: true, scheduledAt: true },
+  });
+}
+
+/**
+ * Cancels a confirmed booking (A-242, part 2): the row is kept and marked,
+ * the slot is free again (the unique index covers confirmed rows only),
+ * the lead's next-follow-up marker from the booking is cleared, and the
+ * Google Calendar event is taken off, best-effort. Null when there was no
+ * such confirmed booking in this business.
+ */
+export async function cancelBooking(bookingId: string, businessId: string, by: CancelledBy): Promise<{ id: string; leadId: string; scheduledAt: Date } | null> {
+  const booking = await prisma.booking.findFirst({
+    where: { id: bookingId, businessId, status: "confirmed" },
+    select: { id: true, leadId: true, scheduledAt: true, googleEventId: true },
+  });
+  if (!booking) return null;
+  const { count } = await prisma.booking.updateMany({
+    where: { id: booking.id, status: "confirmed" },
+    data: { status: "canceled", canceledAt: new Date(), canceledBy: by },
+  });
+  if (count === 0) return null;
+  try {
+    await prisma.lead.updateMany({ where: { id: booking.leadId, nextFollowUp: booking.scheduledAt }, data: { nextFollowUp: null } });
+    await clearBookingOnChecklist(booking.leadId);
+    if (booking.googleEventId) await deleteCalendarEvent(businessId, booking.googleEventId);
+  } catch (err) {
+    console.error(`Booking ${booking.id} cancelled but the bookkeeping after it failed:`, err);
+  }
+  return { id: booking.id, leadId: booking.leadId, scheduledAt: booking.scheduledAt };
+}
 
 /** Marks the viewing known on the lead's checklist, and stamps the ready moment if that completes it. */
 export async function noteBookingOnChecklist(leadId: string, at: Date, timeZone: string): Promise<void> {
@@ -186,8 +226,32 @@ export async function noteBookingOnChecklist(leadId: string, at: Date, timeZone:
   }
 }
 
-/** Books a slot for this lead, re-validating everything server-side rather than trusting the client's slot list. */
-export async function createBooking(leadId: string, scheduledAtIso: string): Promise<CreateBookingResult> {
+/**
+ * The opposite of noteBookingOnChecklist (A-242, part 2): a cancelled booking's
+ * line leaves the checklist, and where the customer stands is judged again
+ * without it. Items the customer said in words are untouched.
+ */
+export async function clearBookingOnChecklist(leadId: string): Promise<void> {
+  const row = await prisma.lead.findUnique({
+    where: { id: leadId },
+    select: { qualification: true, business: { select: { industry: true, askPlan: true } } },
+  });
+  const template = templateFor(row?.business.industry, row?.business.askPlan);
+  const previous = readQualification(row?.qualification);
+  if (!row || !template || !previous) return;
+  const items = previous.items.filter((i) => i.source !== "booking");
+  if (items.length === previous.items.length) return;
+  const qualification = mergeQualification(template, { ...previous, items }, null, [], null);
+  await prisma.lead.update({ where: { id: leadId }, data: { qualification: qualification as unknown as Prisma.InputJsonValue } });
+}
+
+/**
+ * Books a slot for this lead, re-validating everything server-side rather
+ * than trusting the client's slot list. With `replace`, the lead's booking
+ * of that id is cancelled in the same transaction (a move, A-242 part 2):
+ * if the new slot can't be taken, the old booking stands untouched.
+ */
+export async function createBooking(leadId: string, scheduledAtIso: string, opts: { replace?: { id: string; by: CancelledBy } } = {}): Promise<CreateBookingResult> {
   const lead = await prisma.lead.findUnique({
     where: { id: leadId },
     select: {
@@ -242,9 +306,19 @@ export async function createBooking(leadId: string, scheduledAtIso: string): Pro
   // share a per-lead advisory lock so two tabs posting at once cannot
   // both pass it.
   let booking;
+  let replaced: { googleEventId: string | null } | null = null;
   try {
     const outcome = await prisma.$transaction(async (tx) => {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`booking:${lead.id}`}))`;
+      let old: { googleEventId: string | null } | null = null;
+      if (opts.replace) {
+        // The old booking goes first, inside the same transaction: a failed insert below rolls it back.
+        old = await tx.booking.findFirst({ where: { id: opts.replace.id, leadId: lead.id, businessId: lead.businessId, status: "confirmed" }, select: { googleEventId: true } });
+        if (old) {
+          // Seen already: the owner is confirming the new time, so the old one never needs a line on Today.
+          await tx.booking.updateMany({ where: { id: opts.replace.id, status: "confirmed" }, data: { status: "canceled", canceledAt: new Date(), canceledBy: opts.replace.by, cancelSeenAt: new Date() } });
+        }
+      }
       const upcoming = await tx.booking.findFirst({
         where: { leadId: lead.id, status: "confirmed", scheduledAt: { gte: new Date() } },
         select: { id: true },
@@ -253,6 +327,7 @@ export async function createBooking(leadId: string, scheduledAtIso: string): Pro
       return {
         alreadyBooked: false as const,
         booking: await tx.booking.create({ data: { businessId: lead.businessId, leadId: lead.id, scheduledAt } }),
+        replaced: old,
       };
     });
     if (outcome.alreadyBooked) {
@@ -262,6 +337,7 @@ export async function createBooking(leadId: string, scheduledAtIso: string): Pro
       };
     }
     booking = outcome.booking;
+    replaced = outcome.replaced;
   } catch (err) {
     // Unique constraint on (businessId, scheduledAt) — this one really is
     // "someone else got there first", and nothing has been committed. Any
@@ -288,14 +364,17 @@ export async function createBooking(leadId: string, scheduledAtIso: string): Pro
     // un-awaited call here could simply never run. createCalendarEvent()
     // already swallows its own errors and returns {created: false}, so
     // this can't turn a real booking failure into a thrown error.
-    await createCalendarEvent(lead.businessId, {
+    const event = await createCalendarEvent(lead.businessId, {
       summary: `Call with ${lead.name}`,
       description: "Booked via FollowUp.",
       startIso: booking.scheduledAt.toISOString(),
       durationMinutes: SLOT_MINUTES,
       attendeeEmail: lead.email ?? undefined,
     });
-
+    // Kept so a move or a cancel can take the event off the calendar again (A-242, part 2).
+    if (event.eventId) await prisma.booking.update({ where: { id: booking.id }, data: { googleEventId: event.eventId } });
+    // A moved booking's old event goes, best-effort, the same way.
+    if (replaced?.googleEventId) await deleteCalendarEvent(lead.businessId, replaced.googleEventId);
   } catch (err) {
     // The booking is real and the slot is held. Telling the lead it failed
     // would make them book a second one, so this is logged and swallowed:
@@ -317,5 +396,5 @@ export async function createBooking(leadId: string, scheduledAtIso: string): Pro
     console.error(`Booking ${booking.id} committed but the checklist could not be updated:`, err);
   }
 
-  return { success: true, scheduledAt: booking.scheduledAt.toISOString() };
+  return { success: true, scheduledAt: booking.scheduledAt.toISOString(), bookingId: booking.id };
 }

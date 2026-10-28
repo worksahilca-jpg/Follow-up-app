@@ -46,7 +46,9 @@ import { tierFromScore } from "@/lib/followUpCall";
 import CallBriefCard, { type CallToPrepare } from "@/components/app/CallBriefCard";
 import PickedTimeCard from "@/components/app/PickedTimeCard";
 import MarkOpened from "@/components/app/MarkOpened";
-import { offerLineFor, pickedCardWords } from "@/lib/bookingTimes";
+import { bookedCardWords, cancelledCardWords, offerLineFor, pickedCardWords } from "@/lib/bookingTimes";
+import BookedCard from "@/components/app/BookedCard";
+import CancelledCard from "@/components/app/CancelledCard";
 import { callNotOver, readCallBrief } from "@/lib/callBrief";
 import { clockTime, dayOffset } from "@/lib/todayWords";
 import { readQualification, templateFor } from "@/lib/qualification";
@@ -111,6 +113,9 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
   // Booking in the chat (A-242): their picked time, waiting for Confirm; the grey line under a reply that offers times.
   const picked = pickedCardWords(lead, timeZone, now);
   const offerLine = offerLineFor(lead, timeZone, now);
+  // Change or cancel in the chat (A-242, part 2): a booked time still to come, and a time they cancelled.
+  const booked = bookedCardWords(lead, timeZone, now);
+  const cancelled = cancelledCardWords(lead, timeZone, now);
   const firstWrote = firstMessage ? new Date(firstMessage.date).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone }) : null;
   // Their follow-up plan (A-245), from the same plan the engine sends by.
   const plan = rules ? planCard(lead, rules, now, timeZone) : null;
@@ -258,9 +263,18 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
         <MarkOpened leadId={lead.id} />
         {/* id: the target of the ready card's "Message". */}
         <div id="reply" className="mt-5 scroll-mt-4">
+          {/* Booked (A-242, part 2): the agreed time with Change and Cancel, above whatever the reply box holds. */}
+          {booked && !picked && (
+            <div className="mb-4">
+              <BookedCard key={`booked-${booked.id}`} leadId={lead.id} {...booked} />
+            </div>
+          )}
           {picked ? (
             // They picked one of the two offered times (A-242): the owner's one decision, in place of the reply.
             <PickedTimeCard key={`picked-${lead.pickedTime}`} leadId={lead.id} {...picked} />
+          ) : cancelled ? (
+            // They cancelled their booked time (part 2): offer another, or let it be.
+            <CancelledCard key={`cancelled-${cancelled.id}`} leadId={lead.id} {...cancelled} />
           ) : siteReply ? (
             <SiteReplyCard key={lead.id} leadId={lead.id} leadName={lead.name} site={siteReply} draft={lead.suggestedMessage} waiting={Boolean(approval)} />
           ) : !lead.suggestedMessage ? (

@@ -32,7 +32,7 @@ type DbLead = Prisma.LeadGetPayload<{
     conversations: { include: { messages: true } };
     assignedTo: true;
     sequence: { select: { name: true; active: true } };
-    bookings: { select: { createdAt: true; scheduledAt: true; outcome: true } };
+    bookings: { select: { id: true; status: true; createdAt: true; scheduledAt: true; outcome: true; canceledBy: true; cancelSeenAt: true } };
   };
 }>;
 
@@ -61,6 +61,15 @@ export function mapDbLeadToUiLead(dbLead: DbLead, rules: BusinessAutomationRules
     )
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
+  // Confirmed bookings stop the follow-up plan (A-245); a cancelled one doesn't (A-242, part 2).
+  const confirmedBookings = (dbLead.bookings ?? []).filter((b) => b.status === "confirmed");
+  const nowMs = Date.now();
+  const upcoming = confirmedBookings.filter((b) => b.scheduledAt.getTime() >= nowMs).sort((a, b) => a.scheduledAt.getTime() - b.scheduledAt.getTime())[0] ?? null;
+  // The newest time they cancelled themselves that the owner hasn't dealt with: the cancelled card and its Today row.
+  const cancelled =
+    (dbLead.bookings ?? [])
+      .filter((b) => b.status === "canceled" && b.canceledBy === "customer" && !b.cancelSeenAt)
+      .sort((a, b) => b.scheduledAt.getTime() - a.scheduledAt.getTime())[0] ?? null;
   // What the follow-up plan reads about this customer (A-245): the same
   // inputs the engine's planStateOfRow takes, so the badge, Coming up and
   // the customer card say what the engine will do.
@@ -68,7 +77,7 @@ export function mapDbLeadToUiLead(dbLead: DbLead, rules: BusinessAutomationRules
     override: dbLead.followUpPlan ?? null,
     tier: readQualification(dbLead.qualification)?.tier ?? null,
     notBeforeMs: dbLead.followUpNotBefore ? dbLead.followUpNotBefore.getTime() : null,
-    bookings: (dbLead.bookings ?? []).map((b) => ({ createdAt: b.createdAt.getTime(), scheduledAt: b.scheduledAt.getTime(), outcome: b.outcome ?? null })),
+    bookings: confirmedBookings.map((b) => ({ createdAt: b.createdAt.getTime(), scheduledAt: b.scheduledAt.getTime(), outcome: b.outcome ?? null })),
     createdAtMs: dbLead.createdAt.getTime(),
     stayingSince: dbLead.stayInTouchAt ? dbLead.stayInTouchAt.getTime() : null,
     // Instagram or Messenger: the first follow-up goes inside Meta's window (A-304).
@@ -156,6 +165,8 @@ export function mapDbLeadToUiLead(dbLead: DbLead, rules: BusinessAutomationRules
     })(),
     sellerHome: homeOf(readQualification(dbLead.qualification)),
     openedAt: dbLead.openedAt ? dbLead.openedAt.toISOString() : null,
+    upcomingBooking: upcoming ? { id: upcoming.id, at: upcoming.scheduledAt.toISOString() } : null,
+    cancelledBooking: cancelled ? { id: cancelled.id, at: cancelled.scheduledAt.toISOString() } : null,
     moment:
       dbLead.momentAt && dbLead.momentQuote && !dbLead.momentNoteAt
         ? { at: dbLead.momentAt.toISOString(), quote: dbLead.momentQuote, saidAt: dbLead.momentSaidAt ? dbLead.momentSaidAt.toISOString() : null }
@@ -170,8 +181,12 @@ const leadInclude = {
   // Only the trigger is needed — see computeAutomationStatus's
   // hasSubstantiveFollowUp check, mirroring findUnansweredLeads() in
   // automation.ts.
-  // Confirmed bookings stop the follow-up plan (A-245, rule 1).
-  bookings: { where: { status: "confirmed" }, select: { createdAt: true, scheduledAt: true, outcome: true } },
+  // Confirmed bookings stop the follow-up plan (A-245, rule 1); the mapping keeps only those for it. A time the
+  // customer cancelled and the owner hasn't dealt with rides along for the cancelled card (A-242, part 2).
+  bookings: {
+    where: { OR: [{ status: "confirmed" }, { status: "canceled", canceledBy: "customer", cancelSeenAt: null }] },
+    select: { id: true, status: true, createdAt: true, scheduledAt: true, outcome: true, canceledBy: true, cancelSeenAt: true },
+  },
 } satisfies Prisma.LeadInclude;
 
 export async function getLeads(): Promise<Lead[]> {

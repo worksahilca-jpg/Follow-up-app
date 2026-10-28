@@ -142,6 +142,10 @@ export interface Lead {
   sellerHome?: string | null;
   /** When the owner last opened this customer (ISO). A list row reads bold only while their newest message is newer. */
   openedAt?: string | null;
+  /** Their next confirmed booking (A-242, part 2): the Booked card, and what a pick beside it would replace. */
+  upcomingBooking?: { id: string; at: string } | null;
+  /** A time they cancelled themselves that the owner hasn't dealt with yet (Offer another time / OK). */
+  cancelledBooking?: { id: string; at: string } | null;
   /**
    * "Their moment" (A-262): a time they named about a plan of theirs, with
    * their words. Absent once the note for it has been written.

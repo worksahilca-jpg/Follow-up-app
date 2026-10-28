@@ -9,8 +9,8 @@
 import { judgeStayInTouchReply } from "@/lib/stayInTouchData";
 import { readMoment } from "@/lib/theirMoment";
 import { saidYesToMeeting } from "@/lib/bookingOffer";
-import { asksToMeet, carriesOffer, lastOurs, offerButtons, offerText, pickAck, pickedBuzz, readOfferedTimes, readPick, wantedDay, type OfferedTimes } from "@/lib/bookingTimes";
-import { offerTwoTimes } from "@/lib/booking";
+import { asksToCancel, asksToMeet, asksToMove, cancelAckText, cancelledBuzz, carriesOffer, lastOurs, moveOfferText, offerButtons, offerText, pickAck, pickedBuzz, readOfferedTimes, readPick, sayTime, wantedDay, type OfferedTimes } from "@/lib/bookingTimes";
+import { cancelBooking, offerTwoTimes } from "@/lib/booking";
 import { isPushConfigured, sendPushToUser } from "@/lib/webPush";
 import { appUrl } from "@/lib/stripe";
 import { prisma } from "@/lib/db";
@@ -210,14 +210,35 @@ async function scoreAndDraft(leadId: string): Promise<boolean> {
   // newest one picks one: no AI runs. The pick is stored for the owner's Confirm, the customer gets "Great. Let me
   // confirm that and get right back to you." as the draft, and the owner gets one buzz. Nothing is booked yet.
   const timeZone = lead.business.timezone ?? "America/New_York";
+  // A booked time still to come (A-242, part 2): a pick beside it is a move; "cancel" frees it; "can't make
+  // Saturday" asks for two new times. One small read per customer message; nothing for a message of our own.
+  let upcoming: { id: string; scheduledAt: Date } | null = null;
+  if (customerJustWrote) {
+    try {
+      upcoming = await prisma.booking.findFirst({
+        where: { leadId: lead.id, businessId: lead.businessId, status: "confirmed", scheduledAt: { gte: new Date() } },
+        orderBy: { scheduledAt: "asc" },
+        select: { id: true, scheduledAt: true },
+      });
+    } catch (err) {
+      console.error(`Could not read the booked time for lead ${lead.id}:`, err);
+    }
+  }
   const offer = readOfferedTimes(lead.offeredTimes);
   const offerStands = Boolean(offer && carriesOffer(lastOurs(conversation)?.body ?? "", offer, timeZone, new Date()));
   if (customerJustWrote && offer && offerStands) {
     const pick = readPick(newest.body, offer, timeZone, new Date());
     if (pick !== null) {
-      await recordPickedTime(lead, offer, pick, newest, Boolean(dmChannelOf(conversation)));
+      await recordPickedTime(lead, offer, pick, newest, Boolean(dmChannelOf(conversation)), upcoming ? sayTime(upcoming.scheduledAt.toISOString(), timeZone, new Date()) : null);
       return true;
     }
+  }
+  // Change or cancel in the chat (A-242, part 2). A move is read below, where two new times are offered in place
+  // of the usual question; a cancel is answered here with FollowUp's own words, the slot freed, the owner told.
+  const moving = Boolean(upcoming && customerJustWrote && asksToMove(newest.body, upcoming.scheduledAt.toISOString(), timeZone, new Date()));
+  if (upcoming && customerJustWrote && !moving && asksToCancel(newest.body, upcoming.scheduledAt.toISOString(), timeZone, new Date())) {
+    await recordCustomerCancel(lead, upcoming, timeZone, newest, Boolean(dmChannelOf(conversation)));
+    return true;
   }
   // Their pick is on the owner's card: until they write again, there is nothing new to draft.
   if (lead.pickedTime && lead.pickedTimeAt && !(customerJustWrote && new Date(newest.date) > lead.pickedTimeAt)) return false;
@@ -228,7 +249,7 @@ async function scoreAndDraft(leadId: string): Promise<boolean> {
   const detecting = detectLeadLanguage(latestInboundText(conversation) ?? "");
   // The "no" safety net (A-326): their own plain words first, then, when those don't settle it, five AI readings of
   // the one question. Run only when the customer is the one who just wrote.
-  const phrase = customerJustWrote ? declineIn(newest.body) : null;
+  const phrase = customerJustWrote && !moving ? declineIn(newest.body) : null;
   const [scoreResult, voiceSamples, detected, extracted, booking, stopCheck] = await Promise.all([
     scoreLead({
       conversation,
@@ -294,7 +315,8 @@ async function scoreAndDraft(leadId: string): Promise<boolean> {
   // overruled with "Keep following up" stays theirs.
   const sameMessage = Boolean(lead.saidNoAt && latestInboundAt && lead.saidNoAt.getTime() === latestInboundAt.getTime());
   const overruled = Boolean(lead.keepFollowingAt && latestInboundAt && latestInboundAt.getTime() <= lead.keepFollowingAt.getTime());
-  const noHow: NoHow | null = overruled
+  // Someone moving their booked time ("can't do Saturday, Sunday instead?") is not saying no (A-242, part 2).
+  const noHow: NoHow | null = overruled || moving
     ? null
     : (readNo({ phrase: phrase?.kind ?? null, aiSure: scoreResult.saysNo, hasAgent, ...stopCheck }) ??
       (sameMessage ? ((lead.saidNoHow as NoHow | null) ?? "clear") : null));
@@ -345,9 +367,12 @@ async function scoreAndDraft(leadId: string): Promise<boolean> {
   // two free times from the owner's calendar instead of the next question or the booking link. Not on the "not now"
   // path, not beside the one-time contact ask, not after a no. A thin calendar (no free time in the next days)
   // falls back to the booking link, as before. The offer sends by itself where replies do (A-236).
-  const wantsTimes = customerJustWrote && !notNowHint && !askContact && !noHow && (saidYesToMeeting(conversation) || asksToMeet(conversation));
+  const wantsTimes = customerJustWrote && !notNowHint && !askContact && !noHow && (moving || saidYesToMeeting(conversation) || asksToMeet(conversation));
   const offered = wantsTimes
-    ? await offerTwoTimes(lead.id, new Date(), timeZone, { wantDay: wantedDay(newest.body, new Date(), timeZone), avoid: offer?.at ?? [] }).catch((err) => {
+    ? await offerTwoTimes(lead.id, new Date(), timeZone, {
+        wantDay: wantedDay(newest.body, new Date(), timeZone),
+        avoid: [...(offer?.at ?? []), ...(upcoming ? [upcoming.scheduledAt.toISOString()] : [])],
+      }).catch((err) => {
         console.error(`Could not pick times to offer lead ${lead.id}:`, err);
         return null;
       })
@@ -355,7 +380,7 @@ async function scoreAndDraft(leadId: string): Promise<boolean> {
   if (dmChannel && offered) {
     // Fixed words, not the writer's: a DM that names days and times must name only these two, and the shape
     // check (src/lib/dmDrafts.ts) refuses any day the customer didn't say first. The buttons are the two times.
-    suggestedMessage = offerText(offered.said);
+    suggestedMessage = moving ? moveOfferText(offered.said) : offerText(offered.said);
     suggestedResponseId = null;
     suggestedSubject = null;
     suggestedQuickReplies = { question: "offer_times", buttons: offerButtons(offered, timeZone, new Date()).map((title) => ({ title, exit: false })) } as unknown as Prisma.InputJsonValue;
@@ -376,11 +401,11 @@ async function scoreAndDraft(leadId: string): Promise<boolean> {
     // draft that carries it, so the owner always sees it go. With two free
     // times to offer (A-242), those go instead of the link.
     const bookingLink = !offered && customerJustWrote && saidYesToMeeting(conversation) ? `${appUrl()}/book/${lead.id}` : null;
-    const draft = await generateFollowUpMessage({ name: lead.name, conversation, ...(await draftingContext(lead.businessId)), qualify: offered ? null : qualify, bookingLink, offerTimes: offered?.said ?? null, known: known?.qualification ?? null, nothingToAsk: known?.nothingToAsk ?? false }, voiceSamples, notNowHint, undefined, leadLanguage);
+    const draft = await generateFollowUpMessage({ name: lead.name, conversation, ...(await draftingContext(lead.businessId)), qualify: offered ? null : qualify, bookingLink, offerTimes: offered?.said ?? null, offerTimesMoving: moving, known: known?.qualification ?? null, nothingToAsk: known?.nothingToAsk ?? false }, voiceSamples, notNowHint, undefined, leadLanguage);
     suggestedResponseId = draft.responseId ?? null;
     // The writer was told the two times word for word; when it dropped or changed one, the fixed sentence is added
     // under its words, so what the customer reads is always what the owner's calendar has.
-    const body = offered && !carriesOffer(draft.body, offered, timeZone, new Date()) ? `${draft.body.trim()}\n\n${offerText(offered.said)}` : draft.body;
+    const body = offered && !carriesOffer(draft.body, offered, timeZone, new Date()) ? `${draft.body.trim()}\n\n${moving ? moveOfferText(offered.said) : offerText(offered.said)}` : draft.body;
     suggestedMessage = await composeFollowUpEmail(lead.name.split(" ")[0], lead.businessId, body, {
       languageSample: latestInboundText(conversation),
       leadLanguage,
@@ -587,7 +612,9 @@ async function recordPickedTime(
   offer: OfferedTimes,
   pick: number,
   newest: { body: string; date: string },
-  dm: boolean
+  dm: boolean,
+  /** The booked time this pick would replace (A-242, part 2), in words; null for a first booking. */
+  from: string | null = null
 ): Promise<void> {
   const first = lead.name.trim().split(/\s+/)[0] || lead.name;
   const at = new Date(offer.at[pick]);
@@ -612,9 +639,54 @@ async function recordPickedTime(
   if (!isPushConfigured()) return;
   try {
     const users = await prisma.user.findMany({ where: { businessId: lead.businessId }, select: { id: true } });
-    const buzz = pickedBuzz(first, offer.said[pick]);
+    const buzz = pickedBuzz(first, offer.said[pick], from);
     await Promise.all(users.map((u) => sendPushToUser(u.id, { ...buzz, url: `/leads/${lead.id}`, tag: `picked-${lead.id}` }).catch(() => null)));
   } catch (err) {
     console.error(`Could not buzz about a picked time for lead ${lead.id}:`, err);
+  }
+}
+
+/**
+ * The customer cancelled their booked time (A-242, part 2): the booking is
+ * cancelled (slot free, calendar event off), they hear FollowUp's own
+ * acknowledgement as this reply's draft (low risk, sends where replies do),
+ * and the business's people get one buzz. No new time is offered: the owner
+ * decides that from the cancelled card.
+ */
+async function recordCustomerCancel(
+  lead: { id: string; name: string; businessId: string },
+  booking: { id: string; scheduledAt: Date },
+  timeZone: string,
+  newest: { body: string; date: string },
+  dm: boolean
+): Promise<void> {
+  const first = lead.name.trim().split(/\s+/)[0] || lead.name;
+  const said = sayTime(booking.scheduledAt.toISOString(), timeZone, new Date());
+  await cancelBooking(booking.id, lead.businessId, "customer");
+  const ack = dm ? cancelAckText(said) : await composeFollowUpEmail(first, lead.businessId, cancelAckText(said), { languageSample: newest.body });
+  await prisma.lead.update({
+    where: { id: lead.id },
+    data: {
+      pickedTime: null,
+      pickedTimeAt: null,
+      offeredTimes: Prisma.JsonNull,
+      suggestedMessage: ack,
+      suggestedSubject: null,
+      suggestedResponseId: null,
+      suggestedQuickReplies: dm ? ({ question: "cancelled_time", buttons: [] } as unknown as Prisma.InputJsonValue) : Prisma.JsonNull,
+      suggestedRiskLevel: "low",
+      suggestedRiskReason: null,
+      suggestedRiskTopic: null,
+      suggestedDraftedFor: new Date(newest.date),
+      suggestedDraftKind: null,
+    },
+  });
+  if (!isPushConfigured()) return;
+  try {
+    const users = await prisma.user.findMany({ where: { businessId: lead.businessId }, select: { id: true } });
+    const buzz = cancelledBuzz(first, said);
+    await Promise.all(users.map((u) => sendPushToUser(u.id, { ...buzz, url: `/leads/${lead.id}`, tag: `cancelled-${lead.id}` }).catch(() => null)));
+  } catch (err) {
+    console.error(`Could not buzz about a cancelled time for lead ${lead.id}:`, err);
   }
 }

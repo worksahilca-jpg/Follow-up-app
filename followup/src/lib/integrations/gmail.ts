@@ -474,6 +474,26 @@ export async function createCalendarEvent(
 }
 
 /**
+ * Takes a booking's event off the business's Google Calendar when the
+ * booking is moved or cancelled (A-242, part 2). Best-effort, like
+ * createCalendarEvent(): no connection, a token without the calendar scope,
+ * an event already gone, or any API error just means the calendar keeps it
+ * and the owner removes it by hand. The booking row is the truth either way.
+ */
+export async function deleteCalendarEvent(businessId: string, eventId: string): Promise<{ deleted: boolean }> {
+  const authed = await getAuthedOAuthClient(businessId);
+  if (!authed) return { deleted: false };
+  try {
+    const calendar = google.calendar({ version: "v3", auth: authed.oauth2Client });
+    await calendar.events.delete({ calendarId: "primary", eventId, sendUpdates: "all" });
+    return { deleted: true };
+  } catch (err) {
+    console.error(`Failed to delete calendar event for business ${businessId}:`, err);
+    return { deleted: false };
+  }
+}
+
+/**
  * Real busy blocks on the business's connected Google Calendar over a
  * window — what getAvailableSlots() (src/lib/booking.ts) excludes on top
  * of the fixed business-hours grid when Business.bookingCalendarSource

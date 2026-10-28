@@ -280,7 +280,9 @@ describe("everything else stays as it was", () => {
     setLead({ industry: "Plumbing" });
     await scoreAndDraftForLead("lead1");
     expect(h.extract).not.toHaveBeenCalled();
-    expect(h.booking).not.toHaveBeenCalled();
+    // The one booking read left is the booked-time check every kind of business gets (A-242, part 2: a customer
+    // with a booked time may be moving or cancelling it); nothing about it feeds a checklist.
+    expect(h.booking).toHaveBeenCalledTimes(1);
     expect(h.generate.mock.calls[0][0].qualify).toBeNull();
     expect(updateData()).not.toHaveProperty("qualification");
   });

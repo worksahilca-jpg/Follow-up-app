@@ -8,7 +8,9 @@ import { siteReplyFor } from "@/lib/siteReply";
 import ReplyCard from "./ReplyCard";
 import PickedTimeCard from "@/components/app/PickedTimeCard";
 import MarkOpened from "@/components/app/MarkOpened";
-import { offerLineFor, pickedCardWords } from "@/lib/bookingTimes";
+import { bookedCardWords, cancelledCardWords, offerLineFor, pickedCardWords } from "@/lib/bookingTimes";
+import BookedCard from "@/components/app/BookedCard";
+import CancelledCard from "@/components/app/CancelledCard";
 import Thread from "./Thread";
 import { Initials, StatePill } from "./canvasBits";
 import { ChannelIcon, channelFromSource } from "./ChannelIcon";
@@ -59,6 +61,9 @@ export default function ConversationPane({
   // Booking in the chat (A-242): their picked time waiting for Confirm; the line under a reply that offers times.
   const picked = pickedCardWords(lead, timeZone, now);
   const offerLine = offerLineFor(lead, timeZone, now);
+  // Change or cancel in the chat (A-242, part 2): a booked time still to come, and a time they cancelled.
+  const booked = bookedCardWords(lead, timeZone, now);
+  const cancelled = cancelledCardWords(lead, timeZone, now);
   const basis = lead.suggestedMessage
     ? describeBasis({
         draft: lead.suggestedMessage,
@@ -126,8 +131,15 @@ export default function ConversationPane({
               {plainHoldReason(approval.reason, { firstName: lead.name.split(" ")[0] || lead.name, topic: approval.riskTopic })}
             </p>
           )}
+          {booked && !picked && !cancelled && (
+            <div className="mb-3">
+              <BookedCard key={`booked-${booked.id}`} leadId={lead.id} {...booked} dense />
+            </div>
+          )}
           {picked ? (
             <PickedTimeCard key={`picked-${lead.pickedTime}`} leadId={lead.id} {...picked} dense />
+          ) : cancelled ? (
+            <CancelledCard key={`cancelled-${cancelled.id}`} leadId={lead.id} {...cancelled} dense />
           ) : siteReply ? (
             <SiteReplyCard key={lead.id} leadId={lead.id} leadName={lead.name} site={siteReply} draft={lead.suggestedMessage} waiting={Boolean(approval)} dense />
           ) : (

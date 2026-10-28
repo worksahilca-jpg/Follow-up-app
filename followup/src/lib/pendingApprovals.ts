@@ -144,6 +144,8 @@ export type PendingApproval = {
   saidNo?: boolean;
   /** How that no was read (Lead.saidNoHow, A-326): a clear no, a maybe, or an agent. Null when they didn't say no. */
   saidNoHow?: NoHow | null;
+  /** They picked one of the two offered times (A-242) and the acknowledgement waits here: the row says so. */
+  pickedTime?: boolean;
   /** Their newest message asked if they're talking to a real person (Lead.askedIfPersonAt). */
   askedIfPerson?: boolean;
   /**
@@ -254,6 +256,7 @@ export async function getPendingApprovals(businessId: string, now: Date = new Da
       phone: true,
       saidNoAt: true,
       saidNoHow: true,
+      pickedTime: true,
       askedIfPersonAt: true,
       thanksOnlyAt: true,
       // One inbound message per conversation (the most recent), not the
@@ -393,6 +396,7 @@ export async function getPendingApprovals(businessId: string, now: Date = new Da
       leadLastMessageAt: lastInbound ? lastInbound.sentAt.toISOString() : null,
       saidNo: lead.saidNoAt != null,
       saidNoHow: lead.saidNoAt ? ((lead.saidNoHow as NoHow | null) ?? "clear") : null,
+      pickedTime: lead.pickedTime != null,
       ...(typeof meta.quote === "string" && meta.quote
         ? { said: { quote: meta.quote, when: saidWhen(typeof meta.saidOn === "string" ? new Date(meta.saidOn) : event.createdAt, now, timezone) } }
         : {}),

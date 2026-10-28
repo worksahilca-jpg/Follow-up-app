@@ -39,9 +39,12 @@ import TellCard from "@/components/TellCard";
 import { AlertsCard } from "@/components/app/AlertsSetup";
 import InstallCard from "@/components/app/InstallCard";
 import ReplyForMeCard from "@/components/app/ReplyForMeCard";
-import type { LaterLine, TodayRow } from "@/components/app/TodayDay";
-import LaterFold from "@/components/app/LaterFold";
-import { clockTime, dayOffset, daySentence, doneLines, greeting, laterSummary, nextForYouLine } from "@/lib/todayWords";
+import { DayHeading, DayRow, type TodayRow } from "@/components/app/TodayDay";
+import DidRows from "@/components/app/DidRows";
+import Ago from "@/components/app/Ago";
+import { DID_SHOWN, checkInsWords, didRows, sinceLabel, sinceWindow, waitingWords, watchingWords, workSentence } from "@/lib/todayWork";
+import { loadWork, previousOpen, waitingOnReplies } from "@/lib/todayWorkData";
+import { clockTime, dayOffset, daySentence, greeting, nextForYouLine } from "@/lib/todayWords";
 import { oneQueue } from "@/lib/approvalGroups";
 import { replyForMeOffer } from "@/lib/replyForMeOffer";
 import { todaysQuestion } from "@/lib/dailyQuestionData";
@@ -155,10 +158,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     // of them can do anything (A-044). Only asked once there are people.
     ctx && leads.length > 0 ? hasAnySendChannel(ctx.businessId) : true,
     // Instagram counts as connected (A-241): an id and a token, as
-    // sendChannels.ts counts it. Only the empty state asks.
-    ctx && leads.length === 0
-      ? prisma.business.count({ where: { id: ctx.businessId, instagramUserId: { not: null }, instagramAccessToken: { not: null } } })
-      : 0,
+    // sendChannels.ts counts it. The empty state and "Watching Gmail and Instagram" (A-336) both read it.
+    ctx ? prisma.business.count({ where: { id: ctx.businessId, instagramUserId: { not: null }, instagramAccessToken: { not: null } } }) : 0,
   ]);
   const instagramConnected = instagramCount > 0;
   // Calls to make (A-103, the realtor team pilot): empty unless the business
@@ -397,7 +398,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   // tomorrow, what got booked today, and how many customers FollowUp wrote
   // to today. Every time is said on the owner's own clock.
   const dayStart = startOfLocalDay(now, timezone);
-  const [nearBookings, bookedToday, wroteForToday, callsThisWeek] = ctx && leads.length > 0
+  const [nearBookings, callsThisWeek] = ctx && leads.length > 0
     ? await Promise.all([
         // From a few hours back, so a call that has started stays on Today (with its note) until it ends (A-268).
         prisma.booking.findMany({
@@ -406,21 +407,15 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           orderBy: { scheduledAt: "asc" },
           take: 20,
         }),
-        prisma.booking.findMany({
-          where: { businessId: ctx.businessId, status: "confirmed", createdAt: { gte: dayStart } },
-          select: { scheduledAt: true, lead: { select: { name: true } } },
-          orderBy: { createdAt: "desc" },
-          take: 3,
-        }),
-        prisma.followUp.findMany({
-          where: { automated: true, status: "sent", sentAt: { gte: dayStart }, lead: { businessId: ctx.businessId } },
-          select: { leadId: true },
-          distinct: ["leadId"],
-        }),
-        // The number on "Calls this week" in Later (A-317).
+        // The number on "Calls this week" in Your day (A-317).
         countCallsThisWeek(ctx.businessId, now, timezone),
       ])
-    : [[], [], [], 0];
+    : [[], 0];
+  // Today that shows FollowUp working (A-336): what it did since the owner last looked (their last visit before
+  // today, else since midnight, at most a week), and who it is waiting on.
+  const prevOpen = ctx && leads.length > 0 ? await previousOpen(ctx.userId, dayStart) : null;
+  const { since, sinceLook } = sinceWindow(prevOpen, dayStart, now);
+  const work = ctx && leads.length > 0 ? await loadWork(ctx.businessId, since) : { sent: [], booked: [], caught: [] };
   // "How did it go?" (A-263): calls that are over and not yet answered, and
   // the ones answered today (their card stays, with Undo, until tomorrow).
   const lookBackRows = ctx && leads.length > 0
@@ -491,20 +486,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     time: null,
     href: `/leads/${c.leadId}`,
   }));
-  // FollowUp's own check-ins tomorrow (A-046's coming up): nothing for the owner to do, said in "Later" (A-266).
-  const checkInsTomorrow = comingUp?.groups.find((g) => g.day === "Tomorrow")?.items ?? [];
-  const bookedWhen = (at: Date) => {
-    const day = dayOffset(at, now, timezone);
-    const time = clockTime(at, timezone);
-    if (day === 0) return `today at ${time}`;
-    if (day === 1) return `tomorrow at ${time}`;
-    return `${new Intl.DateTimeFormat("en-US", { timeZone: timezone, weekday: "short", month: "short", day: "numeric" }).format(at)} at ${time}`;
-  };
-  const done = doneLines({
-    handled: handledToday,
-    wroteFor: wroteForToday.length,
-    booked: bookedToday.map((b) => ({ name: b.lead.name, when: bookedWhen(b.scheduledAt) })),
-  });
   // Who to start with: the first reply in Today's order (A-230), which is the card that opens (A-266); else the first
   // call; else a call to look back on.
   const firstUp = oneQueue(approvalItems).flatMap((g) => g.needsYou)[0]?.leadName ?? callCards[0]?.name ?? lookBacks[0]?.lead.name ?? null;
@@ -519,41 +500,85 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     lookBack: lookBacks.length,
     startWith: firstUpName,
   });
-  // "Later" (A-266): tomorrow, what's done, and what FollowUp does by itself, one line each, behind one line (A-335).
+  // "Your day" (A-336, R-114): tomorrow and the week's calls, one row each, after today's booked calls.
   const firstTomorrow = bookingsTomorrow[0];
-  const later: LaterLine[] = [
+  const dayLines: TodayRow[] = [
     {
-      label: "Tomorrow",
-      value: firstTomorrow
+      key: "tomorrow",
+      kind: "booking",
+      noIcon: true,
+      title: "Tomorrow",
+      sub: firstTomorrow
         ? bookingsTomorrow.length === 1
           ? `Call with ${firstTomorrow.lead.name.split(" ")[0]} at ${clockTime(firstTomorrow.scheduledAt, timezone)}`
           : `${bookingsTomorrow.length} booked calls, the first at ${clockTime(firstTomorrow.scheduledAt, timezone)}`
-        : "Nothing booked yet",
+        : "Nothing booked",
+      time: null,
       href: firstTomorrow ? `/leads/${firstTomorrow.leadId}` : null,
     },
     // FollowUp's own calendar (A-317): every call booked through the owner's link, the next seven days by day.
-    { label: "Calls this week", value: callsWeekValue(callsThisWeek), href: "/calls" },
-    { label: "Done today", value: done.length > 0 ? done.join(" ") : "Nothing yet", href: done.length > 0 ? "/activity" : null },
-    // Something FollowUp learned waits for the owner's OK before a reply uses it (A-308).
-    ...(factsWaiting > 0
-      ? [
-          {
-            label: "FollowUp learned",
-            value: `${factsWaiting} ${factsWaiting === 1 ? "thing" : "things"} to check`,
-            href: "/settings#business",
-          },
-        ]
-      : []),
-    ...(checkInsTomorrow.length > 0
-      ? [
-          {
-            label: "FollowUp checks in",
-            value: `With ${checkInsTomorrow.length} ${checkInsTomorrow.length === 1 ? "person" : "people"} tomorrow, on its own`,
-            href: "/coming-up",
-          },
-        ]
-      : []),
+    { key: "calls-week", kind: "booking", noIcon: true, title: "Calls this week", sub: callsWeekValue(callsThisWeek), time: null, href: "/calls" },
   ];
+  // Something FollowUp learned waits for the owner's OK before a reply uses it (A-308): a decision, under Needs you.
+  const factsRows: TodayRow[] = factsWaiting > 0
+    ? [{ key: "facts", kind: "checkin", title: `FollowUp learned ${factsWaiting} ${factsWaiting === 1 ? "thing" : "things"}`, sub: "Check them before replies use them.", time: null, href: "/settings#business" }]
+    : [];
+
+  // "FollowUp did" (A-336): rows with names, times and the words it sent; four, then "N more, in Activity".
+  const sayWhen = (at: Date) => sayTime(at.toISOString(), timezone, now);
+  const didAll = didRows(work, since, now, timezone, sayWhen);
+  const didShown: TodayRow[] = didAll
+    .slice(0, DID_SHOWN)
+    .map((r) => ({ key: r.id, kind: "reply", person: r.person, title: r.title, sub: r.sub, time: r.when, quietTime: true, wrap: true, href: `/leads/${r.leadId}` }));
+  // The sentence is FollowUp's report (A-336); with nothing to report, the day's old sentence (A-266).
+  const answered = new Set(work.sent.filter((w) => w.automated).map((w) => w.leadId)).size;
+  const report = workSentence({ sinceLook, answered, caught: work.caught.length, booked: work.booked.length, forOk: approvalItems.length }) ?? dayWords;
+  const didNode =
+    didShown.length > 0 ? (
+      <section aria-label="FollowUp did">
+        <DayHeading title="FollowUp did" aside={sinceLabel(since, sinceLook, now, timezone)} quiet />
+        <DidRows rows={didShown} more={didAll.length - didShown.length} />
+      </section>
+    ) : null;
+
+  // "FollowUp is on it" (A-336): present tense, real state only.
+  const waiting = waitingOnReplies(leads, awaitingOk, now);
+  const planned = comingUp ? comingUp.groups.flatMap((g) => g.items.map((it) => ({ ...it, day: g.day }))) : [];
+  const firstWaitNext = waiting[0] ? planned.find((it) => it.leadId === waiting[0].leadId) ?? null : null;
+  const waitingRow = waitingWords(
+    waiting,
+    now,
+    timezone,
+    firstWaitNext ? { name: firstWaitNext.name, when: firstWaitNext.day === "Today" ? "later today" : firstWaitNext.day === "Tomorrow" ? "tomorrow" : `on ${firstWaitNext.day}` } : null
+  );
+  const checkIns = comingUp ? checkInsWords(comingUp.groups) : null;
+  const watching = watchingWords([gmail.connected ? "Gmail" : "", outlook.connected ? "Outlook" : "", instagramConnected ? "Instagram" : ""]);
+  const lastChecked = "lastSyncedAt" in gmail && gmail.lastSyncedAt ? new Date(gmail.lastSyncedAt).toISOString() : null;
+  // The dot is green only while the words beside it say "a moment ago": a check older than an hour means something
+  // stopped (the reconnect notice is under Needs you), and a green dot next to "23 days ago" would be a lie.
+  const checkedRecently = !lastChecked || now.getTime() - new Date(lastChecked).getTime() < 60 * 60 * 1000;
+  const onItNode =
+    leads.length > 0 && (waitingRow || checkIns || watching) ? (
+      <section aria-label="FollowUp is on it" className="mt-7">
+        <DayHeading title="FollowUp is on it" />
+        <div className="list-group">
+          {waitingRow && <DayRow row={{ key: "waiting", kind: "reply", title: waitingRow.title, sub: waitingRow.sub, time: null, href: null }} />}
+          {checkIns && <DayRow row={{ key: "checkins", kind: "checkin", title: checkIns.title, sub: checkIns.sub, time: null, href: "/coming-up" }} />}
+          {watching && (
+            <div className="ios-sep flex min-h-[60px] items-center gap-3 px-4 py-3" style={{ "--sep-inset": "64px" } as React.CSSProperties}>
+              {/* The dot is real: green for an inbox checked within the hour, grey when the last check is older. */}
+              <span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-card-2">
+                <span className="h-2 w-2 rounded-full" style={{ background: checkedRecently ? "var(--sage)" : "var(--ink-faint)" }} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[15.5px] font-semibold leading-snug">{watching}</span>
+                <span className="mt-0.5 block text-[13.5px] leading-snug text-ink-soft">{lastChecked ? <Ago iso={lastChecked} prefix="Last checked " /> : "Checks every few minutes"}</span>
+              </span>
+            </div>
+          )}
+        </div>
+      </section>
+    ) : null;
 
   return (
     // One column on every screen (A-335, after R-143): on a computer it is a 720px column in the middle of the window.
@@ -579,7 +604,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           {inboxSummary ? (
             <InboxSummaryCard summary={inboxSummary.summary} provider={inboxSummary.provider} />
           ) : (
-            <p className="mt-1.5 text-[16px] leading-snug text-ink-soft">{dayWords}</p>
+            <p className="mt-1.5 text-[16px] leading-snug text-ink-soft">{report}</p>
           )}
         </>
       )}
@@ -608,23 +633,13 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         const queue = (
           <ApprovalQueue
             items={approvalItems}
-            rows={[...bookingRows, ...callRows]}
+            rows={[...bookingRows, ...callRows, ...factsRows]}
             calls={callsToPrepare}
             plan={approvalItems.length === 0 && comingUp ? planLine(comingUp.groups) : null}
             next={nextForYouLine(nextCallForYou)}
-            later={
-              later.length > 0 ? (
-                <LaterFold
-                  summary={laterSummary({
-                    tomorrow: firstTomorrow ? { name: firstTomorrow.lead.name, time: clockTime(firstTomorrow.scheduledAt, timezone), count: bookingsTomorrow.length } : null,
-                    callsThisWeek,
-                    handled: handledToday,
-                    factsWaiting,
-                  })}
-                  lines={later}
-                />
-              ) : null
-            }
+            did={didNode}
+            onIt={onItNode}
+            dayLines={dayLines}
             weekResults={weekResults}
             answeredForYou={rescue?.answeredForYou ?? 0}
             sendLocked={sendLocked}

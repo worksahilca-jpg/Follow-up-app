@@ -23,6 +23,12 @@ export type TodayRow = {
   person?: string | null;
   /** A quiet word beside the name, where they stand: "Ready", "Warm" (A-286, A-310): an outline, no colour. */
   tag?: string | null;
+  /** The time as a quiet fact on the right ("8:12 AM" in grey, A-336's "FollowUp did"), not a calendar time in bold. */
+  quietTime?: boolean;
+  /** A plain line with no face or icon, indented to the words ("Tomorrow · Nothing booked"). */
+  noIcon?: boolean;
+  /** The title may take two lines instead of cutting off: "FollowUp did" rows carry the fact in the title. */
+  wrap?: boolean;
 };
 
 const ICON = { reply: MessageCircle, call: Phone, booking: CalendarDays, checkin: MessageCircle } as const;
@@ -40,12 +46,12 @@ export function TierTag({ children }: { children: React.ReactNode }) {
 }
 
 /** A section title in the day: a plain heading and, on the right, a short count or date. */
-export function DayHeading({ title, aside }: { title: string; aside?: string | null }) {
+export function DayHeading({ title, aside, quiet = false }: { title: string; aside?: string | null; /** The aside as plain words, not a count. */ quiet?: boolean }) {
   return (
     // A small uppercase label over the section's white group (A-307).
     <div className="mb-2 flex items-baseline justify-between gap-3 px-1">
-      <h2 className="group-label">{title}</h2>
-      {aside && <span className="text-[12.5px] font-semibold tabular-nums text-ink-faint">{aside}</span>}
+      <h2 className="group-label shrink-0">{title}</h2>
+      {aside && <span className={"min-w-0 truncate text-[12.5px] text-ink-faint" + (quiet ? "" : " font-semibold tabular-nums")}>{aside}</span>}
     </div>
   );
 }
@@ -57,6 +63,8 @@ export function DayRow({ row, onClick, expanded }: { row: TodayRow; /** No longe
     <>
       {row.person ? (
         <Initials name={row.person} size={36} />
+      ) : row.noIcon ? (
+        <span aria-hidden="true" className="w-9 shrink-0" />
       ) : (
         <span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-card-2 text-ink">
           <Icon className="h-[17px] w-[17px]" strokeWidth={2} />
@@ -64,13 +72,13 @@ export function DayRow({ row, onClick, expanded }: { row: TodayRow; /** No longe
       )}
       <span className="min-w-0 flex-1">
         <span className="flex items-baseline gap-2">
-          <span className="truncate text-[15.5px] font-semibold leading-snug">{row.title}</span>
+          <span className={(row.wrap ? "line-clamp-2" : "truncate") + " text-[15.5px] font-semibold leading-snug"}>{row.title}</span>
           {row.tag && <TierTag>{row.tag}</TierTag>}
         </span>
         {row.sub && <span className="mt-0.5 block text-[13.5px] leading-snug text-ink-soft">{row.sub}</span>}
       </span>
       {row.time ? (
-        <span className="shrink-0 text-[15px] font-semibold tabular-nums">{row.time}</span>
+        <span className={"shrink-0 tabular-nums " + (row.quietTime ? "text-[12.5px] text-ink-faint" : "text-[15px] font-semibold")}>{row.time}</span>
       ) : row.href || onClick ? (
         <ChevronRight className="h-[18px] w-[18px] shrink-0 text-ink-faint" aria-hidden="true" />
       ) : null}
@@ -96,48 +104,5 @@ export function DayRow({ row, onClick, expanded }: { row: TodayRow; /** No longe
     <div style={sep} className={cls}>
       {body}
     </div>
-  );
-}
-
-/** One line of "Later": what it is on the left, what it holds on the right. */
-export type LaterLine = { label: string; value: string; href?: string | null };
-
-/**
- * "Later" (A-266, 2026-10-16; was Tomorrow and Done today as two sections with boxes, A-244): one plain line each
- * for tomorrow, the week's calls (A-317), what is already done, and what FollowUp does on its own. A line opens its
- * page when there is one.
- */
-export function DayLater({ lines, heading = true }: { lines: LaterLine[]; /** Without the "Later" label: inside LaterFold (A-335), which carries it. */ heading?: boolean }) {
-  if (lines.length === 0) return null;
-  return (
-    <section aria-label={heading ? "Later" : undefined}>
-      {heading && <DayHeading title="Later" />}
-      <ul className="list-group">
-        {lines.map((l) => {
-          // A line that opens a page says so with a small chevron (A-317's "Calls this week · 4 booked ›").
-          const inner = (
-            <>
-              <span className="shrink-0 text-[15px]">{l.label}</span>
-              <span className="flex min-w-0 items-center gap-1.5">
-                <span className="min-w-0 text-right text-[14.5px] leading-snug text-ink-soft">{l.value}</span>
-                {l.href && <ChevronRight aria-hidden className="h-[15px] w-[15px] shrink-0 text-ink-faint opacity-70" strokeWidth={2.5} />}
-              </span>
-            </>
-          );
-          const cls = "flex min-h-[52px] items-center justify-between gap-4 px-4 py-3";
-          return (
-            <li key={l.label}>
-              {l.href ? (
-                <Link href={l.href} className={cls + " hover:text-ink"}>
-                  {inner}
-                </Link>
-              ) : (
-                <div className={cls}>{inner}</div>
-              )}
-            </li>
-          );
-        })}
-      </ul>
-    </section>
   );
 }

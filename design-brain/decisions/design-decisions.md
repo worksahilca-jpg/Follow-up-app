@@ -15984,3 +15984,111 @@ seam to settle when their turn comes; (5) the Later line wraps to two lines on a
 down a beat after the slide, when the server's refresh lands; (7) R-114 is honoured by folding, not by showing:
 calls and tomorrow are on the page but take a tap to open, which the founder has not seen on the live app yet.
 
+## 2026-10-28 — The built A-335 Today rejected on sight (R-144); "show me how others make it"
+
+**Founder:** *"i didnt like it can you show me how others make it ??"* on the built screens (dark mode, computer and
+phone), after "merge and build it" to the drawing of the same screen. PR #614 stays open, unmerged, until he decides.
+**What happens next, in order:** (1) record (this entry, R-144, the note on A-335); (2) gather how other products
+make their Today / home / daily queue, from real screens (Mobbin) and the earlier study
+(`reports/How big apps design their Today page.md`, A-283), as principles not templates (brand rule 6); (3) show him
+a board of the references with one line each on what they do differently from ours; (4) ask one question with it:
+"what didn't you like: too empty, still too complex, or the look?"; (5) draw again only after his answer.
+**Step 2, honestly:** no real screen could be fetched from this computer (every outside site and the App Store are
+blocked; Mobbin needs a paid plan), the same limit the 17 Oct study hit. So the founder got links to open himself,
+one line each on how that product makes its Today (from `reports/How big apps design their Today page.md`): Apple
+Reminders' Today (overdue first, then Morning / Afternoon / Tonight), Things 3 (calendar on top, one calm list),
+Todoist (overdue on top, end the day at zero), Superhuman (Important above Other, one email at a time, Inbox Zero),
+Close (one mixed inbox for today: replies, tasks, missed calls) and Follow Up Boss (the list that says who to call).
+The question went with it. No new drawing until he answers.
+
+## 2026-10-28 — "It is working good but doesn't feel like working": the reason behind R-143 and R-144
+
+**Founder:** *"i feel like what we are making and the direction of the product dosent matches the app i mean it is
+working good right but dosent feel like working."* The first reason in his own words for "dead" (R-143) and for
+rejecting the calmer Today (R-144). Recorded as a brand principle (the app must show FollowUp working).
+**Reading:** Today is written as the owner's to-do list; the product is FollowUp doing the following up. The app's
+work (replies sent on its own, check-ins scheduled, customers qualified, calls booked) is real but lives in Activity
+and Results, or behind Later's fold. So the page the owner opens every day shows their work, not FollowUp's. "Less on
+the screen" (A-335) made this worse by folding "FollowUp wrote to 3 customers for you" away.
+**Founder:** *"yes draw it"* to the reading below (same day). **Direction, confirmed:** Today opens with FollowUp's work in the present
+tense: what it did since the owner last looked (names, times, the replies themselves), what it is doing now, who it is
+waiting on and what it will do next on its own; the owner's few decisions on top, in the same voice. Drawn on the real
+app, computer and phone, then built on his yes. PR #614 stays unmerged; its parts that fit (one column, the Next line)
+may be reused.
+
+## 2026-10-28 — Today that shows FollowUp working, drawn on the real app
+
+**Founder:** *"yes draw it"* to the reading of his words (the app must show FollowUp working). Drawn on the live
+local Today, computer 1440 (full height) and phone 390×844, light and dark (scratchpad `today/work/working-today-board.png`).
+**What the drawing proposes (one column, A-335's column kept; the look A-331/A-333 untouched):**
+- **The sentence is FollowUp's report**, not the owner's to-do count: "Since you last looked, FollowUp answered 4
+  people, booked 1 call and wrote 16 replies for your OK." (real counts: handled, wrote-for, booked, the queue).
+- **"FollowUp did · since 9:40 pm"** first: one row per thing it did, face, what ("Answered Zoe", "Booked a call with
+  Raj, Saturday 11 am", "Checked in with Mia, day 3", "Asked Ethan for his number"), the words it sent in quotes, the
+  time on the right; "6 more, in Activity". Shown only when it did something; "since you last looked" is real
+  (the owner's last visit).
+- **"Needs you · 16 · FollowUp wrote these. They go out when you say."** The same open card (their words, "FollowUp
+  wrote:", the reply, the check line, Send / Change it / Skip for now) reframed as FollowUp's work handed over, not the
+  owner's chores; then the Next line with three faces (from A-335).
+- **"FollowUp is on it"**: present tense, real state: "Waiting on 3 replies" (who, how long, what it does if they
+  stay quiet), "Check-ins coming up" (from the plan), "Watching Gmail and Instagram · last checked 2 minutes ago"
+  with the green dot.
+- **"Your day"**: the booked call with its time and note, tomorrow, calls this week (R-114 kept).
+- **Alive where it's true (A-048):** a new row slides in at the top of "FollowUp did" when it acts while the page is
+  open; after Send the reply moves up there ("Sent to Zoe · just now"); "last checked" keeps counting.
+**Weak, named:** (1) on a quiet account (hold-all, nothing sent on its own) "FollowUp did" is empty and the page is the
+old queue in a new voice: the sentence must then say "FollowUp wrote 16 replies for your OK" and nothing false; (2) the
+phone shows the first Send one screen down (four "did" rows above it); (3) "since you last looked" needs the owner's
+last-seen time, which exists (`/api/account/seen`) but was never read for this; (4) the rows in the drawing are
+examples: the real list is only what FollowUp really sent.
+**Founder (same day):** *"yes build it"* → [[approved#^A-336|A-336]]. Building on PR #614's branch (its one column and
+Next line stay; its Then/Later fold goes).
+
+## 2026-10-28 — Today that shows FollowUp working (A-336) built, on PR #614's branch
+
+**Founder:** *"yes build it"*. Built the same day on the A-335 branch (its one column and Next line stay; its Then and
+Later fold go; `LaterFold.tsx` deleted). PR #614 now carries A-336, not the rejected A-335.
+**What was built:** the sentence is FollowUp's report ("Since you last looked, FollowUp answered 2 people, caught 1 new
+customer, booked 1 call and wrote 16 replies for your OK."; "Today, …" when the owner already looked today; "FollowUp has
+16 replies waiting for your OK." when it did nothing on its own; the old day sentence when there is nothing at all).
+"FollowUp did · since 3:32 PM": one row per real send, booking or new customer since the owner last opened the app (the
+`app.open` record; capped at a week; today's start when it is their first open), face, what ("Answered @maya.homes",
+"Checked in with Mia", "Sent your reply to Raj", "Booked a call with Raj, Saturday at 11 am", "New customer from
+Instagram: Ethan Brooks"), the words sent in quotes (90 characters), the time on the right in grey, four rows then
+"N more, in Activity"; a row that appears after the page loaded slides in at the top. "Needs you · 17 · FollowUp wrote
+these. They go out when you say.": the open card, the Next line, then the other decisions as rows. "FollowUp is on it":
+"Waiting on 1 reply · Ethan (1 h)." (with "If Ethan stays quiet, FollowUp checks in tomorrow." when a plan says so),
+"N check-ins coming up · Priya tomorrow · Omar Thursday", "Watching Gmail · Last checked 2 minutes ago" with the dot.
+"Your day": today's calls, Tomorrow, Calls this week.
+**Checked:** computer 1440 (full column) and phone 390×844, light and dark, in a real browser on the local test
+business with seeded sends; the Next list opened, a person picked from it (the card changed, the line re-ordered),
+Skip for now (back to the first person, the skipped one gone from the line); no console errors. Typecheck, lint, the
+full suite (448 files, 5,103 tests; one source-text test updated: the sentence is `{report}`, falling back to the day
+sentence).
+**Design review, honestly:** (✅) the first five seconds answer "what did FollowUp do while I was away" with facts, not
+claims; the owner's part is the same card as before, so nothing to relearn; every row is real (a send, a booking, a
+customer) with its time and the words, nothing generated; the dot and the "ago" are real state. (⚠️ fixed) long
+"FollowUp did" titles cut off on the phone ("New customer from Instagr…") → the title may take two lines there; the
+green dot sat beside "Last checked 23 days ago" on the test account → the dot is grey when the last check is over an
+hour old (the reconnect notice is under Needs you). (⚠️ left, named) on a hold-all account (nothing sent on its own,
+like the founder's test account today) "FollowUp did" is empty and the page is "Needs you", "FollowUp is on it" and
+"Your day": honest, but the feeling he asked for only arrives when FollowUp sends by itself, so the recommendation to
+him stands: turn on sending for the simple replies on the test account and watch it for a week. On the phone the first
+Send is one screen down when four "did" rows sit above it (the drawing's weak spot 2, kept: the report comes first on
+purpose). On day one the one-time "Your first reply went out through FollowUp" card and the "FollowUp did" row say
+the same thing twice; the card is one-time, left. The two labels "Needs you · 17" and "wrote 16 replies" differ by the
+decision rows (a stopped-replying row here); correct, but an owner may count. **Weakest part:** the page is longer than
+A-335 (four groups); it earns the length only on an account where FollowUp acts.
+**20% better next:** a "did" row could open the exact message in the conversation rather than the customer's page;
+"Waiting on" could show the customer's last words.
+
+## 2026-10-28 — monday.com, ClickUp, Macro: how their "today" works (founder's ask, after the drawing)
+
+**Founder:** *"can you check monday clickup and macro how they do it ??"* Checked from their help pages via search
+summaries (the sites are blocked here; no screen seen; grade B), written up in
+`design-brain/references/productivity/2026-10-28-monday-clickup-macro-home.md`. In short: monday's My Work is a to-do
+list by date (Overdue, Today, This week…) and reads as a chore; ClickUp's My Tasks is a canvas of cards with an AI
+StandUp that writes what you did in the last day or week; Macro's Inbox is one list, Signal above Noise, where the AI
+agents' answers land beside people's messages. The two that feel alive are the two where something other than the user
+writes into the list. That is the drawing's bet, done as facts (rows with names and times) rather than a generated
+paragraph. Nothing changes in the drawing; waiting for the founder's yes.

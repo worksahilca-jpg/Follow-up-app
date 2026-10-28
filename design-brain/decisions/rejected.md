@@ -1847,3 +1847,21 @@ column, one person at a time in a box, the rest of the queue as one line with th
 a reply, Later as one line, the numbers off Today, the next person sliding in after Send. The look is unchanged; what
 changed is how much is open at once. Whether this answers "dead" as well as "too complex" is his to say on the live
 app.
+
+## R-144 — The built A-335 Today, on sight: "i didnt like it" ^R-144
+
+**Date:** 2026-10-28. **Founder, verbatim:** *"i didnt like it can you show me how others make it ??"*, on the two
+screenshots of the built [[approved#^A-335|A-335]] (computer and phone, dark mode), minutes after "merge and build
+it" to its drawing. PR #614 stays unmerged.
+**What was rejected:** the built Today with less on the screen (one column, one person in a box, "Next: Ethan, Mia,
+Mason · 12 more", Then only for non-replies, Later as one line, the next person sliding in).
+**Reason, in his words (minutes later):** *"i feel like what we are making and the direction of the product dosent
+matches the app i mean it is working good right but dosent feel like working."* The app does the work but the screen
+doesn't show it working: Today hands the owner a queue ("16 people are waiting for your reply"), which says the owner
+does the following up, when the product's direction is that FollowUp does it. Recorded as a brand principle
+(brand-principles.md, 2026-10-28: the app must show FollowUp working).
+**Principle:** a screen says what the product is. Evidence of FollowUp's work (what it answered, what it is doing,
+what it will do, with names and times) is the content of Today; the owner's few decisions sit on top of it. Cutting
+things from Today made it read deader, because the cut lines were the ones that showed work.
+**Do not propose again:** Today as a queue of the owner's tasks, however calm; another "less on the screen" cut.
+**Answered (2026-10-28)** by [[approved#^A-336|A-336]], Today that shows FollowUp working: *"yes build it"*.

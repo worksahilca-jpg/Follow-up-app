@@ -6057,6 +6057,9 @@ it stays unread make it accurate too bro"*. Built the same day (in the A-242 PR)
 
 ## A-335 — Today with less on the screen: one person at a time, the rest of the day folded ^A-335
 
+**REJECTED ON SIGHT (2026-10-28)** → [[rejected#^R-144|R-144]]: built and checked, then *"i didnt like it"* on the
+screenshots. Not merged (PR #614). Reason to be asked; references of other products' Today screens requested.
+
 **Date:** 2026-10-28. **Founder, verbatim:** *"okay do it"* to the recommendation under [[rejected#^R-143|R-143]]
 ("start with less on the screen, Today as one calm page, a little life only where something changes"), then *"merge
 and build it"* to the drawing (scratchpad `today/today-board.png`: now vs proposed, computer and phone, on the real
@@ -6087,3 +6090,46 @@ FollowUp's call), A-266's sentence.
 Then" (the rows are behind the Next line now); A-307's numbers pill on Today and its "Needs you" white group; A-222's
 "the one customer sits on the page with no box" on Today's phone screen; A-283 #2's "later calls follow the replies"
 (there are no reply rows in Then).
+
+## A-336 — Today shows FollowUp working: what it did, what needs you, what it's on, your day ^A-336
+
+**Date:** 2026-10-28. **Founder, verbatim:** *"i feel like what we are making and the direction of the product dosent
+matches the app i mean it is working good right but dosent feel like working"* → asked "is 'the app should show FollowUp
+working, not give me a to-do list' the feeling you mean?" → *"yes draw it"* → the drawing (scratchpad
+`today/work/working-today-board.png`: now vs proposed, computer and phone, light and dark) → *"why you think this works
+bro ??"* (answered: a screen says what the product is; proof not claims; it changes while you're away; your part gets
+smaller; the catch: it only feels alive when FollowUp really acts on its own) → monday/ClickUp/Macro checked at his ask
+(`references/productivity/2026-10-28-monday-clickup-macro-home.md`) → *"yes build it"*.
+**What specifically was approved (one column, A-335's column and Next line kept; the look A-331/A-333 untouched):**
+- **The sentence is FollowUp's report:** "Since you last looked, FollowUp answered 4 people, booked 1 call and wrote 16
+  replies for your OK." Real counts only; a part that is zero is left out; with nothing done, "FollowUp wrote 16 replies
+  for your OK."; with nothing at all, the old "Nothing needs you right now."
+- **"FollowUp did · since 9:40 pm"** first: one row per thing it did since the owner last looked (or since midnight,
+  whichever is earlier, up to a week): the customer's face, what ("Answered Zoe", "Checked in with Mia", "Sent your
+  reply to Raj", "Booked a call with Raj, Saturday 11 am", "Caught a new customer from Instagram: Ethan"), the words it
+  sent in quotes, the time on the right; four rows, then "N more, in Activity". Shown only when it did something.
+- **"Needs you · N · FollowUp wrote these. They go out when you say."**: the same open card (A-266/A-286 words) and
+  the Next line with three faces (A-335); under them the other decisions as rows: a picked or cancelled time (A-242),
+  a call to make (A-103), a call to look back on (A-263), who stopped replying (A-046), facts waiting for an OK (A-308).
+  Nothing needing the owner: the "all caught up" card alone, no label.
+- **"FollowUp is on it"**: present tense, real state only: "Waiting on N replies" (who, how long, and what it does if
+  they stay quiet), "Check-ins coming up" (from the plan, by day), "Watching Gmail and Instagram · last checked 2
+  minutes ago" (the green dot; the "ago" keeps counting).
+- **"Your day"**: today's booked calls with their time and note (soon first, A-283), tomorrow, calls this week (R-114
+  kept: the whole day on the page).
+- **Alive where it's true (A-048):** a row that appears in "FollowUp did" after the page loaded slides in at the top
+  (after Send, the reply shows up there as "Sent your reply to Zoe · just now"); nothing else moves.
+- **The "Since you started" numbers stay on Results** (A-335's move). The rows in the drawing were examples; the real
+  page shows only what FollowUp really did.
+**What stands:** R-114/A-244 (whole day), A-230 (order), A-286 (open person), A-266 (words), A-088 (noise as one line).
+**Supersedes:** A-335's "Then" and "Later" (the day is now "Your day" rows, the owner's decisions are under "Needs you",
+FollowUp's own plan is "FollowUp is on it"); A-266's "Later" lines ("Done today" is replaced by "FollowUp did";
+"FollowUp checks in" moves to "FollowUp is on it"); A-283 #3's done message ("Next: your call…") is now the "Your day"
+group. R-144 is answered by this, not by another cut.
+**Built 2026-10-28** (same day, PR #614 re-pointed from A-335): `src/lib/todayWork.ts` (pure: the window since the
+owner last looked, the rows, the sentence, the waiting / check-ins / watching words; tested), `todayWorkData.ts` (what
+FollowUp sent, booked and caught since then; who it is waiting on), `DidRows.tsx` (a new row slides in at the top),
+`Ago.tsx` (the "last checked" that keeps counting), the Today page in four groups; `LaterFold.tsx` deleted. Checked
+in a real browser, computer and phone, light and dark; the Next list and Skip walked. Two fixes from the review: long
+"FollowUp did" titles wrap to two lines on the phone instead of cutting off; the Watching dot is green only when the
+inbox was checked within the hour (grey beside "23 days ago").

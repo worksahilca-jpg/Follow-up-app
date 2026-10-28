@@ -675,7 +675,9 @@ export default function ApprovalQueue({
   weekResults = null,
   plan = null,
   next = null,
-  later = null,
+  did = null,
+  onIt = null,
+  dayLines = [],
   meetings = [],
   calls = [],
   quiet = null,
@@ -690,7 +692,7 @@ export default function ApprovalQueue({
   meetings?: MeetingToLookBackOn[];
   /** Customers who stopped replying (A-046), as the list's last row: the first one, and how many in all. */
   quiet?: { id: string; name: string; total: number } | null;
-  /** The rest of the owner's day (A-244): calls to make and times booked for today, in order. */
+  /** The owner's other decisions (A-336 "Needs you"): a picked or cancelled time, a call to make, facts to check. */
   rows?: TodayRow[];
   /** Only admins send, and this person isn't one (A-041). */
   sendLocked?: boolean;
@@ -708,8 +710,12 @@ export default function ApprovalQueue({
   weekResults?: string | null;
   /** "Next: your call with Raj at 3:00 PM." (A-283): the owner's own next thing, once their replies are done. */
   next?: string | null;
-  /** "Later" as one line that opens (A-335), at the foot of the day. */
-  later?: React.ReactNode;
+  /** "FollowUp did" (A-336): the group of what it did since the owner last looked, first on the page. */
+  did?: React.ReactNode;
+  /** "FollowUp is on it" (A-336): who it waits on, the check-ins coming, what it watches. */
+  onIt?: React.ReactNode;
+  /** "Your day" (A-336) after today's booked calls: tomorrow, calls this week, one row each. */
+  dayLines?: TodayRow[];
   /** "Next: FollowUp checks on Priya on Thursday…" (research round 2, #2): the plan, on a quiet Today. */
   plan?: string | null;
 }) {
@@ -823,8 +829,9 @@ export default function ApprovalQueue({
   );
   // Calls to make, booked calls and calls to get ready for: the rest of the day, below the empty state.
   const dayAhead = rows.length + calls.length;
-  // "Then" (A-335): only what isn't a reply. Replies are the card and the folded line above.
-  const thenCount = calls.length + rows.length + listMeetings.length + (quiet ? 1 : 0);
+  // Everything that needs the owner (A-336 "Needs you"): the replies, and the other decisions as rows.
+  const decisionRows = rows.length + listMeetings.length + (quiet ? 1 : 0);
+  const needsCount = queue.length + decisionRows;
 
   // The one person, in full (A-335): their words, FollowUp's reply and Send (A-243's card), open from the start
   // (A-250). After Send the card slides out and the next person's slides in (A-048: motion only where something
@@ -910,131 +917,155 @@ export default function ApprovalQueue({
     </motion.div>
   ) : null;
 
+  // The owner's other decisions, one row each (A-336 "Needs you"): a picked or cancelled time, a call to make, a
+  // call to look back on (which opens its four answers in place), who stopped replying, facts to check.
+  const decisions = decisionRows > 0 && (
+    <div className="list-group mt-3.5">
+      {rows.map((r) => (
+        <DayRow key={r.key} row={r} />
+      ))}
+      {listMeetings.map((m) => (
+        <Fragment key={m.bookingId}>
+          <DayRow
+            row={meetingRow(m)}
+            expanded={openMeeting === m.bookingId}
+            onClick={() => setOpenMeeting((o) => (o === m.bookingId ? null : m.bookingId))}
+          />
+          {openMeeting === m.bookingId && (
+            <div data-attached className="px-3 pb-3">
+              <MeetingOutcomeCard meeting={m} />
+            </div>
+          )}
+        </Fragment>
+      ))}
+      {quiet && (
+        <DayRow
+          row={{
+            key: "quiet",
+            kind: "reply",
+            person: quiet.name,
+            title: quiet.total > 1 ? `${quiet.name} and ${quiet.total - 1} more` : quiet.name,
+            sub: "Stopped replying. A quick check-in could bring them back.",
+            time: null,
+            href: quiet.total > 1 ? "/leads?show=quiet" : `/leads/${quiet.id}`,
+          }}
+        />
+      )}
+    </div>
+  );
+
   return (
-    // One column, on a phone and a computer alike (A-335, after R-143 "too complex"): the one person, the rest of the
-    // queue as one line, Then (only what isn't a reply), and Later as one line. Everything the day holds is still on
-    // the page (R-114); less of it is open at once.
+    // Today that shows FollowUp working (A-336, after R-144): one column on a phone and a computer alike. What
+    // FollowUp did comes first; then what needs the owner (the one open reply, the rest of the queue as one line,
+    // the other decisions as rows); then what FollowUp is on; then the owner's day. Everything the day holds is still
+    // on the page (R-114).
     <div>
+      {did}
+
       {/* Said once, above everything, rather than 48 times on 48 cards. */}
       {summary.fromBeforePermission > 0 && (
-        <p className="mb-3 px-1 text-[12.5px] leading-relaxed text-ink-soft">
+        <p className={"mb-3 px-1 text-[12.5px] leading-relaxed text-ink-soft" + (did ? " mt-7" : "")}>
           {summary.fromBeforePermission} of the drafts waiting were already there before you turned sending on. FollowUp
           left them for you rather than sending them all at once. Send them whenever you&apos;re ready.
         </p>
       )}
 
-      {/* Whole-queue "send the routine ones" (A-006): only when more than
-          one source has routine drafts, otherwise it twins the row below. */}
-      {summary.safeToSend > 0 && groupsWithRoutine > 1 && (
-        <div className={`mb-3 ${CARD} flex flex-wrap items-center justify-between gap-3`}>
-          <div className="min-w-0 flex-1">
-            <p className="text-[14px] font-medium">
-              {summary.safeToSend} {summary.safeToSend === 1 ? "draft is" : "drafts are"} routine.
-            </p>
-            <p className="mt-0.5 text-[12.5px] text-ink-soft">
-              FollowUp checked each one and found nothing that needs a decision. Nothing goes out until you press.
-            </p>
-          </div>
-          {!sendLocked && <SafePileAction count={summary.safeToSend} source={null} />}
-        </div>
-      )}
+      {needsCount > 0 ? (
+        <section aria-label="Needs you" className={did ? "mt-7" : ""}>
+          {/* The replies are FollowUp's work handed over, not the owner's chores: the label says so (A-336). */}
+          <DayHeading title={`Needs you · ${needsCount}`} aside={queue.length > 0 ? "FollowUp wrote these. They go out when you say." : null} quiet />
 
-      {focus}
-
-      {/* Routine drafts: one quiet row per source, sent together on one press. */}
-      {groups
-        .filter((g) => g.safeToSend.length > 0)
-        .map((group) => (
-          <div key={group.source} className="mt-2.5 flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-line bg-card px-3 py-2.5">
-            <p className="min-w-0 flex-1 text-[13px] text-ink-soft">
-              {group.safeToSend.length} routine {group.safeToSend.length === 1 ? "draft" : "drafts"}
-              {group.source === WHOLE_QUEUE ? "" : group.source === UNKNOWN_SOURCE_LABEL ? " added by hand" : ` from ${group.source}`}
-              {group.safeToSend[0] && <span className="text-ink"> · top is {group.safeToSend[0].leadName}</span>}
-            </p>
-            {!sendLocked && <SafePileAction count={group.safeToSend.length} source={group.source === WHOLE_QUEUE ? null : group.source} />}
-            <SafePilePeek items={group.safeToSend} />
-          </div>
-        ))}
-
-      {/* Who comes after (A-335): three faces and one line, "Next: Ethan, Mia, Mason · 12 more". It opens the
-          whole list in place (one row per person, A-286); a row brings that person up into the card. */}
-      {others.length > 0 && (
-        <div className="mt-3.5">
-          <button
-            type="button"
-            onClick={() => setListOpen((o) => !o)}
-            aria-expanded={listOpen}
-            aria-controls="today-next"
-            className="flex min-h-11 w-full items-center gap-2.5 rounded-[12px] px-1 text-left hover:bg-[var(--nav-on)]"
-          >
-            <span aria-hidden="true" className="flex shrink-0 items-center">
-              {others.slice(0, 3).map((i, n) => (
-                <span key={i.leadId} className={"inline-flex rounded-full ring-2 ring-paper" + (n > 0 ? " -ml-[5px]" : "")}>
-                  <Initials name={i.leadName} size={32} />
-                </span>
-              ))}
-            </span>
-            <span className="min-w-0 flex-1 truncate text-[14px] leading-snug text-ink-soft">{nextLine(others.map((i) => i.leadName))}</span>
-            <ChevronRight
-              aria-hidden="true"
-              className={"h-[15px] w-[15px] shrink-0 text-ink-faint opacity-70 transition-transform duration-200" + (listOpen ? " rotate-90" : "")}
-              strokeWidth={2.5}
-            />
-          </button>
-          {listOpen && (
-            <div id="today-next" className="list-group mt-2">
-              {others.map((i) => (
-                <DayRow key={i.leadId} row={replyRow(i)} onClick={() => openPerson(i.leadId)} />
-              ))}
+          {/* Whole-queue "send the routine ones" (A-006): only when more than
+              one source has routine drafts, otherwise it twins the row below. */}
+          {summary.safeToSend > 0 && groupsWithRoutine > 1 && (
+            <div className={`mb-3 ${CARD} flex flex-wrap items-center justify-between gap-3`}>
+              <div className="min-w-0 flex-1">
+                <p className="text-[14px] font-medium">
+                  {summary.safeToSend} {summary.safeToSend === 1 ? "draft is" : "drafts are"} routine.
+                </p>
+                <p className="mt-0.5 text-[12.5px] text-ink-soft">
+                  FollowUp checked each one and found nothing that needs a decision. Nothing goes out until you press.
+                </p>
+              </div>
+              {!sendLocked && <SafePileAction count={summary.safeToSend} source={null} />}
             </div>
           )}
-        </div>
+
+          {selected && focus}
+
+          {/* Routine drafts: one quiet row per source, sent together on one press. */}
+          {groups
+            .filter((g) => g.safeToSend.length > 0)
+            .map((group) => (
+              <div key={group.source} className="mt-2.5 flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-line bg-card px-3 py-2.5">
+                <p className="min-w-0 flex-1 text-[13px] text-ink-soft">
+                  {group.safeToSend.length} routine {group.safeToSend.length === 1 ? "draft" : "drafts"}
+                  {group.source === WHOLE_QUEUE ? "" : group.source === UNKNOWN_SOURCE_LABEL ? " added by hand" : ` from ${group.source}`}
+                  {group.safeToSend[0] && <span className="text-ink"> · top is {group.safeToSend[0].leadName}</span>}
+                </p>
+                {!sendLocked && <SafePileAction count={group.safeToSend.length} source={group.source === WHOLE_QUEUE ? null : group.source} />}
+                <SafePilePeek items={group.safeToSend} />
+              </div>
+            ))}
+
+          {/* Who comes after (A-335): three faces and one line, "Next: Ethan, Mia, Mason · 12 more". It opens the
+              whole list in place (one row per person, A-286); a row brings that person up into the card. */}
+          {others.length > 0 && (
+            <div className="mt-3.5">
+              <button
+                type="button"
+                onClick={() => setListOpen((o) => !o)}
+                aria-expanded={listOpen}
+                aria-controls="today-next"
+                className="flex min-h-11 w-full items-center gap-2.5 rounded-[12px] px-1 text-left hover:bg-[var(--nav-on)]"
+              >
+                <span aria-hidden="true" className="flex shrink-0 items-center">
+                  {others.slice(0, 3).map((i, n) => (
+                    <span key={i.leadId} className={"inline-flex rounded-full ring-2 ring-paper" + (n > 0 ? " -ml-[5px]" : "")}>
+                      <Initials name={i.leadName} size={32} />
+                    </span>
+                  ))}
+                </span>
+                <span className="min-w-0 flex-1 truncate text-[14px] leading-snug text-ink-soft">{nextLine(others.map((i) => i.leadName))}</span>
+                <ChevronRight
+                  aria-hidden="true"
+                  className={"h-[15px] w-[15px] shrink-0 text-ink-faint opacity-70 transition-transform duration-200" + (listOpen ? " rotate-90" : "")}
+                  strokeWidth={2.5}
+                />
+              </button>
+              {listOpen && (
+                <div id="today-next" className="list-group mt-2">
+                  {others.map((i) => (
+                    <DayRow key={i.leadId} row={replyRow(i)} onClick={() => openPerson(i.leadId)} />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {decisions}
+        </section>
+      ) : (
+        // Nothing needs the owner: the finish line, with no label over it.
+        <div className={did ? "mt-7" : ""}>{focus}</div>
       )}
 
-      {/* Then (A-266, A-335): only what isn't a reply. A call starting within the hour first (A-283), then the other
-          booked calls with their times, calls to make and booked or cancelled times, a call to look back on (which
-          opens its four answers in place), and who stopped replying. Shown only when there is something. */}
-      {thenCount > 0 && (
-        <section aria-label="Then" className="mt-7">
-          <DayHeading title="Then" />
+      {onIt}
+
+      {/* The owner's day (R-114, A-336): today's booked calls, a call starting within the hour first (A-283), each
+          opening its note in place (A-268); then tomorrow and the week's calls, one row each. */}
+      {(calls.length > 0 || dayLines.length > 0) && (
+        <section aria-label="Your day" className="mt-7">
+          <DayHeading title="Your day" />
           <div className="list-group">
             {soonCalls.map((c) => callRow(c))}
             {laterCalls.map((c) => callRow(c))}
-            {rows.map((r) => (
+            {dayLines.map((r) => (
               <DayRow key={r.key} row={r} />
             ))}
-            {listMeetings.map((m) => (
-              <Fragment key={m.bookingId}>
-                <DayRow
-                  row={meetingRow(m)}
-                  expanded={openMeeting === m.bookingId}
-                  onClick={() => setOpenMeeting((o) => (o === m.bookingId ? null : m.bookingId))}
-                />
-                {openMeeting === m.bookingId && (
-                  <div data-attached className="px-3 pb-3">
-                    <MeetingOutcomeCard meeting={m} />
-                  </div>
-                )}
-              </Fragment>
-            ))}
-            {quiet && (
-              <DayRow
-                row={{
-                  key: "quiet",
-                  kind: "reply",
-                  person: quiet.name,
-                  title: quiet.total > 1 ? `${quiet.name} and ${quiet.total - 1} more` : quiet.name,
-                  sub: "Stopped replying. A quick check-in could bring them back.",
-                  time: null,
-                  href: quiet.total > 1 ? "/leads?show=quiet" : `/leads/${quiet.id}`,
-                }}
-              />
-            )}
           </div>
         </section>
       )}
-
-      {later && <div className="mt-7">{later}</div>}
     </div>
   );
 }

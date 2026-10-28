@@ -68,7 +68,9 @@ describe("the dashboard on a brand-new account", () => {
     // with who to start with (A-266). Only a brand-new account gets "No customers yet."
     expect(source).toContain("greeting(now, timezone, me?.name)");
     expect(source).toContain("startWith: firstUpName");
-    expect(source).toContain("{dayWords}");
+    // A-336: the sentence is FollowUp's report of what it did; when it did nothing it falls back to the day sentence.
+    expect(source).toContain("?? dayWords");
+    expect(source).toContain("{report}");
   });
 });
 

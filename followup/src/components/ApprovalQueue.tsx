@@ -3,8 +3,7 @@
 import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { scrollPageTop } from "@/lib/scrollTop";
-import { Check } from "lucide-react";
+import { Check, ChevronRight } from "lucide-react";
 import { WARM_CARD } from "@/components/app/ReplyCard";
 import { oneQueue, summariseGroups, UNKNOWN_SOURCE_LABEL, WHOLE_QUEUE } from "@/lib/approvalGroups";
 import type { TodayTier } from "@/lib/calmToday";
@@ -28,7 +27,8 @@ import type { PendingApproval } from "@/lib/pendingApprovals";
 import SafePileAction from "@/components/SafePileAction";
 import SafePilePeek from "@/components/SafePilePeek";
 import UndoLine from "@/components/UndoLine";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
+import { nextLine } from "@/lib/todayWords";
 import { MOTION, RESULT_HOLD_MS } from "@/lib/motion";
 import { fillPriceSlot, hasPriceSlot, slotOf, splitAtPriceSlot } from "@/lib/priceSlot";
 import { RememberPrice } from "@/components/app/RememberPrice";
@@ -123,8 +123,8 @@ const CHANNEL_DID: Record<string, string> = {
 
 /** The one card on Today (A-220): white, a hairline, 18px corners, phone padding. */
 const CARD = "rounded-[18px] border border-line bg-card p-3.5 sm:p-5";
-/** The one customer on Today: a box on a computer; on a phone it sits on the page itself, as a phone app would (A-222). */
-const ONE = "px-2 sm:px-0 lg:rounded-[18px] lg:border lg:border-line lg:bg-card lg:px-5 lg:py-5";
+/** The one person on Today, in full (A-335): the same white box on a phone and a computer, a little roomier on the computer. */
+const ONE = "rounded-[18px] border border-line bg-card p-4 sm:p-6";
 
 function ApprovalCard({
   item,
@@ -135,7 +135,7 @@ function ApprovalCard({
   askNotNow = false,
 }: {
   item: ApprovalItem;
-  /** Inside "Do this first" (A-244), which is the box: no box of its own. */
+  /** Today's card (A-266, A-335): the queue draws the box; the head is initials, name and one line. */
   bare?: boolean;
   /** Ask the one "not now" question on a maybe-no that reads as not now (A-329): an admin whose business hasn't answered. */
   askNotNow?: boolean;
@@ -302,7 +302,7 @@ function ApprovalCard({
   const quoted = moment ? item.said?.quote ?? null : item.leadLastMessage;
 
   return (
-    <article className={bare ? undefined : ONE} aria-label={`${item.leadName} is waiting for you`}>
+    <article aria-label={`${item.leadName} is waiting for you`}>
       {bare ? (
         // Today's card (A-266): their initials and name, then how and when they wrote, on its own line.
         <div className="flex items-center gap-3">
@@ -649,7 +649,7 @@ function ApprovalCard({
               type="button"
               onClick={onSkip}
               disabled={send.busy}
-              className="min-h-11 basis-full text-center text-[14px] text-ink-faint underline underline-offset-[3px] hover:text-ink disabled:opacity-60 sm:ml-auto sm:basis-auto"
+              className="min-h-11 basis-full text-left text-[14px] text-ink-faint underline underline-offset-[3px] hover:text-ink disabled:opacity-60 sm:ml-auto sm:basis-auto sm:text-right"
             >
               Skip for now
             </button>
@@ -708,7 +708,7 @@ export default function ApprovalQueue({
   weekResults?: string | null;
   /** "Next: your call with Raj at 3:00 PM." (A-283): the owner's own next thing, once their replies are done. */
   next?: string | null;
-  /** Tomorrow and done today (A-266): under the list on a computer (A-284), at the foot on a phone. */
+  /** "Later" as one line that opens (A-335), at the foot of the day. */
   later?: React.ReactNode;
   /** "Next: FollowUp checks on Priya on Thursday…" (research round 2, #2): the plan, on a quiet Today. */
   plan?: string | null;
@@ -722,10 +722,9 @@ export default function ApprovalQueue({
     const pending = timers.current;
     return () => pending.forEach(clearTimeout);
   }, []);
-  // The day's numbers, progress and "Done today" are worked out on the
-  // server (A-244). After every send they are fetched again, so "5 replies
-  // to send" becomes 4 and the bar moves as the owner works; what is on
-  // screen here (the open card, a half-written reply) stays as it is.
+  // The day's sentence and "Later" are worked out on the server (A-244). After every send they are fetched again, so
+  // "16 people are waiting" becomes 15 as the owner works; what is on screen here (the open card, a half-written
+  // reply) stays as it is.
   const router = useRouter();
   // Stable, so a card's own timers aren't restarted by every re-render.
   const resolve = useCallback((leadId: string, result: string | null) => {
@@ -749,12 +748,12 @@ export default function ApprovalQueue({
   const visible = items.filter((i) => !resolved.has(i.leadId));
   // What still needs a decision: the counts never include a card that is on its way out.
   const active = visible.filter((i) => !leaving[i.leadId]);
-  // One customer at a time in "Do this first" (A-244). "Skip for now" (A-243)
-  // moves someone to the back of the line for this visit only; a row in
-  // "Still to do today" brings that person up instead. Nothing is saved.
+  // One person at a time (A-244, A-335). "Skip for now" (A-243) moves someone to the back of the line for this
+  // visit only; a row in the folded list brings that person up instead. Nothing is saved.
   const [skipped, setSkipped] = useState<string[]>([]);
   const [picked, setPicked] = useState<string | null>(null);
-  const [showAll, setShowAll] = useState(false);
+  // The rest of the queue, folded into one line under the card (A-335): open, it is every row.
+  const [listOpen, setListOpen] = useState(false);
   const focusRef = useRef<HTMLElement>(null);
   const skip = useCallback((leadId: string) => {
     setPicked(null);
@@ -790,65 +789,33 @@ export default function ApprovalQueue({
   const queuedIds = new Set(queue.map((i) => i.leadId));
   const listMeetings = meetings.filter((m) => !queuedIds.has(m.leadId));
   const alsoMeeting = selected ? meetings.find((m) => m.leadId === selected.leadId) ?? null : null;
-  // On a phone, the list comes first and a tap opens the person (A-286); a computer shows both side by side.
-  const [openOnPhone, setOpenOnPhone] = useState(false);
-  const pushedOpen = useRef(false);
-  useEffect(() => {
-    if (!openOnPhone) return;
-    const onPop = () => {
-      pushedOpen.current = false;
-      setOpenOnPhone(false);
-    };
-    window.addEventListener("popstate", onPop);
-    // The greeting and notices step aside while one person is open on a phone (globals.css).
-    document.documentElement.dataset.personOpen = "";
-    return () => {
-      window.removeEventListener("popstate", onPop);
-      delete document.documentElement.dataset.personOpen;
-    };
-  }, [openOnPhone]);
+  // A tap on a row in the folded list brings that person up into the card; the list folds again, and the page
+  // scrolls back to the card when it is off screen.
   const openPerson = (leadId: string) => {
     setPicked(leadId);
-    if (!openOnPhone && window.matchMedia("(max-width: 1023px)").matches) {
-      window.history.pushState({ todayOpen: leadId }, "");
-      pushedOpen.current = true;
-      setOpenOnPhone(true);
-      scrollPageTop();
-      return;
-    }
-    // On a computer the person is already beside the list; scroll only if it is off screen.
+    setListOpen(false);
     const top = focusRef.current?.getBoundingClientRect().top ?? 0;
     if (top < 0 || top > window.innerHeight) focusRef.current?.scrollIntoView({ block: "start" });
   };
-  const backToList = () => {
-    if (pushedOpen.current) window.history.back();
-    else setOpenOnPhone(false);
-  };
   const selectedFirst = selected ? selected.leadName.split(" ")[0] || selected.leadName : null;
-  // The card Today opens with simply is; the next one fades in after a send or skip (A-048).
-  const [firstCard] = useState(selected?.leadId ?? null);
   // What the last press did, said for a moment before it goes (A-048).
   const justDone = Object.values(leaving).at(-1) ?? null;
   const others = queue.filter((i) => i.leadId !== selected?.leadId);
-  // The list keeps its order when someone is opened, so coming back finds every row where it was (A-286).
-  const shown = showAll ? queue : queue.slice(0, REPLY_ROWS + 1);
-  const hidden = queue.length - shown.length;
   const [openMeeting, setOpenMeeting] = useState<string | null>(null);
   const [openCall, setOpenCall] = useState<string | null>(null);
-  const stillToDo = calls.length + others.length + rows.length + listMeetings.length + (quiet ? 1 : 0);
-  // Booked calls in time order: one starting within the hour leads Then; the rest come after the replies (A-283).
+  // Booked calls in time order: one starting within the hour leads Then (A-283); the rest follow, each with its time
+  // on the right.
   const soonCalls = calls.filter((c) => c.soon);
   const laterCalls = calls.filter((c) => !c.soon);
-  const callRow = (c: CallToPrepare, first: boolean) => (
+  const callRow = (c: CallToPrepare) => (
     <Fragment key={c.bookingId}>
       <DayRow
         row={callPrepRow(c)}
-        first={first}
         expanded={openCall === c.bookingId}
         onClick={() => setOpenCall((o) => (o === c.bookingId ? null : c.bookingId))}
       />
       {openCall === c.bookingId && (
-        <div className="px-3 pb-3">
+        <div data-attached className="px-3 pb-3">
           <CallBriefCard call={c} />
         </div>
       )}
@@ -856,52 +823,54 @@ export default function ApprovalQueue({
   );
   // Calls to make, booked calls and calls to get ready for: the rest of the day, below the empty state.
   const dayAhead = rows.length + calls.length;
+  // "Then" (A-335): only what isn't a reply. Replies are the card and the folded line above.
+  const thenCount = calls.length + rows.length + listMeetings.length + (quiet ? 1 : 0);
 
-  // "Do this first" (A-244), open from the start (A-250, 2026-10-14): their
-  // words, FollowUp's reply and Send (A-243's card), with no tap before it.
+  // The one person, in full (A-335): their words, FollowUp's reply and Send (A-243's card), open from the start
+  // (A-250). After Send the card slides out and the next person's slides in (A-048: motion only where something
+  // changes); the card Today opens with simply is.
   const focus = selected ? (
-    <section ref={focusRef} aria-label="Do this first" className="scroll-mt-20 px-2 sm:px-0 lg:scroll-mt-6">
-      {/* Back to the list on a phone (A-286). */}
-      <button type="button" onClick={backToList} className="-ml-1 mb-3 inline-flex min-h-11 items-center gap-1 text-[16px] text-ink lg:hidden">
-        <span aria-hidden="true">‹</span> Today
-      </button>
+    <section ref={focusRef} aria-label="Do this first" className="scroll-mt-20 lg:scroll-mt-6">
       {/* No label over the card (A-266): the sentence under the greeting already says who to start with. What the
           last press did is said here for a moment. */}
       {justDone && (
-        <p className="mb-3 flex items-center gap-1.5 text-[13.5px] text-ink-soft" role="status">
+        <p className="mb-3 flex items-center gap-1.5 px-1 text-[13.5px] text-ink-soft" role="status">
           <Check className="h-4 w-4 shrink-0" style={{ color: "var(--sage)" }} aria-hidden="true" />
           {[justDone, selectedFirst && `Now ${selectedFirst}.`].filter(Boolean).join(" ")}
         </p>
       )}
-      <motion.div
-        key={selected.leadId}
-        initial={selected.leadId === firstCard ? false : { opacity: 0 }}
-        animate={{ opacity: 1, transition: { duration: MOTION.move, ease: MOTION.easeOut } }}
-      >
-        <ApprovalCard
-          item={selected}
-          bare
-          onResolved={resolve}
-          sendLocked={sendLocked}
-          onSkip={queue.length > 1 ? () => skip(selected.leadId) : undefined}
-          askNotNow={askNotNow}
-        />
-      </motion.div>
-      {/* Anything else waiting for the same person sits with them, not as another row (A-286). */}
-      {alsoMeeting && (
-        <div className="mt-7 border-t border-line pt-3">
-          <p className="px-1 text-[13px] text-ink-faint">Also for {selectedFirst}</p>
-          <div className="-mx-3">
-            <DayRow
-              row={meetingRow(alsoMeeting)}
-              first
-              expanded={openMeeting === alsoMeeting.bookingId}
-              onClick={() => setOpenMeeting((o) => (o === alsoMeeting.bookingId ? null : alsoMeeting.bookingId))}
-            />
-          </div>
-          {openMeeting === alsoMeeting.bookingId && <MeetingOutcomeCard meeting={alsoMeeting} />}
-        </div>
-      )}
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={selected.leadId}
+          initial={{ opacity: 0, x: 28 }}
+          animate={{ opacity: 1, x: 0, transition: { duration: MOTION.move, ease: MOTION.easeApple } }}
+          exit={{ opacity: 0, x: -28, transition: { duration: MOTION.exit, ease: MOTION.easeIn } }}
+          className={ONE}
+        >
+          <ApprovalCard
+            item={selected}
+            bare
+            onResolved={resolve}
+            sendLocked={sendLocked}
+            onSkip={queue.length > 1 ? () => skip(selected.leadId) : undefined}
+            askNotNow={askNotNow}
+          />
+          {/* Anything else waiting for the same person sits with them, not as another row (A-286). */}
+          {alsoMeeting && (
+            <div className="mt-7 border-t border-line pt-3">
+              <p className="px-1 text-[13px] text-ink-faint">Also for {selectedFirst}</p>
+              <div className="-mx-3">
+                <DayRow
+                  row={meetingRow(alsoMeeting)}
+                  expanded={openMeeting === alsoMeeting.bookingId}
+                  onClick={() => setOpenMeeting((o) => (o === alsoMeeting.bookingId ? null : alsoMeeting.bookingId))}
+                />
+              </div>
+              {openMeeting === alsoMeeting.bookingId && <MeetingOutcomeCard meeting={alsoMeeting} />}
+            </div>
+          )}
+        </motion.div>
+      </AnimatePresence>
     </section>
   ) : visible.length === 0 || dayAhead > 0 ? (
     // A finish line, not a blank (A-046, the Todoist study): said calmly,
@@ -942,13 +911,10 @@ export default function ApprovalQueue({
   ) : null;
 
   return (
-    // On a computer, two columns like Mail (A-284; founder: "yes build the laptop layout"): who is waiting on the
-    // left, the open reply on the right, held in view while the list scrolls. On a phone, one column as before:
-    // the open reply, then Then, then Later.
-    // A-286: on a phone the list comes first and a tap opens the person (with "‹ Today" back); a hairline, not a box,
-    // divides the list from the open person on a computer.
-    <div className="lg:grid lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)] lg:items-start">
-      <div className={"min-w-0 lg:sticky lg:top-6 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:min-h-[420px] lg:max-h-[calc(100dvh-3rem)] lg:overflow-y-auto lg:border-l lg:border-line lg:pl-9" + (selected && !openOnPhone ? " hidden lg:block" : "")}>
+    // One column, on a phone and a computer alike (A-335, after R-143 "too complex"): the one person, the rest of the
+    // queue as one line, Then (only what isn't a reply), and Later as one line. Everything the day holds is still on
+    // the page (R-114); less of it is open at once.
+    <div>
       {/* Said once, above everything, rather than 48 times on 48 cards. */}
       {summary.fromBeforePermission > 0 && (
         <p className="mb-3 px-1 text-[12.5px] leading-relaxed text-ink-soft">
@@ -990,50 +956,57 @@ export default function ApprovalQueue({
           </div>
         ))}
 
-      {/* Then (A-266; was "Next", A-244): every other person, one row each with their initials and one plain
-          sentence; calls and booked times; a call to look back on, which opens its four answers in place; and who
-          stopped replying. A reply row brings that person up into the card. No box around the rows. */}
-      </div>
+      {/* Who comes after (A-335): three faces and one line, "Next: Ethan, Mia, Mason · 12 more". It opens the
+          whole list in place (one row per person, A-286); a row brings that person up into the card. */}
+      {others.length > 0 && (
+        <div className="mt-3.5">
+          <button
+            type="button"
+            onClick={() => setListOpen((o) => !o)}
+            aria-expanded={listOpen}
+            aria-controls="today-next"
+            className="flex min-h-11 w-full items-center gap-2.5 rounded-[12px] px-1 text-left hover:bg-[var(--nav-on)]"
+          >
+            <span aria-hidden="true" className="flex shrink-0 items-center">
+              {others.slice(0, 3).map((i, n) => (
+                <span key={i.leadId} className={"inline-flex rounded-full ring-2 ring-paper" + (n > 0 ? " -ml-[5px]" : "")}>
+                  <Initials name={i.leadName} size={32} />
+                </span>
+              ))}
+            </span>
+            <span className="min-w-0 flex-1 truncate text-[14px] leading-snug text-ink-soft">{nextLine(others.map((i) => i.leadName))}</span>
+            <ChevronRight
+              aria-hidden="true"
+              className={"h-[15px] w-[15px] shrink-0 text-ink-faint opacity-70 transition-transform duration-200" + (listOpen ? " rotate-90" : "")}
+              strokeWidth={2.5}
+            />
+          </button>
+          {listOpen && (
+            <div id="today-next" className="list-group mt-2">
+              {others.map((i) => (
+                <DayRow key={i.leadId} row={replyRow(i)} onClick={() => openPerson(i.leadId)} />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
-      <div className={"min-w-0 lg:col-start-1 lg:row-start-1 lg:pr-7" + (openOnPhone ? " hidden lg:block" : "")}>
-      {(stillToDo > 0 || selected) && (
-        <section aria-label={selected ? "Needs you" : "Still to do today"} className={(selected ? "mt-2" : "mt-7") + " lg:mt-0" + (stillToDo > 0 || selected ? "" : " hidden lg:block")}>
-          {/* Everyone who needs the owner, one row each, the open one marked on a computer (A-286). */}
-          <DayHeading title={selected ? "Needs you" : "Still to do today"} aside={selected ? String(queue.length) : null} />
-          {/* One white group, a thin line between rows (A-307). */}
+      {/* Then (A-266, A-335): only what isn't a reply. A call starting within the hour first (A-283), then the other
+          booked calls with their times, calls to make and booked or cancelled times, a call to look back on (which
+          opens its four answers in place), and who stopped replying. Shown only when there is something. */}
+      {thenCount > 0 && (
+        <section aria-label="Then" className="mt-7">
+          <DayHeading title="Then" />
           <div className="list-group">
-            {/* A call starting within the hour comes first (A-283, after A-268): it happens at a time, and its note is
-                what to read before. Later calls follow the replies, in time order, each with its time on the right. */}
-            {soonCalls.map((c, n) => callRow(c, n === 0))}
-            {shown.map((i, n) =>
-              i.leadId === selected?.leadId ? (
-                <div key={i.leadId} className="lg:bg-[var(--nav-on)]" aria-current="true">
-                  <DayRow row={replyRow(i)} first={soonCalls.length === 0 && n === 0} onClick={() => openPerson(i.leadId)} />
-                </div>
-              ) : (
-                <DayRow key={i.leadId} first={soonCalls.length === 0 && n === 0} row={replyRow(i)} onClick={() => openPerson(i.leadId)} />
-              ),
-            )}
-            {hidden > 0 && (
-              <button
-                type="button"
-                onClick={() => setShowAll(true)}
-                className="ios-sep flex min-h-[52px] w-full items-center gap-3 px-4 py-3 text-left text-[14.5px] font-medium hover:bg-paper"
-                style={{ "--sep-inset": "64px" } as React.CSSProperties}
-              >
-                <span aria-hidden="true" className="w-9 shrink-0" />
-                Show {hidden} more {hidden === 1 ? "person" : "people"}
-              </button>
-            )}
-            {laterCalls.map((c, n) => callRow(c, soonCalls.length === 0 && shown.length === 0 && n === 0))}
-            {rows.map((r, n) => (
-              <DayRow key={r.key} row={r} first={calls.length === 0 && shown.length === 0 && n === 0} />
+            {soonCalls.map((c) => callRow(c))}
+            {laterCalls.map((c) => callRow(c))}
+            {rows.map((r) => (
+              <DayRow key={r.key} row={r} />
             ))}
-            {listMeetings.map((m, n) => (
+            {listMeetings.map((m) => (
               <Fragment key={m.bookingId}>
                 <DayRow
                   row={meetingRow(m)}
-                  first={calls.length === 0 && shown.length === 0 && rows.length === 0 && n === 0}
                   expanded={openMeeting === m.bookingId}
                   onClick={() => setOpenMeeting((o) => (o === m.bookingId ? null : m.bookingId))}
                 />
@@ -1046,7 +1019,6 @@ export default function ApprovalQueue({
             ))}
             {quiet && (
               <DayRow
-                first={calls.length === 0 && shown.length === 0 && rows.length === 0 && meetings.length === 0}
                 row={{
                   key: "quiet",
                   kind: "reply",
@@ -1061,14 +1033,11 @@ export default function ApprovalQueue({
           </div>
         </section>
       )}
-      </div>
-      {later && <div className={"mt-9 lg:col-start-1 lg:row-start-2 lg:mt-8 lg:pr-7" + (openOnPhone ? " hidden lg:block" : "")}>{later}</div>}
+
+      {later && <div className="mt-7">{later}</div>}
     </div>
   );
 }
-
-/** How many other replies "Still to do today" lists before "Show N more replies". */
-const REPLY_ROWS = 4;
 
 /** One person in Then (A-266): their name, then one plain sentence of what is ready and how long they have waited. */
 function replyRow(item: ApprovalItem): TodayRow {

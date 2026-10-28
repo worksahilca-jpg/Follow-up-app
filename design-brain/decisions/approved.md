@@ -3719,6 +3719,8 @@ shown Today, Customers and One customer before and after (drawn on the real app)
 
 ## A-222 — The phone gets its own layout: a chat-app customer page, Today's actions in thumb reach ^A-222
 
+**PARTLY SUPERSEDED (2026-10-28)** by [[#^A-335|A-335]]: on Today the one customer is in a white box on the phone too.
+
 **Approved:** 2026-10-10, founder. He said *"for phone we gotta figure out something, because we cannot just fit the
 desktop in this mobile one. Can you figure out how big companies do that"*. He was shown the research
 (`research/ux-patterns/2026-10-10-phone-vs-computer.md`), then a before/after drawn on the real app, and chose
@@ -4691,6 +4693,10 @@ one, when phone buzzes start being missed, or after the first paying customers; 
 
 ## A-266 — Today, simpler and friendlier: one sentence, faces, plain rows ^A-266
 
+**PARTLY SUPERSEDED (2026-10-28)** by [[#^A-335|A-335]]: "Then" no longer lists every other person; they are one
+line under the open person ("Next: Ethan, Mia, Mason · 12 more") that opens the rows. "Later" is one line that
+opens these lines. The computer is one column, not card-left/Later-right.
+
 **Date:** 2026-10-16. **Founder:** *"today page still lacks alot bro i want to make it as simple and as friendly i can
 make"*. Shown the drawing made inside the real app (`simpler-board.png`, now next to proposed, phone and computer),
 he said *"yes"*.
@@ -4933,6 +4939,8 @@ version; his reference was the Claude desktop app's see-through typing bar, "loo
 
 ## A-283 — Today, three small changes from the big-apps study ^A-283
 
+**#2 PARTLY SUPERSEDED (2026-10-28)** by [[#^A-335|A-335]]: Then has no reply rows, so later calls follow the soon one directly.
+
 **Date:** 2026-10-17. **Founder, verbatim:** *"yes do all 3"* (after `reports/How big apps design their Today page.md`).
 **What specifically was approved:**
 1. **Today's count on the phone tab:** a small charcoal badge on the Today icon ("5"), as the laptop sidebar already shows.
@@ -4945,6 +4953,8 @@ version; his reference was the Claude desktop app's see-through typing bar, "loo
 **Not taken from the study:** the "on its own" line removal and two kinds of empty message (not asked for).
 
 ## A-284 — Today on a computer: who is waiting on the left, the open reply on the right ^A-284
+
+**SUPERSEDED (2026-10-28)** by [[#^A-335|A-335]]: one column on a computer too, 720px in the middle of the window.
 
 **Date:** 2026-10-17. **Founder, verbatim:** *"yes build the laptop layout"* (after A-282's drawings, which showed Today
 as a list beside the open conversation, and *"my laptop iterface means a lot"*).
@@ -4970,6 +4980,9 @@ Read as a go-ahead; the reaction was not a word-by-word yes, so his reaction to 
 **Supersedes:** part of A-226 (see there).
 
 ## A-286 — Today: one line per person, three facts, one button ^A-286
+
+**PARTLY SUPERSEDED (2026-10-28)** by [[#^A-335|A-335]]: the list is no longer beside the open person; it is folded
+behind one line under them. The rows themselves (name, one line, a quiet tag) and the open person are unchanged.
 
 **Date:** 2026-10-18. **Founder, verbatim:** *"yes build it"*, after `today-simple-info-board.png` (and before it:
 *"design is good but the info part looks weak"*, *"how can we make it simple"*).
@@ -5407,6 +5420,10 @@ sleeping there"*, and wanting to see FollowUp *"ignoring the spam"* and *"just c
   - **See them** opens Settings with that inbox's window open on "Skipped: not customers".
 
 ## A-307 — The app organised the way Wispr Flow organises ^A-307
+
+**PARTLY SUPERSEDED (2026-10-28)** for Today by [[#^A-335|A-335]]: the "Since you started" pill left Today (its numbers
+are on Results) and the "Needs you" white group is folded behind one line. The one-card-at-a-time rule and the
+white groups elsewhere stand.
 
 **Date:** 2026-10-21. **Founder, verbatim:** *"yes build it and copy wisper flow ui ux design"*, *"like the design and
 templte formate and how they organise"*, then *"yes build it"* to the drawing (scratchpad `wfo/wispr-board.png`: Today,
@@ -6037,3 +6054,36 @@ it stays unread make it accurate too bro"*. Built the same day (in the A-242 PR)
   pane or the customer's page). The action words stay ("Check and send your reply"); only the bold goes.
 - Nothing else changes: the reply still waits, Today still counts it, the orange dot on Today still means "your turn".
   Read is a fact about the owner, not a decision about the customer.
+
+## A-335 — Today with less on the screen: one person at a time, the rest of the day folded ^A-335
+
+**Date:** 2026-10-28. **Founder, verbatim:** *"okay do it"* to the recommendation under [[rejected#^R-143|R-143]]
+("start with less on the screen, Today as one calm page, a little life only where something changes"), then *"merge
+and build it"* to the drawing (scratchpad `today/today-board.png`: now vs proposed, computer and phone, on the real
+app). Built the same day.
+**What specifically was approved:**
+- **One column** on a phone and a computer alike; on a computer a 720px column in the middle of the window. The date,
+  the greeting and the day in one sentence (A-266) stay as they were.
+- **One person, in full, in a white box** (on the phone too): who they are, FollowUp's call (A-310), their words, the
+  reply, the check line, **Send to Zoe** / Change it, and *Skip for now* on its own line from the left.
+- **The rest of the queue is one line under the box:** three faces and "Next: Ethan, Mia, Mason · 12 more" (three
+  first names, then a count). It opens the whole list in place (one row per person, A-286); a row brings that person
+  up into the box; Skip for now sends the open person to the back. The five-row list, "Show 11 more people" and the
+  "Needs you · 16" label are gone.
+- **"Then" keeps only what isn't a reply:** a call starting soon (A-283), the other booked calls with their times,
+  calls to make, a picked or cancelled time (A-242), a call to look back on (A-263), the people who stopped replying.
+  Shown only when there is something.
+- **"Later" is one line** ("LATER · Nothing booked tomorrow · 1 call this week · 2 done today ›") that opens A-266's
+  lines in place.
+- **The "Since you started" numbers leave Today.** They are two rows on Results ("Answered, all time", "Booked, all
+  time", beside "Won, all time").
+- **Motion only where something changes (A-048):** after Send or Skip the box slides out to the left and the next
+  person's slides in from the right; the count in the sentence and the Next line follow. Nothing else moves. The look
+  (A-331, A-333) is untouched.
+**What stands:** R-114 and A-244 (the whole day on one page): calls, bookings, cancels, the people who stopped replying
+and tomorrow are all still on the page, folded into single lines. A-230's order, A-286's open person (three facts,
+FollowUp's call), A-266's sentence.
+**Supersedes:** A-284 (two columns on a computer); A-286's list on the left and A-266's "every other person as a row in
+Then" (the rows are behind the Next line now); A-307's numbers pill on Today and its "Needs you" white group; A-222's
+"the one customer sits on the page with no box" on Today's phone screen; A-283 #2's "later calls follow the replies"
+(there are no reply rows in Then).

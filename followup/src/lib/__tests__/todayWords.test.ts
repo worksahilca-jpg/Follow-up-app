@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clockTime, dayOffset, daySentence, doneLines, greeting, todaysInstruction, whoIsNext, nextForYouLine } from "@/lib/todayWords";
+import { clockTime, dayOffset, daySentence, doneLines, greeting, laterSummary, nextLine, todaysInstruction, whoIsNext, nextForYouLine } from "@/lib/todayWords";
 
 const TZ = "America/Toronto";
 
@@ -87,5 +87,34 @@ describe("nextForYouLine (A-283)", () => {
   });
   it("says nothing when no call is booked", () => {
     expect(nextForYouLine(null)).toBeNull();
+  });
+});
+
+describe("nextLine (A-335, Today with less on the screen)", () => {
+  it("says nothing when nobody else is waiting", () => {
+    expect(nextLine([])).toBeNull();
+  });
+  it("names up to three people by first name", () => {
+    expect(nextLine(["Ethan Wu"])).toBe("Next: Ethan");
+    expect(nextLine(["Ethan Wu", "Mia Gill"])).toBe("Next: Ethan and Mia");
+    expect(nextLine(["Ethan Wu", "Mia Gill", "Mason Roy"])).toBe("Next: Ethan, Mia and Mason");
+  });
+  it("counts the rest after three", () => {
+    expect(nextLine(["Ethan Wu", "Mia Gill", "Mason Roy", "Ava Singh"])).toBe("Next: Ethan, Mia, Mason · 1 more");
+    expect(nextLine(Array.from({ length: 15 }, (_, i) => `Person ${i}`))).toBe("Next: Person, Person, Person · 12 more");
+  });
+});
+
+describe("laterSummary (A-335)", () => {
+  it("says tomorrow and the week even when they are empty, the rest only when true", () => {
+    expect(laterSummary({ tomorrow: null, callsThisWeek: 0, handled: 0, factsWaiting: 0 })).toBe("Nothing booked tomorrow · No calls this week");
+  });
+  it("names tomorrow's one call, counts more than one", () => {
+    expect(laterSummary({ tomorrow: { name: "Raj Mehta", time: "3:00 PM", count: 1 }, callsThisWeek: 1, handled: 2, factsWaiting: 0 })).toBe(
+      "Tomorrow: call with Raj at 3:00 PM · 1 call this week · 2 done today"
+    );
+    expect(laterSummary({ tomorrow: { name: "Raj Mehta", time: "3:00 PM", count: 2 }, callsThisWeek: 4, handled: 0, factsWaiting: 1 })).toBe(
+      "2 calls tomorrow · 4 calls this week · 1 thing to check"
+    );
   });
 });

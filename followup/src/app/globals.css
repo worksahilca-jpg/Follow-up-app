@@ -893,14 +893,6 @@ main[data-swipe="leaving"] {
   pointer-events: none;
   transition: opacity 0.22s var(--ease-apple), translate 0.22s var(--ease-apple);
 }
-/* Today on a phone (A-286): with one person open, the greeting and notices step aside so the
-   person starts at the top. ApprovalQueue sets html[data-person-open]. */
-@media (max-width: 1023px) {
-  html[data-person-open] [data-today-head] {
-    display: none;
-  }
-}
-
 html[data-title-collapsed] .bar-title {
   opacity: 1;
   translate: -50% -50%;

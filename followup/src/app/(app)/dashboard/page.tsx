@@ -39,8 +39,9 @@ import TellCard from "@/components/TellCard";
 import { AlertsCard } from "@/components/app/AlertsSetup";
 import InstallCard from "@/components/app/InstallCard";
 import ReplyForMeCard from "@/components/app/ReplyForMeCard";
-import { DayLater, type LaterLine, type TodayRow } from "@/components/app/TodayDay";
-import { clockTime, dayOffset, daySentence, doneLines, greeting, nextForYouLine } from "@/lib/todayWords";
+import type { LaterLine, TodayRow } from "@/components/app/TodayDay";
+import LaterFold from "@/components/app/LaterFold";
+import { clockTime, dayOffset, daySentence, doneLines, greeting, laterSummary, nextForYouLine } from "@/lib/todayWords";
 import { oneQueue } from "@/lib/approvalGroups";
 import { replyForMeOffer } from "@/lib/replyForMeOffer";
 import { todaysQuestion } from "@/lib/dailyQuestionData";
@@ -48,12 +49,10 @@ import { todaysPractice } from "@/lib/dailyPracticeData";
 import { tellCardOffer } from "@/lib/tellFollowUpData";
 import { inboxSummaryFor } from "@/lib/inboxSummaryData";
 import InboxSummaryCard from "@/components/InboxSummaryCard";
-import { sinceStartedFor } from "@/lib/sinceStarted";
 import { factsWaitingCount } from "@/lib/businessFacts";
 import { callsWeekValue } from "@/lib/callsWeek";
 import { sayTime } from "@/lib/bookingTimes";
 import { countCallsThisWeek } from "@/lib/callsWeekData";
-import SinceStartedPill from "@/components/app/SinceStartedPill";
 import { planLine } from "@/lib/comingUp";
 import { findHabitSuggestion } from "@/lib/habits";
 import type { MeetingToLookBackOn } from "@/components/app/MeetingOutcomeCard";
@@ -301,9 +300,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   // this screen can honestly promise.
   const holdAll = business?.holdAllForApproval ?? false;
   const isAdmin = me?.role === "ADMIN";
-  // "Your last 90 days" (A-306): once, after the first inbox read, in place of the day's sentence. "Since you started"
-  // (A-307): the owner's own numbers at the top.
-  const [inboxSummary, since, factsWaiting] = await Promise.all([
+  // "Your last 90 days" (A-306): once, after the first inbox read, in place of the day's sentence. ("Since you
+  // started", A-307, left Today with A-335: its numbers are on Results.)
+  const [inboxSummary, factsWaiting] = await Promise.all([
     ctx && isAdmin && leads.length > 0
       ? inboxSummaryFor(
           ctx.businessId,
@@ -311,7 +310,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           now
         )
       : null,
-    ctx && leads.length > 0 ? sinceStartedFor(ctx.businessId) : null,
     // What FollowUp learned from replies and waits for an OK (A-308): an admin's to answer.
     ctx && isAdmin ? factsWaitingCount(ctx.businessId) : 0,
   ]);
@@ -521,7 +519,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     lookBack: lookBacks.length,
     startWith: firstUpName,
   });
-  // "Later" (A-266): tomorrow, what's done, and what FollowUp does by itself, one line each.
+  // "Later" (A-266): tomorrow, what's done, and what FollowUp does by itself, one line each, behind one line (A-335).
   const firstTomorrow = bookingsTomorrow[0];
   const later: LaterLine[] = [
     {
@@ -558,17 +556,14 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   ];
 
   return (
-    <div>
+    // One column on every screen (A-335, after R-143): on a computer it is a 720px column in the middle of the window.
+    <div className="lg:mx-auto lg:max-w-[720px]">
       {/* The owner's day (A-244): the date, a greeting on their own clock,
           and who to start with. A brand-new account gets a sentence instead
           (#301): "No customers yet." */}
       {/* Once the greeting scrolls away on a phone, the top bar says "Today" (A-264). */}
       <ScrollTitle title="Today" />
-      {/* data-today-head: hidden on a phone while one person is open (A-286, globals.css). */}
-      <div data-today-head>
-      {/* The greeting on the left, the owner's own numbers on the right (A-307); on a phone the numbers go under it. */}
-      <div className="lg:flex lg:items-end lg:justify-between lg:gap-6">
-      <div className="min-w-0">
+      <div>
       <div className="text-[12.5px] text-ink-faint">
         {new Intl.DateTimeFormat(undefined, { timeZone: timezone, weekday: "long", month: "long", day: "numeric" }).format(now)}
       </div>
@@ -577,9 +572,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       ) : (
         <h1 className="title-serif ios-title1 mt-0.5">{greeting(now, timezone, me?.name)}</h1>
       )}
-      </div>
-      {since && !sentence && <SinceStartedPill counts={since} />}
-      </div>
       {!sentence && (
         <>
           {/* The day in one sentence (A-266), in place of the day's box. On the first days, "Your last 90 days"
@@ -593,17 +585,13 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       )}
       </div>
 
-      {/* On a phone one column, the cards a little wider than the text (12px
-          from the edge, A-220). On a computer two columns like Mail (A-284): who
-          is waiting and Later on the left, the open reply on the right. */}
-      <div className={`-mx-2 sm:mx-0 ${leads.length > 0 ? "lg:max-w-[1120px]" : "sm:max-w-[640px]"}`}>
+      {/* On a phone the cards are a little wider than the text (12px from the edge, A-220). */}
+      <div className={`-mx-2 sm:mx-0 ${leads.length > 0 ? "" : "sm:max-w-[640px]"}`}>
       {sendingPaused && <SendingPausedBanner canResume={isAdmin} />}
       {cantSend && (
         <CantSendNotice reconnectEmail={"needsReconnect" in gmail && gmail.needsReconnect ? (gmail.email ?? "your inbox") : null} />
       )}
-      <div data-today-head>
-        <ProblemNotices problems={problems} />
-      </div>
+      <ProblemNotices problems={problems} />
       {firstValue && !cardShowing && <FirstValueNote title={firstValue.title} body={firstValue.body} />}
       <div className={leads.length > 0 ? "mt-5" : "mt-3.5 sm:mt-5"}>
       <div className="min-w-0">
@@ -624,7 +612,19 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             calls={callsToPrepare}
             plan={approvalItems.length === 0 && comingUp ? planLine(comingUp.groups) : null}
             next={nextForYouLine(nextCallForYou)}
-            later={later.length > 0 ? <DayLater lines={later} /> : null}
+            later={
+              later.length > 0 ? (
+                <LaterFold
+                  summary={laterSummary({
+                    tomorrow: firstTomorrow ? { name: firstTomorrow.lead.name, time: clockTime(firstTomorrow.scheduledAt, timezone), count: bookingsTomorrow.length } : null,
+                    callsThisWeek,
+                    handled: handledToday,
+                    factsWaiting,
+                  })}
+                  lines={later}
+                />
+              ) : null
+            }
             weekResults={weekResults}
             answeredForYou={rescue?.answeredForYou ?? 0}
             sendLocked={sendLocked}

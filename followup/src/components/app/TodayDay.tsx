@@ -107,11 +107,11 @@ export type LaterLine = { label: string; value: string; href?: string | null };
  * for tomorrow, the week's calls (A-317), what is already done, and what FollowUp does on its own. A line opens its
  * page when there is one.
  */
-export function DayLater({ lines }: { lines: LaterLine[] }) {
+export function DayLater({ lines, heading = true }: { lines: LaterLine[]; /** Without the "Later" label: inside LaterFold (A-335), which carries it. */ heading?: boolean }) {
   if (lines.length === 0) return null;
   return (
-    <section aria-label="Later">
-      <DayHeading title="Later" />
+    <section aria-label={heading ? "Later" : undefined}>
+      {heading && <DayHeading title="Later" />}
       <ul className="list-group">
         {lines.map((l) => {
           // A line that opens a page says so with a small chevron (A-317's "Calls this week · 4 booked ›").

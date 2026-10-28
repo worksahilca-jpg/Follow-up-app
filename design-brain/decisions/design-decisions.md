@@ -15946,3 +15946,41 @@ second PR, as proposed, with no new drawing: every card reuses the picked card's
   booking (A-275) is not undone on cancel; (7) the customers panel keeps the "Booked" pill for a moment after a
   cancel until the page refreshes.
 
+## 2026-10-28 — Today with less on the screen (R-143), drawn on the real app
+
+**Founder:** *"okay do it"* to the recommendation under R-143 (start with less on the screen, Today as one calm page,
+life only where something changes). Drawn on the live local Today, computer 1440×900 and phone 390×844, before and
+after (scratchpad `today/today-board.png`).
+**What the drawing proposes:**
+- One column. The date, the greeting, one sentence ("16 people are waiting for your reply. Start with Zoe.").
+- One person, in full: who they are, their words, FollowUp's reply, the one check line, **Send to Zoe** / Change it /
+  *Skip for now*. On the phone it is the first thing under the greeting, in thumb reach.
+- The rest of the queue is one line under the card: three faces and "Next: Ethan, Mia, Mason · 12 more", which opens
+  the full list. The five-row list and "Show 11 more people" go.
+- "Then" keeps only what isn't a reply: a cancelled time, a picked time, a booked call, the people who stopped
+  replying. Shown only when there is something.
+- "Later" folds into one line ("Nothing booked tomorrow · 1 call this week · 2 done today") that opens.
+- The "Since you started" numbers pill leaves Today (it stays on Results). This touches A-307's "numbers at the top
+  right": proposed as a change, to be approved or refused with the drawing.
+- Motion, only where something changes: after Send the card slides out and the next person's slides in, the count
+  ticks down, the faces row shifts. Nothing else moves. The look (A-331, A-333) is untouched.
+**Why it fits what stands:** A-244 and R-114 (the whole day on one page) hold: calls, bookings, cancels, the people
+who stopped replying and tomorrow are all still on the page, folded; what changes is how much is open at once.
+**Weak, named:** (1) "Next: …" hides how long each person has waited (the row's "32 days ago" is gone until the list
+opens); (2) the Then group and the queue line look alike at a glance; (3) the motion can't be shown in a still frame.
+
+**Founder, the same day:** *"merge and build it"* → [[approved#^A-335|A-335]]. **Built** (`ApprovalQueue`, Today,
+`LaterFold`, `todayWords.nextLine` / `laterSummary`; the numbers pill deleted, its two counts added to Results'
+"Everything else"): one column (720px centred on a computer); the one person in a white box on both sizes; the Next
+line with three 32px faces (letters at 12px, the app's floor, 5px overlap, a paper ring) that opens every row in place and folds
+again when a row is tapped; Then only for calls, picked or cancelled times, look-backs and who stopped replying;
+Later as one line that opens the old lines; the box slides out left and the next slides in from the right
+(`AnimatePresence mode="wait"`, 120 ms out, 220 ms in, the first card simply is). The phone's list-first layout
+("‹ Today" back, the greeting hidden while open, `html[data-person-open]`) and "Show N more people" are gone. Checked
+in a real browser at 1440×900 and 390×844, light and dark, with the Next list open, a person picked from it, Later
+open, and Skip for now (the slide was caught mid-way). 5,089 + 5 tests.
+**Weak after the build, named:** (4) on a computer this is the one centred page; Customers and Settings sit left, a
+seam to settle when their turn comes; (5) the Later line wraps to two lines on a phone; (6) the sentence's "16" ticks
+down a beat after the slide, when the server's refresh lands; (7) R-114 is honoured by folding, not by showing:
+calls and tomorrow are on the page but take a tap to open, which the founder has not seen on the live app yet.
+

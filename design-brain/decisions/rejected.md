@@ -1833,5 +1833,17 @@ number of things on Today (numbers, a card, rows, Later lines, questions). The f
 still stands: crisp, premium) but fewer things and a little life where something changes. *The reason is not yet
 his words: ask "is it the look, or how much is on the screen?" before drawing.*
 
+**Asked (2026-10-28), answered:** the question was put with the recommendation "start with less on the screen, Today
+as one calm page, a little life only where something changes"; the founder answered *"okay do it"*. Taken as the
+amount, not the look: Today is drawn again with fewer things (one person at a time, the rest of the day folded into
+single lines, the numbers pill off Today), and motion only where something changes (the next person slides in after
+Send). The look (A-331/A-333) stays.
+
 **What this does not reopen:** the crisp window (A-333, "yes looks good" the same day) and the ban on gimmicks
 (brand principles). A Today redesign is drawn first, built after his yes.
+
+**Built (2026-10-28):** the founder said *"merge and build it"* to the drawing → [[approved#^A-335|A-335]]: one
+column, one person at a time in a box, the rest of the queue as one line with three faces, Then only for what isn't
+a reply, Later as one line, the numbers off Today, the next person sliding in after Send. The look is unchanged; what
+changed is how much is open at once. Whether this answers "dead" as well as "too complex" is his to say on the live
+app.

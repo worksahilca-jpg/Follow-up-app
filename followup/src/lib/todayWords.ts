@@ -71,6 +71,40 @@ export function daySentence(n: {
   return n.startWith ? `${said} Start with ${n.startWith}.` : said;
 }
 
+/**
+ * Who comes after the open person, in one line under their card (A-335, Today with less on the screen): "Next: Ethan,
+ * Mia, Mason · 12 more". Three first names at most; the rest is a count. Nothing when nobody else is waiting.
+ */
+export function nextLine(names: string[]): string | null {
+  const firsts = names.map((n) => n.trim().split(/\s+/)[0] || n);
+  if (firsts.length === 0) return null;
+  if (firsts.length <= 3) return `Next: ${andList(firsts)}`;
+  return `Next: ${firsts.slice(0, 3).join(", ")} · ${firsts.length - 3} more`;
+}
+
+/**
+ * "Later" folded into one line (A-335): tomorrow, the week's calls, what's done today, and anything FollowUp learned
+ * that waits for an OK, each a short clause, "·" between. Only what is true: a zero is said for tomorrow and the week
+ * (an owner plans by them), and left out for the rest.
+ */
+export function laterSummary(n: {
+  /** Tomorrow's booked calls: the first one's name and time, and how many. Null when nothing is booked. */
+  tomorrow: { name: string; time: string; count: number } | null;
+  callsThisWeek: number;
+  /** People the owner dealt with today. */
+  handled: number;
+  factsWaiting: number;
+}): string {
+  const parts: string[] = [];
+  if (!n.tomorrow) parts.push("Nothing booked tomorrow");
+  else if (n.tomorrow.count === 1) parts.push(`Tomorrow: call with ${n.tomorrow.name.trim().split(/\s+/)[0] || n.tomorrow.name} at ${n.tomorrow.time}`);
+  else parts.push(`${n.tomorrow.count} calls tomorrow`);
+  parts.push(n.callsThisWeek > 0 ? `${n.callsThisWeek} ${n.callsThisWeek === 1 ? "call" : "calls"} this week` : "No calls this week");
+  if (n.handled > 0) parts.push(`${n.handled} done today`);
+  if (n.factsWaiting > 0) parts.push(`${n.factsWaiting} ${n.factsWaiting === 1 ? "thing" : "things"} to check`);
+  return parts.join(" · ");
+}
+
 /** Which of the owner's days a time falls on: 0 today, 1 tomorrow, anything else is neither. */
 export function dayOffset(at: Date, now: Date, timeZone: string): number {
   const ymd = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).format(d);

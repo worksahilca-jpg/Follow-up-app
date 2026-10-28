@@ -74,7 +74,7 @@ a booked call or visit; the owner closes.
 
 **Last updated: 2026-10-28**
 
-- **The app on a soft photo, a still frame, Start free fixed (Oct 28, A-331), PR open, not merged.** The founder,
+- **The app on a soft photo, a still frame, Start free fixed (Oct 28, A-331) LIVE ✓ (#609 → 3c0ec37).** The founder,
   first day on a Mac: the app is "way too boring", scrolling "feels like I'm scrolling code", and the landing's Start
   free "scrolls down to the very bottom and asks me to start free again". Found: on a computer the whole web page
   scrolled, so the white sheet and its corner slid away with the list; the frame was flat grey; the bar's Start free
@@ -84,6 +84,13 @@ a booked call or visit; the owner closes.
   from the device's clock); the phone's bars are see-through with a blur; white groups are raised by a soft shadow;
   dark mode keeps its ground. Start free in the bar and the try box go straight to sign-in. Checked phone + computer,
   day, evening and dark. Local `next build` can't run in this sandbox (Turbopack's font download); CI builds it.
+- **One question before reading a website that isn't the owner's (Oct 28, A-332), PR open, not merged.** The
+  founder: "what if someone pasted someone else's website… we'll mess up everything." Today the only guard was the
+  play-back's "Looks right". Now FollowUp compares what the site calls itself (og:site_name or its title) and its first
+  page and address with the business's name; when no distinctive word matches it reads nothing and asks one question
+  ("This site calls itself "Oak Street Homes". Is that your business?") with Yes, that's mine / No, wrong link, in the
+  meeting and on setup's website line. A match costs nothing. Checked phone + computer in a real browser (the server's
+  answer for a mismatched site; the sandbox can't fetch sites).
 - **Accuracy, asked by the founder (Oct 28):** the 4 tests on /admin were last run Oct 14 (replies 10/20 then); many
   fixes went in since and nobody re-ran them. Live use in 14 days: 17 replies drafted, 78 customer checks, 0 failed
   calls, one business. Next: he taps Run on /admin and sends the 4 numbers; then the scores go into the nightly diary.

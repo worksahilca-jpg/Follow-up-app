@@ -10,6 +10,10 @@ import {
   readSiteNote,
   setupReadLine,
   siteName,
+  siteOwnName,
+  siteLooksLike,
+  ownerCheckLine,
+  distinctiveWords,
   sourceOf,
 } from "@/lib/siteRead";
 import { parseTellDraft, siteAfterOwnLines, withSources, type PlaybackRow } from "@/lib/tellFollowUp";
@@ -137,5 +141,50 @@ describe("the read kept with the meeting's draft", () => {
     const site = { url: "https://mysite.ca/", pages: [], posts: 0, from: { hours: "website" as const, languages: "instagram" as const } };
     expect(siteAfterOwnLines(site, [{ label: "Hours", value: "Mon to Fri" }])?.from).toEqual({ languages: "instagram" });
     expect(siteAfterOwnLines(undefined, [{ label: "Hours", value: "x" }])).toBeUndefined();
+  });
+});
+
+describe("is this your site? (A-332)", () => {
+  it("takes what the site calls itself: og:site_name first, else the title without its generic parts", () => {
+    expect(siteOwnName('<head><meta property="og:site_name" content="Maple Realty"><title>Home</title></head>')).toBe("Maple Realty");
+    expect(siteOwnName("<title>Home | Maple Realty</title>")).toBe("Maple Realty");
+    expect(siteOwnName("<title>Maple Realty – Toronto Homes</title>")).toBe("Maple Realty – Toronto Homes");
+    expect(siteOwnName("<title>Welcome to Maple Realty</title>")).toBe("");
+    expect(siteOwnName("<title>Home</title>")).toBe("");
+    expect(siteOwnName("<p>no title</p>")).toBe("");
+    expect(siteOwnName("<title>Maple &amp; Oak Realty: Buy and sell</title>")).toBe("Maple & Oak Realty – Buy and sell");
+  });
+
+  it("keeps the words of a business name that could tell it from another", () => {
+    expect(distinctiveWords("The Maple Realty Group Inc.")).toEqual(["maple"]);
+    expect(distinctiveWords("Real Estate Group")).toEqual([]);
+    expect(distinctiveWords("Café Désirée")).toEqual(["cafe", "desiree"]);
+    expect(distinctiveWords("24/7 Plumbing")).toEqual(["plumbing"]);
+  });
+
+  it("passes a site whose name, words or address carry the business's name", () => {
+    expect(siteLooksLike("Maple Realty", "Maple Realty", "", "https://example.com/")).toBe(true);
+    expect(siteLooksLike("Maple Realty", "", "Welcome to Maple Realty, Toronto's calm brokerage", "https://example.com/")).toBe(true);
+    expect(siteLooksLike("Maple Realty", "", "", "https://www.maplerealty.ca/")).toBe(true);
+    expect(siteLooksLike("Maple Realty", "", "", "https://maple-realty.ca/")).toBe(true);
+    // The realtor's own name on a personal site.
+    expect(siteLooksLike("Chawla Homes", "Sahil Chawla, Realtor", "", "https://sahilchawla.com/")).toBe(true);
+    // Accents and case don't matter.
+    expect(siteLooksLike("Café Désirée", "", "CAFE DESIREE · Montréal", "https://example.com/")).toBe(true);
+  });
+
+  it("asks about a site that doesn't look like the business's", () => {
+    expect(siteLooksLike("Maple Realty", "Oak Street Homes", "Oak Street Homes. Buying and selling across the GTA.", "https://oakstreethomes.ca/")).toBe(false);
+    expect(siteLooksLike("Maple Realty", "", "", "https://example.com/")).toBe(false);
+  });
+
+  it("can't tell a business with no distinctive word apart, so it passes", () => {
+    expect(siteLooksLike("Real Estate Group", "Oak Street Homes", "", "https://oakstreethomes.ca/")).toBe(true);
+    expect(siteLooksLike("", "Oak Street Homes", "", "https://oakstreethomes.ca/")).toBe(true);
+  });
+
+  it("asks in plain words, naming the site", () => {
+    expect(ownerCheckLine("Oak Street Homes", "https://oakstreethomes.ca/")).toBe('This site calls itself "Oak Street Homes". Is that your business?');
+    expect(ownerCheckLine("", "https://www.oakstreethomes.ca/about")).toBe("FollowUp can't tell whose site oakstreethomes.ca is. Is it yours?");
   });
 });

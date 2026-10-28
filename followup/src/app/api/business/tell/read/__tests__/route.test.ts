@@ -45,9 +45,9 @@ beforeEach(() => {
   m(requireAdmin).mockResolvedValue(true);
   m(tooManyRecentActions).mockResolvedValue(false);
   m(loadTellState).mockResolvedValue(fresh);
-  m(readWebsite).mockResolvedValue({ pages: ["https://mysite.ca/", "https://mysite.ca/pricing"], text: SITE });
+  m(readWebsite).mockResolvedValue({ pages: ["https://mysite.ca/", "https://mysite.ca/pricing"], text: SITE, name: "Bright Web Studio" });
   m(readInstagramPosts).mockResolvedValue(null);
-  m(prisma.business.findUnique).mockResolvedValue({ tellDraft: null });
+  m(prisma.business.findUnique).mockResolvedValue({ tellDraft: null, name: "Bright Web Studio" });
   m(proposeTellRead).mockResolvedValue([
     { label: label("Prices"), value: "Sites start at $950 for 5 pages" },
     { label: label("Hours"), value: "Weekdays 10 am to 7 pm" },
@@ -179,5 +179,55 @@ describe("No website, skip this", () => {
     expect(res.status).toBe(200);
     expect(prisma.business.update).toHaveBeenCalledWith({ where: { id: "biz1" }, data: { websiteAskedAt: expect.any(Date) } });
     expect(readWebsite).not.toHaveBeenCalled();
+  });
+});
+
+describe("is this your site? (A-332)", () => {
+  const OTHER = { pages: ["https://oakstreethomes.ca/"], text: "Oak Street Homes\nBuying and selling across the GTA\nFrom $1,200,000", name: "Oak Street Homes" };
+
+  it("asks one question, and reads nothing into the draft, when the site doesn't look like the business's", async () => {
+    m(prisma.business.findUnique).mockResolvedValue({ tellDraft: null, name: "Maple Realty" });
+    m(readWebsite).mockResolvedValue(OTHER);
+    const res = await call({ action: "read", url: "oakstreethomes.ca" });
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.check).toEqual({ line: 'This site calls itself "Oak Street Homes". Is that your business?', site: "oakstreethomes.ca" });
+    expect(data.state).toBeUndefined();
+    expect(proposeTellRead).not.toHaveBeenCalled();
+    expect(addToDraft).not.toHaveBeenCalled();
+    expect(prisma.business.update).not.toHaveBeenCalled();
+    expect(m(recordAudit).mock.calls[0][2].meta).toEqual({ decision: "check", pages: 1 });
+  });
+
+  it("reads on when the owner says it's theirs", async () => {
+    m(prisma.business.findUnique).mockResolvedValue({ tellDraft: null, name: "Maple Realty" });
+    m(readWebsite).mockResolvedValue(OTHER);
+    m(proposeTellRead).mockResolvedValue([{ label: label("Prices"), value: "From $1,200,000" }]);
+    const res = await call({ action: "read", url: "oakstreethomes.ca", mine: true });
+    const data = await res.json();
+    expect(data.check).toBeUndefined();
+    expect(data.found).toBe(1);
+    expect(addToDraft).toHaveBeenCalledTimes(1);
+    expect(m(recordAudit).mock.calls[0][2].meta).toMatchObject({ decision: "read", mine: true });
+  });
+
+  it("asks from setup's waiting screen too", async () => {
+    m(prisma.business.findUnique).mockResolvedValue({ tellDraft: null, name: "Maple Realty" });
+    m(readWebsite).mockResolvedValue(OTHER);
+    const data = await (await call({ action: "read", url: "oakstreethomes.ca", setup: true })).json();
+    expect(data.check.line).toContain("Oak Street Homes");
+    expect(data.line).toBeUndefined();
+    expect(addToDraft).not.toHaveBeenCalled();
+  });
+
+  it("doesn't ask when the site carries the business's name, or when only Instagram is read", async () => {
+    // The default: "Bright Web Studio" is on the page.
+    expect((await (await call({ action: "read", url: "mysite.ca" })).json()).check).toBeUndefined();
+    m(prisma.business.findUnique).mockResolvedValue({ tellDraft: null, name: "Maple Realty" });
+    m(readWebsite).mockResolvedValue(null);
+    m(readInstagramPosts).mockResolvedValue({ posts: 3, text: "Open houses this weekend" });
+    const data = await (await call({ action: "read", instagram: true })).json();
+    expect(data.check).toBeUndefined();
+    expect(data.success).toBe(true);
   });
 });

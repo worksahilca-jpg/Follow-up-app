@@ -15760,3 +15760,25 @@ the texture twice; faint costs one background tile). What's weak, named: the com
 mostly in the sidebar and the 8 px frame; the phone's see-through tab bar lets list text show faintly through it (iOS
 does the same); the local production build could not run in the sandbox (Turbopack's Google-font download fails there),
 so the build gate is CI's. The landing's Start free fix shipped in the same PR.
+
+## 2026-10-28 — "What if someone pasted someone else's website?" → one question before reading on (A-332)
+
+**Founder:** *"And what if someone pasted someone else's website, then what?"*, then, told that nothing is used until
+"Looks right": *"But if we read someone else's or another business website, we'll be getting different information,
+right? Then we'll mess up everything."* He is right about the weak spot: a busy owner taps "Looks right" without
+reading, and a typo in the link or a competitor's site puts wrong prices, areas and services into their own replies
+until they notice. Nothing else is at risk: a wrong site is public pages only, and it touches that owner's account alone.
+
+**Options weighed:** (1) leave it to the play-back, as today (the founder's worry stands); (2) prove ownership (a
+file on their site, a DNS record): heavy friction for every honest owner, to stop a rare mistake; (3) **compare what the
+site calls itself with the business's name and ask one question only when they don't match.** Picked 3: no tap for
+the common case, one tap for the odd one, no verdict on ownership. His answer: *"yes build it"* → [[approved#^A-332|A-332]].
+
+**Built the same day.** The match is deliberately loose (any distinctive word of the business's name on the first page,
+in the site's own name or in the address; corporate words and trade words like "realty", "homes", "inc" don't count),
+so a realtor's personal site ("Sahil Chawla, Realtor" for "Chawla Homes") passes and a different business doesn't. A
+business whose name has only generic words ("Real Estate Group") can't be told apart and passes: the play-back stays the
+check. What's weak, named: a competitor's page that happens to carry a word of the owner's name passes quietly (then it
+is the play-back's job, as before); the question's wording quotes the site's title, which can be long (capped at 80
+characters). The sandbox can't fetch a real site, so the browser check used the server's own answer for a mismatched
+site and passed "Yes, that's mine" through to the real server; the matching itself is unit-tested.

@@ -5940,3 +5940,29 @@ the page itself no longer scrolls (document height = window height), the sheet s
 8 px; on a phone the window scrolls as before and the photo fades into paper by mid-screen.
 **Supersedes** A-211's "one white sheet on the sidebar's frame running off the right and bottom edges" for the frame
 (the sheet now floats, rounded all round) and A-282's grey ground for the frame (now the photo wash).
+
+## A-332 — Before reading a website that doesn't look like the owner's, one question ^A-332
+
+**Date:** 2026-10-28. **Founder, verbatim:** *"And what if someone pasted someone else's website, then what?"* …
+*"But if we read someone else's or another business website, we'll be getting different information, right? Then
+we'll mess up everything."* Proposed as one question, only when the site's name and the business's name don't match;
+his answer: *"yes build it"*.
+**What specifically was approved:**
+- **FollowUp compares what the site calls itself with the business's name on the account** before it takes anything
+  from the site (A-328). The site's name is its `og:site_name`, else its title without generic parts ("Home |
+  Maple Realty" is Maple Realty). It passes when a distinctive word of the business's name (3+ letters, not "the",
+  "inc", "realty", "homes" and the like) is in that name, on the first page, or in the address (maplerealty.ca), or
+  when the name squeezed together is. A business whose name has no distinctive word can't be told apart and passes.
+- **When it doesn't match, nothing is read into the draft.** FollowUp asks one question in the meeting, in its own
+  bubble: *"This site calls itself "Oak Street Homes". Is that your business?"* (or, when the site has no name,
+  *"FollowUp can't tell whose site oakstreethomes.ca is. Is it yours?"*), with **Yes, that's mine** (outlined) and
+  **No, wrong link** (quiet). Yes reads it as before; No keeps the link in the box, focused, to fix. Setup's website
+  line (A-328) asks the same way, with "Yes, it's mine" / "No, fix the link", and holds the screen while it asks.
+- **When it matches, nothing changes:** no extra tap for an honest owner. The play-back's "Looks right" (A-314) stays
+  the owner's check on every line either way, and a wrong fact is one line to change in What FollowUp knows.
+- **It is not a verdict on who owns a site**, only whether to ask before reading on; the audit keeps a count, never the
+  site's words.
+**Built 2026-10-28** (same day): `siteOwnName`, `siteLooksLike`, `ownerCheckLine` in `src/lib/siteRead.ts` (pure, tested);
+the read route answers `check` instead of reading when they don't match and reads on with `mine: true`; the meeting
+screen and setup's line show the question. Checked in a real browser, phone 390×844 and computer 1440×900: the
+question, No (link kept, box focused), Yes (the request carries `mine`); the fetch itself can't run in the sandbox.

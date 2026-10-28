@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import { GRAPH_API } from "@/lib/instagram";
 import { getPageFromTenantUrl } from "@/lib/ssrf";
-import { MAX_PAGES, MAX_POSTS, MAX_SITE_CHARS, pageText, pagesWorthReading, postsText } from "@/lib/siteRead";
+import { MAX_PAGES, MAX_POSTS, MAX_SITE_CHARS, pageText, pagesWorthReading, postsText, siteOwnName } from "@/lib/siteRead";
 
 /**
  * Reading the owner's own website and Instagram (A-328; the rules are in src/lib/siteRead.ts). Every fetch of the
@@ -13,7 +13,8 @@ import { MAX_PAGES, MAX_POSTS, MAX_SITE_CHARS, pageText, pagesWorthReading, post
 /** How long the whole site may take to read: the owner is waiting on the screen. */
 const SITE_BUDGET_MS = 25_000;
 
-export type SiteRead = { pages: string[]; text: string };
+/** The pages read, their words, and what the first page says the site is called (A-332; "" when it doesn't say). */
+export type SiteRead = { pages: string[]; text: string; name: string };
 
 /** A page's address as kept and shown: without what follows "?" or "#", which can carry someone's private bits. */
 function plainAddress(u: string): string {
@@ -57,7 +58,7 @@ export async function readWebsite(url: string): Promise<SiteRead | null> {
     }
   }
   const text = texts.filter(Boolean).join("\n\n").slice(0, MAX_SITE_CHARS);
-  return text.trim() ? { pages, text } : null;
+  return text.trim() ? { pages, text, name: siteOwnName(first.body) } : null;
 }
 
 export type PostsRead = { posts: number; text: string };

@@ -113,15 +113,20 @@ function withoutHidden(html: string): string {
   }
 }
 
+/** The page's <title>, raw (entities still encoded), at most 300 characters; "" when it has none. */
+function pageTitle(html: string): string {
+  const titleAt = html.search(/<title[^>]{0,200}>/i);
+  const titleEnd = titleAt >= 0 ? html.toLowerCase().indexOf("</title>", titleAt) : -1;
+  return titleAt >= 0 && titleEnd > titleAt ? html.slice(html.indexOf(">", titleAt) + 1, titleEnd).slice(0, 300) : "";
+}
+
 /**
  * A page's words, as a visitor reads them: its title and description, then the text, without scripts, styles, menus'
  * markup or hidden parts. Blocks end in a line break so the reading keeps sentences apart. At most MAX_PAGE_CHARS.
  * Every pattern is bounded, so a hostile page costs no more than a normal one.
  */
 export function pageText(html: string): string {
-  const titleAt = html.search(/<title[^>]{0,200}>/i);
-  const titleEnd = titleAt >= 0 ? html.toLowerCase().indexOf("</title>", titleAt) : -1;
-  const title = titleAt >= 0 && titleEnd > titleAt ? html.slice(html.indexOf(">", titleAt) + 1, titleEnd).slice(0, 300) : "";
+  const title = pageTitle(html);
   const description =
     html.match(/<meta[^>]{0,500}name=["']description["'][^>]{0,500}content=["']([^"']{0,500})["']/i)?.[1] ??
     html.match(/<meta[^>]{0,500}content=["']([^"']{0,500})["'][^>]{0,500}name=["']description["']/i)?.[1] ??
@@ -180,6 +185,78 @@ export function pagesWorthReading(html: string, pageUrl: string, max = MAX_PAGES
     if (rank >= 0) found.set(key, rank);
   }
   return [...found.entries()].sort((a, b) => a[1] - b[1]).slice(0, Math.max(0, max)).map(([u]) => u);
+}
+
+/** Title parts that name no business: "Home | Maple Realty" is Maple Realty's. */
+const GENERIC_TITLE = /^(home|homepage|home page|welcome|welcome to .{0,80}|official (web)?site|website|index|main|start|landing|untitled)$/i;
+
+/**
+ * What the site calls itself (A-332): its og:site_name when it has one, else its title without the generic parts,
+ * so the owner can be asked "This site calls itself X. Is that your business?". "" when the page says nothing usable.
+ */
+export function siteOwnName(html: string): string {
+  const og =
+    html.match(/<meta[^>]{0,500}property=["']og:site_name["'][^>]{0,500}content=["']([^"']{1,200})["']/i)?.[1] ??
+    html.match(/<meta[^>]{0,500}content=["']([^"']{1,200})["'][^>]{0,500}property=["']og:site_name["']/i)?.[1] ??
+    "";
+  const ogName = squash(decodeEntities(og));
+  if (ogName) return ogName.slice(0, 80);
+  const parts = squash(decodeEntities(pageTitle(html)))
+    .split(/\s*[|–—·•]\s*|\s+-\s+|\s*::\s*|:\s+/)
+    .map(squash)
+    .filter((p) => p && !GENERIC_TITLE.test(p));
+  return parts.join(" – ").slice(0, 80);
+}
+
+/** Words that say nothing about which business this is: "The Maple Realty Group Inc" is "maple". */
+const GENERIC_WORDS = new Set([
+  "the", "and", "of", "for", "a", "an", "in", "at", "to", "by", "with", "inc", "ltd", "llc", "corp", "co", "company", "group",
+  "team", "service", "services", "solutions", "realty", "real", "estate", "realtor", "realtors", "brokerage", "homes", "home",
+  "properties", "property", "agency", "studio", "consulting", "consultants", "law", "legal", "dental", "clinic", "design",
+  "designs", "web", "media", "marketing", "sales", "partners", "associates", "international", "local", "pro", "pros",
+  "official", "site", "website", "online", "shop", "store",
+]);
+
+/** Lower-case, accents dropped, anything that isn't a letter or digit turned into a space. */
+function plainWords(s: string): string[] {
+  return s
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .split(" ")
+    .filter(Boolean);
+}
+
+/** The words of a business name that could tell it from another: 3 letters or more, not GENERIC_WORDS, with a letter in them. */
+export function distinctiveWords(businessName: string): string[] {
+  return plainWords(businessName).filter((w) => w.length >= 3 && /[a-z]/.test(w) && !GENERIC_WORDS.has(w));
+}
+
+/**
+ * Whether the site plausibly belongs to this business (A-332; founder 2026-10-28: "what if someone pasted someone
+ * else's website?"): a distinctive word of the business's name is on the first page, in what the site calls itself,
+ * or in the address; or the name squeezed together ("maplerealty") is in the address or the words. A name with no
+ * distinctive word ("Real Estate Group") can't be told apart, so it passes: the play-back's "Looks right" is still the
+ * owner's check. Never a verdict on who owns a site, only whether to ask one question before reading on.
+ */
+export function siteLooksLike(businessName: string, ownName: string, text: string, url: string): boolean {
+  const words = distinctiveWords(businessName);
+  if (words.length === 0) return true;
+  const host = siteName(url);
+  const hostSqueezed = plainWords(host).join("");
+  const haystack = new Set(plainWords(`${ownName} ${text}`));
+  const haystackSqueezed = [...haystack].join(" ");
+  const squeezed = plainWords(businessName).join("");
+  if (squeezed.length >= 4 && (hostSqueezed.includes(squeezed) || haystackSqueezed.replace(/ /g, "").includes(squeezed))) return true;
+  return words.some((w) => haystack.has(w) || (w.length >= 4 && hostSqueezed.includes(w)));
+}
+
+/** The one question before reading a site that doesn't look like the business's (A-332). */
+export function ownerCheckLine(ownName: string, url: string): string {
+  return ownName
+    ? `This site calls itself "${ownName}". Is that your business?`
+    : `FollowUp can't tell whose site ${siteName(url)} is. Is it yours?`;
 }
 
 /** The bio and the captions as one text to read, newest post first, at most MAX_POST_CHARS. */

@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState, type ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
 import SettingsList from "@/components/app/SettingsList";
+import { scrollPageTop } from "@/lib/scrollTop";
 import ScrollTitle from "@/components/app/ScrollTitle";
 import { GROUP_PAGE, GROUP_SLUG, PAGE_SECTIONS, PARENT_PAGE, groupOfPage, groupOfSlug, pageForId as pageFor, SETTINGS_MOVED, type SettingsGroup } from "@/lib/settingsGroups";
 import AppWindow from "@/components/app/AppWindow";
@@ -153,7 +154,7 @@ function SettingsPageInner() {
     const onPop = () => {
       setOpenPage(read());
       readGroup();
-      window.scrollTo(0, 0);
+      scrollPageTop();
     };
     window.addEventListener("popstate", onPop);
     window.addEventListener("hashchange", onPop);
@@ -403,7 +404,7 @@ function SettingsPageInner() {
     window.history.pushState({ settingsFrom: window.location.hash }, "", url);
     // pushState fires no event of its own: this tells the desk's stem (Sidebar, A-257) where Settings is now.
     window.dispatchEvent(new Event(SETTINGS_MOVED));
-    window.scrollTo(0, 0);
+    scrollPageTop();
   }
 
   async function savePause(paused: boolean) {

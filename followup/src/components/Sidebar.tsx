@@ -75,7 +75,7 @@ export default function Sidebar({ businessName = "", counts = {} }: { businessNa
     <>
       {/* Phone: a quiet top bar (brand, and Settings with its word) … */}
       {!ownPhoneBar && (
-        <header className="lg:hidden fixed top-0 inset-x-0 z-30 flex items-center justify-between border-b border-line bg-paper px-4 py-1.5">
+        <header className="app-bar lg:hidden fixed top-0 inset-x-0 z-30 flex items-center justify-between border-b border-line px-4 py-1.5">
           <Link href="/dashboard" className="flex min-h-11 items-center gap-2">
             <LogoMark height={20} />
             <span className="text-base font-semibold">FollowUp</span>
@@ -98,7 +98,7 @@ export default function Sidebar({ businessName = "", counts = {} }: { businessNa
       {!ownPhoneBar && (
         <nav
           aria-label="Main"
-          className="lg:hidden fixed bottom-0 inset-x-0 z-30 grid grid-cols-4 border-t border-line bg-paper px-2 pt-1.5"
+          className="app-bar lg:hidden fixed bottom-0 inset-x-0 z-30 grid grid-cols-4 border-t border-line px-2 pt-1.5"
           style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 10px)" }}
         >
           {places.map(({ href, label, icon: Icon, count }) => {
@@ -135,7 +135,7 @@ export default function Sidebar({ businessName = "", counts = {} }: { businessNa
       )}
 
       {/* Desk column, on the frame. */}
-      <aside className="hidden lg:flex w-[224px] shrink-0 flex-col h-screen sticky top-0 px-3 pb-3 pt-2.5">
+      <aside className="hidden lg:flex w-[224px] shrink-0 flex-col h-screen sticky top-0 overflow-y-auto px-3 pb-3 pt-2.5">
         <div className="flex h-9 items-center justify-between">
           <Link href="/dashboard" className="flex items-center gap-2 rounded-lg px-2.5 py-1">
             <LogoMark height={17} />

@@ -9,8 +9,8 @@ import { ChevronRight } from "lucide-react";
  * screens (R-077).
  */
 
-/** One group of rows. */
-export const GROUP = "overflow-hidden rounded-[12px] border border-line bg-card";
+/** One group of rows: white, rounded, raised by a soft shadow (A-331; .app-group in globals.css). */
+export const GROUP = "app-group";
 
 /** A 29px rounded tile; `bg` is its fill, the glyph inside is white. */
 export function IconTile({ bg, children }: { bg: string; children: ReactNode }) {

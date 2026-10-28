@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Mic } from "lucide-react";
+import { scrollPageTop } from "@/lib/scrollTop";
 import ScrollTitle from "@/components/app/ScrollTitle";
 import TellTalk, { useCanRecord } from "@/components/TellTalk";
 import { BrandTile } from "@/components/brandLogos";
@@ -210,7 +211,7 @@ export default function TellFollowUp({
     if (next) return focusBox();
     const back = (data.playback as Playback | null | undefined) ?? null;
     setPlayback(back);
-    if (back) window.scrollTo({ top: 0 });
+    if (back) scrollPageTop();
   }
 
   async function send() {
@@ -320,7 +321,7 @@ export default function TellFollowUp({
     setTalking(false);
     setTalked(true);
     setError(null);
-    window.scrollTo({ top: 0 });
+    scrollPageTop();
   }
 
   /** "Answer them now": back to typing, at the first question the talk didn't cover. The draft keeps the talk. */
@@ -329,7 +330,7 @@ export default function TellFollowUp({
     setTalked(false);
     setPlayback(null);
     setTopic(next);
-    window.scrollTo({ top: 0 });
+    scrollPageTop();
   }
 
   function value(row: PlaybackRow): string {
@@ -356,7 +357,7 @@ export default function TellFollowUp({
     setBusy(false);
     if (!r.ok) return setError(r.message);
     setSaved(playback.rows.map((row) => ({ label: row.label, value: value(row) })).filter((f) => f.value));
-    window.scrollTo({ top: 0 });
+    scrollPageTop();
   }
 
   const back = (

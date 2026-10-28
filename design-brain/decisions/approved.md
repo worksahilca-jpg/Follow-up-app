@@ -2609,6 +2609,10 @@ live in the legend, never on the axis, so nothing collides. **Principle:** show 
 
 *Amended 2026-10-09 by [[#^A-171]]: same words and look, and it flies back up.*
 
+*Amended 2026-10-28 (founder, on his new Mac: "when I click on 'Start Free,' it scrolls down to the very bottom and asks
+me to start free again. Let's fix all that."): the bar's button and the try box's "Start free →" now link straight to
+`/signin`. The flight into the closing card and the big button are unchanged; they no longer sit on the way to sign-up.*
+
 **Direction:** 2026-10-09, founder (thread 02aae9b9): *"This button should come from the top button that has 'Start
 free' in the top bar. I have seen this animation somewhere."* When the closing card's button is fully in view, a copy of
 the bar's button arcs down into it (0.9 s), growing and turning from dark to white, then the real button shows; the
@@ -5908,3 +5912,31 @@ after-states, on the real app).
   out, because no page lists the owner's saved examples yet (a link to nowhere would break trust); the saved card keeps
   the owner's words and **Undo**. The line under the message names the made-up customer (*"How FollowUp would answer
   Lucas."*), so the reply's greeting matches. Add the link when a page shows what FollowUp learned from the owner.
+
+## A-331 — The app on a soft photo: a still frame, the sheet floats, the photo follows the day (A + F) ^A-331
+
+**Date:** 2026-10-28. **Founder, verbatim:** *"A + F"*, then *"make it more simple too. It should be user-friendly, and
+don't make it too dark or something. Make it relatable like iOS does."* (boards: scratchpad `warm/warm-board.png`,
+`warm/warm-board-2.png`, drawn on the live local app).
+**What specifically was approved:**
+- **The frame is still.** On a computer the white sheet floats inside an 8 px frame, rounded on every corner, with a
+  soft shadow, and **never moves: only its inside scrolls**. The sidebar sits on the frame. (Replaces the whole page
+  scrolling, which the founder read as *"scrolling code"*.)
+- **A soft photo behind the frame.** One of the landing's own street photos, blurred until it is only colour (A-120,
+  R-030: nothing in it recognisable, no people, R-011). On a computer it fills the frame; on a phone it sits behind
+  the greeting and the numbers and fades into paper by mid-screen.
+- **The photo follows the time of day (F):** a sunlit street by day (`/landing/d5dc60f92bca.jpg`), the dusk street
+  in the evening (`/landing/42d25b3b05cc.jpg`); the swap is quiet, no animation.
+- **iOS feel on the phone:** the top bar and the tabs are see-through with a blur; the white groups keep A-278's soft
+  two-layer shadow instead of a thin line.
+- **Still minimal:** no colour in type, buttons, rows or faces (R-128; G not taken). Light, never dark (C not taken).
+**Grain:** faint (founder: *"faint, build it. Or I guess we should keep it simple, no? It's on you."*; my call: faint,
+as one tiny background tile on the photo only, never on the content).
+**Built 2026-10-28** (same day): the two washes are pre-blurred 480px photos in `public/app/` (3 KB each), so no CSS
+filter runs; the frame is `.app-shell` in globals.css, the day/evening swap is `DayLight.tsx` (device clock, 5 pm to
+6 am); dark mode keeps its own ground, no photo; the window's scroll-to-top calls go through `scrollPageTop()` so they
+reach the sheet. Checked in a real browser, phone 390×844 and computer 1440×900, day, evening and dark: on a computer
+the page itself no longer scrolls (document height = window height), the sheet scrolls inside and its top edge stays at
+8 px; on a phone the window scrolls as before and the photo fades into paper by mid-screen.
+**Supersedes** A-211's "one white sheet on the sidebar's frame running off the right and bottom edges" for the frame
+(the sheet now floats, rounded all round) and A-282's grey ground for the frame (now the photo wash).

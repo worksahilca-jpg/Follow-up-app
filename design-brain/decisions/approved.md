@@ -5881,3 +5881,30 @@ the way realtors do, instead of FollowUp stopping.)
 and the migration confirmed in production, read-only):** as drawn. Stop (and an owner who hasn't answered) writes a
 warm thanks with no question; Ask writes one light "when would be a good time?", or confirms a time they gave, and
 brings them up on Today that day with one note. While they are on this path nothing else goes, and every reply waits.
+
+
+## A-330 — One practice reply a day on Today ^A-330
+
+**Date:** 2026-10-27. **Founder, verbatim:** *"what if we add muse or something that will help the businees to train
+followup more acurately and everydy"*, then *"yes draw it"* to the proposal of a daily practice card, then *"yes build
+it"* to the drawing (scratchpad `practice/practice-board.png`: Today on a phone and a computer, the card and its three
+after-states, on the real app).
+**What specifically was approved:**
+- **One card on Today:** a small label *"Practice · a made-up customer · nothing is sent"*, the made-up customer's
+  message as the heading (in quotes), *"How FollowUp would answer. Is this how you'd say it?"*, FollowUp's real reply in
+  a quiet box, then a black **Looks right**, an outlined **Change it** and a quiet **Not now**.
+- **Change it** opens the reply in place under *"What would you say?"* with **Save** and **Cancel**. Save keeps the
+  owner's version the same way "Write it better" does (A-290): every later reply reads it. After Save: *"Saved.
+  FollowUp will answer like this from now on."*, the owner's words, *"See what FollowUp learned"* and **Undo**.
+- **Looks right:** *"Thanks. FollowUp will keep answering like this."* · *"Another one tomorrow, on a quiet day."*
+- **It shares the daily question's slot (A-101):** one card a day; a question when FollowUp needs to know something,
+  otherwise a practice reply. Only when nobody is waiting on the owner, never in the first hour after setup, admins
+  only, and never beside a setup card (the drawing's one weak spot: two black buttons on one phone screen).
+- **Made-up customers that fit the business** (a realtor gets "is it still available?", "just browsing", "I have an
+  agent", "what's my home worth?"…), a different one each day. The reply is FollowUp's real reply writer with the
+  owner's facts, voice, examples and rules. Nothing is stored about the made-up customer and nothing is sent.
+- **No streaks, points, counts or reminders** (R-027, A-101).
+- **Built 2026-10-27, two differences from the drawing:** the *"See what FollowUp learned"* link after Save is left
+  out, because no page lists the owner's saved examples yet (a link to nowhere would break trust); the saved card keeps
+  the owner's words and **Undo**. The line under the message names the made-up customer (*"How FollowUp would answer
+  Lucas."*), so the reply's greeting matches. Add the link when a page shows what FollowUp learned from the owner.

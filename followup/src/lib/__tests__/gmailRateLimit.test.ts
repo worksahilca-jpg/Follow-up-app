@@ -70,14 +70,29 @@ const thread = (id: string) => ({
   },
 });
 
+type Result = { truncated: boolean; skippedForLimit?: number; stoppedAt?: number };
+
 /** Runs a sync to the end, letting its waits pass instantly. */
-async function sync() {
-  let result: { truncated: boolean; skippedForLimit?: number } | null = null;
-  const done = fetchSalesConversations("biz1", { onResult: (info) => (result = info) });
+async function sync(options: { from?: number } = {}) {
+  let result: Result | null = null;
+  const done = fetchSalesConversations("biz1", { ...options, onResult: (info) => (result = info) });
   await vi.runAllTimersAsync();
   await done;
-  return result as unknown as { truncated: boolean; skippedForLimit?: number };
+  return result as unknown as Result;
 }
+
+/** The inbox lists `count` threads, t0 newest. */
+const listOf = (count: number) =>
+  threadsList.mockImplementation(async ({ q }: { q: string }) =>
+    q.startsWith("category:updates") ? { data: { threads: [] } } : { data: { threads: Array.from({ length: count }, (_, i) => ({ id: `t${i}` })) } }
+  );
+/** Google reads threads before t`n`, then refuses every read. */
+const limitFrom = (n: number) =>
+  threadsGet.mockImplementation(async ({ id }: { id: string }) => {
+    if (Number(id.slice(1)) >= n) throw perMinute();
+    return thread(id);
+  });
+const readIds = () => [...new Set((threadsGet.mock.calls as unknown as [{ id: string }][]).map(([a]) => a.id))];
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -164,5 +179,49 @@ describe("Gmail's per-minute limit during a sync", () => {
 
     expect(threadsList).toHaveBeenCalledTimes(3);
     expect(prismaMock.message.upsert).toHaveBeenCalledTimes(1);
+  });
+});
+
+/**
+ * Where the limit stopped a full pass (2026-10-27). From Oct 21 one busy inbox's pass was stopped at the same point
+ * on every tick and started over from the newest thread, so it never finished. The pass now says where it stopped,
+ * and the next one can start there (gmailSync.ts keeps the place on the inbox).
+ */
+describe("a full pass the limit stops part-way", () => {
+  it("says where it stopped: the first thread it couldn't read", async () => {
+    listOf(8);
+    limitFrom(3);
+
+    const result = await sync();
+
+    expect(result.skippedForLimit).toBe(5);
+    expect(result.stoppedAt).toBe(3);
+    expect(prismaMock.message.upsert).toHaveBeenCalledTimes(3);
+  });
+
+  it("can start where the last one stopped, without reading the threads before it", async () => {
+    listOf(8);
+
+    const result = await sync({ from: 5 });
+
+    expect(readIds()).toEqual(["t5", "t6", "t7"]);
+    expect(result).toEqual({ truncated: false, skippedForLimit: 0 });
+  });
+
+  it("says where it stopped as a place in the whole list, not in the part it read", async () => {
+    listOf(8);
+    limitFrom(6);
+
+    const result = await sync({ from: 4 });
+
+    expect(result.stoppedAt).toBe(6);
+  });
+
+  it("a pass that finishes says nothing about stopping", async () => {
+    listOf(4);
+
+    const result = await sync();
+
+    expect(result.stoppedAt).toBeUndefined();
   });
 });

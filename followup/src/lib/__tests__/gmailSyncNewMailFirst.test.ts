@@ -7,16 +7,31 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-type Row = { id: string; status: string; lastSyncedAt: Date | null; deepSyncedAt: Date | null; connectedAt: Date | null; lastSyncError: string | null };
+type Row = {
+  id: string;
+  status: string;
+  lastSyncedAt: Date | null;
+  deepSyncedAt: Date | null;
+  deepSyncOffset: number | null;
+  connectedAt: Date | null;
+  lastSyncError: string | null;
+};
 type Where = { id?: string; status?: string };
-type OnResult = (info: { truncated: boolean; skippedForLimit?: number }) => void;
+type OnResult = (info: { truncated: boolean; skippedForLimit?: number; stoppedAt?: number }) => void;
 
-const state = vi.hoisted(() => ({ rows: [] as Row[], unreadOnTick: 0, unreadOnFullPass: 0 }));
+const state = vi.hoisted(() => ({
+  rows: [] as Row[],
+  unreadOnTick: 0,
+  unreadOnFullPass: 0,
+  fullPassStoppedAt: undefined as number | undefined,
+  fullPassTruncated: false,
+}));
 const matches = (r: Row, where: Where) => (!where.status || r.status === where.status) && (!where.id || r.id === where.id);
 
 const { prismaMock, fetchSalesConversations } = vi.hoisted(() => ({
-  fetchSalesConversations: vi.fn(async (_businessId: string, opts: { since?: Date; onResult?: OnResult }) => {
-    opts.onResult?.({ truncated: false, skippedForLimit: opts.since ? state.unreadOnTick : state.unreadOnFullPass });
+  fetchSalesConversations: vi.fn(async (_businessId: string, opts: { since?: Date; from?: number; onResult?: OnResult }) => {
+    if (opts.since) opts.onResult?.({ truncated: false, skippedForLimit: state.unreadOnTick });
+    else opts.onResult?.({ truncated: state.fullPassTruncated, skippedForLimit: state.unreadOnFullPass, stoppedAt: state.fullPassStoppedAt });
     return [];
   }),
   prismaMock: {
@@ -64,7 +79,11 @@ beforeEach(() => {
   vi.setSystemTime(T0);
   state.unreadOnTick = 0;
   state.unreadOnFullPass = 0;
-  state.rows = [{ id: "gmail-1", status: "connected", ...stuck, connectedAt: new Date(T0.getTime() - 11 * 24 * HOUR), lastSyncError: null }];
+  state.fullPassStoppedAt = undefined;
+  state.fullPassTruncated = false;
+  state.rows = [
+    { id: "gmail-1", status: "connected", ...stuck, deepSyncOffset: null, connectedAt: new Date(T0.getTime() - 11 * 24 * HOUR), lastSyncError: null },
+  ];
 });
 
 afterEach(() => {
@@ -111,6 +130,64 @@ describe("the two-minute sync of an inbox whose full pass is due", () => {
 
     expect(passes()).toEqual(["tick", "full"]);
     expect(state.rows[0]).toMatchObject({ lastSyncedAt: T0, deepSyncedAt: T0 });
+  });
+});
+
+/**
+ * The full pass picks up where Google's limit stopped it (2026-10-27). After the fix above new mail came in, but the
+ * busy inbox's full pass still met the limit at the same point on every tick: it started over from the newest thread
+ * each time, re-read the same ~50 it already had, and never reached the rest. Its last finished pass was Oct 20.
+ */
+describe("a full pass Google's limit stops part-way", () => {
+  const fullPassFrom = () =>
+    (fetchSalesConversations.mock.calls as unknown as [string, { since?: Date; from?: number }][]).filter(([, o]) => !o.since).map(([, o]) => o.from ?? 0);
+
+  it("keeps where it stopped and doesn't count as done", async () => {
+    Object.assign(state, { unreadOnFullPass: 103, fullPassStoppedAt: 47 });
+    await syncGmailForAllBusinesses();
+
+    expect(state.rows[0]).toMatchObject({ deepSyncOffset: 47, deepSyncedAt: stuck.deepSyncedAt, lastSyncedAt: T0 });
+  });
+
+  it("the next pass starts there, not from the newest thread", async () => {
+    state.rows[0].deepSyncOffset = 47;
+    Object.assign(state, { unreadOnFullPass: 56, fullPassStoppedAt: 94 });
+    await syncGmailForAllBusinesses();
+
+    expect(fullPassFrom()).toEqual([47]);
+    expect(state.rows[0].deepSyncOffset).toBe(94);
+  });
+
+  it("finishing the rest counts as a full pass and clears the place", async () => {
+    state.rows[0].deepSyncOffset = 94;
+    await syncGmailForAllBusinesses();
+
+    expect(fullPassFrom()).toEqual([94]);
+    expect(state.rows[0]).toMatchObject({ deepSyncedAt: T0, deepSyncOffset: null });
+  });
+
+  it("a fresh day's pass starts from the newest thread", async () => {
+    await syncGmailForAllBusinesses();
+
+    expect(fullPassFrom()).toEqual([0]);
+  });
+
+  it("one cut short by the classification budget keeps its place, so the threads it left are read again", async () => {
+    state.rows[0].deepSyncOffset = 47;
+    Object.assign(state, { fullPassTruncated: true, unreadOnFullPass: 10, fullPassStoppedAt: 80 });
+    await syncGmailForAllBusinesses();
+
+    expect(state.rows[0]).toMatchObject({ deepSyncOffset: 47, deepSyncedAt: stuck.deepSyncedAt });
+  });
+
+  it("the two-minute check never moves the place", async () => {
+    state.rows[0].deepSyncedAt = new Date(T0.getTime() - 2 * HOUR);
+    state.rows[0].deepSyncOffset = 47;
+    state.unreadOnTick = 4;
+    await syncGmailForAllBusinesses();
+
+    expect(passes()).toEqual(["tick"]);
+    expect(state.rows[0].deepSyncOffset).toBe(47);
   });
 });
 

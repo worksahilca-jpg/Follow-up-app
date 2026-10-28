@@ -82,7 +82,9 @@ async function scoreUnscoredLeads(businessId: string, limit: number): Promise<nu
  */
 export async function syncGmailForBusiness(
   businessId: string,
-  options: { since?: Date; integrationId?: string } = {}
+  // `deepFrom`: a full pass (no `since`) that starts where Google's limit
+  // stopped the last one (the inbox's deepSyncOffset, below).
+  options: { since?: Date; integrationId?: string; deepFrom?: number } = {}
 ): Promise<GmailSyncResult> {
   const startedAt = new Date();
   const isDeep = !options.since;
@@ -106,13 +108,16 @@ export async function syncGmailForBusiness(
 
   let truncated = false;
   let skippedForLimit = 0;
+  let stoppedAt: number | undefined;
   const leads = await fetchSalesConversations(businessId, {
     since: options.since,
     ...(integrationId ? { integrationId } : {}),
+    ...(isDeep && options.deepFrom ? { from: options.deepFrom } : {}),
     maxClassifications: MAX_CLASSIFICATIONS_PER_RUN,
     onResult: (info) => {
       truncated = info.truncated;
       skippedForLimit = info.skippedForLimit ?? 0;
+      stoppedAt = info.stoppedAt;
     },
   });
 
@@ -149,13 +154,27 @@ export async function syncGmailForBusiness(
   // the overlap) still covers them, and a deep pass runs again rather than
   // waiting a day (2026-10-18). Not an error either: the "keeps failing"
   // notice is for an inbox that can't be read at all.
+  //
+  // A deep pass Google stopped part-way keeps where it stopped, and the next
+  // one starts there (2026-10-27). Starting over from the newest thread, one
+  // busy inbox's pass met the limit at the same point on every tick from
+  // Oct 21 and never finished. One cut short by the classification budget
+  // keeps its place: the threads it left are still unread by the classifier.
   const unread = skippedForLimit > 0;
+  const deep =
+    !isDeep || truncated
+      ? {}
+      : unread
+        ? stoppedAt === undefined
+          ? {}
+          : { deepSyncOffset: stoppedAt }
+        : { deepSyncedAt: startedAt, deepSyncOffset: null };
   await prisma.integration.updateMany({
     where: { provider: "gmail", status: "connected", user: { businessId }, ...(integrationId ? { id: integrationId } : {}) },
     data: {
       ...(unread ? {} : { lastSyncedAt: startedAt }),
       lastSyncError: null,
-      ...(isDeep && !truncated && !unread ? { deepSyncedAt: startedAt } : {}),
+      ...deep,
     },
   });
 
@@ -184,6 +203,7 @@ export async function syncGmailForAllBusinesses(): Promise<{ businesses: number;
       id: true,
       lastSyncedAt: true,
       deepSyncedAt: true,
+      deepSyncOffset: true,
       connectedAt: true,
       user: { select: { businessId: true, business: { select: { subscriptionStatus: true, tier: true } } } },
     },
@@ -191,7 +211,7 @@ export async function syncGmailForAllBusinesses(): Promise<{ businesses: number;
 
   // Grouped by business, each inbox keeping its own row: its own sync
   // clock, and its own grant, which ends on its own clock.
-  type Inbox = { id: string; lastSyncedAt: Date | null; deepSyncedAt: Date | null; connectedAt: Date | null };
+  type Inbox = { id: string; lastSyncedAt: Date | null; deepSyncedAt: Date | null; deepSyncOffset: number | null; connectedAt: Date | null };
   const byBusiness = new Map<string, Inbox[]>();
   for (const i of integrations) {
     const businessId = i.user.businessId;
@@ -200,7 +220,7 @@ export async function syncGmailForAllBusinesses(): Promise<{ businesses: number;
     // business's inbox still gets synced, not just Plus/Pro's. Without
     // this, Free tier's promised Gmail detection never runs at all.
     if (!businessId || !hasActiveAccess(i.user.business?.subscriptionStatus, i.user.business?.tier)) continue;
-    const inbox = { id: i.id, lastSyncedAt: i.lastSyncedAt, deepSyncedAt: i.deepSyncedAt, connectedAt: i.connectedAt };
+    const inbox = { id: i.id, lastSyncedAt: i.lastSyncedAt, deepSyncedAt: i.deepSyncedAt, deepSyncOffset: i.deepSyncOffset, connectedAt: i.connectedAt };
     byBusiness.set(businessId, [...(byBusiness.get(businessId) ?? []), inbox]);
   }
 
@@ -220,13 +240,16 @@ export async function syncGmailForAllBusinesses(): Promise<{ businesses: number;
       // still, so a busy inbox took in no new email from Oct 21 to Oct 27
       // while Settings said Connected. Reads are spaced out now too
       // (GMAIL_READ_GAP_MS in integrations/gmail.ts), and when the tick
-      // itself met the limit the deep pass waits for the next one.
+      // itself met the limit the deep pass waits for the next one. A deep
+      // pass the limit stopped picks up where it stopped (deepSyncOffset).
       const deepDue = !inbox.deepSyncedAt || Date.now() - inbox.deepSyncedAt.getTime() > DEEP_SYNC_INTERVAL_MS;
       const since = new Date((inbox.lastSyncedAt ?? new Date()).getTime() - SYNC_OVERLAP_MS);
       try {
         const result = await syncGmailForBusiness(businessId, { since, integrationId: inbox.id });
         newLeads += result.count;
-        if (deepDue && !result.leftUnread) newLeads += (await syncGmailForBusiness(businessId, { integrationId: inbox.id })).count;
+        if (deepDue && !result.leftUnread) {
+          newLeads += (await syncGmailForBusiness(businessId, { integrationId: inbox.id, deepFrom: inbox.deepSyncOffset ?? 0 })).count;
+        }
         synced += 1;
         anySynced = true;
       } catch (err) {

@@ -590,9 +590,10 @@ export type SyncOptions = {
   maxClassifications?: number;
   /**
    * `skippedForLimit`: threads left unread because Gmail's per-minute limit outlasted the retries. The caller must
-   * not count the run as having read them (gmailSync.ts keeps its clock where it was).
+   * not count the run as having read them (gmailSync.ts keeps its clock where it was). `stoppedAt`: the first of
+   * them, as a position in the list this run was given, so a full pass can pick up there next time.
    */
-  onResult?: (info: { truncated: boolean; skippedForLimit?: number }) => void;
+  onResult?: (info: { truncated: boolean; skippedForLimit?: number; stoppedAt?: number }) => void;
 };
 
 /**
@@ -667,10 +668,15 @@ async function processThreadRefs(
   // minutes on, reads them.
   let limited = false;
   let skippedForLimit = 0;
+  let stoppedAt: number | undefined;
+  const leftUnread = (index: number) => {
+    skippedForLimit++;
+    stoppedAt = Math.min(stoppedAt ?? index, index);
+  };
   const nextRead = pacer(GMAIL_READ_GAP_MS);
-  const results = await mapWithConcurrency(threadRefs, 5, async (ref): Promise<SyncedLead | null> => {
+  const results = await mapWithConcurrency(threadRefs, 5, async (ref, index): Promise<SyncedLead | null> => {
     if (limited) {
-      skippedForLimit++;
+      leftUnread(index);
       return null;
     }
     try {
@@ -678,7 +684,7 @@ async function processThreadRefs(
     } catch (err) {
       if (isGoogleRateLimitError(err)) {
         limited = true;
-        skippedForLimit++;
+        leftUnread(index);
         return null;
       }
       console.error(`Failed to process Gmail thread ${ref.id ?? "?"}:`, err);
@@ -687,7 +693,7 @@ async function processThreadRefs(
   });
   if (skippedForLimit > 0) console.warn(`Gmail's per-minute limit: ${skippedForLimit} thread(s) left for the next check.`);
 
-  options.onResult?.({ truncated, skippedForLimit });
+  options.onResult?.({ truncated, skippedForLimit, stoppedAt });
   return results.filter((lead): lead is SyncedLead => lead !== null);
 
   async function processOneThread(ref: gmail_v1.Schema$Thread): Promise<SyncedLead | null> {
@@ -1138,7 +1144,10 @@ export async function fetchSalesConversations(
   businessId: string,
   // `integrationId`: read this one connected inbox (the cron syncs each of
   // a business's inboxes separately). Without it, the business's inbox.
-  options: { since?: Date; integrationId?: string } & Pick<SyncOptions, "maxClassifications" | "onResult"> = {}
+  // `from`: a full pass that starts part-way down the list, where Google's
+  // limit stopped the last one (gmailSync.ts); `stoppedAt` comes back as a
+  // position in the whole list.
+  options: { since?: Date; integrationId?: string; from?: number } & Pick<SyncOptions, "maxClassifications" | "onResult"> = {}
 ): Promise<SyncedLead[]> {
   const authed = await getAuthedGmailClient(businessId, options.integrationId);
   if (!authed) return [];
@@ -1205,9 +1214,11 @@ export async function fetchSalesConversations(
     return true;
   });
 
-  return processThreadRefs(businessId, gmail, selfEmail, threadRefs, "Gmail", {
+  const from = Math.max(0, options.from ?? 0);
+  const onResult = options.onResult;
+  return processThreadRefs(businessId, gmail, selfEmail, threadRefs.slice(from), "Gmail", {
     maxClassifications: options.maxClassifications,
-    onResult: options.onResult,
+    onResult: onResult && ((info) => onResult({ ...info, stoppedAt: info.stoppedAt === undefined ? undefined : from + info.stoppedAt })),
   });
 }
 

@@ -15672,3 +15672,32 @@ on Stop (and before anyone answers) the waiting reply to a "not now" is a warm t
 reply writer used to ask when; and a no in the same message as a named time no longer gets a "Their moment" note
 unless the owner chose Ask. Checked on the real app, phone and computer: question shown, answered, gone, and changed
 in Settings both ways.
+
+
+## 2026-10-27 — One practice reply a day (A-330)
+
+**Asked:** the founder wanted something that trains FollowUp "more accurately and every day". FollowUp already learned
+from sent and edited replies, "Not a customer" taps and one question a day, but only when real customers wrote: a quiet
+owner taught it nothing.
+
+**Proposed and approved:** a practice card in the daily question's slot (A-101): one made-up customer message for the
+business's kind, FollowUp's real reply, **Looks right / Change it / Not now**. A change is kept the way "Write it
+better" keeps one (A-290), so the next real reply reads it.
+
+**Why this shape:**
+- *Reuse over invention:* the card is the daily question's box, buttons and gate; the reply is the "Try it yourself"
+  reply writer; the learning is A-290's example store. Nothing new for the owner to learn.
+- *Honest psychology (R-027, A-101):* value first (they see FollowUp's answer), a tiny ask (one tap), an easy way out
+  (Not now), at a quiet moment. No streaks or counts.
+- *Trust:* "made-up customer · nothing is sent" in the first line; nothing about the made-up customer is stored.
+
+**Weak points named at the drawing:** on a phone a setup card can sit under it (two black buttons): the card waits
+while any setup step is open. A practice message can repeat after the list runs out (about two weeks for a realtor).
+
+**Built the same day.** Checked in a real browser on a phone (390×844) and a computer (1440×900) with the local
+database: the card shows only when nobody waits and no setup step is open; every button is 44 px; Change it opens with
+FollowUp's reply already in the box; Save keeps one example and closes the day's slot; Undo removes the example; a
+reload the same day shows no card; Not now and Looks right close the slot. Left out of the build: the *"See what
+FollowUp learned"* link (no page lists the owner's examples yet). **Weak:** the reply takes a few seconds to write, so
+the card first shows a quiet "Writing how FollowUp would answer…" line; and if the reply writer fails the card simply
+doesn't appear, so the owner never sees why.

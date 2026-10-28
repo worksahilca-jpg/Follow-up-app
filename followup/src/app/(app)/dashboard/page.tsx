@@ -34,6 +34,7 @@ import FirstValueNote from "@/components/FirstValueNote";
 import { FIRST_VALUE_SEND, firstValueNote } from "@/lib/firstValue";
 import HabitQuestion from "@/components/HabitQuestion";
 import DailyQuestion from "@/components/DailyQuestion";
+import PracticeCard from "@/components/PracticeCard";
 import TellCard from "@/components/TellCard";
 import { AlertsCard } from "@/components/app/AlertsSetup";
 import InstallCard from "@/components/app/InstallCard";
@@ -43,6 +44,7 @@ import { clockTime, dayOffset, daySentence, doneLines, greeting, nextForYouLine 
 import { oneQueue } from "@/lib/approvalGroups";
 import { replyForMeOffer } from "@/lib/replyForMeOffer";
 import { todaysQuestion } from "@/lib/dailyQuestionData";
+import { todaysPractice } from "@/lib/dailyPracticeData";
 import { tellCardOffer } from "@/lib/tellFollowUpData";
 import { inboxSummaryFor } from "@/lib/inboxSummaryData";
 import InboxSummaryCard from "@/components/InboxSummaryCard";
@@ -288,6 +290,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   // One question a day (A-101): only when nobody is waiting on the owner and
   // nothing else is being asked, so it never stands in front of real work.
   const dailyQuestion = ctx && quietForQuestions && !tellCard ? await todaysQuestion(ctx.businessId, now) : null;
+  // One practice reply a day (A-330): the same slot and gate, when there is nothing to ask, and never beside a setup
+  // step (one black button on a phone screen).
+  const practice =
+    ctx && quietForQuestions && !tellCard && !dailyQuestion && setupSteps.length === 0 && process.env.OPENAI_API_KEY
+      ? await todaysPractice(ctx.businessId, now)
+      : null;
   const sendingPaused = Boolean(business?.sendingPausedAt);
   const sendLocked = Boolean(business?.onlyAdminsSend) && !isAdmin;
   const cantSend = !anySendChannel;
@@ -602,6 +610,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       {isAdmin && needYou === 0 && <HabitQuestion suggestion={habitSuggestion} />}
       {isAdmin && tellCard && <TellCard card={tellCard} />}
       {isAdmin && <DailyQuestion question={dailyQuestion} />}
+      {isAdmin && practice && <PracticeCard name={practice.name} text={practice.text} />}
 
       {leads.length === 0 ? (
         <div className="mt-10">

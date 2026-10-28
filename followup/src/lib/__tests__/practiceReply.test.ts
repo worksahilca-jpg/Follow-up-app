@@ -66,6 +66,13 @@ describe("practiceReply", () => {
     expect(r.verdict.sends).toBe(true);
   });
 
+  it("answers a first message in full when asked (the daily practice card, A-330), not with the instant reply", async () => {
+    const r = await practiceReply("biz1", "Jordan", [{ from: "customer", text: "Is the 3 bed on Elm Street available?" }], null, "email", false, { answerFirst: true });
+    expect(ack).not.toHaveBeenCalled();
+    expect(draft).toHaveBeenCalledTimes(1);
+    expect(r.reply).toContain("Happy to help");
+  });
+
   it("answers later messages with the real reply writer and its send check", async () => {
     const r = await practiceReply(
       "biz1",

@@ -84,7 +84,14 @@ a booked call or visit; the owner closes.
   from the device's clock); the phone's bars are see-through with a blur; white groups are raised by a soft shadow;
   dark mode keeps its ground. Start free in the bar and the try box go straight to sign-in. Checked phone + computer,
   day, evening and dark. Local `next build` can't run in this sandbox (Turbopack's font download); CI builds it.
-- **One question before reading a website that isn't the owner's (Oct 28, A-332), PR open, not merged.** The
+- **One window on a desk, crisp, light and dark (Oct 28, A-333), PR open, not merged.** On his Mac in dark mode
+  the founder saw nothing of A-331 (dark kept its ground), asked for a dark version, then on seeing it: "too blurry…
+  feels like the app isn't loaded yet… make it feel premium… the same for light" (R-142: the blurred photo and the
+  grain are dead in the app). Drawn crisp with no photo (P1 one frame, P3 two panels, P3b one window); he picked P3b
+  after "P3 feels detached". Built: the shell is a flat desk (light #dbd8d1, dark #000), the sidebar and the sheet are
+  one rounded window on it with a hairline ring and a seam, one shadow; the phone keeps paper and its frosted bars;
+  DayLight and the wash photos deleted. Measured in a real browser in both modes.
+- **One question before reading a website that isn't the owner's (Oct 28, A-332) LIVE ✓ (#610 → 2e2cd68).** The
   founder: "what if someone pasted someone else's website… we'll mess up everything." Today the only guard was the
   play-back's "Looks right". Now FollowUp compares what the site calls itself (og:site_name or its title) and its first
   page and address with the business's name; when no distinctive word matches it reads nothing and asks one question

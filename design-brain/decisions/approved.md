@@ -5915,6 +5915,11 @@ after-states, on the real app).
 
 ## A-331 — The app on a soft photo: a still frame, the sheet floats, the photo follows the day (A + F) ^A-331
 
+**AMENDED 2026-10-28 (same day):** the photo, the day/evening swap and the grain are **SUPERSEDED** by
+[[rejected#^R-142|R-142]] ("too blurry… feels like the app isn't loaded yet") and [[#^A-333|A-333]]. What stands from
+A-331: the still frame (only the sheet's inside scrolls), the 8 px frame, the phone's see-through bars, the raised groups,
+and Start free going to sign-in.
+
 **Date:** 2026-10-28. **Founder, verbatim:** *"A + F"*, then *"make it more simple too. It should be user-friendly, and
 don't make it too dark or something. Make it relatable like iOS does."* (boards: scratchpad `warm/warm-board.png`,
 `warm/warm-board-2.png`, drawn on the live local app).
@@ -5966,3 +5971,28 @@ his answer: *"yes build it"*.
 the read route answers `check` instead of reading when they don't match and reads on with `mine: true`; the meeting
 screen and setup's line show the question. Checked in a real browser, phone 390×844 and computer 1440×900: the
 question, No (link kept, box focused), Yes (the request carries `mine`); the fetch itself can't run in the sandbox.
+
+## A-333 — One window on a desk: crisp, no photo, the same in light and dark (P3b) ^A-333
+
+**Date:** 2026-10-28. **Founder, verbatim:** *"We got to make it feel premium. Make it the same for light design as
+well. Let's just upgrade it, please."* → on P3: *"I like the third one, but it feels like it is detached, like they have
+different pages on the same single page."* → on P3b: *"build it"* (boards: scratchpad `premium/premium-light.png`,
+`premium-dark.png`, `premium-joined.png`, drawn on the live local app).
+**What specifically was approved:**
+- **A desk, not a photo.** On a computer the shell is one flat tone (`--desk`: light `#dbd8d1`, dark `#000`), as tall
+  as the window, never moving. No picture, no blur, no grain (R-142).
+- **The sidebar and the sheet are one window** on that desk: rounded 16 px as a whole (the sidebar's left corners, the
+  sheet's right corners), one hairline ring around it (`--window-line`, black 10% / white 10%), a 1 px seam between the
+  two (`--window-seam`, 8%), one soft shadow under both (`--window-shadow`). The sidebar is a lighter zone
+  (`--sidebar`: `#f3f1ec` / `#111`), the sheet is paper (`#fafaf9` / `#202020`). Two zones, one place.
+- **Only the inside scrolls** (A-331's frame stands): the sheet's content, and the sidebar's own when it must.
+- **The same build in both modes:** the tokens change, nothing else.
+- **The phone is untouched by this**: paper ground, the frosted bars, the raised groups; the phone photo band is gone
+  with R-142.
+**Why two separate panels (P3) were not taken:** the founder read them as two pages on one screen; one window with a
+seam reads as one app with a sidebar, the way a Mac window does.
+**Built 2026-10-28** (same day): `--desk`, `--window-line`, `--window-seam`, `--window-shadow` in globals.css (light +
+dark), the `.app-shell`/`aside`/`.app-sheet` rules at `lg`; `DayLight.tsx` and the two wash photos deleted. Measured in
+a real browser, light and dark, 1440×900: the page itself never scrolls, the sheet does, the sidebar and the sheet start
+at 8 px and end 8 px from the edge, the seam is 0 px of gap, no background image anywhere; phone 390×844: no `::before`
+layer, bars still frosted; no page errors.

@@ -15701,3 +15701,62 @@ reload the same day shows no card; Not now and Looks right close the slot. Left 
 FollowUp learned"* link (no page lists the owner's examples yet). **Weak:** the reply takes a few seconds to write, so
 the card first shows a quiet "Writing how FollowUp would answer…" line; and if the reply writer fails the card simply
 doesn't appear, so the owner never sees why.
+
+## 2026-10-28 — The app feels "boring" and "like scrolling code"; a warmer look drawn, the frame made still
+
+**Founder (his first day on a Mac):** *"the app inside our app is way too boring… even Wispr Flow has added all those
+little photos, images, or maybe the textures that they have in the background… It looks way more interactive and a bit
+happier… which also makes sense with our product"* and *"When I scroll and stuff, it feels like I'm not scrolling the
+actual app. It's like I'm scrolling code or something."* Also: *"when I click on 'Start Free,' it scrolls down to the
+very bottom and asks me to start free again. Let's fix all that."*
+
+**What was found (local build, phone 390×844 and computer 1440×900, the busier test business):**
+- *Scrolling:* on a computer the whole web page scrolls, so the white sheet, its rounded corner and the top edge move
+  with the list and the page title disappears; what's left is a column of small text in a wide white field. Real apps
+  (Mac Mail, Wispr, Claude) keep the frame still and scroll only the inside. On a phone the bars are already fixed.
+- *Boring:* the frame is a flat grey (#f3f3f2), the sheet white, the type black; nothing warm anywhere. The landing
+  page has its blurred street photos as colour (A-120, A-143); the app has none of that.
+- *Start free:* the bar's button is `href="#start"` on purpose (A-167, the flight into the closing card), so it
+  scrolls to the bottom where the real button is. On a Mac trackpad that reads as a loop.
+
+**Drawn (scratchpad `warm/warm-board.png`, CSS injected into the live local app, not a mock-up):**
+- **A · a soft photo behind the frame.** The landing's sunlit street photo (`/landing/d5dc60f92bca.jpg`, already used
+  behind the example week's numbers) blurred until it is only colour (A-120, R-030): on a computer it fills the frame
+  behind the sidebar and the 8 px band around the sheet; on a phone it sits behind the greeting and fades into paper
+  by mid-screen. The white sheet floats in the frame with rounded corners and a soft shadow and **never moves: only
+  its inside scrolls** (`overflow-y: auto` on the sheet). The phone's top bar and tabs turn see-through with a blur
+  (iOS). White groups get A-278's soft two-layer shadow instead of the thin line. No colour added to type, buttons or
+  rows (R-128). No person, no visible picture (R-011, R-030).
+- **B · warm paper.** The same frame and depth, a warm paper tone (#f0ece5) with a faint grain, no photo.
+- Recommended to the founder: A. Waiting for his pick.
+- **Not drawn, said as the next step:** on a computer the page name staying at the top of the sheet while the list
+  scrolls (the phone already does this, A-264), and the Customers list on a wide screen kept to a narrower column.
+
+**Start free, changed now (his instruction):** the bar's button and the try box's "Start free →" link straight to
+`/signin`; the big closing button and its flight (A-167, A-171) stay as they are. A-167 amended.
+
+**Weak, named:** the computer wash is quiet by design (the sheet covers most of the window), so the warmth lives mostly
+in the sidebar and the frame; if he wants "happier" than that, the next lever is the photo's strength, not more colour
+in the content. The see-through tab bar lets list text show faintly through it (iOS does the same); kept at 90% white.
+
+**Round 2, same day (founder: *"Are there more options that we can play around with?"*).** Five more drawn the same
+way (scratchpad `warm/warm-board-2.png`): **C** a charcoal frame with the night street (`750fc8e89ea0`) behind it, the
+phone's bars dark (A-282's dark ground, light sheet); **D** warm all over, a cream sheet (#faf7f1) with the white groups
+floating on it, no photo (Wispr's parchment); **E** the photo as a header band only, behind the greeting and the numbers
+(`2da2bf62d814`, blurred less); **F** A with the photo following the time of day (evening: `42d25b3b05cc`, the dusk
+street); **G** A plus a soft tint on every initials face (Apple Contacts). G is colour inside the content, so it was
+offered with R-128 named ("minimal, not colourful"): the founder's call. Recommendation unchanged: A, with F if he
+wants the app to change through the day. Waiting for his pick.
+
+**Picked (2026-10-28, later the same day): A + F → [[approved#^A-331|A-331]].** His words: *"A + F and bro, what about
+the texture… the thing in Wispr Flow… Make it similar to or something close to what you have shown, and we got to make
+it more simple too. It should be user-friendly, and don't make it too dark or something. Make it relatable like iOS
+does."* Read as: build A with the time-of-day photo; keep it light and iOS-like (C and G not taken); and he is asking
+about Wispr's fine paper grain, which the app has in principle (A-115) but which the founder rejected on the landing's
+photo blocks when it was heavy (R-071). Next: show a zoomed sample at two strengths and ask, then build.
+
+**Built the same day (A-331).** Grain: faint, my call after *"It's on you"* (simplicity wins the tie, but he asked for
+the texture twice; faint costs one background tile). What's weak, named: the computer wash is quiet by design and lives
+mostly in the sidebar and the 8 px frame; the phone's see-through tab bar lets list text show faintly through it (iOS
+does the same); the local production build could not run in the sandbox (Turbopack's Google-font download fails there),
+so the build gate is CI's. The landing's Start free fix shipped in the same PR.

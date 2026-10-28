@@ -3,6 +3,7 @@
 import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { scrollPageTop } from "@/lib/scrollTop";
 import { Check } from "lucide-react";
 import { WARM_CARD } from "@/components/app/ReplyCard";
 import { oneQueue, summariseGroups, UNKNOWN_SOURCE_LABEL, WHOLE_QUEUE } from "@/lib/approvalGroups";
@@ -812,7 +813,7 @@ export default function ApprovalQueue({
       window.history.pushState({ todayOpen: leadId }, "");
       pushedOpen.current = true;
       setOpenOnPhone(true);
-      window.scrollTo({ top: 0 });
+      scrollPageTop();
       return;
     }
     // On a computer the person is already beside the list; scroll only if it is off screen.

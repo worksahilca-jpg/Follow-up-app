@@ -72,7 +72,22 @@ a booked call or visit; the owner closes.
 
 ## Where we are (update at the end of every task)
 
-**Last updated: 2026-10-27**
+**Last updated: 2026-10-28**
+
+- **The app on a soft photo, a still frame, Start free fixed (Oct 28, A-331), PR open, not merged.** The founder,
+  first day on a Mac: the app is "way too boring", scrolling "feels like I'm scrolling code", and the landing's Start
+  free "scrolls down to the very bottom and asks me to start free again". Found: on a computer the whole web page
+  scrolled, so the white sheet and its corner slid away with the list; the frame was flat grey; the bar's Start free
+  pointed at the closing card on purpose (A-167). Drawn on the real app, two boards (A/B, then C–G), his pick A + F
+  with a faint grain ("It's on you"): the sheet floats in an 8 px frame and never moves, only its inside scrolls; a
+  street photo from the landing, blurred to colour, sits behind the frame (day until 5 pm, the dusk street after,
+  from the device's clock); the phone's bars are see-through with a blur; white groups are raised by a soft shadow;
+  dark mode keeps its ground. Start free in the bar and the try box go straight to sign-in. Checked phone + computer,
+  day, evening and dark. Local `next build` can't run in this sandbox (Turbopack's font download); CI builds it.
+- **Accuracy, asked by the founder (Oct 28):** the 4 tests on /admin were last run Oct 14 (replies 10/20 then); many
+  fixes went in since and nobody re-ran them. Live use in 14 days: 17 replies drafted, 78 customer checks, 0 failed
+  calls, one business. Next: he taps Run on /admin and sends the 4 numbers; then the scores go into the nightly diary.
+  The website reading (A-328) is live but 0 of 12 businesses have given a link.
 
 - **Gmail's daily full read finishes again (Oct 27), PR open (with the practice card), not merged.** After #607 new
   mail came in, but the busy inbox's daily 90-day read had not finished since Oct 20. Vercel's record of calls to Google:

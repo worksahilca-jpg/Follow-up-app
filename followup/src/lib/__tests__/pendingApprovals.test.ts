@@ -176,6 +176,7 @@ describe("getPendingApprovals", () => {
         customerToldAt: null,
         saidNo: false,
         saidNoHow: null,
+        pickedTime: false,
         askedIfPerson: false,
         site: null,
       },

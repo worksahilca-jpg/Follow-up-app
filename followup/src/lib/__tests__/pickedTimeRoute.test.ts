@@ -4,7 +4,7 @@
  * booking page uses and tells the customer; Another time offers two other
  * free times and tells them; I'll call clears the pick and sends nothing.
  */
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { NextRequest } from "next/server";
 
 const ctx = { userId: "user1", businessId: "biz1", email: "owner@example.com", authTime: Date.now() };
@@ -14,9 +14,10 @@ type SendResult = { success: boolean; message?: string };
 const { sendFollowUpToLead } = vi.hoisted(() => ({ sendFollowUpToLead: vi.fn(async (_id: string, _body: string, _opts?: unknown): Promise<SendResult> => ({ success: true })) }));
 const { recordAudit } = vi.hoisted(() => ({ recordAudit: vi.fn(async () => true) }));
 const { sendRefusal } = vi.hoisted(() => ({ sendRefusal: vi.fn(async (): Promise<string | null> => null) }));
-type Booked = { success: true; scheduledAt: string } | { success: false; message: string };
-const { createBooking, offerTwoTimes } = vi.hoisted(() => ({
-  createBooking: vi.fn(async (_id: string, _iso: string): Promise<Booked> => ({ success: true, scheduledAt: "2026-10-30T17:00:00.000Z" })),
+type Booked = { success: true; scheduledAt: string; bookingId: string } | { success: false; message: string };
+const { createBooking, offerTwoTimes, upcomingBookingFor } = vi.hoisted(() => ({
+  createBooking: vi.fn(async (_id: string, _iso: string, _opts?: unknown): Promise<Booked> => ({ success: true, scheduledAt: "2026-10-30T17:00:00.000Z", bookingId: "b2" })),
+  upcomingBookingFor: vi.fn(async (): Promise<{ id: string; scheduledAt: Date } | null> => null),
   offerTwoTimes: vi.fn(
     async (_id: string, _now: Date, _tz: string, _opts?: unknown): Promise<{ at: string[]; said: string[] } | null> => ({ at: ["2026-10-31T15:00:00.000Z", "2026-11-02T18:00:00.000Z"], said: ["Saturday at 11 am", "Monday at 1 pm"] })
   ),
@@ -33,7 +34,7 @@ vi.mock("@/lib/audit", () => ({ recordAudit }));
 vi.mock("@/lib/billing", () => ({ requireActiveBilling: vi.fn(async () => true), billingLockedMessage: vi.fn(async () => "") }));
 vi.mock("@/lib/rateLimit", () => ({ tooManyRecentActions: vi.fn(async () => false) }));
 vi.mock("@/lib/sendingControl", () => ({ sendRefusal }));
-vi.mock("@/lib/booking", () => ({ createBooking, offerTwoTimes }));
+vi.mock("@/lib/booking", () => ({ createBooking, offerTwoTimes, upcomingBookingFor }));
 vi.mock("@/lib/db", () => ({ prisma: { lead: { findFirst: leadFindFirst, update: leadUpdate } } }));
 
 import { POST } from "@/app/api/leads/[id]/picked-time/route";
@@ -49,14 +50,15 @@ beforeEach(() => {
   vi.clearAllMocks();
   sendFollowUpToLead.mockResolvedValue({ success: true });
   sendRefusal.mockResolvedValue(null);
-  createBooking.mockResolvedValue({ success: true, scheduledAt: PICKED.toISOString() });
+  createBooking.mockResolvedValue({ success: true, scheduledAt: PICKED.toISOString(), bookingId: "b2" });
+  upcomingBookingFor.mockResolvedValue(null);
 });
 
 describe("confirm", () => {
   it("books the picked time through createBooking, tells the customer, and clears the pick", async () => {
     const res = await post({ action: "confirm" });
     expect(res.status).toBe(200);
-    expect(createBooking).toHaveBeenCalledWith("lead1", PICKED.toISOString());
+    expect(createBooking).toHaveBeenCalledWith("lead1", PICKED.toISOString(), {});
     expect(sendFollowUpToLead).toHaveBeenCalledWith("lead1", "Booked: Friday, Oct 30 at 1 pm. See you then.", { trigger: "manual", humanSend: { userId: "user1" } });
     const data = leadUpdate.mock.calls[0][0] as { data: Record<string, unknown> };
     expect(data.data.pickedTime).toBeNull();
@@ -136,5 +138,45 @@ describe("I'll call instead, and the guards", () => {
   });
   it("refuses an unknown action", async () => {
     expect((await post({ action: "book" })).status).toBe(400);
+  });
+});
+
+describe("a pick beside a booked time is a move (part 2)", () => {
+  const OLD = new Date("2026-10-29T15:00:00.000Z"); // Thursday 11 am Toronto
+  beforeEach(() => {
+    // "tomorrow at 11 am" / "Friday at 1 pm" hold only from the Wednesday before: the clock is pinned there.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-28T14:00:00.000Z"));
+    upcomingBookingFor.mockResolvedValue({ id: "b1", scheduledAt: OLD });
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+  it("confirm replaces the old booking in one go and says Moved", async () => {
+    const res = await post({ action: "confirm" });
+    expect(res.status).toBe(200);
+    expect(createBooking).toHaveBeenCalledWith("lead1", PICKED.toISOString(), { replace: { id: "b1", by: "customer" } });
+    expect(sendFollowUpToLead.mock.calls[0][1]).toBe("Moved: Friday, Oct 30 at 1 pm. See you then.");
+    expect(recordAudit).toHaveBeenCalledWith(ctx, "booking.move", expect.objectContaining({ meta: expect.objectContaining({ from: OLD.toISOString() }) }));
+    expect((await res.json()).message).toBe("Moved. FollowUp told Raj.");
+  });
+  it("keep clears the pick and asks whether the old time still works", async () => {
+    const res = await post({ action: "keep" });
+    expect(res.status).toBe(200);
+    expect(createBooking).not.toHaveBeenCalled();
+    expect(sendFollowUpToLead.mock.calls[0][1]).toBe("Sorry, Friday at 1 pm doesn't work on my side after all. Can you still make tomorrow at 11 am? If not, tell me and I'll find another time.");
+    expect((leadUpdate.mock.calls[0][0] as { data: Record<string, unknown> }).data.pickedTime).toBeNull();
+    expect(recordAudit).toHaveBeenCalledWith(ctx, "booking.keep", { targetType: "lead", targetId: "lead1", meta: { kept: OLD.toISOString() } });
+  });
+  it("another time also skips the booked time", async () => {
+    await post({ action: "another" });
+    const opts = offerTwoTimes.mock.calls[0][3] as { avoid: string[] };
+    expect(opts.avoid).toContain(OLD.toISOString());
+  });
+  it("keep answers 409 when nothing is booked", async () => {
+    upcomingBookingFor.mockResolvedValueOnce(null);
+    const res = await post({ action: "keep" });
+    expect(res.status).toBe(409);
+    expect(sendFollowUpToLead).not.toHaveBeenCalled();
   });
 });

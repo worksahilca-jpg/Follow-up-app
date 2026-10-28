@@ -4092,7 +4092,27 @@ confirms a time on its own.
   grey box, Confirm Saturday 11 AM / Another time / I'll call Raj instead) on the customer page, Customers and
   Inbox. Confirm books through the booking page's own check and sends "Booked: Saturday, Oct 31 at 11 am. See you
   then." Not said: "I'll send a reminder the day before" (the drawing had it; no customer reminder exists, so the
-  message doesn't promise one). Part 2, change and cancel, is next.
+  message doesn't promise one). Part 2, change and cancel, is below.
+- **Built, part 2 (2026-10-28, the same "build it"):** change and cancel in the chat. A customer with a booked time
+  who asks to move it ("can't make Saturday, is Sunday possible?", "can we reschedule?") is offered two new free
+  times in the move words ("Sure, let's find another time. I can do Sunday at 11 am or Monday at 1 pm. Which works
+  for you?"), and is never read as a no; their pick shows the card as "Raj wants to move the viewing" with the old
+  time struck through, **Confirm Sunday 11 AM** / **Another time** / *Keep Saturday 11 AM*. Confirm moves the booking
+  in one transaction (the old one cancelled, the new one made, the calendar event swapped) and says "Moved: Sunday,
+  Nov 1 at 11 am. See you then."; Keep tells them the old time stands if they can still make it. A customer who
+  cancels outright ("I need to cancel Saturday, sorry") has the slot freed at once and hears "No problem, I've taken
+  Saturday at 11 am off the calendar. Whenever you'd like to set up another time, just let me know."; the owner gets
+  one buzz ("Raj cancelled") and a cancelled card on the customer page, in Customers and in the Inbox, and a Today
+  row ("Cancelled Saturday at 11 am. Offer another time?"), with **Offer another time** (black) or *OK, leave it*.
+  A cancel that is really a no ("cancel it, we're not interested") stays with the no safety net (A-326) and the
+  booking waits for the owner. The owner's side: a calm white **Booked** card (what · where, day · time, "✓ FollowUp
+  told Raj") with two quiet choices, *Change the time* (the old time goes off, two others are offered with the
+  apology) and *Cancel* (asked once in place, then off and told; no new time offered, that was the owner's choice).
+  A cancelled booking frees its slot (the double-booking guard now covers confirmed bookings only), clears the
+  checklist's booked line and the next-follow-up marker, and takes its Google Calendar event off. Today also shows
+  "Picked Sunday at 11 am. Confirm it." for a pick waiting outside the held list, and a held acknowledgement's row
+  says "Picked a time. Send the reply, then confirm it on their page." Not built: a customer reminder (none exists);
+  the buyer's place on the card (the checklist stores the listing's day, not its address).
 
 ## A-243 — Today says what to do: one customer, one sentence, one black button ^A-243
 

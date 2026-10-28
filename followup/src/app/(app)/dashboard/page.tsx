@@ -51,6 +51,7 @@ import InboxSummaryCard from "@/components/InboxSummaryCard";
 import { sinceStartedFor } from "@/lib/sinceStarted";
 import { factsWaitingCount } from "@/lib/businessFacts";
 import { callsWeekValue } from "@/lib/callsWeek";
+import { sayTime } from "@/lib/bookingTimes";
 import { countCallsThisWeek } from "@/lib/callsWeekData";
 import SinceStartedPill from "@/components/app/SinceStartedPill";
 import { planLine } from "@/lib/comingUp";
@@ -179,6 +180,44 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       last: tried ? `Last call ${tried}: no answer.${c.texted ? ` Your text asked for a good time. No reply yet.` : ""}` : null,
     };
   });
+  // Booking in the chat (A-242, part 2): a picked time waiting for Confirm, and a time the customer cancelled that
+  // the owner hasn't dealt with, each one row that opens the customer's page. Anyone already waiting for an OK has
+  // a reply row, whose words say it instead.
+  const [pickedLeads, cancelledBookings] =
+    ctx && leads.length > 0
+      ? await Promise.all([
+          prisma.lead.findMany({ where: { businessId: ctx.businessId, pickedTime: { not: null } }, select: { id: true, name: true, pickedTime: true } }),
+          prisma.booking.findMany({
+            where: { businessId: ctx.businessId, status: "canceled", canceledBy: "customer", cancelSeenAt: null, canceledAt: { gte: new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000) } },
+            orderBy: { canceledAt: "desc" },
+            select: { id: true, leadId: true, scheduledAt: true, lead: { select: { name: true } } },
+          }),
+        ])
+      : [[], []];
+  const bookingRows: TodayRow[] = [
+    ...pickedLeads
+      .filter((l) => l.pickedTime && !awaitingOk.has(l.id))
+      .map((l) => ({
+        key: `picked-${l.id}`,
+        kind: "booking" as const,
+        title: l.name,
+        person: l.name,
+        sub: `Picked ${sayTime(l.pickedTime!.toISOString(), timezone, now)}. Confirm it.`,
+        time: null,
+        href: `/leads/${l.id}#reply`,
+      })),
+    ...cancelledBookings
+      .filter((b) => !awaitingOk.has(b.leadId))
+      .map((b) => ({
+        key: `cancelled-${b.id}`,
+        kind: "booking" as const,
+        title: b.lead.name,
+        person: b.lead.name,
+        sub: `Cancelled ${sayTime(b.scheduledAt.toISOString(), timezone, now)}. Offer another time?`,
+        time: null,
+        href: `/leads/${b.leadId}#reply`,
+      })),
+  ];
   // Who each waiting person is, from their own words (A-286): one line for the row, up to three facts for the open
   // person, and how many times FollowUp or the owner has written to them. Scoped to this business.
   const waitingIds = withBasisItems.map((a) => a.leadId);
@@ -581,7 +620,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         const queue = (
           <ApprovalQueue
             items={approvalItems}
-            rows={callRows}
+            rows={[...bookingRows, ...callRows]}
             calls={callsToPrepare}
             plan={approvalItems.length === 0 && comingUp ? planLine(comingUp.groups) : null}
             next={nextForYouLine(nextCallForYou)}

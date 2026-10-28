@@ -2,8 +2,21 @@ import { describe, expect, it } from "vitest";
 import type { Message } from "@/lib/types";
 import {
   anotherTimeText,
+  asksToCancel,
   asksToMeet,
+  asksToMove,
+  bookedCardWords,
   bookedText,
+  cancelAckText,
+  cancelledBuzz,
+  cancelledCardWords,
+  keepText,
+  moveOfferText,
+  movedText,
+  ownerCancelText,
+  ownerChangeText,
+  pickedCardWords,
+  reofferText,
   carriesOffer,
   chooseTwo,
   confirmLabel,
@@ -174,5 +187,65 @@ describe("whatFor and readOfferedTimes", () => {
     expect(readOfferedTimes({ at: [THU_10], said: [] })).toBeNull();
     expect(readOfferedTimes(null)).toBeNull();
     expect(readOfferedTimes("x")).toBeNull();
+  });
+});
+
+describe("change or cancel in the chat (part 2)", () => {
+  const SAT = "2026-10-31T15:00:00.000Z"; // Saturday 11 am Toronto, the booked time
+  const move = (t: string) => asksToMove(t, SAT, TZ, NOW);
+  const cancel = (t: string) => asksToCancel(t, SAT, TZ, NOW);
+
+  it("reads a request to move the booked time", () => {
+    expect(move("Can we reschedule? Something came up.")).toBe(true);
+    expect(move("Could we move it to Sunday?")).toBe(true);
+    expect(move("Can't make Saturday, is Sunday possible?")).toBe(true);
+    expect(move("I can't make it Saturday after all")).toBe(true);
+    expect(move("Cancel Saturday, can we do Monday instead?")).toBe(true);
+    expect(move("Is there a different time that works?")).toBe(true);
+    expect(move("can we do 2 pm instead of 11?")).toBe(true);
+  });
+  it("reads a cancel that asks for nothing else", () => {
+    expect(cancel("I need to cancel Saturday, sorry")).toBe(true);
+    expect(cancel("Something came up, I have to cancel")).toBe(true);
+    expect(cancel("We changed our mind, no need for the viewing")).toBe(true);
+    expect(cancel("Let's call it off for now")).toBe(true);
+  });
+  it("never reads both, and leaves a real no to the no safety net", () => {
+    expect(move("I need to cancel Saturday, sorry")).toBe(false);
+    expect(cancel("Can't make Saturday, is Sunday possible?")).toBe(false);
+    expect(cancel("Cancel Saturday, can we do Monday instead?")).toBe(false);
+    expect(cancel("Cancel it, we're not interested anymore")).toBe(false);
+    expect(move("Cancel it, we're not interested anymore")).toBe(false);
+    expect(cancel("Please stop messaging me")).toBe(false);
+  });
+  it("reads nothing into an ordinary message", () => {
+    expect(move("See you Saturday at 11!")).toBe(false);
+    expect(cancel("See you Saturday at 11!")).toBe(false);
+    expect(move("What should I bring?")).toBe(false);
+    expect(cancel("Thanks, looking forward to it")).toBe(false);
+  });
+  it("says the fixed words", () => {
+    expect(moveOfferText(["Sunday at 11 am", "Monday at 1 pm"])).toBe("Sure, let's find another time. I can do Sunday at 11 am or Monday at 1 pm. Which works for you?");
+    expect(movedText("2026-11-01T16:00:00.000Z", TZ, "42 Elm St, Oakville")).toBe("Moved: Sunday, Nov 1 at 11 am, 42 Elm St, Oakville. See you then.");
+    expect(keepText("Saturday at 11 am", "Sunday at 11 am")).toBe("Sorry, Sunday at 11 am doesn't work on my side after all. Can you still make Saturday at 11 am? If not, tell me and I'll find another time.");
+    expect(cancelAckText("Saturday at 11 am")).toBe("No problem, I've taken Saturday at 11 am off the calendar. Whenever you'd like to set up another time, just let me know.");
+    expect(ownerChangeText("Saturday at 11 am", ["Sunday at 11 am", "Monday at 1 pm"])).toBe("Sorry, something came up on my side and I can't do Saturday at 11 am anymore. I can do Sunday at 11 am or Monday at 1 pm. Which works for you?");
+    expect(ownerCancelText("Saturday at 11 am")).toBe("Sorry, I have to cancel Saturday at 11 am. I'll get back to you about another time.");
+    expect(reofferText(["Sunday at 11 am"])).toBe("If it helps, I can do Sunday at 11 am. Does that work for you?");
+    expect(cancelledBuzz("Raj", "Saturday at 11 am")).toEqual({ title: "Raj cancelled", body: "Raj cancelled Saturday at 11 am. Offer another time?" });
+    expect(pickedBuzz("Raj", "Sunday at 11 am", "Saturday at 11 am")).toEqual({ title: "Raj wants to move", body: "Raj wants Sunday at 11 am instead of Saturday at 11 am. Tap to confirm." });
+    expect(offerTimesPromptBlock(["Sunday at 11 am", "Monday at 1 pm"], true)).toContain("THEY WANT TO MOVE THE TIME THEY HAD BOOKED");
+  });
+  it("words the cards: a move carries the old time, booked and cancelled carry theirs", () => {
+    const conversation = [m("inbound", "Can we see 42 Elm St this Saturday?"), m("outbound", offerText(OFFER.said))];
+    const moved = pickedCardWords({ name: "Raj Mehta", conversation, pickedTime: "2026-11-01T16:00:00.000Z", upcomingBooking: { id: "b1", at: SAT } }, TZ, NOW);
+    expect(moved).toMatchObject({ first: "Raj", what: "Viewing", label: "Sunday 11 AM", from: { said: "Saturday at 11 am", label: "Saturday 11 AM" } });
+    expect(pickedCardWords({ name: "Raj Mehta", conversation, pickedTime: "2026-11-01T16:00:00.000Z" }, TZ, NOW)?.from).toBeNull();
+    const booked = bookedCardWords({ name: "Raj Mehta", conversation, upcomingBooking: { id: "b1", at: SAT } }, TZ, NOW);
+    expect(booked).toMatchObject({ id: "b1", first: "Raj", what: "Viewing", day: "Saturday, Oct 31", time: "11:00 AM", said: "Saturday at 11 am", label: "Saturday 11 AM" });
+    expect(bookedCardWords({ name: "Raj Mehta", conversation, upcomingBooking: { id: "b0", at: "2026-10-20T15:00:00.000Z" } }, TZ, NOW)).toBeNull();
+    expect(bookedCardWords({ name: "Raj Mehta", conversation }, TZ, NOW)).toBeNull();
+    expect(cancelledCardWords({ name: "Raj Mehta", conversation, cancelledBooking: { id: "b1", at: SAT } }, TZ, NOW)).toEqual({ id: "b1", first: "Raj", said: "Saturday at 11 am" });
+    expect(cancelledCardWords({ name: "Raj Mehta", conversation }, TZ, NOW)).toBeNull();
   });
 });

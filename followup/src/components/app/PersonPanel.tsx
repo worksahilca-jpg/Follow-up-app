@@ -13,7 +13,9 @@ import { Eyebrow, Initials, StatePill, waitingFor, type StateKey } from "./canva
 import { plainHoldReason } from "@/lib/holdReasons";
 import PickedTimeCard from "@/components/app/PickedTimeCard";
 import MarkOpened from "@/components/app/MarkOpened";
-import { offerLineFor, pickedCardWords } from "@/lib/bookingTimes";
+import { bookedCardWords, cancelledCardWords, offerLineFor, pickedCardWords } from "@/lib/bookingTimes";
+import BookedCard from "@/components/app/BookedCard";
+import CancelledCard from "@/components/app/CancelledCard";
 
 /**
  * One customer, opened beside the Customers list (A-025; the canvas App
@@ -73,6 +75,9 @@ export default function PersonPanel({
   // Booking in the chat (A-242): their picked time waiting for Confirm; the line under a reply that offers times.
   const picked = pickedCardWords(lead, timeZone, now);
   const offerLine = offerLineFor(lead, timeZone, now);
+  // Change or cancel in the chat (A-242, part 2): a booked time still to come, and a time they cancelled.
+  const booked = bookedCardWords(lead, timeZone, now);
+  const cancelled = cancelledCardWords(lead, timeZone, now);
   const basis = lead.suggestedMessage
     ? describeBasis({
         draft: lead.suggestedMessage,
@@ -196,10 +201,14 @@ export default function PersonPanel({
         )}
       </div>
 
-      {(approval || picked) && (
+      {(approval || picked || cancelled || booked) && (
         <div className="px-5 pb-5">
           {picked ? (
             <PickedTimeCard key={`picked-${lead.pickedTime}`} leadId={lead.id} {...picked} />
+          ) : cancelled ? (
+            <CancelledCard key={`cancelled-${cancelled.id}`} leadId={lead.id} {...cancelled} />
+          ) : !approval && booked ? (
+            <BookedCard key={`booked-${booked.id}`} leadId={lead.id} {...booked} />
           ) : siteReply ? (
             <SiteReplyCard key={lead.id} leadId={lead.id} leadName={lead.name} site={siteReply} draft={lead.suggestedMessage} waiting={true} />
           ) : (

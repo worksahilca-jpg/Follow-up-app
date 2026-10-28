@@ -1077,6 +1077,8 @@ function replyRow(item: ApprovalItem): TodayRow {
   const base = { key: item.leadId, kind: "reply" as const, title: item.leadName, person: item.leadName, time: null, href: null, tag: tag && !item.line?.includes(tag) ? tag : null };
   // They said no (A-326): the row says it in words before anything else about them.
   if (item.saidNo) return { ...base, sub: saidNoWords(item.saidNoHow ?? "clear", item.leadName).row };
+  // They picked a time (A-242): the reply waiting is the acknowledgement; the booking waits for Confirm on their page.
+  if (item.pickedTime) return { ...base, sub: "Picked a time. Send the reply, then confirm it on their page." };
   // Who they are, from their own words (A-286), whenever FollowUp knows; what is waiting is said when they open.
   if (item.line) return { ...base, sub: item.line };
   // A note to someone staying in touch (A-260) answers nothing: the row says what it is.

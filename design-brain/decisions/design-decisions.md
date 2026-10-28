@@ -15911,3 +15911,38 @@ customer page); a row is bold only while their newest message is newer than the 
 (2) *"the app feels dead bro and too complex like how today should look like is not what i am expecting we gotta
 fix that as well"*: recorded as R-143 with an inferred principle; one clarifying question goes to him before Today is
 drawn again (look vs amount), per the brain's rule on unclear reasons.
+
+## 2026-10-28 — Booking in the chat (A-242) built, part 2: change and cancel in the chat
+
+**Founder:** the same *"build it"* on the redrawn board (step 3's Change · Cancel, step 4's move). Built as the
+second PR, as proposed, with no new drawing: every card reuses the picked card's shape and words.
+- **Data:** `Booking.googleEventId` (kept from the create so a move or cancel can take the event off), `canceledAt`,
+  `canceledBy` (customer | owner), `cancelSeenAt` (the owner dealt with a customer's cancel). The slot guard is now a
+  partial unique index on confirmed bookings (SQL in the migration; Prisma carries a plain index), so a cancelled
+  booking frees its slot instead of blocking it forever.
+- **Readers (`src/lib/bookingTimes.ts`, pure):** `asksToMove` (move words; "can't make it" without "cancel"; a
+  cancel that names another day) and `asksToCancel` (cancel words, nothing else asked, never when the no reader
+  (A-326) reads a real no). Read only while a confirmed booking is coming up. Fixed words for every reply FollowUp
+  sends on its own: the move offer, the cancel acknowledgement, "Moved: …", Keep, the owner's change and cancel,
+  the re-offer after a customer's cancel.
+- **Engine:** one booked-time read per customer message; a move feeds the two-times offer (the booked time avoided)
+  and switches the no reader off for that message; a cancel frees the slot, drafts the fixed acknowledgement
+  (low-risk, sends where replies do) and buzzes the business, with no AI call.
+- **Owner's side:** `picked-time` gains `keep` and a move on `confirm` (old booking replaced in one transaction);
+  new `POST /api/leads/[id]/booking` {change | cancel | offer | seen}. Cards: `BookedCard` (white, quiet links),
+  `CancelledCard` (warm, one black button), the picked card's move shape (old time struck through, Keep).
+- **Checked:** computer + phone on the local test business (scratchpad `booking/part2/*.png`): the Booked card on
+  the customer page, Customers and Inbox; the move card and its Today row; Keep (the send fails locally, the pick
+  stays, the error line shows); Confirm on a move (old cancelled, new confirmed, next-follow-up moved, audit
+  `booking.move`); Change (old cancelled by owner, "is off your calendar, but the message didn't send" when the send
+  fails); the cancelled card everywhere plus its Today row; OK (seen); Offer another time; the owner's two-step
+  Cancel. 5,089 tests, typecheck and lint clean.
+- **Weak, named honestly:** (1) the readers are English keyword lists: "can we do a video call instead?" beside a
+  booking reads as a move and offers times (safe, not clever); (2) Change cancels the old time before the message
+  goes, so a failed send leaves the time off and tells the owner to write by hand; (3) Keep asks "Can you still make
+  Saturday?", and a "no" to that is read as a move on the next pass, so two round trips; (4) calendar event ids are
+  kept only from this PR on: a booking made before it keeps its event on the calendar after a move or cancel;
+  (5) on Assisted the pick's Today row says two steps (send the reply, then confirm); (6) the CRM stage move on
+  booking (A-275) is not undone on cancel; (7) the customers panel keeps the "Booked" pill for a moment after a
+  cancel until the page refreshes.
+

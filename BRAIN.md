@@ -92,7 +92,8 @@ a booked call or visit; the owner closes.
   one rounded window on it with a hairline ring and a seam, one shadow; the phone keeps paper and its frosted bars;
   DayLight and the wash photos deleted. Measured in a real browser in both modes.
 
-- **Booking in the chat (A-242) built, part 1 (Oct 28):** the reply offers two free times, the customer's pick is read, the owner gets a buzz and one Confirm button; Confirm books it and tells them. Part 2 (change/cancel) next. PR open, waiting for "merge".- **One question before reading a website that isn't the owner's (Oct 28, A-332) LIVE ✓ (#610 → 2e2cd68).** The
+- **Booking in the chat (A-242) built, parts 1 + 2 (Oct 28):** the reply offers two free times, the customer's pick is read, the owner gets a buzz and one Confirm button; Confirm books it and tells them (part 1 LIVE ✓, #612 → 124c2a7). Part 2: a customer who asks to move gets two new times and the owner confirms the move; a customer who cancels frees the slot and the owner can offer another time; the owner's Booked card has Change the time and Cancel (PR open, waiting for "merge").
+- **One question before reading a website that isn't the owner's (Oct 28, A-332) LIVE ✓ (#610 → 2e2cd68).** The
   founder: "what if someone pasted someone else's website… we'll mess up everything." Today the only guard was the
   play-back's "Looks right". Now FollowUp compares what the site calls itself (og:site_name or its title) and its first
   page and address with the business's name; when no distinctive word matches it reads nothing and asks one question

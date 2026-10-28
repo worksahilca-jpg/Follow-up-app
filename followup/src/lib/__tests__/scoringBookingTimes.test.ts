@@ -5,14 +5,16 @@
  * one has the pick stored for the owner's Confirm, the fixed
  * acknowledgement as the draft, one buzz to the business, and no AI call.
  */
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 const SAT = "2026-10-31T15:00:00.000Z"; // Saturday 11 am Toronto
 const MON = "2026-11-02T19:00:00.000Z"; // Monday 2 pm Toronto
 const h = vi.hoisted(() => ({
   lead: null as Record<string, unknown> | null,
   update: vi.fn(),
-  updateMany: vi.fn(),
+  updateMany: vi.fn(async () => ({ count: 0 })),
+  booking: null as { id: string; scheduledAt: Date } | null,
+  cancel: vi.fn(async (_id: string, _biz: string, _by: string) => ({ id: "b1", leadId: "lead1", scheduledAt: new Date("2026-10-31T15:00:00.000Z") })),
   score: vi.fn(async () => ({ score: 60, reason: "Wants to see it", factors: [], saysNo: false, asksIfAutomated: false, onlyThanks: false })),
   generate: vi.fn(async (lead: unknown) => {
     void lead;
@@ -27,7 +29,7 @@ vi.mock("@/lib/db", () => ({
   prisma: {
     lead: { findUnique: vi.fn(async () => h.lead), update: h.update, updateMany: h.updateMany },
     notification: { create: vi.fn() },
-    booking: { findFirst: vi.fn(async () => null) },
+    booking: { findFirst: vi.fn(async () => h.booking) },
     user: { findMany: vi.fn(async () => [{ id: "owner1" }, { id: "mate1" }]) },
   },
 }));
@@ -52,7 +54,7 @@ vi.mock("@/lib/audit", () => ({ recordAudit: vi.fn() }));
 vi.mock("@/lib/pendingApprovals", () => ({ heldSince: vi.fn(async () => true) }));
 vi.mock("@/lib/crm/notes", async (importOriginal) => ({ ...(await importOriginal<typeof import("@/lib/crm/notes")>()), pushCrmNote: vi.fn() }));
 vi.mock("@/lib/crm/stages", async (importOriginal) => ({ ...(await importOriginal<typeof import("@/lib/crm/stages")>()), moveLeadForTier: vi.fn() }));
-vi.mock("@/lib/booking", () => ({ offerTwoTimes: h.offer }));
+vi.mock("@/lib/booking", () => ({ offerTwoTimes: h.offer, cancelBooking: h.cancel }));
 vi.mock("@/lib/webPush", () => ({ isPushConfigured: () => true, sendPushToUser: h.push }));
 
 process.env.OPENAI_API_KEY = "test-key";
@@ -94,6 +96,7 @@ const OFFER_TEXT = "I can do Saturday at 11 am or Monday at 2 pm. Which works fo
 
 beforeEach(() => {
   vi.clearAllMocks();
+  h.booking = null;
   h.offer.mockResolvedValue({ at: [SAT, MON], said: ["Saturday at 11 am", "Monday at 2 pm"] });
   h.generate.mockResolvedValue({ body: "Happy to show you 42 Elm St. I can do Saturday at 11 am or Monday at 2 pm. Which works for you?", subject: "Re: 42 Elm St" });
 });
@@ -175,5 +178,76 @@ describe("reading the pick", () => {
     await scoreAndDraftForLead("lead1");
     expect(updateData().pickedTime).toBeNull();
     expect(updateData().pickedTimeAt).toBeNull();
+  });
+});
+
+describe("change or cancel in the chat (part 2)", () => {
+  const SUN = "2026-11-01T16:00:00.000Z"; // Sunday 11 am Toronto
+  const BOOKED = [
+    message("inbound", "Can we see 42 Elm St this Saturday?", 1),
+    message("outbound", OFFER_TEXT, 2),
+    message("inbound", "Saturday at 11 works for us.", 3),
+    message("outbound", "Booked: Saturday, Oct 31 at 11 am. See you then.", 4),
+  ];
+  beforeEach(() => {
+    // The words say "Saturday at 11 am" only within the week: the clock is pinned to the Wednesday before.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-28T14:00:00.000Z"));
+    h.booking = { id: "b1", scheduledAt: new Date(SAT) };
+    h.offer.mockResolvedValue({ at: [SUN, MON], said: ["Sunday at 11 am", "Monday at 2 pm"] });
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+  it("offers two new times, in the move words, when they ask to move a booked time on a DM", async () => {
+    setLead({ channel: "instagram", messages: [...BOOKED, message("inbound", "Something came up, can we reschedule?", 5)] });
+    expect(await scoreAndDraftForLead("lead1")).toBe(true);
+    expect(h.offer).toHaveBeenCalledWith("lead1", expect.any(Date), "America/Toronto", { wantDay: null, avoid: [SAT] });
+    expect(updateData().suggestedMessage).toBe("Sure, let's find another time. I can do Sunday at 11 am or Monday at 2 pm. Which works for you?");
+    expect(updateData().offeredTimes).toMatchObject({ at: [SUN, MON] });
+    expect(h.cancel).not.toHaveBeenCalled();
+  });
+  it("tells the email writer the times answer a move, and doesn't read 'can't make Saturday' as a no", async () => {
+    h.generate.mockResolvedValueOnce({ body: "No problem at all. I can do Sunday at 11 am or Monday at 2 pm. Which works for you?", subject: "Re: 42 Elm St" });
+    setLead({ messages: [...BOOKED, message("inbound", "I can't make Saturday after all, is there another day?", 5)] });
+    await scoreAndDraftForLead("lead1");
+    const asked = h.generate.mock.calls[0][0] as { offerTimes?: string[]; offerTimesMoving?: boolean };
+    expect(asked.offerTimes).toEqual(["Sunday at 11 am", "Monday at 2 pm"]);
+    expect(asked.offerTimesMoving).toBe(true);
+    expect(updateData().saidNoAt ?? null).toBeNull();
+  });
+  it("cancels the booking, acknowledges in fixed words, buzzes the business and runs no AI when they cancel", async () => {
+    setLead({ channel: "instagram", messages: [...BOOKED, message("inbound", "I need to cancel Saturday, sorry", 5)] });
+    expect(await scoreAndDraftForLead("lead1")).toBe(true);
+    expect(h.cancel).toHaveBeenCalledWith("b1", "biz1", "customer");
+    expect(h.score).not.toHaveBeenCalled();
+    expect(h.offer).not.toHaveBeenCalled();
+    const d = updateData();
+    expect(d.suggestedMessage).toBe("No problem, I've taken Saturday at 11 am off the calendar. Whenever you'd like to set up another time, just let me know.");
+    expect(d.suggestedRiskLevel).toBe("low");
+    expect(h.push).toHaveBeenCalledWith("owner1", { title: "Raj cancelled", body: "Raj cancelled Saturday at 11 am. Offer another time?", url: "/leads/lead1", tag: "cancelled-lead1" });
+  });
+  it("leaves a cancel that is really a no to the normal path, booking untouched", async () => {
+    setLead({ messages: [...BOOKED, message("inbound", "Cancel it, we're not interested anymore.", 5)] });
+    await scoreAndDraftForLead("lead1");
+    expect(h.cancel).not.toHaveBeenCalled();
+    expect(h.score).toHaveBeenCalled();
+  });
+  it("buzzes 'wants to move' when they pick one of the new times", async () => {
+    const OFFERED = { at: [SUN, MON], said: ["Sunday at 11 am", "Monday at 2 pm"], offeredAt: "2026-10-28T13:40:00.000Z" };
+    setLead({
+      messages: [...BOOKED, message("inbound", "Can we reschedule?", 5), message("outbound", "Sure, let's find another time. I can do Sunday at 11 am or Monday at 2 pm. Which works for you?", 6), message("inbound", "Sunday works", 7)],
+      offeredTimes: OFFERED,
+    });
+    expect(await scoreAndDraftForLead("lead1")).toBe(true);
+    expect(updateData().pickedTime).toEqual(new Date(SUN));
+    expect(h.push).toHaveBeenCalledWith("owner1", { title: "Raj wants to move", body: "Raj wants Sunday at 11 am instead of Saturday at 11 am. Tap to confirm.", url: "/leads/lead1", tag: "picked-lead1" });
+  });
+  it("reads no move or cancel without a booked time", async () => {
+    h.booking = null;
+    setLead({ messages: [message("inbound", "I need to cancel Saturday, sorry", 1)] });
+    await scoreAndDraftForLead("lead1");
+    expect(h.cancel).not.toHaveBeenCalled();
+    expect(h.score).toHaveBeenCalled();
   });
 });

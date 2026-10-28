@@ -1691,11 +1691,25 @@ model Booking {
   brief   Json?
   briefAt DateTime?
 
+  // Change or cancel in the chat (A-242, part 2): the Google Calendar event
+  // this booking made, so a move or a cancel can take it off the calendar;
+  // when it was cancelled and by whom (customer | owner); and when the owner
+  // saw a customer's cancel, so its line leaves Today.
+  googleEventId String?
+  canceledAt    DateTime?
+  canceledBy    String?
+  cancelSeenAt  DateTime?
+
   // The real double-booking guard: two people confirming the same slot in
   // the same instant race a findFirst-then-create check in application
-  // code, but not this constraint — the DB rejects the second insert
-  // outright. The lead's own detail page lists its bookings by leadId.
-  @@unique([businessId, scheduledAt])
+  // code, but not the unique index — the DB rejects the second insert
+  // outright. Since part 2 of A-242 the index covers CONFIRMED rows only
+  // (a partial unique index, written in SQL in
+  // migrations/20261028190000_booking_change_cancel, because Prisma cannot
+  // describe one): a cancelled booking frees its slot. The plain index
+  // below is what Prisma knows about. The lead's own detail page lists
+  // its bookings by leadId.
+  @@index([businessId, scheduledAt])
   @@index([leadId])
 }
 

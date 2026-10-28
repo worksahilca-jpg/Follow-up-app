@@ -1,5 +1,5 @@
 /**
- * Booking in the chat (A-242, approved 2026-10-13, redrawn and built 2026-10-28).
+ * Booking in the chat (A-242, approved 2026-10-13, redrawn and built 2026-10-28; change and cancel the same day).
  *
  * When a customer wants to meet (they asked to see a home, or said yes to
  * FollowUp's offer of a viewing or a call), the reply offers TWO concrete
@@ -15,6 +15,7 @@
  */
 import type { Message } from "@/lib/types";
 import { dayOffset } from "@/lib/todayWords";
+import { declineIn } from "@/lib/declinePhrases";
 
 /** What is stored on Lead.offeredTimes while the offer is the last thing FollowUp said. */
 export type OfferedTimes = { at: string[]; said: string[]; offeredAt?: string };
@@ -151,10 +152,12 @@ export function offerText(said: readonly string[]): string {
 }
 
 /** The paragraph the email writer gets: these exact times, one job, no other question. */
-export function offerTimesPromptBlock(said: readonly string[] | null | undefined): string {
+export function offerTimesPromptBlock(said: readonly string[] | null | undefined, moving = false): string {
   if (!said || said.length === 0) return "";
   return (
-    "\n\nTHEY WANT TO MEET. Your reply's one job is to offer " +
+    (moving
+      ? "\n\nTHEY WANT TO MOVE THE TIME THEY HAD BOOKED. Say that's no problem. Your reply's one job is then to offer "
+      : "\n\nTHEY WANT TO MEET. Your reply's one job is to offer ") +
     (said.length === 1 ? "this time" : "these two times") +
     `, word for word, and ask which works for them: ${sayTimes(said)}. ` +
     "Each is free in this business's calendar. Never offer or suggest any other day or time, never say anything is " +
@@ -178,14 +181,55 @@ export function anotherTimeText(said: readonly string[]): string {
   return `Sorry, that one doesn't work on my side after all. ${offerText(said)}`;
 }
 
+/** The DM reply when they asked to move their booked time: fine, two new times. */
+export function moveOfferText(said: readonly string[]): string {
+  return `Sure, let's find another time. ${offerText(said)}`;
+}
+
+/** After the owner's Confirm on a move: the new time and, when known, the place. */
+export function movedText(iso: string, timeZone: string, where: string | null): string {
+  return `Moved: ${longDay(iso, timeZone)} at ${clock(iso, timeZone)}${where ? `, ${where}` : ""}. See you then.`;
+}
+
+/** After "Keep <old>": the owner can't do the new time; the old one stands if they can still make it. */
+export function keepText(oldSaid: string, newSaid: string): string {
+  return `Sorry, ${newSaid} doesn't work on my side after all. Can you still make ${oldSaid}? If not, tell me and I'll find another time.`;
+}
+
+/** What the customer hears when they cancel: the slot is free, the door stays open. Nothing else is asked. */
+export function cancelAckText(said: string): string {
+  return `No problem, I've taken ${said} off the calendar. Whenever you'd like to set up another time, just let me know.`;
+}
+
+/** The owner pressed Change on a booked time: the old one is off, two new ones offered. */
+export function ownerChangeText(oldSaid: string, said: readonly string[]): string {
+  return `Sorry, something came up on my side and I can't do ${oldSaid} anymore. ${offerText(said)}`;
+}
+
+/** The owner pressed Cancel on a booked time. No new time is offered: that was their choice. */
+export function ownerCancelText(oldSaid: string): string {
+  return `Sorry, I have to cancel ${oldSaid}. I'll get back to you about another time.`;
+}
+
+/** "Offer another time" after a customer cancelled: two free times, offered once, gently. */
+export function reofferText(said: readonly string[]): string {
+  return `If it helps, ${offerText(said)}`;
+}
+
 /** The grey line under a reply that carries the offer: information, not a check. */
 export function offerReason(first: string): string {
   return `FollowUp offered ${first} two times from your free hours. Nothing is booked until you confirm.`;
 }
 
-/** The owner's one buzz when a customer picks. */
-export function pickedBuzz(first: string, saidPicked: string): { title: string; body: string } {
+/** The owner's one buzz when a customer picks; on a move, what they had. */
+export function pickedBuzz(first: string, saidPicked: string, from: string | null = null): { title: string; body: string } {
+  if (from) return { title: `${first} wants to move`, body: `${first} wants ${saidPicked} instead of ${from}. Tap to confirm.` };
   return { title: `${first} picked a time`, body: `${first} wants ${saidPicked}. Tap to confirm.` };
+}
+
+/** The owner's one buzz when a customer cancels their booked time. */
+export function cancelledBuzz(first: string, said: string): { title: string; body: string } {
+  return { title: `${first} cancelled`, body: `${first} cancelled ${said}. Offer another time?` };
 }
 
 /** The black button's words: "Saturday 11 AM", "Tomorrow 2 PM". */
@@ -293,6 +337,50 @@ export function readPick(text: string, offer: Pick<OfferedTimes, "at">, timeZone
   return null;
 }
 
+/**
+ * Change or cancel in the chat (A-242, part 2): what a customer with a BOOKED
+ * time says about it. Read only while a confirmed booking is coming up.
+ */
+const MOVE_WORDS =
+  /\b(re-?schedule|move (it|the|our|my|that|this|to)|push (it|that|back|to)|different (time|day|date)|another (time|day|date|slot)|other (time|day|date)|change (it|that|the time|the day|the date|our time|my time|time|the appointment|the viewing|the call|the booking)|instead|postpone|rain ?check|bump|(later|earlier) (in the|that|this|next|on)|sooner|(can|could) (we|you|i|u) (do|make|meet|try|switch to)|switch (it|that|to))\b/i;
+const CANCEL_WORDS =
+  /\b(cancel(l?ing|l?ed)?|call (it|this|that) off|no longer (need|want)|don'?t need (it|this|that|the \w+)( any ?more)?|changed (my|our) mind|forget (it|about it)|never ?mind|scrap (it|that)|won'?t be (coming|able to come|there)|not (going to|gonna) (come|make it|be there)|have to pass|(let'?s|we'?ll) (skip|drop) (it|that))\b/i;
+const CANT_MAKE =
+  /\b((can'?t|cannot|won'?t|unable to|not able to|not going to|not gonna) (make|do|be there|come|attend)|(something|sth|smth) (came|has come|'?s come) up|conflict|clash|double[- ]booked|out of town|not (free|available) (then|that day|anymore|any more))\b/i;
+
+/** Their words name a day or a time that isn't the booked one. */
+function namesAnotherTime(text: string, booked: string, timeZone: string, now: Date): boolean {
+  const h = hits(text, booked, timeZone, now);
+  return (NAMES_A_DAY.test(text) && !h.day) || (NAMES_A_TIME.test(text) && !h.time);
+}
+
+/**
+ * They want to move their booked time: they say so, or they can't make it
+ * and don't cancel outright, or they cancel and name another day. The
+ * answer is two new free times (the engine), never a cancel.
+ */
+export function asksToMove(text: string, booked: string, timeZone: string, now: Date): boolean {
+  const t = text.trim();
+  if (!t || t.length > 400) return false;
+  if (MOVE_WORDS.test(t)) return true;
+  if ((CANT_MAKE.test(t) || CANCEL_WORDS.test(t)) && namesAnotherTime(t, booked, timeZone, now)) return true;
+  return CANT_MAKE.test(t) && !CANCEL_WORDS.test(t);
+}
+
+/**
+ * They cancel their booked time without asking for another: the slot is
+ * freed and the owner decides whether to offer one. A real no ("not
+ * interested", "stop", "have an agent") is not this: the no safety net
+ * (A-326) reads those, and the booking waits for the owner.
+ */
+export function asksToCancel(text: string, booked: string, timeZone: string, now: Date): boolean {
+  const t = text.trim();
+  if (!t || t.length > 400) return false;
+  if (declineIn(t)) return false;
+  if (MOVE_WORDS.test(t) || !CANCEL_WORDS.test(t)) return false;
+  return !namesAnotherTime(t, booked, timeZone, now);
+}
+
 /** Lead.offeredTimes as stored, or null when it isn't an offer. */
 export function readOfferedTimes(raw: unknown): OfferedTimes | null {
   if (!raw || typeof raw !== "object") return null;
@@ -303,21 +391,63 @@ export function readOfferedTimes(raw: unknown): OfferedTimes | null {
   return { at, said, ...(typeof o.offeredAt === "string" ? { offeredAt: o.offeredAt } : {}) };
 }
 
-/** The owner's card, in words: what and where, the day and time lines, the black button's label. */
+type CardLead = {
+  name: string;
+  conversation: readonly Message[];
+  pickedTime?: string | null;
+  sellerHome?: string | null;
+  upcomingBooking?: { id: string; at: string } | null;
+  cancelledBooking?: { id: string; at: string } | null;
+};
+
+/**
+ * The owner's card, in words: what and where, the day and time lines, the
+ * black button's label. With a booked time still standing, the pick is a
+ * move: `from` carries the old time's words and label.
+ */
 export function pickedCardWords(
-  lead: { name: string; conversation: readonly Message[]; pickedTime?: string | null; sellerHome?: string | null },
+  lead: CardLead,
   timeZone: string,
   now: Date
-): { first: string; what: string; where: string | null; day: string; time: string; label: string } | null {
+): { first: string; what: string; where: string | null; day: string; time: string; label: string; from: { said: string; label: string } | null } | null {
   if (!lead.pickedTime) return null;
   const what = whatFor(lead.conversation);
+  const old = lead.upcomingBooking?.at ?? null;
   return {
     first: lead.name.trim().split(/\s+/)[0] || lead.name,
     what,
     where: what === "Home visit" ? (lead.sellerHome ?? null) : null,
     ...pickedLines(lead.pickedTime, timeZone, now),
     label: confirmLabel(lead.pickedTime, timeZone, now),
+    from: old ? { said: sayTime(old, timeZone, now), label: confirmLabel(old, timeZone, now) } : null,
   };
+}
+
+/** The Booked card (A-242, part 2): a confirmed time still to come, with Change and Cancel for the owner. */
+export function bookedCardWords(
+  lead: CardLead,
+  timeZone: string,
+  now: Date
+): { id: string; first: string; what: string; where: string | null; day: string; time: string; said: string; label: string } | null {
+  const b = lead.upcomingBooking;
+  if (!b || new Date(b.at).getTime() < now.getTime()) return null;
+  const what = whatFor(lead.conversation);
+  return {
+    id: b.id,
+    first: lead.name.trim().split(/\s+/)[0] || lead.name,
+    what,
+    where: what === "Home visit" ? (lead.sellerHome ?? null) : null,
+    ...pickedLines(b.at, timeZone, now),
+    said: sayTime(b.at, timeZone, now),
+    label: confirmLabel(b.at, timeZone, now),
+  };
+}
+
+/** The cancelled card (A-242, part 2): the customer cancelled their time; the owner offers another or lets it be. */
+export function cancelledCardWords(lead: CardLead, timeZone: string, now: Date): { id: string; first: string; said: string } | null {
+  const b = lead.cancelledBooking;
+  if (!b) return null;
+  return { id: b.id, first: lead.name.trim().split(/\s+/)[0] || lead.name, said: sayTime(b.at, timeZone, now) };
 }
 
 /** The grey line under a drafted reply that carries the offer, or null. */

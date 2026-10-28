@@ -1801,3 +1801,19 @@ standing rule that the dot is never the only signal. **Principle (stated):** a r
 what to do. A symbol or weight alone is decoration the owner has to decode. **Do not propose again:** a dot, badge,
 colour or bold as the only way a Customers row says the owner must act.
 
+## R-142 — A photo blurred to colour behind the app's frame (the A-331 wash), light or dark ^R-142
+
+**Rejected:** 2026-10-28, founder, on the dark-mode board (and, by his words, the light look that went live the same
+day): *"Bro, it's too blurry. The textures feel like the app isn't loaded yet, so we don't have to make it feel like it's
+a cheap product. We got to make it feel premium. Make it the same for light design as well. Let's just upgrade it."*
+
+**What was rejected:** the blurred street photo behind the sheet and the sidebar (A-331's wash, day/evening, and the
+two dark versions D1/D2), with its faint grain.
+
+**Principle (his words, and inferred):** a blur that removes every detail reads like a picture that hasn't finished
+loading, so it reads cheap. Premium is crisp: exact edges, hairlines, considered shadows, nothing soft. The same look
+must hold in light and dark. *(Inferred: this closes the photo route inside the app both ways: a visible photo that
+means nothing stays rejected (R-030), and a blurred one now reads unfinished. The landing's blurred photo blocks are
+not covered by this; he spoke of the app.)*
+
+**Do not propose again:** a blurred photo, a blurred colour field or a grain texture as the app's background.

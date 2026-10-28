@@ -5,7 +5,6 @@ import { prisma } from "@/lib/db";
 import Sidebar from "@/components/Sidebar";
 import SeenPing from "@/components/SeenPing";
 import PushNav from "@/components/app/PushNav";
-import DayLight from "@/components/app/DayLight";
 import { getPendingApprovals, onTodayNow } from "@/lib/pendingApprovals";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -31,15 +30,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     // theme-auto: dark when the phone or computer is set to dark (research round 2, #8), app screens only.
-    // On the desk the sidebar sits on the frame and the page is one white
-    // sheet floating beside it; the frame never moves, only the sheet's
-    // inside scrolls, and a soft photo sits behind it all (A-331; .app-shell
-    // in globals.css).
-    <div className="theme-auto app-shell flex min-h-screen bg-paper text-ink lg:bg-sidebar">
+    // On a computer the shell is the desk and the sidebar and the sheet are
+    // one window on it; the desk never moves, only the sheet's inside
+    // scrolls (A-331's frame, A-333's window; .app-shell in globals.css).
+    <div className="theme-auto app-shell flex min-h-screen bg-paper text-ink">
       {/* One "opened today" record per person per day (src/lib/appOpens.ts). */}
       <SeenPing />
-      {/* The photo behind the frame follows the day (A-331). */}
-      <DayLight />
       {/* On a phone, a customer slides in and Back slides it out (A-264). Reads the URL, so it waits for it. */}
       <Suspense fallback={null}>
         <PushNav />

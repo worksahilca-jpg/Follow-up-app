@@ -15782,3 +15782,62 @@ check. What's weak, named: a competitor's page that happens to carry a word of t
 is the play-back's job, as before); the question's wording quotes the site's title, which can be long (capped at 80
 characters). The sandbox can't fetch a real site, so the browser check used the server's own answer for a mismatched
 site and passed "Yes, that's mine" through to the real server; the matching itself is unit-tested.
+
+## 2026-10-28 — Dark mode with the photo too: two options drawn (after A-331)
+
+**Founder, on his Mac in dark mode:** *"I don't see anything. I guess I'm on dark mode right now."* → *"yes draw a
+dark version too."* A-331 kept dark mode on its plain dark ground on purpose (A-282); the still frame applies there,
+the photo doesn't. Drawn the same way as A-331 (CSS injected into the live local app in the dark colour scheme, Today,
+phone 390×844 + computer 1440×900; scratchpad `dark/dark-board.png`), with pre-blurred 480px washes under a dark veil:
+- **D1 · the night street always** (`/landing/750fc8e89ea0.jpg`, blur 22, brightness .75, 42% charcoal veil): a cool
+  blue at the top, the street lamps' warmth low in the frame; the sheet keeps A-282's dark ground with a deeper shadow;
+  the phone's photo sits behind the greeting and fades into the dark paper by mid-screen.
+- **D2 · the same photos as light mode, dimmed** (day: `d5dc60f92bca` under a 58% veil; evening: `42d25b3b05cc`
+  under 50%): follows the time of day like the light look, but a daylight street under a dark veil reads as brown-grey
+  mud, and on the phone it is barely there.
+- Recommended: D1. Dark mode is dark whatever the hour, so one photo is honest; the night street is the only one of
+  the four that was shot for the dark. Waiting for his pick.
+- Weak, named: in dark the wash lives mostly in the sidebar and the 8 px frame, like the light one; the phone's photo
+  is faint by design (it must not fight white text). When built, the phone's fade gradient needs a token (`--app-veil`)
+  instead of the hard-coded light rgba, and the dark block keeps `--app-grain` faint rather than none.
+
+## 2026-10-28 — "Too blurry… feels like the app isn't loaded yet": crisp, no photo, drawn for light and dark
+
+**Founder, on the dark board and the live light look:** *"Bro, it's too blurry. The textures feel like the app isn't
+loaded yet, so we don't have to make it feel like it's a cheap product. We got to make it feel premium. Make it the same
+for light design as well. Let's just upgrade it, please."* → [[rejected#^R-142|R-142]]: the blurred wash (A-331's photo
+part) and the grain are dead in the app, light and dark. The still frame, the floating sheet and the iOS bars stand.
+
+**Why no crisp photo instead:** a visible photo that means nothing stays rejected (R-030), and the app has no photo
+that means something to a realtor's day. So the premium has to come from precision, not pictures: exact hairlines,
+tight layered shadows, one considered tone for the desk, the same in both modes.
+
+**Drawn (scratchpad `premium/premium-light.png`, `premium-dark.png`; CSS injected into the live local app, Today,
+phone + computer, both colour schemes):**
+- **P1 · one stone frame.** Light `#e9e7e2`, dark `#070707`; the sheet on a 1 px hairline (black 9% / white 9%) with a
+  tight two-layer shadow; groups on a hairline with A-278's soft shadow; the phone's bars frosted as before; no photo,
+  no grain.
+- **P2 · P1 with a quiet fall of light** (a smooth tone across the frame, `#f1efeb → #e6e3dd`). Dropped from the board:
+  at a glance it is P1, and a soft gradient is the first thing that could read "blurry" again.
+- **P3 · a deeper stone desk, the sidebar as its own panel** (light desk `#dbd8d1`, sidebar `#f3f1ec`, sheet white;
+  dark desk `#000`, sidebar `#111`, sheet `#161616`): two crisp panels on one desk, both rounded 16 px, both on
+  hairlines. The most structure of the three, still neutral (R-128).
+- Recommended: **P3**. Waiting for his pick. On it, A-331 is to be amended (frame yes, photo no) and the dark block
+  gets the same desk.
+- Weak, named: on a thumbnail both options sit close to the flat grey he called boring on Oct 28; the difference is in
+  the edges and the depth, which read at full size, not in a board. If "premium" to him means more than precision, the
+  next lever is the sheet's own interior (type, rows, spacing), not the frame.
+
+**Founder on P3 (same day):** *"Yeah, I like the third one, but it feels like it is detached, like they have different
+pages on the same single page."* Read as: the deeper desk and the crispness are right; two separate cards read as two
+places. **P3b drawn** (scratchpad `premium/premium-joined.png`): one window on the desk, the sidebar joined to the sheet
+(sidebar `#f3f1ec` / dark `#111`, sheet white / `#161616`), rounded 16 px as a whole, one hairline ring around it and a
+hairline seam between the two; the same shadow under both. Like a Mac window with a sidebar: one place, two zones.
+Waiting for his word.
+
+**Built the same day (P3b → [[approved#^A-333|A-333]]).** Tokens, not pictures: `--desk`, `--window-line`,
+`--window-seam`, `--window-shadow` for both modes; the sidebar is the window's left zone (margin 8 px, left corners
+rounded, hairline on three sides), the sheet its right zone (right corners rounded, the seam as its left border); the
+day/evening switch and the two wash photos are deleted. A-331 amended. What's weak, named: the admin pages still sit on
+the plain `--sidebar` tone, not the desk (out of scope, one line to change later); the premium reads in the edges at full
+size, not in a thumbnail, as said before he picked.

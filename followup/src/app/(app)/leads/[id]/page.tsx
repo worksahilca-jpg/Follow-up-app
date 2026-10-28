@@ -44,6 +44,9 @@ import SaidNoCard from "@/components/app/SaidNoCard";
 import type { NoHow } from "@/lib/declinePhrases";
 import { tierFromScore } from "@/lib/followUpCall";
 import CallBriefCard, { type CallToPrepare } from "@/components/app/CallBriefCard";
+import PickedTimeCard from "@/components/app/PickedTimeCard";
+import MarkOpened from "@/components/app/MarkOpened";
+import { offerLineFor, pickedCardWords } from "@/lib/bookingTimes";
 import { callNotOver, readCallBrief } from "@/lib/callBrief";
 import { clockTime, dayOffset } from "@/lib/todayWords";
 import { readQualification, templateFor } from "@/lib/qualification";
@@ -105,6 +108,9 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
   const channelId = displayChannel(lastInbound(lead.conversation)?.channel ?? firstMessage?.channel, lead.source);
   const channel = channelName(channelId, lead.source);
   const now = new Date();
+  // Booking in the chat (A-242): their picked time, waiting for Confirm; the grey line under a reply that offers times.
+  const picked = pickedCardWords(lead, timeZone, now);
+  const offerLine = offerLineFor(lead, timeZone, now);
   const firstWrote = firstMessage ? new Date(firstMessage.date).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone }) : null;
   // Their follow-up plan (A-245), from the same plan the engine sends by.
   const plan = rules ? planCard(lead, rules, now, timeZone) : null;
@@ -249,9 +255,13 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
           </div>
         )}
 
+        <MarkOpened leadId={lead.id} />
         {/* id: the target of the ready card's "Message". */}
         <div id="reply" className="mt-5 scroll-mt-4">
-          {siteReply ? (
+          {picked ? (
+            // They picked one of the two offered times (A-242): the owner's one decision, in place of the reply.
+            <PickedTimeCard key={`picked-${lead.pickedTime}`} leadId={lead.id} {...picked} />
+          ) : siteReply ? (
             <SiteReplyCard key={lead.id} leadId={lead.id} leadName={lead.name} site={siteReply} draft={lead.suggestedMessage} waiting={Boolean(approval)} />
           ) : !lead.suggestedMessage ? (
             // Nothing written yet: one box pinned at the bottom (A-220). A written reply keeps its card below.
@@ -277,6 +287,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
               languageName={replyLanguage}
               textTo={approval?.textTo ?? null}
               why={holdWhy}
+              basis={offerLine}
             />
           )}
         </div>

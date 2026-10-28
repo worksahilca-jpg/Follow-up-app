@@ -131,6 +131,18 @@ export interface Lead {
    */
   stayInTouch?: { since: string; messageId: string | null } | null;
   /**
+   * Booking in the chat (A-242, src/lib/bookingTimes.ts): the time they picked
+   * from the two FollowUp offered (ISO), waiting for the owner's Confirm.
+   * Absent or null: nothing picked.
+   */
+  pickedTime?: string | null;
+  /** The two times FollowUp last offered them, while that offer is the last thing it said. */
+  offeredTimes?: { at: string[]; said: string[] } | null;
+  /** The home a seller wants to sell, from their checklist: the "where" of a home visit. */
+  sellerHome?: string | null;
+  /** When the owner last opened this customer (ISO). A list row reads bold only while their newest message is newer. */
+  openedAt?: string | null;
+  /**
    * "Their moment" (A-262): a time they named about a plan of theirs, with
    * their words. Absent once the note for it has been written.
    */

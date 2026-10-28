@@ -19,6 +19,7 @@ import { isUniqueViolation } from "@/lib/uniqueViolation";
 import { moveBookedLead } from "@/lib/crm/stages";
 import type { Prisma } from "@prisma/client";
 import { bookingWhen, isReady, mergeQualification, readQualification, templateFor } from "@/lib/qualification";
+import { chooseTwo, sayTime, type OfferedPair } from "@/lib/bookingTimes";
 
 const LOOKAHEAD_DAYS = 10;
 const MIN_NOTICE_MINUTES = 60; // don't offer a slot starting less than an hour out
@@ -145,6 +146,25 @@ export async function getAvailableSlots(leadId: string): Promise<string[]> {
     slots.push(instant.toISOString());
   }
   return slots;
+}
+
+/**
+ * Two free times to offer in a reply (A-242, src/lib/bookingTimes.ts): the
+ * open slots as the booking page sees them (free hours, confirmed bookings,
+ * Google Calendar when it is the source), chosen on two different days,
+ * said in the owner's time zone. Null when nothing is open in the next
+ * LOOKAHEAD_DAYS; the reply then falls back to the booking link.
+ */
+export async function offerTwoTimes(
+  leadId: string,
+  now: Date,
+  timeZone: string,
+  opts: { wantDay?: number | null; avoid?: readonly string[] } = {}
+): Promise<OfferedPair | null> {
+  const slots = await getAvailableSlots(leadId);
+  const at = chooseTwo(slots, { timeZone, now, wantDay: opts.wantDay ?? null, avoid: opts.avoid ?? [] });
+  if (!at) return null;
+  return { at, said: at.map((iso) => sayTime(iso, timeZone, now)) };
 }
 
 type CreateBookingResult =

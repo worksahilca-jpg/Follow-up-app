@@ -63,6 +63,9 @@ export type TellSite = {
 /** The website step once done: the link the owner gave (null for Instagram alone) and the line on what was read. */
 type SiteTurn = { said: string | null; asked: boolean; line: string };
 
+/** The one question before a site that doesn't look like this business's is read (A-332). */
+type SiteCheck = { line: string; site: string };
+
 async function post(body: unknown, url = "/api/business/tell"): Promise<{ ok: true; data: Record<string, unknown> } | { ok: false; message: string }> {
   try {
     const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -165,6 +168,7 @@ export default function TellFollowUp({
   const [reading, setReading] = useState<string | null>(null);
   const [siteTurn, setSiteTurn] = useState<SiteTurn | null>(site.readSaid ? { said: null, asked: false, line: site.readSaid } : null);
   const [siteSkipped, setSiteSkipped] = useState(false);
+  const [siteCheck, setSiteCheck] = useState<SiteCheck | null>(null);
   const [readCount, setReadCount] = useState(site.readCount);
   const [showRead, setShowRead] = useState(false);
   const end = useRef<HTMLDivElement>(null);
@@ -251,19 +255,28 @@ export default function TellFollowUp({
     moveOn(r.data);
   }
 
-  /** "Read it": FollowUp reads the website (and the posts, when ticked), then asks only what's left (A-328). */
-  async function readSite() {
+  /**
+   * "Read it": FollowUp reads the website (and the posts, when ticked), then asks only what's left (A-328). A site that
+   * doesn't look like this business's comes back as one question first (A-332); "Yes, that's mine" reads it with `mine`.
+   */
+  async function readSite(mine = false) {
     const link = text.trim();
     const withInstagram = site.instagram !== null && readInstagram;
     if (busy || (!link && !withInstagram)) return;
     setBusy(true);
     setError(null);
+    setSiteCheck(null);
     setReading(link);
-    const r = await post({ action: "read", ...(link ? { url: link } : {}), instagram: withInstagram, again }, "/api/business/tell/read");
+    const r = await post({ action: "read", ...(link ? { url: link } : {}), instagram: withInstagram, again, ...(mine ? { mine: true } : {}) }, "/api/business/tell/read");
     setBusy(false);
     setReading(null);
     // The link stays in the box, so the owner can fix it or skip.
     if (!r.ok) return setError(r.message);
+    if (r.data.check && typeof r.data.check === "object") {
+      const c = r.data.check as { line?: unknown; site?: unknown };
+      setSiteCheck({ line: typeof c.line === "string" ? c.line : "Is that your website?", site: typeof c.site === "string" ? c.site : link });
+      return;
+    }
     setAskSite(false);
     setText("");
     setReadCount(typeof r.data.readCount === "number" ? r.data.readCount : 0);
@@ -731,6 +744,29 @@ export default function TellFollowUp({
             <p className="px-1 text-[14px] text-ink-faint">
               {reading ? `FollowUp is reading ${siteName(reading.includes("://") ? reading : `https://${reading}`)}…` : "FollowUp is reading your Instagram posts…"}
             </p>
+          </>
+        )}
+        {/* The site doesn't look like this business's (A-332): one question, then "Yes, that's mine" reads it, "No" keeps the link in the box to fix. */}
+        {siteCheck && !busy && (
+          <>
+            <YouSay text={siteCheck.site} />
+            <FollowUpSays text={siteCheck.line} />
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-1">
+              <button type="button" onClick={() => void readSite(true)} disabled={busy} className={OUTLINED} style={{ borderColor: "var(--line-strong)" }}>
+                Yes, that&apos;s mine
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSiteCheck(null);
+                  focusBox();
+                }}
+                disabled={busy}
+                className={QUIET}
+              >
+                No, wrong link
+              </button>
+            </div>
           </>
         )}
         {siteSkipped && <p className="-mt-2 px-1 text-[13.5px] text-ink-faint">Skipped.</p>}

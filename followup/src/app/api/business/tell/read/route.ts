@@ -9,7 +9,18 @@ import { proposeTellRead } from "@/lib/integrations/openai";
 import { labelKey } from "@/lib/factLines";
 import { answeredByRead, correctionRows, currentTopic, parseTellDraft, playbackRows } from "@/lib/tellFollowUp";
 import { addToDraft, loadTellState, tellPlayback, wordedTopic } from "@/lib/tellFollowUpData";
-import { businessValue, normalizeWebsite, readLine, setupReadLine, siteName, sourceOf, type ReadSource, type SiteNote } from "@/lib/siteRead";
+import {
+  businessValue,
+  normalizeWebsite,
+  ownerCheckLine,
+  readLine,
+  setupReadLine,
+  siteLooksLike,
+  siteName,
+  sourceOf,
+  type ReadSource,
+  type SiteNote,
+} from "@/lib/siteRead";
 import { readInstagramPosts, readWebsite } from "@/lib/siteReadData";
 
 // Reading a few pages and a model's read of them can take longer than the default.
@@ -25,6 +36,8 @@ const schema = z.discriminatedUnion("action", [
     again: z.boolean().optional(),
     // From setup's waiting screen: no next question to word, the meeting comes later.
     setup: z.boolean().optional(),
+    // The owner answered "Yes, that's mine" to the check below (A-332): read on without asking again.
+    mine: z.boolean().optional(),
   }),
   // "No website, skip this": asked once.
   z.object({ action: z.literal("skip") }),
@@ -38,6 +51,8 @@ const schema = z.discriminatedUnion("action", [
  *    they answer, copied word for word, and adds them to the meeting's draft with where each came from. Nothing is
  *    quoted to a customer before "Looks right" (A-314). Replies with the meeting's state and its next question, worded
  *    for this business, or the play-back when nothing is left to ask.
+ *    When the site doesn't look like this business's (A-332: no word of the business's name on it or in its address),
+ *    nothing is taken: the reply carries `check`, one question for the owner, and the next call says `mine: true`.
  *  - skip: "No website, skip this". Not asked again.
  *
  * Admin only, like the meeting. Limited per hour and per day, and counted toward the business's daily AI ceiling.
@@ -84,6 +99,16 @@ export async function POST(request: NextRequest) {
   }
   if (!site && !posts) return fail(`FollowUp couldn't read your Instagram posts just now. Try again, ${orElse}.`, 422);
 
+  // A site that doesn't look like this business's (A-332): ask before anything is read into the draft. The owner's
+  // "Yes, that's mine" comes back as `mine`; a wrong link is fixed in the box and read again.
+  if (site && url && !body.mine) {
+    const business = await prisma.business.findUnique({ where: { id: ctx.businessId }, select: { name: true } });
+    if (!siteLooksLike(business?.name ?? "", site.name, site.text, url)) {
+      void recordAudit(ctx, "business.tell", { targetType: "business", targetId: ctx.businessId, meta: { decision: "check", pages: site.pages.length } });
+      return NextResponse.json({ success: true, check: { line: ownerCheckLine(site.name, url), site: siteName(url) } });
+    }
+  }
+
   // Only the meeting's own questions, and only those nobody answered yet: what the owner said always wins.
   const known = playbackRows(state.facts, state.draft, state.topics.map((t) => t.label));
   const answered = new Set(known.map((r) => labelKey(r.label)));
@@ -112,7 +137,7 @@ export async function POST(request: NextRequest) {
   void recordAudit(ctx, "business.tell", {
     targetType: "business",
     targetId: ctx.businessId,
-    meta: { decision: "read", pages: note.pages.length, posts: note.posts, facts: rows.length },
+    meta: { decision: "read", pages: note.pages.length, posts: note.posts, facts: rows.length, ...(body.mine ? { mine: true } : {}) },
   });
 
   // The link didn't open but the posts were read: the line says so instead of acting as if the site were read.

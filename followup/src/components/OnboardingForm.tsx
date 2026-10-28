@@ -624,12 +624,14 @@ function SetupWebsite({ instagram, onHold }: { instagram: boolean; onHold: (hold
   const [reading, setReading] = useState(false);
   const [added, setAdded] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // The site doesn't look like this business's (A-332): FollowUp's one question, answered with the two buttons below.
+  const [check, setCheck] = useState<string | null>(null);
   // Long enough to read the line after Add before the screen moves on.
   const [justAdded, setJustAdded] = useState(false);
 
   useEffect(() => {
-    onHold(reading || justAdded || link.trim() !== "");
-  }, [reading, justAdded, link, onHold]);
+    onHold(reading || justAdded || check !== null || link.trim() !== "");
+  }, [reading, justAdded, check, link, onHold]);
 
   useEffect(() => {
     if (!justAdded) return;
@@ -637,20 +639,24 @@ function SetupWebsite({ instagram, onHold }: { instagram: boolean; onHold: (hold
     return () => clearTimeout(t);
   }, [justAdded]);
 
-  async function add() {
+  async function add(mine = false) {
     const url = link.trim();
     if (!url || reading) return;
     setReading(true);
     setError(null);
+    setCheck(null);
     try {
       const res = await fetch("/api/business/tell/read", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "read", url, instagram, setup: true }),
+        body: JSON.stringify({ action: "read", url, instagram, setup: true, ...(mine ? { mine: true } : {}) }),
       });
-      const data = (await res.json().catch(() => ({}))) as { success?: boolean; message?: unknown; line?: unknown };
+      const data = (await res.json().catch(() => ({}))) as { success?: boolean; message?: unknown; line?: unknown; check?: { line?: unknown } };
       if (!res.ok || !data.success) {
         setError(typeof data.message === "string" ? data.message : "That didn't go through. Try again, or leave it.");
+      } else if (data.check && typeof data.check === "object") {
+        // The link stays in the box: "Yes, it's mine" reads it, "No" lets them fix it.
+        setCheck(typeof data.check.line === "string" ? data.check.line : "Is that your website?");
       } else {
         setAdded(typeof data.line === "string" ? data.line : "Added.");
         setJustAdded(true);
@@ -716,6 +722,24 @@ function SetupWebsite({ instagram, onHold }: { instagram: boolean; onHold: (hold
         <p role="alert" className="mt-2 px-1 text-[14px]" style={{ color: "var(--coral)" }}>
           {error}
         </p>
+      )}
+      {check && !reading && (
+        <div className="mt-3 px-1" role="status">
+          <p className="text-[14.5px] leading-snug">{check}</p>
+          <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-2">
+            <button
+              type="button"
+              onClick={() => void add(true)}
+              className="inline-flex min-h-11 items-center rounded-full border bg-card px-[18px] text-[15px] font-medium"
+              style={{ borderColor: "var(--line-strong)" }}
+            >
+              Yes, it&apos;s mine
+            </button>
+            <button type="button" onClick={() => setCheck(null)} className="inline-flex min-h-11 items-center text-[14px] text-ink-soft underline underline-offset-[3px]">
+              No, fix the link
+            </button>
+          </div>
+        </div>
       )}
       {instagram && (
         <p className="mt-2.5 flex items-center gap-2 px-1 text-[13.5px] text-ink-soft">

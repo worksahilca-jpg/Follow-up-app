@@ -72,8 +72,27 @@ a booked call or visit; the owner closes.
 
 ## Where we are (update at the end of every task)
 
-**Last updated: 2026-10-28**
+**Last updated: 2026-10-29**
 
+- **Today made clearer (A-338) BUILT (Oct 29)** on PR #614 with A-337, after the founder's "yes build all four": what
+  each customer wants in words ("Wants to book", "Asked the price"), the app they wrote from as a small mark on their
+  face, Instagram/Messenger's "3 h left to reply" only near the end of the 24 hours, one instruction under the heading
+  ("Read each one, then press Send.") and "Also needs you" over the owner's other tasks. Checked on phone and computer,
+  light and dark; 5,115 tests pass. PR #614 waits for CI and the founder's "merge".
+- **Today from the research (A-337) BUILT (Oct 29)** on PR #614's branch, replacing A-336 there: the owner's part
+  first and loud ("16 replies need your OK", the open reply raised, plain rows with "since", "Your calls today"),
+  FollowUp's part as one quiet panel (its sentence, what it did with the words and times, Coming up, "Checked … at").
+  Checked on phone and computer, light and dark, and clicked through. PR #614 waits for CI and the founder's "merge".
+- **"Are we weak, and why should people choose us?" (Oct 29).** Answered from the October competitor report and
+  production (read-only, last 30 days, test accounts included): 12 businesses signed up, 5 had customers write, 17
+  people wrote, FollowUp sent 4 replies (not counting the instant hello), 1 booking. Why choose us: every customer from
+  email, Instagram, Messenger, the website form and Lead Ads in one list; friends, newsletters and pitches set aside;
+  nothing goes out without the owner's OK or rule, never a guessed price; beside the owner's CRM; $39 flat. Weak: no
+  proof yet (almost no real use, nobody paying), no calls or texts, Gmail capped at 100 users until CASA, Meta's
+  review pending, and "AI writes replies" is free from Meta and Gmail. Recommended: after the A-337 Today build, stop
+  adding features and get 3 realtors using it daily for two weeks; their numbers become the reason to choose us. The
+  same day: the clinic-CRM reel reference read against A-337 (design-decisions 2026-10-29), and Zoie noted as a new
+  competitor (search summaries only).
 - **The app on a soft photo, a still frame, Start free fixed (Oct 28, A-331) LIVE ✓ (#609 → 3c0ec37).** The founder,
   first day on a Mac: the app is "way too boring", scrolling "feels like I'm scrolling code", and the landing's Start
   free "scrolls down to the very bottom and asks me to start free again". Found: on a computer the whole web page
@@ -92,7 +111,8 @@ a booked call or visit; the owner closes.
   one rounded window on it with a hairline ring and a seam, one shadow; the phone keeps paper and its frosted bars;
   DayLight and the wash photos deleted. Measured in a real browser in both modes.
 
-- **Booking in the chat (A-242) built, parts 1 + 2 (Oct 28):** the reply offers two free times, the customer's pick is read, the owner gets a buzz and one Confirm button; Confirm books it and tells them (part 1 LIVE ✓, #612 → 124c2a7). Part 2: a customer who asks to move gets two new times and the owner confirms the move; a customer who cancels frees the slot and the owner can offer another time; the owner's Booked card has Change the time and Cancel (PR open, waiting for "merge").
+- **Booking in the chat (A-242) LIVE ✓, parts 1 + 2 (Oct 28; #612 → 124c2a7, #613 → 65b1474):** the reply offers two free times, the customer's pick is read, the owner gets a buzz and one Confirm button; Confirm books it and tells them. Part 2: a customer who asks to move gets two new times and the owner confirms the move; a customer who cancels frees the slot and the owner can offer another time; the owner's Booked card has Change the time and Cancel. Both migrations confirmed in production.
+- **Today that shows FollowUp working (Oct 28, A-336) built, PR #614 re-pointed, waiting for "merge".** The built A-335 ("less on the screen") was rejected on sight (R-144: "i didnt like it"); the reason came out as "it is working good right but dosent feel like working" and became a brand principle: the app must show FollowUp working, not hand the owner a to-do list. Drawn, justified ("why you think this works"), cross-checked against monday/ClickUp/Macro at his ask, approved ("yes build it"), built the same day: the sentence is FollowUp's report since the owner last looked; "FollowUp did" first (real sends, bookings, new customers with the words and the time; a new one slides in); "Needs you · N" keeps the one open card and the Next line; "FollowUp is on it" (waiting on whom, check-ins coming, watching which inbox with a live "last checked"); "Your day". Checked phone + computer, light + dark; 5,103 tests. Honest limit: on a hold-all account "FollowUp did" is empty, so the feeling only arrives once FollowUp sends by itself; recommended: turn on sending for the simple replies on the test account and watch it a week. Next in his order: the website link box into the first setup screen; inside-the-sheet polish; admin pages onto the desk tone.
 - **One question before reading a website that isn't the owner's (Oct 28, A-332) LIVE ✓ (#610 → 2e2cd68).** The
   founder: "what if someone pasted someone else's website… we'll mess up everything." Today the only guard was the
   play-back's "Looks right". Now FollowUp compares what the site calls itself (og:site_name or its title) and its first

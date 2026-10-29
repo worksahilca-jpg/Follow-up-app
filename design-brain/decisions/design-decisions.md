@@ -15946,3 +15946,330 @@ second PR, as proposed, with no new drawing: every card reuses the picked card's
   booking (A-275) is not undone on cancel; (7) the customers panel keeps the "Booked" pill for a moment after a
   cancel until the page refreshes.
 
+## 2026-10-28 — Today with less on the screen (R-143), drawn on the real app
+
+**Founder:** *"okay do it"* to the recommendation under R-143 (start with less on the screen, Today as one calm page,
+life only where something changes). Drawn on the live local Today, computer 1440×900 and phone 390×844, before and
+after (scratchpad `today/today-board.png`).
+**What the drawing proposes:**
+- One column. The date, the greeting, one sentence ("16 people are waiting for your reply. Start with Zoe.").
+- One person, in full: who they are, their words, FollowUp's reply, the one check line, **Send to Zoe** / Change it /
+  *Skip for now*. On the phone it is the first thing under the greeting, in thumb reach.
+- The rest of the queue is one line under the card: three faces and "Next: Ethan, Mia, Mason · 12 more", which opens
+  the full list. The five-row list and "Show 11 more people" go.
+- "Then" keeps only what isn't a reply: a cancelled time, a picked time, a booked call, the people who stopped
+  replying. Shown only when there is something.
+- "Later" folds into one line ("Nothing booked tomorrow · 1 call this week · 2 done today") that opens.
+- The "Since you started" numbers pill leaves Today (it stays on Results). This touches A-307's "numbers at the top
+  right": proposed as a change, to be approved or refused with the drawing.
+- Motion, only where something changes: after Send the card slides out and the next person's slides in, the count
+  ticks down, the faces row shifts. Nothing else moves. The look (A-331, A-333) is untouched.
+**Why it fits what stands:** A-244 and R-114 (the whole day on one page) hold: calls, bookings, cancels, the people
+who stopped replying and tomorrow are all still on the page, folded; what changes is how much is open at once.
+**Weak, named:** (1) "Next: …" hides how long each person has waited (the row's "32 days ago" is gone until the list
+opens); (2) the Then group and the queue line look alike at a glance; (3) the motion can't be shown in a still frame.
+
+**Founder, the same day:** *"merge and build it"* → [[approved#^A-335|A-335]]. **Built** (`ApprovalQueue`, Today,
+`LaterFold`, `todayWords.nextLine` / `laterSummary`; the numbers pill deleted, its two counts added to Results'
+"Everything else"): one column (720px centred on a computer); the one person in a white box on both sizes; the Next
+line with three 32px faces (letters at 12px, the app's floor, 5px overlap, a paper ring) that opens every row in place and folds
+again when a row is tapped; Then only for calls, picked or cancelled times, look-backs and who stopped replying;
+Later as one line that opens the old lines; the box slides out left and the next slides in from the right
+(`AnimatePresence mode="wait"`, 120 ms out, 220 ms in, the first card simply is). The phone's list-first layout
+("‹ Today" back, the greeting hidden while open, `html[data-person-open]`) and "Show N more people" are gone. Checked
+in a real browser at 1440×900 and 390×844, light and dark, with the Next list open, a person picked from it, Later
+open, and Skip for now (the slide was caught mid-way). 5,089 + 5 tests.
+**Weak after the build, named:** (4) on a computer this is the one centred page; Customers and Settings sit left, a
+seam to settle when their turn comes; (5) the Later line wraps to two lines on a phone; (6) the sentence's "16" ticks
+down a beat after the slide, when the server's refresh lands; (7) R-114 is honoured by folding, not by showing:
+calls and tomorrow are on the page but take a tap to open, which the founder has not seen on the live app yet.
+
+## 2026-10-28 — The built A-335 Today rejected on sight (R-144); "show me how others make it"
+
+**Founder:** *"i didnt like it can you show me how others make it ??"* on the built screens (dark mode, computer and
+phone), after "merge and build it" to the drawing of the same screen. PR #614 stays open, unmerged, until he decides.
+**What happens next, in order:** (1) record (this entry, R-144, the note on A-335); (2) gather how other products
+make their Today / home / daily queue, from real screens (Mobbin) and the earlier study
+(`reports/How big apps design their Today page.md`, A-283), as principles not templates (brand rule 6); (3) show him
+a board of the references with one line each on what they do differently from ours; (4) ask one question with it:
+"what didn't you like: too empty, still too complex, or the look?"; (5) draw again only after his answer.
+**Step 2, honestly:** no real screen could be fetched from this computer (every outside site and the App Store are
+blocked; Mobbin needs a paid plan), the same limit the 17 Oct study hit. So the founder got links to open himself,
+one line each on how that product makes its Today (from `reports/How big apps design their Today page.md`): Apple
+Reminders' Today (overdue first, then Morning / Afternoon / Tonight), Things 3 (calendar on top, one calm list),
+Todoist (overdue on top, end the day at zero), Superhuman (Important above Other, one email at a time, Inbox Zero),
+Close (one mixed inbox for today: replies, tasks, missed calls) and Follow Up Boss (the list that says who to call).
+The question went with it. No new drawing until he answers.
+
+## 2026-10-28 — "It is working good but doesn't feel like working": the reason behind R-143 and R-144
+
+**Founder:** *"i feel like what we are making and the direction of the product dosent matches the app i mean it is
+working good right but dosent feel like working."* The first reason in his own words for "dead" (R-143) and for
+rejecting the calmer Today (R-144). Recorded as a brand principle (the app must show FollowUp working).
+**Reading:** Today is written as the owner's to-do list; the product is FollowUp doing the following up. The app's
+work (replies sent on its own, check-ins scheduled, customers qualified, calls booked) is real but lives in Activity
+and Results, or behind Later's fold. So the page the owner opens every day shows their work, not FollowUp's. "Less on
+the screen" (A-335) made this worse by folding "FollowUp wrote to 3 customers for you" away.
+**Founder:** *"yes draw it"* to the reading below (same day). **Direction, confirmed:** Today opens with FollowUp's work in the present
+tense: what it did since the owner last looked (names, times, the replies themselves), what it is doing now, who it is
+waiting on and what it will do next on its own; the owner's few decisions on top, in the same voice. Drawn on the real
+app, computer and phone, then built on his yes. PR #614 stays unmerged; its parts that fit (one column, the Next line)
+may be reused.
+
+## 2026-10-28 — Today that shows FollowUp working, drawn on the real app
+
+**Founder:** *"yes draw it"* to the reading of his words (the app must show FollowUp working). Drawn on the live
+local Today, computer 1440 (full height) and phone 390×844, light and dark (scratchpad `today/work/working-today-board.png`).
+**What the drawing proposes (one column, A-335's column kept; the look A-331/A-333 untouched):**
+- **The sentence is FollowUp's report**, not the owner's to-do count: "Since you last looked, FollowUp answered 4
+  people, booked 1 call and wrote 16 replies for your OK." (real counts: handled, wrote-for, booked, the queue).
+- **"FollowUp did · since 9:40 pm"** first: one row per thing it did, face, what ("Answered Zoe", "Booked a call with
+  Raj, Saturday 11 am", "Checked in with Mia, day 3", "Asked Ethan for his number"), the words it sent in quotes, the
+  time on the right; "6 more, in Activity". Shown only when it did something; "since you last looked" is real
+  (the owner's last visit).
+- **"Needs you · 16 · FollowUp wrote these. They go out when you say."** The same open card (their words, "FollowUp
+  wrote:", the reply, the check line, Send / Change it / Skip for now) reframed as FollowUp's work handed over, not the
+  owner's chores; then the Next line with three faces (from A-335).
+- **"FollowUp is on it"**: present tense, real state: "Waiting on 3 replies" (who, how long, what it does if they
+  stay quiet), "Check-ins coming up" (from the plan), "Watching Gmail and Instagram · last checked 2 minutes ago"
+  with the green dot.
+- **"Your day"**: the booked call with its time and note, tomorrow, calls this week (R-114 kept).
+- **Alive where it's true (A-048):** a new row slides in at the top of "FollowUp did" when it acts while the page is
+  open; after Send the reply moves up there ("Sent to Zoe · just now"); "last checked" keeps counting.
+**Weak, named:** (1) on a quiet account (hold-all, nothing sent on its own) "FollowUp did" is empty and the page is the
+old queue in a new voice: the sentence must then say "FollowUp wrote 16 replies for your OK" and nothing false; (2) the
+phone shows the first Send one screen down (four "did" rows above it); (3) "since you last looked" needs the owner's
+last-seen time, which exists (`/api/account/seen`) but was never read for this; (4) the rows in the drawing are
+examples: the real list is only what FollowUp really sent.
+**Founder (same day):** *"yes build it"* → [[approved#^A-336|A-336]]. Building on PR #614's branch (its one column and
+Next line stay; its Then/Later fold goes).
+
+## 2026-10-28 — Today that shows FollowUp working (A-336) built, on PR #614's branch
+
+**Founder:** *"yes build it"*. Built the same day on the A-335 branch (its one column and Next line stay; its Then and
+Later fold go; `LaterFold.tsx` deleted). PR #614 now carries A-336, not the rejected A-335.
+**What was built:** the sentence is FollowUp's report ("Since you last looked, FollowUp answered 2 people, caught 1 new
+customer, booked 1 call and wrote 16 replies for your OK."; "Today, …" when the owner already looked today; "FollowUp has
+16 replies waiting for your OK." when it did nothing on its own; the old day sentence when there is nothing at all).
+"FollowUp did · since 3:32 PM": one row per real send, booking or new customer since the owner last opened the app (the
+`app.open` record; capped at a week; today's start when it is their first open), face, what ("Answered @maya.homes",
+"Checked in with Mia", "Sent your reply to Raj", "Booked a call with Raj, Saturday at 11 am", "New customer from
+Instagram: Ethan Brooks"), the words sent in quotes (90 characters), the time on the right in grey, four rows then
+"N more, in Activity"; a row that appears after the page loaded slides in at the top. "Needs you · 17 · FollowUp wrote
+these. They go out when you say.": the open card, the Next line, then the other decisions as rows. "FollowUp is on it":
+"Waiting on 1 reply · Ethan (1 h)." (with "If Ethan stays quiet, FollowUp checks in tomorrow." when a plan says so),
+"N check-ins coming up · Priya tomorrow · Omar Thursday", "Watching Gmail · Last checked 2 minutes ago" with the dot.
+"Your day": today's calls, Tomorrow, Calls this week.
+**Checked:** computer 1440 (full column) and phone 390×844, light and dark, in a real browser on the local test
+business with seeded sends; the Next list opened, a person picked from it (the card changed, the line re-ordered),
+Skip for now (back to the first person, the skipped one gone from the line); no console errors. Typecheck, lint, the
+full suite (448 files, 5,103 tests; one source-text test updated: the sentence is `{report}`, falling back to the day
+sentence).
+**Design review, honestly:** (✅) the first five seconds answer "what did FollowUp do while I was away" with facts, not
+claims; the owner's part is the same card as before, so nothing to relearn; every row is real (a send, a booking, a
+customer) with its time and the words, nothing generated; the dot and the "ago" are real state. (⚠️ fixed) long
+"FollowUp did" titles cut off on the phone ("New customer from Instagr…") → the title may take two lines there; the
+green dot sat beside "Last checked 23 days ago" on the test account → the dot is grey when the last check is over an
+hour old (the reconnect notice is under Needs you). (⚠️ left, named) on a hold-all account (nothing sent on its own,
+like the founder's test account today) "FollowUp did" is empty and the page is "Needs you", "FollowUp is on it" and
+"Your day": honest, but the feeling he asked for only arrives when FollowUp sends by itself, so the recommendation to
+him stands: turn on sending for the simple replies on the test account and watch it for a week. On the phone the first
+Send is one screen down when four "did" rows sit above it (the drawing's weak spot 2, kept: the report comes first on
+purpose). On day one the one-time "Your first reply went out through FollowUp" card and the "FollowUp did" row say
+the same thing twice; the card is one-time, left. The two labels "Needs you · 17" and "wrote 16 replies" differ by the
+decision rows (a stopped-replying row here); correct, but an owner may count. **Weakest part:** the page is longer than
+A-335 (four groups); it earns the length only on an account where FollowUp acts.
+**20% better next:** a "did" row could open the exact message in the conversation rather than the customer's page;
+"Waiting on" could show the customer's last words.
+
+## 2026-10-28 — The built A-336 seen by the founder: "dosent looks as expected bro"
+
+**Founder**, on the two screenshots of the build (computer and phone, light): *"dosent looks as expected bro"*. No
+reason given; asked one question. **Compared the drawing with the build myself first.** Two differences that are
+plainly visible: (1) the one-time "Your first reply went out through FollowUp" card sits between the sentence and
+"FollowUp did" and was not in the drawing (the drawing goes straight from the sentence to the rows); (2) the open
+"Needs you" card is far taller than drawn: the drawing shows name · Buying · Has an agent · "asked 33 days ago" on
+the right, her words, "FollowUp wrote:", the reply, the check line, "If it looks right, press Send.", the buttons;
+the build also shows the "Has an agent" pill with "FollowUp's call", the bold call sentence, "More about Zoe",
+"Zoe emailed you 33 days ago", "FollowUp wrote this reply for you:" and the "Re: listing" subject. Smaller: the
+"FollowUp is on it" rows use an icon where the drawing had stacked faces; times read "1:54 PM" where the drawing had
+"8:12 am". **Inferred (not confirmed):** the gap is that the build kept every existing piece of the card and the
+page and added the new groups around them, where the drawing was a cleaner page; what he approved was the drawing,
+so the build must match it line for line. Question asked: "is it those two, or something else?" with the
+recommendation to make it match the drawing exactly (drop the top box, shorten the card). Waiting for his answer
+before changing anything.
+
+## 2026-10-28 — Five Todays in five shapes, drawn at the founder's ask
+
+**Founder**, after "dosent looks as expected" and the two-difference question: *"i dont now man can you just show me
+diffrent examples please totally diffrent from each other and every example should have different formats."* He
+cannot name what is wrong, so the next move is breadth, not another refinement. Five formats drawn on the live local
+app (computer 1440 and phone 390, light and dark; scratchpad `today/formats/five-todays-{light,dark}.png`), same
+facts on every one (what FollowUp did, the 16 replies for the owner's OK, who it is waiting on, the day), only the
+shape changes: **1 The feed** (one stream, newest on top, FollowUp's work and the owner's part in time order, no
+groups, "You last looked" as a marker, Coming up below); **2 The split desk** (two sides on a computer: FollowUp's
+side as a narrow rail of plain rows, the owner's side as one reply at a time plus name chips; two tabs on the phone);
+**3 The inbox** (one list and no cards, filter pills, every person a row that says what happened or what to do, Send
+on the row); **4 The brief** (no rows: three sentences with names as links and one button, "Read the 16 replies ·
+about 8 minutes"); **5 The day** (a clock down the side, FollowUp's actions above a Now line, the owner's card at Now,
+check-ins and calls below). None re-proposes a rejected idea: every one shows FollowUp's work (the brand principle),
+none is a bare queue (R-114), none keyboard-first (R-002), none a dot-only signal (R-141), the look stays crisp
+(R-142). **Honest notes:** 1 and 5 are long on the phone (the owner's Send sits one or two screens down); 2 is the
+only one that changes the computer layout (two columns); 3 is the densest and the closest to Mail; 4 hides every
+detail behind one button and is the calmest. Sent as two boards. Waiting for his pick, or for what in one of them
+feels right.
+
+## 2026-10-28 — "looks bad all of them": the five shapes rejected (R-145); design the opening page together
+
+**Founder:** *"looks bad all of them. 2nd is like kind of idea we should go for but lets design together bro so lets
+just fiond out what should be there on the opening pager"*. Recorded as R-145. What survives: the idea of two sides
+(FollowUp's side, the owner's side). **What changes in how we work:** no more finished pages to accept or reject
+whole. The opening page is decided item by item with him first (what is on it, in what order, what is not), then
+drawn once, then built. Started by offering him the short list of candidate items with a recommendation, one question
+at a time. PR #614 (A-336) stays open and unmerged until the page he designs replaces it.
+**Step 1, decided (founder, same day):** of the eight candidate items (1 what FollowUp did while away · 2 replies
+waiting for his OK · 3 customers FollowUp is waiting on · 4 coming up · 5 what is watched · 6 numbers · 7 problems ·
+8 his calls today with the note), *"keep 1 2 4 8 bro"*. So the opening page holds: what FollowUp did, the replies for
+his OK, what is coming up, his calls with their notes. Not on it: numbers (Results), the waiting-on list, the watched
+inboxes, problems (where these go, if anywhere, is a later step; problems that need him still have to reach him).
+**Step 2, the order (drawn, waiting):** recommended FollowUp's side first, then the owner's side; computer side by
+side, phone stacked. Founder: *"letss see"* → drawn on the live app (scratchpad `today/sides/two-sides-board.png`,
+computer + phone, light + dark): left column "FollowUp did · since 9:40 PM" (four rows with the words and the time,
+"2 more, in Activity") and "Coming up" (Ethan if quiet · Priya's day-7 check-in · the Saturday call with its note);
+right column "Needs you · 16" (the compact card as approved in A-336's drawing: name, Buying · Has an agent, asked 33
+days ago, her words, FollowUp wrote, the reply, the check line, Send / Change it / Skip for now), the Next line with
+three faces, "Your calls today" (the call with its note; "Nothing else booked today"). Phone: the same, FollowUp's
+side on top. Honest note: on the phone the first Send is about two screens down; if he wants it nearer, the phone
+can open on his side with FollowUp's side one tap above. Waiting for his answer on the order.
+**Step 3 (founder, same day):** *"bro the tasks that a user need to do should be eyecatching right so that they can
+get to know what to do right?"* → yes; recorded as a brand principle (brand-principles.md, 2026-10-28, "What the owner
+must do catches the eye"). Drawn at once (scratchpad `today/sides/loud-board.png`): the owner's side first and bigger
+(computer: left, 7/12 of the width; phone: top), a real heading "16 replies need your OK" with "FollowUp wrote them.
+Each goes out when you say." under it, the card raised with a soft shadow and a darker edge, the one black Send;
+"Your calls today" as a real heading too. FollowUp's side quieter: small caps labels, 28px faces, 14px rows, faint
+times, to the right on a computer and below on the phone. The sentence under the greeting now reads "While you were
+away, FollowUp answered 2 people, booked 1 call and caught 1 new customer." Waiting for his reaction.
+**Founder:** *"no bro"* on the step-3 drawing. No reason. Fourth page-level no today (A-335 built, A-336 built, the
+five shapes, this). Asked one question with three options (the look · where things sit · the words) and offered to
+draw exactly what he describes in one line. No further drawing until he answers; nothing changes in the code.
+**Founder:** *"lwets just lock in and make the design first it too much now lets start the deep research now"*. So:
+stop drawing, research first, then design once from the evidence. Deep research started the same hour (the report
+lands in `reports/`); the opening page gets drawn again only from its findings, with him, item by item.
+**Research delivered (same night):** `reports/Opening page that shows the work.md` ("Today proves the work, then
+asks once"; 6,568 words, 129 citations; five notes in `research_notes/Opening page that shows the work/`: AI-assistant
+home screens, attention and hierarchy, realtor morning screens, showing autonomous work, SMB home screens). Honest
+limit: no vendor site could be opened from this machine; every product finding rests on search excerpts of the
+vendor's own pages; no screen was seen. **What it says, in short:** the owner's side is a decision surface (top-left,
+isolated, three contrast levels, one numeral in the heading, one black button, present only when true); FollowUp's
+side is an audit surface (a sentence of real counts, rows with the exact words and real times, the rest one tap away,
+nothing staged). Phone order: sentence → "N need your OK" with the first reply open and Send under the words → your
+calls today → what FollowUp did → what's coming up. Computer: owner's column left, FollowUp's right and quieter.
+Drop the green dot and the ticking "ago" (no evidence; persistent lights fade from notice); a plain "Checked Gmail and
+Instagram at 9:41" line instead, and a broken channel becomes an owner's-side row. When FollowUp did nothing: no
+heading, no button, a factual cleared state ("Nothing new since 9:40 pm. This week FollowUp answered 23 people.").
+Avoid: urgency tricks, ever-present counters, fake progress, narrated AI reasoning, number tiles, a feed as the page.
+**Could not establish:** counts vs exact words for trust; one-at-a-time vs list for non-experts; sticky vs in-flow
+Send; relative vs absolute time. **Three cheap open questions to decide with him:** the sentence above or below his
+block; Send in the flow or pinned at the thumb; a "checked at" line or none.
+**The three choices, decided (founder, same night):** asked "OKAY SO WHATS NEXT", offered my three picks to save him
+time (FollowUp's sentence below his part so his part is the first thing he sees; Send right under the reply, not
+pinned; a plain "Checked Gmail and Instagram at 9:41" line, no green dot). Founder: *"GO"*. Note: on the sentence the
+report had leaned the other way (above the block, as a "state of the world"); his pick puts his own part first, which
+the same report's top-left and isolation evidence also supports.
+**Drawn once (scratchpad `today/final/today-from-research.png`, computer 1440 + phone 390 first screen and whole page,
+light + dark):** one small line "Wednesday, October 28 · Good afternoon, Local" (the greeting demoted to meta, the
+report rules out a greeting that does no work); level 1 = "16 replies need your OK" (32 px computer / 27 px phone, the
+numeral first) + the one black "Send to Zoe"; "FollowUp wrote them. Each goes out when you say."; the open reply raised
+(name, Buying · Has an agent, "waiting since Sep 25", her words, "FollowUp wrote", the reply, the reason as a fact "It
+waits for you: …", Send to Zoe / Change it / Not now); under it three hairline rows (face, name, their words, "since
+9:14 AM") and "12 more waiting"; "Your calls today" with the call, its time and "Note ready". FollowUp's side is one
+quiet panel (the card-2 ground, no box per row): "FOLLOWUP", the sentence of counts, "SINCE 9:40 PM" rows (what, the
+words in quotes, the time), "2 more, in Activity", "COMING UP" rows, "Checked Gmail and Instagram at 3:41 PM." On a
+computer the panel is the right column (360 px); on the phone it follows his part. His block, heading to Send, sits
+inside the phone's first screen. Waiting for his yes.
+**Founder:** *"LOOKS GOOD WAIT I WILL SEND YOU A REFFRENCE IN A WHILE LETS SEE IF WE can improve with the help of that
+video or the reference that I'm sharing with you"* → approved as [[approved#^A-337|A-337]]; the build waits for his
+reference. When it arrives: study it for principles (never copy), say in plain words what it would change in A-337,
+draw only those changes, then build on PR #614's branch after his yes.
+
+## 2026-10-28 — monday.com, ClickUp, Macro: how their "today" works (founder's ask, after the drawing)
+
+**Founder:** *"can you check monday clickup and macro how they do it ??"* Checked from their help pages via search
+summaries (the sites are blocked here; no screen seen; grade B), written up in
+`design-brain/references/productivity/2026-10-28-monday-clickup-macro-home.md`. In short: monday's My Work is a to-do
+list by date (Overdue, Today, This week…) and reads as a chore; ClickUp's My Tasks is a canvas of cards with an AI
+StandUp that writes what you did in the last day or week; Macro's Inbox is one list, Signal above Noise, where the AI
+agents' answers land beside people's messages. The two that feel alive are the two where something other than the user
+writes into the list. That is the drawing's bet, done as facts (rows with names and times) rather than a generated
+paragraph. Nothing changes in the drawing; waiting for the founder's yes.
+
+## 2026-10-29 — The founder's reference: a clinic CRM demo from a reel, read against A-337 (and a competitor, Zoie)
+
+**Founder:** *"This is what my muse fetched from a reel… Let's see where we are weak, where we are lacking, and do not
+change anything if it feels like, 'Oh, this is not something that we are looking for.' I mean the product's
+direction."* The file is a written brief plus four stills of a clinic CRM demo (Patient Flow board, WhatsApp inbox,
+week schedule, WhatsApp broadcasts), asking to rebuild FollowUp in that shape. Read for principles, not copied.
+**Already in FollowUp (no change):** the owner's OK before a reply goes out (Assisted); a Reel or post with no words is
+not a customer (`sharedContent.ts`, A-240); follow-ups stop when the customer replies; replies in the customer's
+language and script (`voice.ts`); Undo after Send; Meta's reply window shown in its last hours and when shut
+(`AutomationStatusBadge`), with the email fallback (A-238); rows that say the action in words (A-325); chats that read
+like Instagram's (A-324); the calls week (A-317); one big black Send.
+**Not taken, against the direction:** the teal/amber/green palette (R-128, "minimal not colourful"); four number boxes
+on top of every screen (numbers belong to Results; the opening-page research ruled out number tiles on Today); the bell
+and the search box in a top bar (R-116, R-129); a board where the owner drags customers between columns (that is the
+owner doing admin; FollowUp moves customers itself, A-303, and the app shows FollowUp working, A-336); broadcasts to a
+list (a bulk "blast" tool, against the standing rules and Meta's); "never auto-send" as an absolute (the founder chose
+sending by itself after a one-time yes, A-217/A-236); three fixed templates (each reply is written for the person,
+R-118).
+**One thing worth taking:** the demo shows how fast replies go out ("8 min median reply"). FollowUp already measures
+this (`medianReplyMs`, used on Results) but Today never says it. Proposed: add it to FollowUp's sentence in A-337's
+quiet panel, e.g. "Answered 23 people this week, most within 4 minutes", only when the number is real and only as part
+of the sentence, not a box. Proposed, not drawn; waiting for the founder.
+**Competitor named the same day:** the founder mentioned "Zoie app". Search summaries only (zoie.ai is blocked from
+this session; no screen seen): a CRM with AI agents that answer, qualify, book and re-engage over SMS, email, calls and
+a shared inbox (WhatsApp, Messenger, Instagram), a human can take over, and a dental version sold by Teraleads. It was
+not in the October competitor report. Difference from FollowUp as described: Zoie replaces the CRM and its agents act on
+their own; FollowUp works beside the owner's CRM and nothing goes out without the owner's rule or OK.
+
+## 2026-10-29 — "Are we weak, why choose us?", then A-337 built
+
+**Founder:** *"Can we improve? are we weak and why people should choose us ??"* Answered from the competitor report and
+production numbers (read-only): the product's reasons hold (one list across email and DMs, noise set aside, the
+owner's OK, beside the CRM, $39), the weakness is proof (almost no real use yet), plus no calls or texts, the Gmail
+cap until CASA, and Meta's review. Recommended: build the approved Today, then two weeks of getting three realtors
+using it. **Founder:** *"okay go build the today page"* → A-337 built as drawn (Built note under
+[[approved#^A-337|A-337]]). The reply-speed line from the reel reference was **not** added: it was proposed, never
+drawn or approved; still on offer.
+**Self-review (design-review.md), what is weak:** in the panel a booked call reads "Saturday at 11 am" in "Since" and
+"Saturday 11:00 AM" in "Coming up" (two time styles in one panel; the first comes from the customer-facing
+`sayTime`, so it was left alone); the local test data repeats one message, so the rows look samey in the pictures;
+"Not now" wraps under Send on a very narrow phone with a long first name. Pictures: scratchpad `today/build/`.
+
+## 2026-10-29 — "Are you sure we agreed on this design?": four ways to make the built Today clearer (drawn)
+
+**Founder:** *"Are you sure we agreed on this design? I had given you a reference so that we can improve it, but this
+looks good, not bad. Let's see where we can improve, but keep in mind all the things that we need to keep in mind to
+organise this properly so that everybody can understand."* Answer: yes, the drawing was approved Oct 28 ("LOOKS GOOD"),
+and the reel reference changed little because most of what it does goes against earlier decisions (colours, number
+boxes, drag board, broadcasts). What the reference does well, and Today lacks, is that each row tells you at a glance
+what kind of thing it is and where it came from. Drawn on the real app with test customers (scratchpad
+`today/improve/today-clearer-board.png`, computer now/better and phone better), four changes, none against a past
+decision:
+1. **What they want, in words** on the card's line and each waiting row: "Wants to book", "Asked the price" (A-230's
+   own reason, `readyReason()`, which already orders Today; the outline word style Today used for "Ready"; R-141/A-325
+   words, no dot, no colour).
+2. **Where they wrote**: the app's own small logo on their face (A-276 already says small channel marks in rows use the
+   real logos; email stays the envelope where the provider isn't known).
+3. **Instagram/Messenger's deadline only near the end**: "3 h left to reply" in place of "since …", in ink, no colour
+   (A-028's rule: shown only when nearly up, using the existing closing-window state).
+4. **One instruction and clear groups**: the heading's line says "FollowUp wrote them. Read each one, then press Send."
+   (R-113's principle: say the task in a plain sentence); "Also needs you" over the owner's other tasks; one way to
+   write a time in FollowUp's panel ("Saturday at 11 am").
+Proposed, waiting for the founder's yes; nothing built.
+**Approved and built the same day** ("yes build all four", [[approved#^A-338|A-338]]) on PR #614 beside A-337.
+Self-review, honestly: (a) the reason word is only as good as `readyReason()`; on the local test customers it shows
+nothing, because none of them asked anything FollowUp can name, which is right but means the founder sees it first on
+real customers. (b) The channel badge is small (16px, glyph under 10px): clear on a computer, small on a phone; it is
+a second cue, the row's words still carry the meaning. (c) The deadline counts whole hours down, so "2 h left" can mean
+2 h 59 min; rounding up would promise time that isn't there. (d) "Also needs you" is a small uppercase label, the same
+style as the panel's labels, so it reads as a group title and not as a heading competing with the page's own.

@@ -71,6 +71,17 @@ export function daySentence(n: {
   return n.startWith ? `${said} Start with ${n.startWith}.` : said;
 }
 
+/**
+ * Who comes after the open person, in one line under their card (A-335, Today with less on the screen): "Next: Ethan,
+ * Mia, Mason · 12 more". Three first names at most; the rest is a count. Nothing when nobody else is waiting.
+ */
+export function nextLine(names: string[]): string | null {
+  const firsts = names.map((n) => n.trim().split(/\s+/)[0] || n);
+  if (firsts.length === 0) return null;
+  if (firsts.length <= 3) return `Next: ${andList(firsts)}`;
+  return `Next: ${firsts.slice(0, 3).join(", ")} · ${firsts.length - 3} more`;
+}
+
 /** Which of the owner's days a time falls on: 0 today, 1 tomorrow, anything else is neither. */
 export function dayOffset(at: Date, now: Date, timeZone: string): number {
   const ymd = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).format(d);

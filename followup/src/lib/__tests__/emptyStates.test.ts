@@ -59,16 +59,18 @@ describe("the dashboard on a brand-new account", () => {
     const fn = source.slice(source.indexOf("function headline()"));
     const body = fn.slice(0, fn.indexOf("\n  }"));
     expect(body).toContain('if (leads.length === 0) return "No customers yet.";');
-    expect(source).toMatch(/\{sentence \? \(/);
+    // The sentence is the heading only on the brand-new branch.
+    expect(source).toMatch(/leads\.length === 0 \? \([\s\S]*?<h1[^>]*>\{sentence\}<\/h1>/);
   });
 
   it("still gives an account that has worked its day", () => {
     // The fix must not overcorrect: an owner with customers gets their day
-    // (A-244): a greeting on their own clock, then the day in one sentence
-    // with who to start with (A-266). Only a brand-new account gets "No customers yet."
+    // (A-244): a greeting on their own clock (A-337: one small line with the
+    // date), the owner's heading in the queue, and FollowUp's report in its
+    // panel. Only a brand-new account gets "No customers yet."
     expect(source).toContain("greeting(now, timezone, me?.name)");
-    expect(source).toContain("startWith: firstUpName");
-    expect(source).toContain("{dayWords}");
+    expect(source).toContain("{dateWords} · {greetWords}");
+    expect(source).toContain("sentence={inboxSummary ? null : panelWords}");
   });
 });
 

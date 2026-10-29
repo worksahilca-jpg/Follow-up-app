@@ -1833,5 +1833,50 @@ number of things on Today (numbers, a card, rows, Later lines, questions). The f
 still stands: crisp, premium) but fewer things and a little life where something changes. *The reason is not yet
 his words: ask "is it the look, or how much is on the screen?" before drawing.*
 
+**Asked (2026-10-28), answered:** the question was put with the recommendation "start with less on the screen, Today
+as one calm page, a little life only where something changes"; the founder answered *"okay do it"*. Taken as the
+amount, not the look: Today is drawn again with fewer things (one person at a time, the rest of the day folded into
+single lines, the numbers pill off Today), and motion only where something changes (the next person slides in after
+Send). The look (A-331/A-333) stays.
+
 **What this does not reopen:** the crisp window (A-333, "yes looks good" the same day) and the ban on gimmicks
 (brand principles). A Today redesign is drawn first, built after his yes.
+
+**Built (2026-10-28):** the founder said *"merge and build it"* to the drawing → [[approved#^A-335|A-335]]: one
+column, one person at a time in a box, the rest of the queue as one line with three faces, Then only for what isn't
+a reply, Later as one line, the numbers off Today, the next person sliding in after Send. The look is unchanged; what
+changed is how much is open at once. Whether this answers "dead" as well as "too complex" is his to say on the live
+app.
+
+## R-144 — The built A-335 Today, on sight: "i didnt like it" ^R-144
+
+**Date:** 2026-10-28. **Founder, verbatim:** *"i didnt like it can you show me how others make it ??"*, on the two
+screenshots of the built [[approved#^A-335|A-335]] (computer and phone, dark mode), minutes after "merge and build
+it" to its drawing. PR #614 stays unmerged.
+**What was rejected:** the built Today with less on the screen (one column, one person in a box, "Next: Ethan, Mia,
+Mason · 12 more", Then only for non-replies, Later as one line, the next person sliding in).
+**Reason, in his words (minutes later):** *"i feel like what we are making and the direction of the product dosent
+matches the app i mean it is working good right but dosent feel like working."* The app does the work but the screen
+doesn't show it working: Today hands the owner a queue ("16 people are waiting for your reply"), which says the owner
+does the following up, when the product's direction is that FollowUp does it. Recorded as a brand principle
+(brand-principles.md, 2026-10-28: the app must show FollowUp working).
+**Principle:** a screen says what the product is. Evidence of FollowUp's work (what it answered, what it is doing,
+what it will do, with names and times) is the content of Today; the owner's few decisions sit on top of it. Cutting
+things from Today made it read deader, because the cut lines were the ones that showed work.
+**Do not propose again:** Today as a queue of the owner's tasks, however calm; another "less on the screen" cut.
+**Answered (2026-10-28)** by [[approved#^A-336|A-336]], Today that shows FollowUp working: *"yes build it"*.
+
+## R-145 — The five Today shapes (feed, split desk, inbox, brief, day), on sight ^R-145
+
+**Date:** 2026-10-28. **Founder, verbatim:** *"looks bad all of them. 2nd is like kind of idea we should go for but
+lets design together bro so lets just fiond out what should be there on the opening pager"*, on the two boards
+(`today/formats/five-todays-{light,dark}.png`), drawn after the built A-336 "dosent looks as expected".
+**What was rejected:** all five as drawn: 1 the feed, 2 the split desk (as drawn), 3 the inbox, 4 the brief, 5 the
+day. **What survives:** the *idea* of 2, two sides: FollowUp's side and the owner's side. Not its drawing.
+**Principle (his words, and inferred):** he will not pick a finished page from a line-up; the opening page is to be
+designed *with* him, starting from what should be on it, before any shape. *(Inferred: three rounds in one day,
+each a full page he had to accept or reject whole, is the wrong unit; the unit is one item at a time, decided
+together, then drawn.)* **Do not propose again:** a line-up of finished Today pages to choose from; the feed, the
+inbox list and the clock as Today's shape; the prose brief as the page. Draw Today only after the contents are
+agreed with him item by item.
+

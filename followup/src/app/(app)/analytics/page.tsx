@@ -19,6 +19,7 @@ import { CALLS_SHOWN_FROM, readyOutcome } from "@/lib/followUpCall";
 import { loadMissedByCrm } from "@/lib/missedByCrmData";
 import { checkedAgo } from "@/lib/missedByCrm";
 import { MissedByCrmCard } from "@/components/MissedByCrm";
+import { sinceStartedFor } from "@/lib/sinceStarted";
 
 export const dynamic = "force-dynamic";
 
@@ -43,7 +44,7 @@ export default async function NumbersPage() {
   // day it happened, and the date line names the days the number covers.
   const weekStart = startOfLocalDay(new Date(now.getTime() - 6 * DAY), timeZone);
 
-  const [data, leads, report, written, booked, won, calls, missed, isAdmin] = await Promise.all([
+  const [data, leads, report, written, booked, won, calls, missed, isAdmin, since] = await Promise.all([
     getAnalytics(),
     getLeads(),
     getRescueReport(ctx.businessId, 7, now),
@@ -57,6 +58,8 @@ export default async function NumbersPage() {
     // Missed by your CRM (A-315): who wrote and never reached the owner's CRM. null without a CRM checked end to end.
     loadMissedByCrm(ctx.businessId, now),
     requireAdmin(ctx),
+    // "Since you started" (A-307): the owner's all-time numbers. They left Today (A-335) and live here.
+    sinceStartedFor(ctx.businessId),
   ]);
   if (!data) return null;
 
@@ -102,6 +105,8 @@ export default async function NumbersPage() {
     ["On a follow-up plan", String(data.sequenceHealth.enrolledCount)],
     ["Sent as written this week", written.total > 0 ? `${written.asWritten} of ${written.total}` : "—"],
     ["Plans finished (30 days)", String(data.sequenceHealth.completedLast30Days)],
+    ["Answered, all time", String(since?.answered ?? 0)],
+    ["Booked, all time", String(since?.booked ?? 0)],
     ["Won, all time", data.wonCount > 0 ? `${data.wonCount} · ${formatCurrency(data.totalRevenue)}` : "0"],
     ["Replied after a follow-up", data.followUpsSentTotal > 0 ? `${data.repliedCount} of ${data.followUpsSentTotal}` : "—"],
   ];

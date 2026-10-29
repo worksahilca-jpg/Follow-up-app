@@ -448,3 +448,33 @@ customers saying no.)
   realtor checks the hardest cases.
 - Where realtors stop, FollowUp stops. Where they have another move ("not now" becomes "when should I check back?"),
   FollowUp uses that move instead of a blanket rule.
+
+## The app must show FollowUp working, not hand the owner a to-do list (founder, 2026-10-28)
+
+*"i feel like what we are making and the direction of the product dosent matches the app i mean it is working good
+right but dosent feel like working."* (Said on the built A-335 Today, after "i didnt like it".)
+- The product's direction is that FollowUp does the following up and the owner supervises
+  (`followup/PRODUCT_DIRECTION.md`). Today as built opens with "16 people are waiting for your reply. Start with Zoe."
+  That is a to-do list for the owner. It says the opposite of the product: the work is yours.
+- **A screen says what the product is.** When FollowUp answered four people overnight, booked a call and is waiting
+  on three replies, Today must show that, in the present tense, with names and times: what it did since the owner
+  last looked, what it is doing now, what it will do next on its own, and who it is waiting on. The owner's own
+  decisions sit on top of that, few and clear. The page changes between visits because FollowUp did things.
+- The fix for "dead" (R-143) is therefore not decoration (R-142) and not less on the screen (R-144): it is evidence of
+  work. Less on the screen cut exactly the lines that showed FollowUp working ("FollowUp wrote to 3 customers for
+  you" went behind a fold), which is why the calmer Today read deader, not calmer.
+- Confirmed the same day: asked "is 'the app should show FollowUp working, not give me a to-do list' the feeling
+  you mean?", he answered *"yes draw it"*. So "doesn't feel like working" means "I can't see it working".
+
+## What the owner must do catches the eye; FollowUp's work is the quiet proof beside it (founder, 2026-10-28)
+
+*"bro the tasks that a user need to do should be eyecatching right so that they can get to know what to do right?"*
+(Said on the step-2 drawing of the opening page, where both sides had the same weight.)
+- On any screen that mixes the two, the owner's part comes first and is the loudest thing: first in reading order
+  (left on a computer, top on a phone), a real heading that says the action and the count ("16 replies need your OK"),
+  the card raised, the one black button. FollowUp's own work sits beside it, smaller and greyer: present, so the
+  page shows FollowUp working (the principle above), but never competing with what the owner must do.
+- Loud by position, size and the one black button. Never by colour, a badge or a dot alone (R-141), never neon or
+  urgency (standing rules).
+- Both principles hold together: the page proves FollowUp worked *and* makes the owner's next move unmistakable.
+

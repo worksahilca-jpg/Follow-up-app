@@ -122,8 +122,12 @@ describe("the guarantee on a holding account", () => {
     const queue = readFileSync(join(__dirname, "..", "..", "components", "ApprovalQueue.tsx"), "utf8");
     const setup = readFileSync(join(__dirname, "..", "..", "components", "OnboardingForm.tsx"), "utf8");
     expect(setup, "setup still names an exception on Assisted").not.toMatch(/let me check/i);
+    // Today's calm heading says it (A-337): the words live in src/lib/todayWork.ts, which the queue uses.
+    const heading = readFileSync(join(__dirname, "..", "todayWork.ts"), "utf8");
     expect(queue, "Today still names an exception on Assisted").not.toMatch(/apart from a short/i);
-    expect(queue).toMatch(/Nothing goes out until you send it\./);
+    expect(heading, "Today's heading still names an exception on Assisted").not.toMatch(/apart from a short/i);
+    expect(heading).toMatch(/Nothing goes out until you send it\./);
+    expect(queue).toMatch(/ownerHeading\(/);
   });
 });
 

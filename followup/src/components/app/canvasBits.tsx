@@ -3,7 +3,7 @@
  * the initials circle, the short "5d / 4h / 20m" age, and the small grey
  * group label.
  */
-export function Initials({ name, size = 44 }: { name: string; size?: number }) {
+export function Initials({ name, size = 44, quiet = false }: { name: string; size?: number; /** FollowUp's panel (A-337): no fill, faint letters. */ quiet?: boolean }) {
   const letters = name
     .trim()
     .split(/\s+/)
@@ -13,8 +13,8 @@ export function Initials({ name, size = 44 }: { name: string; size?: number }) {
   return (
     <span
       aria-hidden
-      className="shrink-0 inline-flex items-center justify-center rounded-full border border-line font-semibold text-ink-soft"
-      style={{ width: size, height: size, background: "var(--accent-soft)", fontSize: size >= 40 ? 14 : 12 }}
+      className={"shrink-0 inline-flex items-center justify-center rounded-full border border-line font-semibold " + (quiet ? "text-ink-faint" : "text-ink-soft")}
+      style={{ width: size, height: size, background: quiet ? "transparent" : "var(--accent-soft)", fontSize: size >= 40 ? 14 : 12 }}
     >
       {letters || "?"}
     </span>

@@ -1865,3 +1865,18 @@ what it will do, with names and times) is the content of Today; the owner's few 
 things from Today made it read deader, because the cut lines were the ones that showed work.
 **Do not propose again:** Today as a queue of the owner's tasks, however calm; another "less on the screen" cut.
 **Answered (2026-10-28)** by [[approved#^A-336|A-336]], Today that shows FollowUp working: *"yes build it"*.
+
+## R-145 — The five Today shapes (feed, split desk, inbox, brief, day), on sight ^R-145
+
+**Date:** 2026-10-28. **Founder, verbatim:** *"looks bad all of them. 2nd is like kind of idea we should go for but
+lets design together bro so lets just fiond out what should be there on the opening pager"*, on the two boards
+(`today/formats/five-todays-{light,dark}.png`), drawn after the built A-336 "dosent looks as expected".
+**What was rejected:** all five as drawn: 1 the feed, 2 the split desk (as drawn), 3 the inbox, 4 the brief, 5 the
+day. **What survives:** the *idea* of 2, two sides: FollowUp's side and the owner's side. Not its drawing.
+**Principle (his words, and inferred):** he will not pick a finished page from a line-up; the opening page is to be
+designed *with* him, starting from what should be on it, before any shape. *(Inferred: three rounds in one day,
+each a full page he had to accept or reject whole, is the wrong unit; the unit is one item at a time, decided
+together, then drawn.)* **Do not propose again:** a line-up of finished Today pages to choose from; the feed, the
+inbox list and the clock as Today's shape; the prose brief as the page. Draw Today only after the contents are
+agreed with him item by item.
+

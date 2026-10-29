@@ -72,8 +72,22 @@ a booked call or visit; the owner closes.
 
 ## Where we are (update at the end of every task)
 
-**Last updated: 2026-10-28**
+**Last updated: 2026-10-29**
 
+- **Today from the research (A-337) BUILT (Oct 29)** on PR #614's branch, replacing A-336 there: the owner's part
+  first and loud ("16 replies need your OK", the open reply raised, plain rows with "since", "Your calls today"),
+  FollowUp's part as one quiet panel (its sentence, what it did with the words and times, Coming up, "Checked … at").
+  Checked on phone and computer, light and dark, and clicked through. PR #614 waits for CI and the founder's "merge".
+- **"Are we weak, and why should people choose us?" (Oct 29).** Answered from the October competitor report and
+  production (read-only, last 30 days, test accounts included): 12 businesses signed up, 5 had customers write, 17
+  people wrote, FollowUp sent 4 replies (not counting the instant hello), 1 booking. Why choose us: every customer from
+  email, Instagram, Messenger, the website form and Lead Ads in one list; friends, newsletters and pitches set aside;
+  nothing goes out without the owner's OK or rule, never a guessed price; beside the owner's CRM; $39 flat. Weak: no
+  proof yet (almost no real use, nobody paying), no calls or texts, Gmail capped at 100 users until CASA, Meta's
+  review pending, and "AI writes replies" is free from Meta and Gmail. Recommended: after the A-337 Today build, stop
+  adding features and get 3 realtors using it daily for two weeks; their numbers become the reason to choose us. The
+  same day: the clinic-CRM reel reference read against A-337 (design-decisions 2026-10-29), and Zoie noted as a new
+  competitor (search summaries only).
 - **The app on a soft photo, a still frame, Start free fixed (Oct 28, A-331) LIVE ✓ (#609 → 3c0ec37).** The founder,
   first day on a Mac: the app is "way too boring", scrolling "feels like I'm scrolling code", and the landing's Start
   free "scrolls down to the very bottom and asks me to start free again". Found: on a computer the whole web page

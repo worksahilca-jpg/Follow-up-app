@@ -465,3 +465,16 @@ right but dosent feel like working."* (Said on the built A-335 Today, after "i d
   you" went behind a fold), which is why the calmer Today read deader, not calmer.
 - Confirmed the same day: asked "is 'the app should show FollowUp working, not give me a to-do list' the feeling
   you mean?", he answered *"yes draw it"*. So "doesn't feel like working" means "I can't see it working".
+
+## What the owner must do catches the eye; FollowUp's work is the quiet proof beside it (founder, 2026-10-28)
+
+*"bro the tasks that a user need to do should be eyecatching right so that they can get to know what to do right?"*
+(Said on the step-2 drawing of the opening page, where both sides had the same weight.)
+- On any screen that mixes the two, the owner's part comes first and is the loudest thing: first in reading order
+  (left on a computer, top on a phone), a real heading that says the action and the count ("16 replies need your OK"),
+  the card raised, the one black button. FollowUp's own work sits beside it, smaller and greyer: present, so the
+  page shows FollowUp working (the principle above), but never competing with what the owner must do.
+- Loud by position, size and the one black button. Never by colour, a badge or a dot alone (R-141), never neon or
+  urgency (standing rules).
+- Both principles hold together: the page proves FollowUp worked *and* makes the owner's next move unmistakable.
+

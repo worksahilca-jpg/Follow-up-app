@@ -7,14 +7,11 @@ import { hasAnySendChannel } from "@/lib/sendChannels";
 import TestLeadButton from "@/components/TestLeadButton";
 import { getLeads } from "@/lib/leads-data";
 import { aboutToBeLost } from "@/lib/rescue";
-import { getRescueReport } from "@/lib/rescued";
 import { countCustomersAnswered } from "@/lib/weeklyDigest";
 import { withBasis } from "@/lib/showTheWork";
-import { resultsLine } from "@/lib/workDone";
 import { describeWait, describeWaitClause, readyReason, startOfLocalDay, todayTier } from "@/lib/calmToday";
 import { countHandledToday } from "@/lib/handledToday";
 import { loadComingUp } from "@/lib/comingUpData";
-import { medianReplyMs } from "@/lib/waitingOn";
 import { getSessionContext } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { getPendingApprovals, onTodayNow } from "@/lib/pendingApprovals";
@@ -39,13 +36,11 @@ import TellCard from "@/components/TellCard";
 import { AlertsCard } from "@/components/app/AlertsSetup";
 import InstallCard from "@/components/app/InstallCard";
 import ReplyForMeCard from "@/components/app/ReplyForMeCard";
-import { DayHeading, DayRow, type TodayRow } from "@/components/app/TodayDay";
-import DidRows from "@/components/app/DidRows";
-import Ago from "@/components/app/Ago";
-import { DID_SHOWN, checkInsWords, didRows, sinceLabel, sinceWindow, waitingWords, watchingWords, workSentence } from "@/lib/todayWork";
-import { loadWork, previousOpen, waitingOnReplies } from "@/lib/todayWorkData";
-import { clockTime, dayOffset, daySentence, greeting, nextForYouLine } from "@/lib/todayWords";
-import { oneQueue } from "@/lib/approvalGroups";
+import type { TodayRow } from "@/components/app/TodayDay";
+import FollowUpPanel, { type PanelRow } from "@/components/app/FollowUpPanel";
+import { DID_SHOWN, checkedLine, comingUpRows, didRows, panelSentence, sinceLabel, sinceWindow, sinceWords } from "@/lib/todayWork";
+import { loadWork, previousOpen } from "@/lib/todayWorkData";
+import { clockTime, dayOffset, greeting } from "@/lib/todayWords";
 import { replyForMeOffer } from "@/lib/replyForMeOffer";
 import { todaysQuestion } from "@/lib/dailyQuestionData";
 import { todaysPractice } from "@/lib/dailyPracticeData";
@@ -53,10 +48,7 @@ import { tellCardOffer } from "@/lib/tellFollowUpData";
 import { inboxSummaryFor } from "@/lib/inboxSummaryData";
 import InboxSummaryCard from "@/components/InboxSummaryCard";
 import { factsWaitingCount } from "@/lib/businessFacts";
-import { callsWeekValue } from "@/lib/callsWeek";
 import { sayTime } from "@/lib/bookingTimes";
-import { countCallsThisWeek } from "@/lib/callsWeekData";
-import { planLine } from "@/lib/comingUp";
 import { findHabitSuggestion } from "@/lib/habits";
 import type { MeetingToLookBackOn } from "@/components/app/MeetingOutcomeCard";
 import type { CallToPrepare } from "@/components/app/CallBriefCard";
@@ -107,8 +99,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   // messages, the same count the Monday email uses.
   const weekEnd = new Date();
   const weekStart = new Date(weekEnd.getTime() - 7 * 24 * 60 * 60 * 1000);
-  const [rescue, answeredThisWeek, approvals, setupSteps, business, me, gmail, outlook, firstSend] = await Promise.all([
-    ctx ? getRescueReport(ctx.businessId, 7, undefined, { includeOwnerSends: true }) : null,
+  const [answeredThisWeek, approvals, setupSteps, business, me, gmail, outlook, firstSend] = await Promise.all([
     ctx ? countCustomersAnswered(ctx.businessId, weekStart, weekEnd) : 0,
     ctx ? getPendingApprovals(ctx.businessId) : [],
     // Passed straight through. This used to be re-mapped field by field,
@@ -274,6 +265,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     why: readyReason(a),
     // "asked you by email, 2 days ago" (A-243), here for the same reason as `wait`.
     asked: a.leadLastMessageAt ? timeAgo(a.leadLastMessageAt) : null,
+    // "waiting since Sep 25" on the open card, "since 9:14 AM" on a row (A-337): a date on the owner's clock.
+    since: a.leadLastMessageAt ? sinceWords(new Date(a.leadLastMessageAt), now, timezone) : null,
     // "FollowUp told Sarah you're on it · 6:40 pm" (A-060), in the
     // business's own time, worked out here for the same reason as `wait`.
     toldAt: a.customerToldAt
@@ -285,14 +278,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     now,
     timezone
   );
-  // Round 2 (A-088). What came of the week goes to the end of the day, where the owner finishes
-  // (peak-end). A working Today says nothing else under the customer (A-243).
-  const weekResults = resultsLine({
-    heardBackMs: medianReplyMs(leads, weekStart, weekEnd),
-    answered: answeredThisWeek,
-    cameBack: rescue?.rescued ?? 0,
-    booked: rescue?.booked ?? 0,
-  });
   // Everyone waiting on the owner: replies for an OK, and calls to make (A-103).
   const needYou = approvalItems.length + callCards.length;
   const checkedAny = filteredCount > 0;
@@ -394,23 +379,19 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   // waiting (A-243): the question never stands in front of a customer.
   const offer = ctx && isAdmin && leads.length > 0 && needYou === 0 && !alertsOpen ? await replyForMeOffer(ctx.businessId) : null;
 
-  // The owner's whole day (A-244, R-114): calls booked for today and
-  // tomorrow, what got booked today, and how many customers FollowUp wrote
-  // to today. Every time is said on the owner's own clock.
+  // The owner's whole day (A-244, R-114): today's booked calls on their side, the days after in FollowUp's "Coming up"
+  // (A-337). Every time is said on the owner's own clock.
   const dayStart = startOfLocalDay(now, timezone);
-  const [nearBookings, callsThisWeek] = ctx && leads.length > 0
-    ? await Promise.all([
-        // From a few hours back, so a call that has started stays on Today (with its note) until it ends (A-268).
-        prisma.booking.findMany({
-          where: { businessId: ctx.businessId, status: "confirmed", scheduledAt: { gte: new Date(now.getTime() - 4 * 60 * 60 * 1000), lt: new Date(dayStart.getTime() + 50 * 60 * 60 * 1000) } },
-          select: { id: true, leadId: true, scheduledAt: true, durationMinutes: true, brief: true, lead: { select: { name: true, phone: true } } },
-          orderBy: { scheduledAt: "asc" },
-          take: 20,
-        }),
-        // The number on "Calls this week" in Your day (A-317).
-        countCallsThisWeek(ctx.businessId, now, timezone),
-      ])
-    : [[], 0];
+  // From a few hours back, so a call that has started stays on Today (with its note) until it ends (A-268); a week
+  // ahead, for FollowUp's "Coming up" (A-337).
+  const nearBookings = ctx && leads.length > 0
+    ? await prisma.booking.findMany({
+        where: { businessId: ctx.businessId, status: "confirmed", scheduledAt: { gte: new Date(now.getTime() - 4 * 60 * 60 * 1000), lt: new Date(dayStart.getTime() + 7 * 24 * 60 * 60 * 1000) } },
+        select: { id: true, leadId: true, scheduledAt: true, durationMinutes: true, brief: true, lead: { select: { name: true, phone: true } } },
+        orderBy: { scheduledAt: "asc" },
+        take: 20,
+      })
+    : [];
   // Today that shows FollowUp working (A-336): what it did since the owner last looked (their last visit before
   // today, else since midnight, at most a week), and who it is waiting on.
   const prevOpen = ctx && leads.length > 0 ? await previousOpen(ctx.userId, dayStart) : null;
@@ -468,14 +449,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     // The stored note shows at once; the card asks again in the background in case a message came since.
     brief: readCallBrief(b.brief),
   }));
-  const bookingsTomorrow = nearBookings.filter((b) => dayOffset(b.scheduledAt, now, timezone) === 1);
-  // The owner's next booked call, today first, else tomorrow: named when their replies are done (A-283). One
-  // that has already started isn't next (bookingsToday keeps it until it's over, for its row in Then).
-  const nextToday = bookingsToday.find((b) => b.scheduledAt >= now) ?? null;
-  const nextCallBooking = nextToday ?? bookingsTomorrow[0] ?? null;
-  const nextCallForYou = nextCallBooking
-    ? { name: nextCallBooking.lead.name, time: clockTime(nextCallBooking.scheduledAt, timezone), tomorrow: !nextToday }
-    : null;
+  const callsAhead = nearBookings.filter((b) => dayOffset(b.scheduledAt, now, timezone) >= 1);
   // Calls to make (A-103) as rows: the customer's page has the call and its buttons.
   const callRows: TodayRow[] = callCards.map((c) => ({
     key: `call-${c.leadId}`,
@@ -486,203 +460,84 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     time: null,
     href: `/leads/${c.leadId}`,
   }));
-  // Who to start with: the first reply in Today's order (A-230), which is the card that opens (A-266); else the first
-  // call; else a call to look back on.
-  const firstUp = oneQueue(approvalItems).flatMap((g) => g.needsYou)[0]?.leadName ?? callCards[0]?.name ?? lookBacks[0]?.lead.name ?? null;
-  const firstUpName = firstUp ? firstUp.split(" ")[0] || firstUp : null;
-  // The next booked call still to come today, for "1 booked call at 3:00 PM" (A-250).
-  const nextBooked = bookingsToday.filter((b) => b.scheduledAt >= now).sort((a, b) => a.scheduledAt.getTime() - b.scheduledAt.getTime())[0];
-  const dayWords = daySentence({
-    people: approvalItems.length,
-    calls: callCards.length,
-    booked: bookingsToday.length,
-    nextBookedAt: nextBooked ? clockTime(nextBooked.scheduledAt, timezone) : null,
-    lookBack: lookBacks.length,
-    startWith: firstUpName,
-  });
-  // "Your day" (A-336, R-114): tomorrow and the week's calls, one row each, after today's booked calls.
-  const firstTomorrow = bookingsTomorrow[0];
-  const dayLines: TodayRow[] = [
-    {
-      key: "tomorrow",
-      kind: "booking",
-      noIcon: true,
-      title: "Tomorrow",
-      sub: firstTomorrow
-        ? bookingsTomorrow.length === 1
-          ? `Call with ${firstTomorrow.lead.name.split(" ")[0]} at ${clockTime(firstTomorrow.scheduledAt, timezone)}`
-          : `${bookingsTomorrow.length} booked calls, the first at ${clockTime(firstTomorrow.scheduledAt, timezone)}`
-        : "Nothing booked",
-      time: null,
-      href: firstTomorrow ? `/leads/${firstTomorrow.leadId}` : null,
-    },
-    // FollowUp's own calendar (A-317): every call booked through the owner's link, the next seven days by day.
-    { key: "calls-week", kind: "booking", noIcon: true, title: "Calls this week", sub: callsWeekValue(callsThisWeek), time: null, href: "/calls" },
-  ];
   // Something FollowUp learned waits for the owner's OK before a reply uses it (A-308): a decision, under Needs you.
   const factsRows: TodayRow[] = factsWaiting > 0
     ? [{ key: "facts", kind: "checkin", title: `FollowUp learned ${factsWaiting} ${factsWaiting === 1 ? "thing" : "things"}`, sub: "Check them before replies use them.", time: null, href: "/settings#business" }]
     : [];
 
-  // "FollowUp did" (A-336): rows with names, times and the words it sent; four, then "N more, in Activity".
+  // FollowUp's panel (A-337): what it did since the owner last looked, with names, times and the words it sent;
+  // four rows, then "N more, in Activity".
   const sayWhen = (at: Date) => sayTime(at.toISOString(), timezone, now);
   const didAll = didRows(work, since, now, timezone, sayWhen);
-  const didShown: TodayRow[] = didAll
+  const didShown: PanelRow[] = didAll
     .slice(0, DID_SHOWN)
-    .map((r) => ({ key: r.id, kind: "reply", person: r.person, title: r.title, sub: r.sub, time: r.when, quietTime: true, wrap: true, href: `/leads/${r.leadId}` }));
-  // The sentence is FollowUp's report (A-336); with nothing to report, the day's old sentence (A-266).
+    .map((r) => ({ key: r.id, person: r.person, title: r.title, sub: r.sub, when: r.when, href: `/leads/${r.leadId}` }));
+  const sinceWordsLabel = sinceLabel(since, sinceLook, now, timezone);
+  // Its sentence of real counts: what it did on its own; else the replies it sent for the owner; else "Nothing new".
   const answered = new Set(work.sent.filter((w) => w.automated).map((w) => w.leadId)).size;
-  const report = workSentence({ sinceLook, answered, caught: work.caught.length, booked: work.booked.length, forOk: approvalItems.length }) ?? dayWords;
-  const didNode =
-    didShown.length > 0 ? (
-      <section aria-label="FollowUp did">
-        <DayHeading title="FollowUp did" aside={sinceLabel(since, sinceLook, now, timezone)} quiet />
-        <DidRows rows={didShown} more={didAll.length - didShown.length} />
-      </section>
-    ) : null;
-
-  // "FollowUp is on it" (A-336): present tense, real state only.
-  const waiting = waitingOnReplies(leads, awaitingOk, now);
-  const planned = comingUp ? comingUp.groups.flatMap((g) => g.items.map((it) => ({ ...it, day: g.day }))) : [];
-  const firstWaitNext = waiting[0] ? planned.find((it) => it.leadId === waiting[0].leadId) ?? null : null;
-  const waitingRow = waitingWords(
-    waiting,
+  const panelWords = panelSentence({
+    sinceLook,
+    since: sinceWordsLabel,
+    answered,
+    booked: work.booked.length,
+    caught: work.caught.length,
+    yourSends: work.sent.filter((w) => !w.automated).length,
+    weekAnswered: answeredThisWeek,
+  });
+  // Coming up: its planned steps and the owner's calls after today, soonest first; three, then the rest a tap away.
+  const comingAll = comingUpRows(
+    comingUp ? comingUp.groups.flatMap((g) => g.items) : [],
+    callsAhead.map((b) => ({ id: b.id, leadId: b.leadId, name: b.lead.name, at: b.scheduledAt })),
     now,
     timezone,
-    firstWaitNext ? { name: firstWaitNext.name, when: firstWaitNext.day === "Today" ? "later today" : firstWaitNext.day === "Tomorrow" ? "tomorrow" : `on ${firstWaitNext.day}` } : null
   );
-  const checkIns = comingUp ? checkInsWords(comingUp.groups) : null;
-  const watching = watchingWords([gmail.connected ? "Gmail" : "", outlook.connected ? "Outlook" : "", instagramConnected ? "Instagram" : ""]);
-  const lastChecked = "lastSyncedAt" in gmail && gmail.lastSyncedAt ? new Date(gmail.lastSyncedAt).toISOString() : null;
-  // The dot is green only while the words beside it say "a moment ago": a check older than an hour means something
-  // stopped (the reconnect notice is under Needs you), and a green dot next to "23 days ago" would be a lie.
-  const checkedRecently = !lastChecked || now.getTime() - new Date(lastChecked).getTime() < 60 * 60 * 1000;
-  const onItNode =
-    leads.length > 0 && (waitingRow || checkIns || watching) ? (
-      <section aria-label="FollowUp is on it" className="mt-7">
-        <DayHeading title="FollowUp is on it" />
-        <div className="list-group">
-          {waitingRow && <DayRow row={{ key: "waiting", kind: "reply", title: waitingRow.title, sub: waitingRow.sub, time: null, href: null }} />}
-          {checkIns && <DayRow row={{ key: "checkins", kind: "checkin", title: checkIns.title, sub: checkIns.sub, time: null, href: "/coming-up" }} />}
-          {watching && (
-            <div className="ios-sep flex min-h-[60px] items-center gap-3 px-4 py-3" style={{ "--sep-inset": "64px" } as React.CSSProperties}>
-              {/* The dot is real: green for an inbox checked within the hour, grey when the last check is older. */}
-              <span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-card-2">
-                <span className="h-2 w-2 rounded-full" style={{ background: checkedRecently ? "var(--sage)" : "var(--ink-faint)" }} />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-[15.5px] font-semibold leading-snug">{watching}</span>
-                <span className="mt-0.5 block text-[13.5px] leading-snug text-ink-soft">{lastChecked ? <Ago iso={lastChecked} prefix="Last checked " /> : "Checks every few minutes"}</span>
-              </span>
-            </div>
-          )}
-        </div>
-      </section>
-    ) : null;
+  const comingShown: PanelRow[] = comingAll.slice(0, COMING_SHOWN).map((r) => ({ key: r.key, person: r.person, title: r.title, sub: r.sub, when: r.when, href: r.href }));
+  // When it last looked, as a plain line: no dot, no ticking clock (A-337).
+  const lastChecked = "lastSyncedAt" in gmail && gmail.lastSyncedAt ? new Date(gmail.lastSyncedAt) : null;
+  const checked = checkedLine([gmail.connected ? "Gmail" : "", outlook.connected ? "Outlook" : "", instagramConnected ? "Instagram" : ""], lastChecked, now, timezone);
+  // The small line above everything: the date and the greeting, demoted to a fact (A-337).
+  const dateWords = new Intl.DateTimeFormat("en-US", { timeZone: timezone, weekday: "long", month: "long", day: "numeric" }).format(now);
+  const greetWords = greeting(now, timezone, me?.name).replace(/\.$/, "");
+
+  // The queue: the owner's side of Today (A-337). With the one-time "Let FollowUp reply for you?" question, it sits inside it.
+  const queue = (
+    <ApprovalQueue
+      items={approvalItems}
+      rows={[...bookingRows, ...callRows, ...factsRows]}
+      calls={callsToPrepare}
+      sendLocked={sendLocked}
+      handledToday={handledToday}
+      holdAll={holdAll}
+      askNotNow={isAdmin && !business?.notNowPlan}
+      meetings={meetingCards}
+      quiet={atRisk.length > 0 ? { id: atRisk[0].id, name: atRisk[0].name, total: lost.total } : null}
+    />
+  );
 
   return (
-    // One column on every screen (A-335, after R-143): on a computer it is a 720px column in the middle of the window.
-    <div className="lg:mx-auto lg:max-w-[720px]">
-      {/* The owner's day (A-244): the date, a greeting on their own clock,
-          and who to start with. A brand-new account gets a sentence instead
-          (#301): "No customers yet." */}
-      {/* Once the greeting scrolls away on a phone, the top bar says "Today" (A-264). */}
+    // Today from the research (A-337): the owner's part first and loud, FollowUp's part as one quiet panel. On a
+    // computer the panel is the right column; on a phone it follows the owner's part.
+    <div className="lg:mx-auto lg:max-w-[1120px]">
+      {/* Once the top scrolls away on a phone, the top bar says "Today" (A-264). */}
       <ScrollTitle title="Today" />
-      <div>
-      <div className="text-[12.5px] text-ink-faint">
-        {new Intl.DateTimeFormat(undefined, { timeZone: timezone, weekday: "long", month: "long", day: "numeric" }).format(now)}
-      </div>
-      {sentence ? (
-        <h1 className="title-serif ios-title2 mt-1">{sentence}</h1>
-      ) : (
-        <h1 className="title-serif ios-title1 mt-0.5">{greeting(now, timezone, me?.name)}</h1>
-      )}
-      {!sentence && (
-        <>
-          {/* The day in one sentence (A-266), in place of the day's box. On the first days, "Your last 90 days"
-              (A-306) says it instead, until "Got it". */}
-          {inboxSummary ? (
-            <InboxSummaryCard summary={inboxSummary.summary} provider={inboxSummary.provider} />
-          ) : (
-            <p className="mt-1.5 text-[16px] leading-snug text-ink-soft">{report}</p>
-          )}
-        </>
-      )}
-      </div>
-
-      {/* On a phone the cards are a little wider than the text (12px from the edge, A-220). */}
-      <div className={`-mx-2 sm:mx-0 ${leads.length > 0 ? "" : "sm:max-w-[640px]"}`}>
-      {sendingPaused && <SendingPausedBanner canResume={isAdmin} />}
-      {cantSend && (
-        <CantSendNotice reconnectEmail={"needsReconnect" in gmail && gmail.needsReconnect ? (gmail.email ?? "your inbox") : null} />
-      )}
-      <ProblemNotices problems={problems} />
-      {firstValue && !cardShowing && <FirstValueNote title={firstValue.title} body={firstValue.body} />}
-      <div className={leads.length > 0 ? "mt-5" : "mt-3.5 sm:mt-5"}>
-      <div className="min-w-0">
-      {/* A buzz on the owner's phone when a customer needs them (A-216): shown
-          until this device has alerts on, or "Not now". Not on the visit
-          that asks the one-time question below: one question at a time.
-          Not above a waiting customer either (A-243), except on the visit
-          the phone link opened, which is for alerts. */}
-      {/* "How did it go?" after a call (A-263) is a row in Then now (A-266), opening its four answers in place. */}
-      {!offer && ((needYou === 0 && !cardShowing) || alertsOpen) && <div className="mb-4"><AlertsCard open={alertsOpen} /></div>}
-      {/* Do this first, then everything still to do today (A-244). With no
-          customers at all, the box below says what FollowUp checked. */}
-      {leads.length > 0 && (() => {
-        const queue = (
-          <ApprovalQueue
-            items={approvalItems}
-            rows={[...bookingRows, ...callRows, ...factsRows]}
-            calls={callsToPrepare}
-            plan={approvalItems.length === 0 && comingUp ? planLine(comingUp.groups) : null}
-            next={nextForYouLine(nextCallForYou)}
-            did={didNode}
-            onIt={onItNode}
-            dayLines={dayLines}
-            weekResults={weekResults}
-            answeredForYou={rescue?.answeredForYou ?? 0}
-            sendLocked={sendLocked}
-            handledToday={handledToday}
-            holdAll={holdAll}
-            askNotNow={isAdmin && !business?.notNowPlan}
-            meetings={meetingCards}
-            quiet={atRisk.length > 0 ? { id: atRisk[0].id, name: atRisk[0].name, total: lost.total } : null}
-          />
-        );
-        return offer ? (
-          <ReplyForMeCard proof={offer} first={null}>
-            {queue}
-          </ReplyForMeCard>
-        ) : (
-          queue
-        );
-      })()}
-
-      {/* Going quiet is the last row of Then (A-266). Anyone already waiting above is left out (A-046, once each). */}
-
-      {isAdmin && needYou === 0 && <HabitQuestion suggestion={habitSuggestion} />}
-      {isAdmin && tellCard && <TellCard card={tellCard} />}
-      {isAdmin && <DailyQuestion question={dailyQuestion} />}
-      {isAdmin && practice && <PracticeCard name={practice.name} text={practice.text} />}
-
       {leads.length === 0 ? (
-        <div className="mt-10">
-          {/* research/product/2026-09-10-ux-simplification.md §3/§7.1: the
-              old empty state was four zeroed stat tiles and a generic
-              "No leads yet" box — a worse first impression than one
-              honest sentence. This says what's actually true right now
-              (watching, or not yet set up) and gives one real action:
-              seeing the core promise work today rather than waiting for
-              a real lead to arrive. */}
-          {/* This sentence used to be printed unconditionally: an owner who
-              tapped "I'll do this later" in onboarding was told, on their very
-              first screen, that FollowUp was watching an inbox it had no access
-              to. The comment above this block always said it should say
-              "watching, OR not yet set up" — that branch was never written.
-              Claiming a capability you don't have is the worst possible first
-              impression for a product whose entire pitch is being trusted to
-              act on its own. */}
+        <>
+          {/* A brand-new account gets a sentence instead (#301): "No customers yet." */}
+          <div className="text-[12.5px] text-ink-faint">{dateWords}</div>
+          <h1 className="title-serif ios-title2 mt-1">{sentence}</h1>
+          <div className="-mx-2 sm:mx-0 sm:max-w-[640px]">
+            {sendingPaused && <SendingPausedBanner canResume={isAdmin} />}
+            <ProblemNotices problems={problems} />
+            <div className="mt-3.5 sm:mt-5">
+              {((needYou === 0 && !cardShowing) || alertsOpen) && <div className="mb-4"><AlertsCard open={alertsOpen} /></div>}
+              <div className="mt-10">
+                {/* research/product/2026-09-10-ux-simplification.md §3/§7.1: the
+                    old empty state was four zeroed stat tiles and a generic
+                    "No leads yet" box — a worse first impression than one
+                    honest sentence. This says what's actually true right now
+                    (watching, or not yet set up) and gives one real action:
+                    seeing the core promise work today rather than waiting for
+                    a real lead to arrive. */}
           <div
             className="box p-8 text-center"
           >
@@ -796,37 +651,90 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               step. SetupStrip returns null when there is nothing left, so
               it is safe in both branches. */}
           <SetupStrip steps={setupSteps} />
-        </div>
+              </div>
+            </div>
+          </div>
+        </>
       ) : (
-        <>
-          {/* The canvas Today (TodayCalm) has no setup or demo blocks between
-              the work: they show only once nothing needs the owner, so the
-              first screen is the people waiting (founder, 2026-09-27: "I
-              don't see the design on live"). Setup steps also live in
-              Settings. */}
-          {approvalItems.length === 0 && (
-            <>
-              <SetupStrip steps={setupSteps} />
-              {setupSteps.length > 0 && (
-                <div className="mt-6">
-                  <TestLeadButton />
+        // On a phone the cards are a little wider than the text (12px from the edge, A-220).
+        <div className="-mx-2 sm:mx-0">
+          {/* The date and the greeting, demoted to one small line (A-337: a greeting that does no work isn't a heading). */}
+          <p className="mx-1 text-[13px] text-ink-faint lg:mx-0">
+            {dateWords} · {greetWords}
+          </p>
+          <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-12">
+            <div className="min-w-0">
+              {sendingPaused && <SendingPausedBanner canResume={isAdmin} />}
+              {cantSend && (
+                <CantSendNotice reconnectEmail={"needsReconnect" in gmail && gmail.needsReconnect ? (gmail.email ?? "your inbox") : null} />
+              )}
+              {/* A broken inbox is the owner's to fix (A-270), so it sits on their side, above the heading. */}
+              <ProblemNotices problems={problems} />
+              {/* A buzz on the owner's phone when a customer needs them (A-216): only when nobody waits, or on the visit
+                  the phone link opened. Not on the visit that asks the one-time question below: one question at a time. */}
+              {!offer && ((needYou === 0 && !cardShowing) || alertsOpen) && <div className="mb-4"><AlertsCard open={alertsOpen} /></div>}
+              <div className="mt-4 lg:mt-[18px]">
+                {offer ? (
+                  <ReplyForMeCard proof={offer} first={null}>
+                    {queue}
+                  </ReplyForMeCard>
+                ) : (
+                  queue
+                )}
+              </div>
+              {isAdmin && needYou === 0 && <HabitQuestion suggestion={habitSuggestion} />}
+              {isAdmin && tellCard && <TellCard card={tellCard} />}
+              {isAdmin && <DailyQuestion question={dailyQuestion} />}
+              {isAdmin && practice && <PracticeCard name={practice.name} text={practice.text} />}
+              {/* Setup steps show only once nothing waits for the owner (founder, 2026-09-27); they also live in Settings. */}
+              {approvalItems.length === 0 && (
+                <>
+                  <SetupStrip steps={setupSteps} />
+                  {setupSteps.length > 0 && (
+                    <div className="mt-6">
+                      <TestLeadButton />
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+            <div className="mt-[30px] lg:mt-0 lg:pt-[22px]">
+              {/* "Your first reply went out through FollowUp" (A-047): FollowUp's news, said once, on its side (A-337). */}
+              {firstValue && !cardShowing && (
+                <div className="mb-4 [&>*]:mt-0">
+                  <FirstValueNote title={firstValue.title} body={firstValue.body} />
                 </div>
               )}
-            </>
-          )}
-        </>
+              {/* "Your last 90 days" (A-306): on the first days it says what FollowUp found, in place of its sentence. */}
+              {inboxSummary && (
+                <div className="mx-2 mb-4 sm:mx-0 [&>*]:mt-0">
+                  <InboxSummaryCard summary={inboxSummary.summary} provider={inboxSummary.provider} />
+                </div>
+              )}
+              <FollowUpPanel
+                sentence={inboxSummary ? null : panelWords}
+                sinceLabel={sinceWordsLabel}
+                did={didShown}
+                more={didAll.length - didShown.length}
+                coming={comingShown}
+                comingMore={comingAll.length - comingShown.length}
+                checked={checked}
+              />
+            </div>
+          </div>
+        </div>
       )}
-      </div>
       {/* One tap to install, on phones whose browser can (A-265): at the foot of the day, below every customer.
           It hides itself while the alerts card above is asking (one ask at a time). */}
       <div className="mt-8 empty:hidden lg:hidden">
         <InstallCard />
       </div>
-      </div>
-      </div>
     </div>
   );
 }
+
+/** How many of FollowUp's next steps its panel shows before "N more coming up" (A-337). */
+const COMING_SHOWN = 3;
 
 // Each view names itself in the browser tab (WCAG 2.4.2); the root template adds " — FollowUp".
 export const metadata = { title: "Today" };

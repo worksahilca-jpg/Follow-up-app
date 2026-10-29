@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/db";
 import { APP_OPEN } from "@/lib/appOpens";
-import type { BookedRecord, CaughtRecord, SentRecord, WaitingOn } from "@/lib/todayWork";
-import type { Lead } from "@/lib/types";
+import type { BookedRecord, CaughtRecord, SentRecord } from "@/lib/todayWork";
 
 /** The practice customer (POST /api/leads/test-lead) is never "caught". */
 const PRACTICE_SOURCE = "Test lead";
@@ -46,22 +45,4 @@ export async function loadWork(businessId: string, since: Date): Promise<{ sent:
     booked: booked.map((b) => ({ id: b.id, leadId: b.leadId, leadName: b.lead.name, scheduledAt: b.scheduledAt, createdAt: b.createdAt })),
     caught: caught.map((c) => ({ id: c.id, name: c.name, source: c.source, createdAt: c.createdAt })),
   };
-}
-
-/**
- * Who FollowUp (or the owner, through it) wrote to last and is still waiting on: the newest message in the
- * conversation is outbound and recent. Anyone already waiting for the owner's OK is left out (each person once, A-046).
- */
-export function waitingOnReplies(leads: Lead[], exclude: Set<string>, now: Date, withinDays = 14): WaitingOn[] {
-  const floor = now.getTime() - withinDays * 86_400_000;
-  const out: WaitingOn[] = [];
-  for (const lead of leads) {
-    if (exclude.has(lead.id) || lead.conversation.length === 0) continue;
-    const last = lead.conversation.reduce((a, b) => (Date.parse(b.date) > Date.parse(a.date) ? b : a));
-    if (last.direction !== "outbound") continue;
-    const at = Date.parse(last.date);
-    if (!Number.isFinite(at) || at < floor || at > now.getTime()) continue;
-    out.push({ leadId: lead.id, name: lead.name, sentAt: new Date(at) });
-  }
-  return out.sort((a, b) => b.sentAt.getTime() - a.sentAt.getTime());
 }

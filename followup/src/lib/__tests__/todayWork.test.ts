@@ -1,8 +1,8 @@
 /**
- * Today that shows FollowUp working (A-336): the words and the window, from records only.
+ * Today (A-336, A-337): the words and the window, from records only.
  */
 import { describe, expect, it } from "vitest";
-import { checkInsWords, didRows, sendTitle, sinceLabel, sinceWindow, waitingWords, watchingWords, whenShort, workSentence } from "@/lib/todayWork";
+import { checkedLine, comingUpRows, didRows, ownerHeading, panelSentence, quoteWords, sendTitle, sinceLabel, sinceWindow, sinceWords, whenShort } from "@/lib/todayWork";
 
 const TZ = "America/Toronto";
 // Wednesday Oct 28, 2026, 2:00 PM Toronto.
@@ -72,45 +72,86 @@ describe("the rows", () => {
   });
 });
 
-describe("the sentence", () => {
-  it("is FollowUp's report, leaving out zeros", () => {
-    expect(workSentence({ sinceLook: true, answered: 4, caught: 0, booked: 1, forOk: 16 })).toBe(
-      "Since you last looked, FollowUp answered 4 people, booked 1 call and wrote 16 replies for your OK."
-    );
-    expect(workSentence({ sinceLook: false, answered: 1, caught: 2, booked: 0, forOk: 0 })).toBe("Today, FollowUp answered 1 person and caught 2 new customers.");
+describe("the owner's heading (A-337)", () => {
+  it("counts the replies waiting for an OK, numeral first", () => {
+    expect(ownerHeading({ replies: 16, others: 2, handled: 0, holdAll: true })).toEqual({ title: "16 replies need your OK", sub: "FollowUp wrote them. Each goes out when you say." });
+    expect(ownerHeading({ replies: 1, others: 0, handled: 0, holdAll: true })).toEqual({ title: "1 reply needs your OK", sub: "FollowUp wrote it. It goes out when you say." });
   });
-  it("says what waits when nothing was done, and nothing when there is nothing", () => {
-    expect(workSentence({ sinceLook: true, answered: 0, caught: 0, booked: 0, forOk: 1 })).toBe("FollowUp has 1 reply waiting for your OK.");
-    expect(workSentence({ sinceLook: true, answered: 0, caught: 0, booked: 0, forOk: 0 })).toBeNull();
+  it("counts the other decisions when no reply waits", () => {
+    expect(ownerHeading({ replies: 0, others: 2, handled: 0, holdAll: false }).title).toBe("2 things need you");
+    expect(ownerHeading({ replies: 0, others: 1, handled: 0, holdAll: false }).title).toBe("1 thing needs you");
+  });
+  it("says calmly what FollowUp keeps doing when nothing waits", () => {
+    expect(ownerHeading({ replies: 0, others: 0, handled: 3, holdAll: true }).title).toBe("You're done for today");
+    expect(ownerHeading({ replies: 0, others: 0, handled: 3, holdAll: true }).sub).toContain("You handled 3 people today.");
+    expect(ownerHeading({ replies: 0, others: 0, handled: 0, holdAll: true }).sub).toBe("Every reply FollowUp writes shows up here first. Nothing goes out until you send it.");
   });
 });
 
-describe("on it", () => {
-  it("names who it waits on, how long, and what it does next", () => {
-    const w = waitingWords(
-      [
-        { leadId: "a", name: "Ethan Wu", sentAt: new Date("2026-10-28T16:00:00.000Z") },
-        { leadId: "b", name: "Ava Singh", sentAt: new Date("2026-10-27T15:00:00.000Z") },
-        { leadId: "c", name: "Mason Roy", sentAt: new Date("2026-10-25T15:00:00.000Z") },
-        { leadId: "d", name: "Lena D", sentAt: new Date("2026-10-24T15:00:00.000Z") },
-      ],
-      now,
-      TZ,
-      { name: "Ethan Wu", when: "tomorrow" }
+describe("waiting since (A-337)", () => {
+  it("is a time today, yesterday, a short weekday, then a date: never a ticking ago", () => {
+    expect(sinceWords(new Date("2026-10-28T13:14:00.000Z"), now, TZ)).toBe("9:14 AM");
+    expect(sinceWords(new Date("2026-10-27T20:00:00.000Z"), now, TZ)).toBe("yesterday");
+    expect(sinceWords(new Date("2026-10-26T15:00:00.000Z"), now, TZ)).toBe("Mon");
+    expect(sinceWords(new Date("2026-09-25T15:00:00.000Z"), now, TZ)).toBe("Sep 25");
+  });
+  it("quotes their own words on one line", () => {
+    expect(quoteWords("Can I see it\n this weekend?")).toBe("“Can I see it this weekend?”");
+    expect(quoteWords(null)).toBeNull();
+    expect(quoteWords("   ")).toBeNull();
+  });
+});
+
+describe("FollowUp's sentence (A-337)", () => {
+  it("says what it did on its own while the owner was away, zeros left out", () => {
+    expect(panelSentence({ sinceLook: true, since: "since 9:40 PM", answered: 2, booked: 1, caught: 1, yourSends: 0, weekAnswered: 9 })).toBe(
+      "While you were away, FollowUp answered 2 people, booked 1 call and caught 1 new customer."
     );
-    expect(w).toEqual({ title: "Waiting on 4 replies", sub: "Ethan (2 h), Ava (yesterday), Mason (3 days) and 1 more. If Ethan stays quiet, FollowUp checks in tomorrow." });
-    expect(waitingWords([], now, TZ, null)).toBeNull();
+    expect(panelSentence({ sinceLook: false, since: "today", answered: 1, booked: 0, caught: 2, yourSends: 4, weekAnswered: 0 })).toBe("Today, FollowUp answered 1 person and caught 2 new customers.");
   });
-  it("lists the check-ins coming up by day", () => {
-    const c = checkInsWords([
-      { day: "Tomorrow", items: [{ leadId: "p", name: "Priya K" }] },
-      { day: "Thursday", items: [{ leadId: "o", name: "Omar H" }, { leadId: "p", name: "Priya K" }] },
+  it("names the replies it sent for the owner when it did nothing on its own", () => {
+    expect(panelSentence({ sinceLook: true, since: "since 9:40 PM", answered: 0, booked: 0, caught: 0, yourSends: 3, weekAnswered: 9 })).toBe("Since 9:40 PM, FollowUp sent 3 replies for you.");
+  });
+  it("says nothing new plainly, with the week when it adds something", () => {
+    expect(panelSentence({ sinceLook: true, since: "since 9:40 PM", answered: 0, booked: 0, caught: 0, yourSends: 0, weekAnswered: 23 })).toBe(
+      "Nothing new since 9:40 PM. This week, 23 customers got an answer."
+    );
+    expect(panelSentence({ sinceLook: false, since: "today", answered: 0, booked: 0, caught: 0, yourSends: 0, weekAnswered: 0 })).toBe("Nothing new today.");
+    expect(panelSentence({ sinceLook: true, since: "this week", answered: 0, booked: 0, caught: 0, yourSends: 0, weekAnswered: 5 })).toBe("Nothing new this week.");
+  });
+});
+
+describe("the checked line (A-337)", () => {
+  it("says when it last checked, as a time, with no dot", () => {
+    expect(checkedLine(["Gmail", "", "Instagram"], new Date("2026-10-28T17:41:00.000Z"), now, TZ)).toBe("Checked Gmail and Instagram at 1:41 PM.");
+  });
+  it("says an old Gmail check as Gmail's alone", () => {
+    expect(checkedLine(["Gmail", "Instagram"], new Date("2026-10-03T15:00:00.000Z"), now, TZ)).toBe("Gmail last checked on Oct 3. Watching Instagram.");
+    expect(checkedLine(["Gmail"], new Date("2026-10-28T13:00:00.000Z"), now, TZ)).toBe("Gmail last checked at 9:00 AM.");
+  });
+  it("claims no time it doesn't have", () => {
+    expect(checkedLine(["Outlook", "Instagram"], null, now, TZ)).toBe("Watching Outlook and Instagram.");
+    expect(checkedLine(["", ""], null, now, TZ)).toBeNull();
+  });
+});
+
+describe("coming up (A-337)", () => {
+  it("lists FollowUp's next steps and the owner's calls, soonest first, each person once", () => {
+    const rows = comingUpRows(
+      [
+        { leadId: "p", name: "Priya Kaur", at: new Date("2026-10-29T14:00:00.000Z"), what: "Check-in 2 of 4", unless: true },
+        { leadId: "p", name: "Priya Kaur", at: new Date("2026-10-30T14:00:00.000Z"), what: "Last check-in", unless: true },
+        { leadId: "e", name: "Ethan Wu", at: new Date("2026-10-28T20:00:00.000Z"), what: "A reply to their message", unless: false },
+      ],
+      [{ id: "b1", leadId: "r", name: "Raj Mehta", at: new Date("2026-10-31T15:00:00.000Z") }],
+      now,
+      TZ
+    );
+    expect(rows.map((r) => [r.title, r.sub, r.when])).toEqual([
+      ["Replies to Ethan", null, "Later today"],
+      ["Checks in with Priya", "Check-in 2 of 4, if Priya stays quiet", "Tomorrow"],
+      ["Your call with Raj", null, "Saturday 11:00 AM"],
     ]);
-    expect(c).toEqual({ title: "2 check-ins coming up", sub: "Priya tomorrow · Omar Thursday", total: 2 });
-    expect(checkInsWords([])).toBeNull();
-  });
-  it("names what it watches", () => {
-    expect(watchingWords(["Gmail", "", "Instagram"])).toBe("Watching Gmail and Instagram");
-    expect(watchingWords(["", ""])).toBeNull();
+    expect(rows[2].href).toBe("/calls");
   });
 });

@@ -6133,3 +6133,59 @@ FollowUp sent, booked and caught since then; who it is waiting on), `DidRows.tsx
 in a real browser, computer and phone, light and dark; the Next list and Skip walked. Two fixes from the review: long
 "FollowUp did" titles wrap to two lines on the phone instead of cutting off; the Watching dot is green only when the
 inbox was checked within the hour (grey beside "23 days ago").
+
+## A-337 — Today from the research: the owner's part first and loud, FollowUp's part as one quiet panel ^A-337
+
+**Date:** 2026-10-28. **Founder, verbatim:** *"keep 1 2 4 8 bro"* (what FollowUp did · replies for his OK · coming up
+· his calls), *"the tasks that a user need to do should be eyecatching"*, *"lwets just lock in … lets start the deep
+research now"* → `reports/Opening page that shows the work.md` → three picks offered and *"GO"* → the drawing
+(scratchpad `today/final/today-from-research.png`) → *"LOOKS GOOD WAIT I WILL SEND YOU A REFFRENCE IN A WHILE LETS
+SEE IF WE can improve with the help of that video or the reference"*. **Approved as drawn; not built yet**: he is
+sending a reference first, and the build waits for it.
+**What specifically was approved:**
+- **His part first and the only loud thing:** a small line "Wednesday, October 28 · Good afternoon, Local" (the
+  greeting demoted to meta), then the heading "16 replies need your OK" (numeral first, the page's biggest text) and
+  "FollowUp wrote them. Each goes out when you say."
+- **The first reply open, raised:** name, Buying · Has an agent, "waiting since Sep 25", her words, "FollowUp wrote",
+  the reply, the reason as a fact ("It waits for you: …"), the one black "Send to Zoe" right under it, "Change it",
+  "Not now". On the phone everything from the heading to Send sits inside the first screen.
+- **Under it, plain hairline rows, no boxes:** the next people with their words and how long they have waited ("since
+  9:14 AM", "since yesterday"), then "12 more waiting".
+- **"Your calls today"** as a real heading: the call with its time and "Note ready: 3 things to know before you call".
+- **FollowUp's part as one quiet panel** (the soft ground, no box per row, smaller type): "FOLLOWUP", the sentence of
+  real counts ("While you were away, FollowUp answered 2 people, booked 1 call and caught 1 new customer."), "SINCE
+  9:40 PM" rows (what it did, the words it sent in quotes, the time), "2 more, in Activity", "COMING UP" rows, and
+  "Checked Gmail and Instagram at 3:41 PM." On a computer the panel is the right column; on the phone it follows his
+  part.
+- **No green dot, no ticking "ago"** (the research found no support; words and an absolute time instead).
+**Supersedes:** A-336's order ("FollowUp did" first, "Needs you · N" small label), its "FollowUp is on it" group
+(waiting-on and watching rows; the waiting-on list is not on the page, per his step-1 pick), its green dot and live
+"ago", and its "Your day" Tomorrow / Calls this week rows (only today's calls stay). Keeps A-336's real-counts
+sentence, its did-rows with the words and time, the open card, the Next idea (now plain rows with age).
+**Built 2026-10-29** (founder: *"okay go build the today page"*, after the reel reference was read and nothing in it
+changed the drawing), on PR #614's branch in place of A-336:
+- One small line "Wednesday, October 28 · Good evening, Local"; then the heading from `ownerHeading()` in
+  `src/lib/todayWork.ts`: "16 replies need your OK" / "FollowUp wrote them. Each goes out when you say." (27 px phone,
+  32 px computer, weight 700, set on the element because the app's global `h1` rule is thin). With no replies: "2 things
+  need you"; with nothing: "You're all caught up" / "You're done for today" and what FollowUp keeps doing (the old
+  finish card is gone; the heading says it).
+- The open reply raised (20 px corners, the existing `--shadow-box-lift`): face, name, one line with FollowUp's word
+  ("Buying · Has an agent"), "waiting since Sep 25" (`sinceWords()`), their words in quotes, "FollowUp wrote", the reply
+  on the soft ground, the reason as "It waits for you. Check: …" (no dot; the reason is never re-cased because it can
+  start with a name), Send to Zoe / Change it / Not now. FollowUp's next step and the facts left Today's card (still on
+  the customer's page, one tap on the name), as drawn.
+- Three plain hairline rows with their own words and "since 9:14 AM", then "12 more waiting" (opens the rest in
+  place; a row brings that person into the card); the owner's other decisions follow as plain rows; "Your calls today"
+  as a real heading. Row tags ("Ready") are not on Today's rows any more (still on Customers), as drawn.
+- FollowUp's panel (`FollowUpPanel.tsx`) on the soft ground: "FOLLOWUP", `panelSentence()` ("While you were away,
+  FollowUp answered 2 people, booked 1 call and caught 1 new customer."; else the replies it sent for you; else
+  "Nothing new since 9:40 PM. This week, 23 customers got an answer."), "SINCE 3:32 PM" rows with quiet faces, the
+  words and times, "N more, in Activity", "COMING UP" (`comingUpRows()`: its planned steps and the owner's calls after
+  today, call rows open Calls this week), and `checkedLine()` ("Checked Gmail and Instagram at 3:41 PM.", or "Gmail
+  last checked on Oct 5." when old; no time claimed it doesn't have). The first-reply note and "Your last 90 days"
+  sit at the top of FollowUp's side.
+- Computer: two columns (`minmax(0,1fr) 360px`, 48 px gap). Phone: the owner's part, then FollowUp's; heading to Send
+  inside the first screen (checked at 390×844).
+- Removed with it: `DidRows.tsx`, `Ago.tsx` (the ticking ago), the "FollowUp is on it" rows and green dot, Tomorrow /
+  Calls this week rows, the week's results line on Today, and the rescue-report query Today no longer needs.
+

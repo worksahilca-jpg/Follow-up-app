@@ -1,10 +1,10 @@
 import { clockTime, dayOffset } from "@/lib/todayWords";
 
 /**
- * Today that shows FollowUp working (A-336, after R-144 "it is working good but doesn't feel like working"): the
- * pure part. What FollowUp did since the owner last looked, said as rows with names, times and the words it sent;
- * the one sentence at the top; who it is waiting on. Only what the records hold, so it can never claim work that
- * didn't happen. The data comes from src/lib/todayWorkData.ts.
+ * Today (A-336, then A-337 from the research): the pure part. The owner's heading; what FollowUp did since the owner
+ * last looked, said as rows with names, times and the words it sent; FollowUp's one sentence; what it does next; and
+ * when it last checked. Only what the records hold, so it can never claim work that didn't happen. The data comes
+ * from src/lib/todayWorkData.ts.
  */
 
 const DAY = 86_400_000;
@@ -71,6 +71,11 @@ function excerpt(text: string): string {
   const flat = text.replace(/\s+/g, " ").trim();
   if (!flat) return "";
   return `“${flat.length > EXCERPT ? `${flat.slice(0, EXCERPT).trimEnd()}…` : flat}”`;
+}
+
+/** Someone's own words on one line, in quotes and cut short: a waiting row on Today (A-337). Null when there are none. */
+export function quoteWords(text: string | null | undefined): string | null {
+  return text ? excerpt(text) || null : null;
 }
 
 /** "8:12 AM" for today, "Yesterday" or the weekday before that. */
@@ -168,75 +173,120 @@ function andList(items: string[]): string {
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
 /**
- * The one sentence under the greeting, as FollowUp's report: "Since you last looked, FollowUp answered 4 people, caught
- * 2 new customers, booked 1 call and wrote 16 replies for your OK." A part that is zero is left out. With nothing done
- * and replies waiting: "FollowUp has 16 replies waiting for your OK." Null when there is nothing to report at all.
+ * When someone started waiting, as the owner says it (A-337): "9:14 AM" today, "yesterday", "Mon" this week, "Sep 25"
+ * before that. The card says "waiting since Sep 25"; a row says "since 9:14 AM". A date, never a ticking "ago".
  */
-export function workSentence(n: { sinceLook: boolean; answered: number; caught: number; booked: number; forOk: number }): string | null {
-  const did: string[] = [];
-  if (n.answered > 0) did.push(`answered ${plural(n.answered, "person", "people")}`);
-  if (n.caught > 0) did.push(`caught ${plural(n.caught, "new customer", "new customers")}`);
-  if (n.booked > 0) did.push(`booked ${plural(n.booked, "call", "calls")}`);
-  if (did.length === 0) {
-    return n.forOk > 0 ? `FollowUp has ${plural(n.forOk, "reply", "replies")} waiting for your OK.` : null;
-  }
-  if (n.forOk > 0) did.push(`wrote ${plural(n.forOk, "reply", "replies")} for your OK`);
-  return `${n.sinceLook ? "Since you last looked" : "Today"}, FollowUp ${andList(did)}.`;
-}
-
-/** Someone FollowUp wrote to and is waiting on. */
-export type WaitingOn = { leadId: string; name: string; sentAt: Date };
-
-/** "2 h", "yesterday", "3 days": how long since the message they haven't answered. */
-export function waitWords(sentAt: Date, now: Date, timeZone: string): string {
-  const days = -dayOffset(sentAt, now, timeZone);
-  if (days <= 0) {
-    const h = Math.max(1, Math.floor((now.getTime() - sentAt.getTime()) / 3_600_000));
-    return h < 1 ? "just now" : `${h} h`;
-  }
+export function sinceWords(at: Date, now: Date, timeZone: string): string {
+  const days = -dayOffset(at, now, timeZone);
+  if (days <= 0) return clockTime(at, timeZone);
   if (days === 1) return "yesterday";
-  return `${days} days`;
+  if (days < 7) return new Intl.DateTimeFormat("en-US", { timeZone, weekday: "short" }).format(at);
+  return new Intl.DateTimeFormat("en-US", { timeZone, month: "short", day: "numeric" }).format(at);
 }
 
 /**
- * "FollowUp is on it" › waiting: the title and the one line under it. `nextCheckIn` is what FollowUp does if the first
- * of them stays quiet, from the plan ("tomorrow", "on Thursday"), or null when nothing is planned.
+ * The heading of Today (A-337): the owner's part, first and the only loud thing. The replies FollowUp wrote for their
+ * OK come first; with none, their other decisions; with nothing at all, a calm line that says what FollowUp keeps doing.
  */
-export function waitingWords(
-  waiting: WaitingOn[],
+export function ownerHeading(n: { replies: number; others: number; handled: number; holdAll: boolean }): { title: string; sub: string } {
+  if (n.replies > 0) {
+    return n.replies === 1
+      ? { title: "1 reply needs your OK", sub: "FollowUp wrote it. It goes out when you say." }
+      : { title: `${n.replies} replies need your OK`, sub: "FollowUp wrote them. Each goes out when you say." };
+  }
+  if (n.others > 0) return { title: `${n.others} ${n.others === 1 ? "thing needs" : "things need"} you`, sub: "No replies to send right now." };
+  if (n.handled > 0) {
+    return { title: "You're done for today", sub: `You handled ${plural(n.handled, "person", "people")} today. FollowUp keeps watching, and will tell you when someone writes.` };
+  }
+  return {
+    title: "You're all caught up",
+    sub: n.holdAll
+      ? "Every reply FollowUp writes shows up here first. Nothing goes out until you send it."
+      : "Anything FollowUp isn't sure about will show up here before it sends.",
+  };
+}
+
+/**
+ * FollowUp's sentence at the top of its panel (A-337): what it did on its own while the owner was away, zeros left out.
+ * With nothing of its own, the replies it sent for the owner; with nothing at all, a plain "Nothing new" and the week.
+ * `since` is sinceLabel(): "today", "since 9:40 PM", "since Saturday", "this week".
+ */
+export function panelSentence(n: { sinceLook: boolean; since: string; answered: number; booked: number; caught: number; yourSends: number; weekAnswered: number }): string {
+  const did: string[] = [];
+  if (n.answered > 0) did.push(`answered ${plural(n.answered, "person", "people")}`);
+  if (n.booked > 0) did.push(`booked ${plural(n.booked, "call", "calls")}`);
+  if (n.caught > 0) did.push(`caught ${plural(n.caught, "new customer", "new customers")}`);
+  if (did.length > 0) return `${n.sinceLook ? "While you were away" : "Today"}, FollowUp ${andList(did)}.`;
+  const when = n.since.charAt(0).toUpperCase() + n.since.slice(1);
+  if (n.yourSends > 0) return `${when}, FollowUp sent ${plural(n.yourSends, "reply", "replies")} for you.`;
+  const week = n.weekAnswered > 0 && n.since !== "this week" ? ` This week, ${plural(n.weekAnswered, "customer", "customers")} got an answer.` : "";
+  return `Nothing new ${n.since}.${week}`;
+}
+
+/**
+ * The last line of FollowUp's panel (A-337): what it watches and when it last looked, as a plain fact, no dot and no
+ * ticking clock. Only Gmail reports a time. Instagram is read every few minutes, so a Gmail check within the hour is
+ * true of both; an older one is said as Gmail's alone (the reconnect notice says what to do).
+ */
+export function checkedLine(names: string[], gmailCheckedAt: Date | null, now: Date, timeZone: string): string | null {
+  const list = names.filter(Boolean);
+  if (list.length === 0) return null;
+  if (gmailCheckedAt && list.includes("Gmail")) {
+    if (now.getTime() - gmailCheckedAt.getTime() < 60 * 60 * 1000) return `Checked ${andList(list)} at ${clockTime(gmailCheckedAt, timeZone)}.`;
+    const words = sinceWords(gmailCheckedAt, now, timeZone);
+    const when = /\d:\d\d/.test(words) ? `at ${words}` : words === "yesterday" ? "yesterday" : `on ${words}`;
+    const others = list.filter((n) => n !== "Gmail");
+    return `Gmail last checked ${when}.${others.length > 0 ? ` Watching ${andList(others)}.` : ""}`;
+  }
+  return `Watching ${andList(list)}.`;
+}
+
+/** Something FollowUp will do next, or a call the owner has coming (A-337's "Coming up"). */
+export type ComingRow = { key: string; person: string; title: string; sub: string | null; when: string; href: string; at: Date };
+
+/** "Later today", "Tomorrow", "Thursday", "Mon, Oct 5": days only for FollowUp's own steps (it runs hourly). */
+function dayWord(at: Date, now: Date, timeZone: string): string {
+  const days = dayOffset(at, now, timeZone);
+  if (days <= 0) return "Later today";
+  if (days === 1) return "Tomorrow";
+  if (days < 7) return new Intl.DateTimeFormat("en-US", { timeZone, weekday: "long" }).format(at);
+  return new Intl.DateTimeFormat("en-US", { timeZone, weekday: "short", month: "short", day: "numeric" }).format(at);
+}
+
+/** A planned step in the owner's words: "Checks in with Priya", "Replies to Ethan", "Thanks Raj after your call". */
+function stepTitle(what: string, who: string): string {
+  if (what === "A reply to their message") return `Replies to ${who}`;
+  if (what === "Thank-you after your call") return `Thanks ${who} after your call`;
+  if (what === "Check-in they asked for") return `Checks in with ${who}, as they asked`;
+  if (what.startsWith("Welcome back")) return `Welcome-back note to ${who}`;
+  if (what.startsWith("Next step of")) return `${what} for ${who}`;
+  return `Checks in with ${who}`;
+}
+
+/**
+ * "Coming up" in FollowUp's panel (A-337): its planned steps (from the coming-up plan, each person once) and the
+ * owner's booked calls after today, soonest first. A step that only happens if they stay quiet says so.
+ */
+export function comingUpRows(
+  steps: { leadId: string; name: string; at: Date; what: string; unless: boolean }[],
+  calls: { id: string; leadId: string; name: string; at: Date }[],
   now: Date,
   timeZone: string,
-  nextCheckIn: { name: string; when: string } | null,
-): { title: string; sub: string } | null {
-  if (waiting.length === 0) return null;
-  const title = `Waiting on ${plural(waiting.length, "reply", "replies")}`;
-  const named = waiting.slice(0, 3).map((w) => `${first(w.name)} (${waitWords(w.sentAt, now, timeZone)})`);
-  const rest = waiting.length - named.length;
-  let sub = `${named.join(", ")}${rest > 0 ? ` and ${rest} more` : ""}.`;
-  if (nextCheckIn) sub += ` If ${first(nextCheckIn.name)} stays quiet, FollowUp checks in ${nextCheckIn.when}.`;
-  return { title, sub };
-}
-
-/** "Priya tomorrow · Omar Thursday · Lena Friday" from the coming-up groups; null when nothing is planned. */
-export function checkInsWords(groups: { day: string; items: { leadId: string; name: string }[] }[]): { title: string; sub: string; total: number } | null {
+): ComingRow[] {
+  const rows: ComingRow[] = [];
   const seen = new Set<string>();
-  const parts: string[] = [];
-  let total = 0;
-  for (const g of groups) {
-    for (const it of g.items) {
-      if (seen.has(it.leadId)) continue;
-      seen.add(it.leadId);
-      total += 1;
-      if (parts.length < 3) parts.push(`${first(it.name)} ${g.day === "Today" ? "later today" : g.day === "Tomorrow" ? "tomorrow" : g.day}`);
-    }
+  for (const s of steps) {
+    if (seen.has(s.leadId)) continue;
+    seen.add(s.leadId);
+    const who = first(s.name);
+    const step = /check-in/i.test(s.what) && !/they asked/i.test(s.what) ? s.what : null;
+    const quiet = s.unless ? `if ${who} stays quiet` : null;
+    const sub = step && quiet ? `${step}, ${quiet}` : step ?? (quiet ? quiet.charAt(0).toUpperCase() + quiet.slice(1) : null);
+    rows.push({ key: `step-${s.leadId}`, person: s.name, title: stepTitle(s.what, who), sub, when: dayWord(s.at, now, timeZone), href: `/leads/${s.leadId}`, at: s.at });
   }
-  if (total === 0) return null;
-  return { title: total === 1 ? "1 check-in coming up" : `${total} check-ins coming up`, sub: parts.join(" · "), total };
-}
-
-/** "Watching Gmail and Instagram": the connected places, in the owner's words. */
-export function watchingWords(channels: string[]): string | null {
-  const names = channels.filter(Boolean);
-  if (names.length === 0) return null;
-  return `Watching ${andList(names)}`;
+  for (const c of calls) {
+    const day = dayWord(c.at, now, timeZone);
+    rows.push({ key: `call-${c.id}`, person: c.name, title: `Your call with ${first(c.name)}`, sub: null, when: `${day === "Later today" ? "Today" : day} ${clockTime(c.at, timeZone)}`, href: "/calls", at: c.at });
+  }
+  return rows.sort((a, b) => a.at.getTime() - b.at.getTime());
 }

@@ -56,26 +56,43 @@ export function DayHeading({ title, aside, quiet = false }: { title: string; asi
   );
 }
 
-/** One row: an icon, what to do, why, and a time or a chevron. The whole row opens it. */
-export function DayRow({ row, onClick, expanded }: { row: TodayRow; /** No longer changes anything (A-282 dropped the line above rows). */ first?: boolean; onClick?: () => void; expanded?: boolean }) {
+/**
+ * One row: an icon, what to do, why, and a time or a chevron. The whole row opens it. `plain` is the owner's side of
+ * Today (A-337): a hairline above, no white group, their words on one line under the name.
+ */
+export function DayRow({
+  row,
+  onClick,
+  expanded,
+  plain = false,
+}: {
+  row: TodayRow;
+  /** No longer changes anything (A-282 dropped the line above rows). */
+  first?: boolean;
+  onClick?: () => void;
+  expanded?: boolean;
+  plain?: boolean;
+}) {
   const Icon = ICON[row.kind];
   const body = (
     <>
       {row.person ? (
-        <Initials name={row.person} size={36} />
+        <Initials name={row.person} size={plain ? 34 : 36} />
       ) : row.noIcon ? (
-        <span aria-hidden="true" className="w-9 shrink-0" />
+        <span aria-hidden="true" className={(plain ? "w-[34px]" : "w-9") + " shrink-0"} />
       ) : (
-        <span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-card-2 text-ink">
+        <span aria-hidden="true" className={(plain ? "h-[34px] w-[34px]" : "h-9 w-9") + " flex shrink-0 items-center justify-center rounded-full bg-card-2 text-ink"}>
           <Icon className="h-[17px] w-[17px]" strokeWidth={2} />
         </span>
       )}
       <span className="min-w-0 flex-1">
         <span className="flex items-baseline gap-2">
-          <span className={(row.wrap ? "line-clamp-2" : "truncate") + " text-[15.5px] font-semibold leading-snug"}>{row.title}</span>
+          <span className={(row.wrap ? "line-clamp-2" : "truncate") + (plain ? " text-[15px] font-semibold leading-[1.3]" : " text-[15.5px] font-semibold leading-snug")}>{row.title}</span>
           {row.tag && <TierTag>{row.tag}</TierTag>}
         </span>
-        {row.sub && <span className="mt-0.5 block text-[13.5px] leading-snug text-ink-soft">{row.sub}</span>}
+        {row.sub && (
+          <span className={plain ? "mt-px block truncate text-[14px] leading-[1.35] text-ink-soft" : "mt-0.5 block text-[13.5px] leading-snug text-ink-soft"}>{row.sub}</span>
+        )}
       </span>
       {row.time ? (
         <span className={"shrink-0 tabular-nums " + (row.quietTime ? "text-[12.5px] text-ink-faint" : "text-[15px] font-semibold")}>{row.time}</span>
@@ -87,17 +104,18 @@ export function DayRow({ row, onClick, expanded }: { row: TodayRow; /** No longe
   // The hairline between rows starts where the words start (A-264): 16px padding + 36px icon + 12px gap. Since the
   // calm look (A-282) ios-sep draws no line, only the rounded fill a row gets when pointed at, so every row has it,
   // the first one too.
-  const cls = "ios-sep flex min-h-[60px] items-center gap-3 px-4 py-3";
+  const cls = plain ? "flex min-h-[58px] items-center gap-3 border-t border-line px-1 py-2.5" : "ios-sep flex min-h-[60px] items-center gap-3 px-4 py-3";
+  const hover = plain ? "" : " hover:bg-paper";
   const sep = { "--sep-inset": "64px" } as React.CSSProperties;
   if (onClick) {
     return (
-      <button type="button" onClick={onClick} aria-expanded={expanded} style={sep} className={`${cls} w-full text-left hover:bg-paper`}>
+      <button type="button" onClick={onClick} aria-expanded={expanded} style={sep} className={`${cls} w-full text-left${hover}`}>
         {body}
       </button>
     );
   }
   return row.href ? (
-    <Link href={row.href} data-nav="push" style={sep} className={`${cls} hover:bg-paper`}>
+    <Link href={row.href} data-nav="push" style={sep} className={`${cls}${hover}`}>
       {body}
     </Link>
   ) : (

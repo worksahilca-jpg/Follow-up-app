@@ -2,7 +2,7 @@
  * Today (A-336, A-337): the words and the window, from records only.
  */
 import { describe, expect, it } from "vitest";
-import { checkedLine, comingUpRows, didRows, ownerHeading, panelSentence, quoteWords, sendTitle, sinceLabel, sinceWindow, sinceWords, whenShort } from "@/lib/todayWork";
+import { checkedLine, comingUpRows, didRows, ownerHeading, panelSentence, quoteWords, replyWindowLeft, sendTitle, sinceLabel, sinceWindow, sinceWords, whenShort, windowWords } from "@/lib/todayWork";
 
 const TZ = "America/Toronto";
 // Wednesday Oct 28, 2026, 2:00 PM Toronto.
@@ -74,8 +74,11 @@ describe("the rows", () => {
 
 describe("the owner's heading (A-337)", () => {
   it("counts the replies waiting for an OK, numeral first", () => {
-    expect(ownerHeading({ replies: 16, others: 2, handled: 0, holdAll: true })).toEqual({ title: "16 replies need your OK", sub: "FollowUp wrote them. Each goes out when you say." });
-    expect(ownerHeading({ replies: 1, others: 0, handled: 0, holdAll: true })).toEqual({ title: "1 reply needs your OK", sub: "FollowUp wrote it. It goes out when you say." });
+    expect(ownerHeading({ replies: 16, others: 2, handled: 0, holdAll: true })).toEqual({ title: "16 replies need your OK", sub: "FollowUp wrote them. Read each one, then press Send." });
+    expect(ownerHeading({ replies: 1, others: 0, handled: 0, holdAll: true })).toEqual({ title: "1 reply needs your OK", sub: "FollowUp wrote it. Read it, then press Send." });
+  });
+  it("tells a teammate who can't send who does", () => {
+    expect(ownerHeading({ replies: 3, others: 0, handled: 0, holdAll: true, sendLocked: true }).sub).toBe("FollowUp wrote them. An admin on your team sends them.");
   });
   it("counts the other decisions when no reply waits", () => {
     expect(ownerHeading({ replies: 0, others: 2, handled: 0, holdAll: false }).title).toBe("2 things need you");
@@ -145,13 +148,32 @@ describe("coming up (A-337)", () => {
       ],
       [{ id: "b1", leadId: "r", name: "Raj Mehta", at: new Date("2026-10-31T15:00:00.000Z") }],
       now,
-      TZ
+      TZ,
+      () => "Saturday at 11 am"
     );
     expect(rows.map((r) => [r.title, r.sub, r.when])).toEqual([
       ["Replies to Ethan", null, "Later today"],
       ["Checks in with Priya", "Check-in 2 of 4, if Priya stays quiet", "Tomorrow"],
-      ["Your call with Raj", null, "Saturday 11:00 AM"],
+      ["Your call with Raj", null, "Saturday at 11 am"],
     ]);
     expect(rows[2].href).toBe("/calls");
+  });
+});
+
+describe("Instagram's deadline, only near the end (A-028, A-338)", () => {
+  const wrote = new Date("2026-10-28T18:00:00.000Z");
+  const at = (h: number) => new Date(wrote.getTime() + h * 3_600_000);
+  it("says the hours left from 20 hours until the window shuts", () => {
+    expect(replyWindowLeft("instagram", wrote, at(21))).toBe(3);
+    expect(replyWindowLeft("messenger", wrote, at(20))).toBe(4);
+    expect(windowWords(replyWindowLeft("instagram", wrote, at(21)))).toBe("3 h left to reply");
+    expect(windowWords(replyWindowLeft("instagram", wrote, at(23.5)))).toBe("Under 1 h left to reply");
+  });
+  it("says nothing before then, after it shuts, or for other apps", () => {
+    expect(replyWindowLeft("instagram", wrote, at(5))).toBeNull();
+    expect(replyWindowLeft("instagram", wrote, at(24))).toBeNull();
+    expect(replyWindowLeft("email", wrote, at(21))).toBeNull();
+    expect(replyWindowLeft("instagram", null, at(21))).toBeNull();
+    expect(windowWords(null)).toBeNull();
   });
 });

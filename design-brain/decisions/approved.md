@@ -6189,3 +6189,30 @@ changed the drawing), on PR #614's branch in place of A-336:
 - Removed with it: `DidRows.tsx`, `Ago.tsx` (the ticking ago), the "FollowUp is on it" rows and green dot, Tomorrow /
   Calls this week rows, the week's results line on Today, and the rescue-report query Today no longer needs.
 
+## A-338 — Today made clearer: what they want, where they wrote, Instagram's deadline, one instruction ^A-338
+
+**Date:** 2026-10-29. **Founder, verbatim:** *"Are you sure we agreed on this design? … Let's see where we can improve,
+but keep in mind all the things that we need to keep in mind to organise this properly so that everybody can
+understand."*, then *"yes build all four"* to the board (scratchpad `today/improve/today-clearer-board.png`, drawn on
+the real app with test customers). Adds to [[approved#^A-337|A-337]]; its layout stays.
+**What specifically was approved:**
+1. **What they want, in words**: "Wants to book", "Asked the price", "Likely to book" (A-230's `readyReason()`, the
+   reason Today already orders by) as the outline word on each waiting row and at the start of the open card's line.
+   Words, no colour, no dot (R-141, A-325). Nothing when FollowUp doesn't know.
+2. **Where they wrote**: the app's own small mark on the corner of their face (A-276's rule for rows): Instagram,
+   Messenger, WhatsApp, Facebook; an envelope for email (the row can't say Gmail or Outlook), a globe for the website
+   form, a phone for texts.
+3. **Instagram and Messenger's deadline, only near the end** (A-028): "3 h left to reply" in place of "since …", in
+   ink, no colour, from 20 hours after they wrote until the 24-hour window shuts.
+4. **One instruction and clear groups**: under the heading "FollowUp wrote them. Read each one, then press Send.";
+   "Also needs you" over the owner's other tasks when replies wait too; FollowUp's Coming up writes call times the
+   way its rows do ("Saturday at 11 am").
+**Built (2026-10-29, PR #614 with A-337):** all four. The reason word is `TierTag` (the outline word Today already
+had), shown only when `readyReason()` gives one. The face badge is `Face` in `TodayDay.tsx`: a 16px white circle on the
+face's corner holding `ChannelIcon`, drawn only for a channel the icon set knows (`hasChannelIcon`), so it is never an
+empty circle. The deadline is `replyWindowLeft()` + `windowWords()` in `todayWork.ts`, reading `metaWindow.ts`'s own
+numbers (20 h, 24 h, Instagram and Messenger only); whole hours rounded down, "Under 1 h left to reply" at the end.
+The heading line becomes "FollowUp wrote them. An admin on your team sends them." for someone who can't send. Checked
+in the real app on phone and computer, light and dark, including a local test customer set to an Instagram message
+from 21 hours ago (it moved to the top with "2 h left to reply"; the data was put back).
+

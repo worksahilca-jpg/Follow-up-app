@@ -4,6 +4,14 @@ import { LEAD_FORM } from "@/lib/displayChannel";
 
 export { channelFromSource } from "@/lib/displayChannel";
 
+/** The channels ChannelIcon draws a glyph for; anything else draws nothing. */
+const DRAWN = new Set(["email", "call", "text", "web", LEAD_FORM, "instagram", "whatsapp", "messenger"]);
+
+/** Whether ChannelIcon has a glyph for this channel (so a badge around it is never an empty circle). */
+export function hasChannelIcon(channel: string | null | undefined): channel is string {
+  return channel != null && DRAWN.has(channel);
+}
+
 /**
  * The small channel glyph the canvas rows draw after a name or before a
  * channel's name: the app's own logo where there is one (brandLogos.tsx).

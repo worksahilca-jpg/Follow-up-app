@@ -74,6 +74,11 @@ a booked call or visit; the owner closes.
 
 **Last updated: 2026-10-29**
 
+- **Today made clearer (A-338) BUILT (Oct 29)** on PR #614 with A-337, after the founder's "yes build all four": what
+  each customer wants in words ("Wants to book", "Asked the price"), the app they wrote from as a small mark on their
+  face, Instagram/Messenger's "3 h left to reply" only near the end of the 24 hours, one instruction under the heading
+  ("Read each one, then press Send.") and "Also needs you" over the owner's other tasks. Checked on phone and computer,
+  light and dark; 5,115 tests pass. PR #614 waits for CI and the founder's "merge".
 - **Today from the research (A-337) BUILT (Oct 29)** on PR #614's branch, replacing A-336 there: the owner's part
   first and loud ("16 replies need your OK", the open reply raised, plain rows with "since", "Your calls today"),
   FollowUp's part as one quiet panel (its sentence, what it did with the words and times, Coming up, "Checked … at").

@@ -16244,3 +16244,32 @@ drawn or approved; still on offer.
 "Saturday 11:00 AM" in "Coming up" (two time styles in one panel; the first comes from the customer-facing
 `sayTime`, so it was left alone); the local test data repeats one message, so the rows look samey in the pictures;
 "Not now" wraps under Send on a very narrow phone with a long first name. Pictures: scratchpad `today/build/`.
+
+## 2026-10-29 — "Are you sure we agreed on this design?": four ways to make the built Today clearer (drawn)
+
+**Founder:** *"Are you sure we agreed on this design? I had given you a reference so that we can improve it, but this
+looks good, not bad. Let's see where we can improve, but keep in mind all the things that we need to keep in mind to
+organise this properly so that everybody can understand."* Answer: yes, the drawing was approved Oct 28 ("LOOKS GOOD"),
+and the reel reference changed little because most of what it does goes against earlier decisions (colours, number
+boxes, drag board, broadcasts). What the reference does well, and Today lacks, is that each row tells you at a glance
+what kind of thing it is and where it came from. Drawn on the real app with test customers (scratchpad
+`today/improve/today-clearer-board.png`, computer now/better and phone better), four changes, none against a past
+decision:
+1. **What they want, in words** on the card's line and each waiting row: "Wants to book", "Asked the price" (A-230's
+   own reason, `readyReason()`, which already orders Today; the outline word style Today used for "Ready"; R-141/A-325
+   words, no dot, no colour).
+2. **Where they wrote**: the app's own small logo on their face (A-276 already says small channel marks in rows use the
+   real logos; email stays the envelope where the provider isn't known).
+3. **Instagram/Messenger's deadline only near the end**: "3 h left to reply" in place of "since …", in ink, no colour
+   (A-028's rule: shown only when nearly up, using the existing closing-window state).
+4. **One instruction and clear groups**: the heading's line says "FollowUp wrote them. Read each one, then press Send."
+   (R-113's principle: say the task in a plain sentence); "Also needs you" over the owner's other tasks; one way to
+   write a time in FollowUp's panel ("Saturday at 11 am").
+Proposed, waiting for the founder's yes; nothing built.
+**Approved and built the same day** ("yes build all four", [[approved#^A-338|A-338]]) on PR #614 beside A-337.
+Self-review, honestly: (a) the reason word is only as good as `readyReason()`; on the local test customers it shows
+nothing, because none of them asked anything FollowUp can name, which is right but means the founder sees it first on
+real customers. (b) The channel badge is small (16px, glyph under 10px): clear on a computer, small on a phone; it is
+a second cue, the row's words still carry the meaning. (c) The deadline counts whole hours down, so "2 h left" can mean
+2 h 59 min; rounding up would promise time that isn't there. (d) "Also needs you" is a small uppercase label, the same
+style as the panel's labels, so it reads as a group title and not as a heading competing with the page's own.

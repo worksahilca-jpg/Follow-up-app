@@ -1,4 +1,5 @@
 import { clockTime, dayOffset } from "@/lib/todayWords";
+import { META_DM_CHANNELS, META_DM_WINDOW_HOURS, UNANSWERED_META_DM_MAX_HOURS } from "@/lib/metaWindow";
 
 /**
  * Today (A-336, then A-337 from the research): the pure part. The owner's heading; what FollowUp did since the owner
@@ -188,11 +189,16 @@ export function sinceWords(at: Date, now: Date, timeZone: string): string {
  * The heading of Today (A-337): the owner's part, first and the only loud thing. The replies FollowUp wrote for their
  * OK come first; with none, their other decisions; with nothing at all, a calm line that says what FollowUp keeps doing.
  */
-export function ownerHeading(n: { replies: number; others: number; handled: number; holdAll: boolean }): { title: string; sub: string } {
+export function ownerHeading(n: { replies: number; others: number; handled: number; holdAll: boolean; sendLocked?: boolean }): { title: string; sub: string } {
   if (n.replies > 0) {
-    return n.replies === 1
-      ? { title: "1 reply needs your OK", sub: "FollowUp wrote it. It goes out when you say." }
-      : { title: `${n.replies} replies need your OK`, sub: "FollowUp wrote them. Each goes out when you say." };
+    // The task in one plain sentence (R-113, A-338). A teammate who can't send is told who does.
+    const one = n.replies === 1;
+    const sub = n.sendLocked
+      ? `FollowUp wrote ${one ? "it" : "them"}. An admin on your team sends ${one ? "it" : "them"}.`
+      : one
+        ? "FollowUp wrote it. Read it, then press Send."
+        : "FollowUp wrote them. Read each one, then press Send.";
+    return { title: one ? "1 reply needs your OK" : `${n.replies} replies need your OK`, sub };
   }
   if (n.others > 0) return { title: `${n.others} ${n.others === 1 ? "thing needs" : "things need"} you`, sub: "No replies to send right now." };
   if (n.handled > 0) {
@@ -241,6 +247,24 @@ export function checkedLine(names: string[], gmailCheckedAt: Date | null, now: D
   return `Watching ${andList(list)}.`;
 }
 
+/**
+ * Instagram and Messenger's deadline, only near the end (A-028, A-338): the hours left in Meta's 24-hour reply window,
+ * from 20 hours after they wrote until it shuts. Null for any other app, before then, and after it has shut (the
+ * customer's page says what can still go out). Rounded down, so it never offers an hour that has gone.
+ */
+export function replyWindowLeft(channel: string | null | undefined, wroteAt: Date | null, now: Date): number | null {
+  if (!channel || !META_DM_CHANNELS.has(channel) || !wroteAt) return null;
+  const hoursSince = (now.getTime() - wroteAt.getTime()) / 3_600_000;
+  if (hoursSince < UNANSWERED_META_DM_MAX_HOURS || hoursSince >= META_DM_WINDOW_HOURS) return null;
+  return Math.max(0, Math.floor(META_DM_WINDOW_HOURS - hoursSince));
+}
+
+/** "3 h left to reply"; "Under 1 h left to reply" in the last hour. */
+export function windowWords(hoursLeft: number | null): string | null {
+  if (hoursLeft === null) return null;
+  return hoursLeft < 1 ? "Under 1 h left to reply" : `${hoursLeft} h left to reply`;
+}
+
 /** Something FollowUp will do next, or a call the owner has coming (A-337's "Coming up"). */
 export type ComingRow = { key: string; person: string; title: string; sub: string | null; when: string; href: string; at: Date };
 
@@ -272,6 +296,8 @@ export function comingUpRows(
   calls: { id: string; leadId: string; name: string; at: Date }[],
   now: Date,
   timeZone: string,
+  /** A booked time the way FollowUp's rows say it: "Saturday at 11 am" (bookingTimes.sayTime, A-338). */
+  sayWhen: (at: Date) => string,
 ): ComingRow[] {
   const rows: ComingRow[] = [];
   const seen = new Set<string>();
@@ -285,8 +311,8 @@ export function comingUpRows(
     rows.push({ key: `step-${s.leadId}`, person: s.name, title: stepTitle(s.what, who), sub, when: dayWord(s.at, now, timeZone), href: `/leads/${s.leadId}`, at: s.at });
   }
   for (const c of calls) {
-    const day = dayWord(c.at, now, timeZone);
-    rows.push({ key: `call-${c.id}`, person: c.name, title: `Your call with ${first(c.name)}`, sub: null, when: `${day === "Later today" ? "Today" : day} ${clockTime(c.at, timeZone)}`, href: "/calls", at: c.at });
+    const said = sayWhen(c.at);
+    rows.push({ key: `call-${c.id}`, person: c.name, title: `Your call with ${first(c.name)}`, sub: null, when: said.charAt(0).toUpperCase() + said.slice(1), href: "/calls", at: c.at });
   }
   return rows.sort((a, b) => a.at.getTime() - b.at.getTime());
 }

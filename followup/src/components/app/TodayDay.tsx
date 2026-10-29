@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CalendarDays, ChevronRight, MessageCircle, Phone } from "lucide-react";
 import { Initials } from "@/components/app/canvasBits";
+import { ChannelIcon, hasChannelIcon } from "@/components/app/ChannelIcon";
 
 /**
  * The parts of Today that make it the owner's whole day (A-244, after R-114:
@@ -29,7 +30,29 @@ export type TodayRow = {
   noIcon?: boolean;
   /** The title may take two lines instead of cutting off: "FollowUp did" rows carry the fact in the title. */
   wrap?: boolean;
+  /** Where they wrote ("instagram", "email"…): the app's own small mark on the corner of their face (A-338). */
+  channel?: string | null;
+  /** The time is a deadline ("3 h left to reply", A-338): said in ink and a little heavier, never in colour. */
+  due?: boolean;
 };
+
+/**
+ * A customer's face with where they wrote on its corner (A-338, A-276's rule for rows): the app's own mark, an envelope
+ * for email, a globe for the website form. No mark when the channel is unknown.
+ */
+export function Face({ name, size, channel }: { name: string; size: number; channel?: string | null }) {
+  const mark = hasChannelIcon(channel) ? <ChannelIcon channel={channel} className="h-[9.5px] w-[9.5px] text-ink-soft" /> : null;
+  return (
+    <span className="relative inline-flex shrink-0">
+      <Initials name={name} size={size} />
+      {mark && (
+        <span className="absolute -right-[5px] -bottom-[5px] flex h-4 w-4 items-center justify-center rounded-full border border-line bg-card" style={{ boxShadow: "0 0 0 1.5px var(--card)" }}>
+          {mark}
+        </span>
+      )}
+    </span>
+  );
+}
 
 const ICON = { reply: MessageCircle, call: Phone, booking: CalendarDays, checkin: MessageCircle } as const;
 
@@ -77,7 +100,7 @@ export function DayRow({
   const body = (
     <>
       {row.person ? (
-        <Initials name={row.person} size={plain ? 34 : 36} />
+        <Face name={row.person} size={plain ? 34 : 36} channel={row.channel} />
       ) : row.noIcon ? (
         <span aria-hidden="true" className={(plain ? "w-[34px]" : "w-9") + " shrink-0"} />
       ) : (
@@ -95,7 +118,7 @@ export function DayRow({
         )}
       </span>
       {row.time ? (
-        <span className={"shrink-0 tabular-nums " + (row.quietTime ? "text-[12.5px] text-ink-faint" : "text-[15px] font-semibold")}>{row.time}</span>
+        <span className={"shrink-0 tabular-nums " + (row.due ? "text-[13px] font-semibold text-ink" : row.quietTime ? "text-[12.5px] text-ink-faint" : "text-[15px] font-semibold")}>{row.time}</span>
       ) : row.href || onClick ? (
         <ChevronRight className="h-[18px] w-[18px] shrink-0 text-ink-faint" aria-hidden="true" />
       ) : null}

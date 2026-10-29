@@ -15,8 +15,7 @@ import KeepFollowingButton from "@/components/app/KeepFollowingButton";
 import { STAY_IN_TOUCH_TRIGGER } from "@/lib/stayInTouch";
 import { THEIR_MOMENT_TRIGGER } from "@/lib/theirMoment";
 import { isBookingLinkReason } from "@/lib/bookingOffer";
-import { DayRow, type TodayRow } from "@/components/app/TodayDay";
-import { Initials } from "@/components/app/canvasBits";
+import { DayRow, Face, TierTag, type TodayRow } from "@/components/app/TodayDay";
 import MeetingOutcomeCard, { type MeetingToLookBackOn } from "@/components/app/MeetingOutcomeCard";
 import CallBriefCard, { type CallToPrepare } from "@/components/app/CallBriefCard";
 import { callRowWords } from "@/lib/callBrief";
@@ -109,6 +108,8 @@ export type ApprovalItem = PendingApproval & {
   replies?: number;
   /** When they started waiting, worked out on the server (A-337): "9:14 AM", "yesterday", "Mon", "Sep 25". */
   since?: string | null;
+  /** Instagram or Messenger's reply window, only near the end (A-028, A-338): "3 h left to reply". */
+  windowLeft?: string | null;
 };
 
 /** How they reached you, in one plain verb (A-255): "Omar Haddad emailed you 4 days ago:". */
@@ -322,15 +323,24 @@ function ApprovalCard({
         // Today's card (A-337): their face and name, who they are in one line ("Buying · Has an agent", FollowUp's
         // call A-310 in it), and on the right since when they have waited, as a date, never a ticking "ago".
         <div className="flex items-center gap-3">
-          <Initials name={item.leadName} size={42} />
+          <Face name={item.leadName} size={42} channel={item.leadLastMessageChannel} />
           <div className="min-w-0">
             {/* A 44px tap band around the name, keeping the line its own size. */}
             <Link href={`/leads/${item.leadId}`} data-nav="push" className="relative block truncate text-[17px] font-semibold leading-[1.25] text-ink before:absolute before:inset-x-0 before:-inset-y-[11px] before:content-[''] hover:underline">
               {item.leadName}
             </Link>
-            <p className="mt-0.5 truncate text-[13px] leading-snug text-ink-faint">{headLine}</p>
+            <p className="mt-0.5 flex min-w-0 items-center gap-1.5 text-[13px] leading-snug text-ink-faint">
+              {/* What they want, in words (A-338): the reason Today already orders by (A-230). */}
+              {item.why && !note && <TierTag>{item.why}</TierTag>}
+              <span className="truncate">{headLine}</span>
+            </p>
           </div>
-          {item.since && !note && <span className="ml-auto shrink-0 self-start pt-1 text-[12.5px] text-ink-faint">waiting since {item.since}</span>}
+          {/* Instagram's deadline near the end (A-028), else since when they have waited. */}
+          {item.windowLeft && !note ? (
+            <span className="ml-auto shrink-0 self-start pt-1 text-[13px] font-semibold text-ink">{item.windowLeft}</span>
+          ) : (
+            item.since && !note && <span className="ml-auto shrink-0 self-start pt-1 text-[12.5px] text-ink-faint">waiting since {item.since}</span>
+          )}
         </div>
       ) : (
         <p className="text-[14px] leading-snug text-ink-soft">
@@ -791,7 +801,7 @@ export default function ApprovalQueue({
   // The owner's other decisions, one row each.
   const decisionRows = rows.length + listMeetings.length + (quiet ? 1 : 0);
   // The heading (A-337): the replies for their OK, numeral first, the page's biggest words.
-  const heading = ownerHeading({ replies: queue.length, others: decisionRows, handled, holdAll });
+  const heading = ownerHeading({ replies: queue.length, others: decisionRows, handled, holdAll, sendLocked });
 
   // The one person, in full (A-335): their words, FollowUp's reply and Send, open from the start (A-250), raised
   // (A-337). After Send the card slides out and the next person's slides in (A-048: motion only where something
@@ -922,7 +932,11 @@ export default function ApprovalQueue({
             </button>
           )}
           {/* The owner's other decisions, one row each: a picked or cancelled time, a call to make, a call to look
-              back on (which opens its four answers in place), who stopped replying, facts to check. */}
+              back on (which opens its four answers in place), who stopped replying, facts to check. Under their own
+              small title when replies wait above them (A-338), so the two kinds of task don't run together. */}
+          {queue.length > 0 && decisionRows > 0 && (
+            <p className="mx-1 mt-[22px] mb-1 text-[12px] font-semibold uppercase tracking-[0.06em] text-ink-faint lg:mx-0">Also needs you</p>
+          )}
           {rows.map((r) => (
             <DayRow key={r.key} plain row={r} />
           ))}
@@ -983,7 +997,19 @@ const WAITING_SHOWN = 3;
  * time on the right. A no, a picked time and a note say what they are instead of the words.
  */
 function replyRow(item: ApprovalItem): TodayRow {
-  const base = { key: item.leadId, kind: "reply" as const, title: item.leadName, person: item.leadName, time: item.since ? `since ${item.since}` : null, quietTime: true, href: null };
+  // What they want in words, where they wrote, and Instagram's deadline near the end in place of "since" (A-338).
+  const base = {
+    key: item.leadId,
+    kind: "reply" as const,
+    title: item.leadName,
+    person: item.leadName,
+    tag: item.why ?? null,
+    channel: item.leadLastMessageChannel,
+    time: item.windowLeft ?? (item.since ? `since ${item.since}` : null),
+    due: Boolean(item.windowLeft),
+    quietTime: true,
+    href: null,
+  };
   // They said no (A-326): the row says it in words before anything else about them.
   if (item.saidNo) return { ...base, sub: saidNoWords(item.saidNoHow ?? "clear", item.leadName).row };
   // They picked a time (A-242): the reply waiting is the acknowledgement; the booking waits for Confirm on their page.

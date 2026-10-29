@@ -38,7 +38,7 @@ import InstallCard from "@/components/app/InstallCard";
 import ReplyForMeCard from "@/components/app/ReplyForMeCard";
 import type { TodayRow } from "@/components/app/TodayDay";
 import FollowUpPanel, { type PanelRow } from "@/components/app/FollowUpPanel";
-import { DID_SHOWN, checkedLine, comingUpRows, didRows, panelSentence, sinceLabel, sinceWindow, sinceWords } from "@/lib/todayWork";
+import { DID_SHOWN, checkedLine, comingUpRows, didRows, panelSentence, replyWindowLeft, sinceLabel, sinceWindow, sinceWords, windowWords } from "@/lib/todayWork";
 import { loadWork, previousOpen } from "@/lib/todayWorkData";
 import { clockTime, dayOffset, greeting } from "@/lib/todayWords";
 import { replyForMeOffer } from "@/lib/replyForMeOffer";
@@ -267,6 +267,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     asked: a.leadLastMessageAt ? timeAgo(a.leadLastMessageAt) : null,
     // "waiting since Sep 25" on the open card, "since 9:14 AM" on a row (A-337): a date on the owner's clock.
     since: a.leadLastMessageAt ? sinceWords(new Date(a.leadLastMessageAt), now, timezone) : null,
+    // Instagram or Messenger's reply window, only near the end (A-028, A-338): "3 h left to reply".
+    windowLeft: windowWords(replyWindowLeft(a.leadLastMessageChannel, a.leadLastMessageAt ? new Date(a.leadLastMessageAt) : null, now)),
     // "FollowUp told Sarah you're on it · 6:40 pm" (A-060), in the
     // business's own time, worked out here for the same reason as `wait`.
     toldAt: a.customerToldAt
@@ -490,6 +492,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     callsAhead.map((b) => ({ id: b.id, leadId: b.leadId, name: b.lead.name, at: b.scheduledAt })),
     now,
     timezone,
+    sayWhen,
   );
   const comingShown: PanelRow[] = comingAll.slice(0, COMING_SHOWN).map((r) => ({ key: r.key, person: r.person, title: r.title, sub: r.sub, when: r.when, href: r.href }));
   // When it last looked, as a plain line: no dot, no ticking clock (A-337).

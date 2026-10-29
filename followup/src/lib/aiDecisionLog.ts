@@ -28,6 +28,12 @@ export const RATES_PER_MTOK: Readonly<Record<string, { input: number; output: nu
   "gpt-5": { input: 1.25, output: 10 },
   "gpt-5-mini": { input: 0.25, output: 2 },
   "gpt-5-nano": { input: 0.05, output: 0.4 },
+  // Added 2026-10-29: OPENAI_MODEL is gpt-5.4-mini, so every row had cost nothing. Read from several price trackers
+  // that agreed (OpenAI's own page couldn't be reached from where this was written); check before trusting a total.
+  "gpt-5.4": { input: 2.5, output: 15 },
+  "gpt-5.4-mini": { input: 0.75, output: 4.5 },
+  "gpt-5.4-nano": { input: 0.2, output: 1.25 },
+  "gpt-5.5": { input: 5, output: 30 },
 };
 
 /** "gpt-4o-mini" or a dated version of it ("gpt-4o-mini-2024-07-18"); never a different model sharing a prefix. */

@@ -105,8 +105,15 @@ export interface AiLessons {
 // a route's bundle loads.
 const SINK = Symbol.for("followup.aiCallSink");
 const CONTEXT = Symbol.for("followup.aiCallContext");
-/** Who a call is for; `tag` marks a run that isn't a real customer's ("test" for the reply tests, "train" for the founder's practice). */
-type Where = { businessId?: string | null; leadId?: string | null; tag?: string };
+/**
+ * Who a call is for; `tag` marks a run that isn't a real customer's ("test" for the reply tests, "train" for the founder's
+ * practice). `writeWith` is the reply test's side-by-side run: the jobs that write a reply use that model instead of
+ * OPENAI_MODEL, and everything else (the grader included) stays on the usual one.
+ */
+type Where = { businessId?: string | null; leadId?: string | null; tag?: string; writeWith?: string };
+
+/** The jobs that write the words a customer reads; `writeWith` changes only these. */
+const WRITING = new Set(["draft_reply", "draft_first_reply"]);
 const shared = globalThis as unknown as { [SINK]?: AiCallSink | null; [CONTEXT]?: AsyncLocalStorage<Where> };
 const where = (shared[CONTEXT] ??= new AsyncLocalStorage<Where>());
 
@@ -165,9 +172,10 @@ export function getClient(purpose = "other", lessons?: AiLessons): OpenAI {
   // request (an unknown name, a setting it doesn't take).
   // Every call is also handed to the decision log (src/lib/aiDecisionLog.ts), answered or not.
   (completions as unknown as { create: unknown }).create = async (body: ChatBody, options?: unknown) => {
-    const model = body.model;
-    const started = Date.now();
     const here = where.getStore();
+    const trying = here?.writeWith && WRITING.has(purpose) ? here.writeWith : null;
+    const model = trying ?? body.model;
+    const started = Date.now();
     const log = (fellBack: boolean, answer: Answer | null, err?: unknown) =>
       toLog((sink) =>
         sink.call({
@@ -195,7 +203,8 @@ export function getClient(purpose = "other", lessons?: AiLessons): OpenAI {
       return answer;
     } catch (err) {
       const status = (err as { status?: number }).status;
-      if (model === FALLBACK_MODEL || (status !== 400 && status !== 404)) {
+      // A model being tried never falls back: the test would score the known-good model under the new one's name.
+      if (trying || model === FALLBACK_MODEL || (status !== 400 && status !== 404)) {
         await log(false, null, err);
         throw err;
       }

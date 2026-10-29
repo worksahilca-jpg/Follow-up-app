@@ -478,3 +478,19 @@ right but dosent feel like working."* (Said on the built A-335 Today, after "i d
   urgency (standing rules).
 - Both principles hold together: the page proves FollowUp worked *and* makes the owner's next move unmistakable.
 
+
+## Point the owner to their task, don't hand them a newspaper (founder, 2026-10-29)
+
+*"I feel like we are just putting a newspaper in front of them, with too many words and stuff. We got to figure out a
+way where we need to direct them to their task, something like that, like Instagram does, I guess, or WhatsApp and
+other stuff do: to do their task if something needs them. We can't just open them to the whole chat like a
+newspaper. That makes them confused."* (Said on the live A-337/A-338 Today, after R-146.)
+- Opening the app should tell the owner, in a few words, *that* something needs them and *which* thing, then take
+  them to it. The full conversation, the drafted reply and the reasons open only when they go to that one task.
+- Few words on the first screen. A wall of sentences, quotes and replies, however well written, reads as a newspaper
+  and confuses.
+- The way Instagram and WhatsApp do it (principle only, never their screens): a short signal that something is
+  waiting, who it is, one tap to it. *(From general knowledge of those apps; no screens were studied for this note.)*
+- This sharpens the two principles above, it doesn't undo them: FollowUp's work stays visible but short, and the
+  owner's task stays the loudest thing, now by being the thing the screen points to rather than the thing it prints
+  in full.

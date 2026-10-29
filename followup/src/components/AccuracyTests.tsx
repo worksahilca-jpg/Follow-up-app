@@ -21,11 +21,38 @@ type Test = {
   title: string;
   what: string;
   route: string;
+  /** Sent as JSON when set; the reply test takes { model } to write with a bigger model. */
+  body?: Record<string, unknown>;
   read: (r: Record<string, unknown>) => Outcome;
 };
 
 const num = (v: unknown) => (typeof v === "number" ? v : 0);
 const list = <T,>(v: unknown) => (Array.isArray(v) ? (v as T[]) : []);
+
+/** The reply test's answer, read the same way for the usual model and a bigger one. */
+const readReplies = (r: Record<string, unknown>): Outcome => {
+  const p = (r.problems ?? {}) as Record<string, unknown>;
+  const counts = [
+    [num(p.unanswered), "left a question unanswered"],
+    [num(p.language), "in the wrong language"],
+    [num(p.shape), "broke the DM shape rules"],
+    [num(p.missing_fact), "missed a fact you gave"],
+    [num(p.echo), "opened with \"Noted\""],
+    [num(p.pressure), "pushed or rushed them"],
+    [num(p.brag), "praised you"],
+    [num(p.feeling), "missed or made up a feeling"],
+    [num(p.generic), "could go to anyone, or read like a bot"],
+  ] as const;
+  return {
+    headline: `${num(r.passed)} of ${num(r.cases)} replies passed every check`,
+    mustBeZero: { label: "invented a fact", count: num(p.invented) },
+    lines: [...counts.filter(([n]) => n > 0).map(([n, label]) => `${n} ${label}`), ...(num(r.errors) ? [`${num(r.errors)} could not be checked`] : [])],
+    failures: list<{ name: string; reply: string; detail: string }>(r.failures).map((f) => ({
+      name: f.name,
+      detail: `${f.detail}${f.reply ? ` · Reply: "${f.reply}"` : ""}`,
+    })),
+  };
+};
 
 const TESTS: Test[] = [
   {
@@ -88,29 +115,23 @@ const TESTS: Test[] = [
     title: "Replies on Instagram and Messenger",
     what: "20 made-up realtor DMs. Each reply must answer every question, invent nothing, match their language, and sound like a person who read it: no pushing, no bragging.",
     route: "/api/admin/reply-eval",
-    read: (r) => {
-      const p = (r.problems ?? {}) as Record<string, unknown>;
-      const counts = [
-        [num(p.unanswered), "left a question unanswered"],
-        [num(p.language), "in the wrong language"],
-        [num(p.shape), "broke the DM shape rules"],
-        [num(p.missing_fact), "missed a fact you gave"],
-        [num(p.echo), "opened with \"Noted\""],
-        [num(p.pressure), "pushed or rushed them"],
-        [num(p.brag), "praised you"],
-        [num(p.feeling), "missed or made up a feeling"],
-        [num(p.generic), "could go to anyone, or read like a bot"],
-      ] as const;
-      return {
-        headline: `${num(r.passed)} of ${num(r.cases)} replies passed every check`,
-        mustBeZero: { label: "invented a fact", count: num(p.invented) },
-        lines: [...counts.filter(([n]) => n > 0).map(([n, label]) => `${n} ${label}`), ...(num(r.errors) ? [`${num(r.errors)} could not be checked`] : [])],
-        failures: list<{ name: string; reply: string; detail: string }>(r.failures).map((f) => ({
-          name: f.name,
-          detail: `${f.detail}${f.reply ? ` · Reply: "${f.reply}"` : ""}`,
-        })),
-      };
-    },
+    read: readReplies,
+  },
+  {
+    id: "replies-gpt-5.4",
+    title: "Same replies, written by a bigger AI (GPT-5.4)",
+    what: "The same 20 DMs, written by OpenAI's bigger model and checked the same way, to compare with the row above. It costs about 3 times as much per reply. Nothing customers get changes.",
+    route: "/api/admin/reply-eval",
+    body: { model: "gpt-5.4" },
+    read: readReplies,
+  },
+  {
+    id: "replies-gpt-5.5",
+    title: "Same replies, written by the biggest AI (GPT-5.5)",
+    what: "The same 20 DMs again, written by OpenAI's largest model. It costs about 7 times as much per reply. Nothing customers get changes.",
+    route: "/api/admin/reply-eval",
+    body: { model: "gpt-5.5" },
+    read: readReplies,
   },
 ];
 
@@ -122,7 +143,10 @@ function TestRow({ test }: { test: Test }) {
   async function run() {
     setState({ status: "running" });
     try {
-      const res = await fetch(test.route, { method: "POST" });
+      const res = await fetch(
+        test.route,
+        test.body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(test.body) } : { method: "POST" }
+      );
       const body = (await res.json().catch(() => null)) as Record<string, unknown> | null;
       if (!res.ok || !body) {
         setState({ status: "error", message: typeof body?.message === "string" ? body.message : `The test stopped (error ${res.status}). Try again in a minute.` });

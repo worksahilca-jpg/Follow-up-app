@@ -8,7 +8,8 @@
 
 import { generateFollowUpMessage } from "@/lib/integrations/openai";
 import type { LeadLanguage } from "@/lib/leadLanguage";
-import { businessText, checkDmDraftShape, conversationText, pickDmSituation, type DmTouch } from "@/lib/dmDrafts";
+import { businessText, checkDmDraftShape, conversationText, pickDmSituation, putsOffOwnExperience, type DmTouch } from "@/lib/dmDrafts";
+import { answerSlotFor } from "@/lib/priceSlot";
 import type { StoredQuickReplies } from "@/lib/quickReplies";
 import type { Message } from "@/lib/types";
 import { factsText, type FactLine } from "@/lib/factLines";
@@ -58,6 +59,10 @@ const RETRY_NOTES: Record<string, string> = {
   buttons_without_question: "It had buttons but asked nothing. Ask one question or give no buttons.",
   banned_closer: "It used a stock closing line such as \"let me know if you have any questions\". Leave it out.",
   contact: "It included a link or an email address. Include none.",
+  experience:
+    "They asked how long you have done this work, and it put the answer off. If WHAT THIS BUSINESS HAS TOLD " +
+    `CUSTOMERS says, use that; otherwise write the sentence that answers it with the exact blank ${answerSlotFor("years in business")} ` +
+    `where the number goes, e.g. "I've been a realtor for ${answerSlotFor("years in business")}." Never say you'll confirm or check your own experience.`,
   empty: "It was empty. Write the message.",
 };
 const BUTTONS_NOTE =
@@ -124,15 +129,16 @@ export async function draftDm(
     // has to read it in that language — an English-only day list would be
     // the exact shortcut the founder rejected on the WhatsApp filter.
     const shape = checkDmDraftShape({ body: draft.body, buttons }, text, leadLanguage?.language, saidByBusiness);
-    if (shape.ok) return { body: draft.body, quickReplies: { question: situation.id, buttons }, shapeFailed: null, responseId: draft.responseId };
+    const putOff = putsOffOwnExperience(conversation, draft.body);
+    if (shape.ok && !putOff) return { body: draft.body, quickReplies: { question: situation.id, buttons }, shapeFailed: null, responseId: draft.responseId };
     // Only the buttons broke a rule (the accuracy test, 2026-10-17: "Which day would suit you best?" with Saturday
     // and Sunday chips, when the customer only said "this weekend"). Buttons are optional; the reply goes without them.
-    if (buttons.length > 0 && checkDmDraftShape({ body: draft.body, buttons: [] }, text, leadLanguage?.language, saidByBusiness).ok) {
+    if (!putOff && buttons.length > 0 && checkDmDraftShape({ body: draft.body, buttons: [] }, text, leadLanguage?.language, saidByBusiness).ok) {
       return { body: draft.body, quickReplies: { question: situation.id, buttons: [] }, shapeFailed: null, responseId: draft.responseId };
     }
-    lastRule = shape.rule;
+    lastRule = shape.ok ? "experience" : shape.rule;
     if (attempt === 1) return { body: draft.body, quickReplies: { question: situation.id, buttons: [] }, shapeFailed: lastRule, responseId: draft.responseId };
-    ask = { ...situation, hint: `${situation.hint}\n\n${retryNote(shape.rule)}` };
+    ask = { ...situation, hint: `${situation.hint}\n\n${retryNote(lastRule)}` };
   }
   /* istanbul ignore next -- unreachable, the loop always returns */
   throw new Error("draftDm: unreachable");

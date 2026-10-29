@@ -75,3 +75,46 @@ describe("a newer model that refuses", () => {
     expect(create).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("the model that writes customers' replies (founder, 2026-10-29)", () => {
+  const draft = async (purpose: string, model?: string) => {
+    const mod = await load("gpt-5.4-mini");
+    return { mod, out: await mod.getClient(purpose).chat.completions.create({ model: model ?? mod.MODEL, messages: [] }) };
+  };
+
+  it("is GPT-5.5 unless OPENAI_REPLY_MODEL says otherwise", async () => {
+    expect((await load()).REPLY_MODEL).toBe("gpt-5.5");
+    vi.resetModules();
+    process.env.OPENAI_REPLY_MODEL = "gpt-5.4";
+    expect((await load()).REPLY_MODEL).toBe("gpt-5.4");
+    delete process.env.OPENAI_REPLY_MODEL;
+  });
+
+  it("writes reply drafts, and only reply drafts", async () => {
+    create.mockResolvedValue({ choices: [{ message: { content: "ok" } }] });
+    await draft("draft_reply");
+    await draft("score_lead");
+    await draft("grade_reply");
+    expect(create.mock.calls.map((c) => c[0].model)).toEqual(["gpt-5.5", "gpt-5.4-mini", "gpt-5.4-mini"]);
+  });
+
+  it("leaves a reply draft that names its own model alone", async () => {
+    create.mockResolvedValue({ choices: [{ message: { content: "ok" } }] });
+    await draft("draft_reply", "gpt-4o");
+    expect(create.mock.calls[0][0].model).toBe("gpt-4o");
+  });
+
+  it("falls back to the usual model on any failure, so the customer's reply is still written", async () => {
+    create.mockRejectedValueOnce(Object.assign(new Error("rate limited"), { status: 429 }));
+    create.mockResolvedValueOnce({ choices: [{ message: { content: "ok" } }] });
+    const { out } = await draft("draft_reply");
+    expect(out).toEqual({ choices: [{ message: { content: "ok" } }] });
+    expect(create.mock.calls.map((c) => c[0].model)).toEqual(["gpt-5.5", "gpt-5.4-mini"]);
+  });
+
+  it("still fails when the usual model fails too", async () => {
+    create.mockRejectedValue(Object.assign(new Error("server error"), { status: 500 }));
+    await expect(draft("draft_reply")).rejects.toThrow("server error");
+    expect(create).toHaveBeenCalledTimes(2);
+  });
+});

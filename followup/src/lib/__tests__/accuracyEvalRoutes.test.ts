@@ -21,7 +21,7 @@ vi.mock("@/lib/replyEval", () => ({
   gradeReply: vi.fn(),
   REPLY_CASES: [],
   REPLY_EVAL_TRADE: "Real estate",
-  isTryModel: (v: unknown) => v === "gpt-5.4" || v === "gpt-5.5",
+  isTryModel: (v: unknown) => v === "gpt-5.4-mini" || v === "gpt-5.4",
   tradeLessons: vi.fn(async () => ({ examples: [], rules: [] })),
 }));
 vi.mock("@/lib/dmDrafting", () => ({ draftDm: vi.fn() }));
@@ -84,8 +84,8 @@ describe("/api/admin/reply-eval with a bigger model", () => {
 
   it("writes the replies with the model asked for, when it's one the test can try", async () => {
     const { POST } = await import("@/app/api/admin/reply-eval/route");
-    expect((await POST(ask({ model: "gpt-5.5" }))).status).toBe(200);
-    expect(runReplyEval).toHaveBeenCalledWith(expect.anything(), expect.anything(), [], expect.objectContaining({ writeWith: "gpt-5.5" }));
+    expect((await POST(ask({ model: "gpt-5.4-mini" }))).status).toBe(200);
+    expect(runReplyEval).toHaveBeenCalledWith(expect.anything(), expect.anything(), [], expect.objectContaining({ writeWith: "gpt-5.4-mini" }));
   });
 
   it("refuses any other model, and runs nothing", async () => {

@@ -74,6 +74,18 @@ a booked call or visit; the owner closes.
 
 **Last updated: 2026-10-29**
 
+- **Replies now written by GPT-5.5 (Oct 29, on this branch, waits for the founder's "merge").** The side-by-side
+  test (PR #615, live 9b8100e) on the founder's run: gpt-5.4-mini 18/20 (19/20 the run before), gpt-5.4 16/20,
+  gpt-5.5 20/20. Cost on that test: about $0.09, $0.31 and $0.86 for ~21 calls, so about 4 cents a reply on 5.5
+  (under $1 a month at the 18 drafts of the last 30 days); about 6 s a reply against 1 s. The founder: "I don't want
+  to compromise the quality. If you think 5.5 is good, then you can switch it." Built: `REPLY_MODEL` in
+  `openaiClient.ts` (default gpt-5.5, the Vercel setting OPENAI_REPLY_MODEL changes it without a release) writes the
+  `draft_reply` job only: every reply draft, follow-ups, the practice card, "Write a new one" and the reply test's main
+  row. The instant first reply, rewrites, and all reading, sorting and checking stay on OPENAI_MODEL (gpt-5.4-mini).
+  If 5.5 fails for any reason (refusal, rate limit, outage) that reply is written by OPENAI_MODEL instead, logged
+  `fellBack` in the decision log, one Sentry warning per instance. The two compare rows on /admin → Accuracy tests
+  are now gpt-5.4-mini and gpt-5.4. Slower on screen: the practice card and "Write a new one" take a few seconds longer.
+  5,134 tests pass. After it is live: re-run Replies (now 5.5) once to confirm.
 - **Improving the AI first, design after (Oct 29).** The founder: "lets improve the model then we will go with the
   design and stuff". Live numbers that day (read-only, last 30 days): every AI job runs on OPENAI_MODEL =
   gpt-5.4-mini, 180 calls, 0 failures; 18 replies drafted, 5 sent (3 as written, 2 changed), 0 answered yet; 56

@@ -33,6 +33,15 @@ export const MODEL = process.env.OPENAI_MODEL?.trim() || FALLBACK_MODEL;
 export const TRANSCRIBE_MODEL = "gpt-4o-mini-transcribe";
 
 /**
+ * Which model writes the replies customers read (founder, 2026-10-29: "I don't want to compromise the quality"). On
+ * the reply test that day GPT-5.5 passed 20 of 20, gpt-5.4-mini 18 and 19 on two runs, gpt-5.4 16, for about 4 cents
+ * a reply against half a cent. Only the reply drafts use it (REPLY_JOBS); reading, sorting and checking stay on MODEL.
+ * A setting like OPENAI_MODEL: OPENAI_REPLY_MODEL in Vercel changes it without a release.
+ */
+export const REPLY_MODEL = process.env.OPENAI_REPLY_MODEL?.trim() || "gpt-5.5";
+const REPLY_JOBS = new Set(["draft_reply"]);
+
+/**
  * GPT-5-family and o-series models think before they answer. They take
  * only the default temperature, and want max_completion_tokens instead of
  * max_tokens, where the budget also has to cover that thinking: the short
@@ -174,7 +183,9 @@ export function getClient(purpose = "other", lessons?: AiLessons): OpenAI {
   (completions as unknown as { create: unknown }).create = async (body: ChatBody, options?: unknown) => {
     const here = where.getStore();
     const trying = here?.writeWith && WRITING.has(purpose) ? here.writeWith : null;
-    const model = trying ?? body.model;
+    // A reply draft asked for the usual model gets the reply model; a caller that named another model keeps it.
+    const replying = !trying && REPLY_JOBS.has(purpose) && body.model === MODEL && REPLY_MODEL !== MODEL;
+    const model = trying ?? (replying ? REPLY_MODEL : body.model);
     const started = Date.now();
     const log = (fellBack: boolean, answer: Answer | null, err?: unknown) =>
       toLog((sink) =>
@@ -204,20 +215,29 @@ export function getClient(purpose = "other", lessons?: AiLessons): OpenAI {
     } catch (err) {
       const status = (err as { status?: number }).status;
       // A model being tried never falls back: the test would score the known-good model under the new one's name.
-      if (trying || model === FALLBACK_MODEL || (status !== 400 && status !== 404)) {
+      // The reply model falls back on any failure (a refusal, a rate limit, an outage) to the usual model, so a
+      // customer's reply is written either way; any other model only on a refusal, to the known-good one.
+      const fallbackTo = trying
+        ? null
+        : replying
+          ? body.model
+          : model !== FALLBACK_MODEL && (status === 400 || status === 404)
+            ? FALLBACK_MODEL
+            : null;
+      if (!fallbackTo) {
         await log(false, null, err);
         throw err;
       }
       if (!reportedFallback) {
         reportedFallback = true;
-        console.warn(`OpenAI model "${model}" refused a request (${status}); using ${FALLBACK_MODEL} instead.`);
-        Sentry.captureMessage(`OpenAI model "${model}" refused a request (${status}); fell back to ${FALLBACK_MODEL}`, {
+        console.warn(`OpenAI model "${model}" failed a request (${status ?? "no status"}); using ${fallbackTo} instead.`);
+        Sentry.captureMessage(`OpenAI model "${model}" failed a request (${status ?? "no status"}); fell back to ${fallbackTo}`, {
           level: "warning",
           fingerprint: ["openai-model-fallback", model],
         });
       }
       try {
-        const answer = await create(adaptForModel(body, FALLBACK_MODEL), options);
+        const answer = await create(adaptForModel(body, fallbackTo), options);
         await log(true, answer as Answer);
         return answer;
       } catch (again) {

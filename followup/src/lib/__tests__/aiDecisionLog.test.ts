@@ -95,22 +95,22 @@ describe("every AI call gets a row", () => {
   });
 
   it("writes with the model a reply test is trying, and only the writing jobs: the grader keeps the usual one", async () => {
-    await withAiContext({ tag: "test", writeWith: "gpt-5.5" }, async () => {
+    await withAiContext({ tag: "test", writeWith: "gpt-5.4" }, async () => {
       await ask("draft_reply");
       await ask("draft_first_reply");
       await ask("grade_reply");
     });
-    expect(create.mock.calls.map((call) => call[0].model)).toEqual(["gpt-5.5", "gpt-5.5", "gpt-4o-mini"]);
-    expect(sink.call.mock.calls.map((call) => call[0].modelRequested)).toEqual(["gpt-5.5", "gpt-5.5", "gpt-4o-mini"]);
+    expect(create.mock.calls.map((call) => call[0].model)).toEqual(["gpt-5.4", "gpt-5.4", "gpt-4o-mini"]);
+    expect(sink.call.mock.calls.map((call) => call[0].modelRequested)).toEqual(["gpt-5.4", "gpt-5.4", "gpt-4o-mini"]);
     await ask("draft_reply");
-    expect(create.mock.calls[3][0].model).toBe("gpt-4o-mini");
+    expect(create.mock.calls[3][0].model).toBe("gpt-5.5"); // outside a test, replies are written by the reply model
   });
 
   it("never quietly falls back while a model is being tried: the test must not score the old model under the new name", async () => {
     create.mockRejectedValueOnce(Object.assign(new Error("unknown model"), { status: 404 }));
-    await expect(withAiContext({ tag: "test", writeWith: "gpt-5.5" }, () => ask("draft_reply"))).rejects.toThrow("unknown model");
+    await expect(withAiContext({ tag: "test", writeWith: "gpt-5.4" }, () => ask("draft_reply"))).rejects.toThrow("unknown model");
     expect(create).toHaveBeenCalledTimes(1);
-    expect(sink.call.mock.calls[0][0]).toMatchObject({ modelRequested: "gpt-5.5", ok: false, fellBack: false });
+    expect(sink.call.mock.calls[0][0]).toMatchObject({ modelRequested: "gpt-5.4", ok: false, fellBack: false });
   });
 
   it("logs a call the known-good model answered after the chosen one refused it as one row, fallen back", async () => {

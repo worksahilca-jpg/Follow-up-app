@@ -1880,3 +1880,66 @@ together, then drawn.)* **Do not propose again:** a line-up of finished Today pa
 inbox list and the clock as Today's shape; the prose brief as the page. Draw Today only after the contents are
 agreed with him item by item.
 
+
+## R-146 — The live A-337/A-338 Today on the phone: "like I just opened an article" ^R-146
+
+**Date:** 2026-10-29. **Founder, verbatim**, after opening the live app on his phone minutes after the merge of PR
+#614: *"Bro, on phone, it looks very bad. We can't just open the whole chat in front of them rather than just giving
+them any of the context. It feels like I just opened an article, bro, and it's too boring. I won't be working like
+that, so we got to change everything for phone now. Let me just check for computer."*
+**What was rejected (phone only; the computer verdict is pending):** the phone Today of
+[[approved#^A-337|A-337]]/[[approved#^A-338|A-338]] as built: the first reply opened in full at the top (their
+words, "FollowUp wrote", the whole drafted reply, the reason line, Send / Change it / Not now), then the waiting
+rows, then FollowUp's panel below, all in one long column, the computer page stacked.
+**Reason, in his words:** the whole conversation is opened in front of the owner before they're given any context;
+it reads like an article; it's boring; he would not work that way.
+**Principle (inferred, to confirm when the phone is designed with him):** the phone is for glancing and acting, not
+reading. The first thing on the phone is context (what is going on, who, why it matters), and a whole reply or
+conversation opens only when the owner chooses it. The phone needs its own design, not the computer page in one
+column. *(Not yet his words: what "context" should contain is to be agreed item by item, per R-145.)*
+**Do not propose again:** an opened reply or conversation as the first thing on the phone's Today; the computer
+Today stacked into one long phone column as the phone design.
+**What this does not reopen:** R-144 (Today as a queue of the owner's tasks; another "less on the screen" cut) and
+R-145 (a line-up of finished pages; the inbox list as Today's shape) still stand. The phone is to be designed with
+him, item by item, before anything is drawn whole.
+**Added the same day**, founder: *"I feel like we are just putting a newspaper in front of them, with too many words
+and stuff. We got to figure out a way where we need to direct them to their task … like Instagram does, I guess, or
+WhatsApp … We can't just open them to the whole chat like a newspaper. That makes them confused."* The reason is now
+his: too many words, and the page shows content instead of pointing to the task. Recorded as a brand principle
+(2026-10-29, "Point the owner to their task, don't hand them a newspaper"). Not yet said: whether the computer
+Today is rejected too.
+
+## R-147 — The phone Today drawn as a messenger (chat list + chat bubbles), on sight ^R-147
+
+**Date:** 2026-10-29. **Founder, verbatim**, on the board `today/phone/phone-today-{dark,light}.png`: *"We don't have to
+make it like a messenger, bro."*
+**What was rejected:** the drawing's messenger shape: the opening screen as a chat list (a face per row with the app's
+mark, the name in bold, a short line under it, the time on the right, a chevron), and the task screen as a chat
+(their message as a grey bubble, FollowUp's reply as a bubble, the conversation sitting above Send).
+**Reason (inferred, to confirm with one question):** he named Instagram and WhatsApp for *how they point you to what
+needs you*, and the drawing copied *what they look like* instead. FollowUp is not a messaging app; dressed as one it
+reads as another inbox (cf. R-103, "it feels like I'm using WhatsApp"; CLAUDE.md, references are principles, never
+templates). *Not yet known: whether it is the bubbles, the chat-list rows, or both.*
+**Do not propose again:** Today on the phone as a chat list or a chat screen; chat bubbles as the way a task is shown.
+**Still stands:** the newspaper principle (2026-10-29): point the owner to the task in few words, the detail only on
+the task itself.
+
+## R-148 — The phone Today as a to-do list: "a boring app", not interactive ^R-148
+
+**Date:** 2026-10-29. **Founder, verbatim**, on `today/todo/phone-todo-{dark,light}.png`: *"No, it doesn't feel like
+that, bro. I don't know, man. You got to make something like an app. It should be interactive. It's like a boring
+app, right? Do your research, and let's see how we can improve it. If the phone is not the priority, we can leave it,
+but let's see if we really need it. We got to do this too."*
+**What was rejected:** the to-do drawing: a static list of verb-first lines with outline icons, a full-screen card
+with "He asked / FollowUp's reply", Send at the bottom, a toast after Send.
+**Reason, in his words:** it doesn't feel like an app; it isn't interactive; it's boring.
+**Principle (inferred, to be grounded by the research he asked for):** three static pictures of lists and cards
+can't show what makes a phone app feel like one: things respond to the thumb, move when touched, and confirm what
+just happened. The phone Today has to be designed as an interaction (what the thumb does and what the screen does
+back), not as a page layout. Motion is allowed here because it explains a change of state (A-048), never as
+decoration.
+**Do not propose again:** a static list redesign of the phone Today presented as still screenshots; a reshuffle of
+the same rows and cards with new words.
+**Open, his question:** whether the phone is the priority at all. Answer with evidence (how owners actually use
+FollowUp and tools like it) before more drawing. Note R-015 (2026-09-26): *"users will be mostly using their
+phone"*.

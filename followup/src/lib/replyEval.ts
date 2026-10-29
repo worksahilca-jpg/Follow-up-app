@@ -372,6 +372,18 @@ export const gradeRule: RuleGrader = async (rule, c, reply) => {
 export const REPLY_EVAL_CONCURRENCY = 2;
 
 /**
+ * Bigger models the reply test can write with, side by side with the usual one (founder, 2026-10-29: "lets improve
+ * the model"). Only the replies are written by it; the grader stays on OPENAI_MODEL so both runs are marked alike, and
+ * nothing a customer gets changes.
+ */
+export const TRY_MODELS = ["gpt-5.4", "gpt-5.5"] as const;
+export type TryModel = (typeof TRY_MODELS)[number];
+
+export function isTryModel(value: unknown): value is TryModel {
+  return typeof value === "string" && (TRY_MODELS as readonly string[]).includes(value);
+}
+
+/**
  * One reply to one case, and what was wrong with it. `hard` is the part of `problems` that code decided, not a model's
  * reading: the message rules, a reply that hands their words back, a fact left out, the pressure and bragging words
  * src/lib/replyTone.ts looks for, a question after a no. Plan step 3: these can block a lesson outright.
@@ -458,7 +470,7 @@ export async function runReplyEval(
   draft: Drafter = draftDm,
   grade: Grader = gradeReply,
   cases = REPLY_CASES,
-  options: { retry?: RateLimitRetryOptions; lessons?: Lessons } = {}
+  options: { retry?: RateLimitRetryOptions; lessons?: Lessons; writeWith?: TryModel } = {}
 ): Promise<ReplyEvalResult> {
   const result: ReplyEvalResult = {
     cases: cases.length,
@@ -468,7 +480,8 @@ export async function runReplyEval(
     failures: [],
   };
   // Logged as "test:…" in the decision log, apart from real customers' replies.
-  await withAiContext({ tag: "test" }, () => mapWithConcurrency(cases, REPLY_EVAL_CONCURRENCY, async (c) => {
+  const context = options.writeWith ? { tag: "test", writeWith: options.writeWith } : { tag: "test" };
+  await withAiContext(context, () => mapWithConcurrency(cases, REPLY_EVAL_CONCURRENCY, async (c) => {
     try {
       const { reply, problems, detail } = await tryCase(c, draft, grade, options.lessons ?? NO_LESSONS, options.retry);
       for (const p of problems) result.problems[p] += 1;

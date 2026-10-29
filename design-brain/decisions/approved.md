@@ -6188,6 +6188,8 @@ changed the drawing), on PR #614's branch in place of A-336:
   inside the first screen (checked at 390×844).
 - Removed with it: `DidRows.tsx`, `Ago.tsx` (the ticking ago), the "FollowUp is on it" rows and green dot, Tomorrow /
   Calls this week rows, the week's results line on Today, and the rescue-report query Today no longer needs.
+**LIVE 2026-10-29** (PR #614 → 07a2352, merged at the founder's "merge"; no migration). On the phone it was then
+rejected as "like I just opened an article" ([[rejected#^R-146|R-146]]); the computer layout stands.
 
 ## A-338 — Today made clearer: what they want, where they wrote, Instagram's deadline, one instruction ^A-338
 
@@ -6215,4 +6217,5 @@ numbers (20 h, 24 h, Instagram and Messenger only); whole hours rounded down, "U
 The heading line becomes "FollowUp wrote them. An admin on your team sends them." for someone who can't send. Checked
 in the real app on phone and computer, light and dark, including a local test customer set to an Instagram message
 from 21 hours ago (it moved to the top with "2 h left to reply"; the data was put back).
+**LIVE 2026-10-29** (PR #614 → 07a2352, with A-337; no migration).
 

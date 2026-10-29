@@ -74,12 +74,24 @@ a booked call or visit; the owner closes.
 
 **Last updated: 2026-10-29**
 
-- **Today made clearer (A-338) BUILT (Oct 29)** on PR #614 with A-337, after the founder's "yes build all four": what
+- **Improving the AI first, design after (Oct 29).** The founder: "lets improve the model then we will go with the
+  design and stuff". Live numbers that day (read-only, last 30 days): every AI job runs on OPENAI_MODEL =
+  gpt-5.4-mini, 180 calls, 0 failures; 18 replies drafted, 5 sent (3 as written, 2 changed), 0 answered yet; 56
+  drafts unsent, 40 of them older than 30 days (owners not opening, not bad replies). The /admin accuracy tests were
+  last run Oct 14 (replies 10/20). Built on this branch: the reply test can write with a bigger model side by side
+  (two rows on /admin → Accuracy tests, GPT-5.4 and GPT-5.5; only the writing jobs switch, the grader stays, no
+  quiet fallback), and prices for the 5.4/5.5 models so the decision log stops showing $0. Waiting on the founder:
+  run all the tests (and the two new rows once live), screenshot every score with "See what went wrong" open. Then:
+  fix every miss, and pick the model from the side-by-side scores and cost.
+- **Phone Today paused (Oct 29).** After R-146/R-147/R-148 and the research, a tappable demo of the phone Today
+  (private page, example customers) was shown; the founder: "just leave it i will figure out later". Not approved,
+  not rejected.
+- **Today made clearer (A-338) LIVE (Oct 29, PR #614 → 07a2352)** with A-337, after the founder's "yes build all four": what
   each customer wants in words ("Wants to book", "Asked the price"), the app they wrote from as a small mark on their
   face, Instagram/Messenger's "3 h left to reply" only near the end of the 24 hours, one instruction under the heading
   ("Read each one, then press Send.") and "Also needs you" over the owner's other tasks. Checked on phone and computer,
   light and dark; 5,115 tests pass. PR #614 waits for CI and the founder's "merge".
-- **Today from the research (A-337) BUILT (Oct 29)** on PR #614's branch, replacing A-336 there: the owner's part
+- **Today from the research (A-337) LIVE (Oct 29, PR #614 → 07a2352)**, built replacing A-336 there: the owner's part
   first and loud ("16 replies need your OK", the open reply raised, plain rows with "since", "Your calls today"),
   FollowUp's part as one quiet panel (its sentence, what it did with the words and times, Coming up, "Checked … at").
   Checked on phone and computer, light and dark, and clicked through. PR #614 waits for CI and the founder's "merge".

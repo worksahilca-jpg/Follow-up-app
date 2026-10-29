@@ -94,6 +94,25 @@ describe("every AI call gets a row", () => {
     expect(sink.call.mock.calls[0][0]).toMatchObject({ ok: false, errorStatus: 429, modelUsed: null, responseId: null });
   });
 
+  it("writes with the model a reply test is trying, and only the writing jobs: the grader keeps the usual one", async () => {
+    await withAiContext({ tag: "test", writeWith: "gpt-5.5" }, async () => {
+      await ask("draft_reply");
+      await ask("draft_first_reply");
+      await ask("grade_reply");
+    });
+    expect(create.mock.calls.map((call) => call[0].model)).toEqual(["gpt-5.5", "gpt-5.5", "gpt-4o-mini"]);
+    expect(sink.call.mock.calls.map((call) => call[0].modelRequested)).toEqual(["gpt-5.5", "gpt-5.5", "gpt-4o-mini"]);
+    await ask("draft_reply");
+    expect(create.mock.calls[3][0].model).toBe("gpt-4o-mini");
+  });
+
+  it("never quietly falls back while a model is being tried: the test must not score the old model under the new name", async () => {
+    create.mockRejectedValueOnce(Object.assign(new Error("unknown model"), { status: 404 }));
+    await expect(withAiContext({ tag: "test", writeWith: "gpt-5.5" }, () => ask("draft_reply"))).rejects.toThrow("unknown model");
+    expect(create).toHaveBeenCalledTimes(1);
+    expect(sink.call.mock.calls[0][0]).toMatchObject({ modelRequested: "gpt-5.5", ok: false, fellBack: false });
+  });
+
   it("logs a call the known-good model answered after the chosen one refused it as one row, fallen back", async () => {
     create.mockRejectedValueOnce(Object.assign(new Error("unknown model"), { status: 404 })).mockResolvedValueOnce(answer);
     await getClient("draft_reply").chat.completions.create({ model: "gpt-9-imaginary", messages: [] });
@@ -153,7 +172,9 @@ describe("estimateCostMicros", () => {
     expect(estimateCostMicros("gpt-4o-mini", 1_000_000, 0)).toBe(150_000);
     expect(estimateCostMicros("gpt-4o-mini-2024-07-18", 0, 1_000_000)).toBe(600_000);
     expect(estimateCostMicros("gpt-4o-2024-08-06", 1_000_000, 0)).toBe(2_500_000);
-    expect(estimateCostMicros("gpt-5.4-mini", 1000, 1000)).toBeNull();
+    expect(estimateCostMicros("gpt-5.4-mini-2026-03-17", 1_000_000, 0)).toBe(750_000);
+    expect(estimateCostMicros("gpt-5.5", 0, 1_000_000)).toBe(30_000_000);
+    expect(estimateCostMicros("gpt-9-imaginary", 1000, 1000)).toBeNull();
     expect(estimateCostMicros("gpt-4o-mini", null, 10)).toBeNull();
   });
 });

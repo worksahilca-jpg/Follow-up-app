@@ -21,6 +21,7 @@ vi.mock("@/lib/replyEval", () => ({
   gradeReply: vi.fn(),
   REPLY_CASES: [],
   REPLY_EVAL_TRADE: "Real estate",
+  isTryModel: (v: unknown) => v === "gpt-5.4" || v === "gpt-5.5",
   tradeLessons: vi.fn(async () => ({ examples: [], rules: [] })),
 }));
 vi.mock("@/lib/dmDrafting", () => ({ draftDm: vi.fn() }));
@@ -62,5 +63,40 @@ describe.each(routes)("/api/admin/$name", ({ load, run }) => {
     expect((await route.POST(post("cross-site"))).status).toBe(403);
     expect((await route.GET()).status).toBe(405);
     expect(run).not.toHaveBeenCalled();
+  });
+});
+
+describe("/api/admin/reply-eval with a bigger model", () => {
+  const ask = (body: unknown) =>
+    new NextRequest("https://app.example.com/api/admin/reply-eval", {
+      method: "POST",
+      headers: { "sec-fetch-site": "same-origin", "content-type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+  beforeEach(() => {
+    vi.stubEnv("PLATFORM_ADMIN_EMAILS", "founder@example.com");
+    vi.stubEnv("OPENAI_API_KEY", "sk-test");
+    vi.resetModules();
+    getServerSession.mockResolvedValue(ADMIN);
+    runReplyEval.mockClear();
+  });
+
+  it("writes the replies with the model asked for, when it's one the test can try", async () => {
+    const { POST } = await import("@/app/api/admin/reply-eval/route");
+    expect((await POST(ask({ model: "gpt-5.5" }))).status).toBe(200);
+    expect(runReplyEval).toHaveBeenCalledWith(expect.anything(), expect.anything(), [], expect.objectContaining({ writeWith: "gpt-5.5" }));
+  });
+
+  it("refuses any other model, and runs nothing", async () => {
+    const { POST } = await import("@/app/api/admin/reply-eval/route");
+    expect((await POST(ask({ model: "o9-ultra" }))).status).toBe(400);
+    expect(runReplyEval).not.toHaveBeenCalled();
+  });
+
+  it("uses the usual model when no body is sent", async () => {
+    const { POST } = await import("@/app/api/admin/reply-eval/route");
+    await POST(post("same-origin"));
+    expect((runReplyEval.mock.calls[0] as unknown[])[3]).not.toHaveProperty("writeWith");
   });
 });

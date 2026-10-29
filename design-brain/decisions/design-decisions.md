@@ -16273,3 +16273,94 @@ real customers. (b) The channel badge is small (16px, glyph under 10px): clear o
 a second cue, the row's words still carry the meaning. (c) The deadline counts whole hours down, so "2 h left" can mean
 2 h 59 min; rounding up would promise time that isn't there. (d) "Also needs you" is a small uppercase label, the same
 style as the panel's labels, so it reads as a group title and not as a heading competing with the page's own.
+
+## 2026-10-29 — The live Today on the phone rejected (R-146); the computer still to be checked
+
+**Founder**, on his phone minutes after PR #614 went live: *"Bro, on phone, it looks very bad. We can't just open the
+whole chat in front of them rather than just giving them any of the context. It feels like I just opened an article,
+bro, and it's too boring. I won't be working like that, so we got to change everything for phone now. Let me just
+check for computer."* Recorded as [[rejected#^R-146|R-146]]. Read honestly: the phone was never designed on its own;
+A-337 put the computer's two columns into one, so the phone opens on a full drafted reply and scrolls like a page of
+text. The drawings were checked for fit (Send inside the first screen, no sideways scroll, no text under 12px), not
+for how it feels to work from on a phone, which is the test that mattered. Next: the founder's computer verdict, then
+the phone's first screen designed with him item by item (R-145), starting from what "context" means to him. Nothing
+drawn or built yet.
+
+
+## 2026-10-29 — Phone Today pointed at the task (drawn)
+
+After R-146 and the "newspaper" principle, proposed in chat and answered *"Show me."*: the phone's Today in three
+moments, drawn on the real app at 390×844 with test customers, dark and light (scratchpad
+`today/phone/phone-today-{dark,light}.png`):
+1. **Open the app:** "16 need you", then one row per person: face with the app's mark, name, a few words of what they
+   want ("Asked the price", "Your call · note ready"), the time or "2 h left" in ink; five rows, "11 more", then one
+   quiet line, "FollowUp answered 5 people today ›". No message text on this screen.
+2. **Tap a person:** only that task, full screen: who and where at the top ("Instagram · 2 h left to reply"), their
+   message as their bubble and FollowUp's reply as a dashed, unsent bubble just above a full-width "Send to Mason",
+   with Change it / Not now under it. "1 of 16" in the bar.
+3. **Send:** back to the list, the row gone, "15 need you", a "Sent to Mason · Undo" bar above the tabs.
+Self-review, honestly: FollowUp's work is down to one line, which leans against the brand principle that Today shows
+FollowUp working (R-144); the line is tappable, so the proof is one tap away, but this is the founder's call. The task
+screen leaves the middle empty on purpose (the conversation sits by Send, as chat apps do); on a long thread it fills.
+The reply bubble's dashed edge as "not sent yet" is new and unproven. Computer Today not redrawn. Waiting for the
+founder's reaction; nothing built.
+**Rejected on sight the same day** ([[rejected#^R-147|R-147]]): *"We don't have to make it like a messenger, bro."* The
+drawing took the founder's Instagram/WhatsApp example as a look instead of a principle. Lesson for the next drawing:
+keep "straight to the task" and lose the chat shapes.
+
+## 2026-10-29 — Phone Today as a to-do list (drawn)
+
+Proposed after R-147 and answered *"Yes, can you please draw this?"*: each line says what to do, tap opens one clean
+task card. Drawn on the real app at 390×844 with test customers, dark and light (scratchpad
+`today/todo/phone-todo-{dark,light}.png`):
+1. **Open the app:** "16 things to do", then one line per task, verb first: "Reply to Mason", "Call Ava", "Confirm
+   Ethan's showing", "Send Mia the price", "Reply to Zoe". A small outline icon for the kind of task (reply, call,
+   calendar, price tag), not a face. Under each, a faint few words: where (the app's own mark for Instagram, "Email")
+   and what about ("about Elm St", "Note ready"). The time on the right, or "2 h left" in ink when it's near. Then
+   "11 more" and one quiet line, "FollowUp answered 5 people today ›".
+2. **Tap a task:** a full screen with the task as its title ("Reply to Mason", "Instagram · 2 h left to reply"), one
+   plain card with "He asked" and his words, a hairline, "FollowUp's reply" and the reply; no bubbles. A full-width
+   "Send to Mason" at the bottom, Change it / Not now under it.
+3. **Send:** back to the list, the task gone, "15 things to do", "Sent to Mason · Undo".
+Self-review: the verbs depend on FollowUp knowing what each person wants; when it doesn't, the line falls back to
+"Reply to {name}", which is honest but plainer. FollowUp's own work is still one line (R-144 tension, named to the
+founder earlier). The task screen's middle is empty on a short exchange. Waiting for the founder's reaction; nothing
+built.
+
+## 2026-10-29 — Research after R-148: is the phone the priority, and what makes it feel like an app
+
+The founder asked for research after rejecting the to-do drawing ([[rejected#^R-148|R-148]]). Report:
+`reports/Interactive phone app for FollowUp.md` (repo root; notes in `research_notes/Interactive phone app for
+FollowUp/`). Most outside pages were blocked to this session, so habits and competitor findings come from search
+summaries; Apple and Android platform facts were read directly.
+- **The phone stays.** It's for the moment a customer writes: the buzz, who and why, OK the reply, Send, the day's few
+  calls. Setup, teaching FollowUp, Results and long emails stay on the computer. Reasoned, not measured: no one
+  publishes which device follow-up happens on. FollowUp's own numbers: 306 replies waited and 13 were sent in the 30
+  days before Oct 10; 2 of 11 accounts had phone alerts on as of Oct 29 (read-only count).
+- **Why it feels like an article:** too many words stacked on a phone, and nothing on the screen answers the thumb.
+- **Nine ranked moves**, led by: Send turns into "Sending… Undo", then "Sent to Priya", the card folds away and the
+  next person rises; the buzz opens that exact customer ready to send; a row opens where it sits and folds back.
+- **Not possible on iPhone as a Home Screen app:** vibration (narrowed in iOS 26.5), buttons inside notifications,
+  widgets. None is needed for the core loop; a Send inside a notification is ruled out anyway. A-265 (web only)
+  stands.
+Next: a tappable demo on the phone, not still pictures, then the founder's call on each move.
+
+## 2026-10-29 — Phone Today as a tappable demo (shown, not built)
+
+After the research the founder said "yes please" to a demo he can tap on his own phone. Made as a private page with
+example customers (no real data), not in the app. What it does:
+- Today: the date, "N things need you" (the number rolls when it changes), one line "You and FollowUp answered N
+  people today", then one row per task (the app's mark, the task as a verb, a few words, the time or "2 h left").
+- Tap a row: it opens where it sits (their words, FollowUp's reply, "Send to Mason", Change it / Not now); the other
+  rows dim.
+- Send: "Sending to Mason… Undo" fills for 3.5 s, then "Sent to Mason", the row folds away, the count drops, the
+  answered line goes up, and the next reply opens by itself. Not now says when it comes back, with Undo.
+- Call Ava: "Calling Ava…", then "How did the call go?" with chips, then one line and the row folds.
+- A new customer slides in after a few seconds without moving the open row; "Try the buzz" drops a notification
+  that opens that customer ready to send.
+Self-review: the open row still carries two blocks of text (their words and the reply), so the "article" risk is
+smaller but not gone. Change it is a plain text box. The answered line is a number, not a list. Waiting for the
+founder's reaction; nothing built in the app.
+**Paused by the founder (same day):** "okay just leave it i will figure out later lets improve the model then we will
+go with the design and stuff". Not approved and not rejected: the phone Today and the priority list wait. The demo page
+stays up as a private page. Next work is the AI's replies (the "model"), then design again.

@@ -83,6 +83,17 @@ a booked call or visit; the owner closes.
   quiet fallback), and prices for the 5.4/5.5 models so the decision log stops showing $0. Waiting on the founder:
   run all the tests (and the two new rows once live), screenshot every score with "See what went wrong" open. Then:
   fix every miss, and pick the model from the side-by-side scores and cost.
+  **The founder's run, Oct 29 (gpt-5.4-mini):** emails 122/122; chat customer check 43/44 (0 customers lost; the
+  "😍 / Isme bee bhi dal" friend joke let through, left as is: tightening risks losing real customers, and the check
+  fails open on purpose); qualifying 717/720, 0 made up; replies 16/20 (was 10/20 Oct 14). Fixed on the same PR:
+  a question about the owner's years ("How long have you been a realtor?") put off with "I'll confirm that" now gets
+  one retry asking for the answer blank and is held if it still dodges (`putsOffOwnExperience`); "X is clear." added
+  to the verdicts the DM writer must not use; the qualifying reader told never to add a word to a quote, that
+  selling-to-buy is the why, and that a viewing proposed in any language counts. Two reply misses were the grader's,
+  not the AI's: "3 beds near a good school around 1.3" marked invented though the customer wrote it (now a code
+  guard, `theirOwnWords`), and "Losing 3 offers in a row is exhausting" marked generic (left; one run). Known cause
+  of run-to-run noise: gpt-5.4-mini is a reasoning model, so the `temperature: 0` the reader and grader ask for is
+  dropped (`adaptForModel`) and their answers vary a little between runs.
 - **Phone Today paused (Oct 29).** After R-146/R-147/R-148 and the research, a tappable demo of the phone Today
   (private page, example customers) was shown; the founder: "just leave it i will figure out later". Not approved,
   not rejected.

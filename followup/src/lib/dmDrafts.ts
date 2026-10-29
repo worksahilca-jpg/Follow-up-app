@@ -22,6 +22,7 @@ import type { Message } from "@/lib/types";
 import { linkCovered, scanLinks, ungroundedCalendarWords, ungroundedNumbers, ungroundedSpecifics, unconfirmedClaim, type LinkToken } from "@/lib/grounding";
 import { salesPressure } from "@/lib/replyTone";
 import { DM_MAX_BUTTONS, QUICK_REPLY_TITLE_MAX_CHARS, type DmButton } from "@/lib/quickReplies";
+import { hasPriceSlot } from "@/lib/priceSlot";
 
 export const DM_CHANNELS: ReadonlySet<string> = new Set(["instagram", "messenger"]);
 
@@ -363,6 +364,23 @@ export function checkDmDraftShape(
   if (draft.buttons.length === 1 && !draft.buttons[0].exit) return fail("single_yes_button");
 
   return { ok: true };
+}
+
+/** "How long have you been a realtor?", "how many years have you done this", "years of experience". */
+const OWN_EXPERIENCE_RE = /\bhow (?:long|many years) (?:have|has) (?:you|u)\b|\byears? of experience\b|\bhow experienced\b/i;
+/** A number, as digits or a word, the way an answer to "how long" carries one. */
+const HAS_NUMBER_RE = /\d|\b(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|fifteen|twenty|thirty|decades?)\b/i;
+
+/**
+ * The customer's last message asks how long the owner has done this work, and the draft puts it off ("Thanks for
+ * asking about my realtor experience. I'll confirm that for you", reply test 2026-10-29) instead of answering with
+ * the number the facts give or the answer blank (A-100). An owner's own years are theirs to say, never something to
+ * "confirm". English wording only; any other language passes as before.
+ */
+export function putsOffOwnExperience(conversation: Message[], body: string): boolean {
+  const last = [...conversation].reverse().find((m) => m.direction === "inbound");
+  if (!last || !OWN_EXPERIENCE_RE.test(last.body)) return false;
+  return !hasPriceSlot(body) && !HAS_NUMBER_RE.test(body);
 }
 
 /** The whole thread as one string, for the digits rule above. */

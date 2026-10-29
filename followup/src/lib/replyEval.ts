@@ -239,6 +239,19 @@ function toConversation(lines: ReplyCase["lines"]): Message[] {
   }));
 }
 
+/**
+ * The grader's "invented" detail, when every word and number in it is already in the conversation or the business
+ * facts: the reply repeated what was written, which the checklist says is never invented. The run of 2026-10-29
+ * marked "3 beds near a good school around 1.3" invented for a customer who wrote exactly that. A detail with one
+ * word or number nobody wrote (another place, another figure) still counts.
+ */
+export function theirOwnWords(detail: string, c: Pick<ReplyCase, "lines" | "facts">): boolean {
+  const words = (t: string) => t.toLowerCase().match(/[\p{L}\p{N}]+(?:[.,][\p{N}]+)*/gu) ?? [];
+  const said = new Set(words([...c.lines.map(([, text]) => text), ...(c.facts ?? []).map((f) => f.value)].join(" ")));
+  const claimed = words(detail);
+  return claimed.length > 0 && claimed.every((w) => said.has(w));
+}
+
 /** "Noted.", "Got it," as the reply's opening word: their words handed back as a verdict (A-231). */
 const ECHO_RE = /^(?:noted|got it)\b[.!,]?/i;
 
@@ -424,7 +437,7 @@ async function tryCase(
     problems.push("unanswered");
     details.push(`not answered: ${missed.join("; ")}`);
   }
-  if (g.invented) {
+  if (g.invented && !theirOwnWords(g.inventedWhat, c)) {
     problems.push("invented");
     details.push(`invented: ${g.inventedWhat}`);
   }

@@ -1638,7 +1638,8 @@ export async function generateFollowUpMessage(
       "You are the owner, writing in the first person: never describe yourself or your role (\"I'm with the " +
       "realtor side\", \"I'm the assistant\", \"our team here\"). " +
       "Sound like the owner typing on their phone to someone they want to help: warm, plain, natural. Never hand " +
-      "their own words back as a one-line verdict (\"Etobicoke works.\", \"Noted.\", \"Got it, 3 bedrooms.\"). " +
+      "their own words back as a one-line verdict (\"Etobicoke works.\", \"Noted.\", \"Got it, 3 bedrooms.\", " +
+      "\"A 3 bed in Brampton is clear.\"). " +
       "Complete sentences, proper capitalization, no sentence fragments, no trailing off mid-thought. "
     : "You draft a follow-up email — a subject line and the body paragraph. You represent the business " +
       "that was CONTACTED — the person in this conversation reached out about the business's services. You " +
@@ -2633,6 +2634,10 @@ export async function extractQualificationFacts(
           "copied character for character from one inbound line, in the language they wrote in, never " +
           "translated, shortened inside or reworded; a short phrase is enough. Keep their own spelling and " +
           "contractions exactly: if they wrote 'would like', the quote says 'would like', never 'we'd like'. " +
+          // The accuracy test, 2026-10-29: "...pre-approved up to $650k and want a 3-bed townhouse in the east end"
+          // came back quoted as "we want a 3-bed townhouse...", and the area was lost.
+          "Never add a word they didn't write at the start or the end, not even 'we' or 'I': when the words you need " +
+          "begin partway through their sentence, begin the quote there. " +
           "A quote that is not word for word in their message is thrown away, and the item is lost. bucket: for " +
           "an item that lists buckets, exactly one of them when known; for every other item, empty." +
           UNTRUSTED_CONVERSATION_NOTICE,

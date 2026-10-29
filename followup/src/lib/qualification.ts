@@ -220,7 +220,8 @@ const REALTOR: Criterion[] = [
     key: "viewing",
     label: "Viewing",
     find:
-      "a specific day or time they agreed to, or proposed, for seeing a property. Known only when THEY said yes to a time or named one; an offer of times that they have not answered is not a viewing",
+      // The accuracy test, 2026-10-29: a Spanish "¿Podemos verlo el sábado...?" came back not known.
+      "a specific day or time they agreed to, or proposed, for seeing a property, in any language; asking to see it on a named day or at a named time proposes one. Known only when THEY said yes to a time or named one; an offer of times that they have not answered is not a viewing",
     // "Weekday or weekend?" is still picking for them, and it is the exact
     // question a real lead answered with "What do you mean" (2026-09-20).
     ask: "whether they would like to see the home or have a quick call about it, as an open question; never suggest a day, a time, or weekday versus weekend yourself",
@@ -234,7 +235,8 @@ const REALTOR: Criterion[] = [
   {
     key: "why",
     label: "Why",
-    find: "why they are selling: moving for work or family, downsizing, buying another home, a change in their life",
+    // The accuracy test, 2026-10-29: "We need to sell our condo ... before we can buy a house" came back not known.
+    find: "why they are selling: moving for work or family, downsizing, buying another home (having to sell first so they can buy counts), a change in their life",
     ask: "the reason for the move",
   },
   {

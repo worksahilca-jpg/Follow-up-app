@@ -197,7 +197,8 @@ export const CHAT_CASES: ChatCase[] = [
     channel: "instagram",
     lines: [wrote("Hey Sam! Saw you liked the Port Credit condo post. Looking for yourself?", 0), said("just browsing for now", 0)],
     next: reply,
-    expect: "Treats browsing as completely fine, offers something small and useful with no commitment, and asks at most one easy question.",
+    // The playbook keeps a browser talking with one easy question; offering something is optional.
+    expect: "Treats browsing as completely fine, asks for no commitment, and asks at most one easy question.",
   },
   {
     name: "\"We already have an agent\"",
@@ -215,7 +216,8 @@ export const CHAT_CASES: ChatCase[] = [
     lines: [said("I have an agent but honestly she never answers me", 0)],
     next: reply,
     // A-246: someone who already has an agent gets a kind close, and FollowUp stops; it never courts another agent's client.
-    expect: "Says nothing bad about the other agent, does not ask them to switch, and stays kind.",
+    expect: "Says nothing bad about the other agent, does not ask them to switch, offers no help, and stays kind.",
+    closing: true,
   },
   {
     name: "\"Not ready, maybe next year\"",
@@ -596,7 +598,8 @@ export const gradeChat: ChatGrader = async (c, message) => {
           "set up the showing if it's still on your list') asks nothing. askedAgainWhat: what it asked again, or empty. " +
           "askedAgainQuote: the customer's own words, copied exactly from one of their messages, that already answer " +
           "it; empty when askedAgain is false.\n" +
-          "repeated: true when it repeats the wording, the question or the angle of an earlier BUSINESS message. Doing " +
+          "repeated: true when it repeats the wording, the question or the angle of an earlier BUSINESS message. A new " +
+          "question they haven't answered is not this, even on the same subject. Doing " +
           "what WHAT THIS MESSAGE MUST DO asks for is never this.\n" +
           "emptyNudge: for a follow-up, true when it gives no reason to read it: 'just checking in', 'any update?', " +
           "'did you see my message', or nothing new or useful. Always false for a reply to their newest message.\n" +

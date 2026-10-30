@@ -1715,7 +1715,10 @@ export async function generateFollowUpMessage(
           // this the draft said "I'll confirm the price" and the owner
           // rewrote the whole sentence. The blank cannot leave unfilled:
           // assessSendRisk holds it and sendFollowUpToLead refuses it.
-          `The one exception is a price. If their most recent message asks what something costs and neither the ` +
+          // Conversation test 2026-10-30 (fourth run): "what did the one on Pine St sell for?" got "sold for [PRICE]".
+          // A sold price is not this business's to fill in; it says it will check, like any other unknown.
+          `The one exception is a price. If their most recent message asks what something costs now (never what a ` +
+          `home sold for or what someone else paid: for that, say you will check) and neither the ` +
           `conversation nor WHAT THIS BUSINESS HAS TOLD CUSTOMERS (below, when there is one) states the figure, write the sentence that answers it with the exact placeholder ` +
           `${PRICE_SLOT} where the amount goes — for example "The 3-month package is ${PRICE_SLOT}." — so the owner ` +
           `can fill in the real figure. Use ${PRICE_SLOT} once, keep it exactly as written, in capitals and square ` +

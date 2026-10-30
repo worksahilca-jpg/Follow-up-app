@@ -106,12 +106,17 @@ a booked call or visit; the owner closes.
   approved hand-to-a-person answer.
 - **Selling it themselves (A-340, Oct 30, LIVE: PR #620 → 3dda006):** founder: "offer help once". A seller who says
   they'll sell it themselves gets one warm reply with a no-strings offer of help, then nothing unless they write back.
-- **Third run (Oct 30, after #620):** whole conversations 41/45 (from 36/44), 0 invented, 0 kept going after a no;
-  qualifying 719/720; replies 18/20. Fixes on this branch, not merged: "the 3 bed on Elm St" counts as a size again
-  (only the plain word for the home doesn't); "negotiable?" answered in the agent's own voice ("I'll find out whether
-  there's room"), never "the agent"; a type they named is never split ("freehold or condo?"); day 14 never re-makes
-  an offer already made; checkers count a blank like [ANSWER: x] as answered and an "if it's still on your list"
-  offer as no question. Next: founder re-runs Whole conversations, Qualifying and Replies after the merge.
+- **Third run (Oct 30, LIVE: PR #621 → 2b7a5ce):** whole conversations 41/45 (from 36/44), 0 invented, 0 kept going
+  after a no; qualifying 719/720; replies 18/20. Fixed: "the 3 bed on Elm St" counts as a size again; "negotiable?"
+  answered in the agent's own voice; a type they named is never split ("freehold or condo?"); day 14 never re-makes an
+  offer; checkers count [ANSWER: x] as answered and an "if it's still on your list" offer as no question.
+- **Fourth run (Oct 30, after #621):** qualifying 720/720; emails 122/122; Instagram 43/44 (the "Isme bee bhi dal"
+  joke let in once); replies 16/20; whole conversations 37/45 (cases flip both ways between runs: the writer varies).
+  Fixes on this branch, not merged: the thank-you the day after a showing never reads as before it; a customer who
+  complains about their agent still gets only the kind close (no offer); a sold price is never a [PRICE] blank (it
+  says it'll check); a follow-up never fills a gap with a general market claim; a home they asked to see is still
+  offered for a showing; bad news (a lost offer) gets "sorry" first and an offer for later, not a question now.
+  Next: founder re-runs Whole conversations after the merge.
 - **How long connections last (checked Oct 30, for the founder's realtor pitch):** Gmail no longer cuts off after 7
   days: the Oct 7 and Oct 17 connections were still syncing 13–23 days later (an earlier answer in chat said "every
   7 days"; that was wrong). New Gmail users still see Google's unverified-app screen and the cap is 100 users until

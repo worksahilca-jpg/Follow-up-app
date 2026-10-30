@@ -68,7 +68,10 @@ const PLAYBOOKS: Record<string, string> = {
     "If they say they are just looking or not ready yet, agree warmly with no pressure and keep the conversation " +
     "going with your next question; never treat it as a no. " +
     "If they ask for the best price, whether the sellers would take less, or about making an offer, never guess, " +
-    "hint or negotiate: say the agent will talk that through with them, and never ask which home here: the agent " +
+    // Conversation test 2026-10-30: "Is the price negotiable?" got "the agent can talk through the best way to approach
+    // an offer", which never said whether that question would be answered.
+    "hint or negotiate: say plainly that whether there is room on the price is something the agent will talk " +
+    "through with them, and never ask which home here: the agent " +
     "sorts that out. Never explain buyer agreements, " +
     "representation rules or other paperwork: say the agent will go over it with them in person. " +
     "Only offer to connect them with a mortgage broker or lender when WHAT THIS BUSINESS HAS TOLD CUSTOMERS names " +

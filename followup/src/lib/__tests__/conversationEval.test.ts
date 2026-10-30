@@ -157,6 +157,18 @@ describe("a written message", () => {
     expect((email as unknown as { mock: { calls: { known?: unknown }[][] } }).mock.calls[0][0].known).toBe(told);
   });
 
+  it("shows and grades a DM with its tap buttons, as the customer sees it", async () => {
+    const dm = vi.fn(async () => ({
+      body: "Great, Oakville 3-beds under 1.4. What's easier next?",
+      quickReplies: { question: "reply", buttons: [{ title: "Send listings", exit: false }, { title: "Quick call", exit: false }] },
+      shapeFailed: null,
+    })) as unknown as ChatDeps["dm"];
+    const grade = grades();
+    const r = await run([dmReply], { dm, grade });
+    expect(r.chats[0].next).toBe("Great, Oakville 3-beds under 1.4. What's easier next?\n[Buttons: Send listings | Quick call]");
+    expect((grade as unknown as { mock: { calls: unknown[][] } }).mock.calls[0][1]).toContain("[Buttons: Send listings | Quick call]");
+  });
+
   it("catches an empty follow-up by its words, even when the reader missed it", async () => {
     const r = await run([emailFollowUp], { email: emailSays("Just checking in on your search!"), grade: grades() });
     expect(r.chats[0].problems).toContain("empty_nudge");

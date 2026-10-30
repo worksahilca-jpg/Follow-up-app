@@ -95,7 +95,7 @@ export const CHAT_CASES: ChatCase[] = [
     next: followup(0, "open", 1),
     asks: ["whether there are townhouses with a yard"],
     told: ["they want a townhouse", "in Milton", "under 900k", "with a yard"],
-    expect: "Claims no specific townhouse is available, and does not ask again for the area, the budget, the type of home or the yard.",
+    expect: "Never says that a particular townhouse is available, and does not ask again for the area, the budget, the type of home or the yard.",
   },
   {
     name: "Day 3 on Instagram with nothing new to share",
@@ -214,7 +214,8 @@ export const CHAT_CASES: ChatCase[] = [
     channel: "instagram",
     lines: [said("I have an agent but honestly she never answers me", 0)],
     next: reply,
-    expect: "Says nothing bad about the other agent and does not ask them to switch; stays kind and offers help carefully.",
+    // A-246: someone who already has an agent gets a kind close, and FollowUp stops; it never courts another agent's client.
+    expect: "Says nothing bad about the other agent, does not ask them to switch, and stays kind.",
   },
   {
     name: "\"Not ready, maybe next year\"",
@@ -230,7 +231,7 @@ export const CHAT_CASES: ChatCase[] = [
     channel: "instagram",
     lines: [wrote("Are you looking to buy soon?", 1), said("We're about 6 months away", 0)],
     next: reply,
-    expect: "Asks one easy question that makes six months clearer (moved in by then, or starting to look), and pushes no meeting.",
+    expect: "Treats six months as completely fine, pushes no meeting, and asks at most one easy question.",
   },
   {
     name: "Asking price, and FollowUp knows it",
@@ -267,7 +268,7 @@ export const CHAT_CASES: ChatCase[] = [
     lines: [said("what did the one on Pine St sell for?", 0)],
     next: reply,
     asks: ["what the home on Pine St sold for"],
-    expect: "States no sold price or figure, and says the exact number will come from the agent.",
+    expect: "States no sold price or figure, and says it will be checked (the agent writing \"I'll check\" counts).",
   },
   {
     name: "\"Is it still available?\" and FollowUp doesn't know",
@@ -594,7 +595,8 @@ export const gradeChat: ChatGrader = async (c, message) => {
           "and they left unanswered is 'repeated', not this. askedAgainWhat: what it asked again, or empty. " +
           "askedAgainQuote: the customer's own words, copied exactly from one of their messages, that already answer " +
           "it; empty when askedAgain is false.\n" +
-          "repeated: true when it repeats the wording, the question or the angle of an earlier BUSINESS message.\n" +
+          "repeated: true when it repeats the wording, the question or the angle of an earlier BUSINESS message. Doing " +
+          "what WHAT THIS MESSAGE MUST DO asks for is never this.\n" +
           "emptyNudge: for a follow-up, true when it gives no reason to read it: 'just checking in', 'any update?', " +
           "'did you see my message', or nothing new or useful. Always false for a reply to their newest message.\n" +
           "pushy: true when it pressures them: urgency or scarcity nobody stated, a deadline, a command, a test of how " +
@@ -729,6 +731,8 @@ async function runWritten(c: ChatCase, deps: ChatDeps, lessons: Lessons, retry?:
   // live follow-up since 2026-10-30 (automation.ts, sequences.ts).
   const known = await withRateLimitRetry(() => deps.know(conversation), retry);
   let message: string;
+  // What the customer would see: the message, plus its tap buttons on Instagram and Messenger.
+  let shown = "";
   let shapeFailed: string | null = null;
   if (c.channel === "email") {
     const drafted = await withRateLimitRetry(
@@ -743,8 +747,12 @@ async function runWritten(c: ChatCase, deps: ChatDeps, lessons: Lessons, retry?:
     );
     message = drafted.body.trim();
     shapeFailed = drafted.shapeFailed;
+    // On Instagram and Messenger the reply carries tap buttons; "What's easier?" means something only with them.
+    const buttons = (drafted.quickReplies?.buttons ?? []).map((b) => b.title.trim()).filter(Boolean);
+    if (buttons.length) shown = `${message}\n[Buttons: ${buttons.join(" | ")}]`;
   }
-  const g = await withRateLimitRetry(() => deps.grade(c, message), retry);
+  shown ||= message;
+  const g = await withRateLimitRetry(() => deps.grade(c, shown), retry);
 
   const problems: ChatProblem[] = [];
   const details: string[] = [];
@@ -776,7 +784,7 @@ async function runWritten(c: ChatCase, deps: ChatDeps, lessons: Lessons, retry?:
   if ((c.feeling && !g.acknowledgedFeeling) || g.inventedFeeling) add("feeling", g.inventedFeeling ? "made up a feeling" : "missed the feeling they named");
   if ((!g.usedDetail && !c.noDetail) || g.robotic) add("generic", g.robotic ? "read like a template" : "could go to anyone");
   if (c.expect && !g.metExpectation) add("expectation", `didn't do what this case needs: ${c.expect}`);
-  return { next: message, problems, detail: details.join(" · ") };
+  return { next: shown, problems, detail: details.join(" · ") };
 }
 
 /**

@@ -104,9 +104,14 @@ a booked call or visit; the owner closes.
   it on hold" now stops (checkForStop); qualifying never records "this" as an area, and a seller has no area. The
   conversation checker runs on GPT-5.5 and must quote the customer for "asked again". "Is this a bot?" keeps the
   approved hand-to-a-person answer.
-- **Selling it themselves (A-340, Oct 30, on this branch, not merged):** founder: "offer help once". A seller who says
+- **Selling it themselves (A-340, Oct 30, LIVE: PR #620 → 3dda006):** founder: "offer help once". A seller who says
   they'll sell it themselves gets one warm reply with a no-strings offer of help, then nothing unless they write back.
-  Next: founder re-runs all tests on /admin/tests after the merge.
+- **Third run (Oct 30, after #620):** whole conversations 41/45 (from 36/44), 0 invented, 0 kept going after a no;
+  qualifying 719/720; replies 18/20. Fixes on this branch, not merged: "the 3 bed on Elm St" counts as a size again
+  (only the plain word for the home doesn't); "negotiable?" answered in the agent's own voice ("I'll find out whether
+  there's room"), never "the agent"; a type they named is never split ("freehold or condo?"); day 14 never re-makes
+  an offer already made; checkers count a blank like [ANSWER: x] as answered and an "if it's still on your list"
+  offer as no question. Next: founder re-runs Whole conversations, Qualifying and Replies after the merge.
 - **How long connections last (checked Oct 30, for the founder's realtor pitch):** Gmail no longer cuts off after 7
   days: the Oct 7 and Oct 17 connections were still syncing 13–23 days later (an earlier answer in chat said "every
   7 days"; that was wrong). New Gmail users still see Google's unverified-app screen and the cap is 100 users until

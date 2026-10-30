@@ -16438,3 +16438,21 @@ agent speaking; six months out may ask any one easy question; "my agent never an
 A-246). The checker no longer calls a message "repeated" for doing what the case asks.
 Weak point: the reply test's checker is still the usual model and called two good replies templates.
 
+## 2026-10-30 — Third full run, after A-340 went live
+
+Whole conversations 41/45 (from 36/44), 0 invented, 0 kept going after a no; qualifying 719/720; replies 18/20.
+What was weak, and the fix:
+- "Townhouses in Milton" got "condo townhouses too, or only freehold?". Splitting something they named into kinds is
+  asking again (the follow-up rule and the already-told block now say so, with this example).
+- "Is the price negotiable?" got "something the agent can talk through": the reply named its own writer as someone
+  else, because the playbook line said "the agent". It now answers like any unknown, in the agent's own voice: they'll
+  find out whether there is any room and talk it through.
+- Day 14 re-made the offer the agent made 14 days earlier ("homes like it a little lower"). The "something new" angle
+  now forbids making an offer again.
+- Qualifying: the run-2 fix ("the Pine Ct house" is not a kind) also dropped "the 3 bed on Elm St". The line now drops
+  only the plain word for the home and keeps a size or number of bedrooms.
+Checker fixes (the messages were right): "I can set up the showing if it's still on your list" asks nothing, so it is
+not asking again; a blank like [ANSWER: experience] is the owner's answer to fill (A-100), so it answers the question
+and is not a template. The reply checker stays on the usual model on purpose: it compares GPT-5.5 with the smaller
+models, and the best model should not mark its own work.
+

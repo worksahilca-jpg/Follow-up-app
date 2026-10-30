@@ -592,7 +592,8 @@ export const gradeChat: ChatGrader = async (c, message) => {
           "something they never gave is never this: a price or number they didn't state, an area they didn't name. " +
           "Asking whether it is just this one home or a few in the area is not this when they only asked about one " +
           "home: asking about one home doesn't say they want only that one. A question the business already asked " +
-          "and they left unanswered is 'repeated', not this. askedAgainWhat: what it asked again, or empty. " +
+          "and they left unanswered is 'repeated', not this. Only a question asks again: an offer with an 'if' ('I can " +
+          "set up the showing if it's still on your list') asks nothing. askedAgainWhat: what it asked again, or empty. " +
           "askedAgainQuote: the customer's own words, copied exactly from one of their messages, that already answer " +
           "it; empty when askedAgain is false.\n" +
           "repeated: true when it repeats the wording, the question or the angle of an earlier BUSINESS message. Doing " +

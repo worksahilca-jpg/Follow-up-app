@@ -207,8 +207,10 @@ const REALTOR: Criterion[] = [
     key: "kind",
     label: "Wants",
     find: "the kind of home they want to buy or rent: a type, a size or a number of bedrooms, e.g. '2-bed condo' or 'detached with a yard'. Never the home they are selling. " +
-      // Accuracy test 2026-10-30: "see the Pine Ct house sometime" came back as wanting a house.
-      "Naming the one home they asked about ('the Pine Ct house', 'that condo') is not this: it says which listing, not what they want",
+      // Accuracy test 2026-10-30: "see the Pine Ct house sometime" came back as wanting a house. The third run then
+      // lost "the 3 bed on Elm St" as a size, so the line keeps a size and drops only the plain word for the home.
+      "The plain word for the one home they asked about ('the Pine Ct house', 'that place') is not this: it says which " +
+      "listing, not what they want. A size or number of bedrooms they name for it ('the 3 bed on Elm St') is",
     ask: "what kind of place they are after",
   },
   {
@@ -639,7 +641,7 @@ export function knownPromptBlock(q: Qualification | null, nothingLeft = false): 
   const unanswered = (q.offered ?? []).filter((k) => !knows(q, k)).map(label);
   let block = "";
   if (said.length) {
-    block += `\n\nWHAT THIS CUSTOMER HAS ALREADY TOLD YOU: ${said.join("; ")}. Use it, and never ask about any of it again, in any words.`;
+    block += `\n\nWHAT THIS CUSTOMER HAS ALREADY TOLD YOU: ${said.join("; ")}. Use it, and never ask about any of it again, in any words, not even to narrow it or split it into kinds.`;
   }
   if (unanswered.length) {
     block +=

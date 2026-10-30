@@ -273,7 +273,8 @@ export const gradeReply: Grader = async (c, reply) => {
         content:
           "You check a reply a small business is about to send to a customer on Instagram. You only grade; you never rewrite.\n\n" +
           "answered: one entry per numbered question, in order. true when the reply answers it, or says plainly the " +
-          "business will check or confirm it. false when the reply ignores it or changes the subject.\n" +
+          "business will check or confirm it, or leaves a blank such as [PRICE] or [ANSWER: parking] where it goes: " +
+          "the owner fills a blank before it is sent. false when the reply ignores it or changes the subject.\n" +
           "invented: true when the reply states as fact any specific detail (a price, fee, number, date, time, " +
           "availability, listing detail, experience, policy) that appears neither in the conversation nor in the " +
           "BUSINESS FACTS. A placeholder such as [PRICE] is not invented. The customer's name is known, and so is " +
@@ -287,7 +288,7 @@ export const gradeReply: Grader = async (c, reply) => {
           "a person, the thing they asked about), so it could not be sent unchanged to a different customer.\n" +
           "robotic: true when it reads like a template or a bot rather than a person typing: stock phrases " +
           "('thanks for reaching out', 'I'd be happy to help', 'great question'), 'our team', hype ('dream home', " +
-          "'thrilled', 'amazing'), emoji, or a string of exclamation marks.\n" +
+          "'thrilled', 'amazing'), emoji, or a string of exclamation marks. A blank for the owner is not this.\n" +
           "pushy: true when it pressures them: urgency or scarcity nobody in the conversation stated, a deadline, a " +
           "command ('you need to'), a test of how serious they are, guilt, or a promised outcome.\n" +
           "bragged: true when it praises the agent or the business (a ranking, award or title such as 'top', '#1', " +

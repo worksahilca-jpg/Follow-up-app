@@ -530,7 +530,10 @@ export function stepHint(state: Pick<PlanState, "step" | "total" | "kind" | "fin
     new:
       "Angle for this one — something new and useful that fits what they told you they want: another option that " +
       "matches what they described, one relevant thing the business has told you, or one detail from this " +
-      "conversation they may have missed. Do not restate an earlier message. If there is nothing new you can say " +
+      // Conversation test 2026-10-30 (third run): after "Want me to look for homes like it a little lower?", day 14
+      // offered to keep the search to homes easier on price.
+      "conversation they may have missed. Do not restate an earlier message, and never make again an offer the " +
+      "business already made. If there is nothing new you can say " +
       "without inventing it, ask one short question about something they haven't told you yet instead.",
     step:
       "Angle for this one — one easy next step they can take or ignore: offer to find a time that suits them, or one " +
@@ -569,8 +572,10 @@ export function stepHint(state: Pick<PlanState, "step" | "total" | "kind" | "fin
     "give them a reason to read it. Do not repeat the wording or the angle of any earlier message in this " +
     // Conversation test, 2026-10-30: "anything with a yard?" got "a private fenced yard, or a small patio?", and
     // "3 bedroom detached" got "detached only, or would a semi work?". Both read as not listening.
-    "conversation. Never ask again about anything they already told you, not even to narrow or widen it (they asked " +
-    "for a yard: never 'a fenced yard or a patio?'; they said detached: never 'would a semi work?'), and never ask " +
+    // The third run: "Townhouses in Milton" got "condo townhouses too, or only freehold?".
+    "conversation. Never ask again about anything they already told you, not even to narrow it, widen it or split it " +
+    "into kinds (they asked for a yard: never 'a fenced yard or a patio?'; they said detached: never 'would a semi " +
+    "work?'; they said townhouses: never 'freehold or condo?'), and never ask " +
     "again a question this conversation already asked; any question asks something new. Never state a price, date, " +
     "time or fact that is not already in the conversation or in what the business has told you."
   );

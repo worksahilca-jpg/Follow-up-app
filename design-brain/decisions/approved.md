@@ -3877,6 +3877,8 @@ to:
 2. **New** — wrote in the last 24 hours, longest waiting first among them.
 3. **Older** — waiting more than a day, longest waiting first.
 4. **Going quiet** — check-ins, at the bottom as now.
+- **PARTLY SUPERSEDED (2026-10-30) → [[approved#^A-339|A-339]]:** "Ready to book … always on top" now holds only for
+  a ready customer who wrote in the last 24 hours; a ready customer from earlier sits below the new ones.
 - **Each card says why it's there** ("Wants to book", "Waiting 3 days"), so the order can be trusted.
 - **The principle:** the customer you would lose soonest goes first. A fresh, ready customer cools within hours. Someone
   who wrote two weeks ago won't cool much more by tomorrow.
@@ -6219,3 +6221,22 @@ in the real app on phone and computer, light and dark, including a local test cu
 from 21 hours ago (it moved to the top with "2 h left to reply"; the data was put back).
 **LIVE 2026-10-29** (PR #614 → 07a2352, with A-337; no migration).
 
+## A-339 — Today's order: a hot customer is on top only while they're fresh ^A-339
+
+**Approved:** 2026-10-30, founder. In his Messenger test for Meta's review he wrote to the test Page and the new message
+landed second, under an Instagram customer waiting since Sep 27: *"when I texted … it landed as a secondary message, not
+as a primary message … We have to prioritise everything according to the customer, right?"* Both were "Likely to book",
+so A-230 put them in the same ready tier, longest wait first. He was shown the fix and answered *"Yes, started"*.
+**What specifically was approved:** the ready tier splits by how recent the customer's last message is:
+1. **Ready, and wrote in the last 24 hours** (wants to book, asked the price, or likely to book);
+2. **New**, wrote in the last 24 hours;
+3. **Ready, but a day old or more**;
+4. **Older**;
+5. **Check-ins** on someone quiet.
+Inside each, the longest wait still goes first, which on Instagram and Messenger is the one nearest the 24-hour reply
+limit. The reason words on each row (A-338) don't change. **The principle** (A-230's, applied inside the ready tier):
+a customer who wrote minutes ago is the easiest to win and the one who cools fastest; someone from weeks ago won't
+change much by tomorrow.
+**Built (2026-10-30):** `todayTier()` in `calmToday.ts` returns `"readyOld"` for a ready customer whose last message is
+24 hours old or more (or unknown); `TIER_RANK` is ready 0, new 1, readyOld 2, older 3, checkin 4. Tests in
+`calmToday.test.ts`, including the founder's case (a ready customer from 32 days ago against one from 6 minutes ago).

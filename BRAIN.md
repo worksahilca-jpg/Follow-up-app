@@ -72,9 +72,28 @@ a booked call or visit; the owner closes.
 
 ## Where we are (update at the end of every task)
 
-**Last updated: 2026-10-29**
+**Last updated: 2026-10-30**
 
-- **Replies now written by GPT-5.5 (Oct 29, on this branch, waits for the founder's "merge").** The side-by-side
+- **Meta review, Messenger + Lead Ads (Oct 30): videos A–D recorded and checked, E tomorrow, submit Oct 31.** Six days
+  behind the plan's Oct 25. Set-up done on camera-ready accounts: the review Gmail (FollowUp ADMIN, every reply waits)
+  is connected to the test Page "Maple Key Realty Demo" (Page id 1349812771556495), which now has an Instant Form
+  "Buyer enquiry" (privacy link followupbase.io/privacy). A covers `pages_show_list` + `business_management` (Edit
+  settings on Facebook's screen to show the permission list) and B (`pages_manage_metadata`); C covers `pages_messaging`
+  and Business Asset User Profile Access (the sender's name shows); D covers `leads_retrieval` (Meta's Lead Ads Testing
+  Tool, one lead per form, "Delete lead" before a new one). The two orange checks in that tool ("User has Leads
+  Permission", "Lead Access Manager Enabled") don't block: the practice lead reached FollowUp, and the Page isn't in a
+  business portfolio so Leads Access stays open to admins and connected apps. E (Human Agent) needs the unanswered
+  "Also, does it have parking?" Messenger message from 02:57 UTC Oct 30 to pass 24 hours; a reminder is set. Then the
+  written answers (`followup/research/integrations/2026-10-13-meta-messenger-lead-ads-submission.md` §3) and submit;
+  `pages_read_engagement` shows on the consent list ("Read content posted on the Page"), so its §3 answer goes in too.
+  Meta business verification: still "In review" since Sep 25, deadline Dec 21. Founder uses Claude in Chrome on his Mac
+  now (allowed in incognito).
+- **Today's order fixed (A-339, Oct 30, on this branch):** a hot customer is on top only for 24 hours after they wrote;
+  then they sit below new ones. Plus `qs` 6.16.0 → 6.17.1 (the one moderate production package hole). Status check
+  that night: 0 AI failures and 0 failed sends in 7 days; database tables all closed to the public (Supabase's 55 "RLS
+  enabled, no policy" notices are the intended deny-all); 3 of 5 integrations disconnected (testers' Gmails, Google's
+  7-day test-mode expiry); only 2 businesses got customers in 7 days, 3 new customers. Biggest gap: real use.
+- **Replies now written by GPT-5.5 (Oct 29) LIVE (PR #616 → 7a6b0fe, Oct 30).** The side-by-side
   test (PR #615, live 9b8100e) on the founder's run: gpt-5.4-mini 18/20 (19/20 the run before), gpt-5.4 16/20,
   gpt-5.5 20/20. Cost on that test: about $0.09, $0.31 and $0.86 for ~21 calls, so about 4 cents a reply on 5.5
   (under $1 a month at the 18 drafts of the last 30 days); about 6 s a reply against 1 s. The founder: "I don't want

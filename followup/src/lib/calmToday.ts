@@ -46,16 +46,21 @@ export function byLongestWaiting(a: PendingApproval, b: PendingApproval): number
 }
 
 /**
- * Today's order (A-230, founder 2026-10-11: "Yes, build it"): the customer you would lose soonest on top.
- *  1. ready — they asked for a time or a price, or FollowUp rates them likely to buy (score 70+);
+ * Today's order (A-230, founder 2026-10-11: "Yes, build it"; A-339, 2026-10-30): the customer you would lose
+ * soonest on top.
+ *  1. ready — they asked for a time or a price, or FollowUp rates them likely to buy (score 70+), and wrote in the
+ *     last day;
  *  2. new — wrote in the last day;
- *  3. older — waiting a day or more;
- *  4. checkin — FollowUp's check-in on someone quiet (nobody is waiting on an answer).
- * A fresh, ready customer cools within hours; someone who wrote two weeks ago won't cool much more by tomorrow.
- * Inside each tier the longest wait still goes first, so nobody new waits long either.
+ *  3. readyOld — ready, but their last message is a day old or more;
+ *  4. older — waiting a day or more;
+ *  5. checkin — FollowUp's check-in on someone quiet (nobody is waiting on an answer).
+ * A fresh, ready customer cools within hours; someone who wrote two weeks ago won't cool much more by tomorrow. Until
+ * A-339 a ready customer from weeks ago sat above one who wrote minutes ago (the founder's Messenger test, Oct 29).
+ * Inside each tier the longest wait still goes first, so nobody new waits long either, and on Instagram and Messenger
+ * the one nearest the 24-hour reply limit is on top.
  */
-export type TodayTier = "ready" | "new" | "older" | "checkin";
-const TIER_RANK: Record<TodayTier, number> = { ready: 0, new: 1, older: 2, checkin: 3 };
+export type TodayTier = "ready" | "new" | "readyOld" | "older" | "checkin";
+const TIER_RANK: Record<TodayTier, number> = { ready: 0, new: 1, readyOld: 2, older: 3, checkin: 4 };
 /** A customer is "new" for a day after their last message. */
 export const NEW_FOR_MS = 24 * 60 * 60_000;
 
@@ -72,9 +77,10 @@ export function readyReason(a: Tierable): string | null {
 
 export function todayTier(a: Tierable, now: Date): TodayTier {
   if (!isWaitingOnReply(a)) return "checkin";
-  if (readyReason(a)) return "ready";
   const wrote = since(a);
-  return wrote !== null && now.getTime() - wrote < NEW_FOR_MS ? "new" : "older";
+  const fresh = wrote !== null && now.getTime() - wrote < NEW_FOR_MS;
+  if (readyReason(a)) return fresh ? "ready" : "readyOld";
+  return fresh ? "new" : "older";
 }
 
 /**

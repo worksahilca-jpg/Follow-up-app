@@ -64,7 +64,16 @@ describe("Today's order (A-230): the customer you'd lose soonest on top", () => 
     ).toEqual(["Raj", "Lucia"]);
   });
 
-  it("goes ready, then new (last 24 hours), then older, then check-ins; the longest wait first inside each", () => {
+  it("puts a ready customer who wrote minutes ago above a ready one from weeks ago (A-339)", () => {
+    expect(
+      order([
+        a({ leadName: "InstagramSep27", score: 80, leadLastMessageAt: ago(32 * 24) }),
+        a({ leadName: "MessengerNow", score: 80, leadLastMessageAt: ago(0.1) }),
+      ])
+    ).toEqual(["MessengerNow", "InstagramSep27"]);
+  });
+
+  it("goes ready, then new (last 24 hours), then ready but older, then older, then check-ins; the longest wait first inside each", () => {
     expect(
       order([
         a({ leadName: "CheckIn", trigger: "silence", leadLastMessageAt: ago(300) }),
@@ -75,7 +84,7 @@ describe("Today's order (A-230): the customer you'd lose soonest on top", () => 
         a({ leadName: "New20h", leadLastMessageAt: ago(20) }),
         a({ leadName: "Hot", score: 85, leadLastMessageAt: ago(40) }),
       ])
-    ).toEqual(["Hot", "Price", "New20h", "New1h", "Older9d", "Older2", "CheckIn"]);
+    ).toEqual(["Price", "New20h", "New1h", "Hot", "Older9d", "Older2", "CheckIn"]);
   });
 
   it("says why a ready customer is on top, and nothing for anyone else", () => {
@@ -91,6 +100,12 @@ describe("Today's order (A-230): the customer you'd lose soonest on top", () => 
     expect(todayTier(a({ score: 15, leadLastMessageAt: ago(0.2) }), NOW)).toBe("new");
     expect(todayTier(a({ score: 15, leadLastMessageAt: ago(25) }), NOW)).toBe("older");
     expect(todayTier(a({ score: 15, leadLastMessageAt: null }), NOW)).toBe("older");
+  });
+
+  it("keeps a ready customer ready for a day, then below anyone new", () => {
+    expect(todayTier(a({ riskTopic: "date", leadLastMessageAt: ago(23) }), NOW)).toBe("ready");
+    expect(todayTier(a({ riskTopic: "date", leadLastMessageAt: ago(25) }), NOW)).toBe("readyOld");
+    expect(todayTier(a({ score: 90, leadLastMessageAt: null }), NOW)).toBe("readyOld");
   });
 
   it("orders by the tier the server worked out when the item carries one", () => {

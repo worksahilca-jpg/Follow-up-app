@@ -385,7 +385,7 @@ export const gradeRule: RuleGrader = async (rule, c, reply) => {
 export const REPLY_EVAL_CONCURRENCY = 2;
 
 /**
- * Other models the reply test can write with, side by side with the reply model live replies use (REPLY_MODEL,
+ * Other models the reply test can write with, side by side with the model live replies use (BEST_MODEL,
  * src/lib/integrations/openaiClient.ts). Only the replies are written by it; the grader stays on OPENAI_MODEL so every
  * run is marked alike, and nothing a customer gets changes. GPT-5.5 won the first comparison (2026-10-29) and became
  * the reply model; the smaller two stay here so the choice can be checked again.

@@ -449,8 +449,11 @@ function sortable(c: QualEvalCase): boolean {
   return sortKeys.every((k) => skip.has(k) ? false : !c.expect.known.includes(k) || Boolean(c.expect.buckets?.[k]));
 }
 
-/** Same as the lead check's: up to three cases in flight, one model call each. */
-export const QUAL_EVAL_CONCURRENCY = 3;
+/**
+ * Up to five cases in flight, one model call each, like the lead check's. Three until 2026-10-30, when the checklist
+ * reader moved to GPT-5.5, about five times slower a call: five keeps the 58 chats inside the route's five minutes.
+ */
+export const QUAL_EVAL_CONCURRENCY = 5;
 
 export async function runQualificationEval(
   read: Reader = extractQualificationFacts,

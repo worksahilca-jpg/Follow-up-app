@@ -120,11 +120,19 @@ describe("offering two times", () => {
     expect(updateData().suggestedMessage).toContain(`Saturday at 11 am could work.\n\n${OFFER_TEXT}`);
   });
   it("writes a DM offer in fixed words with the two times as buttons, without the drafter", async () => {
-    setLead({ channel: "instagram", messages: [message("inbound", "could we see it this weekend?", 1)] });
-    await scoreAndDraftForLead("lead1");
-    expect(h.draftDm).not.toHaveBeenCalled();
-    expect(updateData().suggestedMessage).toBe(OFFER_TEXT);
-    expect(updateData().suggestedQuickReplies).toEqual({ question: "offer_times", buttons: [{ title: "Sat 11 am", exit: false }, { title: "Mon 2 pm", exit: false }] });
+    // The buttons say "Tomorrow" the day before: the clock is pinned to the Wednesday before, as below. Unpinned,
+    // this failed every Friday.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-28T14:00:00.000Z"));
+    try {
+      setLead({ channel: "instagram", messages: [message("inbound", "could we see it this weekend?", 1)] });
+      await scoreAndDraftForLead("lead1");
+      expect(h.draftDm).not.toHaveBeenCalled();
+      expect(updateData().suggestedMessage).toBe(OFFER_TEXT);
+      expect(updateData().suggestedQuickReplies).toEqual({ question: "offer_times", buttons: [{ title: "Sat 11 am", exit: false }, { title: "Mon 2 pm", exit: false }] });
+    } finally {
+      vi.useRealTimers();
+    }
   });
   it("falls back to the usual reply when the calendar has nothing free", async () => {
     h.offer.mockResolvedValueOnce(null);

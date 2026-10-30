@@ -228,9 +228,12 @@ function toTranscript(bodies: string[]): Message[] {
  * each case is up to two model calls (classifyWithSecondLook), so six
  * cases was up to twelve requests landing together, and a batch started
  * the moment the slowest of the last one finished. Three, in a rolling
- * pool, still finishes well inside the route's five minutes.
+ * pool, still finished well inside the route's five minutes on gpt-5.4-mini.
+ * Five from 2026-10-30, when every job moved to GPT-5.5 (about five times
+ * slower a call): at three, ~120 cases would run past the five minutes. A
+ * rate limit is still waited out and retried (withRateLimitRetry, below).
  */
-export const EVAL_CONCURRENCY = 3;
+export const EVAL_CONCURRENCY = 5;
 
 export type EvalRunOptions = {
   concurrency?: number;

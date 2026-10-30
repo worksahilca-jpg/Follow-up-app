@@ -16375,3 +16375,21 @@ looks. Weak point, said plainly: a ready customer who wrote 25 hours ago now dro
 "hi"; the reason word on the row still shows they were ready, and the Instagram/Messenger deadline line still flags the
 ones about to close.
 
+
+## 2026-10-30 — Best AI for every step, and a test that reads whole conversations
+
+The founder: "we got to make this product so accurate that we're not sending any stupid messages to the leads", then
+"We don't have to do cost cutting... I want the best quality." Two findings first. Real use is too thin to judge
+accuracy from: 33 messages sent in 60 days, 23 drafts in the last 7, all one business, mostly testing. And only the
+reply drafts ran on GPT-5.5; sorting, reading the checklist, scoring, the "no" check, the send-risk check, the instant
+first reply and "Write a new one" were still on gpt-5.4-mini.
+Built: every customer job runs on the best model (BEST_MODEL, openaiClient.ts), falling back to the usual one on any
+failure. The test graders and the public demo box stay on the usual model. Cost said plainly: about seven times the
+price and five times slower per call; about $50 a month for a very busy inbox, almost all of it email sorting.
+Built: Admin → Accuracy tests → "Whole conversations": about 40 invented realtor chats (quiet follow-ups day 1 to 30,
+objections, long and year-old chats, and 11 "stop or keep going" reads), run through the real writers and the real "no"
+check. Two must-be-zero lines: invented a fact, kept going after a no. Every chat comes back in full, so the founder can
+read how FollowUp talks. Reuses the existing row, list and grey-box parts; no new token or component.
+Weak points: the grader is a model and can be wrong, so the full chats are shown, not just the score; the cases are
+invented, not real customers; and the email cases check the body only, not the greeting and sign-off the live email
+adds. Nothing customers see changes until the founder runs it and we fix what it finds.

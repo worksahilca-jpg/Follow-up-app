@@ -94,6 +94,11 @@ a booked call or visit; the owner closes.
   closed to the public (Supabase's 55 "RLS enabled, no policy" notices are the intended deny-all); 3 of 5 Gmail
   integrations not connected (the Sep 6 and Sep 29 ones expired under Google's old 7-day test-mode limit, one was
   disconnected by hand); only 2 businesses got customers in 7 days, 3 new customers. Biggest gap: real use.
+- **Best AI everywhere + whole-conversation test (Oct 30, on this branch, not merged):** founder: "I want the best
+  quality", no cost cutting. Every customer AI step now runs on GPT-5.5 (BEST_MODEL in openaiClient.ts; graders and
+  the website demo stay on gpt-5.4-mini); about $50/month for a very busy inbox. New test on Admin → Accuracy tests:
+  "Whole conversations" (src/lib/conversationEval.ts), ~40 realtor chats incl. follow-ups, objections and "no".
+  Next: founder runs it plus the other four tests after the merge; fix every miss before pitching.
 - **How long connections last (checked Oct 30, for the founder's realtor pitch):** Gmail no longer cuts off after 7
   days: the Oct 7 and Oct 17 connections were still syncing 13–23 days later (an earlier answer in chat said "every
   7 days"; that was wrong). New Gmail users still see Google's unverified-app screen and the cap is 100 users until

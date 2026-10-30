@@ -4,7 +4,7 @@
  * the shape it accepts, and one that refuses falls back to the known-good
  * model instead of stopping replies being written.
  */
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 const create = vi.fn();
 vi.mock("openai", () => ({
@@ -62,7 +62,8 @@ describe("a newer model that refuses", () => {
     create.mockRejectedValueOnce(Object.assign(new Error("model not found"), { status: 404 }));
     create.mockResolvedValueOnce({ choices: [{ message: { content: "ok" } }] });
     const { getClient, MODEL } = await load("gpt-made-up");
-    const result = await getClient().chat.completions.create({ model: MODEL, messages: [], temperature: 0, max_tokens: 100 });
+    // A grader: one of the jobs that stays on the usual model (the rest get the best one, below).
+    const result = await getClient("grade_reply").chat.completions.create({ model: MODEL, messages: [], temperature: 0, max_tokens: 100 });
     expect(result).toEqual({ choices: [{ message: { content: "ok" } }] });
     expect(create).toHaveBeenCalledTimes(2);
     expect(create.mock.calls[1][0]).toMatchObject({ model: "gpt-4o-mini", temperature: 0, max_tokens: 100 });
@@ -71,50 +72,57 @@ describe("a newer model that refuses", () => {
   it("does not hide other failures, like OpenAI being down", async () => {
     create.mockRejectedValueOnce(Object.assign(new Error("server error"), { status: 500 }));
     const { getClient, MODEL } = await load("gpt-5.4-mini");
-    await expect(getClient().chat.completions.create({ model: MODEL, messages: [] })).rejects.toThrow("server error");
+    await expect(getClient("grade_reply").chat.completions.create({ model: MODEL, messages: [] })).rejects.toThrow("server error");
     expect(create).toHaveBeenCalledTimes(1);
   });
 });
 
-describe("the model that writes customers' replies (founder, 2026-10-29)", () => {
-  const draft = async (purpose: string, model?: string) => {
+describe("the best model, for every customer's work (founder, 2026-10-29 and 2026-10-30)", () => {
+  const call = async (purpose: string, model?: string) => {
     const mod = await load("gpt-5.4-mini");
     return { mod, out: await mod.getClient(purpose).chat.completions.create({ model: model ?? mod.MODEL, messages: [] }) };
   };
 
-  it("is GPT-5.5 unless OPENAI_REPLY_MODEL says otherwise", async () => {
-    expect((await load()).REPLY_MODEL).toBe("gpt-5.5");
-    vi.resetModules();
-    process.env.OPENAI_REPLY_MODEL = "gpt-5.4";
-    expect((await load()).REPLY_MODEL).toBe("gpt-5.4");
+  afterEach(() => {
+    delete process.env.OPENAI_BEST_MODEL;
     delete process.env.OPENAI_REPLY_MODEL;
   });
 
-  it("writes reply drafts, and only reply drafts", async () => {
-    create.mockResolvedValue({ choices: [{ message: { content: "ok" } }] });
-    await draft("draft_reply");
-    await draft("score_lead");
-    await draft("grade_reply");
-    expect(create.mock.calls.map((c) => c[0].model)).toEqual(["gpt-5.5", "gpt-5.4-mini", "gpt-5.4-mini"]);
+  it("is GPT-5.5 unless OPENAI_BEST_MODEL, or its older name OPENAI_REPLY_MODEL, says otherwise", async () => {
+    expect((await load()).BEST_MODEL).toBe("gpt-5.5");
+    vi.resetModules();
+    process.env.OPENAI_REPLY_MODEL = "gpt-5.4";
+    expect((await load()).BEST_MODEL).toBe("gpt-5.4");
+    vi.resetModules();
+    process.env.OPENAI_BEST_MODEL = "gpt-5.5-pro";
+    expect((await load()).BEST_MODEL).toBe("gpt-5.5-pro");
   });
 
-  it("leaves a reply draft that names its own model alone", async () => {
+  it("sorts, reads, scores, checks and writes; only the test graders and the website demo stay on the usual model", async () => {
     create.mockResolvedValue({ choices: [{ message: { content: "ok" } }] });
-    await draft("draft_reply", "gpt-4o");
+    const jobs = ["draft_reply", "draft_first_reply", "rewrite_reply", "classify_customer", "read_checklist", "score_lead", "stop_check", "check_send_risk", "other"];
+    for (const job of jobs) await call(job);
+    for (const job of ["grade_reply", "grade_rule", "demo_reply"]) await call(job);
+    expect(create.mock.calls.map((c) => c[0].model)).toEqual([...jobs.map(() => "gpt-5.5"), "gpt-5.4-mini", "gpt-5.4-mini", "gpt-5.4-mini"]);
+  });
+
+  it("leaves a call that names its own model alone", async () => {
+    create.mockResolvedValue({ choices: [{ message: { content: "ok" } }] });
+    await call("draft_reply", "gpt-4o");
     expect(create.mock.calls[0][0].model).toBe("gpt-4o");
   });
 
-  it("falls back to the usual model on any failure, so the customer's reply is still written", async () => {
+  it("falls back to the usual model on any failure, so the customer is still sorted and answered", async () => {
     create.mockRejectedValueOnce(Object.assign(new Error("rate limited"), { status: 429 }));
     create.mockResolvedValueOnce({ choices: [{ message: { content: "ok" } }] });
-    const { out } = await draft("draft_reply");
+    const { out } = await call("classify_customer");
     expect(out).toEqual({ choices: [{ message: { content: "ok" } }] });
     expect(create.mock.calls.map((c) => c[0].model)).toEqual(["gpt-5.5", "gpt-5.4-mini"]);
   });
 
   it("still fails when the usual model fails too", async () => {
     create.mockRejectedValue(Object.assign(new Error("server error"), { status: 500 }));
-    await expect(draft("draft_reply")).rejects.toThrow("server error");
+    await expect(call("draft_reply")).rejects.toThrow("server error");
     expect(create).toHaveBeenCalledTimes(2);
   });
 });

@@ -6,6 +6,13 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
+// These check what each job asks the model for (temperature 0, small requests). The best model every customer's
+// work runs on (BEST_MODEL, src/lib/integrations/openaiClient.ts) is a thinking model that takes only the default
+// temperature, so its adapted request would hide that; here it is set to the usual model and steps aside.
+vi.hoisted(() => {
+  process.env.OPENAI_BEST_MODEL = process.env.OPENAI_MODEL?.trim() || "gpt-4o-mini";
+});
+
 const create = vi.fn();
 vi.mock("openai", () => ({
   default: class {

@@ -49,6 +49,7 @@ import { checkUnreviewedDraft } from "@/lib/unreviewedDraftCheck";
 import { draftingContext, getBusinessFacts } from "@/lib/businessFacts";
 import { sixMonthsAfter, withinSendLimits } from "@/lib/followUpPlans";
 import { withAiContext } from "@/lib/integrations/openaiClient";
+import { readQualification } from "@/lib/qualification";
 
 export interface SequenceStepInput {
   /** Hours after the previous step (or enrollment). Preferred. */
@@ -863,7 +864,8 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
         }
 
         const draft = await generateFollowUpMessage(
-          { name: lead.name, conversation, ...(await draftingContext(lead.businessId)) },
+          // What they already told FollowUp, so a step never asks it again (knownPromptBlock; 2026-10-30).
+          { name: lead.name, conversation, ...(await draftingContext(lead.businessId)), known: readQualification(lead.qualification) },
           voiceSamples,
           channel === "email" ? step.messageHint ?? undefined : nonEmailStepHint(step.messageHint),
           undefined,

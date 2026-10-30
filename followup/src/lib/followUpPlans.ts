@@ -531,7 +531,7 @@ export function stepHint(state: Pick<PlanState, "step" | "total" | "kind" | "fin
       "Angle for this one — something new and useful that fits what they told you they want: another option that " +
       "matches what they described, one relevant thing the business has told you, or one detail from this " +
       "conversation they may have missed. Do not restate an earlier message. If there is nothing new you can say " +
-      "without inventing it, ask one short question about what they are looking for instead.",
+      "without inventing it, ask one short question about something they haven't told you yet instead.",
     step:
       "Angle for this one — one easy next step they can take or ignore: offer to find a time that suits them, or one " +
       "small step that fits where the conversation is. Make no, or not yet, feel completely fine. Do not name a " +
@@ -565,8 +565,12 @@ export function stepHint(state: Pick<PlanState, "step" | "total" | "kind" | "fin
     "Do not apologise: they stopped replying, nobody let them down. Never write \"just checking in\", " +
     "\"circling back\", \"touching base\", \"following up\" or anything that means the same — every message must " +
     "give them a reason to read it. Do not repeat the wording or the angle of any earlier message in this " +
-    "conversation. Never state a price, date, time or fact that is not already in the conversation or in what the " +
-    "business has told you."
+    // Conversation test, 2026-10-30: "anything with a yard?" got "a private fenced yard, or a small patio?", and
+    // "3 bedroom detached" got "detached only, or would a semi work?". Both read as not listening.
+    "conversation. Never ask again about anything they already told you, not even to narrow or widen it (they asked " +
+    "for a yard: never 'a fenced yard or a patio?'; they said detached: never 'would a semi work?'), and never ask " +
+    "again a question this conversation already asked; any question asks something new. Never state a price, date, " +
+    "time or fact that is not already in the conversation or in what the business has told you."
   );
 }
 

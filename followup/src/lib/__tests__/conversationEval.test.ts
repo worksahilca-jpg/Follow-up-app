@@ -6,7 +6,7 @@
 import { describe, it, expect, vi } from "vitest";
 
 vi.mock("@/lib/dmDrafting", () => ({ draftDm: vi.fn() }));
-vi.mock("@/lib/integrations/openai", () => ({ generateFollowUpMessage: vi.fn(), checkForStop: vi.fn() }));
+vi.mock("@/lib/integrations/openai", () => ({ generateFollowUpMessage: vi.fn(), checkForStop: vi.fn(), extractQualificationFacts: vi.fn() }));
 vi.mock("@/lib/integrations/openaiClient", () => ({
   getClient: vi.fn(),
   MODEL: "test",
@@ -25,6 +25,7 @@ const GOOD: G = {
   sameLanguage: true,
   askedAgain: false,
   askedAgainWhat: "",
+  askedAgainQuote: "",
   repeated: false,
   emptyNudge: false,
   pushy: false,
@@ -70,7 +71,7 @@ const stopCase = (text: string, shouldStop: boolean): ChatCase => ({
 });
 
 async function run(cases: ChatCase[], deps: Partial<ChatDeps>) {
-  return runConversationEval(cases, { deps, ...noWait, concurrency: 1 });
+  return runConversationEval(cases, { deps: { know: async () => null, ...deps }, ...noWait, concurrency: 1 });
 }
 
 describe("the cases", () => {
@@ -121,11 +122,39 @@ describe("a written message", () => {
     expect((dm as unknown as { mock: { calls: unknown[][] } }).mock.calls[0][3]).toBeUndefined();
   });
 
-  it("catches asking again for what they already said", async () => {
-    const r = await run([emailFollowUp], { email: emailSays("Which area are you looking in?"), grade: grades({ askedAgain: true, askedAgainWhat: "the area" }) });
+  it("catches asking again for what they already said, with their own words as proof", async () => {
+    const r = await run([emailFollowUp], {
+      email: emailSays("Which area are you looking in?"),
+      grade: grades({ askedAgain: true, askedAgainWhat: "the area", askedAgainQuote: "3 bed in Brampton" }),
+    });
     expect(r.chats[0].problems).toEqual(["asked_again"]);
     expect(r.chats[0].detail).toContain("the area");
+    expect(r.chats[0].detail).toContain('they said "3 bed in Brampton"');
     expect(r.problems.asked_again).toBe(1);
+  });
+
+  it("doesn't count an 'asked again' the reader can't quote from the customer (2026-10-30: a price they never gave)", async () => {
+    const r = await run([emailFollowUp], {
+      email: emailSays("What price would feel comfortable for you?"),
+      grade: grades({ askedAgain: true, askedAgainWhat: "the price", askedAgainQuote: "under 900k" }),
+    });
+    expect(r.chats[0].problems).not.toContain("asked_again");
+    const fromBusiness = await run([emailFollowUp], {
+      email: emailSays("When are you hoping to move?"),
+      grade: grades({ askedAgain: true, askedAgainWhat: "timing", askedAgainQuote: "When are you hoping to move?" }),
+    });
+    expect(fromBusiness.chats[0].problems).not.toContain("asked_again");
+  });
+
+  it("gives both writers what the customer already told, read by the qualifier, as a live draft gets it", async () => {
+    const told = { v: 2, template: "realtor", items: [{ key: "area", value: "Brampton", quote: "in Brampton" }] } as unknown as Awaited<ReturnType<ChatDeps["know"]>>;
+    const know = vi.fn(async () => told);
+    const dm = dmSays("ok");
+    const email = emailSays("ok");
+    await run([dmReply, emailFollowUp], { dm, email, grade: grades(), know });
+    expect(know).toHaveBeenCalledTimes(2);
+    expect((dm as unknown as { mock: { calls: unknown[][] } }).mock.calls[0][11]).toEqual({ qualification: told, nothingToAsk: false });
+    expect((email as unknown as { mock: { calls: { known?: unknown }[][] } }).mock.calls[0][0].known).toBe(told);
   });
 
   it("catches an empty follow-up by its words, even when the reader missed it", async () => {

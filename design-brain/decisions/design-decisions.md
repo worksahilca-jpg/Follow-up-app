@@ -16415,3 +16415,26 @@ Open, the founder's call: "We'll try selling it ourselves" gets a warm goodbye; 
 help. Recommended: offer help once. Weak points: the "lost offers" reply that the checker called generic (borderline,
 left as is), and the cases are still invented, not real customers.
 
+## 2026-10-30 — Selling it themselves: offer help once (A-340)
+
+The founder chose "offer help once" for a seller who says they'll sell it themselves. Built in the realtor playbook and
+the "no" check: one warm reply with a no-strings offer of help and no question, then nothing more unless they write
+back. The conversation test now has the reply case (marked closing, so any question fails it) and a stop case. Weak
+point: only the live model run shows whether the writer keeps it to one offer with no question; the founder re-runs
+the tests after the merge.
+
+## 2026-10-30 — Second full run, after credits were topped up
+
+The first re-run hit an empty OpenAI balance (every call refused; the founder topped up). The real second run: emails
+121/122 (a payment receipt let in, a one-off), Instagram 44/44, qualifying 719/720, replies 18/20, whole conversations
+36/44 (from 31), with 0 invented facts and 0 kept going after a no. "On hold", "selling it ourselves", the Hinglish and
+the asking-price follow-ups now pass.
+Fixed from it: "the Pine Ct house" is a listing, not the kind of home they want (qualifying); "Is the price
+negotiable?" gets a plain answer that the agent talks it through; a follow-up's next step must be one not already
+offered (day 7 offered "a quick call" after "talk it through"). Test fixes: Instagram and Messenger replies are now
+shown and checked with their tap buttons ("What's easier next?" means something only with them); four expectations
+reworded so they test the rule, not a phrasing ("Claims no townhouse is available" read as an order; "I'll check" is the
+agent speaking; six months out may ask any one easy question; "my agent never answers" keeps the approved kind close,
+A-246). The checker no longer calls a message "repeated" for doing what the case asks.
+Weak point: the reply test's checker is still the usual model and called two good replies templates.
+

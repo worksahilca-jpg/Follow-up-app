@@ -534,7 +534,9 @@ export function stepHint(state: Pick<PlanState, "step" | "total" | "kind" | "fin
       "without inventing it, ask one short question about something they haven't told you yet instead.",
     step:
       "Angle for this one — one easy next step they can take or ignore: offer to find a time that suits them, or one " +
-      "small step that fits where the conversation is. Make no, or not yet, feel completely fine. Do not name a " +
+      // Conversation test 2026-10-30: after "Would it help to talk it through?", day 7 offered "a quick call" again.
+      "small step that fits where the conversation is, and one the business hasn't already offered: if it offered a " +
+      "call or a chat, offer something smaller instead. Make no, or not yet, feel completely fine. Do not name a " +
       "specific day, time, price or figure unless it already appears in the conversation.",
     close:
       "Angle for this one — close the loop with one easy question: would they like you to keep sending them things " +

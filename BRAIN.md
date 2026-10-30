@@ -99,12 +99,14 @@ a booked call or visit; the owner closes.
   website demo stay on gpt-5.4-mini); confirmed in the decision log, no fallbacks. A full Accuracy-tests run costs
   about $7. First run (Oct 30): emails 122/122, Instagram 44/44, replies 19/20, qualifying 718/720 (2 made up),
   whole conversations 31/44.
-- **Run-1 fixes (Oct 30, on this branch, not merged):** follow-ups (automation.ts, sequences.ts) now get the
+- **Run-1 fixes (Oct 30, LIVE: PR #619 → 2fa73d3):** follow-ups (automation.ts, sequences.ts) now get the
   customer's checklist like replies do, and never re-ask or narrow what they said (stepHint); "no thanks, we've put
   it on hold" now stops (checkForStop); qualifying never records "this" as an area, and a seller has no area. The
-  conversation checker runs on GPT-5.5 and must quote the customer for "asked again". Waiting on the founder: "we'll
-  sell it ourselves" (offer help once, no strings, or keep saying goodbye?). "Is this a bot?" keeps the approved
-  hand-to-a-person answer.
+  conversation checker runs on GPT-5.5 and must quote the customer for "asked again". "Is this a bot?" keeps the
+  approved hand-to-a-person answer.
+- **Selling it themselves (A-340, Oct 30, on this branch, not merged):** founder: "offer help once". A seller who says
+  they'll sell it themselves gets one warm reply with a no-strings offer of help, then nothing unless they write back.
+  Next: founder re-runs all tests on /admin/tests after the merge.
 - **How long connections last (checked Oct 30, for the founder's realtor pitch):** Gmail no longer cuts off after 7
   days: the Oct 7 and Oct 17 connections were still syncing 13–23 days later (an earlier answer in chat said "every
   7 days"; that was wrong). New Gmail users still see Google's unverified-app screen and the cap is 100 users until

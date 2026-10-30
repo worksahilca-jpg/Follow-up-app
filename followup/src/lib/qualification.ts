@@ -206,7 +206,9 @@ const REALTOR: Criterion[] = [
   {
     key: "kind",
     label: "Wants",
-    find: "the kind of home they want to buy or rent: a type, a size or a number of bedrooms, e.g. '2-bed condo' or 'detached with a yard'. Never the home they are selling",
+    find: "the kind of home they want to buy or rent: a type, a size or a number of bedrooms, e.g. '2-bed condo' or 'detached with a yard'. Never the home they are selling. " +
+      // Accuracy test 2026-10-30: "see the Pine Ct house sometime" came back as wanting a house.
+      "Naming the one home they asked about ('the Pine Ct house', 'that condo') is not this: it says which listing, not what they want",
     ask: "what kind of place they are after",
   },
   {

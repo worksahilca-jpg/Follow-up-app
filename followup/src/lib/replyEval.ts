@@ -285,7 +285,8 @@ export const gradeReply: Grader = async (c, reply) => {
           "sameLanguage: true when the reply is in the same language as the customer's last message (Hinglish " +
           "answered in Hinglish or English both count as the same).\n" +
           "usedDetail: true when the reply picks up something specific the customer wrote (a place, a home, a date, " +
-          "a person, the thing they asked about), so it could not be sent unchanged to a different customer.\n" +
+          "a person, a number, something that happened to them, the thing they asked about), so it could not be sent " +
+          "unchanged to a different customer.\n" +
           "robotic: true when it reads like a template or a bot rather than a person typing: stock phrases " +
           "('thanks for reaching out', 'I'd be happy to help', 'great question'), 'our team', hype ('dream home', " +
           "'thrilled', 'amazing'), emoji, or a string of exclamation marks. A blank for the owner is not this.\n" +

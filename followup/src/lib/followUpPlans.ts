@@ -525,7 +525,11 @@ export function stepHint(state: Pick<PlanState, "step" | "total" | "kind" | "fin
   const angles: Record<StepKind, string> = {
     open:
       "Angle for this one — answer anything left open: if they asked something that has not been fully answered, " +
-      "answer it now from the conversation or from what the business has told you; if everything was answered, put " +
+      "answer it now from the conversation or from what the business has told you, and if neither answers it, say " +
+      // Conversation test 2026-10-30 (fourth run): "anything with a yard?" got "some only have small patios", a claim
+      // about the market nobody gave it.
+      "you'll check and come back with what you find, never a general claim about the market or the area to fill " +
+      "the gap; if everything was answered, put " +
       "the most useful answer in front of them again in one short line, in their own terms. End with one easy question.",
     new:
       "Angle for this one — something new and useful that fits what they told you they want: another option that " +
@@ -549,8 +553,11 @@ export function stepHint(state: Pick<PlanState, "step" | "total" | "kind" | "fin
       "terms, and ask one easy question about whether now is a good time to pick it back up. If it isn't, that is " +
       "completely fine.",
     thanks:
-      "Angle for this one — you met or spoke with them yesterday and they are still deciding. Thank them for their " +
-      "time in one short, specific line, then give one useful thing from the conversation (an answer, a detail they " +
+      "Angle for this one — you met or spoke with them yesterday and they are still deciding. The showing or call " +
+      // Conversation test 2026-10-30 (fourth run): the day after the showing it wrote "Great, see you then at 45
+      // Maple Dr ... before the showing".
+      "has already happened: never write as if it is still to come ('see you then', 'before the showing'). Open by " +
+      "thanking them for their time in one short, specific line, then give one useful thing from the conversation (an answer, a detail they " +
       "asked about, a next step they can take or ignore) and ask one easy question about what they'd like next. Still " +
       "deciding is completely fine; say nothing that reads as pressure, and name no day, time, price or figure that " +
       "the conversation does not contain.",
@@ -576,7 +583,9 @@ export function stepHint(state: Pick<PlanState, "step" | "total" | "kind" | "fin
     "conversation. Never ask again about anything they already told you, not even to narrow it, widen it or split it " +
     "into kinds (they asked for a yard: never 'a fenced yard or a patio?'; they said detached: never 'would a semi " +
     "work?'; they said townhouses: never 'freehold or condo?'), and never ask " +
-    "again a question this conversation already asked; any question asks something new. Never state a price, date, " +
+    "again a question this conversation already asked; any question asks something new. If they asked to see a home " +
+    // Fourth run: day 3 after "Could I see 12 Elm Court sometime?" gave the detail but dropped the showing.
+    "and it isn't booked, still offer to set up the showing. Never state a price, date, " +
     "time or fact that is not already in the conversation or in what the business has told you."
   );
 }

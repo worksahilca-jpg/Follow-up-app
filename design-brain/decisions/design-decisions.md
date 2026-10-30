@@ -16456,3 +16456,24 @@ not asking again; a blank like [ANSWER: experience] is the owner's answer to fil
 and is not a template. The reply checker stays on the usual model on purpose: it compares GPT-5.5 with the smaller
 models, and the best model should not mark its own work.
 
+## 2026-10-30 — Fourth full run, after the third-run fixes went live
+
+Qualifying 720/720 (the "3 bed" fix held), emails 122/122, Instagram 43/44, replies 16/20, whole conversations 37/45
+(from 41: several cases passed in one run and failed in the next with almost the same message, so part of the drop is
+the writer varying). Each new failure was still read as a message a customer might get:
+- The thank-you the day after a showing said "Great, see you then at 45 Maple Dr ... before the showing". The thanks
+  angle now says the showing already happened and opens with the thank-you.
+- "I have an agent but she never answers me" got an offer to help: against A-246 and the playbook's kind close. The
+  close rule now holds even when they complain about their agent; the case counts any question as a fail.
+- "What did it sell for?" got "sold for [PRICE]". The price blank is only for what something costs now; a sold price
+  gets "I'll check".
+- Day 1 filled an open question with "some only have small patios", a market claim nobody gave it. The "answer
+  what's open" angle now says to check and come back instead.
+- Day 3 after "Could I see 12 Elm Court?" gave the new detail but dropped the showing. A home they asked to see is
+  still offered for a showing until it's booked.
+- "We lost the offer... gutted" got sympathy then "Should I look for similar homes?" at once. Bad news now gets sorry
+  first and, if anything, an offer for whenever they're ready, not a question asking them to decide now.
+Test alignments: "just browsing" no longer requires an offer (the playbook keeps them talking with one easy question);
+a new question on the same subject is not "repeated" (day 14 asked for the price ceiling they never gave); the reply
+checker counts a number or something that happened to them ("3 offers in a row") as a detail they wrote.
+Left as is: one Instagram joke ("Isme bee bhi dal" after an emoji) was let in once after passing every earlier run.

@@ -16364,3 +16364,14 @@ founder's reaction; nothing built in the app.
 **Paused by the founder (same day):** "okay just leave it i will figure out later lets improve the model then we will
 go with the design and stuff". Not approved and not rejected: the phone Today and the priority list wait. The demo page
 stays up as a private page. Next work is the AI's replies (the "model"), then design again.
+
+## 2026-10-30 — Today's order: fresh hot customers first (A-339)
+
+The founder's Messenger test for Meta's review (Video C) showed a fresh "Likely to book" message landing under an
+Instagram customer waiting since Sep 27. Cause: A-230 put every ready customer in one tier and ordered it by the longest
+wait. He asked "We have to prioritise everything according to the customer, right?", was shown a five-step order, and
+said yes. Built as A-339: ready splits into fresh (last 24 h) and older; new sits between them. No change to how a row
+looks. Weak point, said plainly: a ready customer who wrote 25 hours ago now drops below someone new who only said
+"hi"; the reason word on the row still shows they were ready, and the Instagram/Messenger deadline line still flags the
+ones about to close.
+

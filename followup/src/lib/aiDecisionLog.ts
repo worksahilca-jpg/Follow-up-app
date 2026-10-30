@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { setAiCallSink, type AiCall } from "@/lib/integrations/openaiClient";
+import { tellFounderCreditsRanOut } from "@/lib/aiCreditsAlert";
 
 /**
  * The decision log: one row per AI call (step 1 of the plan in research/product/2026-10-23-self-improving-loop.md).
@@ -64,5 +65,5 @@ export async function saveAiChoice(responseId: string, choice: string): Promise<
 }
 
 export function installAiDecisionLog(): void {
-  setAiCallSink({ call: saveAiCall, choice: saveAiChoice });
+  setAiCallSink({ call: saveAiCall, choice: saveAiChoice, outOfCredits: tellFounderCreditsRanOut });
 }

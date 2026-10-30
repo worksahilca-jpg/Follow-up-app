@@ -79,8 +79,9 @@ a booked call or visit; the owner closes.
   check → 5 write the reply → 6 safety check → 7 Today / send → 8 follow-ups when quiet → 9 booking → 10 CRM, plus
   how it learns (facts, edits, rulebook). Weak spots found so far: follow-ups (step 8) fail the most in the
   conversation test; tests use made-up chats only (next: real realtor chats, names removed, with the realtor's OK);
-  no alert when OpenAI credits run out (ran out twice on Oct 30, tests only, ~$41 that day; real customers used <$1
-  in 7 days); a full test round costs $12–14, so run only the row that changed and say its price first; booking
+  OpenAI credits ran out twice on Oct 30 unseen (tests only, ~$41 that day; real customers used <$1 in 7 days): an
+  alert now emails, buzzes and posts to Slack on the first refused call, at most once every 6 hours
+  (src/lib/aiCreditsAlert.ts, on this branch, not merged); a full test round costs $12–14, so run only the row that changed and say its price first; booking
   change/cancel is still Stage 2. Keep the best AI everywhere (founder: no compromise on quality).
 
 - **Meta review, Messenger + Lead Ads (Oct 30): videos A–D recorded and checked, E tomorrow, submit Oct 31.** Six days

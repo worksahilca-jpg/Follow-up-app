@@ -13,7 +13,7 @@
   "dependencies": {
     "@prisma/client": "^6.19.3",
     "@sentry/core": "10.76.2",
-    "@sentry/nextjs": "^10.76.2",
+    "@sentry/nextjs": "^11.9.0",
     "@types/papaparse": "^5.5.2",
     "@vercel/analytics": "^2.0.1",
     "framer-motion": "^13.4.4",

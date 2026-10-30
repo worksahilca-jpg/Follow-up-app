@@ -1362,19 +1362,23 @@ export async function runAutomationForBusiness(
         (isUntouched || draftIsCurrent) && (lead.suggestedDraftKind ?? null) === draftKind;
       if (!message || !cachedShapeFits || ((isDeadLead || isUnanswered || reminderStep !== undefined) && !draftFitsNow)) {
         regenerated = true;
+        // What they already told FollowUp, and what was asked and left unanswered, the same block a reply gets
+        // (knownPromptBlock). Follow-ups went without it until 2026-10-30: the conversation test's day-1 and day-3
+        // follow-ups asked again about the yard and the detached home the customer had already named.
+        const told = { qualification: readQualification(lead.qualification), nothingToAsk: false };
         if (isDm) {
           // The lead's decided language/register, off the row already
           // loaded — so the day-3 follow-up uses the same usted/tú the
           // first reply did (src/lib/leadLanguage.ts).
           const { trade, facts, examples, rules } = await draftingContext(lead.businessId);
-          const dm = await draftDm(lead.name, conversation, await voiceFor(leadLanguageOf(lead)), messageHint, undefined, leadLanguageOf(lead), facts, null, trade, examples, rules);
+          const dm = await draftDm(lead.name, conversation, await voiceFor(leadLanguageOf(lead)), messageHint, undefined, leadLanguageOf(lead), facts, null, trade, examples, rules, told);
           message = dm.body;
           responseId = dm.responseId ?? null;
           subject = undefined;
           quickReplies = dm.quickReplies;
           dmShapeFailed = dm.shapeFailed;
         } else {
-          const draft = await generateFollowUpMessage({ name: lead.name, conversation, ...(await draftingContext(lead.businessId)) }, await voiceFor(leadLanguageOf(lead)), messageHint, undefined, leadLanguageOf(lead));
+          const draft = await generateFollowUpMessage({ name: lead.name, conversation, ...(await draftingContext(lead.businessId)), known: told.qualification }, await voiceFor(leadLanguageOf(lead)), messageHint, undefined, leadLanguageOf(lead));
           responseId = draft.responseId ?? null;
           subject = draft.subject;
           // The same invariant the ack and the DM have always had, on the

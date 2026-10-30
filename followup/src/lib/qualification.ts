@@ -164,6 +164,10 @@ const REALTOR: Criterion[] = [
     // listings?" came back as known, which tells the agent nothing).
     find:
       "the area, neighbourhood or city they want to live in, or the specific listing they asked about, e.g. 'near Liberty Village', 'Mississauga' or '220 King St unit 4'. 'Do you have any listings?' on its own is not this. " +
+      // Accuracy test 2026-10-30: "Is this still available?" came back as "This listing".
+      "'This', 'it' or 'that one' with no address, street or name says nothing about where: not this. " +
+      // Accuracy test 2026-10-30: a seller "moving to Calgary for work" came back with Calgary as the area.
+      "Where someone selling is moving to is the reason they sell, not this, unless they say they want to buy or rent there. " +
       // A-299 test (2026-10-19): "just looking at a few in the area" after asking about a home got "What area?" twice.
       "After asking about a home they saw, 'a few in the area' or 'around there' is this too: the value is 'Around the home they asked about'",
     ask: "which area they are looking in",
@@ -263,7 +267,20 @@ const REALTOR: Criterion[] = [
 const KEYS: readonly CriterionKey[] = REALTOR.map((c) => c.key);
 /** Items that only make sense for someone selling a home they own, and for someone buying or renting one. */
 const SELLER_ONLY: readonly CriterionKey[] = ["home", "why", "condition", "price", "visit"];
-const BUYER_ONLY: readonly CriterionKey[] = ["kind", "viewing", "financing", "budget"];
+// Where they want to live is a buyer's or renter's: a seller's home is "home", and where a seller is moving to is
+// their reason (accuracy test 2026-10-30: "moving to Calgary for work" came back as the area).
+const BUYER_ONLY: readonly CriterionKey[] = ["area", "kind", "viewing", "financing", "budget"];
+/** Words that point at a home without saying where it is. */
+const POINTING = new Set(["this", "that", "it", "these", "those", "one", "ones", "the", "a", "an", "is", "still", "available", "listing", "home", "house", "place", "property", "post", "ad", "unit", "condo"]);
+
+/**
+ * An area quote made only of pointing words ("Is this still available?") names no place: the reader's "This listing"
+ * is dropped, whatever its value (accuracy test 2026-10-30). "Around there" names one (A-299) and stays.
+ */
+export function onlyPoints(quote: string): boolean {
+  return (quote.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? []).every((w) => POINTING.has(w));
+}
+
 const isKey = (k: unknown): k is CriterionKey => typeof k === "string" && ((KEYS as readonly string[]).includes(k) || isOwnKey(k));
 
 const TEMPLATES: Record<string, Template> = {
@@ -497,7 +514,7 @@ export function mergeQualification(
     if (offSide.has(c.key)) continue;
     const e = found.get(c.key);
     const value = e?.value.trim().slice(0, MAX_VALUE) ?? "";
-    if (e?.known && value && said(e.quote)) {
+    if (e?.known && value && said(e.quote) && !(c.key === "area" && onlyPoints(e.quote))) {
       const bucket = c.buckets && e.bucket && Object.hasOwn(c.buckets, e.bucket) ? e.bucket : undefined;
       const fromNote = !isCustomerQuote(e.quote, texts);
       items.push({

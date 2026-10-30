@@ -1,6 +1,7 @@
 import { draftDm } from "@/lib/dmDrafting";
-import { checkForStop, generateFollowUpMessage } from "@/lib/integrations/openai";
+import { checkForStop, extractQualificationFacts, generateFollowUpMessage } from "@/lib/integrations/openai";
 import { getClient, MODEL, withAiContext } from "@/lib/integrations/openaiClient";
+import { customerTexts, isCustomerQuote, mergeQualification, templateFor, type Qualification } from "@/lib/qualification";
 import { isOptOutMessage } from "@/lib/optOutKeywords";
 import { salesPressure } from "@/lib/replyTone";
 import { stepHint, type StepKind } from "@/lib/followUpPlans";
@@ -296,7 +297,7 @@ export const CHAT_CASES: ChatCase[] = [
     ],
     next: reply,
     told: ["a 2-bed condo", "in Mississauga"],
-    expect: "Says yes straight away, and asks at most for what would make the listings fit, never the area or the type again.",
+    expect: "Says yes straight away, and asks at most one thing that would make the listings fit (a part of the city is fine), never the city or the type of home again.",
   },
   {
     name: "\"We're working with our bank\"",
@@ -339,7 +340,9 @@ export const CHAT_CASES: ChatCase[] = [
     lines: [wrote("Hi Sam, want me to send a few 2-beds in Etobicoke?", 1), said("Is this a bot?", 0)],
     next: reply,
     noDetail: true,
-    expect: "Is honest that software helps write the messages, and never claims a person typed every word.",
+    // The approved rule (src/lib/integrations/openai.ts, "If they ask whether this is automated"): never deny it,
+    // never claim a person wrote it, and hand it to a person. It always waits for the owner (audit gap B).
+    expect: "Never denies being automated or claims a person typed it, and says someone will come back to them personally.",
   },
   {
     name: "\"How did you get my number?\"",
@@ -494,6 +497,7 @@ type ChatGrade = {
   sameLanguage: boolean;
   askedAgain: boolean;
   askedAgainWhat: string;
+  askedAgainQuote: string;
   repeated: boolean;
   emptyNudge: boolean;
   pushy: boolean;
@@ -509,6 +513,8 @@ export type ChatGrader = (c: ChatCase, message: string) => Promise<ChatGrade>;
 type DmWriter = typeof draftDm;
 type EmailWriter = typeof generateFollowUpMessage;
 type StopReader = typeof checkForStop;
+/** What the customer has told FollowUp so far (the qualifying checklist), as a live draft is given it. */
+type Knower = (conversation: Message[]) => Promise<Qualification | null>;
 
 /** The customer's profile name, as a live lead's would be given to the writer. */
 const LEAD_NAME = "Sam";
@@ -538,9 +544,13 @@ const ECHO_RE = /^(?:noted|got it)\b[.!,]?/i;
 /** What stepHint forbids by name: a follow-up that says only that it is one. */
 const EMPTY_NUDGE_RE = /\b(?:just )?(?:checking in|circling back|touching base|following up|any updates?\b)/i;
 
-/** Reads one message against its checklist. The usual model, temperature 0, so the same message gets the same grade. */
+/**
+ * Reads one message against its checklist. The best model (its own job, "grade_chat", is not one of the usual-model
+ * jobs): on the first run, 2026-10-30, the usual model called seven good replies wrong ("asked again" for a price the
+ * customer never gave, "suggested another lender" for a reply that named none).
+ */
 export const gradeChat: ChatGrader = async (c, message) => {
-  const client = getClient("grade_reply");
+  const client = getClient("grade_chat");
   const facts = (c.facts ?? []).map((f) => `- ${f.label}: ${f.value}`).join("\n") || "(none)";
   const chat = c.lines.map((l) => `[${l.daysAgo === 0 ? "today" : `${l.daysAgo} days ago`}] ${l.who === "in" ? "CUSTOMER" : "BUSINESS"}: ${l.text}`).join("\n");
   const what =
@@ -566,9 +576,14 @@ export const gradeChat: ChatGrader = async (c, message) => {
           "sameLanguage: true when the message is in the language of the customer's last message (Hinglish answered in " +
           "Hinglish or English both count).\n" +
           "askedAgain: true when the message asks the customer for something they already told the business (see WHAT " +
-          "THE CUSTOMER ALREADY TOLD and the conversation), even in other words. Checking one detail they gave is fine " +
-          "only when it adds something ('still Erin Mills, or open to Streetsville too?'). askedAgainWhat: what it " +
-          "asked again, or empty.\n" +
+          "THE CUSTOMER ALREADY TOLD and the conversation), even in other words, including narrowing or widening it " +
+          "(they asked for a yard: 'a fenced yard or a patio?'; they said detached: 'would a semi work?'). Asking for " +
+          "something they never gave is never this: a price or number they didn't state, an area they didn't name. " +
+          "Asking whether it is just this one home or a few in the area is not this when they only asked about one " +
+          "home: asking about one home doesn't say they want only that one. A question the business already asked " +
+          "and they left unanswered is 'repeated', not this. askedAgainWhat: what it asked again, or empty. " +
+          "askedAgainQuote: the customer's own words, copied exactly from one of their messages, that already answer " +
+          "it; empty when askedAgain is false.\n" +
           "repeated: true when it repeats the wording, the question or the angle of an earlier BUSINESS message.\n" +
           "emptyNudge: for a follow-up, true when it gives no reason to read it: 'just checking in', 'any update?', " +
           "'did you see my message', or nothing new or useful. Always false for a reply to their newest message.\n" +
@@ -610,6 +625,7 @@ export const gradeChat: ChatGrader = async (c, message) => {
             sameLanguage: { type: "boolean" },
             askedAgain: { type: "boolean" },
             askedAgainWhat: { type: "string" },
+            askedAgainQuote: { type: "string" },
             repeated: { type: "boolean" },
             emptyNudge: { type: "boolean" },
             pushy: { type: "boolean" },
@@ -627,6 +643,7 @@ export const gradeChat: ChatGrader = async (c, message) => {
             "sameLanguage",
             "askedAgain",
             "askedAgainWhat",
+            "askedAgainQuote",
             "repeated",
             "emptyNudge",
             "pushy",
@@ -652,6 +669,7 @@ export const gradeChat: ChatGrader = async (c, message) => {
     sameLanguage: !!g.sameLanguage,
     askedAgain: !!g.askedAgain,
     askedAgainWhat: String(g.askedAgainWhat ?? ""),
+    askedAgainQuote: String(g.askedAgainQuote ?? ""),
     repeated: !!g.repeated,
     emptyNudge: !!g.emptyNudge,
     pushy: !!g.pushy,
@@ -664,9 +682,18 @@ export const gradeChat: ChatGrader = async (c, message) => {
   };
 };
 
-export type ChatDeps = { dm: DmWriter; email: EmailWriter; grade: ChatGrader; stopRead: StopReader };
+export type ChatDeps = { dm: DmWriter; email: EmailWriter; grade: ChatGrader; stopRead: StopReader; know: Knower };
 
-const LIVE: ChatDeps = { dm: draftDm, email: generateFollowUpMessage, grade: gradeChat, stopRead: checkForStop };
+const REALTOR = templateFor(REPLY_EVAL_TRADE);
+
+/** The real qualifying reader on the chat so far, as scoring.ts reads a live one before it drafts. */
+const knowFromChat: Knower = async (conversation) => {
+  if (!REALTOR) return null;
+  const extracted = await extractQualificationFacts(conversation, REALTOR.criteria);
+  return mergeQualification(REALTOR, null, extracted, customerTexts(conversation));
+};
+
+const LIVE: ChatDeps = { dm: draftDm, email: generateFollowUpMessage, grade: gradeChat, stopRead: checkForStop, know: knowFromChat };
 
 /** The "no" check on their newest message, decided the way scoring.ts decides it: any read that says stop counts. */
 async function runStop(c: ChatCase & { next: { kind: "stop" } }, deps: ChatDeps, retry?: RateLimitRetryOptions): Promise<Pick<ChatResult, "next" | "problems" | "detail">> {
@@ -688,17 +715,20 @@ async function runWritten(c: ChatCase, deps: ChatDeps, lessons: Lessons, retry?:
   const conversation = toConversation(c, Date.now());
   const hint = c.next.kind === "followup" ? stepHint({ step: c.next.step, total: c.next.total, kind: c.next.angle, final: !!c.next.final }, c.next.daysQuiet) : undefined;
   const facts = c.facts ?? [];
+  // What they've told so far, read by the real qualifier: a live reply is written with it (scoring.ts), and so is a
+  // live follow-up since 2026-10-30 (automation.ts, sequences.ts).
+  const known = await withRateLimitRetry(() => deps.know(conversation), retry);
   let message: string;
   let shapeFailed: string | null = null;
   if (c.channel === "email") {
     const drafted = await withRateLimitRetry(
-      () => deps.email({ name: LEAD_NAME, conversation, trade: REPLY_EVAL_TRADE, facts, examples: lessons.examples, rules: lessons.rules }, [], hint, undefined, null),
+      () => deps.email({ name: LEAD_NAME, conversation, trade: REPLY_EVAL_TRADE, facts, examples: lessons.examples, rules: lessons.rules, known }, [], hint, undefined, null),
       retry
     );
     message = drafted.body.trim();
   } else {
     const drafted = await withRateLimitRetry(
-      () => deps.dm(LEAD_NAME, conversation, [], hint, "reply", null, facts, null, REPLY_EVAL_TRADE, lessons.examples, lessons.rules),
+      () => deps.dm(LEAD_NAME, conversation, [], hint, "reply", null, facts, null, REPLY_EVAL_TRADE, lessons.examples, lessons.rules, { qualification: known, nothingToAsk: false }),
       retry
     );
     message = drafted.body.trim();
@@ -722,7 +752,11 @@ async function runWritten(c: ChatCase, deps: ChatDeps, lessons: Lessons, retry?:
   if (!g.sameLanguage) add("language", "wrong language");
   const absent = (c.mustInclude ?? []).filter((w) => !message.includes(w));
   if (absent.length) add("missing_fact", `missing: ${absent.join(", ")}`);
-  if (g.askedAgain) add("asked_again", `asked again: ${g.askedAgainWhat || "something they already said"}`);
+  // Only with their own words as proof: a reader that can't quote where they said it has guessed.
+  const theirs = c.lines.filter((l) => l.who === "in").map((l) => l.text);
+  if (g.askedAgain && isCustomerQuote(g.askedAgainQuote, theirs)) {
+    add("asked_again", `asked again: ${g.askedAgainWhat || "something they already said"} (they said "${g.askedAgainQuote.trim()}")`);
+  }
   if (g.repeated) add("repeated", "repeated an earlier message");
   if (c.next.kind === "followup" && (g.emptyNudge || EMPTY_NUDGE_RE.test(message))) add("empty_nudge", "gave them no reason to read it");
   const tone = salesPressure(message, { said: facts.map((f) => f.value).join("\n") });
@@ -735,8 +769,11 @@ async function runWritten(c: ChatCase, deps: ChatDeps, lessons: Lessons, retry?:
   return { next: message, problems, detail: details.join(" · ") };
 }
 
-/** Three at a time: a written case is up to three model calls (a draft, a retry, a grade); a stop case five reads. */
-export const CONVERSATION_EVAL_CONCURRENCY = 3;
+/**
+ * Five at a time: a written case is up to four best-model calls one after another (the qualifier, a draft, a retry, a
+ * grade), about 20 seconds; a stop case five reads at once. 44 cases stay well inside the route's 300 seconds.
+ */
+export const CONVERSATION_EVAL_CONCURRENCY = 5;
 
 const NO_LESSONS: Lessons = { examples: [], rules: [] };
 

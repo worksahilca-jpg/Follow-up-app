@@ -467,10 +467,14 @@ export async function checkForStop(conversation: Message[]): Promise<{ tries: nu
             "You check one thing about a small business's conversation with a customer: does the customer's newest " +
             "message mean the business should stop following up? Answer stop: true when it turns the business down " +
             "(not interested, no longer needed, found or bought a place elsewhere), says they already have an agent " +
-            "or went with someone else, or asks not to be contacted. Answer stop: false for 'not right now', 'maybe " +
-            "later', a day to check back, a question, a complaint, a thanks, or anything that keeps the conversation " +
-            "going. If you can't tell whether it is a stop, answer true: the owner can undo a pause, but not a " +
-            "message sent after a no." +
+            "or went with someone else, or asks not to be contacted. " +
+            // Conversation test, 2026-10-30: "no thanks, we've put the whole thing on hold" read as go, five times
+            // out of five. A pause with no time to come back is theirs to end; the owner's "not now" choice decides.
+            "Putting the whole search on hold, holding off, or taking a break from it, with no time to come back, is " +
+            "stop: true too. Answer stop: false for 'not right now, maybe in the spring', 'maybe later', a day or " +
+            "time to check back, a no to one home that asks about others ('not that one, anything cheaper?'), a " +
+            "question, a complaint, a thanks, or anything that keeps the conversation going. If you can't tell " +
+            "whether it is a stop, answer true: the owner can undo a pause, but not a message sent after a no." +
             UNTRUSTED_CONVERSATION_NOTICE,
         },
         { role: "user", content: `Conversation:\n${formatTranscript(conversation)}` },

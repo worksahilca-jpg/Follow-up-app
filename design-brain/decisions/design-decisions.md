@@ -16393,3 +16393,25 @@ read how FollowUp talks. Reuses the existing row, list and grey-box parts; no ne
 Weak points: the grader is a model and can be wrong, so the full chats are shown, not just the score; the cases are
 invented, not real customers; and the email cases check the body only, not the greeting and sign-off the live email
 adds. Nothing customers see changes until the founder runs it and we fix what it finds.
+
+## 2026-10-30 — What the first full test run found, and the fixes
+
+The founder ran every accuracy test on the best model: emails 122/122, Instagram 44/44, replies 19/20, qualifying
+718/720 with 2 made up, whole conversations 31/44. Each miss was read against the code before anything was changed.
+Real mistakes, fixed: (1) "no thanks, we've put the whole thing on hold" read as keep going, five reads of five; the
+"no" check now counts a paused search with no time to come back as stop, and the owner's "not now" choice (A-329)
+decides the rest. (2) Qualifying wrote "This listing" as the area for "Is this still available?", and Calgary for a
+seller "moving to Calgary for work"; a pointing word is never an area (prompt and code), and a seller has no area
+(their home is "home"). (3) Follow-ups asked again about what the customer had said ("a fenced yard or a patio?",
+"would a semi work?"). Root cause: automatic follow-ups never got the "what they already told you" block that replies
+get. They do now, and the follow-up instruction forbids narrowing or widening what they said.
+The test's own mistakes (7 of the 13): the usual-model checker called good replies wrong ("asked again" for a price
+the customer never gave; "suggested another lender" for a reply that named none; the approved "just this one or a
+few in the area?" question from A-299). The checker now runs on the best model and has to quote the customer's own
+words before "asked again" counts. Two expectations were brought in line with approved rules: "just send me
+listings" may ask which part of the city; "Is this a bot?" expects the approved hand-to-a-person answer, never a
+denial.
+Open, the founder's call: "We'll try selling it ourselves" gets a warm goodbye; the test expects one no-strings offer of
+help. Recommended: offer help once. Weak points: the "lost offers" reply that the checker called generic (borderline,
+left as is), and the cases are still invented, not real customers.
+

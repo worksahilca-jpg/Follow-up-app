@@ -155,6 +155,30 @@ describe("merging what was read into what was known", () => {
     expect(mergeQualification(realtor, buyer, [known("home", "3 bed on Elm St", "the 3 bed on Elm St")], texts).items.map((i) => i.key)).toEqual(["side", "area"]);
   });
 
+  it("drops an area that only points at a home, but keeps 'around there' (accuracy test 2026-10-30)", () => {
+    const st = ["Is this still available?", "just a few around there"];
+    const merged = mergeQualification(realtor, null, [known("area", "This listing", "this")], st);
+    expect(merged.items.map((i) => i.key)).toEqual([]);
+    expect(mergeQualification(realtor, null, [known("area", "This listing", "Is this still available?")], st).items).toEqual([]);
+    expect(mergeQualification(realtor, null, [known("area", "Around the home they asked about", "around there")], st).items.map((i) => i.key)).toEqual(["area"]);
+    expect(criterionOf(realtor, "area")?.find).toContain("'This', 'it' or 'that one'");
+  });
+
+  it("never gives a seller an area: where they move to is their reason (accuracy test 2026-10-30)", () => {
+    const st = ["We're thinking of selling our townhouse at 12 Oak Cres because we're moving to Calgary for work."];
+    const seller = mergeQualification(
+      realtor,
+      null,
+      [known("side", "Selling", "selling our townhouse", "sell"), known("home", "12 Oak Cres", "12 Oak Cres"), known("area", "Calgary", "moving to Calgary")],
+      st
+    );
+    expect(seller.items.map((i) => i.key)).toEqual(["side", "home"]);
+    // Selling to buy keeps where they will buy.
+    const both = ["We need to sell our condo at 88 Queen St before we can buy a house in Oakville."];
+    const mixed = mergeQualification(realtor, null, [known("side", "Selling and buying", "sell our condo", "both"), known("area", "Oakville", "a house in Oakville")], both);
+    expect(mixed.items.map((i) => i.key)).toEqual(["side", "area"]);
+  });
+
   it("tells the reader that asking if a home is available is buying, and 'a few in the area' is the area (Oct 19 Talk test)", () => {
     expect(criterionOf(realtor, "side")?.find).toContain("Asking whether a home is still available");
     expect(criterionOf(realtor, "area")?.find).toContain("'a few in the area'");

@@ -44,7 +44,7 @@ describe("every AI call gets a row", () => {
       purpose: "score_lead",
       businessId: null,
       leadId: null,
-      modelRequested: "gpt-4o-mini",
+      modelRequested: "gpt-5.5", // every customer's work runs on the best model (founder, 2026-10-30)
       modelUsed: "gpt-4o-mini-2024-07-18",
       fellBack: false,
       ok: true,
@@ -89,7 +89,8 @@ describe("every AI call gets a row", () => {
   });
 
   it("logs a failed call as failed, with its status, and still fails the call", async () => {
-    create.mockRejectedValueOnce(Object.assign(new Error("rate limited"), { status: 429 }));
+    // The best model and the usual one it falls back to both refuse.
+    create.mockRejectedValue(Object.assign(new Error("rate limited"), { status: 429 }));
     await expect(ask("score_lead")).rejects.toThrow("rate limited");
     expect(sink.call.mock.calls[0][0]).toMatchObject({ ok: false, errorStatus: 429, modelUsed: null, responseId: null });
   });

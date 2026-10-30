@@ -33,13 +33,20 @@ export const MODEL = process.env.OPENAI_MODEL?.trim() || FALLBACK_MODEL;
 export const TRANSCRIBE_MODEL = "gpt-4o-mini-transcribe";
 
 /**
- * Which model writes the replies customers read (founder, 2026-10-29: "I don't want to compromise the quality"). On
- * the reply test that day GPT-5.5 passed 20 of 20, gpt-5.4-mini 18 and 19 on two runs, gpt-5.4 16, for about 4 cents
- * a reply against half a cent. Only the reply drafts use it (REPLY_JOBS); reading, sorting and checking stay on MODEL.
- * A setting like OPENAI_MODEL: OPENAI_REPLY_MODEL in Vercel changes it without a release.
+ * The model every customer's work runs on (founder, 2026-10-29: "I don't want to compromise the quality"; 2026-10-30:
+ * "We don't have to do cost cutting... I want the best quality"). On the reply test of 2026-10-29 GPT-5.5 passed 20 of
+ * 20, gpt-5.4-mini 18 and 19 on two runs, gpt-5.4 16. It wrote only the reply drafts until 2026-10-30; from then on it
+ * also sorts, reads, scores, checks and writes every other message. Roughly five times slower and seven times the
+ * price of gpt-5.4-mini: about $50 a month for a very busy inbox, almost all of it the email sorting.
+ * A setting like OPENAI_MODEL: OPENAI_BEST_MODEL in Vercel (or its older name, OPENAI_REPLY_MODEL) changes it without
+ * a release.
  */
-export const REPLY_MODEL = process.env.OPENAI_REPLY_MODEL?.trim() || "gpt-5.5";
-const REPLY_JOBS = new Set(["draft_reply"]);
+export const BEST_MODEL = process.env.OPENAI_BEST_MODEL?.trim() || process.env.OPENAI_REPLY_MODEL?.trim() || "gpt-5.5";
+/**
+ * The jobs that stay on MODEL. The test graders, so a score still means what it meant before and the best model is
+ * never marking its own work; and the demo box on the public website, which strangers can run and no customer reads.
+ */
+const USUAL_JOBS = new Set(["grade_reply", "grade_rule", "demo_reply"]);
 
 /**
  * GPT-5-family and o-series models think before they answer. They take
@@ -116,8 +123,8 @@ const SINK = Symbol.for("followup.aiCallSink");
 const CONTEXT = Symbol.for("followup.aiCallContext");
 /**
  * Who a call is for; `tag` marks a run that isn't a real customer's ("test" for the reply tests, "train" for the founder's
- * practice). `writeWith` is the reply test's side-by-side run: the jobs that write a reply use that model instead of
- * OPENAI_MODEL, and everything else (the grader included) stays on the usual one.
+ * practice). `writeWith` is the reply test's side-by-side run: the jobs that write a reply use that model, and everything
+ * else runs on the model it always does (the grader on the usual one).
  */
 type Where = { businessId?: string | null; leadId?: string | null; tag?: string; writeWith?: string };
 
@@ -183,9 +190,9 @@ export function getClient(purpose = "other", lessons?: AiLessons): OpenAI {
   (completions as unknown as { create: unknown }).create = async (body: ChatBody, options?: unknown) => {
     const here = where.getStore();
     const trying = here?.writeWith && WRITING.has(purpose) ? here.writeWith : null;
-    // A reply draft asked for the usual model gets the reply model; a caller that named another model keeps it.
-    const replying = !trying && REPLY_JOBS.has(purpose) && body.model === MODEL && REPLY_MODEL !== MODEL;
-    const model = trying ?? (replying ? REPLY_MODEL : body.model);
+    // A job asked for the usual model gets the best one; a caller that named another model keeps it.
+    const best = !trying && !USUAL_JOBS.has(purpose) && body.model === MODEL && BEST_MODEL !== MODEL;
+    const model = trying ?? (best ? BEST_MODEL : body.model);
     const started = Date.now();
     const log = (fellBack: boolean, answer: Answer | null, err?: unknown) =>
       toLog((sink) =>
@@ -215,11 +222,11 @@ export function getClient(purpose = "other", lessons?: AiLessons): OpenAI {
     } catch (err) {
       const status = (err as { status?: number }).status;
       // A model being tried never falls back: the test would score the known-good model under the new one's name.
-      // The reply model falls back on any failure (a refusal, a rate limit, an outage) to the usual model, so a
-      // customer's reply is written either way; any other model only on a refusal, to the known-good one.
+      // The best model falls back on any failure (a refusal, a rate limit, an outage) to the usual model, so a
+      // customer is sorted and answered either way; any other model only on a refusal, to the known-good one.
       const fallbackTo = trying
         ? null
-        : replying
+        : best
           ? body.model
           : model !== FALLBACK_MODEL && (status === 400 || status === 404)
             ? FALLBACK_MODEL

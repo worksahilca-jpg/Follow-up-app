@@ -14,7 +14,9 @@ import { useState } from "react";
  */
 
 type Failure = { name: string; detail: string };
-type Outcome = { headline: string; mustBeZero?: { label: string; count: number }; lines: string[]; failures: Failure[] };
+/** One whole conversation from the conversation test, shown in full so the founder can read how FollowUp talks. */
+type Chat = { name: string; ok: boolean; task: string; lines: { who: "in" | "out"; text: string }[]; next: string; detail: string };
+type Outcome = { headline: string; mustBeZero?: { label: string; count: number }[]; lines: string[]; failures: Failure[]; chats?: Chat[] };
 
 type Test = {
   id: string;
@@ -23,6 +25,8 @@ type Test = {
   route: string;
   /** Sent as JSON when set; the reply test takes { model } to write with a bigger model. */
   body?: Record<string, unknown>;
+  /** What "Running…" says about the wait; about two minutes unless set. */
+  takes?: string;
   read: (r: Record<string, unknown>) => Outcome;
 };
 
@@ -45,11 +49,52 @@ const readReplies = (r: Record<string, unknown>): Outcome => {
   ] as const;
   return {
     headline: `${num(r.passed)} of ${num(r.cases)} replies passed every check`,
-    mustBeZero: { label: "invented a fact", count: num(p.invented) },
+    mustBeZero: [{ label: "invented a fact", count: num(p.invented) }],
     lines: [...counts.filter(([n]) => n > 0).map(([n, label]) => `${n} ${label}`), ...(num(r.errors) ? [`${num(r.errors)} could not be checked`] : [])],
     failures: list<{ name: string; reply: string; detail: string }>(r.failures).map((f) => ({
       name: f.name,
       detail: `${f.detail}${f.reply ? ` · Reply: "${f.reply}"` : ""}`,
+    })),
+  };
+};
+
+/** The conversation test's answer (src/lib/conversationEval.ts): the counts, and every conversation in full. */
+const readConversations = (r: Record<string, unknown>): Outcome => {
+  const p = (r.problems ?? {}) as Record<string, unknown>;
+  const counts = [
+    [num(p.asked_again), "asked for something they'd already said"],
+    [num(p.empty_nudge), "sent a follow-up with no reason to read it"],
+    [num(p.repeated), "repeated an earlier message"],
+    [num(p.stopped_wrongly), "stopped a customer who only said \"not now\""],
+    [num(p.expectation), "missed what the conversation needed"],
+    [num(p.unanswered), "left a question unanswered"],
+    [num(p.language), "in the wrong language"],
+    [num(p.shape), "broke the DM shape rules"],
+    [num(p.missing_fact), "missed a fact you gave"],
+    [num(p.pressure), "pushed or rushed them"],
+    [num(p.brag), "praised you"],
+    [num(p.feeling), "missed or made up a feeling"],
+    [num(p.generic), "could go to anyone, or read like a bot"],
+  ] as const;
+  type Raw = { name: string; task: string; lines: { who: "in" | "out"; text: string }[]; next: string; problems: string[]; detail: string; error?: string };
+  const chats = list<Raw>(r.chats);
+  return {
+    headline: `${num(r.passed)} of ${num(r.cases)} conversations passed every check`,
+    mustBeZero: [
+      { label: "invented a fact", count: num(p.invented) },
+      { label: "kept going after a no", count: num(p.kept_going) },
+    ],
+    lines: [...counts.filter(([n]) => n > 0).map(([n, label]) => `${n} ${label}`), ...(num(r.errors) ? [`${num(r.errors)} could not be checked`] : [])],
+    failures: chats
+      .filter((c) => c.error || c.problems.length > 0)
+      .map((c) => ({ name: c.name, detail: c.error ? `couldn't run: ${c.error}` : `${c.detail}${c.next ? ` · FollowUp: "${c.next}"` : ""}` })),
+    chats: chats.map((c) => ({
+      name: c.name,
+      ok: !c.error && c.problems.length === 0,
+      task: c.task,
+      lines: list<{ who: "in" | "out"; text: string }>(c.lines),
+      next: c.error ? `Couldn't run: ${c.error}` : c.next,
+      detail: c.detail,
     })),
   };
 };
@@ -79,7 +124,7 @@ const TESTS: Test[] = [
     route: "/api/admin/dm-judge-eval",
     read: (r) => ({
       headline: `${num(r.right)} of ${num(r.cases)} right`,
-      mustBeZero: { label: "customers set aside", count: num(r.customersSetAside) },
+      mustBeZero: [{ label: "customers set aside", count: num(r.customersSetAside) }],
       lines: [`${num(r.chatsLetThrough)} chats let through that weren't customers`],
       failures: list<{ name: string; expected: string; got: string; reason: string }>(r.failures).map((f) => ({
         name: f.name,
@@ -96,7 +141,7 @@ const TESTS: Test[] = [
       const items = (r.items ?? {}) as Record<string, unknown>;
       return {
         headline: `${num(items.right)} of ${num(items.total)} answers right`,
-        mustBeZero: { label: "made up", count: num(items.madeUp) },
+        mustBeZero: [{ label: "made up", count: num(items.madeUp) }],
         lines: [
           `${num(items.missed)} missed`,
           `Labels right: ${num((r.sorting as Record<string, unknown> | undefined)?.right)} of ${num((r.sorting as Record<string, unknown> | undefined)?.total)}`,
@@ -116,6 +161,14 @@ const TESTS: Test[] = [
     what: "20 made-up realtor DMs, written by GPT-5.5, the AI live replies use. Each reply must answer every question, invent nothing, match their language, and sound like a person who read it: no pushing, no bragging.",
     route: "/api/admin/reply-eval",
     read: readReplies,
+  },
+  {
+    id: "conversations",
+    title: "Whole conversations: follow-ups, objections and \"no\"",
+    what: "About 40 made-up realtor chats: follow-ups after they go quiet, \"just browsing\", \"is this a bot?\", long chats, and the \"no\" that must stop everything. On top of the reply checks: never ask again what they said, never an empty \"just checking in\", never keep going after a no. Every chat comes back in full to read.",
+    route: "/api/admin/conversation-eval",
+    takes: "Takes about four minutes. Keep this page open.",
+    read: readConversations,
   },
   {
     id: "replies-gpt-5.4-mini",
@@ -175,7 +228,7 @@ function TestRow({ test }: { test: Test }) {
         </button>
       </div>
 
-      {state.status === "running" && <p className="text-sm text-ink-soft">Takes about two minutes. Keep this page open.</p>}
+      {state.status === "running" && <p className="text-sm text-ink-soft">{test.takes ?? "Takes about two minutes. Keep this page open."}</p>}
       {state.status === "error" && (
         <p className="text-sm" style={{ color: "var(--coral)" }}>
           {state.message}
@@ -184,11 +237,11 @@ function TestRow({ test }: { test: Test }) {
       {state.status === "done" && (
         <div className="flex flex-col gap-1.5 text-sm" aria-live="polite">
           <p className="text-base font-medium tabular-nums">{state.outcome.headline}</p>
-          {state.outcome.mustBeZero && (
-            <p className="tabular-nums" style={{ color: state.outcome.mustBeZero.count === 0 ? "var(--sage)" : "var(--coral)" }}>
-              {state.outcome.mustBeZero.count} {state.outcome.mustBeZero.label} (should be 0)
+          {state.outcome.mustBeZero?.map((z) => (
+            <p key={z.label} className="tabular-nums" style={{ color: z.count === 0 ? "var(--sage)" : "var(--coral)" }}>
+              {z.count} {z.label} (should be 0)
             </p>
-          )}
+          ))}
           {state.outcome.lines.map((line) => (
             <p key={line} className="text-ink-soft tabular-nums">
               {line}
@@ -202,6 +255,29 @@ function TestRow({ test }: { test: Test }) {
                   <li key={`${f.name}-${i}`} className="rounded-lg bg-card-2 px-3 py-2">
                     <span className="font-medium">{f.name}</span>
                     <span className="block text-ink-soft break-words">{f.detail}</span>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
+          {state.outcome.chats && state.outcome.chats.length > 0 && (
+            <details className="mt-1">
+              <summary className="cursor-pointer text-ink-soft">Read every conversation ({state.outcome.chats.length})</summary>
+              <ul className="mt-2 flex flex-col gap-3">
+                {state.outcome.chats.map((c, i) => (
+                  <li key={`${c.name}-${i}`} className="rounded-lg bg-card-2 px-3 py-3 flex flex-col gap-1.5">
+                    <p className="font-medium">{c.name}</p>
+                    <p style={{ color: c.ok ? "var(--sage)" : "var(--coral)" }}>{c.ok ? "Passed" : c.detail || "Didn't pass"}</p>
+                    {c.lines.map((l, j) => (
+                      <p key={j} className="break-words">
+                        <span className="text-ink-soft">{l.who === "in" ? "Customer: " : "Realtor: "}</span>
+                        {l.text}
+                      </p>
+                    ))}
+                    <p className="break-words">
+                      <span className="text-ink-soft">FollowUp ({c.task.toLowerCase()}): </span>
+                      {c.next}
+                    </p>
                   </li>
                 ))}
               </ul>

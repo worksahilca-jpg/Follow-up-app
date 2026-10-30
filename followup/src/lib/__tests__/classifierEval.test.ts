@@ -165,7 +165,9 @@ describe("runClassifierEval under the rate limit", () => {
       return { isProspect: true, reason: "r" };
     });
     const r = await runClassifierEval(judge as never, EVAL_CASES.slice(0, 20));
-    expect(EVAL_CONCURRENCY).toBeLessThanOrEqual(3);
+    // Six in fixed batches once lost 20 cases to 429s; five in a rolling pool, with 429s waited out, is the most since
+    // the move to GPT-5.5 (2026-10-30), which is slow enough that three would run past the route's five minutes.
+    expect(EVAL_CONCURRENCY).toBeLessThanOrEqual(5);
     expect(peak).toBeLessThanOrEqual(EVAL_CONCURRENCY);
     expect(r.passed + r.failed).toBe(20);
   });

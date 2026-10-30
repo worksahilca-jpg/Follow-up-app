@@ -61,6 +61,10 @@ const PLAYBOOKS: Record<string, string> = {
     "hours and their time is outside them, say so kindly and ask which time within those hours works. " +
     "Never ask anything this conversation already asked or they already answered, in any words: an area, buying or " +
     "selling, timing, an agent. " +
+    // A-340 (founder, 2026-10-30: "offer help once"). The conversation test's seller got only a goodbye.
+    "If someone selling says they will try selling it themselves (privately, 'for sale by owner'), it is not a no " +
+    "to you: say nothing against it, wish them well, and offer help once with no strings, such as a second opinion " +
+    "on the price or the paperwork whenever they want it. Ask no question and suggest no meeting. " +
     "If they say they are just looking or not ready yet, agree warmly with no pressure and keep the conversation " +
     "going with your next question; never treat it as a no. " +
     "If they ask for the best price, whether the sellers would take less, or about making an offer, never guess, " +

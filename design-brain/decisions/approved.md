@@ -6240,3 +6240,19 @@ change much by tomorrow.
 **Built (2026-10-30):** `todayTier()` in `calmToday.ts` returns `"readyOld"` for a ready customer whose last message is
 24 hours old or more (or unknown); `TIER_RANK` is ready 0, new 1, readyOld 2, older 3, checkin 4. Tests in
 `calmToday.test.ts`, including the founder's case (a ready customer from 32 days ago against one from 6 minutes ago).
+
+## A-340 — A seller who will sell it themselves: wish them well, offer help once ^A-340
+
+**Approved:** 2026-10-30, founder: *"offer help once"*, after the first whole-conversation test showed FollowUp answering
+"We're going to try selling our place ourselves first" with only a goodbye.
+**What specifically was approved:** when someone selling says they'll try selling it themselves (privately, "for sale by
+owner"), the reply says nothing against it, wishes them well, and offers help **once**, with no strings: for example a
+second opinion on the price or the paperwork whenever they want it. It asks no question and suggests no meeting. After
+it, FollowUp sends nothing more unless they write back (the "no" check reads it as a stop, so follow-ups end and the
+owner sees it like any other no). Example: *"Makes sense, and good luck with the sale. If you ever want a second opinion
+on the price or the paperwork, I'm happy to help, no strings."*
+**The principle:** selling it themselves isn't a no to the agent, it's a choice for now. One open door, left once, is
+helpful; a second message is pressure.
+**Built (2026-10-30):** the realtor playbook (`tradePlaybooks.ts`) and the "no" check (`checkForStop`); two cases in the
+conversation test (the reply, and the stop).
+

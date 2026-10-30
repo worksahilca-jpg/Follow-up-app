@@ -16415,3 +16415,11 @@ Open, the founder's call: "We'll try selling it ourselves" gets a warm goodbye; 
 help. Recommended: offer help once. Weak points: the "lost offers" reply that the checker called generic (borderline,
 left as is), and the cases are still invented, not real customers.
 
+## 2026-10-30 — Selling it themselves: offer help once (A-340)
+
+The founder chose "offer help once" for a seller who says they'll sell it themselves. Built in the realtor playbook and
+the "no" check: one warm reply with a no-strings offer of help and no question, then nothing more unless they write
+back. The conversation test now has the reply case (marked closing, so any question fails it) and a stop case. Weak
+point: only the live model run shows whether the writer keeps it to one offer with no question; the founder re-runs
+the tests after the merge.
+

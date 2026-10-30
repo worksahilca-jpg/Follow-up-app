@@ -323,6 +323,8 @@ export const CHAT_CASES: ChatCase[] = [
     channel: "email",
     lines: [said("We're going to try selling our place ourselves first.", 0)],
     next: reply,
+    // A-340: wish them well and offer help once, with no question.
+    closing: true,
     expect: "Says nothing against selling privately, and offers help with no strings.",
   },
   {
@@ -423,6 +425,14 @@ export const CHAT_CASES: ChatCase[] = [
   { name: "\"Please stop messaging me\"", group: "stop", channel: "email", lines: [STILL_LOOKING, said("Please stop messaging me, not interested.")], next: stop(true) },
   { name: "\"We bought a place\"", group: "stop", channel: "email", lines: [STILL_LOOKING, said("We bought a place last month actually!")], next: stop(true) },
   { name: "\"We went with another agent\"", group: "stop", channel: "instagram", lines: [STILL_LOOKING, said("We went with another agent, thanks")], next: stop(true) },
+  // A-340: the reply offers help once, then nothing follows unless they write back.
+  {
+    name: "\"We'll sell it ourselves\"",
+    group: "stop",
+    channel: "email",
+    lines: [wrote("Hi Sam, any thoughts on listing your townhouse this spring?", 2), said("We're going to try selling it ourselves first, thanks.")],
+    next: stop(true),
+  },
   { name: "\"On hold\"", group: "stop", channel: "email", lines: [STILL_LOOKING, said("no thanks, we've put the whole thing on hold")], next: stop(true) },
   { name: "Hinglish no", group: "stop", channel: "instagram", lines: [STILL_LOOKING, said("nahi chahiye bhai, thanks")], next: stop(true) },
   { name: "Spanish no", group: "stop", channel: "messenger", lines: [STILL_LOOKING, said("No gracias, ya compramos una casa.")], next: stop(true) },

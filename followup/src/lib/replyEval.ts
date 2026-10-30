@@ -385,11 +385,12 @@ export const gradeRule: RuleGrader = async (rule, c, reply) => {
 export const REPLY_EVAL_CONCURRENCY = 2;
 
 /**
- * Bigger models the reply test can write with, side by side with the usual one (founder, 2026-10-29: "lets improve
- * the model"). Only the replies are written by it; the grader stays on OPENAI_MODEL so both runs are marked alike, and
- * nothing a customer gets changes.
+ * Other models the reply test can write with, side by side with the reply model live replies use (REPLY_MODEL,
+ * src/lib/integrations/openaiClient.ts). Only the replies are written by it; the grader stays on OPENAI_MODEL so every
+ * run is marked alike, and nothing a customer gets changes. GPT-5.5 won the first comparison (2026-10-29) and became
+ * the reply model; the smaller two stay here so the choice can be checked again.
  */
-export const TRY_MODELS = ["gpt-5.4", "gpt-5.5"] as const;
+export const TRY_MODELS = ["gpt-5.4-mini", "gpt-5.4"] as const;
 export type TryModel = (typeof TRY_MODELS)[number];
 
 export function isTryModel(value: unknown): value is TryModel {

@@ -14,14 +14,21 @@ type Rule = RuleWithTests & { price: number };
 
 const ROUTE: Partial<Record<TestId, string>> = {
   conversations: "/api/admin/conversation-eval",
+  "conversations-other-kinds": "/api/admin/conversation-eval",
   replies: "/api/admin/reply-eval",
   qualifying: "/api/admin/qualification-eval",
   "email-check": "/api/admin/classifier-eval",
   "dm-check": "/api/admin/dm-judge-eval",
 };
 
+/** What the route needs besides the names, the same as the test's row on Accuracy tests sends. */
+const EXTRA: Partial<Record<TestId, Record<string, unknown>>> = {
+  "conversations-other-kinds": { kinds: "other" },
+};
+
 const WORD: Partial<Record<TestId, [string, string]>> = {
   conversations: ["conversation", "conversations"],
+  "conversations-other-kinds": ["conversation for another kind of business", "conversations for other kinds of business"],
   replies: ["reply", "replies"],
   qualifying: ["qualifying chat", "qualifying chats"],
   "email-check": ["email", "emails"],
@@ -47,7 +54,7 @@ function RuleRow({ rule }: { rule: Rule }) {
       for (const [test, names] of tests) {
         const route = ROUTE[test];
         if (!route) continue;
-        const res = await fetch(route, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ only: names }) });
+        const res = await fetch(route, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...EXTRA[test], only: names }) });
         const body = (await res.json().catch(() => null)) as Record<string, unknown> | null;
         if (!res.ok || !body) {
           out.error = typeof body?.message === "string" ? body.message : `A test stopped (error ${res.status}). Try again in a minute.`;

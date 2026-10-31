@@ -9,6 +9,7 @@ import { describe, expect, it, vi } from "vitest";
 vi.mock("@/lib/db", () => ({ prisma: {} }));
 
 import { AREAS, RULES, ruleTests, rulebook } from "@/lib/rulebook";
+import { CHAT_CASES } from "@/lib/conversationEval";
 
 /** A source file as one text: the pieces of a long instruction, split across "…" + "…" lines and comments, joined. */
 function joined(file: string): string {
@@ -42,5 +43,17 @@ describe("the rulebook", () => {
     for (const a of AREAS) expect(RULES.some((r) => r.area === a.id)).toBe(true);
     const book = rulebook();
     expect(book.find((r) => r.id === "realtor-negotiable")?.tests.conversations).toEqual(["\"Is the price negotiable?\""]);
+  });
+
+  it("runs other kinds of business as their own test, so a rule's run never lands in the realtors' history", () => {
+    const book = rulebook();
+    const kinds = book.find((r) => r.id === "each-kind-its-plan")!.tests;
+    expect(kinds.conversations).toBeUndefined();
+    expect(kinds["conversations-other-kinds"]?.length).toBeGreaterThan(5);
+    const otherKind = new Set(CHAT_CASES.filter((c) => !!c.trade).map((c) => c.name));
+    for (const r of book) {
+      for (const name of r.tests.conversations ?? []) expect(otherKind.has(name), `${r.id}: ${name}`).toBe(false);
+      for (const name of r.tests["conversations-other-kinds"] ?? []) expect(otherKind.has(name), `${r.id}: ${name}`).toBe(true);
+    }
   });
 });

@@ -492,14 +492,24 @@ const CASES: { [K in keyof Pickers]-?: readonly { name: string }[] } = {
   "dm-check": DM_JUDGE_CASES,
 };
 
-/** A rule's test cases, by test: the names a "run only these" sends. */
+/**
+ * A rule's test cases, by test: the names a "run only these" sends. Chats for other kinds of business are their own
+ * test, so a rule's run is saved beside the row it belongs to on Accuracy tests, never mixed into the realtors' one.
+ */
 export function ruleTests(rule: Rule): Partial<Record<TestId, string[]>> {
   const out: Partial<Record<TestId, string[]>> = {};
   for (const test of Object.keys(rule.tests) as (keyof Pickers)[]) {
     const pick = rule.tests[test] as ((c: { name: string }) => boolean) | undefined;
     if (!pick) continue;
-    const names = CASES[test].filter((c) => pick(c)).map((c) => c.name);
-    if (names.length) out[test] = names;
+    const picked = CASES[test].filter((c) => pick(c));
+    const split: [TestId, readonly { name: string }[]][] =
+      test === "conversations"
+        ? [
+            ["conversations", (picked as ChatCase[]).filter((c) => !c.trade)],
+            ["conversations-other-kinds", (picked as ChatCase[]).filter((c) => !!c.trade)],
+          ]
+        : [[test, picked]];
+    for (const [id, cases] of split) if (cases.length) out[id] = cases.map((c) => c.name);
   }
   return out;
 }

@@ -8,6 +8,7 @@ import { gatherWeeklyDigest, renderWeeklyDigest } from "@/lib/weeklyDigest";
 import { appUrl } from "@/lib/stripe";
 import { mapWithConcurrency } from "@/lib/concurrency";
 import { tooManyRecentActions } from "@/lib/rateLimit";
+import { sendFounderQualityWeek } from "@/lib/qualityWeek";
 
 export const maxDuration = 300;
 
@@ -46,6 +47,13 @@ export async function GET(request: NextRequest) {
   if (unauthorized) return unauthorized;
 
   const week = digestWeekOf(new Date());
+
+  // The founder's own week with real customers (src/lib/qualityWeek.ts): counts only, on its own, so a failure in
+  // either never stops the other. Resend's key names the week, so a repeat delivery of this run sends nothing twice.
+  const founderWeek = await sendFounderQualityWeek().catch((err) => {
+    reportCronFailure("weekly-digest", err, "founder quality week");
+    return null;
+  });
 
   const businesses = await prisma.business.findMany({
     where: { users: { some: { integrations: { some: { provider: "gmail", status: "connected" } } } } },
@@ -117,5 +125,5 @@ export async function GET(request: NextRequest) {
     }
   });
 
-  return NextResponse.json({ success: true, businesses: businesses.length, sent, skipped, alreadySent });
+  return NextResponse.json({ success: true, businesses: businesses.length, sent, skipped, alreadySent, founderWeek });
 }

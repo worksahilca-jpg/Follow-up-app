@@ -1,6 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import {
+  compareWithBefore,
+  estimateRunMicros,
+  flakyOnVersion,
+  priceWords,
+  runToShow,
+  steadyVerdict,
+  type RunSummary,
+  type TestHistory,
+  type TestId,
+} from "@/lib/testRunMath";
 
 /**
  * /admin → "Accuracy tests". One Run button per test, so the founder gets a
@@ -13,13 +24,14 @@ import { useState } from "react";
  * refuses requests from other sites; this page sits behind the same check.
  */
 
-type Failure = { name: string; detail: string };
+/** `caseName` is the test case a failure belongs to, when the name shown adds more (qualifying adds the item). */
+type Failure = { name: string; detail: string; caseName?: string };
 /** One whole conversation from the conversation test, shown in full so the founder can read how FollowUp talks. */
-type Chat = { name: string; ok: boolean; task: string; lines: { who: "in" | "out"; text: string }[]; next: string; detail: string };
+type Chat = { name: string; ok: boolean; task: string; trade?: string; lines: { who: "in" | "out"; text: string }[]; next: string; detail: string };
 type Outcome = { headline: string; mustBeZero?: { label: string; count: number }[]; lines: string[]; failures: Failure[]; chats?: Chat[] };
 
 type Test = {
-  id: string;
+  id: TestId;
   title: string;
   what: string;
   route: string;
@@ -76,7 +88,7 @@ const readConversations = (r: Record<string, unknown>): Outcome => {
     [num(p.feeling), "missed or made up a feeling"],
     [num(p.generic), "could go to anyone, or read like a bot"],
   ] as const;
-  type Raw = { name: string; task: string; lines: { who: "in" | "out"; text: string }[]; next: string; problems: string[]; detail: string; error?: string };
+  type Raw = { name: string; task: string; trade?: string; lines: { who: "in" | "out"; text: string }[]; next: string; problems: string[]; detail: string; error?: string };
   const chats = list<Raw>(r.chats);
   return {
     headline: `${num(r.passed)} of ${num(r.cases)} conversations passed every check`,
@@ -92,6 +104,7 @@ const readConversations = (r: Record<string, unknown>): Outcome => {
       name: c.name,
       ok: !c.error && c.problems.length === 0,
       task: c.task,
+      trade: c.trade,
       lines: list<{ who: "in" | "out"; text: string }>(c.lines),
       next: c.error ? `Couldn't run: ${c.error}` : c.next,
       detail: c.detail,
@@ -150,6 +163,7 @@ const TESTS: Test[] = [
         ],
         failures: list<{ name: string; item: string; expected: string; got: string; detail: string }>(r.failures).map((f) => ({
           name: `${f.name} · ${f.item}`,
+          caseName: f.name,
           detail: `should be ${f.expected}, got ${f.got}${f.detail ? `: ${f.detail}` : ""}`,
         })),
       };
@@ -165,9 +179,25 @@ const TESTS: Test[] = [
   {
     id: "conversations",
     title: "Whole conversations: follow-ups, objections and \"no\"",
-    what: "About 40 made-up realtor chats: follow-ups after they go quiet, \"just browsing\", \"is this a bot?\", long chats, and the \"no\" that must stop everything. On top of the reply checks: never ask again what they said, never an empty \"just checking in\", never keep going after a no. Every chat comes back in full to read.",
+    what: "About 45 made-up realtor chats: follow-ups after they go quiet, \"just browsing\", \"is this a bot?\", long chats, and the \"no\" that must stop everything. On top of the reply checks: never ask again what they said, never an empty \"just checking in\", never keep going after a no. Every chat comes back in full to read.",
     route: "/api/admin/conversation-eval",
     takes: "Takes about four minutes. Keep this page open.",
+    read: readConversations,
+  },
+  {
+    id: "conversations-other-kinds",
+    title: "Whole conversations for other kinds of business",
+    what: "Made-up chats for a contractor, a dental clinic, a lawyer, a mortgage broker, a marketing agency and a photographer: each kind's \"never\" (no legal or medical advice, no rates, no prices nobody gave) and the meeting it works toward. The same checks as the row above.",
+    route: "/api/admin/conversation-eval",
+    body: { kinds: "other" },
+    read: readConversations,
+  },
+  {
+    id: "conversations-real",
+    title: "Real conversations",
+    what: "The real chats kept below, with each owner's OK and names removed: FollowUp's real writers answer them the same way, with the same checks.",
+    route: "/api/admin/conversation-eval",
+    body: { kinds: "real" },
     read: readConversations,
   },
   {
@@ -188,28 +218,93 @@ const TESTS: Test[] = [
   },
 ];
 
-type State = { status: "idle" } | { status: "running" } | { status: "done"; outcome: Outcome } | { status: "error"; message: string };
 
-function TestRow({ test }: { test: Test }) {
-  const [state, setState] = useState<State>({ status: "idle" });
+const dollars = (micros: number) => `$${(micros / 1_000_000).toFixed(2)}`;
 
-  async function run() {
-    setState({ status: "running" });
+/** A saved time in the reader's own clock. The server renders it in its own, so the browser's wins quietly. */
+function When({ iso }: { iso: string }) {
+  return (
+    <time dateTime={iso} suppressHydrationWarning>
+      {new Date(iso).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+    </time>
+  );
+}
+
+/** A saved result read the way a fresh one is; a result saved by an older version that no longer reads shows nothing. */
+function readSaved(test: Test, result: unknown): Outcome | null {
+  if (!result || typeof result !== "object") return null;
+  try {
+    return test.read(result as Record<string, unknown>);
+  } catch {
+    return null;
+  }
+}
+
+type Mode = "all" | "failed" | "recheck";
+
+/** A quiet text button: the secondary actions under a result (one outlined button per row is the main one). */
+function QuietButton({ onClick, disabled, children }: { onClick: () => void; disabled: boolean; children: React.ReactNode }) {
+  return (
+    <button type="button" onClick={onClick} disabled={disabled} className="min-h-[44px] text-left text-sm font-medium underline underline-offset-4 disabled:opacity-60">
+      {children}
+    </button>
+  );
+}
+
+function kindWords(r: RunSummary): string {
+  if (r.kind === "recheck") return `checked ${new Set(r.ran.map((n) => n.replace(/ · try \d+$/, ""))).size} failures twice more`;
+  if (r.kind === "only") return `only ${r.cases} that failed`;
+  return `all ${r.cases}`;
+}
+
+function TestRow({ test, total, history }: { test: Test; total: number; history: TestHistory }) {
+  const first = runToShow(history.runs);
+  const [runs, setRuns] = useState<RunSummary[]>(history.runs);
+  const [shownId, setShownId] = useState<string | null>(first?.id ?? null);
+  const [outcome, setOutcome] = useState<Outcome | null>(() => (history.shown ? readSaved(test, history.shown.result) : null));
+  const [busy, setBusy] = useState<Mode | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [unsaved, setUnsaved] = useState(false);
+
+  const shown = runs.find((r) => r.id === shownId) ?? null;
+  const recheck = shown ? (runs.find((r) => r.kind === "recheck" && r.recheckOf === shown.id) ?? null) : null;
+  const steady = recheck ? steadyVerdict(recheck) : null;
+  const change = shown ? compareWithBefore(shown, runs) : null;
+  const flaky = new Set([...flakyOnVersion(runs, shown?.version ?? null), ...(steady ? [...steady.passedOnRetry, ...steady.flaky] : [])]);
+  const failedNames = shown?.failed ?? [];
+  const priceAll = priceWords(estimateRunMicros(test.id, runs, total, total));
+
+  async function run(mode: Mode) {
+    if (mode !== "all" && (!shown || failedNames.length === 0)) return;
+    setBusy(mode);
+    setError(null);
+    const ask = mode === "failed" ? { only: failedNames } : mode === "recheck" ? { only: failedNames, repeat: 2, recheckOf: shown?.id } : {};
     try {
-      const res = await fetch(
-        test.route,
-        test.body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(test.body) } : { method: "POST" }
-      );
+      const res = await fetch(test.route, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...test.body, ...ask }) });
       const body = (await res.json().catch(() => null)) as Record<string, unknown> | null;
       if (!res.ok || !body) {
-        setState({ status: "error", message: typeof body?.message === "string" ? body.message : `The test stopped (error ${res.status}). Try again in a minute.` });
+        setError(typeof body?.message === "string" ? body.message : `The test stopped (error ${res.status}). Try again in a minute.`);
         return;
       }
-      setState({ status: "done", outcome: test.read(body) });
+      const saved = (body.saved ?? null) as RunSummary | null;
+      if (saved) setRuns((rs) => [saved, ...rs]);
+      // A recheck changes the verdict on the run it checked; the run shown stays.
+      if (mode === "recheck") {
+        if (!saved) setError("The recheck finished but couldn't be kept, so its verdict isn't shown. Try again in a minute.");
+        return;
+      }
+      setOutcome(test.read(body));
+      setShownId(saved?.id ?? null);
+      setUnsaved(!saved);
     } catch {
-      setState({ status: "error", message: "The test didn't finish. Check your connection and try again." });
+      setError("The test didn't finish. Check your connection and try again.");
+    } finally {
+      setBusy(null);
     }
   }
+
+  const failures = outcome?.failures ?? [];
+  const earlier = runs.filter((r) => r.id !== shown?.id);
 
   return (
     <div className="flex flex-col gap-3 border-t border-line px-5 py-4 first:border-t-0">
@@ -220,57 +315,128 @@ function TestRow({ test }: { test: Test }) {
         </div>
         <button
           type="button"
-          onClick={run}
-          disabled={state.status === "running"}
+          onClick={() => run("all")}
+          disabled={busy !== null || total === 0}
           className="shrink-0 rounded-full border border-ink px-4 min-h-[44px] text-sm font-medium disabled:opacity-60"
         >
-          {state.status === "running" ? "Running…" : state.status === "idle" ? "Run" : "Run again"}
+          {busy === "all" ? "Running…" : shown || outcome ? "Run again" : "Run"}
+          <span className="block text-xs font-normal text-ink-soft">{total === 0 ? "nothing to run yet" : priceAll}</span>
         </button>
       </div>
 
-      {state.status === "running" && <p className="text-sm text-ink-soft">{test.takes ?? "Takes about two minutes. Keep this page open."}</p>}
-      {state.status === "error" && (
-        <p className="text-sm" style={{ color: "var(--coral)" }}>
-          {state.message}
+      {busy && (
+        <p className="text-sm text-ink-soft">
+          {busy === "all" ? (test.takes ?? "Takes about two minutes. Keep this page open.") : "Takes a minute or two. Keep this page open."}
         </p>
       )}
-      {state.status === "done" && (
+      {error && (
+        <p className="text-sm" style={{ color: "var(--coral)" }}>
+          {error}
+        </p>
+      )}
+
+      {outcome && (
         <div className="flex flex-col gap-1.5 text-sm" aria-live="polite">
-          <p className="text-base font-medium tabular-nums">{state.outcome.headline}</p>
-          {state.outcome.mustBeZero?.map((z) => (
+          <p className="text-xs text-ink-soft tabular-nums">
+            {shown ? (
+              <>
+                {shown.kind === "only" ? "Only the ones that failed, run " : "Run "}
+                <When iso={shown.createdAt} />
+                {shown.costMicros != null ? ` · cost ${dollars(shown.costMicros)}` : ""}
+                {shown.version ? ` · version ${shown.version}` : ""}
+              </>
+            ) : unsaved ? (
+              "This run finished but couldn't be kept: it will be gone after a refresh."
+            ) : null}
+          </p>
+          <p className="text-base font-medium tabular-nums">{outcome.headline}</p>
+          {outcome.mustBeZero?.map((z) => (
             <p key={z.label} className="tabular-nums" style={{ color: z.count === 0 ? "var(--sage)" : "var(--coral)" }}>
               {z.count} {z.label} (should be 0)
             </p>
           ))}
-          {state.outcome.lines.map((line) => (
+          {outcome.lines.map((line) => (
             <p key={line} className="text-ink-soft tabular-nums">
               {line}
             </p>
           ))}
-          {state.outcome.failures.length > 0 && (
+
+          {change && (change.nowPassing.length > 0 || change.nowFailing.length > 0) && (
             <details className="mt-1">
-              <summary className="cursor-pointer text-ink-soft">See what went wrong ({state.outcome.failures.length})</summary>
-              <ul className="mt-2 flex flex-col gap-2">
-                {state.outcome.failures.map((f, i) => (
-                  <li key={`${f.name}-${i}`} className="rounded-lg bg-card-2 px-3 py-2">
-                    <span className="font-medium">{f.name}</span>
-                    <span className="block text-ink-soft break-words">{f.detail}</span>
+              <summary className="cursor-pointer text-ink-soft">
+                Since <When iso={change.before.createdAt} />: {change.nowPassing.length} now pass{change.nowPassing.length === 1 ? "es" : ""}, {change.nowFailing.length} now fail
+                {change.nowFailing.length === 1 ? "s" : ""}
+              </summary>
+              <ul className="mt-2 flex flex-col gap-1">
+                {change.nowPassing.map((n) => (
+                  <li key={`p-${n}`} className="break-words">
+                    <span style={{ color: "var(--sage)" }}>Now passes: </span>
+                    {n}
+                  </li>
+                ))}
+                {change.nowFailing.map((n) => (
+                  <li key={`f-${n}`} className="break-words">
+                    <span style={{ color: "var(--coral)" }}>Now fails: </span>
+                    {n}
                   </li>
                 ))}
               </ul>
             </details>
           )}
-          {state.outcome.chats && state.outcome.chats.length > 0 && (
+          {change && change.nowPassing.length === 0 && change.nowFailing.length === 0 && (
+            <p className="text-ink-soft">
+              The same cases passed and failed as on <When iso={change.before.createdAt} />.
+            </p>
+          )}
+
+          {steady && shown && (
+            <div className="mt-1 flex flex-col gap-0.5">
+              <p className="font-medium tabular-nums">
+                Checked twice more: {shown.kind === "full" ? `${shown.passed + steady.passedOnRetry.length} of ${shown.cases} pass the 2-of-3 rule. ` : ""}
+                {steady.stillFailing.length} failed again
+                {steady.passedOnRetry.length > 0 ? `, ${steady.passedOnRetry.length} passed both times` : ""}.
+              </p>
+              <p className="text-ink-soft">
+                A case counts as failing only when it fails at least 2 times of 3. One that passed both extra times counts as passing and is marked
+                flaky: the AI or its checker varies on it, so look before fixing.
+              </p>
+            </div>
+          )}
+
+          {failures.length > 0 && (
             <details className="mt-1">
-              <summary className="cursor-pointer text-ink-soft">Read every conversation ({state.outcome.chats.length})</summary>
+              <summary className="cursor-pointer text-ink-soft">See what went wrong ({failures.length})</summary>
+              <ul className="mt-2 flex flex-col gap-2">
+                {failures.map((f, i) => {
+                  const name = f.caseName ?? f.name;
+                  const steadyNote = steady?.passedOnRetry.includes(name) ? "passed both extra times" : steady?.stillFailing.includes(name) ? "failed again" : null;
+                  return (
+                    <li key={`${f.name}-${i}`} className="rounded-lg bg-card-2 px-3 py-2">
+                      <span className="font-medium">{f.name}</span>
+                      {(flaky.has(name) || steadyNote) && (
+                        <span className="text-ink-soft">
+                          {" "}
+                          · {[flaky.has(name) ? "flaky" : null, steadyNote].filter(Boolean).join(", ")}
+                        </span>
+                      )}
+                      <span className="block text-ink-soft break-words">{f.detail}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </details>
+          )}
+          {outcome.chats && outcome.chats.length > 0 && (
+            <details className="mt-1">
+              <summary className="cursor-pointer text-ink-soft">Read every conversation ({outcome.chats.length})</summary>
               <ul className="mt-2 flex flex-col gap-3">
-                {state.outcome.chats.map((c, i) => (
+                {outcome.chats.map((c, i) => (
                   <li key={`${c.name}-${i}`} className="rounded-lg bg-card-2 px-3 py-3 flex flex-col gap-1.5">
                     <p className="font-medium">{c.name}</p>
                     <p style={{ color: c.ok ? "var(--sage)" : "var(--coral)" }}>{c.ok ? "Passed" : c.detail || "Didn't pass"}</p>
                     {c.lines.map((l, j) => (
                       <p key={j} className="break-words">
-                        <span className="text-ink-soft">{l.who === "in" ? "Customer: " : "Realtor: "}</span>
+                        <span className="text-ink-soft">{l.who === "in" ? "Customer: " : c.trade && c.trade !== "Real estate" ? "Business: " : "Realtor: "}</span>
                         {l.text}
                       </p>
                     ))}
@@ -283,18 +449,45 @@ function TestRow({ test }: { test: Test }) {
               </ul>
             </details>
           )}
+
+          {shown && failedNames.length > 0 && (
+            <div className="mt-1 flex flex-wrap gap-x-5">
+              <QuietButton onClick={() => run("failed")} disabled={busy !== null}>
+                {busy === "failed" ? "Running…" : `Run only the ${failedNames.length} that failed (${priceWords(estimateRunMicros(test.id, runs, total, failedNames.length))})`}
+              </QuietButton>
+              {!recheck && (
+                <QuietButton onClick={() => run("recheck")} disabled={busy !== null}>
+                  {busy === "recheck" ? "Checking…" : `Check them twice more (${priceWords(estimateRunMicros(test.id, runs, total, failedNames.length, 2))})`}
+                </QuietButton>
+              )}
+            </div>
+          )}
         </div>
+      )}
+
+      {earlier.length > 0 && (
+        <details className="text-sm">
+          <summary className="cursor-pointer text-ink-soft min-h-[44px] flex items-center">Earlier runs ({earlier.length})</summary>
+          <ul className="mt-1 flex flex-col gap-1 tabular-nums">
+            {earlier.map((r) => (
+              <li key={r.id} className="text-ink-soft">
+                <When iso={r.createdAt} /> · {kindWords(r)} · {r.passed} passed{r.costMicros != null ? ` · ${dollars(r.costMicros)}` : ""}
+                {r.version ? ` · ${r.version}` : ""}
+              </li>
+            ))}
+          </ul>
+        </details>
       )}
     </div>
   );
 }
 
-/** The tests as one list; /admin/tests gives it its title and the sentence about what it does. */
-export default function AccuracyTests() {
+/** The tests as one list; /admin/tests gives it its title, loads each test's saved runs and counts its cases. */
+export default function AccuracyTests({ history, totals }: { history: Record<TestId, TestHistory>; totals: Record<TestId, number> }) {
   return (
     <div className="box overflow-hidden">
       {TESTS.map((t) => (
-        <TestRow key={t.id} test={t} />
+        <TestRow key={t.id} test={t} total={totals[t.id]} history={history[t.id] ?? { runs: [], shown: null }} />
       ))}
     </div>
   );

@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { isPlatformAdmin } from "@/lib/platformAdmin";
-import { runDmJudgeEval } from "@/lib/dmJudgeEval";
+import { DM_JUDGE_CASES, runDmJudgeEval } from "@/lib/dmJudgeEval";
+import { runTest } from "@/lib/testRuns";
 
 // About thirty cases (src/lib/dmJudgeEval.ts), up to two model calls each, two at a time.
 export const maxDuration = 300;
@@ -29,8 +30,11 @@ export async function POST(request: NextRequest) {
   if (!process.env.OPENAI_API_KEY) {
     return NextResponse.json({ success: false, message: "OPENAI_API_KEY is not set on this deployment." }, { status: 503 });
   }
-  const result = await runDmJudgeEval();
-  return NextResponse.json({ success: result.customersSetAside === 0, ...result });
+  // Every case, or only the ones named; saved with its cost (src/lib/testRuns.ts). The judge has no "couldn't run".
+  const out = await runTest("dm-check", await request.json().catch(() => null), DM_JUDGE_CASES, (cases) => runDmJudgeEval(undefined, cases), () => 0);
+  if (!out.ok) return NextResponse.json({ success: false, message: out.error }, { status: 400 });
+  const { result, saved } = out;
+  return NextResponse.json({ success: result.customersSetAside === 0, ...result, saved });
 }
 
 export async function GET() {

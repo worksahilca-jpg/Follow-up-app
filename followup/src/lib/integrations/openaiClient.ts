@@ -129,7 +129,30 @@ const CONTEXT = Symbol.for("followup.aiCallContext");
  * practice). `writeWith` is the reply test's side-by-side run: the jobs that write a reply use that model, and everything
  * else runs on the model it always does (the grader on the usual one).
  */
-type Where = { businessId?: string | null; leadId?: string | null; tag?: string; writeWith?: string };
+type Where = { businessId?: string | null; leadId?: string | null; tag?: string; writeWith?: string; tally?: AiTally };
+
+/**
+ * The calls one accuracy test made, counted as they happen (src/lib/testRuns.ts prices them), so the founder sees
+ * what a run cost and what the next one will (founder, 2026-10-30, after $41 went on tests in a day: "bro thats too
+ * much"). Tokens per model actually used; a call that failed counts as a call with no tokens.
+ */
+export type AiTally = { calls: number; tokens: Record<string, { input: number; output: number }> };
+
+export function newAiTally(): AiTally {
+  return { calls: 0, tokens: {} };
+}
+
+function countInto(tally: AiTally | undefined, model: string, answer: Answer | null): void {
+  if (!tally) return;
+  tally.calls += 1;
+  const used = answer?.model ?? model;
+  const input = answer?.usage?.prompt_tokens ?? 0;
+  const output = answer?.usage?.completion_tokens ?? 0;
+  if (!answer) return;
+  const t = (tally.tokens[used] ??= { input: 0, output: 0 });
+  t.input += input;
+  t.output += output;
+}
 
 /** The jobs that write the words a customer reads; `writeWith` changes only these. */
 const WRITING = new Set(["draft_reply", "draft_first_reply"]);
@@ -206,8 +229,9 @@ export function getClient(purpose = "other", lessons?: AiLessons): OpenAI {
     const best = !trying && !USUAL_JOBS.has(purpose) && body.model === MODEL && BEST_MODEL !== MODEL;
     const model = trying ?? (best ? BEST_MODEL : body.model);
     const started = Date.now();
-    const log = (fellBack: boolean, answer: Answer | null, err?: unknown) =>
-      toLog((sink) =>
+    const log = (fellBack: boolean, answer: Answer | null, err?: unknown) => {
+      countInto(here?.tally, fellBack ? body.model : model, answer);
+      return toLog((sink) =>
         sink.call({
           purpose: here?.tag ? `${here.tag}:${purpose}` : purpose,
           businessId: here?.businessId ?? null,
@@ -227,6 +251,7 @@ export function getClient(purpose = "other", lessons?: AiLessons): OpenAI {
           responseId: answer?.id ?? null,
         })
       );
+    };
     try {
       const answer = await create(adaptForModel(body, model), options);
       await log(false, answer as Answer);

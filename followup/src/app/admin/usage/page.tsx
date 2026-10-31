@@ -4,6 +4,8 @@ import { PageHeader } from "@/components/PageHeader";
 import { getPlatformAdminData } from "@/lib/admin-data";
 import { getProductUsage } from "@/lib/admin-usage";
 import { getNotCustomerStats, NOT_CUSTOMER_CHANNELS, type NotCustomerAnswer } from "@/lib/notCustomerStats";
+import { gatherQualityWeek } from "@/lib/qualityWeek";
+import QualityWeekSection from "@/components/admin/QualityWeekSection";
 
 /** The answers to "Who is this?" as the founder reads them (A-259). */
 const ANSWER_LABEL: Record<NotCustomerAnswer, string> = {
@@ -24,13 +26,24 @@ function channelLabel(provider: string): string {
 export default async function UsagePage() {
   // getPlatformAdminData() checks the founder first; the rest read after it.
   const data = await getPlatformAdminData();
-  const [usage, notCustomer] = await Promise.all([getProductUsage(), getNotCustomerStats(30)]);
+  const [usage, notCustomer, week] = await Promise.all([
+    getProductUsage(),
+    getNotCustomerStats(30),
+    gatherQualityWeek().catch((err) => {
+      console.warn("Usage: couldn't read this week's quality:", err instanceof Error ? err.message : err);
+      return null;
+    }),
+  ]);
 
   return (
     <div>
       <PageHeader title="Usage" subtitle="Every business together. Counts only, no names or messages." />
 
-      <ProductUsageSection usage={usage} />
+      <QualityWeekSection week={week} />
+
+      <div className="mt-10">
+        <ProductUsageSection usage={usage} />
+      </div>
 
       <section id="not-a-customer" className="mt-10 scroll-mt-6">
         <h2 className="font-display text-xl">&ldquo;Not a customer&rdquo;, and why</h2>

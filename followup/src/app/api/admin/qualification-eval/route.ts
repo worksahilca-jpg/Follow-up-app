@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { isPlatformAdmin } from "@/lib/platformAdmin";
-import { runQualificationEval } from "@/lib/qualificationEval";
+import { QUAL_EVAL_CASES, runQualificationEval } from "@/lib/qualificationEval";
+import { runTest } from "@/lib/testRuns";
 
 // About fifty cases (src/lib/qualificationEval.ts), one model call each,
 // three at a time, with rate-limit refusals waited out and retried.
@@ -40,11 +41,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, message: "OPENAI_API_KEY is not set on this deployment." }, { status: 503 });
   }
 
-  const result = await runQualificationEval();
+  // Every case, or only the ones named; saved with its cost (src/lib/testRuns.ts).
+  const out = await runTest("qualifying", await request.json().catch(() => null), QUAL_EVAL_CASES, (cases) => runQualificationEval(undefined, cases), (r) => r.errors);
+  if (!out.ok) return NextResponse.json({ success: false, message: out.error }, { status: 400 });
+  const { result, saved } = out;
   // "Success" is nothing made up and nothing broken. Misses are reported
   // but don't fail it: a missed item is asked about once more, while a
   // made-up one is shown to the owner as fact.
-  return NextResponse.json({ success: result.items.madeUp === 0 && result.errors === 0, ...result });
+  return NextResponse.json({ success: result.items.madeUp === 0 && result.errors === 0, ...result, saved });
 }
 
 export async function GET() {

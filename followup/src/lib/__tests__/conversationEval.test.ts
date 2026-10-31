@@ -253,3 +253,45 @@ describe("the no", () => {
     expect(r.errors).toBe(1);
   });
 });
+
+describe("other kinds of business (night plan A2)", () => {
+  const contractor: ChatCase = {
+    name: "contractor asks a price",
+    trade: "Home services (contractor, cleaning, etc.)",
+    group: "context",
+    channel: "email",
+    lines: [{ who: "in", text: "Roughly how much for a walk-in shower?", daysAgo: 0 }],
+    next: { kind: "reply" },
+    asks: ["roughly how much it costs"],
+  };
+
+  it("writes with that kind's playbook and its own lessons, and never reads a realtor's checklist", async () => {
+    const email = emailSays("It depends on the space, so I'd want to see it first. Could I come by this week?");
+    const know = vi.fn(async () => null);
+    const lessons = { examples: [], rules: ["Always offer a free visit."] };
+    const out = await runConversationEval([contractor], {
+      deps: { email, grade: grades(), know },
+      lessons: { examples: [], rules: ["realtor rule"] },
+      lessonsByTrade: { "Home services (contractor, cleaning, etc.)": lessons },
+      ...noWait,
+      concurrency: 1,
+    });
+    expect(out.passed).toBe(1);
+    expect(out.chats[0].trade).toBe("Home services (contractor, cleaning, etc.)");
+    const arg = (email as unknown as { mock: { calls: unknown[][] } }).mock.calls[0][0] as { trade: string; rules: string[]; known: unknown };
+    expect(arg.trade).toBe("Home services (contractor, cleaning, etc.)");
+    expect(arg.rules).toEqual(["Always offer a free visit."]);
+    expect(arg.known).toBeNull();
+    expect(know).not.toHaveBeenCalled();
+  });
+
+  it("covers every kind with a plan, apart from realtors' own run", async () => {
+    const { OTHER_KIND_CHAT_CASES, REALTOR_CHAT_CASES } = await import("@/lib/conversationEval");
+    const kinds = new Set(OTHER_KIND_CHAT_CASES.map((c) => c.trade));
+    for (const k of ["Mortgage brokerage", "Home services (contractor, cleaning, etc.)", "Dental / medical clinic", "Legal", "Marketing agency"]) {
+      expect(kinds.has(k)).toBe(true);
+    }
+    expect(REALTOR_CHAT_CASES.every((c) => !c.trade)).toBe(true);
+    expect(REALTOR_CHAT_CASES.length + OTHER_KIND_CHAT_CASES.length).toBe(CHAT_CASES.length);
+  });
+});

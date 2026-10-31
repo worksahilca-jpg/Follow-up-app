@@ -176,12 +176,20 @@ describe("the plans the engine runs (A-245)", () => {
   });
 
   it("keeps a Later customer going once a month after day 30, on Long", async () => {
-    const later = { v: 2, template: "real_estate", items: [], tier: "later" };
-    const messages = [row("inbound", 62 * D), row("outbound", 61 * D), ...[60, 58, 54, 47, 31].map((d) => row("outbound", d * D))];
-    hourly({ silence: [aLead(messages, { qualification: later })] });
-    const r = await runAutomationForBusiness("biz1");
-    expect(r.sent).toBe(1);
-    expect(hintGiven()).toMatch(/follow-up 6 of 10/);
+    // A fixed day: the plan's length counts six calendar months from their last message, so from a real "now" it
+    // came out one step shorter whenever those six months ended in February (the run on 2026-10-31 failed).
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-15T15:00:00Z"));
+    try {
+      const later = { v: 2, template: "real_estate", items: [], tier: "later" };
+      const messages = [row("inbound", 62 * D), row("outbound", 61 * D), ...[60, 58, 54, 47, 31].map((d) => row("outbound", d * D))];
+      hourly({ silence: [aLead(messages, { qualification: later })] });
+      const r = await runAutomationForBusiness("biz1");
+      expect(r.sent).toBe(1);
+      expect(hintGiven()).toMatch(/follow-up 6 of 10/);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("uses the days the owner changed", async () => {

@@ -72,7 +72,13 @@ a booked call or visit; the owner closes.
 
 ## Where we are (update at the end of every task)
 
-**Last updated: 2026-10-30**
+**Last updated: 2026-10-31**
+
+- **The improvement plan (Oct 31):** founder: "Find all the ways that are weak … so that in future … we can train
+  anything or fix anything, keep it organised." The list, with the order, is
+  `followup/research/product/2026-10-31-make-followup-easy-to-train-and-fix.md` (A measure, B fix, C learn from real
+  use, D the steps, E safety and cost, F organisation). Next after the credits alert: save every test run + "run only
+  what failed" + price on the button.
 
 - **Founder, Oct 30: "we need to develop our structure as well … keep in mind that too."** Not only the rulebook
   (the prompts the tests fix) but the whole pipeline: 1 sort → 2 customer card → 3 understand (qualify) → 4 "no"

@@ -19,7 +19,12 @@ vi.mock("@/lib/auth", () => ({ authOptions: {} }));
 const { runClassifierEval } = vi.hoisted(() => ({
   runClassifierEval: vi.fn(async () => ({ total: 1, passed: 1, failed: 0, errors: 0, failures: [] })),
 }));
-vi.mock("@/lib/classifierEval", () => ({ runClassifierEval }));
+vi.mock("@/lib/classifierEval", () => ({ runClassifierEval, EVAL_CASES: [{ name: "a" }] }));
+// Each run is kept (src/lib/testRuns.ts); here the table answers with what it was given.
+vi.mock("@/lib/db", () => ({
+  prisma: { testRun: { create: vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({ id: "run-1", createdAt: new Date("2026-10-31T08:00:00Z"), ...data })) } },
+}));
+
 
 const ROUTE_URL = "https://app.example.com/api/admin/classifier-eval";
 const ADMIN = { user: { email: "founder@example.com" } };

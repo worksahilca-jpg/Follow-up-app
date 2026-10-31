@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { isPlatformAdmin } from "@/lib/platformAdmin";
 import { CHAT_CASES, runConversationEval } from "@/lib/conversationEval";
 import { REPLY_EVAL_TRADE, tradeLessons } from "@/lib/replyEval";
+import { runTest } from "@/lib/testRuns";
 
 // About forty chats (src/lib/conversationEval.ts), up to three model calls each, three at a time, on the best model.
 export const maxDuration = 300;
@@ -30,8 +31,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, message: "OPENAI_API_KEY is not set on this deployment." }, { status: 503 });
   }
   // Written with the realtor rules and examples in use, as a live message is (A-319).
-  const result = await runConversationEval(CHAT_CASES, { lessons: await tradeLessons(REPLY_EVAL_TRADE) });
-  return NextResponse.json({ success: result.passed === result.cases, ...result });
+  const lessons = await tradeLessons(REPLY_EVAL_TRADE);
+  // Every chat, or only the ones named; saved with its cost (src/lib/testRuns.ts).
+  const out = await runTest("conversations", await request.json().catch(() => null), CHAT_CASES, (cases) => runConversationEval(cases, { lessons }), (r) => r.errors);
+  if (!out.ok) return NextResponse.json({ success: false, message: out.error }, { status: 400 });
+  const { result, saved } = out;
+  return NextResponse.json({ success: result.passed === result.cases, ...result, saved });
 }
 
 export async function GET() {

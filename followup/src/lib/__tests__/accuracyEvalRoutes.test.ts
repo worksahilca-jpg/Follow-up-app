@@ -14,7 +14,7 @@ const { runDmJudgeEval, runReplyEval } = vi.hoisted(() => ({
   runDmJudgeEval: vi.fn(async () => ({ cases: 2, right: 2, customersSetAside: 0, chatsLetThrough: 0, failures: [] })),
   runReplyEval: vi.fn(async () => ({ cases: 2, passed: 2, errors: 0, problems: {}, failures: [] })),
 }));
-vi.mock("@/lib/dmJudgeEval", () => ({ runDmJudgeEval }));
+vi.mock("@/lib/dmJudgeEval", () => ({ runDmJudgeEval, DM_JUDGE_CASES: [{ name: "a" }, { name: "b" }] }));
 // The reply test drafts with the realtor rules and examples in use (A-319): none here.
 vi.mock("@/lib/replyEval", () => ({
   runReplyEval,
@@ -25,6 +25,11 @@ vi.mock("@/lib/replyEval", () => ({
   tradeLessons: vi.fn(async () => ({ examples: [], rules: [] })),
 }));
 vi.mock("@/lib/dmDrafting", () => ({ draftDm: vi.fn() }));
+// Each run is kept (src/lib/testRuns.ts); here the table answers with what it was given.
+vi.mock("@/lib/db", () => ({
+  prisma: { testRun: { create: vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({ id: "run-1", createdAt: new Date("2026-10-31T08:00:00Z"), ...data })) } },
+}));
+
 
 const ADMIN = { user: { email: "founder@example.com" } };
 const post = (secFetchSite?: string) =>

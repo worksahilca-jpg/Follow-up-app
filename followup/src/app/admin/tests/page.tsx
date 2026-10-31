@@ -6,7 +6,7 @@ import { EVAL_CASES } from "@/lib/classifierEval";
 import { DM_JUDGE_CASES } from "@/lib/dmJudgeEval";
 import { QUAL_EVAL_CASES } from "@/lib/qualificationEval";
 import { REPLY_CASES } from "@/lib/replyEval";
-import { CHAT_CASES } from "@/lib/conversationEval";
+import { OTHER_KIND_CHAT_CASES, REALTOR_CHAT_CASES } from "@/lib/conversationEval";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +20,8 @@ export default async function AccuracyTestsPage() {
     "dm-check": DM_JUDGE_CASES.length,
     qualifying: QUAL_EVAL_CASES.length,
     replies: REPLY_CASES.length,
-    conversations: CHAT_CASES.length,
+    conversations: REALTOR_CHAT_CASES.length,
+    "conversations-other-kinds": OTHER_KIND_CHAT_CASES.length,
     "replies-gpt-5.4-mini": REPLY_CASES.length,
     "replies-gpt-5.4": REPLY_CASES.length,
   };

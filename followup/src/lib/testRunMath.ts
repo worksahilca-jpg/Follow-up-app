@@ -4,7 +4,16 @@
  * since the last one, and the 2-of-3 rule for a failure checked twice more. Night plan A1 + A3 + A4, 2026-10-31.
  */
 
-export const TEST_IDS = ["email-check", "dm-check", "qualifying", "replies", "conversations", "replies-gpt-5.4-mini", "replies-gpt-5.4"] as const;
+export const TEST_IDS = [
+  "email-check",
+  "dm-check",
+  "qualifying",
+  "replies",
+  "conversations",
+  "conversations-other-kinds",
+  "replies-gpt-5.4-mini",
+  "replies-gpt-5.4",
+] as const;
 export type TestId = (typeof TEST_IDS)[number];
 
 export const isTestId = (v: unknown): v is TestId => typeof v === "string" && (TEST_IDS as readonly string[]).includes(v);
@@ -20,6 +29,7 @@ export const FIRST_ESTIMATE_MICROS: Record<TestId, number> = {
   qualifying: 1_300_000,
   replies: 900_000,
   conversations: 3_000_000,
+  "conversations-other-kinds": 800_000,
   "replies-gpt-5.4-mini": 150_000,
   "replies-gpt-5.4": 450_000,
 };
@@ -85,7 +95,7 @@ const failedNames = (list: unknown): Set<string> =>
  */
 export function caseOutcomes(test: TestId, result: unknown, ran: readonly string[]): CaseOutcome[] {
   const r = (result && typeof result === "object" ? result : {}) as Record<string, unknown>;
-  if (test === "conversations") {
+  if (test === "conversations" || test === "conversations-other-kinds") {
     const chats = (Array.isArray(r.chats) ? r.chats : []) as { name?: unknown; problems?: unknown; error?: unknown }[];
     const bad = new Set(chats.filter((c) => c.error || (Array.isArray(c.problems) && c.problems.length > 0)).map((c) => String(c.name)));
     const seen = new Set(chats.map((c) => String(c.name)));

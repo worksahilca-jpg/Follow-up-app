@@ -236,6 +236,18 @@ export const RULES: Rule[] = [
     tests: { replies: () => true, conversations: (c) => written(c) && c.channel !== "email" },
   },
 
+  {
+    id: "each-kind-its-plan",
+    area: "message",
+    name: "Each kind of business has its own plan: what it never says (no legal or medical advice, no rates) and the meeting it works toward.",
+    why: "Founder, Oct 18 (A-296): a non-realtor's replies had no plan at all. The conversation test covers each kind since Oct 31.",
+    where: [
+      { file: PLAYBOOK, words: "A MORTGAGE BROKER" },
+      { file: PLAYBOOK, words: "Never give legal advice" },
+    ],
+    tests: { conversations: (c) => !!c.trade },
+  },
+
   // ── Follow-ups ────────────────────────────────────────────────────────────────────────────────────────────────
   {
     id: "followup-has-a-reason",
@@ -498,7 +510,8 @@ export function caseTotals(): Record<TestId, number> {
     "dm-check": DM_JUDGE_CASES.length,
     qualifying: QUAL_EVAL_CASES.length,
     replies: REPLY_CASES.length,
-    conversations: CHAT_CASES.length,
+    conversations: CHAT_CASES.filter((c) => !c.trade).length,
+    "conversations-other-kinds": CHAT_CASES.filter((c) => !!c.trade).length,
     "replies-gpt-5.4-mini": REPLY_CASES.length,
     "replies-gpt-5.4": REPLY_CASES.length,
   };

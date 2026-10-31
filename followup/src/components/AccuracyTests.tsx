@@ -27,7 +27,7 @@ import {
 /** `caseName` is the test case a failure belongs to, when the name shown adds more (qualifying adds the item). */
 type Failure = { name: string; detail: string; caseName?: string };
 /** One whole conversation from the conversation test, shown in full so the founder can read how FollowUp talks. */
-type Chat = { name: string; ok: boolean; task: string; lines: { who: "in" | "out"; text: string }[]; next: string; detail: string };
+type Chat = { name: string; ok: boolean; task: string; trade?: string; lines: { who: "in" | "out"; text: string }[]; next: string; detail: string };
 type Outcome = { headline: string; mustBeZero?: { label: string; count: number }[]; lines: string[]; failures: Failure[]; chats?: Chat[] };
 
 type Test = {
@@ -88,7 +88,7 @@ const readConversations = (r: Record<string, unknown>): Outcome => {
     [num(p.feeling), "missed or made up a feeling"],
     [num(p.generic), "could go to anyone, or read like a bot"],
   ] as const;
-  type Raw = { name: string; task: string; lines: { who: "in" | "out"; text: string }[]; next: string; problems: string[]; detail: string; error?: string };
+  type Raw = { name: string; task: string; trade?: string; lines: { who: "in" | "out"; text: string }[]; next: string; problems: string[]; detail: string; error?: string };
   const chats = list<Raw>(r.chats);
   return {
     headline: `${num(r.passed)} of ${num(r.cases)} conversations passed every check`,
@@ -104,6 +104,7 @@ const readConversations = (r: Record<string, unknown>): Outcome => {
       name: c.name,
       ok: !c.error && c.problems.length === 0,
       task: c.task,
+      trade: c.trade,
       lines: list<{ who: "in" | "out"; text: string }>(c.lines),
       next: c.error ? `Couldn't run: ${c.error}` : c.next,
       detail: c.detail,
@@ -178,9 +179,17 @@ const TESTS: Test[] = [
   {
     id: "conversations",
     title: "Whole conversations: follow-ups, objections and \"no\"",
-    what: "About 40 made-up realtor chats: follow-ups after they go quiet, \"just browsing\", \"is this a bot?\", long chats, and the \"no\" that must stop everything. On top of the reply checks: never ask again what they said, never an empty \"just checking in\", never keep going after a no. Every chat comes back in full to read.",
+    what: "About 45 made-up realtor chats: follow-ups after they go quiet, \"just browsing\", \"is this a bot?\", long chats, and the \"no\" that must stop everything. On top of the reply checks: never ask again what they said, never an empty \"just checking in\", never keep going after a no. Every chat comes back in full to read.",
     route: "/api/admin/conversation-eval",
     takes: "Takes about four minutes. Keep this page open.",
+    read: readConversations,
+  },
+  {
+    id: "conversations-other-kinds",
+    title: "Whole conversations for other kinds of business",
+    what: "Made-up chats for a contractor, a dental clinic, a lawyer, a mortgage broker, a marketing agency and a photographer: each kind's \"never\" (no legal or medical advice, no rates, no prices nobody gave) and the meeting it works toward. The same checks as the row above.",
+    route: "/api/admin/conversation-eval",
+    body: { kinds: "other" },
     read: readConversations,
   },
   {
@@ -419,7 +428,7 @@ function TestRow({ test, total, history }: { test: Test; total: number; history:
                     <p style={{ color: c.ok ? "var(--sage)" : "var(--coral)" }}>{c.ok ? "Passed" : c.detail || "Didn't pass"}</p>
                     {c.lines.map((l, j) => (
                       <p key={j} className="break-words">
-                        <span className="text-ink-soft">{l.who === "in" ? "Customer: " : "Realtor: "}</span>
+                        <span className="text-ink-soft">{l.who === "in" ? "Customer: " : c.trade && c.trade !== "Real estate" ? "Business: " : "Realtor: "}</span>
                         {l.text}
                       </p>
                     ))}

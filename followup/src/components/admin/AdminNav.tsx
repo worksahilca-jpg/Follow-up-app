@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, BookOpen, FlaskConical, Users, ChartColumn, Briefcase, ArrowLeft } from "lucide-react";
+import { Home, BookOpen, FlaskConical, ListChecks, Users, ChartColumn, Briefcase, ArrowLeft } from "lucide-react";
 import LogoMark from "@/components/LogoMark";
 
 /**
@@ -15,6 +15,8 @@ const places = [
   { href: "/admin", label: "Decide", icon: Home },
   { href: "/admin/train", label: "Train", icon: BookOpen },
   { href: "/admin/tests", label: "Accuracy tests", icon: FlaskConical },
+  // Night plan B1 + B3 (2026-10-31): every rule FollowUp follows, where it lives and the tests that prove it.
+  { href: "/admin/rulebook", label: "Rulebook", icon: ListChecks },
   { href: "/admin/testers", label: "Testers", icon: Users },
   { href: "/admin/usage", label: "Usage", icon: ChartColumn },
   { href: "/admin/office", label: "The office", icon: Briefcase },

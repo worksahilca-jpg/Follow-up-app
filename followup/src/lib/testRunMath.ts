@@ -11,6 +11,7 @@ export const TEST_IDS = [
   "replies",
   "conversations",
   "conversations-other-kinds",
+  "conversations-real",
   "replies-gpt-5.4-mini",
   "replies-gpt-5.4",
 ] as const;
@@ -30,9 +31,13 @@ export const FIRST_ESTIMATE_MICROS: Record<TestId, number> = {
   replies: 900_000,
   conversations: 3_000_000,
   "conversations-other-kinds": 800_000,
+  "conversations-real": 0,
   "replies-gpt-5.4-mini": 150_000,
   "replies-gpt-5.4": 450_000,
 };
+
+/** For a test whose size changes (the real chats), the first estimate per case: a conversation case's, about 7¢. */
+const FIRST_PER_CASE_MICROS: Partial<Record<TestId, number>> = { "conversations-real": 70_000 };
 
 export type RunKind = "full" | "only" | "recheck";
 
@@ -95,7 +100,7 @@ const failedNames = (list: unknown): Set<string> =>
  */
 export function caseOutcomes(test: TestId, result: unknown, ran: readonly string[]): CaseOutcome[] {
   const r = (result && typeof result === "object" ? result : {}) as Record<string, unknown>;
-  if (test === "conversations" || test === "conversations-other-kinds") {
+  if (test === "conversations" || test === "conversations-other-kinds" || test === "conversations-real") {
     const chats = (Array.isArray(r.chats) ? r.chats : []) as { name?: unknown; problems?: unknown; error?: unknown }[];
     const bad = new Set(chats.filter((c) => c.error || (Array.isArray(c.problems) && c.problems.length > 0)).map((c) => String(c.name)));
     const seen = new Set(chats.map((c) => String(c.name)));
@@ -136,7 +141,9 @@ export function runToShow(runs: readonly RunSummary[]): RunSummary | null {
  */
 export function estimateRunMicros(test: TestId, runs: readonly RunSummary[], totalCases: number, count: number, repeat = 1): number {
   const priced = runs.find((r) => r.costMicros != null && r.cases > 0 && r.kind === "full") ?? runs.find((r) => r.costMicros != null && r.cases > 0);
-  const perCase = priced ? (priced.costMicros as number) / priced.cases : FIRST_ESTIMATE_MICROS[test] / Math.max(1, totalCases);
+  const perCase = priced
+    ? (priced.costMicros as number) / priced.cases
+    : (FIRST_PER_CASE_MICROS[test] ?? FIRST_ESTIMATE_MICROS[test] / Math.max(1, totalCases));
   return Math.round(perCase * count * repeat);
 }
 

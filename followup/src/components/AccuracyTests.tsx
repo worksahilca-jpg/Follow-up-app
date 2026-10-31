@@ -193,6 +193,14 @@ const TESTS: Test[] = [
     read: readConversations,
   },
   {
+    id: "conversations-real",
+    title: "Real conversations",
+    what: "The real chats kept below, with each owner's OK and names removed: FollowUp's real writers answer them the same way, with the same checks.",
+    route: "/api/admin/conversation-eval",
+    body: { kinds: "real" },
+    read: readConversations,
+  },
+  {
     id: "replies-gpt-5.4-mini",
     title: "Same replies, written by the small AI (GPT-5.4-mini)",
     what: "The same 20 DMs, written by the AI replies used before Oct 29 and checked the same way, to compare with the row above. It costs about a tenth as much per reply. Nothing customers get changes.",
@@ -308,11 +316,11 @@ function TestRow({ test, total, history }: { test: Test; total: number; history:
         <button
           type="button"
           onClick={() => run("all")}
-          disabled={busy !== null}
+          disabled={busy !== null || total === 0}
           className="shrink-0 rounded-full border border-ink px-4 min-h-[44px] text-sm font-medium disabled:opacity-60"
         >
           {busy === "all" ? "Running…" : shown || outcome ? "Run again" : "Run"}
-          <span className="block text-xs font-normal text-ink-soft">{priceAll}</span>
+          <span className="block text-xs font-normal text-ink-soft">{total === 0 ? "nothing to run yet" : priceAll}</span>
         </button>
       </div>
 

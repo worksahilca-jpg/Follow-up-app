@@ -2,6 +2,9 @@ import { PageHeader } from "@/components/PageHeader";
 import AccuracyTests from "@/components/AccuracyTests";
 import { requirePlatformAdmin } from "@/lib/platformAdmin";
 import { loadTestHistory, type TestId } from "@/lib/testRuns";
+import { listRealChats } from "@/lib/realChats";
+import { knownTrades } from "@/lib/tradePlaybooks";
+import RealChats from "@/components/admin/RealChats";
 import { EVAL_CASES } from "@/lib/classifierEval";
 import { DM_JUDGE_CASES } from "@/lib/dmJudgeEval";
 import { QUAL_EVAL_CASES } from "@/lib/qualificationEval";
@@ -13,7 +16,7 @@ export const dynamic = "force-dynamic";
 /** /admin → Accuracy tests: one Run button per test (each route checks the founder again), with every run kept. */
 export default async function AccuracyTestsPage() {
   await requirePlatformAdmin();
-  const history = await loadTestHistory();
+  const [history, realChats] = await Promise.all([loadTestHistory(), listRealChats()]);
   // How many cases each test has, so a price can be shown before the first run is saved.
   const totals: Record<TestId, number> = {
     "email-check": EVAL_CASES.length,
@@ -22,6 +25,7 @@ export default async function AccuracyTestsPage() {
     replies: REPLY_CASES.length,
     conversations: REALTOR_CHAT_CASES.length,
     "conversations-other-kinds": OTHER_KIND_CHAT_CASES.length,
+    "conversations-real": realChats.length,
     "replies-gpt-5.4-mini": REPLY_CASES.length,
     "replies-gpt-5.4": REPLY_CASES.length,
   };
@@ -37,6 +41,7 @@ export default async function AccuracyTestsPage() {
       <div className="mt-6">
         <AccuracyTests history={history} totals={totals} />
       </div>
+      <RealChats rows={realChats} trades={[...knownTrades(), "Other"]} />
     </div>
   );
 }

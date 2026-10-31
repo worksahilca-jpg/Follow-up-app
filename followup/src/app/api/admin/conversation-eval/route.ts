@@ -4,7 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { isPlatformAdmin } from "@/lib/platformAdmin";
 import { CHAT_CASES, OTHER_KIND_CHAT_CASES, REALTOR_CHAT_CASES, runConversationEval } from "@/lib/conversationEval";
 import { REPLY_EVAL_TRADE, tradeLessons } from "@/lib/replyEval";
-import { runTest } from "@/lib/testRuns";
+import { runTest, type TestId } from "@/lib/testRuns";
+import { realChatCases } from "@/lib/realChats";
 
 // About forty chats (src/lib/conversationEval.ts), up to three model calls each, three at a time, on the best model.
 export const maxDuration = 300;
@@ -32,13 +33,19 @@ export async function POST(request: NextRequest) {
   }
   // Written with the realtor rules and examples in use, as a live message is (A-319).
   const body = (await request.json().catch(() => null)) as { kinds?: unknown; only?: unknown } | null;
-  // Realtors are the usual run; { kinds: "other" } runs every other kind of business (night plan A2). Named cases
-  // (a rerun of what failed, or a rule's tests) can come from either.
-  const other = body?.kinds === "other";
-  const all = body?.only ? CHAT_CASES : other ? OTHER_KIND_CHAT_CASES : REALTOR_CHAT_CASES;
+  // Realtors are the usual run; { kinds: "other" } runs every other kind of business, { kinds: "real" } the real chats
+  // kept on Admin → Accuracy tests (night plan A2). Named cases (a rerun of what failed, or a rule's tests) come from
+  // the set they were run in.
+  const kinds = body?.kinds === "other" || body?.kinds === "real" ? body.kinds : "realtor";
+  const real = kinds === "real" ? await realChatCases() : [];
+  if (kinds === "real" && real.length === 0) {
+    return NextResponse.json({ success: false, message: "No real chats yet. Add one below the tests first." }, { status: 400 });
+  }
+  const all = kinds === "real" ? real : body?.only ? CHAT_CASES : kinds === "other" ? OTHER_KIND_CHAT_CASES : REALTOR_CHAT_CASES;
+  const test: TestId = kinds === "real" ? "conversations-real" : kinds === "other" ? "conversations-other-kinds" : "conversations";
   const lessons = await tradeLessons(REPLY_EVAL_TRADE);
   // Every chat, or only the ones named; saved with its cost (src/lib/testRuns.ts).
-  const out = await runTest(other ? "conversations-other-kinds" : "conversations", body, all, async (cases) => {
+  const out = await runTest(test, body, all, async (cases) => {
     // Each kind is written with its own rules and examples in use, as a live message for it is.
     const kinds = [...new Set(cases.map((c) => c.trade).filter((t): t is string => !!t && t !== REPLY_EVAL_TRADE))];
     const lessonsByTrade = Object.fromEntries(await Promise.all(kinds.map(async (t) => [t, await tradeLessons(t)] as const)));

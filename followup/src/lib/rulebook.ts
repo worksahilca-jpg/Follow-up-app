@@ -512,6 +512,7 @@ export function caseTotals(): Record<TestId, number> {
     replies: REPLY_CASES.length,
     conversations: CHAT_CASES.filter((c) => !c.trade).length,
     "conversations-other-kinds": CHAT_CASES.filter((c) => !!c.trade).length,
+    "conversations-real": 0,
     "replies-gpt-5.4-mini": REPLY_CASES.length,
     "replies-gpt-5.4": REPLY_CASES.length,
   };

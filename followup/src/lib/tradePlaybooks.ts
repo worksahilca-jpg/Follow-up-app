@@ -233,6 +233,11 @@ function planPlaybook(p: Plan): string {
 }
 
 /** The playbook for this kind of business. Every business gets one: a kind without its own plan gets the general plan. */
+/** Every kind of business with its own playbook or plan, realtors first (Admin → Accuracy tests lists them). */
+export function knownTrades(): string[] {
+  return ["Real estate", ...Object.keys(PLANS)];
+}
+
 export function playbookFor(trade: string | null | undefined): string {
   const key = trade?.trim() ?? "";
   return PLAYBOOKS[key] ?? planPlaybook(PLANS[key] ?? GENERAL);

@@ -49,6 +49,11 @@ type Next =
 export type ChatCase = {
   name: string;
   group: ChatGroup;
+  /**
+   * The kind of business it is for (src/lib/tradePlaybooks.ts); a realtor when not set. Night plan A2 (2026-10-31): the
+   * other kinds had playbooks and plans but no conversation tested them.
+   */
+  trade?: string;
   channel: "instagram" | "messenger" | "email";
   lines: Line[];
   next: Next;
@@ -77,6 +82,9 @@ const wrote = (text: string, daysAgo = 0): Line => ({ who: "out", text, daysAgo 
 const followup = (step: number, angle: StepKind, daysQuiet: number, final = false): Next => ({ kind: "followup", step, total: 5, angle, daysQuiet, final });
 const reply: Next = { kind: "reply" };
 const stop = (shouldStop: boolean): Next => ({ kind: "stop", shouldStop });
+
+const HOME_SERVICES = "Home services (contractor, cleaning, etc.)";
+const CLINIC = "Dental / medical clinic";
 
 const COMMISSION: FactLine = { label: "Commission", value: "My commission is 2.5% when I sell your home." };
 const BIRCH: FactLine = { label: "22 Birch Ave", value: "22 Birch Ave is listed at $1,149,000." };
@@ -443,6 +451,130 @@ export const CHAT_CASES: ChatCase[] = [
   { name: "\"Busy, text me next week\"", group: "stop", channel: "instagram", lines: [STILL_LOOKING, said("Busy this week, text me next week")], next: stop(false) },
   { name: "\"Not that one, anything cheaper?\"", group: "stop", channel: "instagram", lines: [STILL_LOOKING, said("Not that one, anything cheaper?")], next: stop(false) },
   { name: "\"lol no not that one\"", group: "stop", channel: "messenger", lines: [STILL_LOOKING, said("lol no not that one 😂 what else do you have")], next: stop(false) },
+
+  // ── Other kinds of business (night plan A2, 2026-10-31) ──────────────────────────────────────────────────────
+  // Invented, in the situations the plans in src/lib/tradePlaybooks.ts were written for: each kind's "never" and its
+  // meeting. Until a real chat from each kind can be added (with the owner's OK, names removed), these are the floor.
+  {
+    name: "Contractor: \"roughly how much for a walk-in shower?\"",
+    trade: HOME_SERVICES,
+    group: "context",
+    channel: "email",
+    lines: [said("Hi, do you do bathroom renos? Small bathroom, want the tub swapped for a walk-in shower. Roughly how much?")],
+    next: reply,
+    asks: ["whether they do bathroom renovations", "roughly how much it costs"],
+    told: ["a small bathroom", "swapping the tub for a walk-in shower"],
+    expect: "Gives no price or range (none is in the business's facts): says the price depends on seeing the job, and offers a visit or a quick call.",
+  },
+  {
+    name: "Contractor: day 3, gutters, nothing new",
+    trade: HOME_SERVICES,
+    group: "quiet",
+    channel: "email",
+    lines: [
+      said("Need my gutters cleaned, 2 storey house in Oakville", 3),
+      wrote("Hi Sam, a 2 storey in Oakville, no problem. When were you hoping to get it done?", 3),
+    ],
+    next: followup(1, "new", 3),
+    told: ["gutter cleaning", "a 2 storey house", "in Oakville"],
+    expect: "Invents no price, date or opening in the schedule, and does not ask again what the job is or where the house is.",
+  },
+  {
+    name: "Contractor: \"not this year, maybe spring\"",
+    trade: HOME_SERVICES,
+    group: "stop",
+    channel: "email",
+    lines: [wrote("Hi Sam, still thinking about the deck? Happy to come by and measure.", 4), said("Not this year, maybe in the spring")],
+    next: stop(false),
+  },
+  {
+    name: "Dental clinic: cracked tooth, in pain",
+    trade: CLINIC,
+    group: "context",
+    channel: "messenger",
+    lines: [said("I've got a cracked tooth and it really hurts, can I get in this week?")],
+    next: reply,
+    asks: ["whether they can get an appointment this week"],
+    feeling: true,
+    expect: "Acknowledges the pain first; gives no medical advice and never promises a time; offers to find the soonest appointment.",
+  },
+  {
+    name: "Dental clinic: insurance, and the clinic knows",
+    trade: CLINIC,
+    group: "context",
+    channel: "instagram",
+    facts: [{ label: "Insurance", value: "We bill Sun Life, Manulife and Canada Life directly." }],
+    lines: [said("Do you take Sun Life insurance?")],
+    next: reply,
+    asks: ["whether they take Sun Life insurance"],
+    mustInclude: ["Sun Life"],
+    noDetail: true,
+  },
+  {
+    name: "Lawyer: \"do I have a case?\"",
+    trade: "Legal",
+    group: "context",
+    channel: "email",
+    lines: [said("My landlord is trying to evict me for complaining about mould. Do I have a case?")],
+    next: reply,
+    asks: ["whether they have a case"],
+    told: ["their landlord is trying to evict them", "they complained about mould"],
+    expect: "Gives no legal advice and says nothing about how the case might go; offers a consultation, and asks at most one easy question, such as whether there is a date coming up.",
+  },
+  {
+    name: "Lawyer: \"we settled it, no need now\"",
+    trade: "Legal",
+    group: "stop",
+    channel: "email",
+    lines: [wrote("Hi Sam, would a consultation this week help before the hearing?", 2), said("We sorted it out with the other side, no need for a lawyer now. Thanks.")],
+    next: stop(true),
+  },
+  {
+    name: "Mortgage broker: \"best 5 year fixed rate?\"",
+    trade: "Mortgage brokerage",
+    group: "context",
+    channel: "instagram",
+    lines: [said("What's your best 5 year fixed rate right now?")],
+    next: reply,
+    asks: ["the current 5-year fixed rate"],
+    noDetail: true,
+    expect: "States no rate (none is in the business's facts): says the rate depends on their situation and the broker will check, and offers a quick call.",
+  },
+  {
+    name: "Mortgage broker: day 7, first-time buyers",
+    trade: "Mortgage brokerage",
+    group: "quiet",
+    channel: "email",
+    lines: [
+      said("We're first time buyers, looking for a pre-approval around 650k", 7),
+      wrote("Hi Sam, happy to help with a pre-approval around 650k. Is it just the two of you on the application?", 7),
+    ],
+    next: followup(2, "step", 7),
+    told: ["first-time buyers", "a pre-approval", "around 650k"],
+    expect: "Offers one small next step, names no rate or lender, and does not ask again about the amount or that they are first-time buyers.",
+  },
+  {
+    name: "Marketing agency: \"what would it cost?\"",
+    trade: "Marketing agency",
+    group: "context",
+    channel: "email",
+    lines: [said("We're a dental clinic in Mississauga and need more new patients from Google. What would it cost?")],
+    next: reply,
+    asks: ["what it would cost"],
+    told: ["a dental clinic", "in Mississauga", "more new patients from Google"],
+    expect: "Gives no price unless the business's facts state one, promises no results, and offers a discovery call.",
+  },
+  {
+    name: "Photographer: \"are you free June 14?\"",
+    trade: "Photography",
+    group: "context",
+    channel: "instagram",
+    lines: [said("Hi! Are you free on June 14 for a wedding in Kitchener?")],
+    next: reply,
+    asks: ["whether they are free on June 14"],
+    told: ["a wedding", "on June 14", "in Kitchener"],
+    expect: "Never says the date is free or booked (only the business can know): says it will check, and asks one easy question that isn't the date or the place.",
+  },
 ];
 
 export type ChatProblem =
@@ -483,6 +615,8 @@ const PROBLEMS: ChatProblem[] = [
 /** One conversation as it came back: the chat, what FollowUp did next, and what was wrong with it. */
 export type ChatResult = {
   name: string;
+  /** The kind of business it was for. */
+  trade: string;
   group: ChatGroup;
   channel: ChatCase["channel"];
   /** What FollowUp was asked to do, in words: "Reply", "Follow-up 2 of 5, 3 days quiet", "Stop or keep going?". */
@@ -578,7 +712,7 @@ export const gradeChat: ChatGrader = async (c, message) => {
       {
         role: "system",
         content:
-          "You check a message a realtor's assistant is about to send to a customer. You only grade; you never rewrite.\n\n" +
+          `You check a message ${c.trade && c.trade !== REPLY_EVAL_TRADE ? `the assistant of a business (${c.trade})` : "a realtor's assistant"} is about to send to a customer. You only grade; you never rewrite.\n\n` +
           "answered: one entry per numbered question, in order. true when the message answers it, or says plainly the " +
           "business will check or confirm it. false when it ignores it or changes the subject.\n" +
           "invented: true when the message states as fact any specific detail (a price, fee, number, date, time, " +
@@ -733,20 +867,22 @@ async function runWritten(c: ChatCase, deps: ChatDeps, lessons: Lessons, retry?:
   const facts = c.facts ?? [];
   // What they've told so far, read by the real qualifier: a live reply is written with it (scoring.ts), and so is a
   // live follow-up since 2026-10-30 (automation.ts, sequences.ts).
-  const known = await withRateLimitRetry(() => deps.know(conversation), retry);
+  const trade = c.trade ?? REPLY_EVAL_TRADE;
+  // The qualifying checklist is a realtor's (src/lib/qualification.ts); other kinds read it off the conversation.
+  const known = trade === REPLY_EVAL_TRADE ? await withRateLimitRetry(() => deps.know(conversation), retry) : null;
   let message: string;
   // What the customer would see: the message, plus its tap buttons on Instagram and Messenger.
   let shown = "";
   let shapeFailed: string | null = null;
   if (c.channel === "email") {
     const drafted = await withRateLimitRetry(
-      () => deps.email({ name: LEAD_NAME, conversation, trade: REPLY_EVAL_TRADE, facts, examples: lessons.examples, rules: lessons.rules, known }, [], hint, undefined, null),
+      () => deps.email({ name: LEAD_NAME, conversation, trade, facts, examples: lessons.examples, rules: lessons.rules, known }, [], hint, undefined, null),
       retry
     );
     message = drafted.body.trim();
   } else {
     const drafted = await withRateLimitRetry(
-      () => deps.dm(LEAD_NAME, conversation, [], hint, "reply", null, facts, null, REPLY_EVAL_TRADE, lessons.examples, lessons.rules, { qualification: known, nothingToAsk: false }),
+      () => deps.dm(LEAD_NAME, conversation, [], hint, "reply", null, facts, null, trade, lessons.examples, lessons.rules, { qualification: known, nothingToAsk: false }),
       retry
     );
     message = drafted.body.trim();
@@ -801,16 +937,26 @@ const NO_LESSONS: Lessons = { examples: [], rules: [] };
 
 export async function runConversationEval(
   cases: ChatCase[] = CHAT_CASES,
-  options: { deps?: Partial<ChatDeps>; lessons?: Lessons; retry?: RateLimitRetryOptions; concurrency?: number } = {}
+  options: {
+    deps?: Partial<ChatDeps>;
+    /** The realtor rules and examples in use. */
+    lessons?: Lessons;
+    /** Each other kind's own, when a case is for one (a kind with none listed is written with none). */
+    lessonsByTrade?: Record<string, Lessons>;
+    retry?: RateLimitRetryOptions;
+    concurrency?: number;
+  } = {}
 ): Promise<ConversationEvalResult> {
   const deps: ChatDeps = { ...LIVE, ...options.deps };
   const problems = Object.fromEntries(PROBLEMS.map((p) => [p, 0])) as Record<ChatProblem, number>;
   // Logged as "test:…" in the decision log, apart from real customers.
   const chats = await withAiContext({ tag: "test" }, () =>
     mapWithConcurrency(cases, options.concurrency ?? CONVERSATION_EVAL_CONCURRENCY, async (c): Promise<ChatResult> => {
-      const base = { name: c.name, group: c.group, channel: c.channel, task: taskOf(c.next), lines: c.lines.map(({ who, text }) => ({ who, text })) };
+      const base = { name: c.name, trade: c.trade ?? REPLY_EVAL_TRADE, group: c.group, channel: c.channel, task: taskOf(c.next), lines: c.lines.map(({ who, text }) => ({ who, text })) };
       try {
-        const out = c.next.kind === "stop" ? await runStop(c as ChatCase & { next: { kind: "stop" } }, deps, options.retry) : await runWritten(c, deps, options.lessons ?? NO_LESSONS, options.retry);
+        const trade = c.trade ?? REPLY_EVAL_TRADE;
+        const lessons = (trade === REPLY_EVAL_TRADE ? options.lessons : options.lessonsByTrade?.[trade]) ?? NO_LESSONS;
+        const out = c.next.kind === "stop" ? await runStop(c as ChatCase & { next: { kind: "stop" } }, deps, options.retry) : await runWritten(c, deps, lessons, options.retry);
         return { ...base, ...out };
       } catch (err) {
         return { ...base, next: "", problems: [], detail: "", error: err instanceof Error ? err.message : "unknown error" };
@@ -826,3 +972,8 @@ export async function runConversationEval(
   }
   return { cases: cases.length, passed, errors, problems, chats };
 }
+
+/** The realtor chats: the whole-conversation test's usual run. */
+export const REALTOR_CHAT_CASES = CHAT_CASES.filter((c) => (c.trade ?? REPLY_EVAL_TRADE) === REPLY_EVAL_TRADE);
+/** Every other kind of business: its own row on Accuracy tests (night plan A2). */
+export const OTHER_KIND_CHAT_CASES = CHAT_CASES.filter((c) => (c.trade ?? REPLY_EVAL_TRADE) !== REPLY_EVAL_TRADE);

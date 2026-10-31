@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { isPlatformAdmin } from "@/lib/platformAdmin";
 import { draftDm } from "@/lib/dmDrafting";
 import { gradeReply, isTryModel, REPLY_CASES, REPLY_EVAL_TRADE, runReplyEval, tradeLessons } from "@/lib/replyEval";
+import { runTest, type TestId } from "@/lib/testRuns";
 
 // Twenty cases (src/lib/replyEval.ts), up to three model calls each (a draft, a retry, a grade), two at a time.
 export const maxDuration = 300;
@@ -31,16 +32,25 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, message: "OPENAI_API_KEY is not set on this deployment." }, { status: 503 });
   }
   // No body: the usual model. { model } names a bigger one to write the replies with, side by side (TRY_MODELS).
-  const asked = ((await request.json().catch(() => null)) as { model?: unknown } | null)?.model;
+  const body = (await request.json().catch(() => null)) as { model?: unknown } | null;
+  const asked = body?.model;
   if (asked !== undefined && !isTryModel(asked)) {
     return NextResponse.json({ success: false, message: "That model isn't one this test can try." }, { status: 400 });
   }
   // Drafted with the realtor rules and examples in use, as a live reply is (A-319).
-  const result = await runReplyEval(draftDm, gradeReply, REPLY_CASES, {
-    lessons: await tradeLessons(REPLY_EVAL_TRADE),
-    ...(asked ? { writeWith: asked } : {}),
-  });
-  return NextResponse.json({ success: result.passed === result.cases, ...result });
+  const lessons = await tradeLessons(REPLY_EVAL_TRADE);
+  // Each model's runs are kept apart, so its scores compare with its own (src/lib/testRuns.ts).
+  const test: TestId = asked === "gpt-5.4-mini" ? "replies-gpt-5.4-mini" : asked === "gpt-5.4" ? "replies-gpt-5.4" : "replies";
+  const out = await runTest(
+    test,
+    body,
+    REPLY_CASES,
+    (cases) => runReplyEval(draftDm, gradeReply, cases, { lessons, ...(asked ? { writeWith: asked } : {}) }),
+    (r) => r.errors
+  );
+  if (!out.ok) return NextResponse.json({ success: false, message: out.error }, { status: 400 });
+  const { result, saved } = out;
+  return NextResponse.json({ success: result.passed === result.cases, ...result, saved });
 }
 
 export async function GET() {

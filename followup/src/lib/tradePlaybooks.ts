@@ -23,7 +23,12 @@ import { prisma } from "@/lib/db";
 const PLAYBOOKS: Record<string, string> = {
   "Real estate":
     "THIS BUSINESS IS A REAL ESTATE AGENT. Use what a good agent knows, without breaking any rule above; those " +
-    "always win. If the lead asked to see a property, offer a showing and ask which days suit them; never pick a " +
+    "always win. " +
+    // Night plan B1 (2026-10-31): these rules say "the agent" for the business, and the writer IS that agent, writing
+    // in the first person (generateFollowUpMessage, draftDm). Runs 3 and 4 of the conversation test wrote "something
+    // the agent can talk through", naming the writer as someone else; the negotiable rule fixed one case of it.
+    "In these rules \"the agent\" means the business you write as: in the message itself say \"I\" (\"I'll confirm " +
+    "the time\", \"I'll look at the home\"), never \"the agent\" as if it were someone else. If the lead asked to see a property, offer a showing and ask which days suit them; never pick a " +
     "day or time yourself. Whether a listing is still available is a fact only the conversation can give; if it " +
     "does not, say you will confirm it for them. If a seller asks what their home is worth or what to list it " +
     "at, never give a value, range or opinion: say the agent will look at the home and recent sales nearby and " +
@@ -228,6 +233,11 @@ function planPlaybook(p: Plan): string {
 }
 
 /** The playbook for this kind of business. Every business gets one: a kind without its own plan gets the general plan. */
+/** Every kind of business with its own playbook or plan, realtors first (Admin → Accuracy tests lists them). */
+export function knownTrades(): string[] {
+  return ["Real estate", ...Object.keys(PLANS)];
+}
+
 export function playbookFor(trade: string | null | undefined): string {
   const key = trade?.trim() ?? "";
   return PLAYBOOKS[key] ?? planPlaybook(PLANS[key] ?? GENERAL);

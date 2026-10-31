@@ -2716,3 +2716,56 @@ model TrainerMessage {
 
   @@index([createdAt])
 }
+
+/// Night plan A1 + A4 (2026-10-31): one run of an accuracy test on Admin → Accuracy tests, kept so a result survives
+/// a refresh, can be compared with the last one, and its failures can be run again on their own (src/lib/testRuns.ts).
+/// The cases are invented; no business's customer is in here.
+model TestRun {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  /// Which test: "email-check", "dm-check", "qualifying", "replies", "conversations", "replies-gpt-5.4-mini", …
+  test       String
+  /// "full" (every case), "only" (the cases named), or "recheck" (failed cases run twice more, A3).
+  kind       String   @default("full")
+  /// For a recheck: the run whose failures it checked again.
+  recheckOf  String?
+  /// The FollowUp version that ran it (the deploy's commit), so a score is tied to the code that earned it.
+  version    String?
+  cases      Int
+  passed     Int
+  errors     Int      @default(0)
+  /// The cases run, and the ones that didn't pass (couldn't run counts as didn't pass).
+  ran        String[]
+  failed     String[]
+  calls      Int?
+  /// Estimated, in millionths of a US dollar, from the tokens each call used (src/lib/aiDecisionLog.ts prices).
+  costMicros Int?
+  /// What the test returned, for reading it again later: the invented chats and the checker's notes.
+  result     Json?
+
+  @@index([test, createdAt])
+}
+
+/// Night plan A2 (2026-10-31): a real conversation a business owner agreed to share, cleaned of names, emails, phone
+/// numbers and links, kept as a test case for the whole-conversation test (src/lib/realChats.ts). Added only by the
+/// founder on Admin → Accuracy tests, and deleted there. Never a live customer record: nothing here links to a Lead.
+model RealChatCase {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  /// A short name for the case, written by the founder ("Buyer asks about parking, day 3").
+  name      String
+  trade     String
+  channel   String
+  /// The cleaned chat, oldest first: [{ who: "in" | "out", text, daysAgo }].
+  lines     Json
+  /// What FollowUp must do next: { kind: "reply" } | { kind: "followup", daysQuiet } | { kind: "stop", shouldStop }.
+  next      Json
+  asks      String[]
+  told      String[]
+  expect    String?
+  closing   Boolean  @default(false)
+  /// Who said it could be used, and when, in the founder's words ("Owner said OK, Nov 2").
+  consent   String
+
+  @@index([createdAt])
+}

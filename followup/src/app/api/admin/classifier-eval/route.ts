@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { isPlatformAdmin } from "@/lib/platformAdmin";
-import { runClassifierEval } from "@/lib/classifierEval";
+import { EVAL_CASES, runClassifierEval } from "@/lib/classifierEval";
+import { runTest } from "@/lib/testRuns";
 
 // About a hundred cases (src/lib/classifierEval.ts), each one or two model calls,
 // three at a time, with rate-limit refusals waited out and retried.
@@ -51,8 +52,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, message: "OPENAI_API_KEY is not set on this deployment." }, { status: 503 });
   }
 
-  const result = await runClassifierEval();
-  return NextResponse.json({ success: result.failed === 0 && result.errors === 0, ...result });
+  // Every case, or only the ones named (a rerun of what failed); saved with its cost (src/lib/testRuns.ts).
+  const out = await runTest("email-check", await request.json().catch(() => null), EVAL_CASES, (cases) => runClassifierEval(undefined, cases), (r) => r.errors);
+  if (!out.ok) return NextResponse.json({ success: false, message: out.error }, { status: 400 });
+  const { result, saved } = out;
+  return NextResponse.json({ success: result.failed === 0 && result.errors === 0, ...result, saved });
 }
 
 // GET never runs anything. It answers 404 to everyone but a platform admin

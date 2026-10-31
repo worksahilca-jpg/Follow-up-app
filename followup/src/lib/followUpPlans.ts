@@ -565,6 +565,20 @@ export function stepHint(state: Pick<PlanState, "step" | "total" | "kind" | "fin
   const last = state.final
     ? " This is the last message about this unless they answer: no deadline, no \"last chance\", nothing that reads as pressure."
     : "";
+  // Night plan D1 (2026-10-31): the angle came from the day alone, so a question still open on day 3 or 14 waited
+  // behind "something new", and with nothing new the model had to invent something (most of the conversation test's
+  // failures on Oct 30). What the conversation still needs now decides first; the day's angle is for when nothing is
+  // open. A thank-you, a check-back and the last message keep their own job.
+  const needsFirst =
+    kind === "open" || kind === "new" || kind === "step"
+      ? "First, read what this conversation still needs, in this order: a question of theirs that no message from the " +
+        "business has answered (answer it from the conversation or what the business has told you, or say you'll check " +
+        "and come back); a home, a call or a time they asked about that isn't booked (offer to set it up, naming no day " +
+        "or time); a worry they named about price, timing, money or the market (one useful, true thing about it, never " +
+        "a claim nobody made). If one of these is open, this message is about the first one that is, whatever the angle " +
+        "below says. Only when nothing is open, follow the angle; and with nothing true and new to say, write a short, " +
+        "kind message that asks one easy thing they haven't told you yet. "
+      : "";
   const which =
     kind === "checkback"
       ? `They asked you to get back to them around now; nothing from them in about ${daysQuiet} days.`
@@ -573,7 +587,7 @@ export function stepHint(state: Pick<PlanState, "step" | "total" | "kind" | "fin
       : `This is follow-up ${state.step + 1} of ${state.total} to someone who went quiet after the last message here — ` +
         (daysQuiet < 1 ? "nothing from them since it, less than a day ago." : `nothing from them in about ${daysQuiet} days.`);
   return (
-    `${which} ${angles[kind]}${last} ` +
+    `${which} ${needsFirst}${angles[kind]}${last} ` +
     "Do not apologise: they stopped replying, nobody let them down. Never write \"just checking in\", " +
     "\"circling back\", \"touching base\", \"following up\" or anything that means the same — every message must " +
     "give them a reason to read it. Do not repeat the wording or the angle of any earlier message in this " +

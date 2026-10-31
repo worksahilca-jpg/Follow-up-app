@@ -107,3 +107,46 @@ FollowUp talks the way it does. **Fix:** the organised rulebook (B1) becomes the
 6. **D1** follow-ups chosen from the conversation, not the day.
 7. **A6 + C2** weekly quality summary from real use.
 8. **B2, A5, E3, D2** quick fixes from Train, checker check, model-change alert, outage retry check.
+
+---
+
+## Re-check after the night's work (2026-11-01, early morning)
+
+The founder, 2026-10-31: *"please fix all 6 of them all together and then recheck what are the weaknesses"*. All on
+branch `claude/followup-demo-to-production-4k39hr`, one PR, not merged. Every test passes (5,298), types, lint and the
+production build are clean. Nothing below has been run against the real AI yet: that is one paid run, the founder's.
+
+| Weak spot | Now | Where |
+|---|---|---|
+| A1 results vanish | **Fixed.** Every run is saved (`TestRun`): score, each failure, cost, version. The row shows the last run after a refresh and "since <date>: N now pass, M now fail". | `src/lib/testRuns.ts`, `/admin/tests` |
+| A4 all or nothing | **Fixed.** The price is on every Run button before it runs; "Run only the N that failed (about $X)". | same |
+| A3 pass, then fail | **Fixed.** "Check them twice more": a case fails only if it fails 2 of 3; a case that passed and failed on the same version is marked flaky. | same |
+| B1 rulebook scattered | **Fixed, first version.** 42 rules in 6 areas, each with why, right/wrong example, the file and exact words it lives in (a test fails if those words disappear), and its tests. The "the agent" clash in the realtor playbook is removed. | `src/lib/rulebook.ts`, `/admin/rulebook` |
+| B3 rule ↔ tests | **Fixed.** Each rule has "Run its N tests · about $X". | same |
+| B2 fix without a deploy | **Was already there:** every test run uses the Train rules and examples in use for that kind of business. | `tradeLessons` |
+| A2 only made-up realtor chats | **Half fixed.** 11 chats for 6 other kinds of business (own row). Real chats: paste one, see it cleaned (names → stand-ins; emails, phones, postal codes, links, @handles removed), keep it with who said OK. **Still needs the realtors' chats.** | `src/lib/conversationEval.ts`, `src/lib/realChats.ts` |
+| D1 follow-ups by the day | **Fixed in the writer.** Open, new and step follow-ups first look for what the chat still needs (an unanswered question, a showing asked about, a worry), and only then use the day's angle. Unproven until the paid run. | `src/lib/followUpPlans.ts` |
+| A6 + C2 real-life quality | **Fixed, numbers only.** Admin → Usage opens with the week: drafts sent as written / changed / typed / not sent by situation, what FollowUp learned, AI cost for customers vs tests; emailed on Monday mornings. Edited examples are not shown (H1: no message words on admin). | `src/lib/qualityWeek.ts` |
+| E3 model changes under us | **Fixed.** The same summary flags a model version that answered this week and not in the 6 weeks before, and the email subject says so. | same |
+| D2 drafts after an outage | **Partly answered.** OpenAI's "out of credits" is an HTTP 429, which `isTransientError` treats as "try again soon": the lead's claim is released and a later run writes the draft once credits are back. Not yet proven on a local run. | `src/lib/automation.ts` |
+| A5 checkers make mistakes | **Not started.** | |
+| C1 almost no real use | **Founder's part.** Unchanged. | |
+
+### Found while checking (fixed tonight)
+
+- A rule's run on the Rulebook saved other kinds' chats in the realtors' history. Each kind is now its own test.
+- The weekly summary read every AI call of the week into memory; it now asks the database for totals.
+
+### Weak spots that remain, or are new
+
+1. **No real chats yet.** The box is built; it is empty until a realtor says OK.
+2. **The night's changes haven't met the real AI.** D1 and the voice fix are only proven by the next paid run
+   (realtor conversations about $3, other kinds about $0.80).
+3. **Checkers are still trusted blindly (A5).** The next build: a small set of known-good and known-bad messages each
+   checker must mark right.
+4. **Real chats:** a street address or a workplace is not taken out automatically; the preview asks for it by hand.
+5. **Prices are first guesses** until each test has one saved full run; then they come from the real cost.
+6. **Package warnings:** 5 moderate warnings, all in Sentry's build tool (`glob`/`minimatch`, run only while building,
+   on our own files). The only fix offered is a downgrade; wait for Sentry's update.
+7. **The weekly summary is numbers only,** so it says *how many* drafts were changed, not *what* changed. Seeing the
+   changes needs the opted-in examples, which admin can't show under H1.

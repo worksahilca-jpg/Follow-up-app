@@ -72,7 +72,18 @@ a booked call or visit; the owner closes.
 
 ## Where we are (update at the end of every task)
 
-**Last updated: 2026-10-31**
+**Last updated: 2026-11-01**
+
+- **Night of Oct 31 → Nov 1: the six weak spots, fixed together (one PR, not merged).** Founder: "fix all 6 of them
+  all together and then recheck what are the weaknesses". Built: every test run saved with its cost and version,
+  price on every Run button, "run only what failed", "check them twice more" (2-of-3, flaky marked); the Rulebook
+  (`/admin/rulebook`, 42 rules, each with why, where it lives in exact words, and a button to run only its tests);
+  11 chats for other kinds of business; a box to paste a real chat (cleaned, kept only with the owner's OK);
+  follow-ups that start from what the chat still needs (D1); "This week with real customers" on Admin → Usage plus a
+  Monday email, with a warning when OpenAI changes the model. The re-check, what's left and the new weak spots are at
+  the end of `followup/research/product/2026-10-31-make-followup-easy-to-train-and-fix.md`. Waiting on the founder:
+  "merge"; one paid run (realtor conversations ~$3, other kinds ~$0.80) to prove D1 and the voice fix; the realtors'
+  real chats. Next build if he agrees: A5 (checkers checked against known-good and known-bad messages).
 
 - **The improvement plan (Oct 31):** founder: "Find all the ways that are weak … so that in future … we can train
   anything or fix anything, keep it organised." The list, with the order, is

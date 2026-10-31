@@ -16477,3 +16477,25 @@ Test alignments: "just browsing" no longer requires an offer (the playbook keeps
 a new question on the same subject is not "repeated" (day 14 asked for the price ceiling they never gave); the reply
 checker counts a number or something that happened to them ("3 offers in a row") as a detail they wrote.
 Left as is: one Instagram joke ("Isme bee bhi dal" after an emoji) was let in once after passing every earlier run.
+
+## 2026-11-01 — Admin tools for testing and teaching FollowUp (night of Oct 31)
+
+Founder, 2026-10-31: "fix all 6 of them all together … I'll check with you in the morning." Founder-only admin
+screens, built overnight without a drawing first because the founder was asleep and asked for the fixes, not designs.
+They reuse the existing admin parts (boxes, quiet links, one black pill), add no colour, font or package, and wait for
+his reaction like any other drawing. Checked on a 1280-wide computer and a 390-wide phone; nothing scrolls sideways.
+- **Accuracy tests (`/admin/tests`):** each row shows its last saved run when idle (date, cost, version), the price in
+  small type under "Run" on the button ("about $3.00"), and after a run "Since <date>: N now pass, M now fail". Two quiet buttons
+  follow a run with failures: "Run only the N that failed (about $X)" and "Check them twice more (about $X)". Flaky
+  cases are tagged in words, not colour. Two new rows: other kinds of business, and real chats.
+- **Real chats (below the tests):** a list with a Delete link each, and "Add a real chat": paste the chat, list the
+  names, read "What will be kept" (cleaned live as you type) before the one black button "Keep this chat as a test".
+  Who said OK is required. The preview asks the founder to remove what the cleaner can't (a street address).
+- **Rulebook (`/admin/rulebook`):** the rules by area, each with its reason, a right and a wrong example, where it
+  lives, and "Run its N tests · about $X". Results appear under the rule.
+- **Usage → "This week with real customers":** a table of drafts by situation (sent, as written with its %, changed,
+  typed, not sent) and two boxes (what FollowUp learned; the AI's cost for customers and for tests). A new AI model
+  version gets one plain sentence above the table. Numbers only (H1).
+Weak, honestly: the Usage table scrolls inside its box on a phone (six columns don't fit 390px; acceptable for a
+founder tool read on a laptop); the Rulebook is long (42 rules) and has no search; the Accuracy tests page now carries
+more buttons per row after a run, which is busier than the rest of the app.

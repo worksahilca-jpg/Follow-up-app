@@ -14,6 +14,7 @@ import OpenAI from "openai";
 import * as Sentry from "@sentry/nextjs";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { createHash } from "node:crypto";
+import { isOutOfCreditsError } from "@/lib/rateLimitRetry";
 
 /**
  * Which model writes (founder, 2026-10-04: "we should use newer models
@@ -109,6 +110,8 @@ export interface AiCall {
 export interface AiCallSink {
   call(call: AiCall): Promise<void>;
   choice(responseId: string, choice: string): Promise<void>;
+  /** A call failed because the OpenAI account has no credit left (src/lib/aiCreditsAlert.ts tells the founder). */
+  outOfCredits?(): Promise<void>;
 }
 
 /** The rules and examples a drafting call carries, so the log can tell one set of lessons from another. */
@@ -168,6 +171,15 @@ async function toLog(write: (sink: AiCallSink) => Promise<void>): Promise<void> 
 export async function noteAiChoice(responseId: string | null | undefined, choice: string): Promise<void> {
   if (!responseId) return;
   await toLog((sink) => sink.choice(responseId, choice));
+}
+
+/**
+ * Oct 30, 2026: the credits ran out twice in one day and nobody was told; the founder found out from a test page full
+ * of 429s. Only a call that has finally failed counts (the best model's refusal is retried on the usual one first).
+ */
+async function creditsGone(err: unknown): Promise<void> {
+  if (!isOutOfCreditsError(err)) return;
+  await toLog((sink) => sink.outOfCredits?.() ?? Promise.resolve());
 }
 
 const fingerprint = (value: unknown): string => createHash("sha256").update(JSON.stringify(value ?? null)).digest("hex");
@@ -233,6 +245,7 @@ export function getClient(purpose = "other", lessons?: AiLessons): OpenAI {
             : null;
       if (!fallbackTo) {
         await log(false, null, err);
+        await creditsGone(err);
         throw err;
       }
       if (!reportedFallback) {
@@ -249,6 +262,7 @@ export function getClient(purpose = "other", lessons?: AiLessons): OpenAI {
         return answer;
       } catch (again) {
         await log(true, null, again);
+        await creditsGone(again);
         throw again;
       }
     }

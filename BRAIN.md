@@ -72,7 +72,23 @@ a booked call or visit; the owner closes.
 
 ## Where we are (update at the end of every task)
 
-**Last updated: 2026-10-30**
+**Last updated: 2026-10-31**
+
+- **The improvement plan (Oct 31):** founder: "Find all the ways that are weak … so that in future … we can train
+  anything or fix anything, keep it organised." The list, with the order, is
+  `followup/research/product/2026-10-31-make-followup-easy-to-train-and-fix.md` (A measure, B fix, C learn from real
+  use, D the steps, E safety and cost, F organisation). Next after the credits alert: save every test run + "run only
+  what failed" + price on the button.
+
+- **Founder, Oct 30: "we need to develop our structure as well … keep in mind that too."** Not only the rulebook
+  (the prompts the tests fix) but the whole pipeline: 1 sort → 2 customer card → 3 understand (qualify) → 4 "no"
+  check → 5 write the reply → 6 safety check → 7 Today / send → 8 follow-ups when quiet → 9 booking → 10 CRM, plus
+  how it learns (facts, edits, rulebook). Weak spots found so far: follow-ups (step 8) fail the most in the
+  conversation test; tests use made-up chats only (next: real realtor chats, names removed, with the realtor's OK);
+  OpenAI credits ran out twice on Oct 30 unseen (tests only, ~$41 that day; real customers used <$1 in 7 days): an
+  alert now emails, buzzes and posts to Slack on the first refused call, at most once every 6 hours
+  (src/lib/aiCreditsAlert.ts, on this branch, not merged); a full test round costs $12–14, so run only the row that changed and say its price first; booking
+  change/cancel is still Stage 2. Keep the best AI everywhere (founder: no compromise on quality).
 
 - **Meta review, Messenger + Lead Ads (Oct 30): videos A–D recorded and checked, E tomorrow, submit Oct 31.** Six days
   behind the plan's Oct 25. Set-up done on camera-ready accounts: the review Gmail (FollowUp ADMIN, every reply waits)

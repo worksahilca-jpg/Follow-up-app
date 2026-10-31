@@ -95,6 +95,19 @@ describe("every AI call gets a row", () => {
     expect(sink.call.mock.calls[0][0]).toMatchObject({ ok: false, errorStatus: 429, modelUsed: null, responseId: null });
   });
 
+  it("tells the founder when a call fails because the OpenAI account has no credit left, and only then", async () => {
+    const outOfCredits = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
+    setAiCallSink({ ...sink, outOfCredits });
+    create.mockRejectedValue(Object.assign(new Error("429 You have no credits remaining."), { status: 429 }));
+    await expect(ask("score_lead")).rejects.toThrow("no credits");
+    expect(outOfCredits).toHaveBeenCalled();
+
+    outOfCredits.mockClear();
+    create.mockRejectedValue(Object.assign(new Error("rate limited"), { status: 429 }));
+    await expect(ask("score_lead")).rejects.toThrow("rate limited");
+    expect(outOfCredits).not.toHaveBeenCalled();
+  });
+
   it("writes with the model a reply test is trying, and only the writing jobs: the grader keeps the usual one", async () => {
     await withAiContext({ tag: "test", writeWith: "gpt-5.4" }, async () => {
       await ask("draft_reply");

@@ -54,6 +54,21 @@ export function isRateLimitError(err: unknown): boolean {
   return typeof e.message === "string" && /\b429\b|rate limit/i.test(e.message);
 }
 
+/**
+ * OpenAI saying the account has no credit left: "429 You have no credits remaining" or code `insufficient_quota`.
+ * Nothing works again until someone adds credits, so it is worth telling the founder at once (src/lib/aiCreditsAlert.ts).
+ */
+export function isOutOfCreditsError(err: unknown): boolean {
+  if (!err || typeof err !== "object") return false;
+  const e = err as ErrorShape;
+  if (e.code === "insufficient_quota" || e.error?.code === "insufficient_quota") return true;
+  return (
+    e.status === 429 &&
+    typeof e.message === "string" &&
+    /no credits remaining|exceeded your current quota|insufficient[_ ]quota/i.test(e.message)
+  );
+}
+
 type GoogleErrorShape = {
   status?: unknown;
   code?: unknown;

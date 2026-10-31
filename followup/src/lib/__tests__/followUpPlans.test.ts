@@ -247,3 +247,22 @@ describe("the day they asked to hear back", () => {
     expect(at("We bought our last place in the spring of 2019")).toBeNull();
   });
 });
+
+describe("follow-ups chosen from the conversation, not the day (night plan D1)", () => {
+  it("puts what the chat still needs before the day's angle on day 1, 3, 7 and 14", () => {
+    for (const kind of ["open", "new", "step"] as const) {
+      const hint = stepHint({ step: 1, total: 5, kind, final: false }, 3);
+      const needs = hint.indexOf("First, read what this conversation still needs");
+      expect(needs).toBeGreaterThan(-1);
+      expect(needs).toBeLessThan(hint.indexOf("Angle for this one"));
+      expect(hint).toContain("a question of theirs that no message from the business has answered");
+      expect(hint).toContain("asks one easy thing they haven't told you yet");
+    }
+  });
+
+  it("leaves the thank-you, the check-back and the last message to their own job", () => {
+    for (const kind of ["thanks", "checkback", "close"] as const) {
+      expect(stepHint({ step: 1, total: 5, kind, final: kind === "close" }, 3)).not.toContain("First, read what this conversation still needs");
+    }
+  });
+});

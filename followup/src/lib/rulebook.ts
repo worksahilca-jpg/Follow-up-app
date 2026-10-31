@@ -259,6 +259,14 @@ export const RULES: Rule[] = [
     tests: { conversations: (c) => c.next.kind === "followup" },
   },
   {
+    id: "followup-needs-first",
+    area: "followup",
+    name: "A follow-up starts from what the chat still needs: an unanswered question, a showing not booked, a worry they named. The day's angle comes only after.",
+    why: "Night plan D1 (Oct 31): the angle came from the day alone, so on day 14 with nothing new FollowUp had to invent something, where most of the Oct 30 test failures were.",
+    where: [{ file: PLANS, words: "First, read what this conversation still needs" }],
+    tests: { conversations: (c) => c.next.kind === "followup" && ["open", "new", "step"].includes(c.next.angle) },
+  },
+  {
     id: "followup-open",
     area: "followup",
     name: "Day 1: answer anything left open; if nothing answers it, say you'll check. Never fill the gap with a claim about the market.",

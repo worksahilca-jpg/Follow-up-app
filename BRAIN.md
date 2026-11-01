@@ -74,6 +74,15 @@ a booked call or visit; the owner closes.
 
 **Last updated: 2026-11-01**
 
+- **"Are we on the right track?" (Nov 1, after PR #624 went live).** Research verdict: partly. Right problem, wrong
+  use of time: in the last 30 days 1 customer answered through FollowUp, 0 bookings, 1 new signup, and the AI has been
+  off since Oct 30 (no credits). Report: `reports/FollowUp right track check.md` (notes in `research_notes/`). Its
+  plan for Nov 2–30: turn the AI back on; set up the 9 signed-up businesses by hand on a call; 10–15 conversations a
+  week with Toronto solo realtors; charge $39 from day one with a refund promise (lawyer's privacy review first); sell
+  "follow-up with your OK". One weekly number: realtors with a customer answered through FollowUp. Decision on Nov 30.
+  Stop new features, redesigns, admin tools and big test runs unless a real realtor is stuck. Waiting on the founder's
+  yes to this plan.
+
 - **Night of Oct 31 → Nov 1: the six weak spots, fixed together (one PR, not merged).** Founder: "fix all 6 of them
   all together and then recheck what are the weaknesses". Built: every test run saved with its cost and version,
   price on every Run button, "run only what failed", "check them twice more" (2-of-3, flaky marked); the Rulebook

@@ -29,12 +29,12 @@ beforeEach(() => {
 afterEach(() => setAiCallSink(null));
 
 describe("the daily test limit", () => {
-  it("is $10 unless set, and a bad setting falls back to $10", () => {
-    expect(testBudgetMicros()).toBe(10_000_000);
+  it("is $5 unless set, and a bad setting falls back to $5", () => {
+    expect(testBudgetMicros()).toBe(5_000_000);
     vi.stubEnv("TEST_DAILY_BUDGET_USD", "25");
     expect(testBudgetMicros()).toBe(25_000_000);
     vi.stubEnv("TEST_DAILY_BUDGET_USD", "nonsense");
-    expect(testBudgetMicros()).toBe(10_000_000);
+    expect(testBudgetMicros()).toBe(5_000_000);
   });
 
   it("refuses a run once the limit is used, or when the run would go over it, and says why in plain words", () => {
@@ -44,19 +44,19 @@ describe("the daily test limit", () => {
   });
 
   it("counts only calls tagged as tests, over the last 24 hours", async () => {
-    spent(4_000_000);
-    expect(await checkTestBudget(7_000_000)).toMatch(/only \$6\.00/);
+    spent(2_000_000);
+    expect(await checkTestBudget(4_000_000)).toMatch(/only \$3\.00/);
     const where = aggregate.mock.calls[0][0].where;
     expect(where.purpose).toEqual({ startsWith: "test:" });
     expect(Date.now() - where.createdAt.gte.getTime()).toBeGreaterThanOrEqual(24 * 60 * 60 * 1000 - 1000);
   });
 
   it("stops an accuracy run before it starts when it would go over, and never runs it", async () => {
-    spent(9_900_000);
+    spent(4_900_000);
     const run = vi.fn();
     const cases = Array.from({ length: 40 }, (_, i) => ({ name: `case ${i}` }));
     const out = await runTest("conversations", {}, cases, run, () => 0);
-    expect(out).toMatchObject({ ok: false, error: expect.stringMatching(/only \$0\.10 of today's \$10\.00/) });
+    expect(out).toMatchObject({ ok: false, error: expect.stringMatching(/only \$0\.10 of today's \$5\.00/) });
     expect(run).not.toHaveBeenCalled();
   });
 
@@ -76,7 +76,7 @@ describe("at the one place every AI call goes through", () => {
   });
 
   it("stops a test's call once today's limit is used, without asking OpenAI", async () => {
-    spent(10_000_000);
+    spent(5_000_000);
     await expect(withAiContext({ tag: "test" }, ask)).rejects.toBeInstanceOf(TestBudgetError);
     expect(create).not.toHaveBeenCalled();
   });

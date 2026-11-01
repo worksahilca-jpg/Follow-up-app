@@ -98,12 +98,14 @@ describe("the best model, for every customer's work (founder, 2026-10-29 and 202
     expect((await load()).BEST_MODEL).toBe("gpt-5.5-pro");
   });
 
-  it("sorts, reads, scores, checks and writes; only the test graders and the website demo stay on the usual model", async () => {
+  it("writes, scores and checks on the best model; sorting, reading, the language read, graders and the demo stay on the usual one", async () => {
     create.mockResolvedValue({ choices: [{ message: { content: "ok" } }] });
-    const jobs = ["draft_reply", "draft_first_reply", "rewrite_reply", "classify_customer", "read_checklist", "score_lead", "stop_check", "check_send_risk", "other"];
-    for (const job of jobs) await call(job);
-    for (const job of ["grade_reply", "grade_rule", "demo_reply"]) await call(job);
-    expect(create.mock.calls.map((c) => c[0].model)).toEqual([...jobs.map(() => "gpt-5.5"), "gpt-5.4-mini", "gpt-5.4-mini", "gpt-5.4-mini"]);
+    const best = ["draft_reply", "draft_first_reply", "rewrite_reply", "score_lead", "stop_check", "check_send_risk", "other"];
+    // Nov 1 2026: sorting and reading cost almost all the money on the best model and scored perfectly on the usual one.
+    const usual = ["classify_customer", "read_checklist", "detect_language", "grade_reply", "grade_rule", "demo_reply"];
+    for (const job of best) await call(job);
+    for (const job of usual) await call(job);
+    expect(create.mock.calls.map((c) => c[0].model)).toEqual([...best.map(() => "gpt-5.5"), ...usual.map(() => "gpt-5.4-mini")]);
   });
 
   it("leaves a call that names its own model alone", async () => {
@@ -115,7 +117,7 @@ describe("the best model, for every customer's work (founder, 2026-10-29 and 202
   it("falls back to the usual model on any failure, so the customer is still sorted and answered", async () => {
     create.mockRejectedValueOnce(Object.assign(new Error("rate limited"), { status: 429 }));
     create.mockResolvedValueOnce({ choices: [{ message: { content: "ok" } }] });
-    const { out } = await call("classify_customer");
+    const { out } = await call("score_lead");
     expect(out).toEqual({ choices: [{ message: { content: "ok" } }] });
     expect(create.mock.calls.map((c) => c[0].model)).toEqual(["gpt-5.5", "gpt-5.4-mini"]);
   });

@@ -74,13 +74,18 @@ a booked call or visit; the owner closes.
 
 **Last updated: 2026-11-01**
 
-- **Accuracy without credit, and a screen check (Nov 1, same PR #626, not merged).** Two plain-rule guards, no AI
-  cost: a reply with a template leftover ("[Your Name]", "{first_name}") never reaches a customer and waits with
-  "Change "[Your Name]" to the real words, then send."; and a price typed into one blank no longer fills a second,
-  different blank (found on Today with sample customers: it would have sent "parking is $450,000"). The robot tester
-  works again (34 of 34 screens pass, phone and computer). Open for the founder: a box for each different blank (a
-  drawing first), and the business mailing address on automated emails (Canada's anti-spam law; the unsubscribe link
-  is already there).
+- **A "stop" by email is recorded (Nov 1, PR open).** A customer who answered an email with just "stop" or
+  "unsubscribe" was recorded nowhere (texts, WhatsApp and Instagram were), so a welcome-back could email them again.
+  Now the Gmail and Outlook syncs read the reply above the quoted thread and set the same opt-out; on email only
+  "stop"/"unsubscribe" count ("Cancel" under a showing email is about the showing). Waiting on the founder: A or B for
+  the email footer drawing (A: business mailing address only; B: address plus "Not looking any more? Reply "stop" and
+  I won't follow up again."; recommended B). Correction made to him: automatic emails have NO unsubscribe link today
+  (his call, Sept 15, code comment in `followup/src/lib/sending.ts`).
+
+- **PR #626 is live (Nov 1, 05:38 UTC).** Sorting and checklist reading on the usual model, tests capped at $5 a day,
+  an AI outage never stops an incoming delivery (hourly catch-up), a reply with a template leftover ("[Your Name]")
+  never reaches a customer, and a price typed for one blank never fills another ("parking is $450,000"). The robot
+  tester works again (34 of 34). Still open: a box for each different blank (a drawing first).
 
 - **Budget and the accuracy loop (Nov 1).** About $20 of AI credit (founder: "I'm very tight with the budget...
   optimise everything"). Live: tests may spend at most $10 a day (#625). On the branch, not yet merged: sorting and

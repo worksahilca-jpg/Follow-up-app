@@ -30,7 +30,7 @@ import { checkAiEligibility } from "@/lib/billing";
 import { detectLeadLanguage, leadLanguageOf } from "@/lib/leadLanguage";
 import { SCORE_HIGH, SCORE_MEDIUM } from "@/lib/scoreThresholds";
 import { escapeSlackText, notifySlack } from "@/lib/slack";
-import { isOptInMessage, isOptOutMessage } from "@/lib/optOutKeywords";
+import { isOptInReply, isOptOutReply } from "@/lib/optOutKeywords";
 import type { Message } from "@/lib/types";
 import { Prisma, type Priority as DbPriority } from "@prisma/client";
 import { draftingContext } from "@/lib/businessFacts";
@@ -173,7 +173,7 @@ async function scoreAndDraft(leadId: string): Promise<boolean> {
     );
   }
 
-  if (newest.direction === "inbound" && (isOptOutMessage(newest.body) || isOptInMessage(newest.body))) return false;
+  if (newest.direction === "inbound" && (isOptOutReply(newest.body, newest.channel) || isOptInReply(newest.body, newest.channel))) return false;
 
   // How this lead writes, read from their NEWEST message, every time.
   //

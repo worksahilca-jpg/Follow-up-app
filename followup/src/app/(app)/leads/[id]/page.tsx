@@ -358,7 +358,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
         />
 
         <DetailsFold>
-          <CollapsibleSection row title={`Why it may write to ${firstName}`} status={lead.optedOutAt ? "Opted out of texts" : consentLabel(lead.source)}>
+          <CollapsibleSection row title={`Why it may write to ${firstName}`} status={lead.optedOutAt ? "Said STOP" : consentLabel(lead.source)}>
             <LeadTrustPanel part="why" source={lead.source} optedOutAt={lead.optedOutAt} auditTrail={auditTrail} languageRead={lead.languageRead as LeadLanguage | null} />
           </CollapsibleSection>
           <CollapsibleSection row title="What FollowUp did" status={lastActionSummary(auditTrail, now) ?? "Nothing yet"}>

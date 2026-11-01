@@ -1,8 +1,10 @@
 import { prisma } from "@/lib/db";
 import { estimateCostMicros } from "@/lib/aiDecisionLog";
 import { newAiTally, withAiContext, type AiTally } from "@/lib/integrations/openaiClient";
+import { checkTestBudget } from "@/lib/testBudget";
 import {
   caseOutcomes,
+  estimateRunMicros,
   isTestId,
   kindOf,
   pickCases,
@@ -127,6 +129,22 @@ function toSummary(row: Row): RunSummary {
 /** How many runs of each test the page lists. */
 const HISTORY = 15;
 
+/** The columns a run's summary is read from. */
+const SUMMARY_FIELDS = {
+  id: true,
+  createdAt: true,
+  test: true,
+  kind: true,
+  recheckOf: true,
+  version: true,
+  cases: true,
+  passed: true,
+  errors: true,
+  ran: true,
+  failed: true,
+  costMicros: true,
+} as const;
+
 /** Every test's recent runs, for /admin/tests. Empty when the table can't be read: the page still runs tests. */
 export async function loadTestHistory(): Promise<Record<TestId, TestHistory>> {
   const empty = Object.fromEntries(TEST_IDS.map((t): [TestId, TestHistory] => [t, { runs: [], shown: null }])) as Record<TestId, TestHistory>;
@@ -138,7 +156,7 @@ export async function loadTestHistory(): Promise<Record<TestId, TestHistory>> {
           where: { test },
           orderBy: { createdAt: "desc" },
           take: HISTORY,
-          select: { id: true, createdAt: true, test: true, kind: true, recheckOf: true, version: true, cases: true, passed: true, errors: true, ran: true, failed: true, costMicros: true },
+          select: SUMMARY_FIELDS,
         })
       )
     );
@@ -165,6 +183,19 @@ export async function loadTestHistory(): Promise<Record<TestId, TestHistory>> {
  * One Run button press, start to finish: read what was asked, pick the cases, run them with every call counted, save
  * the run. The routes keep their own locks (founder only, POST only, never from another site); this is what's common.
  */
+/**
+ * Why this run would go over today's test limit, or null. Priced like the Run button (the last full run's cost per case).
+ * When the limit can't be checked the run goes ahead; each test call is checked again as it is made.
+ */
+async function overTestBudget(test: TestId, totalCases: number, count: number): Promise<string | null> {
+  try {
+    const rows = await prisma.testRun.findMany({ where: { test }, orderBy: { createdAt: "desc" }, take: HISTORY, select: SUMMARY_FIELDS });
+    return await checkTestBudget(estimateRunMicros(test, rows.map(toSummary), totalCases, count));
+  } catch {
+    return null;
+  }
+}
+
 export async function runTest<C extends { name: string }, R>(
   test: TestId,
   body: unknown,
@@ -176,6 +207,9 @@ export async function runTest<C extends { name: string }, R>(
   if ("error" in ask) return { ok: false, error: ask.error };
   const cases = pickCases(all, ask);
   if ("error" in cases) return { ok: false, error: cases.error };
+  // Tests never spend the credit real customers need (src/lib/testBudget.ts): priced first, refused over the limit.
+  const over = await overTestBudget(test, all.length, cases.length);
+  if (over) return { ok: false, error: over };
   const { result, tally } = await runCounted(() => run(cases));
   const ran = cases.map((c) => c.name);
   const saved = await saveTestRun({ test, ask, outcomes: caseOutcomes(test, result, ran), errors: errorsOf(result), result, tally });

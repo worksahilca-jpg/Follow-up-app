@@ -112,6 +112,19 @@ export interface AiCallSink {
   choice(responseId: string, choice: string): Promise<void>;
   /** A call failed because the OpenAI account has no credit left (src/lib/aiCreditsAlert.ts tells the founder). */
   outOfCredits?(): Promise<void>;
+  /** Before a call made under the "test" tag: false once today's test limit is used (src/lib/testBudget.ts). */
+  testCallAllowed?(): Promise<boolean>;
+}
+
+/**
+ * Thrown instead of making a test's AI call once today's test limit is used, so tests never spend the credit real
+ * customers need. Real customers' calls never meet it.
+ */
+export class TestBudgetError extends Error {
+  constructor() {
+    super("Tests have used today's AI limit, so real customers' replies keep the credit. Try again tomorrow.");
+    this.name = "TestBudgetError";
+  }
 }
 
 /** The rules and examples a drafting call carries, so the log can tell one set of lessons from another. */
@@ -224,6 +237,10 @@ export function getClient(purpose = "other", lessons?: AiLessons): OpenAI {
   // Every call is also handed to the decision log (src/lib/aiDecisionLog.ts), answered or not.
   (completions as unknown as { create: unknown }).create = async (body: ChatBody, options?: unknown) => {
     const here = where.getStore();
+    if (here?.tag === "test") {
+      const allowed = shared[SINK]?.testCallAllowed;
+      if (allowed && !(await allowed())) throw new TestBudgetError();
+    }
     const trying = here?.writeWith && WRITING.has(purpose) ? here.writeWith : null;
     // A job asked for the usual model gets the best one; a caller that named another model keeps it.
     const best = !trying && !USUAL_JOBS.has(purpose) && body.model === MODEL && BEST_MODEL !== MODEL;

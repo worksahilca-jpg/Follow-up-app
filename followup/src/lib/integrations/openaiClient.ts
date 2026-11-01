@@ -45,9 +45,13 @@ export const TRANSCRIBE_MODEL = "gpt-4o-mini-transcribe";
 export const BEST_MODEL = process.env.OPENAI_BEST_MODEL?.trim() || process.env.OPENAI_REPLY_MODEL?.trim() || "gpt-5.5";
 /**
  * The jobs that stay on MODEL. The test graders, so a score still means what it meant before and the best model is
- * never marking its own work; and the demo box on the public website, which strangers can run and no customer reads.
+ * never marking its own work; the demo box on the public website, which strangers can run and no customer reads; and,
+ * from 2026-11-01, the email sorting, the checklist reading and the language read. In the 30 days to Nov 1 the sorting
+ * cost $17.78 and the reading $8.71 on the best model, against $0.18 for every reply it wrote, and both had scored
+ * perfectly on the usual model (emails 122/122, qualifying 192/192, accuracy run 4, Oct 14). The founder, Nov 1: "I'm
+ * very tight with the budget... optimise everything." Writing, the "no" check and everything else stay on the best.
  */
-const USUAL_JOBS = new Set(["grade_reply", "grade_rule", "demo_reply"]);
+const USUAL_JOBS = new Set(["grade_reply", "grade_rule", "demo_reply", "classify_customer", "read_checklist", "detect_language"]);
 
 /**
  * GPT-5-family and o-series models think before they answer. They take

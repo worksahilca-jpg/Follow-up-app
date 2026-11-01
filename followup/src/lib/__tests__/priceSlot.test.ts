@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fillPriceSlot, hasPriceSlot, isFilledDraft, PRICE_SLOT, splitAtPriceSlot } from "@/lib/priceSlot";
+import { fillPriceSlot, hasPriceSlot, isFilledDraft, mixedBlanks, PRICE_SLOT, splitAtPriceSlot } from "@/lib/priceSlot";
 
 describe("the price blank", () => {
   it("finds the blank however the model cased or spaced it", () => {
@@ -22,6 +22,26 @@ describe("the price blank", () => {
 
   it("fills every blank with what the owner typed", () => {
     expect(fillPriceSlot("It is [PRICE], or [price] with the extra.", "$1,200")).toBe("It is $1,200, or $1,200 with the extra.");
+  });
+
+  it("never puts the price into a different blank (Nov 1 2026: \"parking is $450,000\")", () => {
+    const draft = "The asking price is [PRICE], and parking is [ANSWER: parking].";
+    expect(fillPriceSlot(draft, "$450,000")).toBe("The asking price is $450,000, and parking is [ANSWER: parking].");
+    expect(hasPriceSlot(fillPriceSlot(draft, "$450,000"))).toBe(true);
+    expect(fillPriceSlot("Parking is [ANSWER: parking]; pets are [ANSWER: pets].", "Included")).toBe("Parking is Included; pets are [ANSWER: pets].");
+  });
+
+  it("puts the owner's words in exactly as typed", () => {
+    expect(fillPriceSlot("It is [PRICE].", "$$500 or $& more")).toBe("It is $$500 or $& more.");
+  });
+
+  it("knows when a draft has two different blanks", () => {
+    expect(mixedBlanks("The price is [PRICE], and parking is [ANSWER: parking].")).toBe(true);
+    expect(mixedBlanks("Parking is [ANSWER: parking], pets [answer: Pets].")).toBe(true);
+    expect(mixedBlanks("It is [PRICE], or [price] with the extra.")).toBe(false);
+    expect(mixedBlanks("Parking is [ANSWER: parking], yes [ANSWER: Parking ].")).toBe(false);
+    expect(mixedBlanks("No blank here.")).toBe(false);
+    expect(mixedBlanks(null)).toBe(false);
   });
 
   it("cuts the draft at the blank for drawing the box", () => {

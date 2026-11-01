@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { MOTION, OPEN_IN_PLACE } from "@/lib/motion";
 import { useRouter } from "next/navigation";
-import { fillPriceSlot, hasPriceSlot, slotOf, splitAtPriceSlot } from "@/lib/priceSlot";
+import { fillPriceSlot, hasPriceSlot, mixedBlanks, slotOf, splitAtPriceSlot } from "@/lib/priceSlot";
 import { RememberPrice } from "@/components/app/RememberPrice";
 import { useUndoableSend } from "@/components/useUndoableSend";
 import UndoLine from "@/components/UndoLine";
@@ -87,7 +87,8 @@ export default function ReplyCard({
   // The owner's own words: they typed, or asked for a rewrite. "Write a new one" is FollowUp's again.
   const [mine, setMine] = useState(false);
 
-  const needsPrice = !editing && hasPriceSlot(text);
+  // Two different blanks get no box: the reply shows as written, and "Change it" is where both go in (priceSlot.ts).
+  const needsPrice = !editing && hasPriceSlot(text) && !mixedBlanks(text);
   // A price blank or an answer blank (A-100): "[ANSWER: parking]".
   const blankTopic = needsPrice ? (slotOf(text) as { topic?: string } | null)?.topic : undefined;
   const blankHint = blankTopic ? `your answer on ${blankTopic}` : "$ price";

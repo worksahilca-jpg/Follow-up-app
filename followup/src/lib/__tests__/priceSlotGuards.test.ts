@@ -73,6 +73,29 @@ describe("a message that still has the blank never leaves", () => {
   });
 });
 
+describe("a reply with two different blanks (Nov 1 2026)", () => {
+  it("is refused, and says to write both in", async () => {
+    const result = await sendFollowUpToLead("lead1", "The asking price is [PRICE], and parking is [ANSWER: parking].", { trigger: "manual" });
+    expect(result).toMatchObject({ success: false, failure: "refused" });
+    expect(result.message).toBe("This reply has two blanks. Press Change it and write in both first.");
+  });
+});
+
+describe("a message with a template leftover never leaves either (Nov 1 2026)", () => {
+  it("is refused on an automatic send, and names what to change", async () => {
+    const result = await sendFollowUpToLead("lead1", "Happy to show it Saturday!\n\nBest,\n[Your Name]", { automated: true, trigger: "silence" });
+    expect(result).toMatchObject({ success: false, failure: "refused" });
+    expect(result.message).toMatch(/Change "\[Your Name\]" to the real words first/);
+    expect(p.message.findFirst).not.toHaveBeenCalled();
+  });
+
+  it("is refused in the subject line too", async () => {
+    const result = await sendFollowUpToLead("lead1", "Here are the details.", { subject: "Viewing on {date}" });
+    expect(result.success).toBe(false);
+    expect(result.message).toMatch(/\{date\}/);
+  });
+});
+
 describe("drafting writes the blank instead of a number", () => {
   it("tells the model to write [PRICE] for a price it doesn't have, and never a figure", async () => {
     create.mockResolvedValue({ choices: [{ message: { content: JSON.stringify({ subject: "Your package", body: "It is [PRICE]." }) } }] });

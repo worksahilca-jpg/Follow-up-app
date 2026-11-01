@@ -6,11 +6,25 @@
 // See scripts/robot/README.md.
 import { PrismaClient } from "@prisma/client";
 import { encode } from "next-auth/jwt";
-import { writeFileSync } from "node:fs";
+import { existsSync, readdirSync, writeFileSync } from "node:fs";
 
 const BASE = process.env.ROBOT_BASE_URL ?? "http://localhost:3111";
 const PLAYWRIGHT = process.env.ROBOT_PLAYWRIGHT ?? "/opt/node22/lib/node_modules/playwright/index.mjs";
-const CHROME = process.env.ROBOT_CHROME ?? "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
+// The browser's folder name carries its version and changes when the container is updated (chromium-1194 went away
+// on Nov 1 2026 and the robot couldn't start), so the newest one present is used unless ROBOT_CHROME says otherwise.
+function findChrome() {
+  const root = "/opt/pw-browsers";
+  const dirs = existsSync(root) ? readdirSync(root).filter((d) => /^chromium-\d+$/.test(d)) : [];
+  dirs.sort((a, b) => Number(b.split("-")[1]) - Number(a.split("-")[1]));
+  for (const dir of dirs) {
+    for (const sub of ["chrome-linux64", "chrome-linux"]) {
+      const path = `${root}/${dir}/${sub}/chrome`;
+      if (existsSync(path)) return path;
+    }
+  }
+  return undefined; // Playwright's own default
+}
+const CHROME = process.env.ROBOT_CHROME || findChrome();
 const OUT = process.env.ROBOT_OUT ?? "robot-report.json";
 
 if (!process.env.DATABASE_URL?.includes("localhost")) throw new Error("refusing: the robot only runs against a local database");

@@ -45,7 +45,8 @@ import {
   rescheduleSend,
   retireSend,
 } from "@/lib/sendQueue";
-import { filledAnswer, filledPrice, hasPriceSlot, isFilledDraft, PRICE_SLOT, slotOf } from "@/lib/priceSlot";
+import { filledAnswer, filledPrice, hasPriceSlot, isFilledDraft, mixedBlanks, PRICE_SLOT, slotOf } from "@/lib/priceSlot";
+import { strayPlaceholder } from "@/lib/strayPlaceholder";
 import { customerGreetingName } from "@/lib/leadName";
 import { editSize } from "@/lib/decisionOutcome";
 
@@ -453,10 +454,22 @@ export async function sendFollowUpToLead(
   if (hasPriceSlot(body) || hasPriceSlot(options.subject)) {
     return {
       success: false,
-      message:
-        slotOf(body ?? options.subject)?.kind === "answer"
+      message: mixedBlanks(body)
+        ? "This reply has two blanks. Press Change it and write in both first."
+        : slotOf(body ?? options.subject)?.kind === "answer"
           ? "Add your answer first: the reply still has a blank where it goes."
           : `Add the price first: the reply still says ${PRICE_SLOT} where the figure goes.`,
+      failure: "refused",
+    };
+  }
+
+  // A template leftover ("[Your Name]", "{first_name}") never reaches a customer either, on any path
+  // (src/lib/strayPlaceholder.ts). The owner's edit replaces it; nothing is queued or recorded for it.
+  const leftover = strayPlaceholder(body) ?? strayPlaceholder(options.subject);
+  if (leftover) {
+    return {
+      success: false,
+      message: `Change "${leftover}" to the real words first: the reply still has a placeholder in it.`,
       failure: "refused",
     };
   }

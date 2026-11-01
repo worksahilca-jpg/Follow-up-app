@@ -60,14 +60,40 @@ export function hasPriceSlot(text: string | null | undefined): boolean {
   return SLOT_RE.test(text);
 }
 
-/** The draft with every blank replaced by what the owner typed. */
+/** Which blank a token is: "price", or "answer:<topic>". Two tokens are the same blank when these match. */
+function blankKey(token: string): string {
+  const answer = token.match(ANSWER_RE);
+  return answer ? `answer:${answer[1].trim().toLowerCase()}` : "price";
+}
+
+/**
+ * True when the draft has two different blanks, "[PRICE]" and "[ANSWER: parking]". The writer is told to use one, and
+ * Today draws one box. A second, different blank gets no box: the owner writes both in with "Change it".
+ */
+export function mixedBlanks(text: string | null | undefined): boolean {
+  if (!text) return false;
+  return new Set((text.match(SLOT_RE) ?? []).map(blankKey)).size > 1;
+}
+
+/**
+ * The draft with its first blank, and every copy of that same blank, replaced by what the owner typed. A different
+ * blank stays as it is, so the figure typed for one question never becomes the answer to another (Nov 1 2026: a draft
+ * with "[PRICE]" and "[ANSWER: parking]" would have said "parking is $450,000"); the send refuses what is left. The
+ * owner's words go in as written: a "$&" or "$$" in them is never read as a replacement pattern.
+ */
 export function fillPriceSlot(text: string, price: string): string {
-  return text.replace(SLOT_RE, price);
+  SLOT_RE.lastIndex = 0;
+  const first = SLOT_RE.exec(text)?.[0];
+  SLOT_RE.lastIndex = 0;
+  if (!first) return text;
+  const key = blankKey(first);
+  return text.replace(SLOT_RE, (token) => (blankKey(token) === key ? price : token));
 }
 
 /**
  * The draft cut at the blanks, for drawing a box in each gap. One blank is
- * what the drafting rule asks for; more than one all take the same figure.
+ * what the drafting rule asks for; copies of that same blank all take the same
+ * figure. A draft with two different blanks (mixedBlanks) isn't drawn this way.
  */
 export function splitAtPriceSlot(text: string): string[] {
   return text.split(SLOT_RE);

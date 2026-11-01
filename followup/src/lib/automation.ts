@@ -35,6 +35,7 @@ import { byTranscriptOrder } from "@/lib/transcript";
 import { settledByTalk, settledByDecline, lastInboundTime, lastMessageTime } from "@/lib/talked";
 import { generateFollowUpMessage, assessSendRisk, type RiskTopic } from "@/lib/integrations/openai";
 import { slotOf, slotReason } from "@/lib/priceSlot";
+import { strayPlaceholder, strayPlaceholderReason } from "@/lib/strayPlaceholder";
 import { draftDm, readStoredQuickReplies } from "@/lib/dmDrafting";
 import { businessText, checkDmDraftShape, conversationText, emailBodyOf, emailGreetingOf } from "@/lib/dmDrafts";
 import { checkUnreviewedDraft } from "@/lib/unreviewedDraftCheck";
@@ -1584,6 +1585,9 @@ export async function runAutomationForBusiness(
       // would refuse it and nobody would ever see it.
       const blank = slotOf(message);
       const needsPrice = blank !== null;
+      // A template leftover ("[Your Name]") waits for the owner's edit on every tier (src/lib/strayPlaceholder.ts):
+      // the send layer would refuse it, and nobody would see why.
+      const leftover = strayPlaceholder(message);
       // They asked if they're talking to a real person (Lead.askedIfPersonAt):
       // the only honest reply is a person's, so it waits on every tier.
       const askedIfPerson = lead.askedIfPersonAt != null;
@@ -1593,7 +1597,7 @@ export async function runAutomationForBusiness(
       const notNow = !maybeNo && lead.notNowAt != null;
       // Their booking link in the reply (A-263) always waits for the owner.
       const offersBooking = carriesBookingLink(message, lead.id);
-      if (holdAll || isUntouched || phoneNeverWrote || unconfirmedSpam || effectiveTier !== "AUTONOMOUS" || tier === "free" || needsPrice || askedIfPerson || maybeNo || notNow || offersBooking) {
+      if (holdAll || isUntouched || phoneNeverWrote || unconfirmedSpam || effectiveTier !== "AUTONOMOUS" || tier === "free" || needsPrice || leftover || askedIfPerson || maybeNo || notNow || offersBooking) {
         /**
          * Every draft that reaches here gets a verdict, including ones
          * that are going to be held no matter what it says.
@@ -1679,6 +1683,10 @@ export async function runAutomationForBusiness(
         // off this topic). Stored, because it is a true verdict.
         if (blank) {
           risk = { riskLevel: "high", reason: slotReason(blank), topic: blank.kind === "price" ? "price" : "other" };
+          riskAssessed = true;
+        }
+        if (leftover) {
+          risk = { riskLevel: "high", reason: strayPlaceholderReason(leftover), topic: "other" };
           riskAssessed = true;
         }
         if (maybeNo) {

@@ -51,7 +51,8 @@ vi.mock("@/lib/facebook", () => ({
 
 const { acknowledgeNewLead } = vi.hoisted(() => ({ acknowledgeNewLead: vi.fn<AcknowledgeNewLead>(async () => ({ sent: true })) }));
 vi.mock("@/lib/acknowledge", () => ({ acknowledgeNewLead }));
-vi.mock("@/lib/scoring", () => ({ scoreAndDraftForLead: vi.fn(async () => true) }));
+const { scoreAndDraftForLead } = vi.hoisted(() => ({ scoreAndDraftForLead: vi.fn(async () => true) }));
+vi.mock("@/lib/scoring", () => ({ scoreAndDraftForLead }));
 vi.mock("@/lib/conversations", () => ({ findOrCreateConversation: vi.fn(async () => ({ id: "conv1" })) }));
 vi.mock("@/lib/engagement", () => ({ checkRapidEngagement: vi.fn() }));
 vi.mock("@/lib/audit", () => ({ recordAudit: vi.fn() }));
@@ -126,5 +127,21 @@ describe("a DM is timed from when it was written", () => {
       })
     );
     expect(captureDirectReply.mock.calls[0][5].getTime()).toBe(sentAt);
+  });
+});
+
+describe("an AI outage after a message is stored", () => {
+  it("never stops the rest of the delivery: the next message in it is still stored and acknowledged", async () => {
+    // Oct 30 2026: no AI credit left; each failed delivery used to stop at its first message.
+    scoreAndDraftForLead.mockRejectedValueOnce(Object.assign(new Error("429 You have no credits remaining"), { status: 429 }));
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    const now = Date.now();
+    await expect(
+      processMetaEnvelope({ object: "instagram", entry: [{ id: IG, messaging: [dm(now - 60_000, "first"), dm(now - 30_000, "second")] }] })
+    ).resolves.not.toThrow();
+    error.mockRestore();
+    expect(createInboundMessageIfNew).toHaveBeenCalledTimes(2);
+    expect(acknowledgeNewLead).toHaveBeenCalledTimes(2);
+    expect(scoreAndDraftForLead).toHaveBeenCalledTimes(2);
   });
 });

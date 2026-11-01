@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { scoreAndDraftForLead } from "@/lib/scoring";
+import { scoreAndDraftAfterCapture } from "@/lib/scoreAfterCapture";
 import { checkRapidEngagement } from "@/lib/engagement";
 import { acknowledgeNewLead } from "@/lib/acknowledge";
 import { recordAudit } from "@/lib/audit";
@@ -108,6 +108,6 @@ export async function processTwilioInbound(
     // `ownWords`, never the synthesized media placeholder above.
     await acknowledgeNewLead(lead.id, { channel, inboundText: ownWords, inboundAt: new Date() });
   }
-  await scoreAndDraftForLead(lead.id);
+  await scoreAndDraftAfterCapture(lead.id);
   await checkRapidEngagement(lead.id);
 }

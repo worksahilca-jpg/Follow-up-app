@@ -26,6 +26,7 @@
 
 import { ANSWER_SLOT_REASON, PRICE_SLOT_REASON } from "@/lib/priceSlot";
 import { isBookingLinkReason } from "@/lib/bookingOffer";
+import { strayPlaceholderAction } from "@/lib/strayPlaceholder";
 
 /** Business.holdAllForApproval, reached via the hourly silence check. */
 export const HOLD_ALL_AUTOMATION_REASON =
@@ -284,6 +285,9 @@ export function plainHoldReason(reason: string, opts: { firstName: string; topic
   if (!r || isHeldOnlyByApprovalSetting(r)) return null;
   const known = PLAIN_BY_REASON[r];
   if (known) return known(first);
+  // A template leftover ("[Your Name]"): what to change, before any word in it ("[booking link]") reads as a topic.
+  const leftover = strayPlaceholderAction(r);
+  if (leftover) return leftover;
   // Their booking link in the reply (A-263): its own two sentences, not a check.
   if (isBookingLinkReason(r)) return `${r}.`;
   const off = /^FollowUp is switched off for (.+?), so this reply only goes when you send it$/.exec(r);

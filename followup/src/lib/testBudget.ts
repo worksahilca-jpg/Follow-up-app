@@ -8,10 +8,12 @@ import { prisma } from "@/lib/db";
  * Every AI call made under the "test" tag (accuracy tests, Train's lesson tests and their practice messages) counts
  * against this limit; real customers' calls never do and are never stopped by it.
  *
- * The limit is $10 over the last 24 hours, or TEST_DAILY_BUDGET_USD when that is set to a positive number.
+ * The limit is $5 over the last 24 hours, or TEST_DAILY_BUDGET_USD when that is set to a positive number: enough for
+ * one full run of the costliest test (whole conversations, about $3) plus reruns of what failed, never a day of
+ * credit (founder, Nov 1 2026: "I'm very tight with the budget... optimise everything").
  */
 
-const DEFAULT_USD = 10;
+const DEFAULT_USD = 5;
 const WINDOW_MS = 24 * 60 * 60 * 1000;
 /** How long a spend total is reused before the database is asked again, so a run of many calls asks rarely. */
 const CACHE_MS = 30_000;

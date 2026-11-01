@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
 import { pickAssignee } from "@/lib/assignment";
-import { scoreAndDraftForLead } from "@/lib/scoring";
+import { scoreAndDraftAfterCapture } from "@/lib/scoreAfterCapture";
 import { notifyLeadEvent } from "@/lib/outboundWebhook";
 import { applySourceRouting } from "@/lib/sourceRouting";
 import { acknowledgeNewLead } from "@/lib/acknowledge";
@@ -96,13 +96,13 @@ export async function processLeadFormSubmission(
     // Return value deliberately ignored: `false` means this exact
     // submission's Message is already on disk (a replay), which says
     // nothing about whether the scoring and acknowledgement below ever
-    // ran — an OpenAI timeout right after the message was written is the
-    // single likeliest reason this row is being replayed at all. Both
-    // calls below are self-guarding (checkAiEligibility, and
+    // ran. Both calls below are self-guarding (checkAiEligibility, and
     // acknowledgeNewLead's own once-per-lead acknowledgedAt check), so
-    // re-running them is safe and is the point of the replay.
+    // re-running them is safe. An AI failure in the scoring no longer
+    // fails the submission (src/lib/scoreAfterCapture.ts, Oct 30 2026): the
+    // acknowledgement below still goes out, and the hourly catch-up scores it.
     await createInboundMessageIfNew(conversation.id, message, receivedAt, eventId);
-    await scoreAndDraftForLead(leadId);
+    await scoreAndDraftAfterCapture(leadId);
   }
 
   // A form/webhook lead gave us an email on purpose — acknowledge by email

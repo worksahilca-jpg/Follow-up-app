@@ -9,6 +9,7 @@ import { recheckDmLeadsForAllBusinesses } from "@/lib/inbound/dmRecheck";
 import { pruneDemoTries } from "@/lib/demoReply";
 import { remindStaleApprovalsForAllBusinesses } from "@/lib/staleApprovals";
 import { writeMomentNotesForAllBusinesses } from "@/lib/theirMomentData";
+import { scoreUnscoredLeadsForAllBusinesses } from "@/lib/scoreAfterCapture";
 
 // One invocation covers every business with automation enabled — at real
 // tenant counts that's comfortably past a default serverless timeout even
@@ -102,6 +103,12 @@ export async function GET(request: NextRequest) {
       failed("their moment")(err);
       return { written: 0, waiting: 0, skipped: 0, failed: 0 };
     });
+    // Customers whose message was stored but never scored (an AI outage, no credit left: Oct 30 2026), on every
+    // channel, a few per business per tick (src/lib/scoring.ts). Its own failure, like the reminders.
+    const caughtUp = await scoreUnscoredLeadsForAllBusinesses().catch((err) => {
+      failed("unscored catch-up")(err);
+      return { businesses: 0, scored: 0 };
+    });
     // Retention for the raw inbound-capture log (InboundWebhookEvent):
     // processed rows after 14 days, unreplayed failures after 90. It is
     // written once per inbound message forever, so it needs a policy from
@@ -144,7 +151,7 @@ export async function GET(request: NextRequest) {
      * the failure to Sentry either way. (This used to say console.error
      * did; it never did, as the server config has no console integration.)
      */
-    const body = { success: errors.length === 0, automation, sequences, staleApprovals, dmRechecked, moments, pruned, prunedSetAside, prunedRateLimitHits, prunedDemoTries, errors };
+    const body = { success: errors.length === 0, automation, sequences, staleApprovals, dmRechecked, moments, caughtUp, pruned, prunedSetAside, prunedRateLimitHits, prunedDemoTries, errors };
     const nothingRan = automation === null && sequences === null;
     return NextResponse.json(body, { status: nothingRan ? 500 : 200 });
   } catch (err) {

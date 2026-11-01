@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { scoreAndDraftForLead } from "@/lib/scoring";
+import { scoreAndDraftAfterCapture } from "@/lib/scoreAfterCapture";
 import { checkRapidEngagement } from "@/lib/engagement";
 import { acknowledgeNewLead } from "@/lib/acknowledge";
 import { recordAudit } from "@/lib/audit";
@@ -205,7 +205,7 @@ async function handleQuickReplyTap(
     : `${lead.name} tapped "${label}" on ${platform} — they answered you, and this one needs you now.`;
   await notifyLeadOwners(businessId, lead, message);
   if (tap.exit) return;
-  await scoreAndDraftForLead(lead.id);
+  await scoreAndDraftAfterCapture(lead.id);
   await checkRapidEngagement(lead.id);
 }
 
@@ -430,7 +430,7 @@ export async function processMetaEnvelope(payload: { object?: string; entry?: un
         // generated reply to a placeholder FollowUp wrote itself (see messageContent).
         await acknowledgeNewLead(lead.id, { channel: "instagram", inboundText: content.ownWords, inboundAt: sentAt });
       }
-      await scoreAndDraftForLead(lead.id);
+      await scoreAndDraftAfterCapture(lead.id);
       await checkRapidEngagement(lead.id);
     }
   }
@@ -541,7 +541,7 @@ async function handlePageEvents(entries: any[]): Promise<void> {
         // `body` — see the matching comment on the Instagram path above.
         await acknowledgeNewLead(lead.id, { channel: "messenger", inboundText: content.ownWords, inboundAt: sentAt });
       }
-      await scoreAndDraftForLead(lead.id);
+      await scoreAndDraftAfterCapture(lead.id);
       await checkRapidEngagement(lead.id);
     }
 
@@ -565,7 +565,7 @@ async function handlePageEvents(entries: any[]): Promise<void> {
       if (result.isNew && result.lead.email) {
         await acknowledgeNewLead(result.lead.id, { channel: "email", inboundText: body, inboundAt: data.createdTime });
       }
-      await scoreAndDraftForLead(result.lead.id);
+      await scoreAndDraftAfterCapture(result.lead.id);
     }
   }
 }

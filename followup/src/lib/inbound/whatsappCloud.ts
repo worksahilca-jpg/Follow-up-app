@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { scoreAndDraftForLead } from "@/lib/scoring";
+import { scoreAndDraftAfterCapture } from "@/lib/scoreAfterCapture";
 import { checkRapidEngagement } from "@/lib/engagement";
 import { acknowledgeNewLead } from "@/lib/acknowledge";
 import { recordAudit } from "@/lib/audit";
@@ -525,7 +525,7 @@ async function handleMessages(businessId: string, value: { messages?: unknown; s
       // Coexistence that reply arrives here as an echo and cancels the ack.
       await acknowledgeNewLead(lead.id, { channel: "whatsapp", inboundText: content.ownWords, inboundAt: sentAt });
     }
-    await scoreAndDraftForLead(lead.id);
+    await scoreAndDraftAfterCapture(lead.id);
     await checkRapidEngagement(lead.id);
   }
 

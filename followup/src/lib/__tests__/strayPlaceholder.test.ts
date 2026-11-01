@@ -3,7 +3,8 @@
  * "<insert date>" are caught by plain rules, while FollowUp's own blanks and ordinary text are left alone.
  */
 import { describe, expect, it } from "vitest";
-import { strayPlaceholder } from "@/lib/strayPlaceholder";
+import { strayPlaceholder, strayPlaceholderReason } from "@/lib/strayPlaceholder";
+import { plainHoldReason } from "@/lib/holdReasons";
 
 describe("template leftovers", () => {
   it.each([
@@ -36,5 +37,13 @@ describe("template leftovers", () => {
   it("handles nothing at all", () => {
     expect(strayPlaceholder(null)).toBeNull();
     expect(strayPlaceholder(undefined)).toBeNull();
+  });
+});
+
+describe("what the owner reads on Today", () => {
+  it("says what to change, even when the leftover names a topic", () => {
+    for (const token of ["[Your Name]", "[booking link]", "[amount]"]) {
+      expect(plainHoldReason(strayPlaceholderReason(token), { firstName: "Elena", topic: "other" })).toBe(`Change "${token}" to the real words, then send.`);
+    }
   });
 });

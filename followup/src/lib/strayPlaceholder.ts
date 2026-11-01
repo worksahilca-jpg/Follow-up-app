@@ -35,3 +35,11 @@ export function strayPlaceholder(text: string | null | undefined): string | null
 export function strayPlaceholderReason(token: string): string {
   return `the reply still says "${token}" where a real detail goes`;
 }
+
+const REASON_RE = /^the reply still says "(.+)" where a real detail goes$/;
+
+/** Today's line for that reason (src/lib/holdReasons.ts): what to do, like the price blank's "Add the price, then send." */
+export function strayPlaceholderAction(reason: string): string | null {
+  const token = REASON_RE.exec(reason)?.[1];
+  return token ? `Change "${token}" to the real words, then send.` : null;
+}

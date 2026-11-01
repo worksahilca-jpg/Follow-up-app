@@ -16499,3 +16499,18 @@ his reaction like any other drawing. Checked on a 1280-wide computer and a 390-w
 Weak, honestly: the Usage table scrolls inside its box on a phone (six columns don't fit 390px; acceptable for a
 founder tool read on a laptop); the Rulebook is long (42 rules) and has no search; the Accuracy tests page now carries
 more buttons per row after a run, which is busier than the rest of the app.
+
+## 2026-11-01 — Two different blanks in one reply; a template leftover's note on Today
+
+Found by looking at Today with sample customers (local, 390 and 1280 wide). A draft with both "[PRICE]" and
+"[ANSWER: parking]" drew one price box, showed "$ price" in the parking gap, and would have put the typed price in both
+places: "parking is $450,000". A safety fix, not a new design:
+- **One box fills only its own blank.** Copies of the same blank still share the figure (A-060 as built); a different
+  blank stays as written, and Send refuses what is left.
+- **A reply with two different blanks gets no box.** It shows as written, "[PRICE]" and "[ANSWER: parking]" included,
+  and Send says "This reply has two blanks. Press Change it and write in both first." The writer is told to use one
+  blank, so this should be rare.
+- **A template leftover ("[Your Name]") reads as an action on Today:** 'Change "[Your Name]" to the real words, then
+  send.', in the same form as "Add the price, then send."
+Weak, honestly: the raw "[ANSWER: parking]" in a reply is less friendly than a box. The better version, a box for each
+different blank, is a drawing for the founder to see first.

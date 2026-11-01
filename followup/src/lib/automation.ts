@@ -54,7 +54,7 @@ import { recordAudit } from "@/lib/audit";
 import { isWithinSendWindow } from "@/lib/sendWindow";
 import { isTransientError } from "@/lib/transientError";
 import { greetingFirstName } from "@/lib/leadName";
-import { isOptOutMessage, isOptInMessage } from "@/lib/optOutKeywords";
+import { isOptInReply, isOptOutReply } from "@/lib/optOutKeywords";
 import { ackGracePeriodMs } from "@/lib/acknowledge";
 import { heldSince } from "@/lib/pendingApprovals";
 import { isNoAnswerDraft } from "@/lib/callPlan";
@@ -375,9 +375,12 @@ export const FRESH_REPLY_SETTLE_MS = 60_000;
  */
 export const FRESH_DRAFT_WAIT_MS = 2 * 60_000;
 
-/** Nothing to answer: STOP/START are consent, handled by the capture path, never replied to by a draft. Exported for the status badge, which must agree. */
-export function isConsentKeyword(body: string | null | undefined): boolean {
-  return typeof body === "string" && (isOptOutMessage(body) || isOptInMessage(body));
+/**
+ * Nothing to answer: STOP/START are consent, handled by the capture path, never replied to by a draft. Exported for
+ * the status badge, which must agree. On email, read above the quoted thread (src/lib/optOutKeywords.ts).
+ */
+export function isConsentKeyword(body: string | null | undefined, channel?: string | null): boolean {
+  return typeof body === "string" && (isOptOutReply(body, channel) || isOptInReply(body, channel));
 }
 
 /**
@@ -424,7 +427,7 @@ export function freshInboundToAnswer(
   if (judged.length === 0) return null;
   const last = judged.reduce((latest, m) => (m.sentAt > latest.sentAt ? m : latest));
   if (last.direction !== "inbound") return null;
-  if (isExitPayload(last.quickReplyPayload) || isConsentKeyword(last.body)) return null;
+  if (isExitPayload(last.quickReplyPayload) || isConsentKeyword(last.body, last.channel)) return null;
   if (settledByTalk(lead.talkedAt, last.sentAt)) return null;
   // "Don't send" on this message: the owner declined, leave it (founder 2026-09-30).
   if (settledByDecline(lead.holdDismissedAt, last.sentAt)) return null;
@@ -614,7 +617,7 @@ async function findUnansweredLeads(businessId: string, hours: number, recheckCut
   // that inbound, AND it's old enough by the threshold THIS lead actually
   // gets" counts — if anyone has replied since, it's not neglected.
   return candidates.filter((lead) => {
-    const all = lead.conversations.flatMap((c) => c.messages);
+    const all = lead.conversations.flatMap((c) => c.messages.map((m) => ({ ...m, channel: c.channel })));
     // The instant acknowledgement is boilerplate everyone gets, not a
     // reply. For "did anyone answer this lead" it is transparent: the
     // judgment runs over everything else. Before Message.trigger existed
@@ -640,7 +643,7 @@ async function findUnansweredLeads(businessId: string, hours: number, recheckCut
     // A bare STOP or START is consent, recorded by the capture path — not
     // a question. Holding a drafted "reply" to someone's STOP in Approvals
     // invites the one message that must never be sent.
-    if (isConsentKeyword(last.body)) return false;
+    if (isConsentKeyword(last.body, last.channel)) return false;
     // "We talked" (src/lib/talked.ts): the owner answered this message in
     // person or on a call, where FollowUp cannot see it.
     if (settledByTalk(lead.talkedAt, last.sentAt)) return false;

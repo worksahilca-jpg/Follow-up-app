@@ -14,6 +14,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 vi.mock("@/lib/db", () => ({
   prisma: {
     lead: { findUnique: vi.fn(), update: vi.fn() },
+    // The automatic-email footer's name and address (src/lib/emailFooter.ts).
+    business: { findUnique: vi.fn(async () => ({ name: "Harbour Homes", mailingAddress: "100 King St W\nToronto ON M5X 1A9" })) },
     conversation: { findFirst: vi.fn(), create: vi.fn() },
     // findFirst is the Meta window pre-flight (metaWindowFor): the lead's
     // last inbound on the DM channel. Defaulted to "just now" in beforeEach
@@ -472,7 +474,7 @@ describe("email unsubscribe", () => {
   // draft is required to say so — an "unsubscribe" line would misdescribe
   // an overdue reply as a mailing. This pins the absence, so it can't drift
   // back in unnoticed.
-  it("puts no unsubscribe line or header on anything, batch included", async () => {
+  it("puts no unsubscribe link or header on anything, batch included", async () => {
     for (const options of [
       { automated: false } as const,
       { automated: true, trigger: "unanswered" } as const,
@@ -488,6 +490,40 @@ describe("email unsubscribe", () => {
       expect(sent.body).not.toMatch(/unsubscribe/i);
       expect(sent.extraHeaders).toBeUndefined();
     }
+  });
+
+  // Superseded in part, 2026-11-01 (A-341, founder: "Go for B"): every email FollowUp sends on its own ends with who
+  // sent it, where, and one line in the owner's voice to stop. Not a link, not a header; never on the owner's own
+  // email; never in the stored message.
+  it("ends every automatic email, and only those, with the name, the address and the stop line", async () => {
+    for (const [options, footer] of [
+      [{ automated: false }, false],
+      [{ automated: true, trigger: "unanswered" }, true],
+      [{ automated: true, trigger: "dead_lead_reactivation" }, true],
+    ] as const) {
+      gmailSend.mockClear();
+      p.message.create.mockClear();
+      p.lead.findUnique.mockResolvedValue(lead());
+      p.conversation.findFirst.mockResolvedValue({ id: "c1" });
+
+      await sendFollowUpToLead("lead1", "Just checking in on the King St condo.", options);
+
+      const sent = gmailSend.mock.calls.at(-1)![1] as { body: string; extraHeaders?: string[] };
+      const line = "\n\n—\nHarbour Homes · 100 King St W, Toronto ON M5X 1A9\nNot looking any more? Reply \"stop\" and I won't follow up again.";
+      expect(sent.body).toBe("Just checking in on the King St condo." + (footer ? line : ""));
+      expect(sent.extraHeaders).toBeUndefined();
+      const stored = p.message.create.mock.calls.at(-1)?.[0]?.data?.body;
+      if (stored !== undefined) expect(stored).toBe("Just checking in on the King St condo.");
+    }
+  });
+
+  it("still sends the stop line when the business can't be read", async () => {
+    p.business.findUnique.mockRejectedValueOnce(new Error("db hiccup"));
+    p.lead.findUnique.mockResolvedValue(lead());
+    p.conversation.findFirst.mockResolvedValue({ id: "c1" });
+    await sendFollowUpToLead("lead1", "Hi again.", { automated: true, trigger: "unanswered" });
+    const sent = gmailSend.mock.calls.at(-1)![1] as { body: string };
+    expect(sent.body).toBe('Hi again.\n\n—\nNot looking any more? Reply "stop" and I won\'t follow up again.');
   });
 
   it("never blocks a text because of an EMAIL unsubscribe", async () => {

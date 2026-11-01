@@ -40,6 +40,7 @@ import { mapWithConcurrency } from "@/lib/concurrency";
 import { pickAssignee } from "@/lib/assignment";
 import { notifyLeadEvent } from "@/lib/outboundWebhook";
 import { checkRapidEngagement } from "@/lib/engagement";
+import { recordEmailConsent } from "@/lib/emailOptOut";
 import { applySourceRouting } from "@/lib/sourceRouting";
 import { acknowledgeNewLead } from "@/lib/acknowledge";
 import { isFollowUpSender, ownAddressSet, TEAM_ADDRESS_SELECT, teamAddresses } from "@/lib/ownSenders";
@@ -1071,6 +1072,9 @@ async function processThreadRefs(
         if (!isUniqueViolation(err)) throw err;
       }
     }
+    // A reply of just "stop" is recorded before anything else is sent (src/lib/emailOptOut.ts), the instant
+    // acknowledgement below included.
+    await recordEmailConsent(lead.id, businessId);
     // Safe to call unconditionally, including on a resync of an old
     // thread — checkRapidEngagement() only looks at messages from the
     // last 15 minutes, so re-upserting historical mail (whose real sentAt

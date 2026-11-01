@@ -11,6 +11,8 @@ const onboardingSchema = z.object({
   finish: z.boolean().optional(),
   name: z.string().trim().max(MAX_NAME_LENGTH).optional(),
   industry: z.string().trim().max(200).optional(),
+  // Settings → Your business. Empty clears it.
+  mailingAddress: z.string().trim().max(300).optional(),
   teamSize: z.coerce.number().optional(),
 });
 
@@ -47,7 +49,7 @@ export async function GET() {
 
   const business = await prisma.business.findUnique({
     where: { id: ctx.businessId },
-    select: { name: true, industry: true, teamSize: true },
+    select: { name: true, industry: true, teamSize: true, mailingAddress: true },
   });
   if (!business) return NextResponse.json({ success: false, message: "Not found." }, { status: 404 });
 
@@ -56,6 +58,7 @@ export async function GET() {
     name: business.name,
     industry: business.industry,
     teamSize: business.teamSize,
+    mailingAddress: business.mailingAddress,
     // Whether the name is still a stand-in. The Settings section says so
     // plainly rather than leaving the owner to notice — see
     // businessDisplayName in src/lib/leadName.ts for why it matters and
@@ -95,9 +98,10 @@ export async function POST(request: NextRequest) {
   // from `?? ""`/`?? null` defaults, so a call that only intended to
   // update one field (e.g. just `name`) silently reset the other two to
   // empty/null instead of leaving them alone.
-  const data: { name?: string; industry?: string | null; teamSize?: number | null } = {};
+  const data: { name?: string; industry?: string | null; teamSize?: number | null; mailingAddress?: string | null } = {};
   if (body.name !== undefined) data.name = body.name;
   if (body.industry !== undefined) data.industry = body.industry || null;
+  if (body.mailingAddress !== undefined) data.mailingAddress = body.mailingAddress || null;
   if (body.teamSize !== undefined) {
     data.teamSize = Number.isFinite(body.teamSize) ? Math.max(1, Math.round(body.teamSize)) : null;
   }

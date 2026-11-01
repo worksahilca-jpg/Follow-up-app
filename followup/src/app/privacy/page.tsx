@@ -36,7 +36,7 @@ export default function PrivacyPage() {
 
       <main className="max-w-3xl mx-auto px-6 py-16">
         <h1 className="font-display text-3xl">Privacy Policy</h1>
-        <p className="text-sm text-ink-soft mt-2">Last updated: October 26, 2026</p>
+        <p className="text-sm text-ink-soft mt-2">Last updated: November 1, 2026</p>
 
         <div className="mt-10 space-y-10 text-sm leading-relaxed text-ink-soft">
           <section>
@@ -58,6 +58,12 @@ export default function PrivacyPage() {
               <li>
                 <strong className="text-ink">Account info</strong> — your name and email address from Google
                 sign-in.
+              </li>
+              <li>
+                <strong className="text-ink">Your business details</strong> — the name, kind of business and mailing
+                address you enter in Settings. Your business name and mailing address go at the bottom of the emails
+                FollowUp sends on its own for you, with a line saying the customer can reply &quot;stop&quot;. A
+                customer who replies &quot;stop&quot; gets nothing more from FollowUp on its own.
               </li>
               <li>
                 <strong className="text-ink">Sign-ins</strong> — each time you sign in, the kind of browser and

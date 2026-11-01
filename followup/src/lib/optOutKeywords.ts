@@ -9,8 +9,8 @@
  * you end up with "stop" working on SMS and not on Instagram, so there
  * is exactly one, here.
  *
- * Zero imports on purpose — the same reason src/lib/instagramId.ts
- * exists. twilio.ts pulls in Prisma and the Twilio REST wrappers; a pure
+ * Almost zero imports on purpose — the same reason src/lib/instagramId.ts
+ * exists (the one import, src/lib/replyBody.ts, has none of its own). twilio.ts pulls in Prisma and the Twilio REST wrappers; a pure
  * string check that four call sites need must not drag any of that
  * behind it.
  *
@@ -36,6 +36,8 @@
  * clearing an opt-out on that would be the wrong failure mode. That
  * reasoning is stronger, not weaker, in a DM.
  */
+import { cleanReplyBody } from "@/lib/replyBody";
+
 const STOP_KEYWORDS = new Set(["stop", "stopall", "unsubscribe", "cancel", "end", "quit"]);
 const START_KEYWORDS = new Set(["start", "unstop"]);
 
@@ -54,4 +56,23 @@ export function isOptOutMessage(body: string): boolean {
 
 export function isOptInMessage(body: string): boolean {
   return START_KEYWORDS.has(body.trim().toLowerCase());
+}
+
+/**
+ * The same checks for a reply on any channel. On email only what the customer typed above the quoted thread and
+ * signature counts: a Gmail reply of "STOP" arrives as "STOP\n\nOn Mon, … wrote:\n> …", which the whole-body rule
+ * never matched (Nov 1 2026: a "stop" by email went unrecorded). And on email only "stop" and "unsubscribe" are a
+ * STOP: "Cancel" under a showing email means the showing, not the emails. Other channels keep the whole body and the
+ * whole list: a DM has no quoted thread, and cutting one at a "wrote:" could turn "Stop. On second thought…" into a STOP.
+ */
+const EMAIL_STOP_KEYWORDS = new Set(["stop", "stopall", "unsubscribe"]);
+
+export function isOptOutReply(body: string, channel?: string | null): boolean {
+  if (channel !== "email") return isOptOutMessage(body);
+  const words = cleanReplyBody(body);
+  return isOptOutMessage(words) && EMAIL_STOP_KEYWORDS.has(words.trim().toLowerCase().replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ""));
+}
+
+export function isOptInReply(body: string, channel?: string | null): boolean {
+  return isOptInMessage(channel === "email" ? cleanReplyBody(body) : body);
 }

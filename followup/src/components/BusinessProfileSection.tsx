@@ -21,8 +21,9 @@ import { INDUSTRIES } from "@/lib/industries";
  * he was told to "set it in Settings" he replied that there was no such
  * option, and he was right.
  *
- * Two fields, no more. Team size is collected at onboarding and drives
- * nothing today; adding it here would be a third control that changes
+ * Two fields, then a third (the mailing address, 2026-11-01) once it meant
+ * something: it goes under every automatic email. Team size is collected
+ * at onboarding and drives nothing today; adding it here would be a control that changes
  * nothing, which is S-12 (decoration that doesn't improve usability).
  * It can be added the day it means something.
  *
@@ -34,6 +35,7 @@ export default function BusinessProfileSection() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [industry, setIndustry] = useState("");
+  const [mailingAddress, setMailingAddress] = useState("");
   const [namePlaceholder, setNamePlaceholder] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -44,10 +46,11 @@ export default function BusinessProfileSection() {
   useEffect(() => {
     fetchOnOpen("/api/onboarding")
       .then((r) => r.json())
-      .then((data: { success: boolean; name?: string; industry?: string | null; namePlaceholder?: boolean; isAdmin?: boolean }) => {
+      .then((data: { success: boolean; name?: string; industry?: string | null; mailingAddress?: string | null; namePlaceholder?: boolean; isAdmin?: boolean }) => {
         if (!data.success) return;
         setName(data.name ?? "");
         setIndustry(data.industry ?? "");
+        setMailingAddress(data.mailingAddress ?? "");
         setNamePlaceholder(Boolean(data.namePlaceholder));
         setIsAdmin(Boolean(data.isAdmin));
       })
@@ -69,7 +72,7 @@ export default function BusinessProfileSection() {
         // `industry: ""` clears it server-side (`body.industry || null`),
         // which is the honest behaviour for someone who picks the blank
         // option back — not a silent refusal to change anything.
-        body: JSON.stringify({ name: name.trim(), industry }),
+        body: JSON.stringify({ name: name.trim(), industry, mailingAddress: mailingAddress.trim() }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.success) throw new Error(data.message ?? "Couldn't save — try again.");
@@ -159,6 +162,32 @@ export default function BusinessProfileSection() {
               <p className="mt-1.5 text-[13px] text-ink-soft leading-relaxed">
                 FollowUp uses this to tell a real customer from a supplier or a sales pitch. With it blank, it has to
                 guess.
+              </p>
+            </div>
+
+            {/* Founder, 2026-11-01 (option B): it goes under every email FollowUp sends on its own, with the
+                business name and a "Reply "stop"" line (src/lib/emailFooter.ts). Two rows so a full address
+                shows on a phone. */}
+            <div>
+              <label htmlFor="business-address" className="text-[13px] font-medium block mb-1.5">
+                Mailing address
+              </label>
+              <textarea
+                id="business-address"
+                value={mailingAddress}
+                onChange={(e) => {
+                  setMailingAddress(e.target.value);
+                  setSaved(false);
+                }}
+                disabled={!isAdmin}
+                maxLength={300}
+                rows={2}
+                placeholder="e.g. 100 King St W, Suite 500, Toronto ON M5X 1A9"
+                className="w-full resize-none rounded-[12px] border border-line bg-paper px-3 py-2 text-sm leading-snug disabled:opacity-60"
+              />
+              <p className="mt-1.5 text-[13px] text-ink-soft leading-relaxed">
+                Goes at the bottom of emails FollowUp sends on its own, never on the ones you send yourself.
+                Canada&apos;s anti-spam law asks for it. Your office or brokerage address is fine.
               </p>
             </div>
           </div>

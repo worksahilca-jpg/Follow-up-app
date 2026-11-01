@@ -360,7 +360,7 @@ export function computeAutomationStatus(
   // A bare STOP/START is consent, not a question — the engine never drafts
   // a reply to one (findUnansweredLeads, freshInboundToAnswer), so neither
   // may the badge count down to one.
-  const lastIsInbound = last?.direction === "inbound" && !isExitPayload(last.quickReplyPayload) && !isConsentKeyword(last.body);
+  const lastIsInbound = last?.direction === "inbound" && !isExitPayload(last.quickReplyPayload) && !isConsentKeyword(last.body, last.channel);
   const timeline: TimelineMessage[] = lead.conversation.map((m) => ({
     direction: m.direction,
     at: new Date(m.date).getTime(),

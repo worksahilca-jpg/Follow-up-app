@@ -153,7 +153,7 @@ export default function LeadTrustPanel({
         <p>{consent.explanation}</p>
         <p style={{ color: optedOutAt ? "var(--coral)" : undefined }}>
           {optedOutAt
-            ? `Opted out of texts and WhatsApp on ${formatDate(optedOutAt)} (replied STOP). Those stay blocked until they reply START.`
+            ? `Said STOP on ${formatDate(optedOutAt)}. FollowUp won't message them on its own, and texts and WhatsApp stay blocked, until they reply START. You can still email them yourself.`
             : "No opt-out on file, so texts and WhatsApp are allowed."}
         </p>
         <p>
@@ -219,8 +219,8 @@ export default function LeadTrustPanel({
           <div className="flex items-start gap-2 rounded-[12px] p-2 text-[13px]" style={{ backgroundColor: "var(--tint-bad)" }}>
             <ShieldAlert className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: "var(--coral)" }} />
             <span style={{ color: "var(--coral)" }}>
-              Opted out of SMS/WhatsApp on {formatDate(optedOutAt)} (replied STOP) — texts and WhatsApp are blocked for
-              this lead until they reply START.
+              Said STOP on {formatDate(optedOutAt)}: nothing automatic on any channel, and no texts or WhatsApp, until
+              they reply START.
             </span>
           </div>
         ) : (

@@ -119,6 +119,10 @@ model Business {
   id                    String   @id @default(cuid())
   name                  String
   industry              String?
+  // The business's mailing address, as the owner typed it in Settings → Your business (founder, 2026-11-01, option B):
+  // shown with its name and a "Reply "stop"" line at the bottom of every email FollowUp sends on its own
+  // (src/lib/emailFooter.ts). Canada's anti-spam law asks a sender to say who they are and where. Null until set.
+  mailingAddress        String?
   teamSize              Int?
   avgDealValue          Float?
   primaryChannels       String[]

@@ -41,6 +41,7 @@ import { listSentReplies, isAuthRevoked, type SentReply } from "@/lib/integratio
 import { deidentifyText, type KnownIdentifier } from "@/lib/deidentify";
 import { machineSentIndex, isMachineSent } from "@/lib/voice";
 import { isFollowUpSender } from "@/lib/ownSenders";
+import { cleanReplyBody } from "@/lib/replyBody";
 
 export const MAX_KEPT = 300;
 export const MAX_SCANNED = 2000;
@@ -90,36 +91,7 @@ function domainOf(email: string): string {
   return email.split("@")[1] ?? "";
 }
 
-/**
- * The part of a sent message the owner actually wrote: cut at the first
- * quoted-history marker (Gmail's "On … wrote:", Outlook's "From:" block or
- * "-----Original Message-----", ">"-quoted lines), at a signature delimiter,
- * and at a phone's "Sent from my …" line.
- */
-export function cleanReplyBody(raw: string): string {
-  const text = raw.replace(/\r\n/g, "\n");
-  const markers = [
-    /^On .{0,200}wrote:\s*$/im,
-    /On [^\n]{0,200}? wrote:/i, // an HTML-only body arrives as one line
-    /^>/m,
-    /^-{2,}\s*Original Message\s*-{2,}/im,
-    /^_{8,}\s*$/m,
-    /^From:\s.+\n(?:.*\n){0,3}?(?:Sent|Date):\s/im,
-    /^--\s*$/m,
-    /^Sent from my /im,
-    /^Get Outlook for /im,
-  ];
-  let cut = text.length;
-  for (const re of markers) {
-    const m = re.exec(text);
-    if (m && m.index < cut) cut = m.index;
-  }
-  return text
-    .slice(0, cut)
-    .replace(/[ \t]+\n/g, "\n")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
-}
+export { cleanReplyBody };
 
 export interface KeepContext {
   /** Every address that is the business itself: the connected inbox and each teammate. */

@@ -74,6 +74,14 @@ a booked call or visit; the owner closes.
 
 **Last updated: 2026-11-01**
 
+- **Budget and the accuracy loop (Nov 1).** About $20 of AI credit (founder: "I'm very tight with the budget...
+  optimise everything"). Live: tests may spend at most $10 a day (#625). On the branch, not yet merged: sorting and
+  checklist reading back on the usual model (they were $26 of $28 of real AI cost in 30 days on the best model;
+  replies were $0.18), the test limit down to $5, and the fix for an AI outage stopping incoming deliveries plus an
+  hourly catch-up. The step-by-step way to train and fix accuracy cheaply is the last section of
+  `followup/research/product/2026-10-31-make-followup-easy-to-train-and-fix.md`. The founder handles all realtor
+  outreach; don't plan calls or messages for him.
+
 - **"Are we on the right track?" (Nov 1, after PR #624 went live).** Research verdict: partly. Right problem, wrong
   use of time: in the last 30 days 1 customer answered through FollowUp, 0 bookings, 1 new signup, and the AI has been
   off since Oct 30 (no credits). Report: `reports/FollowUp right track check.md` (notes in `research_notes/`). Its

@@ -150,3 +150,31 @@ production build are clean. Nothing below has been run against the real AI yet: 
    on our own files). The only fix offered is a downgrade; wait for Sentry's update.
 7. **The weekly summary is numbers only,** so it says *how many* drafts were changed, not *what* changed. Seeing the
    changes needs the opted-in examples, which admin can't show under H1.
+
+---
+
+## The accuracy loop: how to train and fix, cheaply (2026-11-01)
+
+Founder, Nov 1: *"we got to make our process so strong and optimised, and keep it organised so that we can train the
+accuracy."* With about $20 of AI credit, every step below is the cheapest one that still proves something.
+
+1. **Find the miss.** It comes from one of three places: a draft an owner changed or didn't send (Admin → Usage →
+   "This week with real customers"), a real chat a realtor shares (Admin → Accuracy tests → Real chats), or a test
+   that failed.
+2. **Turn it into a test case first.** A real chat goes in through "Add a real chat" (cleaned, with the owner's OK).
+   An invented one goes into the test file next to the cases like it. No fix without a case that fails.
+3. **Fix the smallest thing.** A rule for one kind of business goes on Train (tested before it's used, no deploy).
+   A rule for everyone goes in the code, and into the Rulebook (`src/lib/rulebook.ts`) with its exact words, its
+   reason and the tests that prove it.
+4. **Run only what proves it.** "Run its N tests" on the Rulebook, or "Run only the N that failed" on Accuracy
+   tests: cents, not dollars. A full run of a whole row is for after a model change or a big rule change.
+5. **Check before trusting.** A case that fails once gets "Check them twice more": it counts only if it fails 2 times
+   of 3. A flaky case gets a look, not a fix.
+6. **Ship it.** One PR, the usual checks, the founder's "merge". The next week's summary shows whether owners change
+   fewer drafts.
+
+**What the money is spent on (Nov 1):**
+- Writing replies, the "no" check and scoring run on the best model.
+- Sorting emails, reading the checklist and the language read run on the usual model. Those two jobs were most of
+  the bill, and both scored perfectly on it.
+- Tests may spend at most $5 a day (`TEST_DAILY_BUDGET_USD`). Real customers' calls are never counted or stopped.

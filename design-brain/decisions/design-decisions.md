@@ -16514,3 +16514,12 @@ places: "parking is $450,000". A safety fix, not a new design:
   send.', in the same form as "Add the price, then send."
 Weak, honestly: the raw "[ANSWER: parking]" in a reply is less friendly than a box. The better version, a box for each
 different blank, is a drawing for the founder to see first.
+
+## 2026-11-01 — The line under automatic emails (A-341)
+
+Drawn on the real Settings page (computer and phone) and as an email in a plain mail view, two options side by side.
+The founder chose **B**: the business name and mailing address, plus "Not looking any more? Reply "stop" and I won't
+follow up again." Built the same day, with the email "stop" reply recorded as an opt-out (before, only texts, WhatsApp
+and Instagram recorded one).
+Weak, honestly: the line is in English even under a reply written in Spanish or Punjabi; and a business that hasn't
+typed its address yet sends the name and the stop line only, with nothing on Today asking for the address.

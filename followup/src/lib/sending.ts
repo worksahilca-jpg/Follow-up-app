@@ -49,6 +49,7 @@ import { filledAnswer, filledPrice, hasPriceSlot, isFilledDraft, mixedBlanks, PR
 import { strayPlaceholder } from "@/lib/strayPlaceholder";
 import { customerGreetingName } from "@/lib/leadName";
 import { editSize } from "@/lib/decisionOutcome";
+import { automaticEmailFooter } from "@/lib/emailFooter";
 
 /**
  * SMS and WhatsApp both live on Lead.phone (the same phone number
@@ -368,6 +369,15 @@ async function alreadyMessagedAutomaticallyToday(leadId: string, businessId: str
   } catch (err) {
     console.error(`Could not check today's automated sends for lead ${leadId}:`, err);
     return true;
+  }
+}
+
+/** The name and address for the automatic-email footer (src/lib/emailFooter.ts); null when they can't be read. */
+async function footerBusiness(businessId: string): Promise<{ name: string; mailingAddress: string | null } | null> {
+  try {
+    return await prisma.business.findUnique({ where: { id: businessId }, select: { name: true, mailingAddress: true } });
+  } catch {
+    return null;
   }
 }
 
@@ -695,34 +705,23 @@ export async function sendFollowUpToLead(
     }
   }
 
-  // No unsubscribe line, and no List-Unsubscribe header, on ANY message.
-  // Founder's call, 2026-09-15, and the reasoning is sound enough to write
-  // down rather than just obey.
+  // No List-Unsubscribe header, on any message, and no unsubscribe LINK.
+  // Founder's call, 2026-09-15: every message here is a reply to someone who
+  // contacted the business first, and a mailing-list "unsubscribe" would
+  // misdescribe it as a mailing.
   //
-  // Every message this product sends is a reply to someone who contacted
-  // the business first. Even the coldest one in the reactivation batch goes
-  // to a person who filled in a form or sent an email and then never heard
-  // back — and deadLeadMessageHint() requires the draft to open on exactly
-  // that conversation, in their own terms ("you got in touch about X"),
-  // with "sorry we never came back to you" added only where that is true
-  // (since 2026-09-25). A recipient reading that recognises it instantly. It is an overdue reply,
-  // not an approach, and an "unsubscribe" line stapled to the bottom would
-  // misdescribe it as a mailing — which is both untrue and corrosive to the
-  // one thing this product sells, that its messages read as if the owner
-  // wrote them.
+  // SUPERSEDED IN PART (2026-11-01, A-341, founder: "Go for B"): every email
+  // FollowUp sends on its own now ends with the business's name and mailing
+  // address and one line in the owner's voice, "Not looking any more? Reply
+  // "stop" and I won't follow up again." (src/lib/emailFooter.ts). Not a link
+  // and not a header, so the message still reads as a reply; but who sent it
+  // is stated, and stopping is one word away. Someone who can stop that easily
+  // doesn't press "Report spam", which is what keeps the owner's Gmail out of
+  // spam folders. A "stop" reply is recorded (src/lib/emailOptOut.ts), and the
+  // suppression list below is still enforced.
   //
-  // The suppression list itself is deliberately KEPT and still enforced
-  // below. What changed is how an address gets onto it: not a link, but a
-  // person saying so — which is how the SMS side already works, and how
-  // someone would actually do it in an email anyway ("please stop emailing
-  // me"). Volume is also bounded (see sendCaps.ts), which is what makes
-  // relying on a reply rather than a button reasonable: this is 25 messages
-  // a day to people who asked, not a list blast.
-  //
-  // What would make this wrong: if the drafts stopped naming the original
-  // enquiry (and the missed reply, where there was one), or if volume rose
-  // to where recipients no longer recognise the sender. Both are worth
-  // re-checking together.
+  // Volume is also bounded (see sendCaps.ts): a handful of recognisable,
+  // overdue replies a day to people who asked, not a list blast.
   // Daily volume ceiling. Applies to AUTOMATED sends only — a human
   // emailing their own customer is never rate-limited by us — and lives
   // here, in the one funnel every automated path goes through, so a caller
@@ -887,6 +886,12 @@ export async function sendFollowUpToLead(
   // escaped transient throw by releasing its claim and re-drafting the lead
   // next hour, which would race this queue and send twice.
   // ---------------------------------------------------------------
+  // The line under every email FollowUp sends on its own (A-341, src/lib/emailFooter.ts): the business's name and
+  // address, and "Reply "stop"". Only automatic emails, and only on what goes out: `body` stays what is stored,
+  // shown in the thread and learned from. If the business can't be read, the stop line still goes.
+  const outgoing =
+    channel === "email" && options.automated ? body + automaticEmailFooter((await footerBusiness(lead.businessId)) ?? { name: null, mailingAddress: null }) : body;
+  // ---------------------------------------------------------------
   const dispatch = async (): Promise<
     // `sentTemplate` is set only when WhatsApp's 24-hour window had closed
     // and the business's approved template went out INSTEAD of `body`.
@@ -914,7 +919,7 @@ export async function sendFollowUpToLead(
         const result = await sendGhlMessage(conn.apiKey, {
           channel,
           contactId: lead.crmId,
-          body,
+          body: outgoing,
           subject: options.subject ?? `Following up on your inquiry, ${lead.name.split(" ")[0]}`,
         });
         if (!result.success) return providerFailure(result, "GoHighLevel didn't confirm this message sent.");
@@ -924,16 +929,6 @@ export async function sendFollowUpToLead(
     if (channel === "email") {
       if (!emailTo) return { ok: false, message: "This lead has no email address on file.", failure: "refused" };
 
-      // Only AUTOMATED mail carries the unsubscribe footer and headers. A
-      // human typing a reply to a customer is not a mailing they should be
-      // offered a way out of — putting "unsubscribe" under a personal reply
-      // would be both odd and, by implying the message was bulk, untrue.
-      //
-      // Deliberately a SEPARATE value rather than appended to `body`: the
-      // footer is transport decoration, like the List-Unsubscribe header
-      // beside it. `body` is what gets stored on the Message row, shown in
-      // the thread, and measured in the audit trail — and none of those
-      // should carry a link that isn't part of what anyone wrote.
       emailProvider = await detectEmailProvider(lead.businessId, lead.id);
       const fallbackSubject = options.subject ?? `Following up on your inquiry, ${lead.name.split(" ")[0]}`;
       // A caller that already knows the thread (the instant ack, the retry
@@ -944,7 +939,7 @@ export async function sendFollowUpToLead(
         const result = await sendOutlookEmail(lead.businessId, {
           to: emailTo,
           subject: fallbackSubject,
-          body,
+          body: outgoing,
           // Graph's /reply endpoint takes the specific message's own id,
           // not an RFC822 Message-ID header — acknowledgeNewLead's Outlook
           // path passes that Graph id through as emailInReplyTo (same
@@ -980,7 +975,7 @@ export async function sendFollowUpToLead(
         const result = await sendEmail(lead.businessId, {
           to: emailTo,
           subject,
-          body,
+          body: outgoing,
           threadId,
           inReplyTo,
           ...(integrationId ? { integrationId } : {}),

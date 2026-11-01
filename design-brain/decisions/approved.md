@@ -6256,3 +6256,24 @@ helpful; a second message is pressure.
 **Built (2026-10-30):** the realtor playbook (`tradePlaybooks.ts`) and the "no" check (`checkForStop`); two cases in the
 conversation test (the reply, and the stop).
 
+
+## A-341 — The line under automatic emails: who sent it, where, and "reply stop" (option B) ^A-341
+
+**Approved:** 2026-11-01, founder: *"Go for B"*, after a drawing of two options (A: the business's mailing address
+only; B: the address plus a way to stop). He had asked to "keep all those privacy, security, and other things in mind
+so that we do not go spam, get blocked, or get reported".
+**What specifically was approved:** every email FollowUp sends on its own ends, under a "—", with two plain-text lines:
+*"Harbour Homes · 100 King St W, Suite 500, Toronto ON M5X 1A9"* and *"Not looking any more? Reply "stop" and I won't
+follow up again."* Never on an email the owner sends themselves. Same size as the rest (plain text). The address is
+one new box in Settings → Your business, "Mailing address", two rows, with the line "Goes at the bottom of emails
+FollowUp sends on its own, never on the ones you send yourself. Canada's anti-spam law asks for it. Your office or
+brokerage address is fine."
+**The principle:** say who you are, and make stopping one word. Someone who can stop that easily doesn't press "Report
+spam", which keeps the owner's own Gmail out of spam folders. Not a link and not a mailing-list "unsubscribe": the
+email still reads as a reply from the owner.
+**Supersedes in part** the founder's 2026-09-15 call of no unsubscribe line on any message (recorded in
+`followup/src/lib/sending.ts`): still no link and no List-Unsubscribe header, but now a reply-to-stop line on
+automatic emails.
+**Built (2026-11-01):** `src/lib/emailFooter.ts` (added at send time, never stored in the message), the Settings box in
+`BusinessProfileSection.tsx`, `Business.mailingAddress`; a "stop" reply by email is recorded as an opt-out
+(`src/lib/emailOptOut.ts`).
